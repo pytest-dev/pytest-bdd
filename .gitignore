@@ -34,4 +34,4 @@ nosetests.xml
 .project
 .pydevproject
 
-/*.sublime-workspace
+/*.sublime-*
