@@ -1,14 +1,16 @@
 #!/usr/bin/env python
+import os
+from setuptools import setup, find_packages
 
-from setuptools import setup
+packages = find_packages(os.path.dirname(os.path.abspath(__file__)))
 
 setup(
-    name='pytestbdd',
+    name='pytest-bdd',
     description='BDD for pytest',
     version='0.1',
     install_requires=[
         'pytest',
         'splinter',
     ],
-    packages=['pytestbdd'],
+    packages=packages,
 )

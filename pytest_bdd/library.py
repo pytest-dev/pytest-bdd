@@ -1,6 +1,6 @@
 """Library of the step Python implementation."""
 
-from pytestbdd.types import GIVEN, WHEN, THEN
+from pytest_bdd.types import GIVEN, WHEN, THEN
 
 
 class Library(object):

@@ -14,8 +14,8 @@ test_publish_article = scenario(
 import inspect
 from os import path as op
 
-from pytestbdd.library import Library
-from pytestbdd.feature import Feature
+from pytest_bdd.library import Library
+from pytest_bdd.feature import Feature
 
 
 def scenario(feature_name, scenario_name):

@@ -21,7 +21,7 @@ def no_error_message(browser):
 
 import pytest
 
-from pytestbdd.types import GIVEN, WHEN, THEN
+from pytest_bdd.types import GIVEN, WHEN, THEN
 
 
 def given(name):

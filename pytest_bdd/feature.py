@@ -20,7 +20,7 @@ Syntax example:
 one line.
 """
 
-from pytestbdd.types import SCENARIO, GIVEN, WHEN, THEN
+from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN
 
 # Global features dictionary
 features = {}
