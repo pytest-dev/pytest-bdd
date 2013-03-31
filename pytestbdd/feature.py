@@ -69,7 +69,7 @@ def remove_prefix(line):
     """
     for prefix in STEP_PREFIXES:
         if line.startswith(prefix):
-            return line[:len(prefix)].strip()
+            return line[len(prefix):].strip()
     return line
 
 
@@ -94,6 +94,8 @@ class Feature(object):
                     continue
 
                 mode = get_step_type(line) or mode
+                # Remove Given, When, Then, And
+                line = remove_prefix(line)
 
                 if mode == SCENARIO:
                     self.scenarios[line] = scenario = Scenario(line)
