@@ -52,3 +52,16 @@ test_publish_article.py:
 	def article_is_published(article):
 		article.refresh()  # Refresh the object in the SQLAlchemy session
 		assert article.is_published
+
+
+Subplugins
+==========
+
+The pytest BDD has plugin support, and the main purpose of plugins (subplugins) is to provide useful and specialized
+fixtures.
+
+List of known subplugins:
+
+    *  pytest-bdd-splinter -- collection of fixtures for real browser BDD testing
+
+
