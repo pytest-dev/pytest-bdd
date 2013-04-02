@@ -117,14 +117,11 @@ class Scenario(object):
     def __init__(self, name):
         self.name = name
         self.given = []
-        self.when = []
-        self.then = []
+        self.steps = []
 
     def add_step(self, step_type, step):
         """Add step."""
         if step_type == GIVEN:
             self.given.append(step)
-        elif step_type == WHEN:
-            self.when.append(step)
-        elif step_type == THEN:
-            self.then.append(step)
+        else:
+            self.steps.append(step)
