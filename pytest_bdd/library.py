@@ -1,6 +1,6 @@
 """Library of the step Python implementation."""
 
-from pytest_bdd.types import GIVEN, WHEN, THEN
+from pytest_bdd.types import GIVEN
 
 
 class Library(object):
@@ -13,8 +13,7 @@ class Library(object):
         :param module: Module of the current test case.
         """
         self.given = {}
-        self.when = {}
-        self.then = {}
+        self.steps = {}
 
         # Collect pytest fixtures
         fm = request.session._fixturemanager
@@ -25,10 +24,5 @@ class Library(object):
 
         # Collect when and then steps
         for attr in vars(module).itervalues():
-            step_type = getattr(attr, '__step_type__', None)
-            if step_type is None:
-                continue
-            if step_type == WHEN:
-                self.when[attr.__step_name__] = attr
-            elif step_type == THEN:
-                self.then[attr.__step_name__] = attr
+            if getattr(attr, '__step_type__', None):
+                self.step[attr.__step_name__] = attr

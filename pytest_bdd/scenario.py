@@ -16,6 +16,7 @@ from os import path as op
 
 from pytest_bdd.library import Library
 from pytest_bdd.feature import Feature
+from pytest_bdd.types import THEN
 
 
 def scenario(feature_name, scenario_name):
@@ -34,14 +35,9 @@ def scenario(feature_name, scenario_name):
             fixture = library.given[given]
             request.getfuncargvalue(fixture)
 
-        # Execute when steps
-        for when in scenario.when:
-            _execute_step(request, library.when[when])
-
-        # Assert then steps
-        for then in scenario.then:
-            result = _execute_step(request, library.then[then])
-            assert result or result is None
+        # Execute other steps
+        for step in scenario.steps:
+            _execute_step(request, library.steps[step])
 
     return _scenario
 
@@ -56,4 +52,7 @@ def _execute_step(request, func):
     from the request and passed to the step function.
     """
     kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(func).args)
-    return func(**kwargs)
+    result = func(**kwargs)
+    if func.__step_type__ == THEN:
+        assert result or result is None
+
