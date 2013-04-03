@@ -19,6 +19,10 @@ from pytest_bdd.feature import Feature
 from pytest_bdd.types import THEN
 
 
+class ScenarioNotFound(Exception):
+    """Scenario Not Found"""
+
+
 def scenario(feature_name, scenario_name):
     """Scenario."""
     frame = inspect.stack()[1]
@@ -28,7 +32,10 @@ def scenario(feature_name, scenario_name):
     def _scenario(request):
         library = Library(request, module)
         feature = Feature.get_feature(feature_path)
-        scenario = feature.scenarios[scenario_name]
+        try:
+            scenario = feature.scenarios[scenario_name]
+        except KeyError:
+            raise ScenarioNotFound('Scenario "{0}" in feature "{1}" is not found'.format(scenario_name, feature_name))
 
         # Evaluate given steps (can have side effects)
         for given in scenario.given:
@@ -55,4 +62,3 @@ def _execute_step(request, func):
     result = func(**kwargs)
     if func.__step_type__ == THEN:
         assert result or result is None
-
