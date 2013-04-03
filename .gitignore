@@ -34,4 +34,11 @@ nosetests.xml
 .project
 .pydevproject
 
+# Sublime
 /*.sublime-*
+
+# virtualenv
+/.Python
+/lib
+/include
+/src

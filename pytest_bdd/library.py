@@ -25,4 +25,4 @@ class Library(object):
         # Collect when and then steps
         for attr in vars(module).itervalues():
             if getattr(attr, '__step_type__', None):
-                self.step[attr.__step_name__] = attr
+                self.steps[attr.__step_name__] = attr
