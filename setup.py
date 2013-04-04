@@ -4,6 +4,7 @@ from setuptools import setup, Command, find_packages
 
 
 class PyTest(Command):
+    """Testing."""
     user_options = []
 
     def initialize_options(self):
