@@ -18,6 +18,10 @@ class Library(object):
         # Collect pytest fixtures
         fm = request.session._fixturemanager
         for fixture_name, fixture_defs in fm._arg2fixturedefs.iteritems():
+            faclist = list(fm._matchfactories(fixture_defs, request._parentid))
+            if not faclist:
+                continue
+
             func = fixture_defs[-1].func
             if getattr(func, '__step_type__', None) == GIVEN:
                 self.given[func.__step_name__] = fixture_name

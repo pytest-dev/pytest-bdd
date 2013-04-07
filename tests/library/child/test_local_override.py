@@ -1,7 +1,8 @@
-"""Test givens declared in the base conftest and plugin files.
+"""Test givens declared in the parent conftest and plugin files.
 
-Check the parent givens are collected, override them locally.
+Check the parent given steps are collected, override them locally.
 """
+
 from pytest_bdd import given
 
 

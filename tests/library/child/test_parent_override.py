@@ -1,4 +1,4 @@
-"""Test givens declared in the base conftest and plugin files.
+"""Test givens declared in the parent conftest and plugin files.
 
 Check the parent givens are collected and overriden in the local conftest.
 """

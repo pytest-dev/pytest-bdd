@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os
-from setuptools import setup, Command, find_packages
+from setuptools import setup, Command
 
 
 class PyTest(Command):
@@ -19,16 +19,16 @@ class PyTest(Command):
         errno = subprocess.call([sys.executable, '-m', 'pytest'])
         raise SystemExit(errno)
 
-packages = find_packages(os.path.dirname(os.path.abspath(__file__)))
 
 setup(
     name='pytest-bdd',
     description='BDD for pytest',
+    author='Oleg Pidsadnyi, Anatoly Bubenkov',
     version='0.1',
     cmdclass={'test': PyTest},
     install_requires=[
         'pytest',
     ],
     tests_require=['mock'],
-    packages=packages,
+    packages=['pytest_bdd'],
 )
