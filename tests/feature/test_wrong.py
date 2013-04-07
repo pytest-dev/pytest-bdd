@@ -3,7 +3,7 @@
 import pytest
 
 from pytest_bdd import scenario
-from pytest_bdd.exceptions import FeatureError
+from pytest_bdd.feature import FeatureError
 
 
 @pytest.fixture(params=[

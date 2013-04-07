@@ -21,7 +21,12 @@ one line.
 """
 
 from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN
-from pytest_bdd.exceptions import FeatureError
+
+
+class FeatureError(Exception):
+    """Feature parse error."""
+    pass
+
 
 # Global features dictionary
 features = {}
