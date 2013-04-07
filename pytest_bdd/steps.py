@@ -22,6 +22,7 @@ def no_error_message(browser):
 import pytest
 
 from pytest_bdd.types import GIVEN, WHEN, THEN
+from pytest_bdd.feature import remove_prefix
 
 
 def given(name):
@@ -50,7 +51,7 @@ def _decorate_step(step_type, step_name):
     """
     def decorator(func):
         func.__step_type__ = step_type
-        func.__step_name__ = step_name
+        func.__step_name__ = remove_prefix(step_name)
         if step_type == GIVEN:
             return pytest.fixture(func)
         return func

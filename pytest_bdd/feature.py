@@ -21,6 +21,7 @@ one line.
 """
 
 from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN
+from pytest_bdd.exceptions import FeatureError
 
 # Global features dictionary
 features = {}
@@ -85,6 +86,7 @@ class Feature(object):
 
         scenario = None
         mode = None
+        prev_mode = None
 
         with open(filename, 'r') as f:
             content = f.read()
@@ -94,6 +96,18 @@ class Feature(object):
                     continue
 
                 mode = get_step_type(line) or mode
+
+                if mode == GIVEN and prev_mode not in (GIVEN, SCENARIO):
+                    raise FeatureError('Given steps must be the first in withing the Scenario')
+
+                if mode == WHEN and prev_mode not in (GIVEN, WHEN):
+                    raise FeatureError('When steps must follow Given steps')
+
+                if mode == THEN and prev_mode not in (WHEN, THEN):
+                    raise FeatureError('Then steps must follow When steps')
+
+                prev_mode = mode
+
                 # Remove Given, When, Then, And
                 line = remove_prefix(line)
 
