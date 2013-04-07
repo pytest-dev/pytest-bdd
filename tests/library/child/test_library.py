@@ -31,4 +31,4 @@ def test_given_collected(request):
     assert 'local_child_fixture' in fixtures
     assert 'parent' in fixtures
     assert 'overridable' in fixtures
-
+    assert 'foo' in fixtures
