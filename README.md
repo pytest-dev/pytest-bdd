@@ -31,7 +31,7 @@ test_publish_article.py:
 
 
 	@given('I have an article')
-	def article(author)
+	def article(author):
 		return create_test_article(author=author)
 
 
@@ -39,9 +39,11 @@ test_publish_article.py:
 	def go_to_article(article, browser):
 		browser.visit(urljoin(browser.url, '/manage/articles/{0}/'.format(article.id)))
 
+
 	@when('I press the publish button')
 	def publish_article(browser):
 		browser.find_by_css('button[name=publish]').first.click()
+
 
 	@then('I should not see the error message')
 	def no_error_message(browser):

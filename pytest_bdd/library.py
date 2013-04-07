@@ -22,7 +22,7 @@ class Library(object):
             if not faclist:
                 continue
 
-            func = fixture_defs[-1].func
+            func = faclist[-1].func
             if getattr(func, '__step_type__', None) == GIVEN:
                 self.given[func.__step_name__] = fixture_name
 
