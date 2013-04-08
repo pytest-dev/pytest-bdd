@@ -57,6 +57,34 @@ test_publish_article.py:
 		assert article.is_published
 
 
+Step aliases
+============
+
+Sometimes it is needed to declare the same fixtures or steps with the different names
+for better readability.
+In order to use the same step function with multiple step names simply
+decorate it multiple times:
+
+
+	@given('I have an article')
+	@given('there\'s an article')
+	def article(author):
+		return create_test_article(author=author)
+
+
+For example if you assoicate your resource to some owner or not. Admin user can't be an
+author of the article, but article should have some default author.
+
+	Scenario: I'm the author
+		Given I'm an author
+		And I have an article
+
+
+	Scenario: I'm the admin
+		Given I'm the admin
+		And there is an article
+
+
 Subplugins
 ==========
 

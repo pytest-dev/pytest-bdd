@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import os
 from setuptools import setup, Command
 
 
@@ -23,8 +22,8 @@ class PyTest(Command):
 setup(
     name='pytest-bdd',
     description='BDD for pytest',
-    author='Oleg Pidsadnyi, Anatoly Bubenkov',
-    version='0.1',
+    author='Oleg Pidsadnyi',
+    version='0.2',
     cmdclass={'test': PyTest},
     install_requires=[
         'pytest',
