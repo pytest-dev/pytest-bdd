@@ -3,6 +3,10 @@
 from pytest_bdd.types import GIVEN
 
 
+class LibraryError(Exception):
+    pass
+
+
 class Library(object):
     """Library."""
 
@@ -24,9 +28,15 @@ class Library(object):
 
             func = faclist[-1].func
             if getattr(func, '__step_type__', None) == GIVEN:
-                self.given[func.__step_name__] = fixture_name
+                for name in func.__step_names__:
+                    if name in self.given:
+                        raise LibraryError('Step with this name already registered')
+                    self.given[name] = fixture_name
 
         # Collect when and then steps
         for attr in vars(module).itervalues():
             if getattr(attr, '__step_type__', None):
-                self.steps[attr.__step_name__] = attr
+                for name in attr.__step_names__:
+                    if name in self.steps:
+                        raise LibraryError('Step with this name already registered')
+                    self.steps[name] = attr

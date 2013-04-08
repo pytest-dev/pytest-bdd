@@ -25,6 +25,10 @@ from pytest_bdd.types import GIVEN, WHEN, THEN
 from pytest_bdd.feature import remove_prefix
 
 
+class StepError(Exception):
+    pass
+
+
 def given(name):
     """Given step decorator."""
     return _decorate_step(GIVEN, name)
@@ -50,8 +54,15 @@ def _decorate_step(step_type, step_name):
     fixture decorator to the step function.
     """
     def decorator(func):
+        old_type = getattr(func, '__step_type__', None)
+        if old_type and old_type != step_type:
+            raise StepError('Step type mismatched')
+
         func.__step_type__ = step_type
-        func.__step_name__ = remove_prefix(step_name)
+
+        if not hasattr(func, '__step_names__'):
+            func.__step_names__ = []
+        func.__step_names__.append(remove_prefix(step_name))
         if step_type == GIVEN:
             return pytest.fixture(func)
         return func
