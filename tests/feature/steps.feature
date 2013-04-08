@@ -6,3 +6,8 @@ Scenario: Executed step by step
     And I append 3 to the list
     Then foo should have value "foo"
     And the list should be [1, 2, 3]
+
+
+Scenario: When step can be the first
+	When I do nothing
+	Then I make no mistakes

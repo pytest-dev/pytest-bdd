@@ -9,7 +9,6 @@ from pytest_bdd.feature import FeatureError
 @pytest.fixture(params=[
     'When after then',
     'Then first',
-    'When first',
     'Given after When',
     'Given after Then',
 ])

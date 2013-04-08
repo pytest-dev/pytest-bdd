@@ -37,3 +37,16 @@ def foo_is_foo(foo):
 @then('the list should be [1, 2, 3]')
 def check_results(results):
     assert results == [1, 2, 3]
+
+
+test_when_first = scenario('steps.feature', 'When step can be the first')
+
+
+@when('When I do nothing')
+def do_nothing():
+    pass
+
+
+@then('Then I make no mistakes')
+def no_errors():
+    assert True

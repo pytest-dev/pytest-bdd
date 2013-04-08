@@ -10,10 +10,6 @@ Scenario: Then first
 	Then it won't work
 
 
-Scenario: When first
-	When it won't work
-
-
 Scenario: Given after When
 	Given something
 	When something else
