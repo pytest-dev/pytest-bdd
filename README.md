@@ -84,6 +84,14 @@ author of the article, but article should have some default author.
 		Given I'm the admin
 		And there is an article
 
+Reusing fixtures
+================
+
+Sometimes scenarios define new names for the fixture that can be inherited.
+Fixtures can be reused with other names using given():
+
+	given('I have beautiful article', fixture='article')
+
 
 Subplugins
 ==========

@@ -17,6 +17,19 @@ def no_error_message(browser):
     with pytest.raises(ElementDoesNotExist):
         browser.find_by_css('.message.error').first
 
+
+Multiple names for the steps:
+
+@given('I have an article')
+@given('there is an article')
+def article(author):
+    return create_test_article(author=author)
+
+
+Reusing existing fixtures for a different step name:
+
+given('I have a beautiful article', fixture='article')
+
 """
 
 import inspect
