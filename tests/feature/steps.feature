@@ -11,3 +11,8 @@ Scenario: Executed step by step
 Scenario: When step can be the first
 	When I do nothing
 	Then I make no mistakes
+
+
+Scenario: Then step can follow Given step
+	Given I have a foo fixture with value "foo"
+	Then foo should have value "foo"

@@ -27,7 +27,8 @@ def test_given_collected(request):
     assert request.getfuncargvalue('foo') == 'parent'
 
     fixtures = lib.given.values()
-    assert len(fixtures) == 4
+    assert len(fixtures) == 5
+    assert 'root' in fixtures
     assert 'local_parent_fixture' in fixtures
     assert 'parent' in fixtures
     assert 'overridable' in fixtures

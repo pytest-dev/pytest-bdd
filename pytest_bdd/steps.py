@@ -19,6 +19,7 @@ def no_error_message(browser):
 
 """
 
+import inspect
 import pytest
 
 from pytest_bdd.types import GIVEN, WHEN, THEN
@@ -29,40 +30,88 @@ class StepError(Exception):
     pass
 
 
-def given(name):
-    """Given step decorator."""
-    return _decorate_step(GIVEN, name)
+def given(name, fixture=None):
+    """Given step decorator.
+
+    :param name: Given step name.
+    :param fixture: Optional name of the fixture to reuse.
+
+    :raises: StepError in case of wrong configuration.
+    :note: Can't be used as a decorator when the fixture is specified.
+    """
+    if fixture is not None:
+        frame = inspect.stack()[1]
+        module = inspect.getmodule(frame[0])
+        func = getattr(module, fixture, None)
+        if func is None:
+            func = pytest.fixture(lambda request: request.getfuncargvalue(fixture))
+            setattr(module, fixture, func)
+
+        _decorate_step(func, GIVEN, name)
+        return _not_a_fixture_decorator
+
+    return _step_decorator(GIVEN, name)
 
 
 def when(name):
-    """When step decorator."""
-    return _decorate_step(WHEN, name)
+    """When step decorator.
+
+    :param name: Step name.
+    :raises: StepError in case of wrong configuration.
+    """
+    return _step_decorator(WHEN, name)
 
 
 def then(name):
-    """Then step decorator."""
-    return _decorate_step(THEN, name)
+    """Then step decorator.
+
+    :param name: Step name.
+    :raises: StepError in case of wrong configuration.
+    """
+    return _step_decorator(THEN, name)
 
 
-def _decorate_step(step_type, step_name):
-    """Decorates the step with name and type.
-    :param step_type: GIVEN, WHEN or THEN.
+def _not_a_fixture_decorator(func):
+    """Function that prevents the decoration.
+
+    :param func: Function that is going to be decorated.
+    :raises: `StepError` if was used as a decorator.
+    """
+    raise StepError('Cannot be used as a decorator when the fixture is specified')
+
+
+def _decorate_step(func, step_type, step_name):
+    """Decorate the step function.
+
+    :param func: Step function.
+    :param step_type: Step type (GIVEN, WHEN or THEN).
     :param step_name: Step name as in the feature file.
+
+    :raises: StepError when step types mismatch.
+    """
+    old_type = getattr(func, '__step_type__', None)
+    if old_type and old_type != step_type:
+        raise StepError('Step type mismatched')
+
+    func.__step_type__ = step_type
+    if not hasattr(func, '__step_names__'):
+        func.__step_names__ = []
+    func.__step_names__.append(remove_prefix(step_name))
+
+
+def _step_decorator(step_type, step_name):
+    """Step decorator for the type and the name.
+    :param step_type: Step type (GIVEN, WHEN or THEN).
+    :param step_name: Step name as in the feature file.
+
     :return: Decorator function for the step.
+    :raises: StepError when step types mismatch.
 
     :note: If the step type is GIVEN it will automatically apply the pytest
     fixture decorator to the step function.
     """
     def decorator(func):
-        old_type = getattr(func, '__step_type__', None)
-        if old_type and old_type != step_type:
-            raise StepError('Step type mismatched')
-
-        func.__step_type__ = step_type
-
-        if not hasattr(func, '__step_names__'):
-            func.__step_names__ = []
-        func.__step_names__.append(remove_prefix(step_name))
+        _decorate_step(func, step_type, step_name)
         if step_type == GIVEN:
             return pytest.fixture(func)
         return func

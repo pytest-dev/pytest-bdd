@@ -23,6 +23,7 @@ setup(
     name='pytest-bdd',
     description='BDD for pytest',
     author='Oleg Pidsadnyi',
+    author_email='oleg.podsadny@gmail.com',
     version='0.2',
     cmdclass={'test': PyTest},
     install_requires=[

@@ -50,3 +50,6 @@ def do_nothing():
 @then('Then I make no mistakes')
 def no_errors():
     assert True
+
+
+test_then_after_given = scenario('steps.feature', 'Then step can follow Given step')

@@ -108,8 +108,8 @@ class Feature(object):
                 if mode == WHEN and prev_mode not in (SCENARIO, GIVEN, WHEN):
                     raise FeatureError('When steps must be the first or follow Given steps')
 
-                if mode == THEN and prev_mode not in (WHEN, THEN):
-                    raise FeatureError('Then steps must follow When steps')
+                if mode == THEN and prev_mode not in (GIVEN, WHEN, THEN):
+                    raise FeatureError('Then steps must follow Given or When steps')
 
                 prev_mode = mode
 
