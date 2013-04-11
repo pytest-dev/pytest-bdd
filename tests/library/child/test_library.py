@@ -1,6 +1,5 @@
 """Test all the given steps are collected in the Library."""
 
-import sys
 from pytest_bdd import given
 from pytest_bdd.library import Library
 
@@ -20,9 +19,7 @@ def test_given_collected(request):
 
     Expects parent conftest, local conftest and local fixtures.
     """
-
-    module = sys.modules[test_given_collected.__module__]
-    lib = Library(request, module)
+    lib = Library(request)
 
     assert request.getfuncargvalue('foo') == 'child'
 

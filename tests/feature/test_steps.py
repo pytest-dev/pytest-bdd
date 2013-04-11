@@ -73,3 +73,6 @@ def test_same_step_name():
 
     with pytest.raises(StepError):
         given('xyz', fixture='xyz')
+
+
+test_conftest = scenario('steps.feature', 'All steps are declared in the conftest')

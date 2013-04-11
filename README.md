@@ -84,7 +84,7 @@ author of the article, but article should have some default author.
 		Given I'm the admin
 		And there is an article
 
-Reusing fixtures
+Reuse fixtures
 ================
 
 Sometimes scenarios define new names for the fixture that can be inherited.
@@ -92,6 +92,37 @@ Fixtures can be reused with other names using given():
 
 	given('I have beautiful article', fixture='article')
 
+
+Reuse steps
+===========
+
+It is possible to define some common steps in the parent conftest.py and simply
+expect them in the child test file.
+
+common_steps.feature:
+	Scenario: All steps are declared in the conftest
+	    Given I have a bar
+	    Then bar should have value "bar"
+
+
+conftest.py:
+	from pytest_bdd import given, then
+
+
+	@given('I have a bar')
+	def bar():
+	    return 'bar'
+
+
+	@then('bar should have value "bar"')
+	def bar_is_bar(bar):
+	    assert bar == 'bar'
+
+test_common.py:
+	test_conftest = scenario('common_steps.feature', 'All steps are declared in the conftest')
+
+There are no definitions of the steps in the test file. They were collected from the parent
+conftests.
 
 Subplugins
 ==========

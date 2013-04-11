@@ -16,3 +16,8 @@ Scenario: When step can be the first
 Scenario: Then step can follow Given step
 	Given I have a foo fixture with value "foo"
 	Then foo should have value "foo"
+
+
+Scenario: All steps are declared in the conftest
+    Given I have a bar
+    Then bar should have value "bar"

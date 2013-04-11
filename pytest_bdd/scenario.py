@@ -25,12 +25,10 @@ class ScenarioNotFound(Exception):
 
 def scenario(feature_name, scenario_name):
     """Scenario."""
-    frame = inspect.stack()[1]
-    module = inspect.getmodule(frame[0])
-    feature_path = op.abspath(op.join(op.dirname(module.__file__), feature_name))
 
     def _scenario(request):
-        library = Library(request, module)
+        feature_path = op.abspath(op.join(op.dirname(request.module.__file__), feature_name))
+        library = Library(request)
         feature = Feature.get_feature(feature_path)
         try:
             scenario = feature.scenarios[scenario_name]
