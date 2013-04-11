@@ -100,12 +100,14 @@ It is possible to define some common steps in the parent conftest.py and simply
 expect them in the child test file.
 
 common_steps.feature:
+
 	Scenario: All steps are declared in the conftest
 	    Given I have a bar
 	    Then bar should have value "bar"
 
 
 conftest.py:
+
 	from pytest_bdd import given, then
 
 
@@ -119,7 +121,9 @@ conftest.py:
 	    assert bar == 'bar'
 
 test_common.py:
+
 	test_conftest = scenario('common_steps.feature', 'All steps are declared in the conftest')
+
 
 There are no definitions of the steps in the test file. They were collected from the parent
 conftests.
