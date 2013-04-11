@@ -1,4 +1,6 @@
+import pytest
 from pytest_bdd import scenario, given, when, then
+from pytest_bdd.steps import StepError
 
 
 test_steps = scenario('steps.feature', 'Executed step by step')
@@ -53,3 +55,21 @@ def no_errors():
 
 
 test_then_after_given = scenario('steps.feature', 'Then step can follow Given step')
+
+
+@given('xyz')
+def xyz():
+    """Used in the test_same_step_name."""
+    return
+
+
+def test_same_step_name():
+    """Test that step is not decorated with the same name."""
+    with pytest.raises(StepError):
+        @then('abc')
+        @then('abc')
+        def abc():
+            pass
+
+    with pytest.raises(StepError):
+        given('xyz', fixture='xyz')

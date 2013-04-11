@@ -109,7 +109,10 @@ def _decorate_step(func, step_type, step_name):
     func.__step_type__ = step_type
     if not hasattr(func, '__step_names__'):
         func.__step_names__ = []
-    func.__step_names__.append(remove_prefix(step_name))
+    step_name = remove_prefix(step_name)
+    if step_name in func.__step_names__:
+        raise StepError('Step already has this name')
+    func.__step_names__.append(step_name)
 
 
 def _step_decorator(step_type, step_name):
