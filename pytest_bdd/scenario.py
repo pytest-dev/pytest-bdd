@@ -36,7 +36,6 @@ def scenario(feature_name, scenario_name):
 
         # Evaluate given steps (can have side effects)
         for given in scenario.given:
-            #fixture = library.given[given]
             request.getfuncargvalue(given)
 
         # Execute other steps

@@ -11,3 +11,8 @@ def test_parent(parent, overridable):
     """
     assert parent == 'parent'
     assert overridable == 'parent'
+
+
+def test_global_when_step(request):
+    """Test when step defined in the parent conftest."""
+    request.getfuncargvalue('I use a when step from the parent conftest')

@@ -1,6 +1,6 @@
 """Configuration for pytest runner."""
 
-from pytest_bdd import given
+from pytest_bdd import given, when
 
 pytest_plugins = 'pytester'
 
@@ -8,3 +8,8 @@ pytest_plugins = 'pytester'
 @given('I have a root fixture')
 def root():
     return 'root'
+
+
+@when('I use a when step from the parent conftest')
+def global_when():
+    pass
