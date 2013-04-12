@@ -14,7 +14,6 @@ test_publish_article = scenario(
 import inspect
 from os import path as op
 
-from pytest_bdd.library import Library
 from pytest_bdd.feature import Feature
 from pytest_bdd.types import THEN
 
@@ -28,7 +27,7 @@ def scenario(feature_name, scenario_name):
 
     def _scenario(request):
         feature_path = op.abspath(op.join(op.dirname(request.module.__file__), feature_name))
-        library = Library(request)
+        #library = Library(request)
         feature = Feature.get_feature(feature_path)
         try:
             scenario = feature.scenarios[scenario_name]
@@ -37,25 +36,26 @@ def scenario(feature_name, scenario_name):
 
         # Evaluate given steps (can have side effects)
         for given in scenario.given:
-            fixture = library.given[given]
-            request.getfuncargvalue(fixture)
+            #fixture = library.given[given]
+            request.getfuncargvalue(given)
 
         # Execute other steps
         for step in scenario.steps:
-            _execute_step(request, library.steps[step])
+            _execute_step(request, step)
 
     return _scenario
 
 
-def _execute_step(request, func):
+def _execute_step(request, name):
     """Execute the step.
 
     :param request: pytest request object.
-    :param func: Step Python function.
+    :param name: Step name.
 
     :note: Steps can take pytest fixture parameters. They will be evaluated
     from the request and passed to the step function.
     """
+    func = request.getfuncargvalue(name)
     kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(func).args)
     result = func(**kwargs)
     if func.__step_type__ == THEN:
