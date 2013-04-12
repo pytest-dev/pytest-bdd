@@ -119,7 +119,7 @@ class Feature(object):
                 if mode == SCENARIO:
                     self.scenarios[line] = scenario = Scenario(line)
                 else:
-                    scenario.add_step(mode, line)
+                    scenario.add_step(line)
 
     @classmethod
     def get_feature(cls, filename):
@@ -135,12 +135,8 @@ class Scenario(object):
 
     def __init__(self, name):
         self.name = name
-        self.given = []
         self.steps = []
 
-    def add_step(self, step_type, step):
+    def add_step(self, step):
         """Add step."""
-        if step_type == GIVEN:
-            self.given.append(step)
-        else:
-            self.steps.append(step)
+        self.steps.append(step)
