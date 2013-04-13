@@ -138,8 +138,8 @@ def _step_decorator(step_type, step_name):
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
 
-        # if it's a THEN step, we should defer the evaluation to separate resolving params and action
-        if step_type == THEN:
+        # When and then steps are functions
+        if step_type != GIVEN:
             func = lambda request: func
         func = _decorate_step(func, step_type, step_name)
 
