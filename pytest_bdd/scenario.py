@@ -15,7 +15,6 @@ import inspect
 from os import path as op
 
 from pytest_bdd.feature import Feature
-from pytest_bdd.types import THEN
 
 
 class ScenarioNotFound(Exception):
@@ -26,19 +25,17 @@ def scenario(feature_name, scenario_name):
     """Scenario."""
 
     def _scenario(request):
+        # get feature
         feature_path = op.abspath(op.join(op.dirname(request.module.__file__), feature_name))
-        #library = Library(request)
         feature = Feature.get_feature(feature_path)
+
+        # get scenario
         try:
             scenario = feature.scenarios[scenario_name]
         except KeyError:
             raise ScenarioNotFound('Scenario "{0}" in feature "{1}" is not found'.format(scenario_name, feature_name))
 
-        # Evaluate given steps (can have side effects)
-        for given in scenario.given:
-            request.getfuncargvalue(given)
-
-        # Execute other steps
+        # execute scenario's steps
         for step in scenario.steps:
             _execute_step(request, step)
 
@@ -54,8 +51,10 @@ def _execute_step(request, name):
     :note: Steps can take pytest fixture parameters. They will be evaluated
     from the request and passed to the step function.
     """
-    func = request.getfuncargvalue(name)
-    kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(func).args)
-    result = func(**kwargs)
-    if func.__step_type__ == THEN:
-        assert result or result is None
+    fixture = request.getfuncargvalue(name)
+
+    # if fixture is a callable and has a __step_type__ then it's a step fixture
+    if callable(fixture) and hasattr(fixture, '__step_type__'):
+        kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(fixture).args)
+        # calling an action
+        fixture(**kwargs)
