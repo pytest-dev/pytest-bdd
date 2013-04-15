@@ -14,7 +14,7 @@ test_publish_article = scenario(
 import inspect
 from os import path as op
 
-from pytest_bdd.types import GIVEN, THEN
+from pytest_bdd.types import THEN
 from pytest_bdd.feature import Feature
 
 

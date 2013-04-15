@@ -100,8 +100,12 @@ def _decorate_step(func, step_type, step_name):
 
     :raises: StepError when step types mismatch.
     """
+    func_ = func
     old_type = getattr(func, '__step_type__', None)
     if old_type is None:
+        # When and then steps are functions
+        if step_type != GIVEN:
+            func = lambda request: func_
         func = pytest.fixture(func)
 
     if old_type and old_type != step_type:
@@ -115,6 +119,10 @@ def _decorate_step(func, step_type, step_name):
         raise StepError('Step already has this name')
 
     func.__step_names__.append(step_name)
+
+    # Make sure the original function is decorated
+    func_.__step_type__ = func.__step_type__
+    func_.__step_names__ = func.__step_names__
     return func
 
 
@@ -137,10 +145,6 @@ def _step_decorator(step_type, step_name):
 
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
-
-        # When and then steps are functions
-        if step_type != GIVEN:
-            func = lambda request: func
         func = _decorate_step(func, step_type, step_name)
 
         setattr(module, step_name, func)

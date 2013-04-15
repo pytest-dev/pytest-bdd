@@ -1,9 +1,11 @@
 """Test step alias when decorated multiple times."""
-
+import pytest
 from pytest_bdd import scenario, given, when, then
 
 
-test_steps = scenario('alias.feature', 'Multiple decorated aliases should work')
+test_steps = pytest.mark.xfail(
+    scenario('alias.feature', 'Multiple decorated aliases should work')
+)
 
 
 @given('Given I have an empty list')
