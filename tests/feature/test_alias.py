@@ -1,11 +1,9 @@
 """Test step alias when decorated multiple times."""
-import pytest
+
 from pytest_bdd import scenario, given, when, then
 
 
-test_steps = pytest.mark.xfail(
-    scenario('alias.feature', 'Multiple decorated aliases should work')
-)
+test_steps = scenario('alias.feature', 'Given step alias is an independent copy')
 
 
 @given('Given I have an empty list')
@@ -25,7 +23,7 @@ def crash(results):
     results.append(2)
 
 
-@then('my list should be [1, 2, 2]')
+@then('my list should be [1, 1, 2, 2]')
 def check_results(results):
-    """Fixture is evaluated only once, so the list will be [1, 2, 2]"""
-    assert results == [1, 2, 2]
+    """Fixture alias is a copy, so the list will be [1, 1, 2, 2]"""
+    assert results == [1, 1, 2, 2]

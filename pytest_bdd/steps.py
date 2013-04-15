@@ -57,8 +57,7 @@ def given(name, fixture=None):
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
         func = getattr(module, fixture, lambda request: request.getfuncargvalue(fixture))
-        func = _decorate_step(func, GIVEN, name)
-        setattr(module, name, func)
+        setattr(module, name, pytest.fixture(lambda: func))
         return _not_a_fixture_decorator
 
     return _step_decorator(GIVEN, name)
@@ -91,41 +90,6 @@ def _not_a_fixture_decorator(func):
     raise StepError('Cannot be used as a decorator when the fixture is specified')
 
 
-def _decorate_step(func, step_type, step_name):
-    """Decorate the step function.
-
-    :param func: Step function.
-    :param step_type: Step type (GIVEN, WHEN or THEN).
-    :param step_name: Step name as in the feature file.
-
-    :raises: StepError when step types mismatch.
-    """
-    func_ = func
-    old_type = getattr(func, '__step_type__', None)
-    if old_type is None:
-        # When and then steps are functions
-        if step_type != GIVEN:
-            func = lambda request: func_
-        func = pytest.fixture(func)
-
-    if old_type and old_type != step_type:
-        raise StepError('Step type mismatched')
-
-    func.__step_type__ = step_type
-    if not hasattr(func, '__step_names__'):
-        func.__step_names__ = []
-
-    if step_name in func.__step_names__:
-        raise StepError('Step already has this name')
-
-    func.__step_names__.append(step_name)
-
-    # Make sure the original function is decorated
-    func_.__step_type__ = func.__step_type__
-    func_.__step_names__ = func.__step_names__
-    return func
-
-
 def _step_decorator(step_type, step_name):
     """Step decorator for the type and the name.
     :param step_type: Step type (GIVEN, WHEN or THEN).
@@ -140,14 +104,14 @@ def _step_decorator(step_type, step_name):
     step_name = remove_prefix(step_name)
 
     def decorator(func):
-        if step_name in getattr(func, '__step_names__', []):
-            raise StepError('Step already has this name')
-
+        func_ = func
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
-        func = _decorate_step(func, step_type, step_name)
+        if step_type == GIVEN:
+            func = pytest.fixture(func)
 
-        setattr(module, step_name, func)
+        func_.__name__ = step_name
+        setattr(module, step_name, pytest.fixture(lambda: func_))
         return func
 
     return decorator

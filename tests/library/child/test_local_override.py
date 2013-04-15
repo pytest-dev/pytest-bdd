@@ -20,8 +20,8 @@ def test_override(request, overridable):
     """Test locally overriden fixture."""
 
     # Test the fixture is also collected by the text name
-    assert request.getfuncargvalue('I have the overriden fixture') == 'child'
-    assert request.getfuncargvalue('I have locally overriden fixture') == 'local'
+    assert request.getfuncargvalue('I have the overriden fixture')() == 'child'
+    assert request.getfuncargvalue('I have locally overriden fixture')() == 'local'
     assert overridable == 'local'
 
 

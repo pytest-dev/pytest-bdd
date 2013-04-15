@@ -71,6 +71,7 @@ decorate it multiple times:
 	def article(author):
 		return create_test_article(author=author)
 
+Note that the given step aliases are independent and will be executed when mentioned.
 
 For example if you assoicate your resource to some owner or not. Admin user can't be an
 author of the article, but article should have some default author.

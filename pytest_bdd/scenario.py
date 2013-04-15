@@ -14,7 +14,6 @@ test_publish_article = scenario(
 import inspect
 from os import path as op
 
-from pytest_bdd.types import THEN
 from pytest_bdd.feature import Feature
 
 
@@ -38,15 +37,8 @@ def scenario(feature_name, scenario_name):
 
         # Execute scenario's steps
         for step in scenario.steps:
-            # Evaluate the fixture, also applies to given
             func = request.getfuncargvalue(step)
-            if getattr(func, '__step_type__', None) is None:
-                continue
-
-            # Execute when and then steps
             kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(func).args)
-            result = func(**kwargs)
-            if func.__step_type__ == THEN:
-                assert result is None or result
+            func(**kwargs)
 
     return _scenario
