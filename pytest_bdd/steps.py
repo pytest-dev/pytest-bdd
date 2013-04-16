@@ -96,7 +96,6 @@ def _step_decorator(step_type, step_name):
     :param step_name: Step name as in the feature file.
 
     :return: Decorator function for the step.
-    :raises: StepError when step types mismatch.
 
     :note: If the step type is GIVEN it will automatically apply the pytest
     fixture decorator to the step function.
