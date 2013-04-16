@@ -3,7 +3,7 @@
 from pytest_bdd import scenario, given, when, then
 
 
-test_steps = scenario('alias.feature', 'Given step alias is an independent copy')
+test_steps = scenario('alias.feature', 'Multiple given alias is not evaluated multiple times')
 
 
 @given('Given I have an empty list')
@@ -23,7 +23,7 @@ def crash(results):
     results.append(2)
 
 
-@then('my list should be [1, 1, 2, 2]')
+@then('my list should be [1, 2, 2]')
 def check_results(results):
-    """Fixture alias is a copy, so the list will be [1, 1, 2, 2]"""
-    assert results == [1, 1, 2, 2]
+    """Fixtures are not evaluated multiple times, so the list will be [1, 2, 2]"""
+    assert results == [1, 2, 2]

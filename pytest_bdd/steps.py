@@ -109,6 +109,7 @@ def _step_decorator(step_type, step_name):
         module = inspect.getmodule(frame[0])
         if step_type == GIVEN:
             func = pytest.fixture(func)
+            func_ = lambda request: request.getfuncargvalue(func.func_name)
 
         func_.__name__ = step_name
         setattr(module, step_name, pytest.fixture(lambda: func_))
