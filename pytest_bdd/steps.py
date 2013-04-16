@@ -104,15 +104,15 @@ def _step_decorator(step_type, step_name):
     step_name = remove_prefix(step_name)
 
     def decorator(func):
-        func_ = func
+        step_func = func
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
         if step_type == GIVEN:
             func = pytest.fixture(func)
-            func_ = lambda request: request.getfuncargvalue(func.func_name)
+            step_func = lambda request: request.getfuncargvalue(func.func_name)
 
-        func_.__name__ = step_name
-        setattr(module, step_name, pytest.fixture(lambda: func_))
+        step_func.__name__ = step_name
+        setattr(module, step_name, pytest.fixture(lambda: step_func))
         return func
 
     return decorator
