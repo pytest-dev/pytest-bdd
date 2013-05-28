@@ -1,4 +1,4 @@
-"""Test wrong feature syntax."""
+"""Test feature base dir."""
 import os.path
 
 import pytest
@@ -14,12 +14,12 @@ def scenario_name(request):
 
 
 @pytest.fixture
-def pytestbdd_feature_path():
+def pytestbdd_feature_base_dir():
     return '/does/not/exist'
 
 
 def test_feature_path(request, scenario_name):
-    """Test feature path."""
+    """Test feature base dir."""
     sc = scenario('steps.feature', scenario_name)
     with pytest.raises(IOError) as exc:
         sc(request)

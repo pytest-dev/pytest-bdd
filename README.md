@@ -136,7 +136,7 @@ Feature file paths
 ==================
 
 But default, pytest-bdd will use current module's path as base path for finding feature files, but this behaviour can
-be changed by having fixture named 'pytest_bdd_feature_path' which should return the new base path.
+be changed by having fixture named 'pytestbdd_feature_base_dir' which should return the new base path.
 
 test_publish_article.py:
 
@@ -145,7 +145,7 @@ test_publish_article.py:
 
 
     @pytest.fixture
-    def pytest_bdd_feature_path():
+    def pytestbdd_feature_base_dir():
         return '/home/user/projects/foo.bar/features'
 
     test_publish = scenario('publish_article.feature', 'Publishing the article')
