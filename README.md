@@ -25,9 +25,9 @@ publish_article.feature:
 
 test_publish_article.py:
 
-	from pytest_bdd import scenario, given, when, then
+	from pytest_bdd import scenarios, given, when, then
 
-	test_publish = scenario('publish_article.feature', 'Publishing the article')
+	scenarios('publish_article.feature', 'Publishing the article')
 
 
 	@given('I have an article')

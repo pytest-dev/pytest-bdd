@@ -19,7 +19,6 @@ Syntax example:
 :note: There're no multiline steps, the description of the step must fit in
 one line.
 """
-
 from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN
 
 
