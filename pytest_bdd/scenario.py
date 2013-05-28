@@ -25,12 +25,7 @@ def scenario(feature_name, scenario_name):
 
     def _scenario(request):
         # Get the feature
-        try:
-            base_path = request.getfuncargvalue('pytest_bdd_feature_path')
-        except LookupError:
-            # TODO: add concrete exception type, for now it's not clear how to import FixtureLookupErrorRepr from pytest
-            base_path = op.dirname(request.module.__file__)
-
+        base_path = request.getfuncargvalue('pytestbdd_feature_path')
         feature_path = op.abspath(op.join(base_path, feature_name))
         feature = Feature.get_feature(feature_path)
 

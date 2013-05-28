@@ -29,6 +29,12 @@ setup(
     install_requires=[
         'pytest',
     ],
+    # the following makes a plugin available to py.test
+    entry_points = {
+        'pytest11': [
+            'pytest-bdd = pytest_bdd.plugin',
+        ]
+    },
     tests_require=['mock'],
     packages=['pytest_bdd'],
 )

@@ -14,7 +14,7 @@ def scenario_name(request):
 
 
 @pytest.fixture
-def pytest_bdd_feature_path():
+def pytestbdd_feature_path():
     return '/does/not/exist'
 
 
