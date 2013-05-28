@@ -24,4 +24,4 @@ def test_feature_path(request, scenario_name):
     with pytest.raises(IOError) as exc:
         sc(request)
 
-    assert exc.value.filename == os.path.join('/does/not/exist/', 'steps.feature')
+    assert os.path.join('/does/not/exist/', 'steps.feature') in str(exc.value)
