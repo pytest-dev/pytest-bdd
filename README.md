@@ -3,6 +3,7 @@ BDD library for the py.test runner
 
 [![Build Status](https://api.travis-ci.org/olegpidsadnyi/pytest-bdd.png)](https://travis-ci.org/olegpidsadnyi/pytest-bdd)
 
+
 Install pytest-bdd
 =================
 
@@ -85,6 +86,7 @@ author of the article, but article should have some default author.
 		Given I'm the admin
 		And there is an article
 
+
 Reuse fixtures
 ================
 
@@ -128,6 +130,26 @@ test_common.py:
 
 There are no definitions of the steps in the test file. They were collected from the parent
 conftests.
+
+
+Feature file paths
+==================
+
+But default, pytest-bdd will use current module's path as base path for finding feature files, but this behaviour can
+be changed by having fixture named 'pytestbdd_feature_base_dir' which should return the new base path.
+
+test_publish_article.py:
+
+    import pytest
+    from pytest_bdd import scenario
+
+
+    @pytest.fixture
+    def pytestbdd_feature_base_dir():
+        return '/home/user/projects/foo.bar/features'
+
+    test_publish = scenario('publish_article.feature', 'Publishing the article')
+
 
 Subplugins
 ==========

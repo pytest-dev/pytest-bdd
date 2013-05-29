@@ -107,7 +107,9 @@ def _step_decorator(step_type, step_name):
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
         if step_type == GIVEN:
-            func = pytest.fixture(func)
+            if not hasattr(func, '_pytestfixturefunction'):
+                # avoid overfixturing of a fixture
+                func = pytest.fixture(func)
             step_func = lambda request: request.getfuncargvalue(func.func_name)
 
         step_func.__name__ = step_name
