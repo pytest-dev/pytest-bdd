@@ -31,12 +31,13 @@ Reusing existing fixtures for a different step name:
 given('I have a beautiful article', fixture='article')
 
 """
-
 import inspect
+import sys
+
 import pytest
 
-from pytest_bdd.types import GIVEN, WHEN, THEN
 from pytest_bdd.feature import remove_prefix
+from pytest_bdd.types import GIVEN, WHEN, THEN
 
 
 class StepError(Exception):
@@ -54,8 +55,7 @@ def given(name, fixture=None):
     """
     name = remove_prefix(name)
     if fixture is not None:
-        frame = inspect.stack()[1]
-        module = inspect.getmodule(frame[0])
+        module = get_caller_module()
         func = getattr(module, fixture, lambda request: request.getfuncargvalue(fixture))
         setattr(module, name, pytest.fixture(lambda: func))
         return _not_a_fixture_decorator
@@ -104,8 +104,6 @@ def _step_decorator(step_type, step_name):
 
     def decorator(func):
         step_func = func
-        frame = inspect.stack()[1]
-        module = inspect.getmodule(frame[0])
         if step_type == GIVEN:
             if not hasattr(func, '_pytestfixturefunction'):
                 # avoid overfixturing of a fixture
@@ -113,7 +111,13 @@ def _step_decorator(step_type, step_name):
             step_func = lambda request: request.getfuncargvalue(func.func_name)
 
         step_func.__name__ = step_name
-        setattr(module, step_name, pytest.fixture(lambda: step_func))
+        setattr(get_caller_module(), step_name, pytest.fixture(lambda: step_func))
         return func
 
     return decorator
+
+
+def get_caller_module(depth=2):
+    """Return the module of the caller."""
+    frame = sys._getframe(depth)
+    return inspect.getmodule(frame)
