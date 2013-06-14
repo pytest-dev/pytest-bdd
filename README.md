@@ -165,6 +165,6 @@ List of known subplugins:
 License
 =======
 
-This software is licensed under the `MIT license <http://en.wikipedia.org/wiki/MIT_License>`_.
+This software is licensed under the [MIT license])http://en.wikipedia.org/wiki/MIT_License>).
 
 © 2013 Oleg Pidsadnyi
