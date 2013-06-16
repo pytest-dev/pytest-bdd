@@ -12,7 +12,8 @@ Example
 ```````
 
 publish_article.feature:
-.. code:: feature
+
+.. code:: gherkin
 
     Scenario: Publishing the article
         Given I'm an author user
@@ -24,6 +25,7 @@ publish_article.feature:
 
 
 test_publish_article.py:
+
 .. code:: python
 
     from pytest_bdd import scenario, given, when, then
