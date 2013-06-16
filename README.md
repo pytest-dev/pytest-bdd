@@ -1,5 +1,5 @@
 BDD library for the py.test runner
-===================================
+==================================
 
 [![Build Status](https://api.travis-ci.org/olegpidsadnyi/pytest-bdd.png)](https://travis-ci.org/olegpidsadnyi/pytest-bdd)
 
