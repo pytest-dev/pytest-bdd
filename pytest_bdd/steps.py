@@ -56,8 +56,8 @@ def given(name, fixture=None):
     name = remove_prefix(name)
     if fixture is not None:
         module = get_caller_module()
-        func = getattr(module, fixture, lambda request: request.getfuncargvalue(fixture))
-        setattr(module, name, pytest.fixture(lambda: func))
+        func = lambda: lambda request: request.getfuncargvalue(fixture)
+        setattr(module, name, pytest.fixture(func))
         return _not_a_fixture_decorator
 
     return _step_decorator(GIVEN, name)
