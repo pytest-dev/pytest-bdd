@@ -101,7 +101,7 @@ setup(
     license='MIT license',
     author_email='oleg.podsadny@gmail.com',
     url='https://github.com/olegpidsadnyi/pytest-bdd',
-    version='0.4.4',
+    version='0.4.5',
     classifiers=[
         'Development Status :: 6 - Mature',
         'Intended Audience :: Developers',

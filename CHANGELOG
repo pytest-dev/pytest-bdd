@@ -1,4 +1,10 @@
+Changes between 0.4.3 and 0.4.5
+-------------------------------
+
+- Fixed a bug with the reuse of the fixture by given steps being evaluated multiple times.
+
+
 Changes between 0.4.1 and 0.4.3
 -------------------------------
 
-- Update the license file and PYPI related documentation
+- Update the license file and PYPI related documentation.
