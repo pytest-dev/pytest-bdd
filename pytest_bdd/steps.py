@@ -41,6 +41,8 @@ import pytest
 from pytest_bdd.feature import remove_prefix
 from pytest_bdd.types import GIVEN, WHEN, THEN
 
+PY3 = sys.version_info[0] >= 3
+
 
 class StepError(Exception):
     pass
@@ -110,7 +112,7 @@ def _step_decorator(step_type, step_name):
             if not hasattr(func, '_pytestfixturefunction'):
                 # avoid overfixturing of a fixture
                 func = pytest.fixture(func)
-            step_func = lambda request: request.getfuncargvalue(func.func_name)
+            step_func = lambda request: request.getfuncargvalue(func.__name__)
 
         step_func.__name__ = step_name
         contribute_to_module(
@@ -130,17 +132,32 @@ def contribute_to_module(module, name, func):
     :param name: Attribute name.
     :param func: Function object.
     """
+
+    def get_code(func):
+        return func.__code__ if PY3 else func.func_code
+
+    def set_code(func, code):
+        if PY3:
+            func.__code__ = code
+        else:
+            func.func_code = code
+
     argnames = [
         'co_argcount', 'co_nlocals', 'co_stacksize', 'co_flags', 'co_code', 'co_consts', 'co_names',
         'co_varnames', 'co_filename', 'co_name', 'co_firstlineno', 'co_lnotab', 'co_freevars', 'co_cellvars',
     ]
+    if PY3:
+        argnames.insert(1, 'co_kwonlyargcount')
+
     args = []
+    code = get_code(func)
     for arg in argnames:
         if arg == 'co_filename':
             args.append(module.__file__)
         else:
-            args.append(getattr(func.func_code, arg))
-    func.func_code = CodeType(*args)
+            args.append(getattr(code, arg))
+
+    set_code(func, CodeType(*args))
     setattr(module, name, func)
 
 

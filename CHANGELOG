@@ -1,3 +1,8 @@
+Changes between 0.4.6 and 0.4.7
+-------------------------------
+
+- Fixed Python 3.3 support
+
 Changes between 0.4.5 and 0.4.6
 -------------------------------
 
