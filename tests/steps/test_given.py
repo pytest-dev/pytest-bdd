@@ -8,17 +8,31 @@ from pytest_bdd.steps import StepError
 def foo():
     return 'foo'
 
+
+@given('I have bar')
+def bar():
+    return 'bar'
+
+
 given('I have alias for foo', fixture='foo')
 given('I have an alias to the root fixture', fixture='root')
+given('I have a given with list of foo and bar fixtures', fixture=['foo', 'bar'])
 
 test_given_with_fixture = scenario('given.feature', 'Test reusing local fixture')
 
 test_root_alias = scenario('given.feature', 'Test reusing root fixture')
 
+test_list_of_fixtures = scenario('given.feature', 'Test of using list of fixtures with given')
+
 
 @then('foo should be "foo"')
 def foo_is_foo(foo):
     assert foo == 'foo'
+
+
+@then('bar should be "bar"')
+def bar_is_bar(bar):
+    assert bar == 'bar'
 
 
 @then('root should be "root"')
