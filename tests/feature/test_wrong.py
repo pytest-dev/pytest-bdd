@@ -22,3 +22,17 @@ def test_wrong(request, scenario_name):
     sc = scenario('wrong.feature', scenario_name)
     with pytest.raises(FeatureError):
         sc(request)
+
+
+def test_verbose_output(request):
+    """Test verbose output of failed feature scenario"""
+    sc = scenario('wrong.feature', 'When after then')
+    try:
+        sc(request)
+    except FeatureError as excinfo:
+        msg, number_of_line, line, prev_mode, mode = excinfo.args
+
+        assert number_of_line == 4
+        assert line == 'When I do it again'
+        assert prev_mode == 'then'
+        assert mode == 'when'
