@@ -1,3 +1,11 @@
+Changes between 0.4.7 and 0.5.0
+-------------------------------
+
+- Added parametrization to scenarios
+- Coveralls.io integration
+- Test coverage improvement/fixes
+
+
 Changes between 0.4.6 and 0.4.7
 -------------------------------
 

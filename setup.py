@@ -73,6 +73,7 @@ Links
 * `documentation <https://pytest-bdd.readthedocs.org/en/latest/>`_
 
 """
+import os
 import sys
 
 from setuptools import setup
@@ -83,15 +84,16 @@ class PyTest(TestCommand):
 
     def finalize_options(self):
         TestCommand.finalize_options(self)
-        self.test_args = []
+        self.test_args = ['tests', '-pep8', '--cov', 'pytest_bdd', '--cov-report', 'term-missing']
         self.test_suite = True
 
     def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
+        # The import is here, cause outside the eggs aren't loaded
         import pytest
         errno = pytest.main(self.test_args)
         sys.exit(errno)
 
+tests_require = open(os.path.join(os.path.dirname(__file__), 'requirements-testing.txt')).read().split()
 
 setup(
     name='pytest-bdd',
@@ -101,7 +103,7 @@ setup(
     license='MIT license',
     author_email='oleg.podsadny@gmail.com',
     url='https://github.com/olegpidsadnyi/pytest-bdd',
-    version='0.4.7',
+    version='0.5.0',
     classifiers=[
         'Development Status :: 6 - Mature',
         'Intended Audience :: Developers',
@@ -125,6 +127,6 @@ setup(
             'pytest-bdd = pytest_bdd.plugin',
         ]
     },
-    tests_require=['mock'],
+    tests_require=tests_require,
     packages=['pytest_bdd'],
 )

@@ -10,17 +10,18 @@ test_publish_article = scenario(
     scenario_name='Publishing the article',
 )
 """
-import inspect
-from os import path as op
+import inspect  # pragma: no cover
+from os import path as op  # pragma: no cover
 
-from pytest_bdd.feature import Feature
+from pytest_bdd.feature import Feature  # pragma: no cover
+from pytest_bdd.steps import recreate_function  # pragma: no cover
 
 
-class ScenarioNotFound(Exception):
+class ScenarioNotFound(Exception):  # pragma: no cover
     """Scenario Not Found"""
 
 
-def scenario(feature_name, scenario_name):
+def scenario(feature_name, scenario_name, params=()):
     """Scenario."""
 
     def _scenario(request):
@@ -40,5 +41,9 @@ def scenario(feature_name, scenario_name):
             func = request.getfuncargvalue(step)
             kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(func).args)
             func(**kwargs)
+
+    if params:
+        # add test parameters to function
+        _scenario = recreate_function(_scenario, add_args=params)
 
     return _scenario

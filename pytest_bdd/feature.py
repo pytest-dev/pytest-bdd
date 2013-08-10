@@ -19,8 +19,9 @@ Syntax example:
 :note: There're no multiline steps, the description of the step must fit in
 one line.
 """
+import re
 
-from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN
+from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN  # pragma: no cover
 
 
 class FeatureError(Exception):
@@ -42,6 +43,8 @@ STEP_PREFIXES = {
 
 COMMENT_SYMBOLS = '#'
 
+STEP_PARAM_RE = re.compile('\<(.+)\>')
+
 
 def get_step_type(line):
     """Detect step type by the beginning of the line.
@@ -52,6 +55,14 @@ def get_step_type(line):
     for prefix in STEP_PREFIXES:
         if line.startswith(prefix):
             return STEP_PREFIXES[prefix]
+
+
+def get_step_params(name):
+    """Return step parameters."""
+    params = STEP_PARAM_RE.search(name)
+    if params:
+        return params.groups()
+    return ()
 
 
 def strip(line):
@@ -135,8 +146,10 @@ class Scenario(object):
 
     def __init__(self, name):
         self.name = name
+        self.params = set()
         self.steps = []
 
     def add_step(self, step):
         """Add step."""
+        self.params.update(get_step_params(step))
         self.steps.append(step)

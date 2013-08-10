@@ -58,6 +58,7 @@ def given(name, fixture=None):
     :note: Can't be used as a decorator when the fixture is specified.
     """
     name = remove_prefix(name)
+
     if fixture is not None:
         module = get_caller_module()
         func = lambda: lambda request: request.getfuncargvalue(fixture)
@@ -94,10 +95,11 @@ def _not_a_fixture_decorator(func):
     raise StepError('Cannot be used as a decorator when the fixture is specified')
 
 
-def _step_decorator(step_type, step_name):
+def _step_decorator(step_type, step_name, params=None):
     """Step decorator for the type and the name.
     :param step_type: Step type (GIVEN, WHEN or THEN).
     :param step_name: Step name as in the feature file.
+    :param params: Step params.
 
     :return: Decorator function for the step.
 
@@ -120,18 +122,17 @@ def _step_decorator(step_type, step_name):
             step_name,
             pytest.fixture(lambda: step_func),
         )
+
         return func
 
     return decorator
 
 
-def contribute_to_module(module, name, func):
-    """Contribute a function to a module.
-
-    :param module: Module to contribute to.
-    :param name: Attribute name.
+def recreate_function(func, module=None, add_args=()):
+    """Recreate a function, replacing some info.
     :param func: Function object.
-    """
+    :param module: Module to contribute to.
+    :param add_args: Additional arguments to add to function."""
 
     def get_code(func):
         return func.__code__ if PY3 else func.func_code
@@ -152,12 +153,28 @@ def contribute_to_module(module, name, func):
     args = []
     code = get_code(func)
     for arg in argnames:
-        if arg == 'co_filename':
+        if module is not None and arg == 'co_filename':
             args.append(module.__file__)
+        elif arg == 'co_argcount':
+            args.append(getattr(code, arg) + len(add_args))
+        elif arg == 'co_varnames':
+            args.append(tuple(add_args) + getattr(code, arg))
         else:
             args.append(getattr(code, arg))
 
     set_code(func, CodeType(*args))
+    return func
+
+
+def contribute_to_module(module, name, func):
+    """Contribute a function to a module.
+
+    :param module: Module to contribute to.
+    :param name: Attribute name.
+    :param func: Function object.
+    """
+    func = recreate_function(func, module=module)
+
     setattr(module, name, func)
 
 

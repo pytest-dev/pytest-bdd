@@ -87,6 +87,52 @@ author of the article, but article should have some default author.
 		And there is an article
 
 
+Step parameters
+===============
+
+Sometimes it is hard to write good scenarios without duplicating most of contents of existing scenario.
+For example if you create some object with static param value, you might want to create another test with
+different param value. 
+By Gherkin specification it's possible to have parameters in steps: http://docs.behat.org/guides/1.gherkin.html
+Example:
+
+    Scenario: Parametrized given, when, thens
+        Given there are <start> cucumbers
+        When I eat <eat> cucumbers
+        Then I should have <left> cucumbers
+
+As you can see we don't use Scenario Outline, but use just Scenario, just because it's simple to implement for pytest.
+
+
+The code will look like:
+
+    test_reuse = scenario(
+        'parametrized.feature',
+        'Parametrized given, when, thens',
+        # here we tell scenario about the parameters, it's not possible to get them automatically, as 
+        # feature files are parsed on test runtime, not import time
+        params=['start', 'eat', 'left']
+    )
+
+    # here we use pytest power to parametrize test
+    test_reuse = pytest.mark.parametrize(['start', 'eat', 'left'], [(12, 5, 7)])(test_reuse)
+
+
+    @given('there are <start> cucumbers')
+    def start_cucumbers(start):
+        return dict(start=start)
+
+
+    @when('I eat <eat> cucumbers')
+    def eat_cucumbers(start_cucumbers, start, eat):
+        assert start_cucumbers['start'] == start
+
+
+    @then('I should have <left> cucumbers')
+    def should_have_left_cucumbers(start, eat, left):
+        assert start - eat == left
+
+
 Reuse fixtures
 ================
 

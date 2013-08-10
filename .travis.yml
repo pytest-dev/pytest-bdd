@@ -4,9 +4,11 @@ python:
   - "2.7"
   - "3.3"
 # command to install dependencies
-install: "python setup.py develop"
+install: pip install -e . python-coveralls
 # # command to run tests
 script: python setup.py test
+after_success:
+  - coveralls
 notifications:
     email:
         - bubenkoff@gmail.com
