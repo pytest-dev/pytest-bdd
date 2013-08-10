@@ -12,3 +12,4 @@ after_success:
 notifications:
     email:
         - bubenkoff@gmail.com
+        - oleg.podsadny@gmail.com
