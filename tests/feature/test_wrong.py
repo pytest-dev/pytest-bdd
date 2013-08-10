@@ -30,9 +30,9 @@ def test_verbose_output(request):
     try:
         sc(request)
     except FeatureError as excinfo:
-        msg, number_of_line, line, prev_mode, mode = excinfo.args
+        msg, line_number, line, prev_mode, mode = excinfo.args
 
-        assert number_of_line == 4
+        assert line_number == 4
         assert line == 'When I do it again'
         assert prev_mode == 'then'
         assert mode == 'when'
