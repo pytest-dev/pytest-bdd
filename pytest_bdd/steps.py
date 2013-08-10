@@ -52,7 +52,7 @@ def given(name, fixture=None):
     """Given step decorator.
 
     :param name: Given step name.
-    :param fixture: Optional name of the fixture or list/tuple of names of fixtures to reuse.
+    :param fixture: Optional name of the fixture to reuse.
 
     :raises: StepError in case of wrong configuration.
     :note: Can't be used as a decorator when the fixture is specified.
@@ -60,17 +60,8 @@ def given(name, fixture=None):
     name = remove_prefix(name)
     if fixture is not None:
         module = get_caller_module()
-        fixtures = []
-
-        if isinstance(fixture, str):
-            fixtures.append(lambda: lambda request: request.getfuncargvalue(fixture))
-        elif isinstance(fixture, (list, tuple)):
-            for fx in fixture:
-                fixtures.append(lambda: lambda request: request.getfuncargvalue(fx))
-
-        for func in fixtures:
-            contribute_to_module(module, name, pytest.fixture(func))
-
+        func = lambda: lambda request: request.getfuncargvalue(fixture)
+        contribute_to_module(module, name, pytest.fixture(func))
         return _not_a_fixture_decorator
 
     return _step_decorator(GIVEN, name)
