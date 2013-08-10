@@ -2,6 +2,8 @@ BDD library for the py.test runner
 ==================================
 
 [![Build Status](https://api.travis-ci.org/olegpidsadnyi/pytest-bdd.png)](https://travis-ci.org/olegpidsadnyi/pytest-bdd)
+[![Pypi](https://pypip.in/v/pytest-bdd/badge.png)](https://crate.io/packages/pytest-bdd/)
+[![Coverrals](https://coveralls.io/repos/olegpidsadnyi/pytest-bdd/badge.png?branch=master)](https://coveralls.io/r/olegpidsadnyi/pytest-bdd)
 
 
 Install pytest-bdd
