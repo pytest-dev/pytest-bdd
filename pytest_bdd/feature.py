@@ -95,7 +95,7 @@ class Feature(object):
 
         with open(filename, 'r') as f:
             content = f.read()
-            for line in content.split('\n'):
+            for number_of_line, line in enumerate(content.split('\n')):
                 line = strip(line)
                 if not line:
                     continue
@@ -103,13 +103,16 @@ class Feature(object):
                 mode = get_step_type(line) or mode
 
                 if mode == GIVEN and prev_mode not in (GIVEN, SCENARIO):
-                    raise FeatureError('Given steps must be the first in withing the Scenario')
+                    raise FeatureError('Given steps must be the first in withing the Scenario',
+                                       number_of_line, line, prev_mode, mode)
 
                 if mode == WHEN and prev_mode not in (SCENARIO, GIVEN, WHEN):
-                    raise FeatureError('When steps must be the first or follow Given steps')
+                    raise FeatureError('When steps must be the first or follow Given steps',
+                                       number_of_line, line, prev_mode, mode)
 
                 if mode == THEN and prev_mode not in (GIVEN, WHEN, THEN):
-                    raise FeatureError('Then steps must follow Given or When steps')
+                    raise FeatureError('Then steps must follow Given or When steps',
+                                       number_of_line, line, prev_mode, mode)
 
                 prev_mode = mode
 
