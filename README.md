@@ -9,7 +9,7 @@ BDD library for the py.test runner
 Install pytest-bdd
 =================
 
-	pip install pytest-bdd
+    pip install pytest-bdd
 
 
 Example
@@ -28,36 +28,36 @@ publish_article.feature:
 
 test_publish_article.py:
 
-	from pytest_bdd import scenario, given, when, then
+    from pytest_bdd import scenario, given, when, then
 
-	test_publish = scenario('publish_article.feature', 'Publishing the article')
-
-
-	@given('I have an article')
-	def article(author):
-		return create_test_article(author=author)
+    test_publish = scenario('publish_article.feature', 'Publishing the article')
 
 
-	@when('I go to the article page')
-	def go_to_article(article, browser):
-		browser.visit(urljoin(browser.url, '/manage/articles/{0}/'.format(article.id)))
+    @given('I have an article')
+    def article(author):
+        return create_test_article(author=author)
 
 
-	@when('I press the publish button')
-	def publish_article(browser):
-		browser.find_by_css('button[name=publish]').first.click()
+    @when('I go to the article page')
+    def go_to_article(article, browser):
+        browser.visit(urljoin(browser.url, '/manage/articles/{0}/'.format(article.id)))
 
 
-	@then('I should not see the error message')
-	def no_error_message(browser):
-	    with pytest.raises(ElementDoesNotExist):
-	        browser.find_by_css('.message.error').first
+    @when('I press the publish button')
+    def publish_article(browser):
+        browser.find_by_css('button[name=publish]').first.click()
 
 
-	@then('And the article should be published')
-	def article_is_published(article):
-		article.refresh()  # Refresh the object in the SQLAlchemy session
-		assert article.is_published
+    @then('I should not see the error message')
+    def no_error_message(browser):
+        with pytest.raises(ElementDoesNotExist):
+            browser.find_by_css('.message.error').first
+
+
+    @then('And the article should be published')
+    def article_is_published(article):
+        article.refresh()  # Refresh the object in the SQLAlchemy session
+        assert article.is_published
 
 
 Step aliases
@@ -69,24 +69,24 @@ In order to use the same step function with multiple step names simply
 decorate it multiple times:
 
 
-	@given('I have an article')
-	@given('there\'s an article')
-	def article(author):
-		return create_test_article(author=author)
+    @given('I have an article')
+    @given('there\'s an article')
+    def article(author):
+        return create_test_article(author=author)
 
 Note that the given step aliases are independent and will be executed when mentioned.
 
 For example if you assoicate your resource to some owner or not. Admin user can't be an
 author of the article, but article should have some default author.
 
-	Scenario: I'm the author
-		Given I'm an author
-		And I have an article
+    Scenario: I'm the author
+        Given I'm an author
+        And I have an article
 
 
-	Scenario: I'm the admin
-		Given I'm the admin
-		And there is an article
+    Scenario: I'm the admin
+        Given I'm the admin
+        And there is an article
 
 
 Step parameters
@@ -108,16 +108,17 @@ As you can see we don't use Scenario Outline, but use just Scenario, just becaus
 
 The code will look like:
 
-    test_reuse = scenario(
+    # here we use pytest power to parametrize test
+    @pytest.mark.parametrize(
+        ['start', 'eat', 'left'],
+        [(12, 5, 7)])
+    @scenario(
         'parametrized.feature',
         'Parametrized given, when, thens',
-        # here we tell scenario about the parameters, it's not possible to get them automatically, as 
-        # feature files are parsed on test runtime, not import time
-        params=['start', 'eat', 'left']
     )
-
-    # here we use pytest power to parametrize test
-    test_reuse = pytest.mark.parametrize(['start', 'eat', 'left'], [(12, 5, 7)])(test_reuse)
+    # note that we should receive same arguments in function that we use for test parametrization
+    def test_parametrized(start, eat, left):
+        """We don't need to do anything here, everything will be managed by scenario decorator."""
 
 
     @given('there are <start> cucumbers')
@@ -135,13 +136,14 @@ The code will look like:
         assert start - eat == left
 
 
+
 Reuse fixtures
 ================
 
 Sometimes scenarios define new names for the fixture that can be inherited.
 Fixtures can be reused with other names using given():
 
-	given('I have beautiful article', fixture='article')
+    given('I have beautiful article', fixture='article')
 
 
 Reuse steps
@@ -152,28 +154,28 @@ expect them in the child test file.
 
 common_steps.feature:
 
-	Scenario: All steps are declared in the conftest
-	    Given I have a bar
-	    Then bar should have value "bar"
+    Scenario: All steps are declared in the conftest
+        Given I have a bar
+        Then bar should have value "bar"
 
 
 conftest.py:
 
-	from pytest_bdd import given, then
+    from pytest_bdd import given, then
 
 
-	@given('I have a bar')
-	def bar():
-	    return 'bar'
+    @given('I have a bar')
+    def bar():
+        return 'bar'
 
 
-	@then('bar should have value "bar"')
-	def bar_is_bar(bar):
-	    assert bar == 'bar'
+    @then('bar should have value "bar"')
+    def bar_is_bar(bar):
+        assert bar == 'bar'
 
 test_common.py:
 
-	test_conftest = scenario('common_steps.feature', 'All steps are declared in the conftest')
+    test_conftest = scenario('common_steps.feature', 'All steps are declared in the conftest')
 
 
 There are no definitions of the steps in the test file. They were collected from the parent

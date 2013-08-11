@@ -1,16 +1,52 @@
 import pytest
 
-from pytest_bdd.steps import when
+from pytest_bdd.steps import NotEnoughStepParams
 
-from pytest_bdd import given, then, scenario
+from pytest_bdd import given, when, then, scenario
 
-test_reuse = scenario(
+
+@pytest.mark.parametrize(
+    ['start', 'eat', 'left'],
+    [(12, 5, 7)])
+@scenario(
     'parametrized.feature',
     'Parametrized given, when, thens',
-    params=['start', 'eat', 'left']
 )
+def test_parametrized(request, start, eat, left):
+    """Test parametrized scenario."""
 
-test_reuse = pytest.mark.parametrize(['start', 'eat', 'left'], [(12, 5, 7)])(test_reuse)
+
+def test_parametrized_given():
+    """Test parametrized given."""
+    with pytest.raises(NotEnoughStepParams) as exc:
+        @given('there are <some> cucumbers')
+        def some_cucumbers():
+            return {}
+    assert exc.value.args == (
+        'Step "there are <some> cucumbers" doesn\'t have enough parameters declared.\n'
+        'Should declare params: set([\'some\']), but declared only: []',)
+
+
+def test_parametrized_when():
+    """Test parametrized when."""
+    with pytest.raises(NotEnoughStepParams) as exc:
+        @when('I eat <some> cucumbers')
+        def some_cucumbers():
+            return {}
+    assert exc.value.args == (
+        'Step "I eat <some> cucumbers" doesn\'t have enough parameters declared.\n'
+        'Should declare params: set([\'some\']), but declared only: []',)
+
+
+def test_parametrized_then():
+    """Test parametrized then."""
+    with pytest.raises(NotEnoughStepParams) as exc:
+        @when('I should have <some> cucumbers')
+        def some_cucumbers():
+            return {}
+    assert exc.value.args == (
+        'Step "I should have <some> cucumbers" doesn\'t have enough parameters declared.\n'
+        'Should declare params: set([\'some\']), but declared only: []',)
 
 
 @given('there are <start> cucumbers')

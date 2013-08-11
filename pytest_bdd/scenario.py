@@ -13,37 +13,56 @@ test_publish_article = scenario(
 import inspect  # pragma: no cover
 from os import path as op  # pragma: no cover
 
+from _pytest import python
+
 from pytest_bdd.feature import Feature  # pragma: no cover
-from pytest_bdd.steps import recreate_function  # pragma: no cover
+from pytest_bdd.steps import recreate_function
 
 
 class ScenarioNotFound(Exception):  # pragma: no cover
     """Scenario Not Found"""
 
 
-def scenario(feature_name, scenario_name, params=()):
-    """Scenario."""
+def scenario(feature_name, scenario_name):
+    """Scenario. May be called both as decorator and as just normal function"""
 
-    def _scenario(request):
-        # Get the feature
-        base_path = request.getfuncargvalue('pytestbdd_feature_base_dir')
-        feature_path = op.abspath(op.join(base_path, feature_name))
-        feature = Feature.get_feature(feature_path)
+    def decorator(request):
 
-        # Get the scenario
-        try:
-            scenario = feature.scenarios[scenario_name]
-        except KeyError:
-            raise ScenarioNotFound('Scenario "{0}" in feature "{1}" is not found'.format(scenario_name, feature_name))
+        def _scenario(request):
+            # Get the feature
+            base_path = request.getfuncargvalue('pytestbdd_feature_base_dir')
+            feature_path = op.abspath(op.join(base_path, feature_name))
+            feature = Feature.get_feature(feature_path)
 
-        # Execute scenario's steps
-        for step in scenario.steps:
-            func = request.getfuncargvalue(step)
-            kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(func).args)
-            func(**kwargs)
+            # Get the scenario
+            try:
+                scenario = feature.scenarios[scenario_name]
+            except KeyError:
+                raise ScenarioNotFound(
+                    'Scenario "{0}" in feature "{1}" is not found'.format(scenario_name, feature_name))
 
-    if params:
-        # add test parameters to function
-        _scenario = recreate_function(_scenario, add_args=params)
+            if scenario.params != _scenario.pytestbdd_params:
+                raise Exception(scenario.params, _scenario.pytestbdd_params)
 
-    return _scenario
+            # Execute scenario's steps
+            for step in scenario.steps:
+                step_func = request.getfuncargvalue(step)
+                kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
+                step_func(**kwargs)
+
+        _scenario.pytestbdd_params = set()
+
+        if isinstance(request, python.FixtureRequest):
+            # we called as a normal function
+            return _scenario(request)
+
+        # we called as a decorator, so modify the returned function to add parameters from a decorated function
+        func_args = inspect.getargspec(request).args
+        if 'request' in func_args:
+            func_args.remove('request')
+        _scenario = recreate_function(_scenario, add_args=func_args)
+        _scenario.pytestbdd_params = set(func_args)
+
+        return _scenario
+
+    return decorator

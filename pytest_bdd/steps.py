@@ -38,13 +38,17 @@ import sys
 
 import pytest
 
-from pytest_bdd.feature import remove_prefix
+from pytest_bdd.feature import remove_prefix, get_step_params
 from pytest_bdd.types import GIVEN, WHEN, THEN
 
 PY3 = sys.version_info[0] >= 3
 
 
 class StepError(Exception):
+    pass
+
+
+class NotEnoughStepParams(Exception):
     pass
 
 
@@ -95,11 +99,10 @@ def _not_a_fixture_decorator(func):
     raise StepError('Cannot be used as a decorator when the fixture is specified')
 
 
-def _step_decorator(step_type, step_name, params=None):
+def _step_decorator(step_type, step_name):
     """Step decorator for the type and the name.
     :param step_type: Step type (GIVEN, WHEN or THEN).
     :param step_name: Step name as in the feature file.
-    :param params: Step params.
 
     :return: Decorator function for the step.
 
@@ -108,8 +111,17 @@ def _step_decorator(step_type, step_name, params=None):
     """
     step_name = remove_prefix(step_name)
 
+    step_params = set(get_step_params(step_name))
+
     def decorator(func):
         step_func = func
+        if step_params:
+            step_func_args = inspect.getargspec(step_func).args
+            if step_params.intersection(step_func_args) != step_params:
+                raise NotEnoughStepParams(
+                    """Step "{0}" doesn't have enough parameters declared.
+Should declare params: {1}, but declared only: {2}""".format(step_name, step_params, step_func_args))
+
         if step_type == GIVEN:
             if not hasattr(func, '_pytestfixturefunction'):
                 # avoid overfixturing of a fixture
@@ -158,7 +170,8 @@ def recreate_function(func, module=None, add_args=()):
         elif arg == 'co_argcount':
             args.append(getattr(code, arg) + len(add_args))
         elif arg == 'co_varnames':
-            args.append(tuple(add_args) + getattr(code, arg))
+            co_varnames = getattr(code, arg)
+            args.append(co_varnames[:code.co_argcount] + tuple(add_args) + co_varnames[code.co_argcount:])
         else:
             args.append(getattr(code, arg))
 

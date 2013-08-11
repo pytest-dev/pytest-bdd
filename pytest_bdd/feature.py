@@ -43,7 +43,7 @@ STEP_PREFIXES = {
 
 COMMENT_SYMBOLS = '#'
 
-STEP_PARAM_RE = re.compile('\<(.+)\>')
+STEP_PARAM_RE = re.compile('\<(.+?)\>')
 
 
 def get_step_type(line):
