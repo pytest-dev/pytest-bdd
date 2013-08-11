@@ -31,24 +31,24 @@ Reusing existing fixtures for a different step name:
 given('I have a beautiful article', fixture='article')
 
 """
-from __future__ import absolute_import
-from types import CodeType
-import inspect
-import sys
+from __future__ import absolute_import  # pragma: no cover
+from types import CodeType  # pragma: no cover
+import inspect  # pragma: no cover  # pragma: no cover
+import sys  # pragma: no cover
 
-import pytest
+import pytest  # pragma: no cover
 
-from pytest_bdd.feature import remove_prefix, get_step_params
-from pytest_bdd.types import GIVEN, WHEN, THEN
+from pytest_bdd.feature import remove_prefix, get_step_params  # pragma: no cover
+from pytest_bdd.types import GIVEN, WHEN, THEN  # pragma: no cover
 
-PY3 = sys.version_info[0] >= 3
+PY3 = sys.version_info[0] >= 3  # pragma: no cover
 
 
-class StepError(Exception):
+class StepError(Exception):  # pragma: no cover
     pass
 
 
-class NotEnoughStepParams(Exception):
+class NotEnoughStepParams(Exception):  # pragma: no cover
     pass
 
 
@@ -120,7 +120,7 @@ def _step_decorator(step_type, step_name):
             if step_params.intersection(step_func_args) != step_params:
                 raise NotEnoughStepParams(
                     """Step "{0}" doesn't have enough parameters declared.
-Should declare params: {1}, but declared only: {2}""".format(step_name, step_params, step_func_args))
+Should declare params: {1}, but declared only: {2}""".format(step_name, list(step_params), list(step_func_args)))
 
         if step_type == GIVEN:
             if not hasattr(func, '_pytestfixturefunction'):
@@ -140,7 +140,7 @@ Should declare params: {1}, but declared only: {2}""".format(step_name, step_par
     return decorator
 
 
-def recreate_function(func, module=None, add_args=()):
+def recreate_function(func, module=None, name=None, add_args=()):
     """Recreate a function, replacing some info.
     :param func: Function object.
     :param module: Module to contribute to.
@@ -167,6 +167,8 @@ def recreate_function(func, module=None, add_args=()):
     for arg in argnames:
         if module is not None and arg == 'co_filename':
             args.append(module.__file__)
+        elif name is not None and arg == 'co_name':
+            args.append(name)
         elif arg == 'co_argcount':
             args.append(getattr(code, arg) + len(add_args))
         elif arg == 'co_varnames':
@@ -176,6 +178,8 @@ def recreate_function(func, module=None, add_args=()):
             args.append(getattr(code, arg))
 
     set_code(func, CodeType(*args))
+    if name is not None:
+        func.__name__ = name
     return func
 
 

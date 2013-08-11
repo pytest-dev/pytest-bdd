@@ -23,6 +23,10 @@ class ScenarioNotFound(Exception):  # pragma: no cover
     """Scenario Not Found"""
 
 
+class NotEnoughScenarioParams(Exception):  # pragma: no cover
+    pass
+
+
 def scenario(feature_name, scenario_name):
     """Scenario. May be called both as decorator and as just normal function"""
 
@@ -42,7 +46,10 @@ def scenario(feature_name, scenario_name):
                     'Scenario "{0}" in feature "{1}" is not found'.format(scenario_name, feature_name))
 
             if scenario.params != _scenario.pytestbdd_params:
-                raise Exception(scenario.params, _scenario.pytestbdd_params)
+                raise NotEnoughScenarioParams(
+                    """Scenario "{0}" in feature "{1}" doesn't have enough parameters declared.
+Should declare params: {2}, but declared only: {3}""".format(
+                    scenario_name, feature_name, list(scenario.params), list(_scenario.pytestbdd_params)))
 
             # Execute scenario's steps
             for step in scenario.steps:
@@ -60,7 +67,7 @@ def scenario(feature_name, scenario_name):
         func_args = inspect.getargspec(request).args
         if 'request' in func_args:
             func_args.remove('request')
-        _scenario = recreate_function(_scenario, add_args=func_args)
+        _scenario = recreate_function(_scenario, name=request.__name__, add_args=func_args)
         _scenario.pytestbdd_params = set(func_args)
 
         return _scenario

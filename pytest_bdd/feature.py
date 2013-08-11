@@ -19,21 +19,21 @@ Syntax example:
 :note: There're no multiline steps, the description of the step must fit in
 one line.
 """
-import re
+import re  # pragma: no cover
 
 from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN  # pragma: no cover
 
 
-class FeatureError(Exception):
+class FeatureError(Exception):  # pragma: no cover
     """Feature parse error."""
     pass
 
 
 # Global features dictionary
-features = {}
+features = {}  # pragma: no cover
 
 
-STEP_PREFIXES = {
+STEP_PREFIXES = {  # pragma: no cover
     'Scenario: ': SCENARIO,
     'Given ': GIVEN,
     'When ': WHEN,
@@ -41,9 +41,9 @@ STEP_PREFIXES = {
     'And ': None,  # Unknown step type
 }
 
-COMMENT_SYMBOLS = '#'
+COMMENT_SYMBOLS = '#'  # pragma: no cover
 
-STEP_PARAM_RE = re.compile('\<(.+?)\>')
+STEP_PARAM_RE = re.compile('\<(.+?)\>')  # pragma: no cover
 
 
 def get_step_type(line):
