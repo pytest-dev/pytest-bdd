@@ -120,7 +120,7 @@ def _step_decorator(step_type, step_name):
             if step_params.intersection(step_func_args) != step_params:
                 raise NotEnoughStepParams(
                     """Step "{0}" doesn't have enough parameters declared.
-Should declare params: {1}, but declared only: {2}""".format(step_name, list(step_params), list(step_func_args)))
+Should declare params: {1}, but declared only: {2}""".format(step_name, sorted(step_params), sorted(step_func_args)))
 
         if step_type == GIVEN:
             if not hasattr(func, '_pytestfixturefunction'):

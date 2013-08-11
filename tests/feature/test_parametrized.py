@@ -64,7 +64,7 @@ def test_parametrized_wrongly(request):
 
     assert exc.value.args == (
         'Scenario "Parametrized given, when, thens" in feature "parametrized.feature" doesn\'t have enough '
-        'parameters declared.\nShould declare params: [\'start\', \'eat\', \'left\'], but declared only: []',
+        'parameters declared.\nShould declare params: [\'eat\', \'left\', \'start\'], but declared only: []',
     )
 
 

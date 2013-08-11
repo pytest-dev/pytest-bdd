@@ -49,7 +49,7 @@ def scenario(feature_name, scenario_name):
                 raise NotEnoughScenarioParams(
                     """Scenario "{0}" in feature "{1}" doesn't have enough parameters declared.
 Should declare params: {2}, but declared only: {3}""".format(
-                    scenario_name, feature_name, list(scenario.params), list(_scenario.pytestbdd_params)))
+                    scenario_name, feature_name, sorted(scenario.params), sorted(_scenario.pytestbdd_params)))
 
             # Execute scenario's steps
             for step in scenario.steps:
