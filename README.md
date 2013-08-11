@@ -128,13 +128,14 @@ The code will look like:
 
     @when('I eat <eat> cucumbers')
     def eat_cucumbers(start_cucumbers, start, eat):
-        assert start_cucumbers['start'] == start
+        start_cucumbers['eat'] = eat
 
 
     @then('I should have <left> cucumbers')
-    def should_have_left_cucumbers(start, eat, left):
+    def should_have_left_cucumbers(start_cucumbers, start, eat, left):
         assert start - eat == left
-
+        assert start_cucumbers['start'] == start
+        assert start_cucumbers['eat'] == eat
 
 
 Reuse fixtures
