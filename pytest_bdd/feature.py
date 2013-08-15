@@ -93,7 +93,8 @@ class Feature(object):
         mode = None
         prev_mode = None
 
-        with open(filename, 'r') as f:
+        f = open(filename, 'r')
+        try:
             content = f.read()
             for line in content.split('\n'):
                 line = strip(line)
@@ -120,6 +121,8 @@ class Feature(object):
                     self.scenarios[line] = scenario = Scenario(line)
                 else:
                     scenario.add_step(line)
+        finally:
+            f.close()
 
     @classmethod
     def get_feature(cls, filename):

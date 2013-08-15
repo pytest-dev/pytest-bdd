@@ -29,7 +29,9 @@ def root_is_root(root):
 def test_decorate_with_fixture():
     """Test given can't be used as decorator when the fixture is specified."""
 
-    with pytest.raises(StepError):
+    def decorator():
         @given('Foo', fixture='foo')
         def bla():
             pass
+
+    pytest.raises(StepError, decorator)

@@ -20,5 +20,4 @@ def test_wrong(request, scenario_name):
     """Test wrong feature scenarios."""
 
     sc = scenario('wrong.feature', scenario_name)
-    with pytest.raises(FeatureError):
-        sc(request)
+    pytest.raises(FeatureError, sc, request)
