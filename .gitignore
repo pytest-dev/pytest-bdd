@@ -45,3 +45,4 @@ nosetests.xml
 /lib
 /include
 /src
+/share

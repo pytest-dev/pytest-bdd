@@ -114,7 +114,7 @@ setup(
         'Topic :: Utilities',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3'
-    ] + [('Programming Language :: Python :: %s' % x) for x in '2.6 2.7 3.0 3.1 3.2 3.3'.split()],
+    ] + [('Programming Language :: Python :: %s' % x) for x in '2.5 2.6 2.7 3.0 3.1 3.2 3.3'.split()],
     cmdclass={'test': PyTest},
     install_requires=[
         'pytest',
