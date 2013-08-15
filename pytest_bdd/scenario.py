@@ -38,7 +38,7 @@ def scenario(feature_name, scenario_name):
         # Execute scenario's steps
         for step in scenario.steps:
             func = request.getfuncargvalue(step)
-            kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(func).args)
+            kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(func)[0])
             func(**kwargs)
 
     return _scenario
