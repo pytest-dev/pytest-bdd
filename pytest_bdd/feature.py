@@ -19,20 +19,21 @@ Syntax example:
 :note: There're no multiline steps, the description of the step must fit in
 one line.
 """
+import re  # pragma: no cover
 
-from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN
+from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN  # pragma: no cover
 
 
-class FeatureError(Exception):
+class FeatureError(Exception):  # pragma: no cover
     """Feature parse error."""
     pass
 
 
 # Global features dictionary
-features = {}
+features = {}  # pragma: no cover
 
 
-STEP_PREFIXES = {
+STEP_PREFIXES = {  # pragma: no cover
     'Scenario: ': SCENARIO,
     'Given ': GIVEN,
     'When ': WHEN,
@@ -40,7 +41,9 @@ STEP_PREFIXES = {
     'And ': None,  # Unknown step type
 }
 
-COMMENT_SYMBOLS = '#'
+COMMENT_SYMBOLS = '#'  # pragma: no cover
+
+STEP_PARAM_RE = re.compile('\<(.+?)\>')  # pragma: no cover
 
 
 def get_step_type(line):
@@ -52,6 +55,14 @@ def get_step_type(line):
     for prefix in STEP_PREFIXES:
         if line.startswith(prefix):
             return STEP_PREFIXES[prefix]
+
+
+def get_step_params(name):
+    """Return step parameters."""
+    params = STEP_PARAM_RE.search(name)
+    if params:
+        return params.groups()
+    return ()
 
 
 def strip(line):
@@ -135,8 +146,10 @@ class Scenario(object):
 
     def __init__(self, name):
         self.name = name
+        self.params = set()
         self.steps = []
 
     def add_step(self, step):
         """Add step."""
+        self.params.update(get_step_params(step))
         self.steps.append(step)
