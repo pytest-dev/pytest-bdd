@@ -38,17 +38,13 @@ import sys  # pragma: no cover
 
 import pytest  # pragma: no cover
 
-from pytest_bdd.feature import remove_prefix, get_step_params  # pragma: no cover
+from pytest_bdd.feature import remove_prefix  # pragma: no cover
 from pytest_bdd.types import GIVEN, WHEN, THEN  # pragma: no cover
 
 PY3 = sys.version_info[0] >= 3  # pragma: no cover
 
 
 class StepError(Exception):  # pragma: no cover
-    pass
-
-
-class NotEnoughStepParams(Exception):  # pragma: no cover
     pass
 
 
@@ -111,30 +107,31 @@ def _step_decorator(step_type, step_name):
     """
     step_name = remove_prefix(step_name)
 
-    step_params = set(get_step_params(step_name))
-
     def decorator(func):
+
         step_func = func
-        if step_params:
-            step_func_args = inspect.getargspec(step_func).args
-            if step_params.intersection(step_func_args) != step_params:
-                raise NotEnoughStepParams(
-                    """Step "{0}" doesn't have enough parameters declared.
-Should declare params: {1}, but declared only: {2}""".format(step_name, sorted(step_params), sorted(step_func_args)))
 
         if step_type == GIVEN:
             if not hasattr(func, '_pytestfixturefunction'):
                 # avoid overfixturing of a fixture
                 func = pytest.fixture(func)
             step_func = lambda request: request.getfuncargvalue(func.__name__)
+            step_func.__doc__ = func.__doc__
 
         step_func.__name__ = step_name
+
+        @pytest.fixture
+        def lazy_step_func():
+            return step_func
+
+        # preserve docstring
+        lazy_step_func.__doc__ = func.__doc__
+
         contribute_to_module(
             get_caller_module(),
             step_name,
-            pytest.fixture(lambda: step_func),
+            lazy_step_func,
         )
-
         return func
 
     return decorator

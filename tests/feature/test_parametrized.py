@@ -1,6 +1,5 @@
 import pytest
 
-from pytest_bdd.steps import NotEnoughStepParams
 from pytest_bdd.scenario import NotEnoughScenarioParams
 
 from pytest_bdd import given, when, then, scenario
@@ -17,39 +16,6 @@ def test_parametrized(request, start, eat, left):
     """Test parametrized scenario."""
 
 
-def test_parametrized_given():
-    """Test parametrized given."""
-    with pytest.raises(NotEnoughStepParams) as exc:
-        @given('there are <some> cucumbers')
-        def some_cucumbers():
-            return {}
-    assert exc.value.args == (
-        'Step "there are <some> cucumbers" doesn\'t have enough parameters declared.\n'
-        'Should declare params: [\'some\'], but declared only: []',)
-
-
-def test_parametrized_when():
-    """Test parametrized when."""
-    with pytest.raises(NotEnoughStepParams) as exc:
-        @when('I eat <some> cucumbers')
-        def some_cucumbers():
-            return {}
-    assert exc.value.args == (
-        'Step "I eat <some> cucumbers" doesn\'t have enough parameters declared.\n'
-        'Should declare params: [\'some\'], but declared only: []',)
-
-
-def test_parametrized_then():
-    """Test parametrized then."""
-    with pytest.raises(NotEnoughStepParams) as exc:
-        @when('I should have <some> cucumbers')
-        def some_cucumbers():
-            return {}
-    assert exc.value.args == (
-        'Step "I should have <some> cucumbers" doesn\'t have enough parameters declared.\n'
-        'Should declare params: [\'some\'], but declared only: []',)
-
-
 def test_parametrized_wrongly(request):
     """Test parametrized scenario when the test function lacks parameters."""
     @scenario(
@@ -63,8 +29,8 @@ def test_parametrized_wrongly(request):
         test_parametrized_wrongly(request)
 
     assert exc.value.args == (
-        'Scenario "Parametrized given, when, thens" in feature "parametrized.feature" doesn\'t have enough '
-        'parameters declared.\nShould declare params: [\'eat\', \'left\', \'start\'], but declared only: []',
+        'Scenario "Parametrized given, when, thens" in feature "parametrized.feature" was not able to resolve all '
+        'parameters declared.\nShould resolve params: [\'eat\', \'left\', \'start\'], but resolved only: []',
     )
 
 

@@ -45,11 +45,13 @@ def scenario(feature_name, scenario_name):
                 raise ScenarioNotFound(
                     'Scenario "{0}" in feature "{1}" is not found'.format(scenario_name, feature_name))
 
-            if scenario.params != _scenario.pytestbdd_params:
+            resolved_params = scenario.params.intersection(request.fixturenames)
+
+            if scenario.params != resolved_params:
                 raise NotEnoughScenarioParams(
-                    """Scenario "{0}" in feature "{1}" doesn't have enough parameters declared.
-Should declare params: {2}, but declared only: {3}""".format(
-                    scenario_name, feature_name, sorted(scenario.params), sorted(_scenario.pytestbdd_params)))
+                    """Scenario "{0}" in feature "{1}" was not able to resolve all parameters declared.
+Should resolve params: {2}, but resolved only: {3}""".format(
+                    scenario_name, feature_name, sorted(scenario.params), sorted(resolved_params)))
 
             # Execute scenario's steps
             for step in scenario.steps:
