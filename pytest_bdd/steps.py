@@ -31,20 +31,20 @@ Reusing existing fixtures for a different step name:
 given('I have a beautiful article', fixture='article')
 
 """
-from __future__ import absolute_import
-from types import CodeType
-import inspect
-import sys
+from __future__ import absolute_import  # pragma: no cover
+from types import CodeType  # pragma: no cover
+import inspect  # pragma: no cover  # pragma: no cover
+import sys  # pragma: no cover
 
-import pytest
+import pytest  # pragma: no cover
 
-from pytest_bdd.feature import remove_prefix
-from pytest_bdd.types import GIVEN, WHEN, THEN
+from pytest_bdd.feature import remove_prefix  # pragma: no cover
+from pytest_bdd.types import GIVEN, WHEN, THEN  # pragma: no cover
 
-PY3 = sys.version_info[0] >= 3
+PY3 = sys.version_info[0] >= 3  # pragma: no cover
 
 
-class StepError(Exception):
+class StepError(Exception):  # pragma: no cover
     pass
 
 
@@ -58,6 +58,7 @@ def given(name, fixture=None):
     :note: Can't be used as a decorator when the fixture is specified.
     """
     name = remove_prefix(name)
+
     if fixture is not None:
         module = get_caller_module()
         func = lambda: lambda request: request.getfuncargvalue(fixture)
@@ -107,31 +108,40 @@ def _step_decorator(step_type, step_name):
     step_name = remove_prefix(step_name)
 
     def decorator(func):
+
         step_func = func
+
         if step_type == GIVEN:
             if not hasattr(func, '_pytestfixturefunction'):
                 # avoid overfixturing of a fixture
                 func = pytest.fixture(func)
             step_func = lambda request: request.getfuncargvalue(func.__name__)
+            step_func.__doc__ = func.__doc__
 
         step_func.__name__ = step_name
+
+        @pytest.fixture
+        def lazy_step_func():
+            return step_func
+
+        # preserve docstring
+        lazy_step_func.__doc__ = func.__doc__
+
         contribute_to_module(
             get_caller_module(),
             step_name,
-            pytest.fixture(lambda: step_func),
+            lazy_step_func,
         )
         return func
 
     return decorator
 
 
-def contribute_to_module(module, name, func):
-    """Contribute a function to a module.
-
-    :param module: Module to contribute to.
-    :param name: Attribute name.
+def recreate_function(func, module=None, name=None, add_args=()):
+    """Recreate a function, replacing some info.
     :param func: Function object.
-    """
+    :param module: Module to contribute to.
+    :param add_args: Additional arguments to add to function."""
 
     def get_code(func):
         return func.__code__ if PY3 else func.func_code
@@ -152,12 +162,33 @@ def contribute_to_module(module, name, func):
     args = []
     code = get_code(func)
     for arg in argnames:
-        if arg == 'co_filename':
+        if module is not None and arg == 'co_filename':
             args.append(module.__file__)
+        elif name is not None and arg == 'co_name':
+            args.append(name)
+        elif arg == 'co_argcount':
+            args.append(getattr(code, arg) + len(add_args))
+        elif arg == 'co_varnames':
+            co_varnames = getattr(code, arg)
+            args.append(co_varnames[:code.co_argcount] + tuple(add_args) + co_varnames[code.co_argcount:])
         else:
             args.append(getattr(code, arg))
 
     set_code(func, CodeType(*args))
+    if name is not None:
+        func.__name__ = name
+    return func
+
+
+def contribute_to_module(module, name, func):
+    """Contribute a function to a module.
+
+    :param module: Module to contribute to.
+    :param name: Attribute name.
+    :param func: Function object.
+    """
+    func = recreate_function(func, module=module)
+
     setattr(module, name, func)
 
 
