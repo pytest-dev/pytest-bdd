@@ -4,6 +4,8 @@ import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
+import pytest_bdd
+
 
 class Tox(TestCommand):
     def finalize_options(self):
@@ -33,7 +35,7 @@ setup(
     license='MIT license',
     author_email='oleg.podsadny@gmail.com',
     url='https://github.com/olegpidsadnyi/pytest-bdd',
-    version='0.5.0',
+    version=pytest_bdd.__version__,
     classifiers=[
         'Development Status :: 6 - Mature',
         'Intended Audience :: Developers',
