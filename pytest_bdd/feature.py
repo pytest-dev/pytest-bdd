@@ -25,7 +25,7 @@ from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN
 
 class FeatureError(Exception):
     """Feature parse error."""
-    message = u'{0}.\nLine number: {1}.\nLine: {2}.\nPrevious mode: {3}.\nCurrent mode: {4}'
+    message = u'{0}.\nLine number: {1}.\nLine: {2}.'
 
     def __str__(self):
         return unicode(self).encode('utf-8')
@@ -110,15 +110,15 @@ class Feature(object):
 
                 if mode == GIVEN and prev_mode not in (GIVEN, SCENARIO):
                     raise FeatureError('Given steps must be the first in withing the Scenario',
-                                       line_number, line, prev_mode, mode)
+                                       line_number, line)
 
                 if mode == WHEN and prev_mode not in (SCENARIO, GIVEN, WHEN):
                     raise FeatureError('When steps must be the first or follow Given steps',
-                                       line_number, line, prev_mode, mode)
+                                       line_number, line)
 
                 if mode == THEN and prev_mode not in (GIVEN, WHEN, THEN):
                     raise FeatureError('Then steps must follow Given or When steps',
-                                       line_number, line, prev_mode, mode)
+                                       line_number, line)
 
                 prev_mode = mode
 

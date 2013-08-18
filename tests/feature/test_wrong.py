@@ -30,9 +30,7 @@ def test_verbose_output(request):
     with pytest.raises(FeatureError) as excinfo:
         sc(request)
 
-    msg, line_number, line, prev_mode, mode = excinfo.value.args
+    msg, line_number, line = excinfo.value.args
 
     assert line_number == 4
     assert line == 'When I do it again'
-    assert prev_mode == 'then'
-    assert mode == 'when'
