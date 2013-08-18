@@ -30,7 +30,13 @@ from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN  # pragma: no cover
 
 class FeatureError(Exception):  # pragma: no cover
     """Feature parse error."""
-    pass
+    message = u'{0}.\nLine number: {1}.\nLine: {2}.'
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    def __unicode__(self):
+        return self.message.format(*self.args)
 
 
 # Global features dictionary
@@ -113,7 +119,7 @@ class Feature(object):
 
         with open(filename, 'r') as f:
             content = f.read()
-            for line in content.split('\n'):
+            for line_number, line in enumerate(content.split('\n')):
                 line = strip(line)
                 if not line:
                     continue
@@ -121,13 +127,16 @@ class Feature(object):
                 mode = get_step_type(line) or mode
 
                 if mode == GIVEN and prev_mode not in (GIVEN, SCENARIO):
-                    raise FeatureError('Given steps must be the first in withing the Scenario')
+                    raise FeatureError('Given steps must be the first in withing the Scenario',
+                                       line_number, line)
 
                 if mode == WHEN and prev_mode not in (SCENARIO, GIVEN, WHEN):
-                    raise FeatureError('When steps must be the first or follow Given steps')
+                    raise FeatureError('When steps must be the first or follow Given steps',
+                                       line_number, line)
 
                 if mode == THEN and prev_mode not in (GIVEN, WHEN, THEN):
-                    raise FeatureError('Then steps must follow Given or When steps')
+                    raise FeatureError('Then steps must follow Given or When steps',
+                                       line_number, line)
 
                 prev_mode = mode
 
