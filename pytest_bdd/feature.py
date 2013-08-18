@@ -25,7 +25,13 @@ from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN
 
 class FeatureError(Exception):
     """Feature parse error."""
-    pass
+    message = u'{0}.\nLine number: {1}.\nLine: {2}.\nPrevious mode: {3}.\nCurrent mode: {4}'
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    def __unicode__(self):
+        return self.message.format(*self.args)
 
 
 # Global features dictionary
