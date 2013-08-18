@@ -36,4 +36,3 @@ def test_verbose_output(request):
     assert line == 'When I do it again'
     assert prev_mode == 'then'
     assert mode == 'when'
-
