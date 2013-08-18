@@ -56,6 +56,7 @@ def given(name, fixture=None):
 
     :raises: StepError in case of wrong configuration.
     :note: Can't be used as a decorator when the fixture is specified.
+
     """
     name = remove_prefix(name)
 
@@ -72,7 +73,9 @@ def when(name):
     """When step decorator.
 
     :param name: Step name.
+
     :raises: StepError in case of wrong configuration.
+
     """
     return _step_decorator(WHEN, name)
 
@@ -81,7 +84,9 @@ def then(name):
     """Then step decorator.
 
     :param name: Step name.
+
     :raises: StepError in case of wrong configuration.
+
     """
     return _step_decorator(THEN, name)
 
@@ -90,13 +95,16 @@ def _not_a_fixture_decorator(func):
     """Function that prevents the decoration.
 
     :param func: Function that is going to be decorated.
+
     :raises: `StepError` if was used as a decorator.
+
     """
     raise StepError('Cannot be used as a decorator when the fixture is specified')
 
 
 def _step_decorator(step_type, step_name):
     """Step decorator for the type and the name.
+
     :param step_type: Step type (GIVEN, WHEN or THEN).
     :param step_name: Step name as in the feature file.
 
@@ -104,6 +112,7 @@ def _step_decorator(step_type, step_name):
 
     :note: If the step type is GIVEN it will automatically apply the pytest
     fixture decorator to the step function.
+
     """
     step_name = remove_prefix(step_name)
 
@@ -113,7 +122,7 @@ def _step_decorator(step_type, step_name):
 
         if step_type == GIVEN:
             if not hasattr(func, '_pytestfixturefunction'):
-                # avoid overfixturing of a fixture
+                # Avoid multiple wrapping a fixture
                 func = pytest.fixture(func)
             step_func = lambda request: request.getfuncargvalue(func.__name__)
             step_func.__doc__ = func.__doc__
@@ -124,7 +133,7 @@ def _step_decorator(step_type, step_name):
         def lazy_step_func():
             return step_func
 
-        # preserve docstring
+        # Preserve a docstring
         lazy_step_func.__doc__ = func.__doc__
 
         contribute_to_module(
@@ -139,9 +148,14 @@ def _step_decorator(step_type, step_name):
 
 def recreate_function(func, module=None, name=None, add_args=()):
     """Recreate a function, replacing some info.
+
     :param func: Function object.
     :param module: Module to contribute to.
-    :param add_args: Additional arguments to add to function."""
+    :param add_args: Additional arguments to add to function.
+
+    :return: Function copy.
+
+    """
 
     def get_code(func):
         return func.__code__ if PY3 else func.func_code
@@ -186,6 +200,7 @@ def contribute_to_module(module, name, func):
     :param module: Module to contribute to.
     :param name: Attribute name.
     :param func: Function object.
+
     """
     func = recreate_function(func, module=module)
 

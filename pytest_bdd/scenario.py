@@ -28,7 +28,7 @@ class NotEnoughScenarioParams(Exception):  # pragma: no cover
 
 
 def scenario(feature_name, scenario_name):
-    """Scenario. May be called both as decorator and as just normal function"""
+    """Scenario. May be called both as decorator and as just normal function."""
 
     def decorator(request):
 
@@ -43,14 +43,14 @@ def scenario(feature_name, scenario_name):
                 scenario = feature.scenarios[scenario_name]
             except KeyError:
                 raise ScenarioNotFound(
-                    'Scenario "{0}" in feature "{1}" is not found'.format(scenario_name, feature_name))
+                    'Scenario "{0}" in feature "{1}" is not found.'.format(scenario_name, feature_name))
 
             resolved_params = scenario.params.intersection(request.fixturenames)
 
             if scenario.params != resolved_params:
                 raise NotEnoughScenarioParams(
-                    """Scenario "{0}" in feature "{1}" was not able to resolve all parameters declared.
-Should resolve params: {2}, but resolved only: {3}""".format(
+                    """Scenario "{0}" in the feature "{1}" was not able to resolve all declared parameters."""
+                    """Should resolve params: {2}, but resolved only: {3}.""".format(
                     scenario_name, feature_name, sorted(scenario.params), sorted(resolved_params)))
 
             # Execute scenario's steps
@@ -62,10 +62,10 @@ Should resolve params: {2}, but resolved only: {3}""".format(
         _scenario.pytestbdd_params = set()
 
         if isinstance(request, python.FixtureRequest):
-            # we called as a normal function
+            # Called as a normal function.
             return _scenario(request)
 
-        # we called as a decorator, so modify the returned function to add parameters from a decorated function
+        # Used as a decorator. Modify the returned function to add parameters from a decorated function.
         func_args = inspect.getargspec(request).args
         if 'request' in func_args:
             func_args.remove('request')

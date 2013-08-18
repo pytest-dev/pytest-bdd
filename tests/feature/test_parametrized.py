@@ -22,16 +22,17 @@ def test_parametrized_wrongly(request):
         'parametrized.feature',
         'Parametrized given, when, thens',
     )
-    def test_parametrized_wrongly(request):
+    def wrongly_parametrized(request):
         pass
 
     with pytest.raises(NotEnoughScenarioParams) as exc:
-        test_parametrized_wrongly(request)
+        wrongly_parametrized(request)
 
-    assert exc.value.args == (
-        'Scenario "Parametrized given, when, thens" in feature "parametrized.feature" was not able to resolve all '
-        'parameters declared.\nShould resolve params: [\'eat\', \'left\', \'start\'], but resolved only: []',
-    )
+        assert exc.value.args == (
+            """Scenario "Parametrized given, when, thens" in the feature "parametrized.feature" was not able to """
+            """resolve all declared parameters. """
+            """Should resolve params: [\'eat\', \'left\', \'start\'], but resolved only: []."""
+        )
 
 
 @given('there are <start> cucumbers')

@@ -1,9 +1,12 @@
 """Feature.
 
 The way of describing the behavior is based on Gherkin language, but a very
-limited version. It doesn't support any parameter tables or any variables.
+limited version. It doesn't support any parameter tables.
 If the parametrization is needed to generate more test cases it can be done
 on the fixture level of the pytest.
+The <variable> syntax can be used here to make a connection between steps and
+it will also validate the parameters mentioned in the steps with ones
+provided in the pytest parametrization table.
 
 Syntax example:
 
@@ -18,6 +21,7 @@ Syntax example:
 :note: The "#" symbol is used for comments.
 :note: There're no multiline steps, the description of the step must fit in
 one line.
+
 """
 import re  # pragma: no cover
 
@@ -82,7 +86,9 @@ def remove_prefix(line):
     """Remove the step prefix (Scenario, Given, When, Then or And).
 
     :param line: Line of the Feature file.
+
     :return: Line without the prefix.
+
     """
     for prefix in STEP_PREFIXES:
         if line.startswith(prefix):
@@ -97,6 +103,7 @@ class Feature(object):
         """Parse the feature file.
 
         :param filename: Relative path to the feature file.
+
         """
         self.scenarios = {}
 
@@ -134,6 +141,17 @@ class Feature(object):
 
     @classmethod
     def get_feature(cls, filename):
+        """Get a feature by the filename.
+
+        :param filename: Filename of the feature file.
+
+        :return: `Feature` instance from the parsed feature cache.
+
+        :note: The features are parsed on the execution of the test and
+            stored in the global variable cache to improve the performance
+            when multiple scenarios are referencing the same file.
+
+        """
         feature = features.get(filename)
         if not feature:
             feature = Feature(filename)

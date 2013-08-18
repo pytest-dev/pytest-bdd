@@ -8,6 +8,18 @@ BDD library for the py.test runner
 .. |Coverrals| image:: https://coveralls.io/repos/olegpidsadnyi/pytest-bdd/badge.png?branch=master
    :target: https://coveralls.io/r/olegpidsadnyi/pytest-bdd
 
+pytest-bdd implements a subset of Gherkin language for the automation of the project
+requirements testing and easier behavioral driven development.
+
+Unlike many other BDD tools it doesn't require a separate runner and benefits from
+the power and flexibility of the pytest. It allows to unify your unit and functional
+tests, easier continuous integration server configuration and maximal reuse of the
+tests setup.
+
+Pytest fixtures written for the unit tests can be reused for the setup and actions
+mentioned in the feature steps with dependency injection, which allows a true BDD
+just-enough specification of the requirements without maintaining any context object
+containing the side effects of the Gherkin imperative declarations.
 
 Install pytest-bdd
 ==================
@@ -83,8 +95,8 @@ function with multiple step names simply decorate it multiple times:
 Note that the given step aliases are independent and will be executed
 when mentioned.
 
-For example if you assoicate your resource to some owner or not. Admin
-user can’t be an author of the article, but article should have some
+For example if you associate your resource to some owner or not. Admin
+user can’t be an author of the article, but articles should have a
 default author.
 
 ::
@@ -101,11 +113,9 @@ default author.
 Step parameters
 ===============
 
-Sometimes it is hard to write good scenarios without duplicating most of
-contents of existing scenario. For example if you create some object
-with static param value, you might want to create another test with
-different param value. By Gherkin specification it’s possible to have
-parameters in steps: http://docs.behat.org/guides/1.gherkin.html
+Scenarios can be parametrized to cover few cases. In Gherkin the variable
+templates are written using corner braces as <somevalue>.
+
 Example:
 
 ::
@@ -115,14 +125,17 @@ Example:
         When I eat <eat> cucumbers
         Then I should have <left> cucumbers
 
-As you can see we don’t use Scenario Outline, but use just Scenario,
-just because it’s simple to implement for pytest.
+Unlike other tools, pytest-bdd implements the scenario outline not in the
+feature files, but in the python code using pytest parametrization.
+The reason for this is that it is very often that some simple pythonic type
+is needed in the parameters like a datetime or a dictionary, which makes it
+more difficult to express in the text files and preserve the correct format.
 
 The code will look like:
 
 ::
 
-    # here we use pytest power to parametrize test
+    # Here we use pytest to parametrize the test with the parameters table
     @pytest.mark.parametrize(
         ['start', 'eat', 'left'],
         [(12, 5, 7)])
@@ -130,10 +143,10 @@ The code will look like:
         'parametrized.feature',
         'Parametrized given, when, thens',
     )
-    # note that we should receive same arguments in function that we use for test parametrization either directly
-    # or indirectly (throught fixtures)
+    # Note that we should take the same arguments in the test function that we use
+    # for the test parametrization either directly or indirectly (fixtures depend on them).
     def test_parametrized(start, eat, left):
-        """We don't need to do anything here, everything will be managed by scenario decorator."""
+        """We don't need to do anything here, everything will be managed by the scenario decorator."""
 
 
     @given('there are <start> cucumbers')
@@ -233,7 +246,7 @@ List of known subplugins:
 
 ::
 
-    *  pytest-bdd-splinter -- collection of fixtures for real browser BDD testing
+    *  pytest-bdd-splinter -- collection of fixtures for the real browser BDD testing
 
 License
 =======
