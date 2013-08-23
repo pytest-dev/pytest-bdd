@@ -4,7 +4,8 @@ import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
-import pytest_bdd
+
+version = '0.5.1'
 
 
 class Tox(TestCommand):
@@ -35,7 +36,7 @@ setup(
     license='MIT license',
     author_email='oleg.podsadny@gmail.com',
     url='https://github.com/olegpidsadnyi/pytest-bdd',
-    version=pytest_bdd.__version__,
+    version=version,
     classifiers=[
         'Development Status :: 6 - Mature',
         'Intended Audience :: Developers',
