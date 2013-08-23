@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-0.5.1
+0.5.2
 -----
 
 - Added extra info into output when FeatureError exception raises. (amakhnach)
