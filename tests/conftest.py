@@ -3,6 +3,7 @@
 from pytest_bdd import given, when
 from pytest_bdd.plugin import pytestbdd_feature_base_dir
 
+
 pytest_plugins = 'pytester'
 
 

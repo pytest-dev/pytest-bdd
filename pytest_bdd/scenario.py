@@ -9,7 +9,10 @@ test_publish_article = scenario(
     feature_name='publish_article.feature',
     scenario_name='Publishing the article',
 )
+import rpdb2
+rpdb2.start_embedded_debugger('lalalala')
 """
+
 import inspect  # pragma: no cover
 from os import path as op  # pragma: no cover
 
@@ -27,16 +30,33 @@ class NotEnoughScenarioParams(Exception):  # pragma: no cover
     pass
 
 
-def scenario(feature_name, scenario_name):
+def scenario(*args):
     """Scenario. May be called both as decorator and as just normal function."""
 
     def decorator(request):
 
         def _scenario(request):
-            # Get the feature
+
+            # Determine the feature_name and scenario_name
+            if len(args) > 0 and len(args) < 3:
+                if '.feature' in args[0]:
+                    feature_name = args[0]
+                    scenario_name = args[1]
+                else:
+                    scenario_name = args[0]
+                    try:
+                        feature_name = request.module.PYTESTBDD_FEATURE_FILE
+                    except:
+                        raise Exception("Feature file path or name was not found. " +
+                                        "Either specify the PYTESTBDD_FEATURE_FILE or send the name to this function")
+            else:
+                raise Exception("Call this function either with <feature_file>, <scenario_name> as arguments or with only <scenario_name>")
+
+            # Get the feature file
             base_path = request.getfuncargvalue('pytestbdd_feature_base_dir')
             feature_path = op.abspath(op.join(base_path, feature_name))
             feature = Feature.get_feature(feature_path)
+
 
             # Get the scenario
             try:
