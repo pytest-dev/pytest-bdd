@@ -43,7 +43,7 @@ def scenario(feature_name=None, scenario_name=None):
                     scenarioname = feature_name
                     featurename = request.getfuncargvalue('pytestbdd_feature_file')
                 except python.FixtureLookupError:
-                    raise Exception("Feature file path or name was not found. " +
+                    raise Exception("Feature file path was not found. " +
                                     "Specify the pytestbdd_feature_file fixture, " +
                                     "or send the feature_name as first argument or kwarg.")
             else:
