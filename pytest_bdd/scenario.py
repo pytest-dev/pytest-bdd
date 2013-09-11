@@ -10,7 +10,6 @@ test_publish_article = scenario(
     scenario_name='Publishing the article',
 )
 """
-
 import inspect  # pragma: no cover
 from os import path as op  # pragma: no cover
 
