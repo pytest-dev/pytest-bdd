@@ -27,23 +27,40 @@ class NotEnoughScenarioParams(Exception):  # pragma: no cover
     pass
 
 
-def scenario(feature_name, scenario_name):
+def scenario(feature_name=None, scenario_name=None):
     """Scenario. May be called both as decorator and as just normal function."""
 
     def decorator(request):
 
         def _scenario(request):
-            # Get the feature
+
+            # Determine the feature_name and scenario_name
+            if not scenario_name and not feature_name:
+                raise Exception("No parameters given; there's nothing we can do.")
+
+            if not scenario_name:
+                try:
+                    scenarioname = feature_name
+                    featurename = request.getfuncargvalue('pytestbdd_feature_file')
+                except python.FixtureLookupError:
+                    raise Exception("Feature file path was not found. " +
+                                    "Specify the pytestbdd_feature_file fixture, " +
+                                    "or send the feature_name as first argument or kwarg.")
+            else:
+                scenarioname = scenario_name
+                featurename = feature_name
+
+            # Get the feature file
             base_path = request.getfuncargvalue('pytestbdd_feature_base_dir')
-            feature_path = op.abspath(op.join(base_path, feature_name))
+            feature_path = op.abspath(op.join(base_path, featurename))
             feature = Feature.get_feature(feature_path)
 
             # Get the scenario
             try:
-                scenario = feature.scenarios[scenario_name]
+                scenario = feature.scenarios[scenarioname]
             except KeyError:
                 raise ScenarioNotFound(
-                    'Scenario "{0}" in feature "{1}" is not found.'.format(scenario_name, feature_name))
+                    'Scenario "{0}" in feature "{1}" is not found.'.format(scenarioname, featurename))
 
             resolved_params = scenario.params.intersection(request.fixturenames)
 
@@ -51,7 +68,7 @@ def scenario(feature_name, scenario_name):
                 raise NotEnoughScenarioParams(
                     """Scenario "{0}" in the feature "{1}" was not able to resolve all declared parameters."""
                     """Should resolve params: {2}, but resolved only: {3}.""".format(
-                    scenario_name, feature_name, sorted(scenario.params), sorted(resolved_params)))
+                    scenarioname, featurename, sorted(scenario.params), sorted(resolved_params)))
 
             # Execute scenario's steps
             for step in scenario.steps:

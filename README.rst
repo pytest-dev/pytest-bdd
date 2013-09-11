@@ -236,6 +236,30 @@ test\_publish\_article.py:
 
     test_publish = scenario('publish_article.feature', 'Publishing the article')
 
+
+Feature file fixture
+====================
+
+Instead of specifiying the feature file over and over again in a certain testfile, you can also create a fixture which does that for you. 
+The path you return here will be appended to the pytestbdd_feature_base_dir, which is explained above.
+Examples make everything better:
+
+::
+
+    import pytest
+    from pytest_bdd import scenario
+
+
+    @pytest.fixture
+    def pytestbdd_feature_file():
+        return "publish_article.feature"
+
+    test_publish = scenario("Publishing the article")
+
+
+This example will use the 'publish_article.feature' file for all scenarios in the file which do not have a feature file explicitly specified.
+
+
 Subplugins
 ==========
 
