@@ -4,13 +4,12 @@ from pytest_bdd.scenario import NotEnoughScenarioParams
 
 from pytest_bdd import given, when, then, scenario
 
-PYTESTBDD_FEATURE_FILE = 'parametrized.feature'
-
 
 @pytest.mark.parametrize(
     ['start', 'eat', 'left'],
     [(12, 5, 7)])
 @scenario(
+    'parametrized.feature',
     'Parametrized given, when, thens',
 )
 def test_parametrized(request, start, eat, left):
