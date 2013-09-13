@@ -236,6 +236,31 @@ test\_publish\_article.py:
 
     test_publish = scenario('publish_article.feature', 'Publishing the article')
 
+
+Avoid retyping the feature file name
+====================================
+
+If you've worked with pytest-bdd, you probably will have noticed you will have to enter the name of your .feature file in each scenario.
+This is not DRY, and can be resolved using Python's builtin functools.partial.
+
+
+test\_publish\_article.py:
+
+::
+
+    from functools import partial
+
+    import pytest_bdd
+    
+
+    scenario = partial(pytest_bdd.scenario, '/path/to/publish_article.feature')
+
+    test_publish = scenario('Publishing the article')
+
+
+If you want to learn more about functools.partial, look here: http://docs.python.org/2/library/functools.html#functools.partial
+
+
 Subplugins
 ==========
 
