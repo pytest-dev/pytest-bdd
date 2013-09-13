@@ -33,7 +33,7 @@ Example
 
 publish\_article.feature:
 
-::
+.. code-block:: feature
 
     Scenario: Publishing the article
         Given I'm an author user
@@ -45,7 +45,7 @@ publish\_article.feature:
 
 test\_publish\_article.py:
 
-::
+.. code-block:: python
 
     from pytest_bdd import scenario, given, when, then
 
@@ -85,7 +85,7 @@ Sometimes it is needed to declare the same fixtures or steps with the
 different names for better readability. In order to use the same step
 function with multiple step names simply decorate it multiple times:
 
-::
+.. code-block:: python
 
     @given('I have an article')
     @given('there\'s an article')
@@ -99,7 +99,7 @@ For example if you associate your resource to some owner or not. Admin
 user can’t be an author of the article, but articles should have a
 default author.
 
-::
+.. code-block:: feature
 
     Scenario: I'm the author
         Given I'm an author
@@ -118,7 +118,7 @@ templates are written using corner braces as <somevalue>.
 
 Example:
 
-::
+.. code-block:: feature
 
     Scenario: Parametrized given, when, thens
         Given there are <start> cucumbers
@@ -133,7 +133,7 @@ more difficult to express in the text files and preserve the correct format.
 
 The code will look like:
 
-::
+.. code-block:: python
 
     # Here we use pytest to parametrize the test with the parameters table
     @pytest.mark.parametrize(
@@ -171,7 +171,7 @@ Reuse fixtures
 Sometimes scenarios define new names for the fixture that can be
 inherited. Fixtures can be reused with other names using given():
 
-::
+.. code-block:: python
 
     given('I have beautiful article', fixture='article')
 
@@ -183,7 +183,7 @@ simply expect them in the child test file.
 
 common\_steps.feature:
 
-::
+.. code-block:: feature
 
     Scenario: All steps are declared in the conftest
         Given I have a bar
@@ -191,7 +191,7 @@ common\_steps.feature:
 
 conftest.py:
 
-::
+.. code-block:: python
 
     from pytest_bdd import given, then
 
@@ -207,7 +207,7 @@ conftest.py:
 
 test\_common.py:
 
-::
+.. code-block:: python
 
     test_conftest = scenario('common_steps.feature', 'All steps are declared in the conftest')
 
@@ -224,7 +224,7 @@ new base path.
 
 test\_publish\_article.py:
 
-::
+.. code-block:: python
 
     import pytest
     from pytest_bdd import scenario
