@@ -76,13 +76,11 @@ def scenario(feature_name, scenario_name):
                     
                     step_func = request.getfuncargvalue(m.re.pattern)
                     
-                    # Find the function parameters
-                    if len(m.groups()) > 0:
-                        kwargs = {}
-                        for i, arg in enumerate(inspect.getargspec(step_func).args):
-                            kwargs[arg] = m.groups()[i]
-                    else:
-                        kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
+                    # Match the function parameters
+                    kwargs = m.groupdict()
+                    for arg in inspect.getargspec(step_func).args:
+                        if arg not in kwargs:
+                            kwargs[arg] = request.getfuncargvalue(arg)
                         
                     step_func(**kwargs)
 
