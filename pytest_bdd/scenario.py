@@ -12,6 +12,7 @@ test_publish_article = scenario(
 """
 import inspect  # pragma: no cover
 from os import path as op  # pragma: no cover
+import re # pragma: no cover
 
 from _pytest import python
 
@@ -55,9 +56,35 @@ def scenario(feature_name, scenario_name):
 
             # Execute scenario's steps
             for step in scenario.steps:
-                step_func = request.getfuncargvalue(step)
-                kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
-                step_func(**kwargs)
+                step_func, kwargs = None, None
+            
+                try:
+                    step_func = request.getfuncargvalue(step)
+                    kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
+                    step_func(**kwargs)
+                except python.FixtureLookupError:
+                    m = None
+                    
+                    # Find the fixture this step matches
+                    fm = request._fixturemanager
+                    for name, fixturedef in fm._arg2fixturedefs.items():
+                        faclist = list(fm._matchfactories(fixturedef, request._parentid))
+                        if faclist:
+                            m = re.match(name, step)
+                            if m is not None:
+                                break
+                    
+                    step_func = request.getfuncargvalue(m.re.pattern)
+                    
+                    # Find the function parameters
+                    if len(m.groups()) > 0:
+                        kwargs = {}
+                        for i, arg in enumerate(inspect.getargspec(step_func).args):
+                            kwargs[arg] = m.groups()[i]
+                    else:
+                        kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
+                        
+                    step_func(**kwargs)
 
         _scenario.pytestbdd_params = set()
 
