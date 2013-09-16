@@ -240,13 +240,15 @@ test\_publish\_article.py:
 Avoid retyping the feature file name
 ====================================
 
-If you've worked with pytest-bdd, you probably will have noticed you will have to enter the name of your .feature file in each scenario.
-This is not DRY, and can be resolved using Python's builtin functools.partial.
+If you want to avoid retyping the feature file name when defining your scenarios in a test file, use functools.partial.
+This will make your life much easier when defining multiple scenarios in a test file.
+
+For example:
 
 
 test\_publish\_article.py:
 
-::
+.. code-block:: python
 
     from functools import partial
 
@@ -256,9 +258,10 @@ test\_publish\_article.py:
     scenario = partial(pytest_bdd.scenario, '/path/to/publish_article.feature')
 
     test_publish = scenario('Publishing the article')
+    test_publish_unprivileged = scenario('Publishing the article as unprivileged user')
 
 
-If you want to learn more about functools.partial, look here: http://docs.python.org/2/library/functools.html#functools.partial
+You can learn more about `functools.partial <http://docs.python.org/2/library/functools.html#functools.partial>`_ in the Python docs.
 
 
 Subplugins
