@@ -236,6 +236,34 @@ test\_publish\_article.py:
 
     test_publish = scenario('publish_article.feature', 'Publishing the article')
 
+
+Avoid retyping the feature file name
+====================================
+
+If you want to avoid retyping the feature file name when defining your scenarios in a test file, use functools.partial.
+This will make your life much easier when defining multiple scenarios in a test file.
+
+For example:
+
+
+test\_publish\_article.py:
+
+.. code-block:: python
+
+    from functools import partial
+
+    import pytest_bdd
+    
+
+    scenario = partial(pytest_bdd.scenario, '/path/to/publish_article.feature')
+
+    test_publish = scenario('Publishing the article')
+    test_publish_unprivileged = scenario('Publishing the article as unprivileged user')
+
+
+You can learn more about `functools.partial <http://docs.python.org/2/library/functools.html#functools.partial>`_ in the Python docs.
+
+
 Subplugins
 ==========
 
