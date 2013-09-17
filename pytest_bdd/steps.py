@@ -32,6 +32,7 @@ given('I have a beautiful article', fixture='article')
 
 """
 from __future__ import absolute_import  # pragma: no cover
+import re
 from types import CodeType  # pragma: no cover
 import inspect  # pragma: no cover  # pragma: no cover
 import sys  # pragma: no cover
@@ -45,7 +46,9 @@ PY3 = sys.version_info[0] >= 3  # pragma: no cover
 
 
 class StepError(Exception):  # pragma: no cover
-    pass
+    """Step declaration error."""
+
+RE_TYPE = type(re.compile(''))
 
 
 def given(name, fixture=None):
@@ -58,12 +61,11 @@ def given(name, fixture=None):
     :note: Can't be used as a decorator when the fixture is specified.
 
     """
-    name = remove_prefix(name)
 
     if fixture is not None:
         module = get_caller_module()
         func = lambda: lambda request: request.getfuncargvalue(fixture)
-        contribute_to_module(module, name, pytest.fixture(func))
+        contribute_to_module(module, remove_prefix(name), pytest.fixture(func))
         return _not_a_fixture_decorator
 
     return _step_decorator(GIVEN, name)
@@ -102,6 +104,39 @@ def _not_a_fixture_decorator(func):
     raise StepError('Cannot be used as a decorator when the fixture is specified')
 
 
+def _parse_step_name(name):
+    """Parse step name.
+
+    :param name: Step name or compiled regular expressions pattern with named
+        groups representing the arguments.
+    :return: Tuple of the stripped step name and the regex Pattern if provided.
+
+    """
+    if isinstance(name, RE_TYPE):
+        name = remove_prefix(name.pattern)
+        return name, re.compile(name)
+    else:
+        return remove_prefix(name), None
+
+
+def _contribute_regex_pattern(func, pattern):
+    """Contribute a regex pattern to the step function.
+
+    Checks regular expression named groups are accepted in the
+    function arguments.
+
+    :param func: Step function.
+    :param pattern: Regular expressions compliled pattern.
+
+    :raise: StepError if the function doesn't take group names as parameters.
+
+    """
+    unknown = set(pattern.groupindex) - set(inspect.getargspec(func).args)
+    if unknown:
+        raise StepError('Step function should take parameters: {0}'.format([unicode(x) for x in unknown]))
+    func.pattern = pattern
+
+
 def _step_decorator(step_type, step_name):
     """Step decorator for the type and the name.
 
@@ -110,19 +145,25 @@ def _step_decorator(step_type, step_name):
 
     :return: Decorator function for the step.
 
+    :raise: StepError if the function doesn't take group names as parameters.
+
     :note: If the step type is GIVEN it will automatically apply the pytest
     fixture decorator to the step function.
 
     """
-    step_name = remove_prefix(step_name)
+    step_name, pattern = _parse_step_name(step_name)
 
     def decorator(func):
+        # Validate the regex arguments and their group names
+        # Contribute the regex pattern to the step function
+        if pattern:
+            _contribute_regex_pattern(func, pattern)
 
         step_func = func
 
         if step_type == GIVEN:
             if not hasattr(func, '_pytestfixturefunction'):
-                # Avoid multiple wrapping a fixture
+                # Avoid multiple wrapping of a fixture
                 func = pytest.fixture(func)
             step_func = lambda request: request.getfuncargvalue(func.__name__)
             step_func.__doc__ = func.__doc__

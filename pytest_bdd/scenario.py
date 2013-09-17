@@ -9,10 +9,10 @@ test_publish_article = scenario(
     feature_name='publish_article.feature',
     scenario_name='Publishing the article',
 )
+
 """
 import inspect  # pragma: no cover
 from os import path as op  # pragma: no cover
-import re # pragma: no cover
 
 from _pytest import python
 
@@ -25,7 +25,22 @@ class ScenarioNotFound(Exception):  # pragma: no cover
 
 
 class NotEnoughScenarioParams(Exception):  # pragma: no cover
-    pass
+    """Scenario function doesn't take enough parameters in the arguments."""
+
+
+def _find_step_function(request, name):
+    """Match the step defined by the regular expression pattern.
+
+    :param request: PyTest request object.
+    :param name: Step name.
+
+    :return: Step function.
+
+    """
+    try:
+        return request.getfuncargvalue(name)
+    except python.FixtureLookupError:
+        pass
 
 
 def scenario(feature_name, scenario_name):
@@ -54,35 +69,11 @@ def scenario(feature_name, scenario_name):
                     """Should resolve params: {2}, but resolved only: {3}.""".format(
                     scenario_name, feature_name, sorted(scenario.params), sorted(resolved_params)))
 
-            # Execute scenario's steps
+            # Execute scenario steps
             for step in scenario.steps:
-                step_func, kwargs = None, None
-            
-                try:
-                    step_func = request.getfuncargvalue(step)
-                    kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
-                    step_func(**kwargs)
-                except python.FixtureLookupError:
-                    m = None
-                    
-                    # Find the fixture this step matches
-                    fm = request._fixturemanager
-                    for name, fixturedef in fm._arg2fixturedefs.items():
-                        faclist = list(fm._matchfactories(fixturedef, request._parentid))
-                        if faclist:
-                            m = re.match(name, step)
-                            if m is not None:
-                                break
-                    
-                    step_func = request.getfuncargvalue(m.re.pattern)
-                    
-                    # Match the function parameters
-                    kwargs = m.groupdict()
-                    for arg in inspect.getargspec(step_func).args:
-                        if arg not in kwargs:
-                            kwargs[arg] = request.getfuncargvalue(arg)
-                        
-                    step_func(**kwargs)
+                step_func = _find_step_function(request, step)
+                kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
+                step_func(**kwargs)
 
         _scenario.pytestbdd_params = set()
 
