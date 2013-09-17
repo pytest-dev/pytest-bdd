@@ -244,8 +244,6 @@ The pytest BDD has plugin support, and the main purpose of plugins
 
 List of known subplugins:
 
-::
-
     *  pytest-bdd-splinter -- collection of fixtures for the real browser BDD testing
 
 License
