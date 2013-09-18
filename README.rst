@@ -124,8 +124,11 @@ Example:
 
     Scenario: Arguments for given, when, thens
         Given there are 5 cucumbers
+
         When I eat 3 cucumbers
-        Then I should have 2 cucumbers
+        And I eat 2 cucumbers
+
+        Then I should have 0 cucumbers
 
 
 The code will look like:
@@ -141,21 +144,20 @@ The code will look like:
     def start_cucumbers(start):
         # note that you always get step arguments as strings, convert them on demand
         start = int(start)
-        return dict(start=start)
+        return dict(start=start, eat=0)
 
 
     @when(re.compile('I eat (?P<eat>\d+) cucumbers'))
-    def eat_cucumbers(start_cucumbers, start, eat):
-        start, eat = int(start), int(eat) 
-        start_cucumbers['eat'] = eat
+    def eat_cucumbers(start_cucumbers, eat):
+        eat = int(eat)
+        start_cucumbers['eat'] += eat
 
 
     @then(re.compile('I should have (?P<left>\d+) cucumbers'))
-    def should_have_left_cucumbers(start_cucumbers, start, eat, left):
-        start, eat, left = int(start), int(eat), int(left) 
-        assert start - eat == left
+    def should_have_left_cucumbers(start_cucumbers, start, left):
+        start, left = int(start), int(left) 
         assert start_cucumbers['start'] == start
-        assert start_cucumbers['eat'] == eat
+        assert start - start_cucumbers['eat'] == left
 
 Step parameters
 ===============
