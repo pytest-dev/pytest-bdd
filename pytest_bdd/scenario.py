@@ -82,7 +82,7 @@ def scenario(feature_name, scenario_name):
                 raise NotEnoughScenarioParams(
                     """Scenario "{0}" in the feature "{1}" was not able to resolve all declared parameters."""
                     """Should resolve params: {2}, but resolved only: {3}.""".format(
-                    scenario_name, feature_name, sorted(scenario.params), sorted(resolved_params)))
+                        scenario_name, feature_name, sorted(scenario.params), sorted(resolved_params)))
 
             # Execute scenario steps
             for step in scenario.steps:
