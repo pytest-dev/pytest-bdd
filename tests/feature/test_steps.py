@@ -42,12 +42,12 @@ def check_results(results):
 test_when_first = scenario('steps.feature', 'When step can be the first')
 
 
-@when('When I do nothing')
+@when('I do nothing')
 def do_nothing():
     pass
 
 
-@then('Then I make no mistakes')
+@then('I make no mistakes')
 def no_errors():
     assert True
 
