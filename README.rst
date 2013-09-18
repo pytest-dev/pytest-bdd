@@ -110,6 +110,53 @@ default author.
         Given I'm the admin
         And there is an article
 
+Step arguments
+==============
+
+Often it's possible to reuse steps giving them a parameter(s).
+This allows to have single implementation and multiple use, so less code.
+Also opens the possibility to use same step twice in single scenario and with different arguments!
+Important thing that argumented step names are not just strings but regular expressions.
+
+Example:
+
+.. code-block:: feature
+
+    Scenario: Arguments for given, when, thens
+        Given there are 5 cucumbers
+        When I eat 3 cucumbers
+        Then I should have 2 cucumbers
+
+
+The code will look like:
+
+.. code-block:: python
+
+    import re
+    from pytest_bdd import scenario, given, when, then
+
+    test_arguments = scenario('arguments.feature', 'Arguments for given, when, thens',)
+
+    @given(re.compile('there are (?P<start>\d+) cucumbers'))
+    def start_cucumbers(start):
+        # note that you always get step arguments as strings, convert them on demand
+        start = int(start)
+        return dict(start=start)
+
+
+    @when(re.compile('I eat (?P<eat>\d+) cucumbers'))
+    def eat_cucumbers(start_cucumbers, start, eat):
+        start, eat = int(start), int(eat) 
+        start_cucumbers['eat'] = eat
+
+
+    @then(re.compile('I should have (?P<left>\d+) cucumbers'))
+    def should_have_left_cucumbers(start_cucumbers, start, eat, left):
+        start, eat, left = int(start), int(eat), int(left) 
+        assert start - eat == left
+        assert start_cucumbers['start'] == start
+        assert start_cucumbers['eat'] == eat
+
 Step parameters
 ===============
 
@@ -134,6 +181,9 @@ more difficult to express in the text files and preserve the correct format.
 The code will look like:
 
 .. code-block:: python
+    
+    import pytest
+    from pytest_bdd import scenario, given, when, then
 
     # Here we use pytest to parametrize the test with the parameters table
     @pytest.mark.parametrize(
@@ -262,7 +312,6 @@ test\_publish\_article.py:
 
 
 You can learn more about `functools.partial <http://docs.python.org/2/library/functools.html#functools.partial>`_ in the Python docs.
-
 
 Subplugins
 ==========
