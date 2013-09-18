@@ -40,7 +40,22 @@ def _find_step_function(request, name):
     try:
         return request.getfuncargvalue(name)
     except python.FixtureLookupError:
-        pass
+        fm = request._fixturemanager
+        for fixturename, fixturedef in fm._arg2fixturedefs.items():
+            fixturedef = fixturedef[0]
+            pattern = getattr(fixturedef.func, 'pattern', None)
+            if pattern:
+                m = pattern.match(name)
+                if m:
+                    for name, value in m.groupdict().items():
+                        fd = python.FixtureDef(
+                            fm, fixturedef.baseid, name, lambda: value, fixturedef.scope, fixturedef.params,
+                            fixturedef.unittest)
+                        fm._arg2fixturedefs[name] = [fd]
+                        if name in request._funcargs:
+                            request._funcargs[name] = value
+                    return request.getfuncargvalue(pattern.pattern)
+        raise
 
 
 def scenario(feature_name, scenario_name):

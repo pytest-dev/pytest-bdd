@@ -113,10 +113,10 @@ def _parse_step_name(name):
 
     """
     if isinstance(name, RE_TYPE):
-        name = remove_prefix(name.pattern)
+        name = name.pattern
         return name, re.compile(name)
     else:
-        return remove_prefix(name), None
+        return name, None
 
 
 def _contribute_regex_pattern(func, pattern):
@@ -131,9 +131,6 @@ def _contribute_regex_pattern(func, pattern):
     :raise: StepError if the function doesn't take group names as parameters.
 
     """
-    unknown = set(pattern.groupindex) - set(inspect.getargspec(func).args)
-    if unknown:
-        raise StepError('Step function should take parameters: {0}'.format([unicode(x) for x in unknown]))
     func.pattern = pattern
 
 
@@ -156,9 +153,6 @@ def _step_decorator(step_type, step_name):
     def decorator(func):
         # Validate the regex arguments and their group names
         # Contribute the regex pattern to the step function
-        if pattern:
-            _contribute_regex_pattern(func, pattern)
-
         step_func = func
 
         if step_type == GIVEN:
@@ -176,6 +170,9 @@ def _step_decorator(step_type, step_name):
 
         # Preserve a docstring
         lazy_step_func.__doc__ = func.__doc__
+
+        if pattern:
+            _contribute_regex_pattern(lazy_step_func, pattern)
 
         contribute_to_module(
             get_caller_module(),

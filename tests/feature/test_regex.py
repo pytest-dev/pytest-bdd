@@ -1,3 +1,4 @@
+import re
 from pytest_bdd import scenario, given, when, then
 
 
@@ -14,7 +15,7 @@ def results():
     return []
 
 
-@when('I append (?P<n>\d+) to the list')
+@when(re.compile('I append (?P<n>\d+) to the list'))
 def append_to_list(results, n):
     results.append(int(n))
 
