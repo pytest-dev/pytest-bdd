@@ -17,17 +17,14 @@ def values():
 
 @given(re.compile(r'I have (?P<euro>\d+) Euro'))
 def i_have(euro, values):
-    print euro
     assert euro == values.pop(0)
 
 
 @when(re.compile(r'I pay (?P<euro>\d+) Euro'))
 def i_pay(euro, values, request):
-    print euro
     assert euro == values.pop(0)
 
 
 @then(re.compile(r'I should have (?P<euro>\d+) Euro'))
 def i_should_have(euro, values):
-    print euro
     assert euro == values.pop(0)
