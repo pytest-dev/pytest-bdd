@@ -40,21 +40,26 @@ def _find_step_function(request, name):
     try:
         return request.getfuncargvalue(name)
     except python.FixtureLookupError:
-        fm = request._fixturemanager
-        for fixturename, fixturedef in fm._arg2fixturedefs.items():
-            fixturedef = fixturedef[0]
+
+        for fixturename, fixturedefs in request._fixturemanager._arg2fixturedefs.items():
+            fixturedef = fixturedefs[0]
+
             pattern = getattr(fixturedef.func, 'pattern', None)
-            if pattern:
-                m = pattern.match(name)
-                if m:
-                    for name, value in m.groupdict().items():
-                        fd = python.FixtureDef(
-                            fm, fixturedef.baseid, name, lambda: value, fixturedef.scope, fixturedef.params,
-                            fixturedef.unittest)
-                        fm._arg2fixturedefs[name] = [fd]
-                        if name in request._funcargs:
-                            request._funcargs[name] = value
-                    return request.getfuncargvalue(pattern.pattern)
+            match = pattern.match(name) if pattern else None
+
+            if match:
+                for arg, value in match.groupdict().items():
+                    fd = python.FixtureDef(
+                        request._fixturemanager,
+                        fixturedef.baseid,
+                        arg,
+                        lambda: value, fixturedef.scope, fixturedef.params,
+                        fixturedef.unittest,
+                    )
+                    request._fixturemanager._arg2fixturedefs[arg] = [fd]
+                    if arg in request._funcargs:
+                        request._funcargs[arg] = value
+                return request.getfuncargvalue(pattern.pattern)
         raise
 
 
@@ -74,7 +79,8 @@ def scenario(feature_name, scenario_name):
                 scenario = feature.scenarios[scenario_name]
             except KeyError:
                 raise ScenarioNotFound(
-                    'Scenario "{0}" in feature "{1}" is not found.'.format(scenario_name, feature_name))
+                    'Scenario "{0}" in feature "{1}" is not found.'.format(scenario_name, feature_name)
+                )
 
             resolved_params = scenario.params.intersection(request.fixturenames)
 
@@ -82,7 +88,9 @@ def scenario(feature_name, scenario_name):
                 raise NotEnoughScenarioParams(
                     """Scenario "{0}" in the feature "{1}" was not able to resolve all declared parameters."""
                     """Should resolve params: {2}, but resolved only: {3}.""".format(
-                        scenario_name, feature_name, sorted(scenario.params), sorted(resolved_params)))
+                        scenario_name, feature_name, sorted(scenario.params), sorted(resolved_params),
+                    )
+                )
 
             # Execute scenario steps
             for step in scenario.steps:

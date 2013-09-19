@@ -104,36 +104,6 @@ def _not_a_fixture_decorator(func):
     raise StepError('Cannot be used as a decorator when the fixture is specified')
 
 
-def _parse_step_name(name):
-    """Parse step name.
-
-    :param name: Step name or compiled regular expressions pattern with named
-        groups representing the arguments.
-    :return: Tuple of the stripped step name and the regex Pattern if provided.
-
-    """
-    if isinstance(name, RE_TYPE):
-        name = name.pattern
-        return name, re.compile(name)
-    else:
-        return name, None
-
-
-def _contribute_regex_pattern(func, pattern):
-    """Contribute a regex pattern to the step function.
-
-    Checks regular expression named groups are accepted in the
-    function arguments.
-
-    :param func: Step function.
-    :param pattern: Regular expressions compliled pattern.
-
-    :raise: StepError if the function doesn't take group names as parameters.
-
-    """
-    func.pattern = pattern
-
-
 def _step_decorator(step_type, step_name):
     """Step decorator for the type and the name.
 
@@ -148,11 +118,12 @@ def _step_decorator(step_type, step_name):
     fixture decorator to the step function.
 
     """
-    step_name, pattern = _parse_step_name(step_name)
+    pattern = None
+    if isinstance(step_name, RE_TYPE):
+        pattern = step_name
+        step_name = pattern.pattern
 
     def decorator(func):
-        # Validate the regex arguments and their group names
-        # Contribute the regex pattern to the step function
         step_func = func
 
         if step_type == GIVEN:
@@ -172,7 +143,7 @@ def _step_decorator(step_type, step_name):
         lazy_step_func.__doc__ = func.__doc__
 
         if pattern:
-            _contribute_regex_pattern(lazy_step_func, pattern)
+            lazy_step_func.pattern = pattern
 
         contribute_to_module(
             get_caller_module(),
