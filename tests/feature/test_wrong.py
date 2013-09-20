@@ -37,6 +37,7 @@ def test_wrong(request, feature, scenario_name):
     sc = scenario(feature, scenario_name)
     with pytest.raises(FeatureError):
         sc(request)
+    # TODO: assert the exception args from parameters
 
 
 @pytest.mark.parametrize(
@@ -51,12 +52,11 @@ def test_wrong(request, feature, scenario_name):
     ]
 )
 def test_wrong_type_order(request, scenario_name):
-    """Test wrong feature scenarios."""
-
+    """Test wrong step type order."""
     sc = scenario('wrong_type_order.feature', scenario_name)
     with pytest.raises(StepTypeError) as excinfo:
         sc(request)
-        print excinfo.value.args
+    excinfo  # TODO: assert the exception args from parameters
 
 
 def test_verbose_output(request):
