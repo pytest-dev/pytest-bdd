@@ -4,14 +4,13 @@ from pytest_bdd import scenario, given, when, then
 
 
 test_steps = scenario(
-    'regex_steps.feature',
+    'args_steps.feature',
     'Every step takes a parameter with the same name'
 )
 
 
 @pytest.fixture
 def values():
-    #return ['1', '2', '2', '1', '0', '999999']
     return ['1', '2', '1', '0', '999999']
 
 

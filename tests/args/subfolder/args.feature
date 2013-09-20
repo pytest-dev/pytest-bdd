@@ -1,4 +1,4 @@
-Scenario: Executed with steps matching regex step definitons
+Scenario: Executed with steps matching step definitons with arguments
     Given I have a foo fixture with value "foo"
     And there is a list
     When I append 1 to the list

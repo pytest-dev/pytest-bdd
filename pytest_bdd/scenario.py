@@ -18,6 +18,7 @@ from _pytest import python
 
 from pytest_bdd.feature import Feature  # pragma: no cover
 from pytest_bdd.steps import recreate_function
+from pytest_bdd.types import GIVEN
 
 
 class ScenarioNotFound(Exception):  # pragma: no cover
@@ -26,6 +27,14 @@ class ScenarioNotFound(Exception):  # pragma: no cover
 
 class NotEnoughScenarioParams(Exception):  # pragma: no cover
     """Scenario function doesn't take enough parameters in the arguments."""
+
+
+class StepTypeError(Exception):  # pragma: no cover
+    """Step definition is not of the type expected in the scenario."""
+
+
+class GivenAlreadyUsed(Exception):  # pragma: no cover
+    """Fixture that implements the Given has been already used."""
 
 
 def _find_step_function(request, name):
@@ -92,10 +101,29 @@ def scenario(feature_name, scenario_name):
                     )
                 )
 
+            givens = set()
             # Execute scenario steps
-            for step in scenario.steps:
-                step_func = _find_step_function(request, step)
+            for step_name, step_type in scenario.steps:
+                step_func = _find_step_function(request, step_name)
+
+                # Check the step types are called in the correct order
+                if step_func.step_type != step_type:
+                    raise StepTypeError('Wrong step type "{0}", expected {1}.'.format(step_func.step_type, step_type))
+
+                # Check if the fixture that implements given step has not been yet used by another given step
+                if step_type == GIVEN:
+                    if step_func.__name__ in givens:
+                        raise GivenAlreadyUsed(
+                            'Fixture "{0}" that implements this given step "{1}" has been already used.'.format(
+                                step_func.__name__, step_name,
+                            )
+                        )
+                    givens.add(step_func.__name__)
+
+                # Get the step argument values
                 kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
+
+                # Execute the step
                 step_func(**kwargs)
 
         _scenario.pytestbdd_params = set()

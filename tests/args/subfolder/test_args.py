@@ -1,7 +1,10 @@
 from pytest_bdd import scenario, given, then
 
 
-test_steps = scenario('regex.feature', 'Executed with steps matching regex step definitons')
+test_steps = scenario(
+    'args.feature',
+    'Executed with steps matching step definitons with arguments',
+)
 
 
 @given('I have a foo fixture with value "foo"')

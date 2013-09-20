@@ -48,7 +48,7 @@ PY3 = sys.version_info[0] >= 3  # pragma: no cover
 class StepError(Exception):  # pragma: no cover
     """Step declaration error."""
 
-RE_TYPE = type(re.compile(''))
+RE_TYPE = type(re.compile(''))  # pragma: no cover
 
 
 def given(name, fixture=None):
@@ -64,8 +64,12 @@ def given(name, fixture=None):
 
     if fixture is not None:
         module = get_caller_module()
-        func = lambda: lambda request: request.getfuncargvalue(fixture)
-        contribute_to_module(module, remove_prefix(name), pytest.fixture(func))
+        step_func = lambda request: request.getfuncargvalue(fixture)
+        step_func.step_type = GIVEN
+        step_func.__name__ = fixture
+        func = pytest.fixture(lambda: step_func)
+        func.__doc__ = 'Alias for the "{0}" fixture.'.format(fixture)
+        contribute_to_module(module, remove_prefix(name), func)
         return _not_a_fixture_decorator
 
     return _step_decorator(GIVEN, name)
@@ -134,12 +138,13 @@ def _step_decorator(step_type, step_name):
             step_func.__doc__ = func.__doc__
 
         step_func.__name__ = step_name
+        step_func.step_type = step_type
 
         @pytest.fixture
         def lazy_step_func():
             return step_func
 
-        # Preserve a docstring
+        # Preserve the docstring
         lazy_step_func.__doc__ = func.__doc__
 
         if pattern:

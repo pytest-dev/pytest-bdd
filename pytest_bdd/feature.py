@@ -146,7 +146,7 @@ class Feature(object):
                 if mode == SCENARIO:
                     self.scenarios[line] = scenario = Scenario(line)
                 else:
-                    scenario.add_step(line)
+                    scenario.add_step(step_name=line, step_type=mode)
 
     @classmethod
     def get_feature(cls, filename):
@@ -176,7 +176,12 @@ class Scenario(object):
         self.params = set()
         self.steps = []
 
-    def add_step(self, step):
-        """Add step."""
-        self.params.update(get_step_params(step))
-        self.steps.append(step)
+    def add_step(self, step_name, step_type):
+        """Add step to the scenario.
+
+        :param step_name: Step name.
+        :param step_type: Step type.
+
+        """
+        self.params.update(get_step_params(step_name))
+        self.steps.append((step_name, step_type))

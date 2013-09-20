@@ -1,6 +1,5 @@
 Scenario: Every step takes a parameter with the same name
 	Given I have 1 Euro
-	#And I have 2 Euro
 	When I pay 2 Euro
 	And I pay 1 Euro
 	Then I should have 0 Euro
