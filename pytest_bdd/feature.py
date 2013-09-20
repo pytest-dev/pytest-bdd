@@ -30,6 +30,7 @@ from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN  # pragma: no cover
 
 class FeatureError(Exception):  # pragma: no cover
     """Feature parse error."""
+
     message = u'{0}.\nLine number: {1}.\nLine: {2}.'
 
     def __str__(self):

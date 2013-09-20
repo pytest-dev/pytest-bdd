@@ -2,25 +2,60 @@
 
 import pytest
 
-from pytest_bdd import scenario
+from pytest_bdd import scenario, given, when, then
 from pytest_bdd.feature import FeatureError
+from pytest_bdd.scenario import StepTypeError
 
 
-@pytest.fixture(params=[
-    'When after then',
-    'Then first',
-    'Given after When',
-    'Given after Then',
-])
-def scenario_name(request):
-    return request.param
+@given('something')
+def given_something():
+    pass
 
 
-def test_wrong(request, scenario_name):
+@when('something else')
+def when_something_else():
+    pass
+
+
+@then('nevermind')
+def then_nevermind():
+    pass
+
+
+# @pytest.mark.parametrize(
+#     ('feature', 'scenario_name'),
+#     [
+#         # ('wrong.feature', 'When after then'),
+#         # ('wrong.feature', 'Then first'),
+#         # ('wrong.feature', 'Given after When'),
+#         # ('wrong.feature', 'Given after Then'),
+#     ]
+# )
+# def test_wrong(request, feature, scenario_name):
+#     """Test wrong feature scenarios."""
+
+#     sc = scenario(feature, scenario_name)
+#     sc(request)
+#     with pytest.raises(FeatureError):
+#         sc(request)
+
+
+@pytest.mark.parametrize(
+    'scenario_name',
+    [
+        'When in Given',
+        'When in Then',
+        'Then in Given',
+        'Given in When',
+        'Given in Then',
+        'Then in When',
+    ]
+)
+def test_wrong_type_order(request, scenario_name):
     """Test wrong feature scenarios."""
 
-    sc = scenario('wrong.feature', scenario_name)
-    with pytest.raises(FeatureError):
+    sc = scenario('wrong_type_order.feature', scenario_name)
+    with pytest.raises(StepTypeError):
         sc(request)
 
 
