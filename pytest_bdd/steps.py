@@ -66,7 +66,8 @@ def given(name, fixture=None):
         module = get_caller_module()
         step_func = lambda request: request.getfuncargvalue(fixture)
         step_func.step_type = GIVEN
-        step_func.__name__ = fixture
+        step_func.__name__ = name
+        step_func.fixture = fixture
         func = pytest.fixture(lambda: step_func)
         func.__doc__ = 'Alias for the "{0}" fixture.'.format(fixture)
         contribute_to_module(module, remove_prefix(name), func)
@@ -136,6 +137,7 @@ def _step_decorator(step_type, step_name):
                 func = pytest.fixture(func)
             step_func = lambda request: request.getfuncargvalue(func.__name__)
             step_func.__doc__ = func.__doc__
+            step_func.fixture = func.__name__
 
         step_func.__name__ = step_name
         step_func.step_type = step_type

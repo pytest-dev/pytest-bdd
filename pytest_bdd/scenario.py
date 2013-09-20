@@ -112,13 +112,13 @@ def scenario(feature_name, scenario_name):
 
                 # Check if the fixture that implements given step has not been yet used by another given step
                 if step_type == GIVEN:
-                    if step_func.__name__ in givens:
+                    if step_func.fixture in givens:
                         raise GivenAlreadyUsed(
-                            'Fixture "{0}" that implements this given step "{1}" has been already used.'.format(
-                                step_func.__name__, step_name,
+                            'Fixture "{0}" that implements this "{1}" given step has been already used.'.format(
+                                step_func.fixture, step_name,
                             )
                         )
-                    givens.add(step_func.__name__)
+                    givens.add(step_func.fixture)
 
                 # Get the step argument values
                 kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)

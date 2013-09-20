@@ -1,4 +1,7 @@
+import pytest
+
 from pytest_bdd import scenario, given, when, then
+from pytest_bdd.scenario import GivenAlreadyUsed
 
 
 test_steps = scenario('steps.feature', 'Executed step by step')
@@ -61,3 +64,13 @@ def xyz():
     return
 
 test_conftest = scenario('steps.feature', 'All steps are declared in the conftest')
+
+
+def test_multiple_given(request):
+    """Using the same given fixture raises an error."""
+    test = scenario(
+        'steps.feature',
+        'Using the same given fixture raises an error',
+    )
+    with pytest.raises(GivenAlreadyUsed):
+        test(request)

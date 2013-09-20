@@ -21,3 +21,8 @@ Scenario: Then step can follow Given step
 Scenario: All steps are declared in the conftest
     Given I have a bar
     Then bar should have value "bar"
+
+
+Scenario: Using the same given fixture raises an error
+    Given I have a bar
+    And I have a bar
