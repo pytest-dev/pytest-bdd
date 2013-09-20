@@ -22,22 +22,21 @@ def then_nevermind():
     pass
 
 
-# @pytest.mark.parametrize(
-#     ('feature', 'scenario_name'),
-#     [
-#         # ('wrong.feature', 'When after then'),
-#         # ('wrong.feature', 'Then first'),
-#         # ('wrong.feature', 'Given after When'),
-#         # ('wrong.feature', 'Given after Then'),
-#     ]
-# )
-# def test_wrong(request, feature, scenario_name):
-#     """Test wrong feature scenarios."""
+@pytest.mark.parametrize(
+    ('feature', 'scenario_name'),
+    [
+        ('when_after_then.feature', 'When after then'),
+        ('then_first.feature', 'Then first'),
+        ('given_after_when.feature', 'Given after When'),
+        ('given_after_then.feature', 'Given after Then'),
+    ]
+)
+def test_wrong(request, feature, scenario_name):
+    """Test wrong feature scenarios."""
 
-#     sc = scenario(feature, scenario_name)
-#     sc(request)
-#     with pytest.raises(FeatureError):
-#         sc(request)
+    sc = scenario(feature, scenario_name)
+    with pytest.raises(FeatureError):
+        sc(request)
 
 
 @pytest.mark.parametrize(
@@ -61,7 +60,7 @@ def test_wrong_type_order(request, scenario_name):
 
 def test_verbose_output(request):
     """Test verbose output of failed feature scenario"""
-    sc = scenario('wrong.feature', 'When after then')
+    sc = scenario('when_after_then.feature', 'When after then')
     with pytest.raises(FeatureError) as excinfo:
         sc(request)
 
