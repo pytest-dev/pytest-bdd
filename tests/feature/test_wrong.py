@@ -54,8 +54,9 @@ def test_wrong_type_order(request, scenario_name):
     """Test wrong feature scenarios."""
 
     sc = scenario('wrong_type_order.feature', scenario_name)
-    with pytest.raises(StepTypeError):
+    with pytest.raises(StepTypeError) as excinfo:
         sc(request)
+        print excinfo.value.args
 
 
 def test_verbose_output(request):
