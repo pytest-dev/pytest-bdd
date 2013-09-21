@@ -138,7 +138,7 @@ The code will look like:
     import re
     from pytest_bdd import scenario, given, when, then
 
-    test_arguments = scenario('arguments.feature', 'Arguments for given, when, thens',)
+    test_arguments = scenario('arguments.feature', 'Arguments for given, when, thens')
 
     @given(re.compile('there are (?P<start>\d+) cucumbers'))
     def start_cucumbers(start):
@@ -217,8 +217,98 @@ The code will look like:
         assert start_cucumbers['start'] == start
         assert start_cucumbers['eat'] == eat
 
-Reuse fixtures
-==============
+Test setup
+==========
+
+Test setup is implemented within the Given section. Even though these steps
+are executed imperatively to apply possible side-effects, pytest-bdd is trying
+to benefit of the PyTest fixtures which is based on the dependency injection
+and makes the setup more declarative style.
+
+.. code-block:: python
+
+    @given('I have a beautiful article')
+    def article():
+        return Article(is_beautiful=True)
+
+This also declares a PyTest fixture "article" and any other step can depend on it.
+
+.. code-block:: feature
+
+    Given I have a beautiful article
+    When I publish this article
+
+When step is referring the article to publish it.
+
+.. code-block:: python
+
+    @when('I publish this article')
+    def publish_article(article):
+        article.publish()
+
+Many other BDD toolkits operate a global context and put the side effects there.
+This makes it very difficult to implement the steps, because the dependencies
+appear only as the side-effects in the run-time and not declared in the code.
+The publish article step has to trust that the article is already in the context,
+has to know the name of the attribute it is stored there, the type etc.
+
+In pytest-bdd you just declare an argument of the step function that it depends on
+and the PyTest will make sure to provide it.
+
+Still side effects can be applied in the imperative style by design of the BDD.
+
+.. code-block:: feature
+
+    Given I have a beautiful article
+    And my article is published
+
+Functional tests can reuse your fixture libraries created for the unit-tests and upgrade
+them by applying the side effects.
+
+.. code-block:: python
+
+    given('I have a beautiful article', fixture='article')
+    
+    @given('my article is published')
+    def published_article(article):
+        article.publish()
+        return article
+
+This way side-effects were applied to our article and PyTest makes sure that all
+steps that require the "article" fixture will receive the same object. The value
+of the "published_article" and the "article" fixtures is the same object.
+
+Fixtures are evaluated only once within the PyTest scope and their values are cached.
+In case of Given steps and the step arguments mentioning the same given step makes
+no sense. It won't be executed second time.
+
+.. code-block:: feature
+
+    Given I have a beautiful article
+    And some other thing
+    And I have a beautiful article  # Won't be executed, exception is raised
+
+
+pytest-bdd will raise an exception even in the case of the steps that use regular expression
+patterns to get arguments.
+
+
+.. code-block:: feature
+
+    Given I have 1 cucumbers
+    And I have 2 cucumbers  # Exception is raised
+
+Will raise an exception if the step is using the regular expression pattern.
+
+.. code-block:: python
+
+    @given(re.compile('I have (?P<n>\d+) cucumbers'))
+    def cucumbers(n):
+        return create_cucumbers(n)
+
+
+Reusing fixtures
+================
 
 Sometimes scenarios define new names for the fixture that can be
 inherited. Fixtures can be reused with other names using given():
@@ -227,8 +317,8 @@ inherited. Fixtures can be reused with other names using given():
 
     given('I have beautiful article', fixture='article')
 
-Reuse steps
-===========
+Reusing steps
+=============
 
 It is possible to define some common steps in the parent conftest.py and
 simply expect them in the child test file.
@@ -323,7 +413,7 @@ The pytest BDD has plugin support, and the main purpose of plugins
 
 List of known subplugins:
 
-    *  pytest-bdd-splinter -- collection of fixtures for the real browser BDD testing
+    *  pytest-bdd-splinter - collection of fixtures for the real browser BDD testing
 
 License
 =======
