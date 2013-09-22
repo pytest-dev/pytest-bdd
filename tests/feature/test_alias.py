@@ -6,7 +6,7 @@ from pytest_bdd import scenario, given, when, then
 test_steps = scenario('alias.feature', 'Multiple given alias is not evaluated multiple times')
 
 
-@given('Given I have an empty list')
+@given('I have an empty list')
 def results():
     return []
 

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.6.0
+-----
+
+- Added step arguments support. (curzona, olegpidsadnyi, bubenkoff)
+
 
 0.5.2
 -----

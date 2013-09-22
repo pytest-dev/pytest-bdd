@@ -32,6 +32,7 @@ given('I have a beautiful article', fixture='article')
 
 """
 from __future__ import absolute_import  # pragma: no cover
+import re
 from types import CodeType  # pragma: no cover
 import inspect  # pragma: no cover  # pragma: no cover
 import sys  # pragma: no cover
@@ -45,7 +46,9 @@ PY3 = sys.version_info[0] >= 3  # pragma: no cover
 
 
 class StepError(Exception):  # pragma: no cover
-    pass
+    """Step declaration error."""
+
+RE_TYPE = type(re.compile(''))  # pragma: no cover
 
 
 def given(name, fixture=None):
@@ -58,12 +61,16 @@ def given(name, fixture=None):
     :note: Can't be used as a decorator when the fixture is specified.
 
     """
-    name = remove_prefix(name)
 
     if fixture is not None:
         module = get_caller_module()
-        func = lambda: lambda request: request.getfuncargvalue(fixture)
-        contribute_to_module(module, name, pytest.fixture(func))
+        step_func = lambda request: request.getfuncargvalue(fixture)
+        step_func.step_type = GIVEN
+        step_func.__name__ = name
+        step_func.fixture = fixture
+        func = pytest.fixture(lambda: step_func)
+        func.__doc__ = 'Alias for the "{0}" fixture.'.format(fixture)
+        contribute_to_module(module, remove_prefix(name), func)
         return _not_a_fixture_decorator
 
     return _step_decorator(GIVEN, name)
@@ -110,31 +117,40 @@ def _step_decorator(step_type, step_name):
 
     :return: Decorator function for the step.
 
+    :raise: StepError if the function doesn't take group names as parameters.
+
     :note: If the step type is GIVEN it will automatically apply the pytest
     fixture decorator to the step function.
 
     """
-    step_name = remove_prefix(step_name)
+    pattern = None
+    if isinstance(step_name, RE_TYPE):
+        pattern = step_name
+        step_name = pattern.pattern
 
     def decorator(func):
-
         step_func = func
 
         if step_type == GIVEN:
             if not hasattr(func, '_pytestfixturefunction'):
-                # Avoid multiple wrapping a fixture
+                # Avoid multiple wrapping of a fixture
                 func = pytest.fixture(func)
             step_func = lambda request: request.getfuncargvalue(func.__name__)
             step_func.__doc__ = func.__doc__
+            step_func.fixture = func.__name__
 
         step_func.__name__ = step_name
+        step_func.step_type = step_type
 
         @pytest.fixture
         def lazy_step_func():
             return step_func
 
-        # Preserve a docstring
+        # Preserve the docstring
         lazy_step_func.__doc__ = func.__doc__
+
+        if pattern:
+            lazy_step_func.pattern = pattern
 
         contribute_to_module(
             get_caller_module(),
