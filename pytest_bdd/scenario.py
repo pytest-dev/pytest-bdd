@@ -103,21 +103,21 @@ def scenario(feature_name, scenario_name):
 
             givens = set()
             # Execute scenario steps
-            for step_name, step_type in scenario.steps:
-                step_func = _find_step_function(request, step_name)
+            for step in scenario.steps:
+                step_func = _find_step_function(request, step.name)
 
                 # Check the step types are called in the correct order
-                if step_func.step_type != step_type:
+                if step_func.step_type != step.type:
                     raise StepTypeError(
-                        'Wrong step type "{0}" while "{1}" is expected.'.format(step_func.step_type, step_type)
+                        'Wrong step type "{0}" while "{1}" is expected.'.format(step_func.step_type, step.type)
                     )
 
                 # Check if the fixture that implements given step has not been yet used by another given step
-                if step_type == GIVEN:
+                if step.type == GIVEN:
                     if step_func.fixture in givens:
                         raise GivenAlreadyUsed(
                             'Fixture "{0}" that implements this "{1}" given step has been already used.'.format(
-                                step_func.fixture, step_name,
+                                step_func.fixture, step.name,
                             )
                         )
                     givens.add(step_func.fixture)

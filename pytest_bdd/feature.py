@@ -185,4 +185,12 @@ class Scenario(object):
 
         """
         self.params.update(get_step_params(step_name))
-        self.steps.append((step_name, step_type))
+        self.steps.append(Step(name=step_name, type=step_type))
+
+
+class Step(object):
+    """Step."""
+
+    def __init__(self, name, type):
+        self.name = name
+        self.type = type
