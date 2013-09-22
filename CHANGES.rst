@@ -5,6 +5,7 @@ Changelog
 -----
 
 - Added step arguments support. (curzona, olegpidsadnyi, bubenkoff)
+- Added checking of the step type order. (markon, olegpidsadnyi)
 
 
 0.5.2
