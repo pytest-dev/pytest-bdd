@@ -1,7 +1,4 @@
 """Test wrong feature syntax."""
-import functools
-import re
-
 import pytest
 
 from pytest_bdd import scenario, given, when, then
@@ -71,21 +68,3 @@ def test_verbose_output(request):
 
     assert line_number == 4
     assert line == 'When I do it again'
-
-
-sc = functools.partial(scenario, 'failing_arguments.feature')
-test_argument_in_when_step_1 = sc('Argument in when, step 1')
-test_argument_in_when_step_2 = sc('Argument in when, step 2')
-
-
-@pytest.fixture
-@when(re.compile('I get argument (?P<arg>\d+)'))
-def get_argument(arg):
-    """Getting argument."""
-    return dict(arg=arg)
-
-
-@then(re.compile('My argument should be (?P<arg>\d+)'))
-def assert_that_my_argument_is_arg(get_argument, arg):
-    """Assert that arg from when equals arg."""
-    assert get_argument['arg'] == arg

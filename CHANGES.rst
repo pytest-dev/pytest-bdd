@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.6.1
+-----
+
+- Step arguments in whens when there are no given arguments used. (amakhnach, bubenkoff)
+
+
 0.6.0
 -----
 
