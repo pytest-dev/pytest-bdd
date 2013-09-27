@@ -1,5 +1,4 @@
 """Test wrong feature syntax."""
-
 import pytest
 
 from pytest_bdd import scenario, given, when, then

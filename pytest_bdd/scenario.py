@@ -65,9 +65,10 @@ def _find_step_function(request, name):
                         lambda: value, fixturedef.scope, fixturedef.params,
                         fixturedef.unittest,
                     )
+                    # inject fixture definition
                     request._fixturemanager._arg2fixturedefs[arg] = [fd]
-                    if arg in request._funcargs:
-                        request._funcargs[arg] = value
+                    # inject fixture value in request cache
+                    request._funcargs[arg] = value
                 return request.getfuncargvalue(pattern.pattern)
         raise
 
