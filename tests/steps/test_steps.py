@@ -1,6 +1,7 @@
 """Test when and then steps are callables."""
 
-from pytest_bdd import when, then
+import pytest
+from pytest_bdd import given, when, then
 
 
 @when('I do stuff')
@@ -24,3 +25,17 @@ def test_when_then(request):
 
     check_stuff_ = request.getfuncargvalue('I check stuff')
     assert callable(check_stuff_)
+
+
+@pytest.mark.parametrize(
+    ('step', 'keyword'), [
+        (given, 'Given'),
+        (when, 'When'),
+        (then, 'Then')])
+def test_preserve_decorator(step, keyword):
+    """Check that we preserve original function attributes after decorating it."""
+    @step(keyword)
+    def func():
+        """Doc string."""
+
+    assert globals()[keyword].__doc__ == 'Doc string.'

@@ -1,9 +1,12 @@
 """Feature.
 
 The way of describing the behavior is based on Gherkin language, but a very
-limited version. It doesn't support any parameter tables or any variables.
+limited version. It doesn't support any parameter tables.
 If the parametrization is needed to generate more test cases it can be done
 on the fixture level of the pytest.
+The <variable> syntax can be used here to make a connection between steps and
+it will also validate the parameters mentioned in the steps with ones
+provided in the pytest parametrization table.
 
 Syntax example:
 
@@ -18,21 +21,30 @@ Syntax example:
 :note: The "#" symbol is used for comments.
 :note: There're no multiline steps, the description of the step must fit in
 one line.
+
 """
+import re  # pragma: no cover
 
-from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN
+from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN  # pragma: no cover
 
 
-class FeatureError(Exception):
+class FeatureError(Exception):  # pragma: no cover
     """Feature parse error."""
-    pass
+
+    message = u'{0}.\nLine number: {1}.\nLine: {2}.'
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    def __unicode__(self):
+        return self.message.format(*self.args)
 
 
 # Global features dictionary
-features = {}
+features = {}  # pragma: no cover
 
 
-STEP_PREFIXES = {
+STEP_PREFIXES = {  # pragma: no cover
     'Scenario: ': SCENARIO,
     'Given ': GIVEN,
     'When ': WHEN,
@@ -40,7 +52,9 @@ STEP_PREFIXES = {
     'And ': None,  # Unknown step type
 }
 
-COMMENT_SYMBOLS = '#'
+COMMENT_SYMBOLS = '#'  # pragma: no cover
+
+STEP_PARAM_RE = re.compile('\<(.+?)\>')  # pragma: no cover
 
 
 def get_step_type(line):
@@ -52,6 +66,14 @@ def get_step_type(line):
     for prefix in STEP_PREFIXES:
         if line.startswith(prefix):
             return STEP_PREFIXES[prefix]
+
+
+def get_step_params(name):
+    """Return step parameters."""
+    params = STEP_PARAM_RE.search(name)
+    if params:
+        return params.groups()
+    return ()
 
 
 def strip(line):
@@ -71,7 +93,9 @@ def remove_prefix(line):
     """Remove the step prefix (Scenario, Given, When, Then or And).
 
     :param line: Line of the Feature file.
+
     :return: Line without the prefix.
+
     """
     for prefix in STEP_PREFIXES:
         if line.startswith(prefix):
@@ -86,6 +110,7 @@ class Feature(object):
         """Parse the feature file.
 
         :param filename: Relative path to the feature file.
+
         """
         self.scenarios = {}
 
@@ -95,7 +120,7 @@ class Feature(object):
 
         with open(filename, 'r') as f:
             content = f.read()
-            for number_of_line, line in enumerate(content.split('\n')):
+            for line_number, line in enumerate(content.split('\n')):
                 line = strip(line)
                 if not line:
                     continue
@@ -104,15 +129,15 @@ class Feature(object):
 
                 if mode == GIVEN and prev_mode not in (GIVEN, SCENARIO):
                     raise FeatureError('Given steps must be the first in withing the Scenario',
-                                       number_of_line, line, prev_mode, mode)
+                                       line_number, line)
 
                 if mode == WHEN and prev_mode not in (SCENARIO, GIVEN, WHEN):
                     raise FeatureError('When steps must be the first or follow Given steps',
-                                       number_of_line, line, prev_mode, mode)
+                                       line_number, line)
 
                 if mode == THEN and prev_mode not in (GIVEN, WHEN, THEN):
                     raise FeatureError('Then steps must follow Given or When steps',
-                                       number_of_line, line, prev_mode, mode)
+                                       line_number, line)
 
                 prev_mode = mode
 
@@ -122,10 +147,21 @@ class Feature(object):
                 if mode == SCENARIO:
                     self.scenarios[line] = scenario = Scenario(line)
                 else:
-                    scenario.add_step(line)
+                    scenario.add_step(step_name=line, step_type=mode)
 
     @classmethod
     def get_feature(cls, filename):
+        """Get a feature by the filename.
+
+        :param filename: Filename of the feature file.
+
+        :return: `Feature` instance from the parsed feature cache.
+
+        :note: The features are parsed on the execution of the test and
+            stored in the global variable cache to improve the performance
+            when multiple scenarios are referencing the same file.
+
+        """
         feature = features.get(filename)
         if not feature:
             feature = Feature(filename)
@@ -138,8 +174,23 @@ class Scenario(object):
 
     def __init__(self, name):
         self.name = name
+        self.params = set()
         self.steps = []
 
-    def add_step(self, step):
-        """Add step."""
-        self.steps.append(step)
+    def add_step(self, step_name, step_type):
+        """Add step to the scenario.
+
+        :param step_name: Step name.
+        :param step_type: Step type.
+
+        """
+        self.params.update(get_step_params(step_name))
+        self.steps.append(Step(name=step_name, type=step_type))
+
+
+class Step(object):
+    """Step."""
+
+    def __init__(self, name, type):
+        self.name = name
+        self.type = type

@@ -9,36 +9,138 @@ test_publish_article = scenario(
     feature_name='publish_article.feature',
     scenario_name='Publishing the article',
 )
+
 """
-import inspect
-from os import path as op
+import inspect  # pragma: no cover
+from os import path as op  # pragma: no cover
 
-from pytest_bdd.feature import Feature
+from _pytest import python
+
+from pytest_bdd.feature import Feature  # pragma: no cover
+from pytest_bdd.steps import recreate_function
+from pytest_bdd.types import GIVEN
 
 
-class ScenarioNotFound(Exception):
+class ScenarioNotFound(Exception):  # pragma: no cover
     """Scenario Not Found"""
 
 
+class NotEnoughScenarioParams(Exception):  # pragma: no cover
+    """Scenario function doesn't take enough parameters in the arguments."""
+
+
+class StepTypeError(Exception):  # pragma: no cover
+    """Step definition is not of the type expected in the scenario."""
+
+
+class GivenAlreadyUsed(Exception):  # pragma: no cover
+    """Fixture that implements the Given has been already used."""
+
+
+def _find_step_function(request, name):
+    """Match the step defined by the regular expression pattern.
+
+    :param request: PyTest request object.
+    :param name: Step name.
+
+    :return: Step function.
+
+    """
+    try:
+        return request.getfuncargvalue(name)
+    except python.FixtureLookupError:
+
+        for fixturename, fixturedefs in request._fixturemanager._arg2fixturedefs.items():
+            fixturedef = fixturedefs[0]
+
+            pattern = getattr(fixturedef.func, 'pattern', None)
+            match = pattern.match(name) if pattern else None
+
+            if match:
+                for arg, value in match.groupdict().items():
+                    fd = python.FixtureDef(
+                        request._fixturemanager,
+                        fixturedef.baseid,
+                        arg,
+                        lambda: value, fixturedef.scope, fixturedef.params,
+                        fixturedef.unittest,
+                    )
+                    request._fixturemanager._arg2fixturedefs[arg] = [fd]
+                    if arg in request._funcargs:
+                        request._funcargs[arg] = value
+                return request.getfuncargvalue(pattern.pattern)
+        raise
+
+
 def scenario(feature_name, scenario_name):
-    """Scenario."""
+    """Scenario. May be called both as decorator and as just normal function."""
 
-    def _scenario(request):
-        # Get the feature
-        base_path = request.getfuncargvalue('pytestbdd_feature_base_dir')
-        feature_path = op.abspath(op.join(base_path, feature_name))
-        feature = Feature.get_feature(feature_path)
+    def decorator(request):
 
-        # Get the scenario
-        try:
-            scenario = feature.scenarios[scenario_name]
-        except KeyError:
-            raise ScenarioNotFound('Scenario "{0}" in feature "{1}" is not found'.format(scenario_name, feature_name))
+        def _scenario(request):
+            # Get the feature
+            base_path = request.getfuncargvalue('pytestbdd_feature_base_dir')
+            feature_path = op.abspath(op.join(base_path, feature_name))
+            feature = Feature.get_feature(feature_path)
 
-        # Execute scenario's steps
-        for step in scenario.steps:
-            func = request.getfuncargvalue(step)
-            kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(func).args)
-            func(**kwargs)
+            # Get the scenario
+            try:
+                scenario = feature.scenarios[scenario_name]
+            except KeyError:
+                raise ScenarioNotFound(
+                    'Scenario "{0}" in feature "{1}" is not found.'.format(scenario_name, feature_name)
+                )
 
-    return _scenario
+            resolved_params = scenario.params.intersection(request.fixturenames)
+
+            if scenario.params != resolved_params:
+                raise NotEnoughScenarioParams(
+                    """Scenario "{0}" in the feature "{1}" was not able to resolve all declared parameters."""
+                    """Should resolve params: {2}, but resolved only: {3}.""".format(
+                        scenario_name, feature_name, sorted(scenario.params), sorted(resolved_params),
+                    )
+                )
+
+            givens = set()
+            # Execute scenario steps
+            for step in scenario.steps:
+                step_func = _find_step_function(request, step.name)
+
+                # Check the step types are called in the correct order
+                if step_func.step_type != step.type:
+                    raise StepTypeError(
+                        'Wrong step type "{0}" while "{1}" is expected.'.format(step_func.step_type, step.type)
+                    )
+
+                # Check if the fixture that implements given step has not been yet used by another given step
+                if step.type == GIVEN:
+                    if step_func.fixture in givens:
+                        raise GivenAlreadyUsed(
+                            'Fixture "{0}" that implements this "{1}" given step has been already used.'.format(
+                                step_func.fixture, step.name,
+                            )
+                        )
+                    givens.add(step_func.fixture)
+
+                # Get the step argument values
+                kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
+
+                # Execute the step
+                step_func(**kwargs)
+
+        _scenario.pytestbdd_params = set()
+
+        if isinstance(request, python.FixtureRequest):
+            # Called as a normal function.
+            return _scenario(request)
+
+        # Used as a decorator. Modify the returned function to add parameters from a decorated function.
+        func_args = inspect.getargspec(request).args
+        if 'request' in func_args:
+            func_args.remove('request')
+        _scenario = recreate_function(_scenario, name=request.__name__, add_args=func_args)
+        _scenario.pytestbdd_params = set(func_args)
+
+        return _scenario
+
+    return decorator
