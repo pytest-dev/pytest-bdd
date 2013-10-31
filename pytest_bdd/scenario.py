@@ -17,7 +17,7 @@ from os import path as op  # pragma: no cover
 from _pytest import python
 
 from pytest_bdd.feature import Feature  # pragma: no cover
-from pytest_bdd.steps import recreate_function
+from pytest_bdd.steps import recreate_function, get_caller_module
 from pytest_bdd.types import GIVEN
 
 
@@ -75,6 +75,8 @@ def _find_step_function(request, name):
 
 def scenario(feature_name, scenario_name):
     """Scenario. May be called both as decorator and as just normal function."""
+
+    caller_module = get_caller_module()
 
     def decorator(request):
 
@@ -139,9 +141,11 @@ def scenario(feature_name, scenario_name):
         func_args = inspect.getargspec(request).args
         if 'request' in func_args:
             func_args.remove('request')
-        _scenario = recreate_function(_scenario, name=request.__name__, add_args=func_args)
+        _scenario = recreate_function(_scenario, name=request.__name__, add_args=func_args, module=caller_module)
         _scenario.pytestbdd_params = set(func_args)
 
         return _scenario
+
+    recreate_function(decorator, module=caller_module)
 
     return decorator
