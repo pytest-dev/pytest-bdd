@@ -109,7 +109,7 @@ def scenario(feature_name, scenario_name, encoding='utf-8'):
             for step in scenario.steps:
                 step_func = _find_step_function(request, step.name)
 
-                # Check the step types are _find_step_function called in the correct order
+                # Check the step types are called in the correct order
                 if step_func.step_type != step.type:
                     raise StepTypeError(
                         'Wrong step type "{0}" while "{1}" is expected.'.format(step_func.step_type, step.type)
