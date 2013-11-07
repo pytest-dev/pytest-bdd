@@ -24,6 +24,7 @@ one line.
 
 """
 import re  # pragma: no cover
+import sys  # pragma: no cover
 
 from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN  # pragma: no cover
 
@@ -103,6 +104,20 @@ def remove_prefix(line):
     return line
 
 
+def _open_file(filename, encoding):
+    if sys.version_info < (3, 0):
+        return open(filename, 'r')
+    else:
+        return open(filename, 'r', encoding=encoding)
+
+
+def _force_unicode(string, encoding):
+    if sys.version_info < (3, 0):
+        return string.decode(encoding)
+    else:
+        return string
+
+
 class Feature(object):
     """Feature."""
 
@@ -118,8 +133,8 @@ class Feature(object):
         mode = None
         prev_mode = None
 
-        with open(filename, 'r') as f:
-            content = f.read().decode(encoding)
+        with _open_file(filename, encoding) as f:
+            content = _force_unicode(f.read(), encoding)
             for line_number, line in enumerate(content.split('\n')):
                 line = strip(line)
                 if not line:
