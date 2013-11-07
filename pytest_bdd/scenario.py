@@ -84,7 +84,7 @@ def scenario(feature_name, scenario_name, encoding='utf-8'):
             # Get the feature
             base_path = request.getfuncargvalue('pytestbdd_feature_base_dir')
             feature_path = op.abspath(op.join(base_path, feature_name))
-            feature = Feature.get_feature(feature_path)
+            feature = Feature.get_feature(feature_path, encoding=encoding)
 
             # Get the scenario
             try:
@@ -109,7 +109,7 @@ def scenario(feature_name, scenario_name, encoding='utf-8'):
             for step in scenario.steps:
                 step_func = _find_step_function(request, step.name, encoding=encoding)
 
-                # Check the step types ar_find_step_functione called in the correct order
+                # Check the step types are _find_step_function called in the correct order
                 if step_func.step_type != step.type:
                     raise StepTypeError(
                         'Wrong step type "{0}" while "{1}" is expected.'.format(step_func.step_type, step.type)
