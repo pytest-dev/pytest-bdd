@@ -37,7 +37,7 @@ class GivenAlreadyUsed(Exception):  # pragma: no cover
     """Fixture that implements the Given has been already used."""
 
 
-def _find_step_function(request, name, encoding='utf-8'):
+def _find_step_function(request, name):
     """Match the step defined by the regular expression pattern.
 
     :param request: PyTest request object.
@@ -68,7 +68,7 @@ def _find_step_function(request, name, encoding='utf-8'):
                     # inject fixture definition
                     request._fixturemanager._arg2fixturedefs[arg] = [fd]
                     # inject fixture value in request cache
-                    request._funcargs[arg] = value.decode(encoding)
+                    request._funcargs[arg] = value
                 return request.getfuncargvalue(pattern.pattern)
         raise
 
@@ -107,7 +107,7 @@ def scenario(feature_name, scenario_name, encoding='utf-8'):
             givens = set()
             # Execute scenario steps
             for step in scenario.steps:
-                step_func = _find_step_function(request, step.name, encoding=encoding)
+                step_func = _find_step_function(request, step.name)
 
                 # Check the step types are _find_step_function called in the correct order
                 if step_func.step_type != step.type:
