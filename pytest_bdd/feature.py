@@ -106,7 +106,7 @@ def remove_prefix(line):
 class Feature(object):
     """Feature."""
 
-    def __init__(self, filename):
+    def __init__(self, filename, encoding='utf-8'):
         """Parse the feature file.
 
         :param filename: Relative path to the feature file.
@@ -119,7 +119,7 @@ class Feature(object):
         prev_mode = None
 
         with open(filename, 'r') as f:
-            content = f.read()
+            content = f.read().decode(encoding)
             for line_number, line in enumerate(content.split('\n')):
                 line = strip(line)
                 if not line:
@@ -150,7 +150,7 @@ class Feature(object):
                     scenario.add_step(step_name=line, step_type=mode)
 
     @classmethod
-    def get_feature(cls, filename):
+    def get_feature(cls, filename, encoding='utf-8'):
         """Get a feature by the filename.
 
         :param filename: Filename of the feature file.
@@ -164,7 +164,7 @@ class Feature(object):
         """
         feature = features.get(filename)
         if not feature:
-            feature = Feature(filename)
+            feature = Feature(filename, encoding=encoding)
             features[filename] = feature
         return feature
 

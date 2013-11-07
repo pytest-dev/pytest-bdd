@@ -37,7 +37,7 @@ class GivenAlreadyUsed(Exception):  # pragma: no cover
     """Fixture that implements the Given has been already used."""
 
 
-def _find_step_function(request, name):
+def _find_step_function(request, name, encoding='utf-8'):
     """Match the step defined by the regular expression pattern.
 
     :param request: PyTest request object.
@@ -68,12 +68,12 @@ def _find_step_function(request, name):
                     # inject fixture definition
                     request._fixturemanager._arg2fixturedefs[arg] = [fd]
                     # inject fixture value in request cache
-                    request._funcargs[arg] = value
+                    request._funcargs[arg] = value.decode(encoding)
                 return request.getfuncargvalue(pattern.pattern)
         raise
 
 
-def scenario(feature_name, scenario_name):
+def scenario(feature_name, scenario_name, encoding='utf-8'):
     """Scenario. May be called both as decorator and as just normal function."""
 
     caller_module = get_caller_module()
@@ -107,9 +107,9 @@ def scenario(feature_name, scenario_name):
             givens = set()
             # Execute scenario steps
             for step in scenario.steps:
-                step_func = _find_step_function(request, step.name)
+                step_func = _find_step_function(request, step.name, encoding=encoding)
 
-                # Check the step types are called in the correct order
+                # Check the step types ar_find_step_functione called in the correct order
                 if step_func.step_type != step.type:
                     raise StepTypeError(
                         'Wrong step type "{0}" while "{1}" is expected.'.format(step_func.step_type, step.type)
@@ -145,7 +145,5 @@ def scenario(feature_name, scenario_name):
         _scenario.pytestbdd_params = set(func_args)
 
         return _scenario
-
-    recreate_function(decorator, module=caller_module)
 
     return decorator
