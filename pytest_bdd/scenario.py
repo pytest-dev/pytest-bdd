@@ -73,7 +73,7 @@ def _find_step_function(request, name):
         raise
 
 
-def scenario(feature_name, scenario_name):
+def scenario(feature_name, scenario_name, encoding='utf-8'):
     """Scenario. May be called both as decorator and as just normal function."""
 
     caller_module = get_caller_module()
@@ -84,7 +84,7 @@ def scenario(feature_name, scenario_name):
             # Get the feature
             base_path = request.getfuncargvalue('pytestbdd_feature_base_dir')
             feature_path = op.abspath(op.join(base_path, feature_name))
-            feature = Feature.get_feature(feature_path)
+            feature = Feature.get_feature(feature_path, encoding=encoding)
 
             # Get the scenario
             try:
@@ -145,7 +145,5 @@ def scenario(feature_name, scenario_name):
         _scenario.pytestbdd_params = set(func_args)
 
         return _scenario
-
-    recreate_function(decorator, module=caller_module)
 
     return decorator

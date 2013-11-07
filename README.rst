@@ -155,9 +155,13 @@ The code will look like:
 
     @then(re.compile('I should have (?P<left>\d+) cucumbers'))
     def should_have_left_cucumbers(start_cucumbers, start, left):
-        start, left = int(start), int(left) 
+        start, left = int(start), int(left)
         assert start_cucumbers['start'] == start
         assert start - start_cucumbers['eat'] == left
+
+Scenario parameters
+===================
+Scenario can accept `encoding` param to decode content of feature file in specific encoding. UTF-8 is default.
 
 Step parameters
 ===============
@@ -183,7 +187,7 @@ more difficult to express in the text files and preserve the correct format.
 The code will look like:
 
 .. code-block:: python
-    
+
     import pytest
     from pytest_bdd import scenario, given, when, then
 
@@ -268,7 +272,7 @@ them by applying the side effects.
 .. code-block:: python
 
     given('I have a beautiful article', fixture='article')
-    
+
     @given('my article is published')
     def published_article(article):
         article.publish()
@@ -395,7 +399,7 @@ test\_publish\_article.py:
     from functools import partial
 
     import pytest_bdd
-    
+
 
     scenario = partial(pytest_bdd.scenario, '/path/to/publish_article.feature')
 

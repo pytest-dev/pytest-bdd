@@ -24,6 +24,7 @@ one line.
 
 """
 import re  # pragma: no cover
+import sys  # pragma: no cover
 
 from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN  # pragma: no cover
 
@@ -103,10 +104,24 @@ def remove_prefix(line):
     return line
 
 
+def _open_file(filename, encoding):
+    if sys.version_info < (3, 0):
+        return open(filename, 'r')
+    else:
+        return open(filename, 'r', encoding=encoding)
+
+
+def _force_unicode(string, encoding):
+    if sys.version_info < (3, 0):
+        return string.decode(encoding)
+    else:
+        return string
+
+
 class Feature(object):
     """Feature."""
 
-    def __init__(self, filename):
+    def __init__(self, filename, encoding='utf-8'):
         """Parse the feature file.
 
         :param filename: Relative path to the feature file.
@@ -118,8 +133,8 @@ class Feature(object):
         mode = None
         prev_mode = None
 
-        with open(filename, 'r') as f:
-            content = f.read()
+        with _open_file(filename, encoding) as f:
+            content = _force_unicode(f.read(), encoding)
             for line_number, line in enumerate(content.split('\n')):
                 line = strip(line)
                 if not line:
@@ -150,7 +165,7 @@ class Feature(object):
                     scenario.add_step(step_name=line, step_type=mode)
 
     @classmethod
-    def get_feature(cls, filename):
+    def get_feature(cls, filename, encoding='utf-8'):
         """Get a feature by the filename.
 
         :param filename: Filename of the feature file.
@@ -164,7 +179,7 @@ class Feature(object):
         """
         feature = features.get(filename)
         if not feature:
-            feature = Feature(filename)
+            feature = Feature(filename, encoding=encoding)
             features[filename] = feature
         return feature
 
