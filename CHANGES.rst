@@ -1,10 +1,16 @@
 Changelog
 =========
 
+0.6.4
+-----
+
+- More unicode fixes (amakhnach)
+
+
 0.6.3
 -----
 
-- Added unicode support for feature files. Removed buggy module replacement for scenario. (amakhnach
+- Added unicode support for feature files. Removed buggy module replacement for scenario. (amakhnach)
 
 
 0.6.2
