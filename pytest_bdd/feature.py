@@ -111,9 +111,16 @@ def _open_file(filename, encoding):
         return open(filename, 'r', encoding=encoding)
 
 
-def _force_unicode(string, encoding):
-    if sys.version_info < (3, 0):
+def force_unicode(string, encoding='utf-8'):
+    if sys.version_info < (3, 0) and isinstance(string, str):
         return string.decode(encoding)
+    else:
+        return string
+
+
+def force_encode(string, encoding='utf-8'):
+    if sys.version_info < (3, 0):
+        return string.encode(encoding)
     else:
         return string
 
@@ -134,7 +141,7 @@ class Feature(object):
         prev_mode = None
 
         with _open_file(filename, encoding) as f:
-            content = _force_unicode(f.read(), encoding)
+            content = force_unicode(f.read(), encoding)
             for line_number, line in enumerate(content.split('\n')):
                 line = strip(line)
                 if not line:
