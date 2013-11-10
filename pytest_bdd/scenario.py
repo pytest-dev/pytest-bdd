@@ -16,7 +16,7 @@ from os import path as op  # pragma: no cover
 
 from _pytest import python
 
-from pytest_bdd.feature import Feature  # pragma: no cover
+from pytest_bdd.feature import Feature, force_encode  # pragma: no cover
 from pytest_bdd.steps import recreate_function, get_caller_module
 from pytest_bdd.types import GIVEN
 
@@ -37,7 +37,7 @@ class GivenAlreadyUsed(Exception):  # pragma: no cover
     """Fixture that implements the Given has been already used."""
 
 
-def _find_step_function(request, name):
+def _find_step_function(request, name, encoding):
     """Match the step defined by the regular expression pattern.
 
     :param request: PyTest request object.
@@ -46,8 +46,9 @@ def _find_step_function(request, name):
     :return: Step function.
 
     """
+
     try:
-        return request.getfuncargvalue(name)
+        return request.getfuncargvalue(force_encode(name, encoding))
     except python.FixtureLookupError:
 
         for fixturename, fixturedefs in request._fixturemanager._arg2fixturedefs.items():
@@ -107,7 +108,7 @@ def scenario(feature_name, scenario_name, encoding='utf-8'):
             givens = set()
             # Execute scenario steps
             for step in scenario.steps:
-                step_func = _find_step_function(request, step.name)
+                step_func = _find_step_function(request, step.name, encoding=encoding)
 
                 # Check the step types are called in the correct order
                 if step_func.step_type != step.type:
