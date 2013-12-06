@@ -93,9 +93,6 @@ def test_step_hooks(testdir):
     testdir.makepyfile("""
         from pytest_bdd import given, when, scenario
 
-        def pytest_bdd_step_error():
-            print 'ok'
-
         @given('I have a bar')
         def i_have_bar():
             return 'bar'
