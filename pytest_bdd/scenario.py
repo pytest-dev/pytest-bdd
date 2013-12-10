@@ -66,9 +66,12 @@ def _find_step_function(request, name, encoding):
                         lambda: value, fixturedef.scope, fixturedef.params,
                         fixturedef.unittest,
                     )
+                    fd.cached_result = (value, 0)
                     # inject fixture definition
                     request._fixturemanager._arg2fixturedefs[arg] = [fd]
+                    request._arg2fixturedefs[arg] = [fd]
                     # inject fixture value in request cache
+                    getattr(request, '_fixturedefs', {})[arg] = fd
                     request._funcargs[arg] = value
                 return request.getfuncargvalue(pattern.pattern)
         raise
