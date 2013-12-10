@@ -112,12 +112,8 @@ def scenario(feature_name, scenario_name, encoding='utf-8'):
             givens = set()
             # Execute scenario steps
             for step in scenario.steps:
-                request.config.hook.pytest_bdd_step_func_lookup(
-                    request=request, feature=feature, scenario=scenario, step=step)
                 try:
                     step_func = _find_step_function(request, step.name, encoding=encoding)
-                    request.config.hook.pytest_bdd_step_func_found(
-                        request=request, feature=feature, scenario=scenario, step=step, step_func=step_func)
                 except python.FixtureLookupError as exception:
                     request.config.hook.pytest_bdd_step_func_lookup_error(
                         request=request, feature=feature, scenario=scenario, step=step, exception=exception)
@@ -148,12 +144,12 @@ def scenario(feature_name, scenario_name, encoding='utf-8'):
                 # Get the step argument values
                 kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
                 try:
-                    request.config.hook.pytest_bdd_step_start(
+                    request.config.hook.pytest_bdd_before_step(
                         request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
                         step_func_args=kwargs)
                     # Execute the step
                     step_func(**kwargs)
-                    request.config.hook.pytest_bdd_step_finish(
+                    request.config.hook.pytest_bdd_after_step(
                         request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
                         step_func_args=kwargs)
                 except Exception as exception:

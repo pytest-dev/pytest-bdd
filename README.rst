@@ -409,6 +409,27 @@ test\_publish\_article.py:
 
 You can learn more about `functools.partial <http://docs.python.org/2/library/functools.html#functools.partial>`_ in the Python docs.
 
+Hooks
+=====
+
+pytest-bdd exposes several pytest `hooks <http://pytest.org/latest/plugins.html#well-specified-hooks>`_
+which might be helpful building useful reporting, visualization, etc on top of it:
+
+    * pytest_bdd_before_step(request, feature, scenario, step, step_func, step_func_args) - Called before step function
+      is executed
+
+    * pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args) - Called after step function
+      is successfully executed
+
+    * pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception) - Called when step
+      function failed to execute
+
+    * pytest_bdd_step_validation_error(request, feature, scenario, step, step_func, step_func_args, exception) - Called
+      when step failed to validate
+
+    * pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception) - Called when step lookup failed
+
+
 Subplugins
 ==========
 
