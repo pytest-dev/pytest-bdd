@@ -21,19 +21,23 @@ from pytest_bdd.steps import recreate_function, get_caller_module, get_caller_fu
 from pytest_bdd.types import GIVEN
 
 
-class ScenarioNotFound(Exception):  # pragma: no cover
+class ScenarioValidationError(Exception):
+    """Base class for scenario validation."""
+
+
+class ScenarioNotFound(ScenarioValidationError):  # pragma: no cover
     """Scenario Not Found"""
 
 
-class NotEnoughScenarioParams(Exception):  # pragma: no cover
+class NotEnoughScenarioParams(ScenarioValidationError):  # pragma: no cover
     """Scenario function doesn't take enough parameters in the arguments."""
 
 
-class StepTypeError(Exception):  # pragma: no cover
+class StepTypeError(ScenarioValidationError):  # pragma: no cover
     """Step definition is not of the type expected in the scenario."""
 
 
-class GivenAlreadyUsed(Exception):  # pragma: no cover
+class GivenAlreadyUsed(ScenarioValidationError):  # pragma: no cover
     """Fixture that implements the Given has been already used."""
 
 
@@ -112,29 +116,51 @@ def scenario(feature_name, scenario_name, encoding='utf-8'):
             givens = set()
             # Execute scenario steps
             for step in scenario.steps:
-                step_func = _find_step_function(request, step.name, encoding=encoding)
+                try:
+                    step_func = _find_step_function(request, step.name, encoding=encoding)
+                except python.FixtureLookupError as exception:
+                    request.config.hook.pytest_bdd_step_func_lookup_error(
+                        request=request, feature=feature, scenario=scenario, step=step, exception=exception)
+                    raise
 
-                # Check the step types are called in the correct order
-                if step_func.step_type != step.type:
-                    raise StepTypeError(
-                        'Wrong step type "{0}" while "{1}" is expected.'.format(step_func.step_type, step.type)
-                    )
-
-                # Check if the fixture that implements given step has not been yet used by another given step
-                if step.type == GIVEN:
-                    if step_func.fixture in givens:
-                        raise GivenAlreadyUsed(
-                            'Fixture "{0}" that implements this "{1}" given step has been already used.'.format(
-                                step_func.fixture, step.name,
-                            )
+                try:
+                    # Check the step types are called in the correct order
+                    if step_func.step_type != step.type:
+                        raise StepTypeError(
+                            'Wrong step type "{0}" while "{1}" is expected.'.format(step_func.step_type, step.type)
                         )
-                    givens.add(step_func.fixture)
+
+                    # Check if the fixture that implements given step has not been yet used by another given step
+                    if step.type == GIVEN:
+                        if step_func.fixture in givens:
+                            raise GivenAlreadyUsed(
+                                'Fixture "{0}" that implements this "{1}" given step has been already used.'.format(
+                                    step_func.fixture, step.name,
+                                )
+                            )
+                        givens.add(step_func.fixture)
+                except ScenarioValidationError as exception:
+                    request.config.hook.pytest_bdd_step_validation_error(
+                        request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
+                        exception=exception)
+                    raise
 
                 # Get the step argument values
                 kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
-
-                # Execute the step
-                step_func(**kwargs)
+                try:
+                    request.config.hook.pytest_bdd_before_step(
+                        request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
+                        step_func_args=kwargs)
+                    # Execute the step
+                    step_func(**kwargs)
+                    request.config.hook.pytest_bdd_after_step(
+                        request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
+                        step_func_args=kwargs)
+                except Exception as exception:
+                    request.config.hook.pytest_bdd_step_error(
+                        request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
+                        step_func_args=kwargs, exception=exception)
+                    raise
 
         _scenario.pytestbdd_params = set()
 

@@ -76,6 +76,69 @@ def test_multiple_given(request):
         test(request)
 
 
+def test_step_hooks(testdir):
+    """When step fails."""
+    testdir.makefile('.feature', test="""
+    Scenario: When step has hook on failure
+        Given I have a bar
+        When it fails
+
+    Scenario: When step is not found
+        Given not found
+
+    Scenario: When step validation error happens
+        Given foo
+        And foo
+    """)
+    testdir.makepyfile("""
+        from pytest_bdd import given, when, scenario
+
+        @given('I have a bar')
+        def i_have_bar():
+            return 'bar'
+
+        @when('it fails')
+        def when_it_fails():
+            raise Exception('when fails')
+
+        @scenario('test.feature', 'When step has hook on failure')
+        def test_when_fails():
+            pass
+
+        @scenario('test.feature', 'When step is not found')
+        def test_when_not_found():
+            pass
+
+        @when('foo')
+        def foo():
+            return 'foo'
+
+        @scenario('test.feature', 'When step validation error happens')
+        def test_when_step_validation_error():
+            pass
+    """)
+    reprec = testdir.inline_run("-k test_when_fails")
+    assert reprec.ret == 1
+
+    calls = reprec.getcalls("pytest_bdd_before_step")
+    assert calls[0].request
+
+    calls = reprec.getcalls("pytest_bdd_after_step")
+    assert calls[0].request
+
+    calls = reprec.getcalls("pytest_bdd_step_error")
+    assert calls[0].request
+
+    reprec = testdir.inline_run("-k test_when_not_found")
+    assert reprec.ret == 3
+
+    calls = reprec.getcalls("pytest_bdd_step_func_lookup_error")
+    assert calls[0].request
+
+    reprec = testdir.inline_run("-k test_when_step_validation_error")
+    assert reprec.ret == 3
+
+
 def test_step_trace(testdir):
     """Test step trace."""
     testdir.makefile('.feature', test="""
