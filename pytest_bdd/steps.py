@@ -162,7 +162,7 @@ def _step_decorator(step_type, step_name):
     return decorator
 
 
-def recreate_function(func, module=None, name=None, add_args=()):
+def recreate_function(func, module=None, name=None, add_args=(), firstlineno=None):
     """Recreate a function, replacing some info.
 
     :param func: Function object.
@@ -172,7 +172,6 @@ def recreate_function(func, module=None, name=None, add_args=()):
     :return: Function copy.
 
     """
-
     def get_code(func):
         return func.__code__ if PY3 else func.func_code
 
@@ -201,6 +200,8 @@ def recreate_function(func, module=None, name=None, add_args=()):
         elif arg == 'co_varnames':
             co_varnames = getattr(code, arg)
             args.append(co_varnames[:code.co_argcount] + tuple(add_args) + co_varnames[code.co_argcount:])
+        elif arg == 'co_firstlineno' and firstlineno:
+            args.append(firstlineno)
         else:
             args.append(getattr(code, arg))
 
@@ -227,3 +228,8 @@ def get_caller_module(depth=2):
     """Return the module of the caller."""
     frame = sys._getframe(depth)
     return inspect.getmodule(frame)
+
+
+def get_caller_function(depth=2):
+    """Return caller function."""
+    return sys._getframe(depth)

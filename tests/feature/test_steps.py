@@ -74,3 +74,63 @@ def test_multiple_given(request):
     )
     with pytest.raises(GivenAlreadyUsed):
         test(request)
+
+
+def test_step_trace(testdir):
+    """Test step trace."""
+    testdir.makefile('.feature', test="""
+    Scenario: When step has failure
+        Given I have a bar
+        When it fails
+
+    Scenario: When step is not found
+        Given not found
+
+    Scenario: When step validation error happens
+        Given foo
+        And foo
+    """)
+    testdir.makepyfile("""
+        from pytest_bdd import given, when, scenario
+
+        @given('I have a bar')
+        def i_have_bar():
+            return 'bar'
+
+        @when('it fails')
+        def when_it_fails():
+            raise Exception('when fails')
+
+        test_when_fails_inline = scenario('test.feature', 'When step has failure')
+
+        @scenario('test.feature', 'When step has failure')
+        def test_when_fails_decorated():
+            pass
+
+        test_when_not_found = scenario('test.feature', 'When step is not found')
+
+        @when('foo')
+        def foo():
+            return 'foo'
+
+        test_when_step_validation_error = scenario('test.feature', 'When step validation error happens')
+    """)
+    result = testdir.runpytest('-k test_when_fails_inline', '-vv')
+    assert result.ret == 1
+    result.stdout.fnmatch_lines('test_step_trace.py:*: test_when_fails_inline FAILED')
+    assert 'INTERNALERROR' not in result.stdout.str()
+
+    result = testdir.runpytest('-k test_when_fails_decorated', '-vv')
+    assert result.ret == 1
+    result.stdout.fnmatch_lines('test_step_trace.py:*: test_when_fails_decorated FAILED')
+    assert 'INTERNALERROR' not in result.stdout.str()
+
+    result = testdir.runpytest('-k test_when_not_found', '-vv')
+    assert result.ret == 1
+    result.stdout.fnmatch_lines('test_step_trace.py:*: test_when_not_found FAILED')
+    assert 'INTERNALERROR' not in result.stdout.str()
+
+    result = testdir.runpytest('-k test_when_step_validation_error', '-vv')
+    assert result.ret == 1
+    result.stdout.fnmatch_lines('test_step_trace.py:*: test_when_step_validation_error FAILED')
+    assert 'INTERNALERROR' not in result.stdout.str()

@@ -17,7 +17,7 @@ from os import path as op  # pragma: no cover
 from _pytest import python
 
 from pytest_bdd.feature import Feature, force_encode  # pragma: no cover
-from pytest_bdd.steps import recreate_function, get_caller_module
+from pytest_bdd.steps import recreate_function, get_caller_module, get_caller_function
 from pytest_bdd.types import GIVEN
 
 
@@ -78,6 +78,7 @@ def scenario(feature_name, scenario_name, encoding='utf-8'):
     """Scenario. May be called both as decorator and as just normal function."""
 
     caller_module = get_caller_module()
+    caller_function = get_caller_function()
 
     def decorator(request):
 
@@ -136,6 +137,7 @@ def scenario(feature_name, scenario_name, encoding='utf-8'):
 
         if isinstance(request, python.FixtureRequest):
             # Called as a normal function.
+            _scenario = recreate_function(_scenario, module=caller_module)
             return _scenario(request)
 
         # Used as a decorator. Modify the returned function to add parameters from a decorated function.
@@ -146,5 +148,7 @@ def scenario(feature_name, scenario_name, encoding='utf-8'):
         _scenario.pytestbdd_params = set(func_args)
 
         return _scenario
+
+    decorator = recreate_function(decorator, module=caller_module, firstlineno=caller_function.f_lineno)
 
     return decorator
