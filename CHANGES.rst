@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.6.5
+-----
+
+- Compartibility with recent pytest (bubenkoff)
+
+
 0.6.4
 -----
 
