@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.6.6
+-----
+
+- Fixes to unnecessary mentioning of pytest-bdd package files in py.test log with -v (bubenkoff)
+
+
 0.6.5
 -----
 

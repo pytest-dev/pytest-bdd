@@ -6,7 +6,7 @@ from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
 
-version = '0.6.5'
+version = '0.6.6'
 
 
 class Tox(TestCommand):
