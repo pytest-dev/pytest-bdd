@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.6.7
+0.6.8
 -----
 
 - Implemented several hooks to allow reporting/error handling (bubenkoff)

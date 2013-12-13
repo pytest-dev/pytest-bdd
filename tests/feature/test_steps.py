@@ -83,6 +83,10 @@ def test_step_hooks(testdir):
         Given I have a bar
         When it fails
 
+    Scenario: When step's dependency a has failure
+        Given I have a bar
+        When it's dependency fails
+
     Scenario: When step is not found
         Given not found
 
@@ -91,6 +95,7 @@ def test_step_hooks(testdir):
         And foo
     """)
     testdir.makepyfile("""
+        import pytest
         from pytest_bdd import given, when, scenario
 
         @given('I have a bar')
@@ -100,6 +105,22 @@ def test_step_hooks(testdir):
         @when('it fails')
         def when_it_fails():
             raise Exception('when fails')
+
+        @given('I have a bar')
+        def i_have_bar():
+            return 'bar'
+
+        @pytest.fixture
+        def dependency():
+            raise Exception('dependency fails')
+
+        @when("it's dependency fails")
+        def when_dependency_fails(dependency):
+            pass
+
+        @scenario('test.feature', "When step's dependency a has failure")
+        def test_when_dependency_fails():
+            pass
 
         @scenario('test.feature', 'When step has hook on failure')
         def test_when_fails():
@@ -130,13 +151,22 @@ def test_step_hooks(testdir):
     assert calls[0].request
 
     reprec = testdir.inline_run("-k test_when_not_found")
-    assert reprec.ret == 3
+    assert reprec.ret == 1
 
     calls = reprec.getcalls("pytest_bdd_step_func_lookup_error")
     assert calls[0].request
 
     reprec = testdir.inline_run("-k test_when_step_validation_error")
-    assert reprec.ret == 3
+    assert reprec.ret == 1
+
+    reprec = testdir.inline_run("-k test_when_dependency_fails", '-vv')
+    assert reprec.ret == 1
+
+    calls = reprec.getcalls("pytest_bdd_before_step")
+    assert len(calls) == 1
+
+    calls = reprec.getcalls("pytest_bdd_step_error")
+    assert calls[0].request
 
 
 def test_step_trace(testdir):
@@ -154,6 +184,7 @@ def test_step_trace(testdir):
         And foo
     """)
     testdir.makepyfile("""
+        import pytest
         from pytest_bdd import given, when, scenario
 
         @given('I have a bar')

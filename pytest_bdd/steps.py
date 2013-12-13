@@ -200,8 +200,8 @@ def recreate_function(func, module=None, name=None, add_args=(), firstlineno=Non
         elif arg == 'co_varnames':
             co_varnames = getattr(code, arg)
             args.append(co_varnames[:code.co_argcount] + tuple(add_args) + co_varnames[code.co_argcount:])
-        elif arg == 'co_firstlineno' and firstlineno:
-            args.append(firstlineno)
+        elif arg == 'co_firstlineno':
+            args.append(firstlineno if firstlineno else 1)
         else:
             args.append(getattr(code, arg))
 

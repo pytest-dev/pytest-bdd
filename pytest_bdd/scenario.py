@@ -145,9 +145,10 @@ def scenario(feature_name, scenario_name, encoding='utf-8'):
                         exception=exception)
                     raise
 
-                # Get the step argument values
-                kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
+                kwargs = {}
                 try:
+                    # Get the step argument values
+                    kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
                     request.config.hook.pytest_bdd_before_step(
                         request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
                         step_func_args=kwargs)
