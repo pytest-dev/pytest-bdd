@@ -17,8 +17,8 @@ class Tox(TestCommand):
 
     def run_tests(self):
         #import here, cause outside the eggs aren't loaded
-        import tox
-        errno = tox.cmdline(self.test_args)
+        import detox.main
+        errno = detox.main.main(self.test_args)
         sys.exit(errno)
 
 
@@ -61,6 +61,6 @@ setup(
             'pytest-bdd = pytest_bdd.plugin',
         ]
     },
-    tests_require=['tox'],
+    tests_require=['detox'],
     packages=['pytest_bdd'],
 )
