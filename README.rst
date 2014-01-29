@@ -34,6 +34,8 @@ Example
 publish\_article.feature:
 
 .. code-block:: feature
+    Feature: Blog
+        A site where you can publish your articles.
 
     Scenario: Publishing the article
         Given I'm an author user

@@ -26,7 +26,7 @@ one line.
 import re  # pragma: no cover
 import sys  # pragma: no cover
 
-from pytest_bdd.types import SCENARIO, GIVEN, WHEN, THEN  # pragma: no cover
+from pytest_bdd.types import FEATURE, SCENARIO, GIVEN, WHEN, THEN  # pragma: no cover
 
 
 class FeatureError(Exception):  # pragma: no cover
@@ -46,6 +46,7 @@ features = {}  # pragma: no cover
 
 
 STEP_PREFIXES = {  # pragma: no cover
+    'Feature: ': FEATURE,
     'Scenario: ': SCENARIO,
     'Given ': GIVEN,
     'When ': WHEN,
@@ -139,6 +140,7 @@ class Feature(object):
         scenario = None
         mode = None
         prev_mode = None
+        description = []
 
         with _open_file(filename, encoding) as f:
             content = force_unicode(f.read(), encoding)
@@ -161,15 +163,23 @@ class Feature(object):
                     raise FeatureError('Then steps must follow Given or When steps',
                                        line_number, line)
 
+                if mode == FEATURE:
+                    if prev_mode != FEATURE:
+                        self.name = remove_prefix(line)
+                    else:
+                        description.append(line)
+
                 prev_mode = mode
 
-                # Remove Given, When, Then, And
+                # Remove Feature, Given, When, Then, And
                 line = remove_prefix(line)
 
                 if mode == SCENARIO:
                     self.scenarios[line] = scenario = Scenario(line)
-                else:
+                elif mode and mode != FEATURE:
                     scenario.add_step(step_name=line, step_type=mode)
+
+        self.description = u'\n'.join(description)
 
     @classmethod
     def get_feature(cls, filename, encoding='utf-8'):

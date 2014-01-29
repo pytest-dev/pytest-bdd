@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.6.9
+-----
+
+- Implemented support of Gherkin "Feature:" (olegpidsadnyi)
+
+
 0.6.8
 -----
 

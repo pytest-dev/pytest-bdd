@@ -1,3 +1,8 @@
+Feature: Steps are executed one by one
+    Steps are executed one by one. Given and When sections
+    are not mandatory in some cases.
+
+
 Scenario: Executed step by step
     Given I have a foo fixture with value "foo"
     And there is a list
