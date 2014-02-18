@@ -6,3 +6,4 @@ Scenario: Test reusing root fixture
 Scenario: Test reusing local fixture
 	Given I have alias for foo
 	Then foo should be "foo"
+
