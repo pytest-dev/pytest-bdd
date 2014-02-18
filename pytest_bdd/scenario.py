@@ -78,7 +78,6 @@ def _find_step_function(request, name, encoding):
                     # inject fixture value in request cache
                     getattr(request, '_fixturedefs', {})[arg] = fd
                     request._funcargs[arg] = value
-                    import pytest;pytest.set_trace()
                 return request.getfuncargvalue(pattern.pattern)
         raise
 

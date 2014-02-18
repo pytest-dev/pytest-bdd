@@ -7,8 +7,3 @@ Scenario: Test reusing local fixture
 	Given I have alias for foo
 	Then foo should be "foo"
 
-
-Scenario: Test argumented step
-    Given I buy 5 red apples
-
-    Then I should have 5 red apples
