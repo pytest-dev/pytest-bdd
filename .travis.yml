@@ -1,7 +1,6 @@
 language: python
 # command to install dependencies
 install:
-  - pip install virtualenv==1.10
   - pip install python-coveralls
 # # command to run tests
 script: python setup.py test
