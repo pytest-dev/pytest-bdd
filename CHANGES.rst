@@ -1,6 +1,13 @@
 Changelog
 =========
 
+
+0.6.10
+-----
+
+- Fixed step arguments conflict with the fixtures having the same name (olegpidsadnyi)
+
+
 0.6.9
 -----
 

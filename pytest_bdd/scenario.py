@@ -56,28 +56,38 @@ def _find_step_function(request, name, encoding):
     except python.FixtureLookupError:
 
         for fixturename, fixturedefs in request._fixturemanager._arg2fixturedefs.items():
-            fixturedef = fixturedefs[0]
+            for fixturedef in fixturedefs:
 
-            pattern = getattr(fixturedef.func, 'pattern', None)
-            match = pattern.match(name) if pattern else None
+                pattern = getattr(fixturedef.func, 'pattern', None)
+                match = pattern.match(name) if pattern else None
 
-            if match:
-                for arg, value in match.groupdict().items():
-                    fd = python.FixtureDef(
-                        request._fixturemanager,
-                        fixturedef.baseid,
-                        arg,
-                        lambda: value, fixturedef.scope, fixturedef.params,
-                        fixturedef.unittest,
-                    )
-                    fd.cached_result = (value, 0)
-                    # inject fixture definition
-                    request._fixturemanager._arg2fixturedefs[arg] = [fd]
-                    request._arg2fixturedefs[arg] = [fd]
-                    # inject fixture value in request cache
-                    getattr(request, '_fixturedefs', {})[arg] = fd
-                    request._funcargs[arg] = value
-                return request.getfuncargvalue(pattern.pattern)
+                if match:
+                    for arg, value in match.groupdict().items():
+                        fd = python.FixtureDef(
+                            request._fixturemanager,
+                            fixturedef.baseid,
+                            arg,
+                            lambda: value, fixturedef.scope, fixturedef.params,
+                            fixturedef.unittest,
+                        )
+                        fd.cached_result = (value, 0)
+
+                        old_fd = getattr(request, '_fixturedefs', {}).get(arg)
+                        old_value = request._funcargs.get(arg)
+
+                        def fin():
+                            request._fixturemanager._arg2fixturedefs[arg].remove(fd)
+                            getattr(request, '_fixturedefs', {})[arg] = old_fd
+                            request._funcargs[arg] = old_value
+
+                        request.addfinalizer(fin)
+
+                        # inject fixture definition
+                        request._fixturemanager._arg2fixturedefs.setdefault(arg, []).insert(0, fd)
+                        # inject fixture value in request cache
+                        getattr(request, '_fixturedefs', {})[arg] = fd
+                        request._funcargs[arg] = value
+                    return request.getfuncargvalue(pattern.pattern)
         raise
 
 
