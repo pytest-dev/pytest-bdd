@@ -332,7 +332,7 @@ Reusing steps
 It is possible to define some common steps in the parent conftest.py and
 simply expect them in the child test file.
 
-common\_steps.feature:
+common_steps.feature:
 
 .. code-block:: gherkin
 
@@ -370,7 +370,7 @@ Feature file paths
 
 But default, pytest-bdd will use current module’s path as base path for
 finding feature files, but this behaviour can be changed by having
-fixture named ‘pytestbdd\_feature\_base\_dir’ which should return the
+fixture named ‘pytestbdd_feature_base_dir’ which should return the
 new base path.
 
 test_publish_article.py:
