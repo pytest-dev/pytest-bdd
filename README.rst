@@ -33,7 +33,7 @@ Install pytest-bdd
 Example
 =======
 
-publish\_article.feature:
+publish_article.feature:
 
 .. code-block:: gherkin
     
@@ -48,7 +48,7 @@ publish\_article.feature:
         Then I should not see the error message
         And the article should be published  # Note: will query the database
 
-test\_publish\_article.py:
+test_publish_article.py:
 
 .. code-block:: python
 
@@ -356,7 +356,7 @@ conftest.py:
     def bar_is_bar(bar):
         assert bar == 'bar'
 
-test\_common.py:
+test_common.py:
 
 .. code-block:: python
 
@@ -373,7 +373,7 @@ finding feature files, but this behaviour can be changed by having
 fixture named ‘pytestbdd\_feature\_base\_dir’ which should return the
 new base path.
 
-test\_publish\_article.py:
+test_publish_article.py:
 
 .. code-block:: python
 
@@ -397,7 +397,7 @@ This will make your life much easier when defining multiple scenarios in a test 
 For example:
 
 
-test\_publish\_article.py:
+test_publish_article.py:
 
 .. code-block:: python
 
