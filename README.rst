@@ -3,8 +3,10 @@ BDD library for the py.test runner
 
 .. image:: https://api.travis-ci.org/olegpidsadnyi/pytest-bdd.png
    :target: https://travis-ci.org/olegpidsadnyi/pytest-bdd
+
 .. image:: https://pypip.in/v/pytest-bdd/badge.png
    :target: https://crate.io/packages/pytest-bdd/
+
 .. image:: https://coveralls.io/repos/olegpidsadnyi/pytest-bdd/badge.png?branch=master
    :target: https://coveralls.io/r/olegpidsadnyi/pytest-bdd
 
@@ -33,7 +35,7 @@ Example
 
 publish\_article.feature:
 
-.. code-block:: feature
+.. code-block:: gherkin
     
     Feature: Blog
         A site where you can publish your articles.
@@ -102,7 +104,7 @@ For example if you associate your resource to some owner or not. Admin
 user can’t be an author of the article, but articles should have a
 default author.
 
-.. code-block:: feature
+.. code-block:: gherkin
 
     Scenario: I'm the author
         Given I'm an author
@@ -123,7 +125,7 @@ Important thing that argumented step names are not just strings but regular expr
 
 Example:
 
-.. code-block:: feature
+.. code-block:: gherkin
 
     Scenario: Arguments for given, when, thens
         Given there are 5 cucumbers
@@ -174,7 +176,7 @@ templates are written using corner braces as <somevalue>.
 
 Example:
 
-.. code-block:: feature
+.. code-block:: gherkin
 
     Scenario: Parametrized given, when, thens
         Given there are <start> cucumbers
@@ -240,7 +242,7 @@ and makes the setup more declarative style.
 
 This also declares a PyTest fixture "article" and any other step can depend on it.
 
-.. code-block:: feature
+.. code-block:: gherkin
 
     Given I have a beautiful article
     When I publish this article
@@ -264,7 +266,7 @@ and the PyTest will make sure to provide it.
 
 Still side effects can be applied in the imperative style by design of the BDD.
 
-.. code-block:: feature
+.. code-block:: gherkin
 
     Given I have a beautiful article
     And my article is published
@@ -289,7 +291,7 @@ Fixtures are evaluated only once within the PyTest scope and their values are ca
 In case of Given steps and the step arguments mentioning the same given step makes
 no sense. It won't be executed second time.
 
-.. code-block:: feature
+.. code-block:: gherkin
 
     Given I have a beautiful article
     And some other thing
@@ -300,7 +302,7 @@ pytest-bdd will raise an exception even in the case of the steps that use regula
 patterns to get arguments.
 
 
-.. code-block:: feature
+.. code-block:: gherkin
 
     Given I have 1 cucumbers
     And I have 2 cucumbers  # Exception is raised
@@ -332,7 +334,7 @@ simply expect them in the child test file.
 
 common\_steps.feature:
 
-.. code-block:: feature
+.. code-block:: gherkin
 
     Scenario: All steps are declared in the conftest
         Given I have a bar

@@ -76,7 +76,8 @@ def _find_step_function(request, name, encoding):
                         old_value = request._funcargs.get(arg)
 
                         def fin():
-                            request._fixturemanager._arg2fixturedefs[arg].remove(fd)
+                            if fd in request._fixturemanager._arg2fixturedefs[arg]:
+                                request._fixturemanager._arg2fixturedefs[arg].remove(fd)
                             getattr(request, '_fixturedefs', {})[arg] = old_fd
                             request._funcargs[arg] = old_value
 
