@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.0.0
+-----
+
+- Implemented scenario outlines (bubenkoff)
+
 
 0.6.10
 -----

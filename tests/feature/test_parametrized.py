@@ -16,6 +16,22 @@ def test_parametrized(request, start, eat, left):
     """Test parametrized scenario."""
 
 
+@pytest.fixture(params=[1, 2])
+def foo_bar(request):
+    return 'foo_bar' * request.param
+
+
+@pytest.mark.parametrize(
+    ['start', 'eat', 'left'],
+    [(12, 5, 7)])
+@scenario(
+    'parametrized.feature',
+    'Parametrized given, when, thens',
+)
+def test_parametrized_with_other_fixtures(request, start, eat, left, foo_bar):
+    """Test parametrized scenario, but also with other fixtures."""
+
+
 def test_parametrized_wrongly(request):
     """Test parametrized scenario when the test function lacks parameters."""
     @scenario(
