@@ -26,7 +26,10 @@ one line.
 import re  # pragma: no cover
 import sys  # pragma: no cover
 
-from pytest_bdd.types import FEATURE, SCENARIO, GIVEN, WHEN, THEN  # pragma: no cover
+from pytest_bdd.types import (
+    FEATURE, SCENARIO, SCENARIO_OUTLINE, EXAMPLES, EXAMPLES_HEADERS, EXAMPLE_LINE, GIVEN, WHEN,
+    THEN  # pragma: no cover
+)
 
 
 class FeatureError(Exception):  # pragma: no cover
@@ -47,6 +50,8 @@ features = {}  # pragma: no cover
 
 STEP_PREFIXES = {  # pragma: no cover
     'Feature: ': FEATURE,
+    'Scenario Outline: ': SCENARIO_OUTLINE,
+    'Examples:': EXAMPLES,
     'Scenario: ': SCENARIO,
     'Given ': GIVEN,
     'When ': WHEN,
@@ -137,6 +142,7 @@ class Feature(object):
         """
         self.scenarios = {}
 
+        self.filename = filename
         scenario = None
         mode = None
         prev_mode = None
@@ -144,18 +150,17 @@ class Feature(object):
 
         with _open_file(filename, encoding) as f:
             content = force_unicode(f.read(), encoding)
-            for line_number, line in enumerate(content.split('\n')):
+            for line_number, line in enumerate(content.splitlines()):
                 line = strip(line)
                 if not line:
                     continue
-
                 mode = get_step_type(line) or mode
 
-                if mode == GIVEN and prev_mode not in (GIVEN, SCENARIO):
+                if mode == GIVEN and prev_mode not in (GIVEN, SCENARIO, SCENARIO_OUTLINE):
                     raise FeatureError('Given steps must be the first in withing the Scenario',
                                        line_number, line)
 
-                if mode == WHEN and prev_mode not in (SCENARIO, GIVEN, WHEN):
+                if mode == WHEN and prev_mode not in (SCENARIO, SCENARIO_OUTLINE, GIVEN, WHEN):
                     raise FeatureError('When steps must be the first or follow Given steps',
                                        line_number, line)
 
@@ -173,9 +178,15 @@ class Feature(object):
 
                 # Remove Feature, Given, When, Then, And
                 line = remove_prefix(line)
-
-                if mode == SCENARIO:
+                if mode in [SCENARIO, SCENARIO_OUTLINE]:
                     self.scenarios[line] = scenario = Scenario(line)
+                elif mode == EXAMPLES:
+                    mode = EXAMPLES_HEADERS
+                elif mode == EXAMPLES_HEADERS:
+                    scenario.set_param_names([l.strip() for l in line.split('|') if l.strip()])
+                    mode = EXAMPLE_LINE
+                elif mode == EXAMPLE_LINE:
+                    scenario.add_example([l.strip() for l in line.split('|') if l.strip()])
                 elif mode and mode != FEATURE:
                     scenario.add_step(step_name=line, step_type=mode)
 
@@ -208,6 +219,8 @@ class Scenario(object):
         self.name = name
         self.params = set()
         self.steps = []
+        self.example_params = []
+        self.examples = []
 
     def add_step(self, step_name, step_type):
         """Add step to the scenario.
@@ -218,6 +231,23 @@ class Scenario(object):
         """
         self.params.update(get_step_params(step_name))
         self.steps.append(Step(name=step_name, type=step_type))
+
+    def set_param_names(self, keys):
+        """Set parameter names.
+
+        :param names: `list` of `string` parameter names
+
+        """
+        self.params.update(keys)
+        self.example_params = keys
+
+    def add_example(self, values):
+        """Add example.
+
+        :param values: `list` of `string` parameter values
+
+        """
+        self.examples.append(values)
 
 
 class Step(object):

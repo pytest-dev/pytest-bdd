@@ -34,7 +34,7 @@ Example
 publish\_article.feature:
 
 .. code-block:: feature
-    
+
     Feature: Blog
         A site where you can publish your articles.
 
@@ -166,23 +166,59 @@ Scenario parameters
 ===================
 Scenario can accept `encoding` param to decode content of feature file in specific encoding. UTF-8 is default.
 
-Step parameters
-===============
+Scenario outlines
+=================
 
 Scenarios can be parametrized to cover few cases. In Gherkin the variable
 templates are written using corner braces as <somevalue>.
+`Scenario outlines <http://docs.behat.org/guides/1.gherkin.html#scenario-outlines>`_ are supported by pytest-bdd
+exactly as it's described in be behave docs.
+
 
 Example:
 
 .. code-block:: feature
 
-    Scenario: Parametrized given, when, thens
+    Scenario Outline: Outlined given, when, thens
         Given there are <start> cucumbers
         When I eat <eat> cucumbers
         Then I should have <left> cucumbers
 
-Unlike other tools, pytest-bdd implements the scenario outline not in the
-feature files, but in the python code using pytest parametrization.
+        Examples:
+        | start | eat | left |
+        |  12   |  5  |  7   |
+
+
+The code will look like:
+
+.. code-block:: python
+
+    from pytest_bdd import given, when, then, scenario
+
+
+    test_outlined = scenario(
+        'outline.feature',
+        'Outlined given, when, thens',
+    )
+
+
+    @given('there are <start> cucumbers')
+    def start_cucumbers(start):
+        return dict(start=int(start))
+
+
+    @when('I eat <eat> cucumbers')
+    def eat_cucumbers(start_cucumbers, start, eat):
+        start_cucumbers['eat'] = int(eat)
+
+
+    @then('I should have <left> cucumbers')
+    def should_have_left_cucumbers(start_cucumbers, start, eat, left):
+        assert int(start) - int(eat) == int(left)
+        assert start_cucumbers['start'] == int(start)
+        assert start_cucumbers['eat'] == int(eat)
+
+It's also possible to parametrize the scenario on the python side. This is done using pytest parametrization.
 The reason for this is that it is very often that some simple pythonic type
 is needed in the parameters like a datetime or a dictionary, which makes it
 more difficult to express in the text files and preserve the correct format.
@@ -223,6 +259,9 @@ The code will look like:
         assert start - eat == left
         assert start_cucumbers['start'] == start
         assert start_cucumbers['eat'] == eat
+
+The significant downside of this approach is inability to see the test table from the feature file.
+
 
 Test setup
 ==========
@@ -324,6 +363,7 @@ inherited. Fixtures can be reused with other names using given():
 
     given('I have beautiful article', fixture='article')
 
+
 Reusing steps
 =============
 
@@ -362,6 +402,7 @@ test\_common.py:
 
 There are no definitions of the steps in the test file. They were
 collected from the parent conftests.
+
 
 Feature file paths
 ==================
