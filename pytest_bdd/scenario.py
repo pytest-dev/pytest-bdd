@@ -41,6 +41,45 @@ class GivenAlreadyUsed(ScenarioValidationError):  # pragma: no cover
     """Fixture that implements the Given has been already used."""
 
 
+def _inject_fixture(request, arg, value):
+    """Inject fixture into pytest fixture request.
+
+    :param request: pytest fixture request
+    :param arg: argument name
+    :param value: argument value
+
+    """
+    fd = python.FixtureDef(
+        request._fixturemanager,
+        None,
+        arg,
+        lambda: value, None, None,
+        False,
+    )
+    fd.cached_result = (value, 0)
+
+    old_fd = getattr(request, '_fixturedefs', {}).get(arg)
+    old_value = request._funcargs.get(arg)
+    add_fixturename = arg not in request.fixturenames
+
+    def fin():
+        request._fixturemanager._arg2fixturedefs[arg].remove(fd)
+        getattr(request, '_fixturedefs', {})[arg] = old_fd
+        request._funcargs[arg] = old_value
+        if add_fixturename:
+            request.fixturenames.remove(arg)
+
+    request.addfinalizer(fin)
+
+    # inject fixture definition
+    request._fixturemanager._arg2fixturedefs.setdefault(arg, []).insert(0, fd)
+    # inject fixture value in request cache
+    getattr(request, '_fixturedefs', {})[arg] = fd
+    request._funcargs[arg] = value
+    if add_fixturename:
+        request.fixturenames.append(arg)
+
+
 def _find_step_function(request, name, encoding):
     """Match the step defined by the regular expression pattern.
 
@@ -63,33 +102,86 @@ def _find_step_function(request, name, encoding):
 
                 if match:
                     for arg, value in match.groupdict().items():
-                        fd = python.FixtureDef(
-                            request._fixturemanager,
-                            fixturedef.baseid,
-                            arg,
-                            lambda: value, fixturedef.scope, fixturedef.params,
-                            fixturedef.unittest,
-                        )
-                        fd.cached_result = (value, 0)
-
-                        old_fd = getattr(request, '_fixturedefs', {}).get(arg)
-                        old_value = request._funcargs.get(arg)
-
-                        def fin():
-                            if fd in request._fixturemanager._arg2fixturedefs[arg]:
-                                request._fixturemanager._arg2fixturedefs[arg].remove(fd)
-                            getattr(request, '_fixturedefs', {})[arg] = old_fd
-                            request._funcargs[arg] = old_value
-
-                        request.addfinalizer(fin)
-
-                        # inject fixture definition
-                        request._fixturemanager._arg2fixturedefs.setdefault(arg, []).insert(0, fd)
-                        # inject fixture value in request cache
-                        getattr(request, '_fixturedefs', {})[arg] = fd
-                        request._funcargs[arg] = value
+                        _inject_fixture(request, arg, value)
                     return request.getfuncargvalue(pattern.pattern)
         raise
+
+
+def _validate_scenario(feature, scenario, request):
+    """Validate the scenario."""
+    resolved_params = scenario.params.intersection(request.fixturenames)
+
+    if scenario.params != resolved_params:
+        raise NotEnoughScenarioParams(
+            """Scenario "{0}" in the feature "{1}" was not able to resolve all declared parameters."""
+            """Should resolve params: {2}, but resolved only: {3}.""".format(
+                scenario.name, feature.filename, sorted(scenario.params), sorted(resolved_params),
+            )
+        )
+
+
+def _execute_scenario_outline(feature, scenario, request, encoding):
+    """Execute the scenario outline."""
+    for example in scenario.examples:
+        for key, value in dict(zip(scenario.example_params, example)).items():
+            _inject_fixture(request, key, value)
+        _execute_scenario(feature, scenario, request, encoding)
+
+
+def _execute_scenario(feature, scenario, request, encoding):
+    """Execute the scenario."""
+
+    _validate_scenario(feature, scenario, request)
+
+    givens = set()
+    # Execute scenario steps
+    for step in scenario.steps:
+        try:
+            step_func = _find_step_function(request, step.name, encoding=encoding)
+        except python.FixtureLookupError as exception:
+            request.config.hook.pytest_bdd_step_func_lookup_error(
+                request=request, feature=feature, scenario=scenario, step=step, exception=exception)
+            raise
+
+        try:
+            # Check the step types are called in the correct order
+            if step_func.step_type != step.type:
+                raise StepTypeError(
+                    'Wrong step type "{0}" while "{1}" is expected.'.format(step_func.step_type, step.type)
+                )
+
+            # Check if the fixture that implements given step has not been yet used by another given step
+            if step.type == GIVEN:
+                if step_func.fixture in givens:
+                    raise GivenAlreadyUsed(
+                        'Fixture "{0}" that implements this "{1}" given step has been already used.'.format(
+                            step_func.fixture, step.name,
+                        )
+                    )
+                givens.add(step_func.fixture)
+        except ScenarioValidationError as exception:
+            request.config.hook.pytest_bdd_step_validation_error(
+                request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
+                exception=exception)
+            raise
+
+        kwargs = {}
+        try:
+            # Get the step argument values
+            kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
+            request.config.hook.pytest_bdd_before_step(
+                request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
+                step_func_args=kwargs)
+            # Execute the step
+            step_func(**kwargs)
+            request.config.hook.pytest_bdd_after_step(
+                request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
+                step_func_args=kwargs)
+        except Exception as exception:
+            request.config.hook.pytest_bdd_step_error(
+                request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
+                step_func_args=kwargs, exception=exception)
+            raise
 
 
 def scenario(feature_name, scenario_name, encoding='utf-8'):
@@ -114,65 +206,10 @@ def scenario(feature_name, scenario_name, encoding='utf-8'):
                     'Scenario "{0}" in feature "{1}" is not found.'.format(scenario_name, feature_name)
                 )
 
-            resolved_params = scenario.params.intersection(request.fixturenames)
-
-            if scenario.params != resolved_params:
-                raise NotEnoughScenarioParams(
-                    """Scenario "{0}" in the feature "{1}" was not able to resolve all declared parameters."""
-                    """Should resolve params: {2}, but resolved only: {3}.""".format(
-                        scenario_name, feature_name, sorted(scenario.params), sorted(resolved_params),
-                    )
-                )
-
-            givens = set()
-            # Execute scenario steps
-            for step in scenario.steps:
-                try:
-                    step_func = _find_step_function(request, step.name, encoding=encoding)
-                except python.FixtureLookupError as exception:
-                    request.config.hook.pytest_bdd_step_func_lookup_error(
-                        request=request, feature=feature, scenario=scenario, step=step, exception=exception)
-                    raise
-
-                try:
-                    # Check the step types are called in the correct order
-                    if step_func.step_type != step.type:
-                        raise StepTypeError(
-                            'Wrong step type "{0}" while "{1}" is expected.'.format(step_func.step_type, step.type)
-                        )
-
-                    # Check if the fixture that implements given step has not been yet used by another given step
-                    if step.type == GIVEN:
-                        if step_func.fixture in givens:
-                            raise GivenAlreadyUsed(
-                                'Fixture "{0}" that implements this "{1}" given step has been already used.'.format(
-                                    step_func.fixture, step.name,
-                                )
-                            )
-                        givens.add(step_func.fixture)
-                except ScenarioValidationError as exception:
-                    request.config.hook.pytest_bdd_step_validation_error(
-                        request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
-                        exception=exception)
-                    raise
-
-                kwargs = {}
-                try:
-                    # Get the step argument values
-                    kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
-                    request.config.hook.pytest_bdd_before_step(
-                        request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
-                        step_func_args=kwargs)
-                    # Execute the step
-                    step_func(**kwargs)
-                    request.config.hook.pytest_bdd_after_step(
-                        request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
-                        step_func_args=kwargs)
-                except Exception as exception:
-                    request.config.hook.pytest_bdd_step_error(
-                        request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
-                        step_func_args=kwargs, exception=exception)
-                    raise
+            if scenario.examples:
+                _execute_scenario_outline(feature, scenario, request, encoding)
+            else:
+                _execute_scenario(feature, scenario, request, encoding)
 
         _scenario.pytestbdd_params = set()
 
