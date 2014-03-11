@@ -11,14 +11,25 @@ test_publish_article = scenario(
 )
 
 """
+import collections
+import os
+import imp
+
+import sys
 import inspect  # pragma: no cover
 from os import path as op  # pragma: no cover
+
+import pytest
+
+from future import utils as future_utils
 
 from _pytest import python
 
 from pytest_bdd.feature import Feature, force_encode  # pragma: no cover
 from pytest_bdd.steps import recreate_function, get_caller_module, get_caller_function
 from pytest_bdd.types import GIVEN
+
+from pytest_bdd import plugin
 
 
 class ScenarioValidationError(Exception):
@@ -29,8 +40,8 @@ class ScenarioNotFound(ScenarioValidationError):  # pragma: no cover
     """Scenario Not Found"""
 
 
-class NotEnoughScenarioParams(ScenarioValidationError):  # pragma: no cover
-    """Scenario function doesn't take enough parameters in the arguments."""
+class ScenarioExamplesNotValidError(ScenarioValidationError):  # pragma: no cover
+    """Scenario steps argumets do not match declared scenario examples."""
 
 
 class StepTypeError(ScenarioValidationError):  # pragma: no cover
@@ -101,7 +112,10 @@ def _find_step_function(request, name, encoding):
                 match = pattern.match(name) if pattern else None
 
                 if match:
+                    converters = getattr(fixturedef.func, 'converters', {})
                     for arg, value in match.groupdict().items():
+                        if arg in converters:
+                            value = converters[arg](value)
                         _inject_fixture(request, arg, value)
                     return request.getfuncargvalue(pattern.pattern)
         raise
@@ -109,26 +123,58 @@ def _find_step_function(request, name, encoding):
 
 def _validate_scenario(feature, scenario, request):
     """Validate the scenario."""
-    resolved_params = scenario.params.intersection(request.fixturenames)
-
-    if scenario.params != resolved_params:
-        raise NotEnoughScenarioParams(
-            """Scenario "{0}" in the feature "{1}" was not able to resolve all declared parameters."""
-            """Should resolve params: {2}, but resolved only: {3}.""".format(
-                scenario.name, feature.filename, sorted(scenario.params), sorted(resolved_params),
+    if scenario.params and scenario.example_params and scenario.params != set(scenario.example_params):
+        raise ScenarioExamplesNotValidError(
+            """Scenario "{0}" in the feature "{1}" has not valid examples. """
+            """Set of step parameters {2} should match set of example values {3}.""".format(
+                scenario.name, feature.filename, sorted(scenario.params), sorted(scenario.example_params),
             )
         )
 
 
-def _execute_scenario_outline(feature, scenario, request, encoding):
+def _execute_scenario_outline(feature, scenario, request, encoding, example_converters=None):
     """Execute the scenario outline."""
+    errors = []
+    # tricky part, basically here we clear pytest request cache
     for example in scenario.examples:
-        for key, value in dict(zip(scenario.example_params, example)).items():
+        request._funcargs = {}
+        request._arg2index = {}
+        try:
+            _execute_scenario(feature, scenario, request, encoding, example=dict(zip(scenario.example_params, example)))
+        except Exception as e:
+            errors.append([e, sys.exc_info()[2]])
+    for error in errors:
+        raise future_utils.raise_with_traceback(error[0], error[1])
+
+
+def _execute_step_function(request, feature, step, step_func, example=None):
+    """Execute step function."""
+    kwargs = {}
+    if example:
+        for key in step.params:
+            value = example[key]
+            if step_func.converters and key in step_func.converters:
+                value = step_func.converters[key](value)
             _inject_fixture(request, key, value)
-        _execute_scenario(feature, scenario, request, encoding)
+    try:
+        # Get the step argument values
+        kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
+        request.config.hook.pytest_bdd_before_step(
+            request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
+            step_func_args=kwargs)
+        # Execute the step
+        step_func(**kwargs)
+        request.config.hook.pytest_bdd_after_step(
+            request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
+            step_func_args=kwargs)
+    except Exception as exception:
+        request.config.hook.pytest_bdd_step_error(
+            request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
+            step_func_args=kwargs, exception=exception)
+        raise
 
 
-def _execute_scenario(feature, scenario, request, encoding):
+def _execute_scenario(feature, scenario, request, encoding, example=None):
     """Execute the scenario."""
 
     _validate_scenario(feature, scenario, request)
@@ -165,68 +211,77 @@ def _execute_scenario(feature, scenario, request, encoding):
                 exception=exception)
             raise
 
-        kwargs = {}
-        try:
-            # Get the step argument values
-            kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
-            request.config.hook.pytest_bdd_before_step(
-                request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
-                step_func_args=kwargs)
-            # Execute the step
-            step_func(**kwargs)
-            request.config.hook.pytest_bdd_after_step(
-                request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
-                step_func_args=kwargs)
-        except Exception as exception:
-            request.config.hook.pytest_bdd_step_error(
-                request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
-                step_func_args=kwargs, exception=exception)
-            raise
+        _execute_step_function(request, feature, step, step_func, example=example)
 
 
-def scenario(feature_name, scenario_name, encoding='utf-8'):
-    """Scenario. May be called both as decorator and as just normal function."""
+FakeRequest = collections.namedtuple('FakeRequest', ['module'])
 
-    caller_module = get_caller_module()
-    caller_function = get_caller_function()
 
-    def decorator(request):
+def get_fixture(caller_module, fixture, path=None, module=None):
+    """Get first conftest module from given one."""
+    def call_fixture(function):
+        args = []
+        if 'request' in inspect.getargspec(function).args:
+            args = [FakeRequest(module=caller_module)]
+        return function(*args)
 
-        def _scenario(request):
-            # Get the feature
-            base_path = request.getfuncargvalue('pytestbdd_feature_base_dir')
-            feature_path = op.abspath(op.join(base_path, feature_name))
-            feature = Feature.get_feature(feature_path, encoding=encoding)
+    if not module:
+        module = caller_module
 
-            # Get the scenario
-            try:
-                scenario = feature.scenarios[scenario_name]
-            except KeyError:
-                raise ScenarioNotFound(
-                    'Scenario "{0}" in feature "{1}" is not found.'.format(scenario_name, feature_name)
-                )
+    if hasattr(module, fixture):
+        return call_fixture(getattr(module, fixture))
 
-            if scenario.examples:
-                _execute_scenario_outline(feature, scenario, request, encoding)
-            else:
-                _execute_scenario(feature, scenario, request, encoding)
+    if path is None:
+        path = os.path.dirname(module.__file__)
+    if os.path.exists(os.path.join(path, '__init__.py')):
+        file_path = os.path.join(path, 'conftest.py')
+        if os.path.exists(file_path):
+            conftest = imp.load_source('conftest', file_path)
+            if hasattr(conftest, fixture):
+                return get_fixture(caller_module, fixture, module=conftest)
+    else:
+        return get_fixture(caller_module, fixture, module=plugin)
+    return get_fixture(caller_module, fixture, path=os.path.dirname(path), module=module)
 
-        _scenario.pytestbdd_params = set()
 
-        if isinstance(request, python.FixtureRequest):
-            # Called as a normal function.
-            _scenario = recreate_function(_scenario, module=caller_module)
-            return _scenario(request)
+def scenario(
+        feature_name, scenario_name, encoding='utf-8', example_converters=None,
+        caller_module=None, caller_function=None):
+    """Scenario."""
 
-        # Used as a decorator. Modify the returned function to add parameters from a decorated function.
-        func_args = inspect.getargspec(request).args
-        if 'request' in func_args:
-            func_args.remove('request')
-        _scenario = recreate_function(_scenario, name=request.__name__, add_args=func_args, module=caller_module)
-        _scenario.pytestbdd_params = set(func_args)
+    caller_module = caller_module or get_caller_module()
+    caller_function = caller_function or get_caller_function()
 
-        return _scenario
+    # Get the feature
+    base_path = get_fixture(caller_module, 'pytestbdd_feature_base_dir')
+    feature_path = op.abspath(op.join(base_path, feature_name))
+    feature = Feature.get_feature(feature_path, encoding=encoding)
 
-    decorator = recreate_function(decorator, module=caller_module, firstlineno=caller_function.f_lineno)
+    # Get the scenario
+    try:
+        scenario = feature.scenarios[scenario_name]
+    except KeyError:
+        raise ScenarioNotFound(
+            'Scenario "{0}" in feature "{1}" is not found.'.format(scenario_name, feature_name)
+        )
 
-    return decorator
+    if scenario.examples:
+        params = []
+        for example in scenario.examples:
+            for index, param in enumerate(scenario.example_params):
+                if example_converters and param in example_converters:
+                    example[index] = example_converters[param](example[index])
+            params.append(example)
+        params = [scenario.example_params, params]
+    else:
+        params = []
+
+    def _scenario(request, *args, **kwargs):
+        _execute_scenario(feature, scenario, request, encoding)
+
+    _scenario = recreate_function(
+        _scenario, module=caller_module, firstlineno=caller_function.f_lineno,
+        add_args=scenario.example_params)
+    if params:
+        _scenario = pytest.mark.parametrize(*params)(_scenario)
+    return _scenario

@@ -229,8 +229,9 @@ class Scenario(object):
         :param step_type: Step type.
 
         """
-        self.params.update(get_step_params(step_name))
-        self.steps.append(Step(name=step_name, type=step_type))
+        params = get_step_params(step_name)
+        self.params.update(params)
+        self.steps.append(Step(name=step_name, type=step_type, params=params))
 
     def set_param_names(self, keys):
         """Set parameter names.
@@ -238,8 +239,7 @@ class Scenario(object):
         :param names: `list` of `string` parameter names
 
         """
-        self.params.update(keys)
-        self.example_params = keys
+        self.example_params = [str(key) for key in keys]
 
     def add_example(self, values):
         """Add example.
@@ -253,6 +253,7 @@ class Scenario(object):
 class Step(object):
     """Step."""
 
-    def __init__(self, name, type):
+    def __init__(self, name, type, params):
         self.name = name
         self.type = type
+        self.params = params

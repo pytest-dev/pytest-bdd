@@ -51,11 +51,13 @@ class StepError(Exception):  # pragma: no cover
 RE_TYPE = type(re.compile(''))  # pragma: no cover
 
 
-def given(name, fixture=None):
+def given(name, fixture=None, converters=None):
     """Given step decorator.
 
     :param name: Given step name.
     :param fixture: Optional name of the fixture to reuse.
+    :param converters: Optional `dict` of the argument or parameter converters in form
+    {<param_name>: <converter function>}.
 
     :raises: StepError in case of wrong configuration.
     :note: Can't be used as a decorator when the fixture is specified.
@@ -66,6 +68,7 @@ def given(name, fixture=None):
         module = get_caller_module()
         step_func = lambda request: request.getfuncargvalue(fixture)
         step_func.step_type = GIVEN
+        step_func.converters = converters
         step_func.__name__ = name
         step_func.fixture = fixture
         func = pytest.fixture(lambda: step_func)
@@ -73,29 +76,33 @@ def given(name, fixture=None):
         contribute_to_module(module, remove_prefix(name), func)
         return _not_a_fixture_decorator
 
-    return _step_decorator(GIVEN, name)
+    return _step_decorator(GIVEN, name, converters=converters)
 
 
-def when(name):
+def when(name, converters=None):
     """When step decorator.
 
     :param name: Step name.
+    :param converters: Optional `dict` of the argument or parameter converters in form
+    {<param_name>: <converter function>}.
 
     :raises: StepError in case of wrong configuration.
 
     """
-    return _step_decorator(WHEN, name)
+    return _step_decorator(WHEN, name, converters=converters)
 
 
-def then(name):
+def then(name, converters=None):
     """Then step decorator.
 
     :param name: Step name.
+    :param converters: Optional `dict` of the argument or parameter converters in form
+    {<param_name>: <converter function>}.
 
     :raises: StepError in case of wrong configuration.
 
     """
-    return _step_decorator(THEN, name)
+    return _step_decorator(THEN, name, converters=converters)
 
 
 def _not_a_fixture_decorator(func):
@@ -109,7 +116,7 @@ def _not_a_fixture_decorator(func):
     raise StepError('Cannot be used as a decorator when the fixture is specified')
 
 
-def _step_decorator(step_type, step_name):
+def _step_decorator(step_type, step_name, converters=None):
     """Step decorator for the type and the name.
 
     :param step_type: Step type (GIVEN, WHEN or THEN).
@@ -141,6 +148,7 @@ def _step_decorator(step_type, step_name):
 
         step_func.__name__ = step_name
         step_func.step_type = step_type
+        step_func.converters = converters
 
         @pytest.fixture
         def lazy_step_func():
@@ -151,6 +159,8 @@ def _step_decorator(step_type, step_name):
 
         if pattern:
             lazy_step_func.pattern = pattern
+        if converters:
+            lazy_step_func.converters = converters
 
         contribute_to_module(
             get_caller_module(),
@@ -162,7 +172,7 @@ def _step_decorator(step_type, step_name):
     return decorator
 
 
-def recreate_function(func, module=None, name=None, add_args=(), firstlineno=None):
+def recreate_function(func, module=None, name=None, add_args=[], firstlineno=None):
     """Recreate a function, replacing some info.
 
     :param func: Function object.
@@ -187,6 +197,10 @@ def recreate_function(func, module=None, name=None, add_args=(), firstlineno=Non
     ]
     if PY3:
         argnames.insert(1, 'co_kwonlyargcount')
+
+    for arg in inspect.getargspec(func).args:
+        if arg in add_args:
+            add_args.remove(arg)
 
     args = []
     code = get_code(func)

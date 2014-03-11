@@ -6,7 +6,7 @@ from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
 
-version = '1.0.0'
+version = '2.0.0'
 
 
 class Tox(TestCommand):
@@ -54,6 +54,7 @@ setup(
     cmdclass={'test': Tox},
     install_requires=[
         'pytest',
+        'future'
     ],
     # the following makes a plugin available to py.test
     entry_points={

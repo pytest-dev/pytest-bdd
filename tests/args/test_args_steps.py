@@ -19,16 +19,21 @@ test_argument_in_when_step_2 = sc('Argument in when, step 2')
 
 @pytest.fixture
 def values():
-    return ['1', '2', '1', '0', '999999']
+    return [1, 2, 1, 0, 999999]
 
 
-@given(re.compile(r'I have (?P<euro>\d+) Euro'))
+@given(re.compile(r'I have (?P<euro>\d+) Euro'), converters=dict(euro=int))
 def i_have(euro, values):
     assert euro == values.pop(0)
 
 
-@when(re.compile(r'I pay (?P<euro>\d+) Euro'))
+@when(re.compile(r'I pay (?P<euro>\d+) Euro'), converters=dict(euro=int))
 def i_pay(euro, values, request):
+    assert euro == values.pop(0)
+
+
+@then(re.compile(r'I should have (?P<euro>\d+) Euro'), converters=dict(euro=int))
+def i_should_have(euro, values):
     assert euro == values.pop(0)
 
 
@@ -42,11 +47,6 @@ def argument():
 def get_argument(argument, arg):
     """Getting argument."""
     argument['arg'] = arg
-
-
-@then(re.compile(r'I should have (?P<euro>\d+) Euro'))
-def i_should_have(euro, values):
-    assert euro == values.pop(0)
 
 
 @then(re.compile('My argument should be (?P<arg>\d+)'))
