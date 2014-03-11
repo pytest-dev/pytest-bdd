@@ -1,14 +1,12 @@
 import pytest
 
-from pytest_bdd.scenario import NotEnoughScenarioParams
-
-from pytest_bdd import given, when, then, scenario
+from pytest_bdd import given, when, then, mark
 
 
 @pytest.mark.parametrize(
     ['start', 'eat', 'left'],
     [(12, 5, 7)])
-@scenario(
+@mark.scenario(
     'parametrized.feature',
     'Parametrized given, when, thens',
 )
@@ -18,37 +16,18 @@ def test_parametrized(request, start, eat, left):
 
 @pytest.fixture(params=[1, 2])
 def foo_bar(request):
-    return 'foo_bar' * request.param
+    return 'bar' * request.param
 
 
 @pytest.mark.parametrize(
     ['start', 'eat', 'left'],
     [(12, 5, 7)])
-@scenario(
+@mark.scenario(
     'parametrized.feature',
     'Parametrized given, when, thens',
 )
 def test_parametrized_with_other_fixtures(request, start, eat, left, foo_bar):
-    """Test parametrized scenario, but also with other fixtures."""
-
-
-def test_parametrized_wrongly(request):
-    """Test parametrized scenario when the test function lacks parameters."""
-    @scenario(
-        'parametrized.feature',
-        'Parametrized given, when, thens',
-    )
-    def wrongly_parametrized(request):
-        pass
-
-    with pytest.raises(NotEnoughScenarioParams) as exc:
-        wrongly_parametrized(request)
-
-        assert exc.value.args == (
-            """Scenario "Parametrized given, when, thens" in the feature "parametrized.feature" was not able to """
-            """resolve all declared parameters. """
-            """Should resolve params: [\'eat\', \'left\', \'start\'], but resolved only: []."""
-        )
+    """Test parametrized scenario, but also with other parametrized fixtures."""
 
 
 @given('there are <start> cucumbers')

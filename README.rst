@@ -21,12 +21,14 @@ mentioned in the feature steps with dependency injection, which allows a true BD
 just-enough specification of the requirements without maintaining any context object
 containing the side effects of the Gherkin imperative declarations.
 
+
 Install pytest-bdd
 ==================
 
 ::
 
     pip install pytest-bdd
+
 
 Example
 =======
@@ -81,6 +83,7 @@ test\_publish\_article.py:
         article.refresh()  # Refresh the object in the SQLAlchemy session
         assert article.is_published
 
+
 Step aliases
 ============
 
@@ -113,6 +116,7 @@ default author.
         Given I'm the admin
         And there is an article
 
+
 Step arguments
 ==============
 
@@ -143,28 +147,32 @@ The code will look like:
 
     test_arguments = scenario('arguments.feature', 'Arguments for given, when, thens')
 
-    @given(re.compile('there are (?P<start>\d+) cucumbers'))
+    @given(re.compile('there are (?P<start>\d+) cucumbers'), converters=dict(start=int))
     def start_cucumbers(start):
-        # note that you always get step arguments as strings, convert them on demand
-        start = int(start)
         return dict(start=start, eat=0)
 
 
-    @when(re.compile('I eat (?P<eat>\d+) cucumbers'))
+    @when(re.compile('I eat (?P<eat>\d+) cucumbers'), converters=dict(eat=int))
     def eat_cucumbers(start_cucumbers, eat):
-        eat = int(eat)
         start_cucumbers['eat'] += eat
 
 
-    @then(re.compile('I should have (?P<left>\d+) cucumbers'))
+    @then(re.compile('I should have (?P<left>\d+) cucumbers'), converters=dict(left=int))
     def should_have_left_cucumbers(start_cucumbers, start, left):
-        start, left = int(start), int(left)
         assert start_cucumbers['start'] == start
         assert start - start_cucumbers['eat'] == left
 
+Example code also shows possibility to pass argument converters which may be useful if you need argument types
+different than strings.
+
+
 Scenario parameters
 ===================
-Scenario can accept `encoding` param to decode content of feature file in specific encoding. UTF-8 is default.
+Scenario function/decorator can accept such optional keyword arguments:
+
+    * `encoding` - decode content of feature file in specific encoding. UTF-8 is default.
+    * `example_converters` - mapping to pass functions to convert example values provided in feature files.
+
 
 Scenario outlines
 =================
@@ -173,7 +181,6 @@ Scenarios can be parametrized to cover few cases. In Gherkin the variable
 templates are written using corner braces as <somevalue>.
 `Scenario outlines <http://docs.behat.org/guides/1.gherkin.html#scenario-outlines>`_ are supported by pytest-bdd
 exactly as it's described in be behave docs.
-
 
 Example:
 
@@ -199,42 +206,47 @@ The code will look like:
     test_outlined = scenario(
         'outline.feature',
         'Outlined given, when, thens',
+        example_converters=dict(start=int, eat=float, left=str)
     )
 
 
     @given('there are <start> cucumbers')
     def start_cucumbers(start):
-        return dict(start=int(start))
+        assert isinstance(start, int)
+        return dict(start=start)
 
 
     @when('I eat <eat> cucumbers')
-    def eat_cucumbers(start_cucumbers, start, eat):
-        start_cucumbers['eat'] = int(eat)
+    def eat_cucumbers(start_cucumbers, eat):
+        assert isinstance(eat, float)
+        start_cucumbers['eat'] = eat
 
 
     @then('I should have <left> cucumbers')
     def should_have_left_cucumbers(start_cucumbers, start, eat, left):
-        assert int(start) - int(eat) == int(left)
-        assert start_cucumbers['start'] == int(start)
-        assert start_cucumbers['eat'] == int(eat)
+        assert isinstance(left, str)
+        assert start - eat == int(left)
+        assert start_cucumbers['start'] == start
+        assert start_cucumbers['eat'] == eat
 
-It's also possible to parametrize the scenario on the python side. This is done using pytest parametrization.
-The reason for this is that it is very often that some simple pythonic type
-is needed in the parameters like a datetime or a dictionary, which makes it
-more difficult to express in the text files and preserve the correct format.
+Example code also shows possibility to pass example converters which may be useful if you need parameter types
+different than strings.
+
+It's also possible to parametrize the scenario on the python side.
+The reason for this is that it is sometimes not needed to mention example table for every scenario.
 
 The code will look like:
 
 .. code-block:: python
 
     import pytest
-    from pytest_bdd import scenario, given, when, then
+    from pytest_bdd import mark, given, when, then
 
     # Here we use pytest to parametrize the test with the parameters table
     @pytest.mark.parametrize(
         ['start', 'eat', 'left'],
         [(12, 5, 7)])
-    @scenario(
+    @mark.scenario(
         'parametrized.feature',
         'Parametrized given, when, thens',
     )
@@ -453,6 +465,7 @@ test\_publish\_article.py:
 
 You can learn more about `functools.partial <http://docs.python.org/2/library/functools.html#functools.partial>`_ in the Python docs.
 
+
 Hooks
 =====
 
@@ -474,15 +487,13 @@ which might be helpful building useful reporting, visualization, etc on top of i
     * pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception) - Called when step lookup failed
 
 
-Subplugins
-==========
+Browser testing
+===============
 
-The pytest BDD has plugin support, and the main purpose of plugins
-(subplugins) is to provide useful and specialized fixtures.
+Tools recommended to use for browser testing:
 
-List of known subplugins:
+    *  pytest-splinter - pytest splinter integration for the real browser testing
 
-    *  pytest-bdd-splinter - collection of fixtures for the real browser BDD testing
 
 License
 =======

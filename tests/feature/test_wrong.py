@@ -33,9 +33,8 @@ def then_nevermind():
 def test_wrong(request, feature, scenario_name):
     """Test wrong feature scenarios."""
 
-    sc = scenario(feature, scenario_name)
     with pytest.raises(FeatureError):
-        sc(request)
+        scenario(feature, scenario_name)
     # TODO: assert the exception args from parameters
 
 
@@ -60,9 +59,8 @@ def test_wrong_type_order(request, scenario_name):
 
 def test_verbose_output(request):
     """Test verbose output of failed feature scenario"""
-    sc = scenario('when_after_then.feature', 'When after then')
     with pytest.raises(FeatureError) as excinfo:
-        sc(request)
+        scenario('when_after_then.feature', 'When after then')
 
     msg, line_number, line = excinfo.value.args
 

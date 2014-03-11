@@ -1,6 +1,13 @@
 Changelog
 =========
 
+2.0.0
+-----
+
+- Pure pytest parametrization for scenario outlines (bubenkoff)
+- Splitting scenario decorated and non-decorated variants (bubenkoff)
+
+
 1.0.0
 -----
 
