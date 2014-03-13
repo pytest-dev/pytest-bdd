@@ -11,22 +11,20 @@ test_publish_article = scenario(
 )
 
 """
+
 import collections
 import os
 import imp
 
-import sys
 import inspect  # pragma: no cover
 from os import path as op  # pragma: no cover
 
 import pytest
 
-from future import utils as future_utils
-
 from _pytest import python
 
 from pytest_bdd.feature import Feature, force_encode  # pragma: no cover
-from pytest_bdd.steps import recreate_function, get_caller_module, get_caller_function
+from pytest_bdd.steps import execute, recreate_function, get_caller_module, get_caller_function
 from pytest_bdd.types import GIVEN
 
 from pytest_bdd import plugin
@@ -110,7 +108,6 @@ def _find_step_function(request, name, encoding):
 
                 pattern = getattr(fixturedef.func, 'pattern', None)
                 match = pattern.match(name) if pattern else None
-
                 if match:
                     converters = getattr(fixturedef.func, 'converters', {})
                     for arg, value in match.groupdict().items():
@@ -121,7 +118,7 @@ def _find_step_function(request, name, encoding):
         raise
 
 
-def _validate_scenario(feature, scenario, request):
+def _validate_scenario(feature, scenario):
     """Validate the scenario."""
     if scenario.params and scenario.example_params and scenario.params != set(scenario.example_params):
         raise ScenarioExamplesNotValidError(
@@ -130,21 +127,6 @@ def _validate_scenario(feature, scenario, request):
                 scenario.name, feature.filename, sorted(scenario.params), sorted(scenario.example_params),
             )
         )
-
-
-def _execute_scenario_outline(feature, scenario, request, encoding, example_converters=None):
-    """Execute the scenario outline."""
-    errors = []
-    # tricky part, basically here we clear pytest request cache
-    for example in scenario.examples:
-        request._funcargs = {}
-        request._arg2index = {}
-        try:
-            _execute_scenario(feature, scenario, request, encoding, example=dict(zip(scenario.example_params, example)))
-        except Exception as e:
-            errors.append([e, sys.exc_info()[2]])
-    for error in errors:
-        raise future_utils.raise_with_traceback(error[0], error[1])
 
 
 def _execute_step_function(request, feature, step, step_func, example=None):
@@ -176,8 +158,6 @@ def _execute_step_function(request, feature, step, step_func, example=None):
 
 def _execute_scenario(feature, scenario, request, encoding, example=None):
     """Execute the scenario."""
-
-    _validate_scenario(feature, scenario, request)
 
     givens = set()
     # Execute scenario steps
@@ -265,6 +245,8 @@ def scenario(
             'Scenario "{0}" in feature "{1}" is not found.'.format(scenario_name, feature_name)
         )
 
+    _validate_scenario(feature, scenario)
+
     if scenario.examples:
         params = []
         for example in scenario.examples:
@@ -276,12 +258,18 @@ def scenario(
     else:
         params = []
 
-    def _scenario(request, *args, **kwargs):
-        _execute_scenario(feature, scenario, request, encoding)
+    g = globals().copy()
+    g.update(locals())
+
+    code = """def _scenario(request, {0}):
+        _execute_scenario(feature, scenario, request, encoding)""".format(','.join(scenario.example_params))
+
+    execute(code, g)
 
     _scenario = recreate_function(
-        _scenario, module=caller_module, firstlineno=caller_function.f_lineno,
-        add_args=scenario.example_params)
+        g['_scenario'], module=caller_module, firstlineno=caller_function.f_lineno)
     if params:
         _scenario = pytest.mark.parametrize(*params)(_scenario)
+    _scenario.pytestbdd_params = params
+    _scenario.scenario = scenario
     return _scenario

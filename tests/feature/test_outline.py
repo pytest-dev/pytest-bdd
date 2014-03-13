@@ -37,15 +37,14 @@ def should_have_left_cucumbers(start_cucumbers, start, eat, left):
 
 def test_wrongly_outlined(request):
     """Test parametrized scenario when the test function lacks parameters."""
-    @mark.scenario(
-        'outline.feature',
-        'Outlined with wrong examples',
-    )
-    def wrongly_outlined(request):
-        pass
 
     with pytest.raises(ScenarioExamplesNotValidError) as exc:
-        wrongly_outlined(request, 1, 2, 3, 4)
+        @mark.scenario(
+            'outline.feature',
+            'Outlined with wrong examples',
+        )
+        def wrongly_outlined(request):
+            pass
 
     assert re.match(
         """Scenario \"Outlined with wrong examples\" in the feature \"(.+)\" has not valid examples\. """

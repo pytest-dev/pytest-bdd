@@ -1,7 +1,9 @@
 """Pytest-bdd markers."""
 import inspect
 
-from pytest_bdd.steps import recreate_function, get_caller_module, get_caller_function
+import pytest
+
+from pytest_bdd.steps import execute, recreate_function, get_caller_module, get_caller_function
 
 from pytest_bdd import scenario as bdd_scenario
 
@@ -19,7 +21,28 @@ def scenario(feature_name, scenario_name, encoding='utf-8', example_converters=N
 
         args = inspect.getargspec(request).args
 
-        _scenario = recreate_function(_scenario, name=request.__name__, module=caller_module, add_args=args)
+        if 'request' not in args:
+            args.insert(0, 'request')
+
+        g = globals().copy()
+        g.update(locals())
+
+        pytestbdd_params = _scenario.pytestbdd_params
+        scenario = _scenario.scenario
+
+        sc_args = list(scenario.example_params)
+        if 'request' not in sc_args:
+            sc_args.insert(0, 'request')
+
+        code = """def _decorated_scenario({0}):
+                _scenario({1})""".format(', '.join(args), ', '.join(sc_args))
+
+        execute(code, g)
+
+        _scenario = recreate_function(g['_decorated_scenario'], module=caller_module, add_args=args)
+
+        if pytestbdd_params:
+            _scenario = pytest.mark.parametrize(*pytestbdd_params)(_scenario)
 
         return _scenario
 

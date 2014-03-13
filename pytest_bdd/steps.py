@@ -234,7 +234,6 @@ def contribute_to_module(module, name, func):
 
     """
     func = recreate_function(func, module=module)
-
     setattr(module, name, func)
 
 
@@ -247,3 +246,7 @@ def get_caller_module(depth=2):
 def get_caller_function(depth=2):
     """Return caller function."""
     return sys._getframe(depth)
+
+
+def execute(code, g):
+    exec(code, g)

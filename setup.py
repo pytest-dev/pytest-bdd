@@ -54,7 +54,6 @@ setup(
     cmdclass={'test': Tox},
     install_requires=[
         'pytest',
-        'future'
     ],
     # the following makes a plugin available to py.test
     entry_points={
