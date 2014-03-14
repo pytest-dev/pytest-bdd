@@ -52,3 +52,17 @@ def test_wrongly_outlined(request):
         """(.+)\.""",
         exc.value.args[0]
     )
+
+
+@pytest.fixture(params=[1, 2, 3])
+def other_fixture(request):
+    return request.param
+
+
+@mark.scenario(
+    'outline.feature',
+    'Outlined given, when, thens',
+    example_converters=dict(start=int, eat=float, left=str)
+)
+def test_outlined_with_other_fixtures(start, eat, left, other_fixture):
+    """Test outlined scenario also using other parametrized fixture."""

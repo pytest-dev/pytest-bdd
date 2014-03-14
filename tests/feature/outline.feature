@@ -6,6 +6,7 @@ Scenario Outline: Outlined given, when, thens
     Examples:
     | start | eat | left |
     |  12   |  5  |  7   |
+    |  5    |  4  |  1   |
 
 
 Scenario Outline: Outlined with wrong examples
