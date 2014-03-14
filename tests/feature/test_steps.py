@@ -59,7 +59,9 @@ def no_errors():
     assert True
 
 
-test_then_after_given = scenario('steps.feature', 'Then step can follow Given step')
+@scenario('steps.feature', 'Then step can follow Given step')
+def test_then_after_given():
+    pass
 
 
 @given('xyz')
@@ -67,15 +69,21 @@ def xyz():
     """Used in the test_same_step_name."""
     return
 
-test_conftest = scenario('steps.feature', 'All steps are declared in the conftest')
+
+@scenario('steps.feature', 'All steps are declared in the conftest')
+def test_conftest():
+    pass
 
 
 def test_multiple_given(request):
     """Using the same given fixture raises an error."""
-    test = scenario(
+    @scenario(
         'steps.feature',
         'Using the same given fixture raises an error',
     )
+    def test():
+        pass
+
     with pytest.raises(GivenAlreadyUsed):
         test(request)
 

@@ -15,8 +15,16 @@ def test_steps():
     pass
 
 sc = functools.partial(scenario, 'when_arguments.feature')
-test_argument_in_when_step_1 = sc('Argument in when, step 1')
-test_argument_in_when_step_2 = sc('Argument in when, step 2')
+
+
+@sc('Argument in when, step 1')
+def test_argument_in_when_step_1():
+    pass
+
+
+@sc('Argument in when, step 2')
+def test_argument_in_when_step_2():
+    pass
 
 
 @pytest.fixture

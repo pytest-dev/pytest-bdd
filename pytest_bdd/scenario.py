@@ -296,6 +296,8 @@ def scenario(
         if params:
             _scenario = pytest.mark.parametrize(*params)(_scenario)
 
+        _scenario.__doc__ = '{feature_name}: {scenario_name}'.format(
+            feature_name=feature_name, scenario_name=scenario_name)
         return _scenario
 
     decorator = recreate_function(decorator, module=caller_module, firstlineno=caller_function.f_lineno)

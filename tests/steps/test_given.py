@@ -11,9 +11,15 @@ def foo():
 given('I have alias for foo', fixture='foo')
 given('I have an alias to the root fixture', fixture='root')
 
-test_given_with_fixture = scenario('given.feature', 'Test reusing local fixture')
 
-test_root_alias = scenario('given.feature', 'Test reusing root fixture')
+@scenario('given.feature', 'Test reusing local fixture')
+def test_given_with_fixture():
+    pass
+
+
+@scenario('given.feature', 'Test reusing root fixture')
+def test_root_alias():
+    pass
 
 
 @then('foo should be "foo"')

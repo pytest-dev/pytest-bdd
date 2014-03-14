@@ -8,8 +8,17 @@ import functools
 from pytest_bdd import scenario, given, then
 
 scenario = functools.partial(scenario, 'unicode.feature')
-test_steps_in_feature_file_have_unicode = scenario('Steps in .feature file have unicode')
-test_steps_in_py_file_have_unicode = scenario('Steps in .py file have unicode')
+
+
+@scenario('Steps in .feature file have unicode')
+def test_steps_in_feature_file_have_unicode():
+    pass
+
+
+@scenario('Steps in .py file have unicode')
+def test_steps_in_py_file_have_unicode():
+    pass
+
 
 pattern = '(?P<content>\'\w+\')'
 

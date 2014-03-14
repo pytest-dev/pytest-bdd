@@ -20,8 +20,15 @@ def migrate_tests():
 
 def migrate_tests_in_file(file_path):
     """Migrate all bdd-based tests in the given test file."""
-    with open(file_path, 'w') as fd:
-        content = fd.read()
-        content = MIGRATE_REGEX.sub('@scenario(2)\ndef 1():\n    pass', content)
-        fd.seek(0)
-        fd.write(content)
+    try:
+        with open(file_path, 'r+') as fd:
+            content = fd.read()
+            new_content = MIGRATE_REGEX.sub(r'\n\n@scenario(\2)\ndef \1():\n    pass\n', content)
+            if new_content != content:
+                fd.seek(0)
+                fd.write(new_content)
+                print('migrated: {0}'.format(file_path))
+            else:
+                print('skipped: {0}'.format(file_path))
+    except IOError:
+        pass
