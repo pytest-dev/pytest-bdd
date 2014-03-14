@@ -7,10 +7,12 @@ from pytest_bdd import scenario, given, when, then
 from pytest_bdd.scenario import GivenAlreadyUsed
 
 
-test_steps = scenario(
+@scenario(
     'args_steps.feature',
     'Every step takes a parameter with the same name',
 )
+def test_steps():
+    pass
 
 sc = functools.partial(scenario, 'when_arguments.feature')
 test_argument_in_when_step_1 = sc('Argument in when, step 1')
@@ -57,9 +59,11 @@ def assert_that_my_argument_is_arg(argument, arg):
 
 def test_multiple_given(request):
     """Using the same given fixture raises an error."""
-    test = scenario(
+    @scenario(
         'args_steps.feature',
         'Using the same given fixture raises an error',
     )
+    def test():
+        pass
     with pytest.raises(GivenAlreadyUsed):
         test(request)

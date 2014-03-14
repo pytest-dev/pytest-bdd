@@ -59,6 +59,9 @@ setup(
     entry_points={
         'pytest11': [
             'pytest-bdd = pytest_bdd.plugin',
+        ],
+        'console_scripts': [
+            'pytestbdd_migrate_tests = pytest_bdd.scripts:migrate_tests'
         ]
     },
     tests_require=['detox'],

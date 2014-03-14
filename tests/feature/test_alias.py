@@ -3,7 +3,9 @@
 from pytest_bdd import scenario, given, when, then
 
 
-test_steps = scenario('alias.feature', 'Multiple given alias is not evaluated multiple times')
+@scenario('alias.feature', 'Multiple given alias is not evaluated multiple times')
+def test_steps():
+    pass
 
 
 @given('I have an empty list')

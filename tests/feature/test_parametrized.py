@@ -1,12 +1,12 @@
 import pytest
 
-from pytest_bdd import given, when, then, mark
+from pytest_bdd import given, when, then, scenario
 
 
 @pytest.mark.parametrize(
     ['start', 'eat', 'left'],
     [(12, 5, 7)])
-@mark.scenario(
+@scenario(
     'parametrized.feature',
     'Parametrized given, when, thens',
 )
@@ -22,7 +22,7 @@ def foo_bar(request):
 @pytest.mark.parametrize(
     ['start', 'eat', 'left'],
     [(12, 5, 7)])
-@mark.scenario(
+@scenario(
     'parametrized.feature',
     'Parametrized given, when, thens',
 )

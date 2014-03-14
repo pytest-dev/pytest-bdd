@@ -30,6 +30,10 @@ from pytest_bdd.types import GIVEN
 from pytest_bdd import plugin
 
 
+class ScenarioIsDecoratorOnly(Exception):
+    """Scenario can be only used as decorator."""
+
+
 class ScenarioValidationError(Exception):
     """Base class for scenario validation."""
 
@@ -245,6 +249,7 @@ def scenario(
             'Scenario "{0}" in feature "{1}" is not found.'.format(scenario_name, feature_name)
         )
 
+    # Validate the scenario
     _validate_scenario(feature, scenario)
 
     if scenario.examples:
@@ -261,15 +266,38 @@ def scenario(
     g = globals().copy()
     g.update(locals())
 
-    code = """def _scenario(request, {0}):
-        _execute_scenario(feature, scenario, request, encoding)""".format(','.join(scenario.example_params))
+    def decorator(_pytestbdd_function):
+        if isinstance(_pytestbdd_function, python.FixtureRequest):
+            raise ScenarioIsDecoratorOnly(
+                'scenario function can only be used as a decorator. Refer to the documentation.')
 
-    execute(code, g)
+        g.update(locals())
 
-    _scenario = recreate_function(
-        g['_scenario'], module=caller_module, firstlineno=caller_function.f_lineno)
-    if params:
-        _scenario = pytest.mark.parametrize(*params)(_scenario)
-    _scenario.pytestbdd_params = params
-    _scenario.scenario = scenario
-    return _scenario
+        args = inspect.getargspec(_pytestbdd_function).args
+        function_args = list(args)
+        for arg in scenario.example_params:
+            if arg not in function_args:
+                function_args.append(arg)
+        if 'request' not in function_args:
+            function_args.append('request')
+
+        code = """def {name}({function_args}):
+            _execute_scenario(feature, scenario, request, encoding)
+            _pytestbdd_function({args})""".format(
+            name=_pytestbdd_function.__name__,
+            function_args=', '.join(function_args),
+            args=', '.join(args))
+
+        execute(code, g)
+
+        _scenario = recreate_function(
+            g[_pytestbdd_function.__name__], module=caller_module, firstlineno=caller_function.f_lineno)
+
+        if params:
+            _scenario = pytest.mark.parametrize(*params)(_scenario)
+
+        return _scenario
+
+    decorator = recreate_function(decorator, module=caller_module, firstlineno=caller_function.f_lineno)
+
+    return decorator

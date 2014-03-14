@@ -1,10 +1,12 @@
 from pytest_bdd import scenario, given, then
 
 
-test_steps = scenario(
+@scenario(
     'args.feature',
     'Executed with steps matching step definitons with arguments',
 )
+def test_steps():
+    pass
 
 
 @given('I have a foo fixture with value "foo"')

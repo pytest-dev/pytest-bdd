@@ -4,15 +4,16 @@ import re
 import pytest
 
 from pytest_bdd import given, when, then, scenario
-from pytest_bdd import mark
 from pytest_bdd.scenario import ScenarioExamplesNotValidError
 
 
-test_outlined = scenario(
+@scenario(
     'outline.feature',
     'Outlined given, when, thens',
     example_converters=dict(start=int, eat=float, left=str)
 )
+def test_outlined():
+    assert 1
 
 
 @given('there are <start> cucumbers')
@@ -39,11 +40,11 @@ def test_wrongly_outlined(request):
     """Test parametrized scenario when the test function lacks parameters."""
 
     with pytest.raises(ScenarioExamplesNotValidError) as exc:
-        @mark.scenario(
+        @scenario(
             'outline.feature',
             'Outlined with wrong examples',
         )
-        def wrongly_outlined(request):
+        def wrongly_outlined():
             pass
 
     assert re.match(
@@ -59,7 +60,7 @@ def other_fixture(request):
     return request.param
 
 
-@mark.scenario(
+@scenario(
     'outline.feature',
     'Outlined given, when, thens',
     example_converters=dict(start=int, eat=float, left=str)

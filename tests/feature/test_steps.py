@@ -4,7 +4,9 @@ from pytest_bdd import scenario, given, when, then
 from pytest_bdd.scenario import GivenAlreadyUsed
 
 
-test_steps = scenario('steps.feature', 'Executed step by step')
+@scenario('steps.feature', 'Executed step by step')
+def test_steps():
+    pass
 
 
 @given('I have a foo fixture with value "foo"')
@@ -42,7 +44,9 @@ def check_results(results):
     assert results == [1, 2, 3]
 
 
-test_when_first = scenario('steps.feature', 'When step can be the first')
+@scenario('steps.feature', 'When step can be the first')
+def test_when_first():
+    pass
 
 
 @when('I do nothing')
@@ -96,7 +100,7 @@ def test_step_hooks(testdir):
     """)
     testdir.makepyfile("""
         import pytest
-        from pytest_bdd import given, when, mark
+        from pytest_bdd import given, when, scenario
 
         @given('I have a bar')
         def i_have_bar():
@@ -118,15 +122,15 @@ def test_step_hooks(testdir):
         def when_dependency_fails(dependency):
             pass
 
-        @mark.scenario('test.feature', "When step's dependency a has failure")
+        @scenario('test.feature', "When step's dependency a has failure")
         def test_when_dependency_fails():
             pass
 
-        @mark.scenario('test.feature', 'When step has hook on failure')
+        @scenario('test.feature', 'When step has hook on failure')
         def test_when_fails():
             pass
 
-        @mark.scenario('test.feature', 'When step is not found')
+        @scenario('test.feature', 'When step is not found')
         def test_when_not_found():
             pass
 
@@ -134,7 +138,7 @@ def test_step_hooks(testdir):
         def foo():
             return 'foo'
 
-        @mark.scenario('test.feature', 'When step validation error happens')
+        @scenario('test.feature', 'When step validation error happens')
         def test_when_step_validation_error():
             pass
     """)
@@ -185,7 +189,7 @@ def test_step_trace(testdir):
     """)
     testdir.makepyfile("""
         import pytest
-        from pytest_bdd import given, when, scenario, mark
+        from pytest_bdd import given, when, scenario
 
         @given('I have a bar')
         def i_have_bar():
@@ -195,19 +199,25 @@ def test_step_trace(testdir):
         def when_it_fails():
             raise Exception('when fails')
 
-        test_when_fails_inline = scenario('test.feature', 'When step has failure')
+        @scenario('test.feature', 'When step has failure')
+        def test_when_fails_inline():
+            pass
 
-        @mark.scenario('test.feature', 'When step has failure')
+        @scenario('test.feature', 'When step has failure')
         def test_when_fails_decorated():
             pass
 
-        test_when_not_found = scenario('test.feature', 'When step is not found')
+        @scenario('test.feature', 'When step is not found')
+        def test_when_not_found():
+            pass
 
         @when('foo')
         def foo():
             return 'foo'
 
-        test_when_step_validation_error = scenario('test.feature', 'When step validation error happens')
+        @scenario('test.feature', 'When step validation error happens')
+        def test_when_step_validation_error():
+            pass
     """)
     result = testdir.runpytest('-k test_when_fails_inline', '-vv')
     assert result.ret == 1
