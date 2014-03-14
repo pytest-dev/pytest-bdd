@@ -34,6 +34,10 @@ def scenario(feature_name, scenario_name, encoding='utf-8', example_converters=N
         if 'request' not in sc_args:
             sc_args.insert(0, 'request')
 
+        for arg in scenario.example_params:
+            if arg not in args:
+                args.append(arg)
+
         code = """def {name}({args}):
                 _scenario({scenario_args})""".format(
             name=request.__name__,
@@ -42,7 +46,7 @@ def scenario(feature_name, scenario_name, encoding='utf-8', example_converters=N
 
         execute(code, g)
 
-        _scenario = recreate_function(g[request.__name__], module=caller_module, add_args=args)
+        _scenario = recreate_function(g[request.__name__], module=caller_module)
 
         if pytestbdd_params:
             _scenario = pytest.mark.parametrize(*pytestbdd_params)(_scenario)

@@ -64,5 +64,5 @@ def other_fixture(request):
     'Outlined given, when, thens',
     example_converters=dict(start=int, eat=float, left=str)
 )
-def test_outlined_with_other_fixtures(start, eat, left, other_fixture):
+def test_outlined_with_other_fixtures(other_fixture):
     """Test outlined scenario also using other parametrized fixture."""
