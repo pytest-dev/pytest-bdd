@@ -46,3 +46,4 @@ nosetests.xml
 /include
 /src
 /share
+/local

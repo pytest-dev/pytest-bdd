@@ -61,9 +61,12 @@ setup(
             'pytest-bdd = pytest_bdd.plugin',
         ],
         'console_scripts': [
-            'pytestbdd_migrate_tests = pytest_bdd.scripts:migrate_tests'
+            'pytestbdd_migrate_tests = pytest_bdd.scripts:migrate_tests [migrate]'
         ]
     },
     tests_require=['detox'],
+    extras_require={
+        'migrate': ['glob2']
+    },
     packages=['pytest_bdd'],
 )
