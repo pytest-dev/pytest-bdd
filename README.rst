@@ -531,15 +531,45 @@ Browser testing
 
 Tools recommended to use for browser testing:
 
-    *  pytest-splinter - pytest splinter integration for the real browser testing
+    * pytest-splinter - pytest splinter integration for the real browser testing
+
 
 
 Migration of your tests from versions 0.x.x-1.x.x
 -------------------------------------------------
 
-Tools recommended to use for browser testing:
+In version 2.0.0, the backward-incompartible change was introduced: scenario function can now only be used as a
+decorator. Reasons for that:
 
-    *  pytest-splinter - pytest splinter integration for the real browser testing
+    * test code readability is much higher using normal python function syntax;
+    * pytest-bdd internals are much cleaner and shorter when using single approach instead of supporting two;
+    * after moving to parsing-on-import-time approach for feature files, it's not possible to detect whether it's a
+        decorator more or not, so to support it along with functional approach there needed to be special parameter
+        for that, which is also a backward-incompartible change.
+To help users migrate to newer version, there's migration console script provided with **migrate** extra:
+
+
+::
+
+    # install extra for migration
+    pip install pytest-bdd[migrate]
+
+    # run migration script
+    pytestbdd_migrate_tests <your test folder>
+
+Under the hood the script does the replacement from this:
+
+.. code-block:: python
+
+    test_function = scenario('publish_article.feature', 'Publishing the article')
+
+to this:
+
+.. code-block:: python
+
+    @scenario('publish_article.feature', 'Publishing the article')
+    def test_function():
+        pass
 
 
 License
