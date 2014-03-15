@@ -1,9 +1,11 @@
 """Test wrong feature syntax."""
+import re
+
 import pytest
 
 from pytest_bdd import scenario, given, when, then
 from pytest_bdd.feature import FeatureError
-from pytest_bdd.scenario import StepTypeError
+from pytest_bdd import exceptions
 
 
 @given('something')
@@ -57,10 +59,9 @@ def test_wrong_type_order(request, scenario_name):
     def test_wrong_type_order(request):
         pass
 
-    with pytest.raises(StepTypeError) as excinfo:
+    with pytest.raises(exceptions.StepTypeError) as excinfo:
         test_wrong_type_order(request)
-
-    excinfo  # TODO: assert the exception args from parameters
+    assert re.match(r'Wrong step type \"(\w+)\" while \"(\w+)\" is expected\.', excinfo.value.args[0])
 
 
 def test_verbose_output(request):

@@ -4,7 +4,7 @@ import functools
 import re
 import pytest
 from pytest_bdd import scenario, given, when, then
-from pytest_bdd.scenario import GivenAlreadyUsed
+from pytest_bdd import exceptions
 
 
 @scenario(
@@ -73,5 +73,5 @@ def test_multiple_given(request):
     )
     def test():
         pass
-    with pytest.raises(GivenAlreadyUsed):
+    with pytest.raises(exceptions.GivenAlreadyUsed):
         test(request)

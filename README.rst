@@ -23,7 +23,7 @@ containing the side effects of the Gherkin imperative declarations.
 
 
 Install pytest-bdd
-==================
+------------------
 
 ::
 
@@ -31,7 +31,7 @@ Install pytest-bdd
 
 
 Example
-=======
+-------
 
 publish\_article.feature:
 
@@ -54,7 +54,9 @@ test\_publish\_article.py:
 
     from pytest_bdd import scenario, given, when, then
 
-    test_publish = scenario('publish_article.feature', 'Publishing the article')
+    @scenario('publish_article.feature', 'Publishing the article')
+    def test_publish():
+        pass
 
 
     @given('I have an article')
@@ -85,7 +87,7 @@ test\_publish\_article.py:
 
 
 Step aliases
-============
+------------
 
 Sometimes it is needed to declare the same fixtures or steps with the
 different names for better readability. In order to use the same step
@@ -118,7 +120,7 @@ default author.
 
 
 Step arguments
-==============
+--------------
 
 Often it's possible to reuse steps giving them a parameter(s).
 This allows to have single implementation and multiple use, so less code.
@@ -145,7 +147,11 @@ The code will look like:
     import re
     from pytest_bdd import scenario, given, when, then
 
-    test_arguments = scenario('arguments.feature', 'Arguments for given, when, thens')
+
+    @scenario('arguments.feature', 'Arguments for given, when, thens')
+    def test_arguments():
+        pass
+
 
     @given(re.compile('there are (?P<start>\d+) cucumbers'), converters=dict(start=int))
     def start_cucumbers(start):
@@ -167,15 +173,15 @@ different than strings.
 
 
 Scenario parameters
-===================
-Scenario function/decorator can accept such optional keyword arguments:
+-------------------
+Scenario decorator can accept such optional keyword arguments:
 
     * `encoding` - decode content of feature file in specific encoding. UTF-8 is default.
     * `example_converters` - mapping to pass functions to convert example values provided in feature files.
 
 
 Scenario outlines
-=================
+-----------------
 
 Scenarios can be parametrized to cover few cases. In Gherkin the variable
 templates are written using corner braces as <somevalue>.
@@ -195,6 +201,24 @@ Example:
         | start | eat | left |
         |  12   |  5  |  7   |
 
+pytest-bdd feature file format also supports example tables in different way:
+
+
+.. code-block:: feature
+
+    Scenario Outline: Outlined given, when, thens
+        Given there are <start> cucumbers
+        When I eat <eat> cucumbers
+        Then I should have <left> cucumbers
+
+        Examples: Vertical
+        | start | 12 | 2 |
+        | eat   | 5  | 1 |
+        | left  | 7  | 1 |
+
+This form allows to have tables with lots of columns keeping the maximum text width predictable without significant
+readability change.
+
 
 The code will look like:
 
@@ -203,11 +227,13 @@ The code will look like:
     from pytest_bdd import given, when, then, scenario
 
 
-    test_outlined = scenario(
+    @scenario(
         'outline.feature',
         'Outlined given, when, thens',
         example_converters=dict(start=int, eat=float, left=str)
     )
+    def test_outlined():
+        pass
 
 
     @given('there are <start> cucumbers')
@@ -241,6 +267,7 @@ The code will look like:
 
     import pytest
     from pytest_bdd import mark, given, when, then
+
 
     # Here we use pytest to parametrize the test with the parameters table
     @pytest.mark.parametrize(
@@ -276,7 +303,7 @@ The significant downside of this approach is inability to see the test table fro
 
 
 Test setup
-==========
+----------
 
 Test setup is implemented within the Given section. Even though these steps
 are executed imperatively to apply possible side-effects, pytest-bdd is trying
@@ -366,7 +393,7 @@ Will raise an exception if the step is using the regular expression pattern.
 
 
 Reusing fixtures
-================
+----------------
 
 Sometimes scenarios define new names for the fixture that can be
 inherited. Fixtures can be reused with other names using given():
@@ -377,7 +404,7 @@ inherited. Fixtures can be reused with other names using given():
 
 
 Reusing steps
-=============
+-------------
 
 It is possible to define some common steps in the parent conftest.py and
 simply expect them in the child test file.
@@ -410,14 +437,16 @@ test\_common.py:
 
 .. code-block:: python
 
-    test_conftest = scenario('common_steps.feature', 'All steps are declared in the conftest')
+    @scenario('common_steps.feature', 'All steps are declared in the conftest')
+    def test_conftest():
+        pass
 
 There are no definitions of the steps in the test file. They were
 collected from the parent conftests.
 
 
 Feature file paths
-==================
+------------------
 
 But default, pytest-bdd will use current module’s path as base path for
 finding feature files, but this behaviour can be changed by having
@@ -436,11 +465,14 @@ test\_publish\_article.py:
     def pytestbdd_feature_base_dir():
         return '/home/user/projects/foo.bar/features'
 
-    test_publish = scenario('publish_article.feature', 'Publishing the article')
+
+    @scenario('publish_article.feature', 'Publishing the article')
+    def test_publish():
+        pass
 
 
 Avoid retyping the feature file name
-====================================
+------------------------------------
 
 If you want to avoid retyping the feature file name when defining your scenarios in a test file, use functools.partial.
 This will make your life much easier when defining multiple scenarios in a test file.
@@ -459,15 +491,22 @@ test\_publish\_article.py:
 
     scenario = partial(pytest_bdd.scenario, '/path/to/publish_article.feature')
 
-    test_publish = scenario('Publishing the article')
-    test_publish_unprivileged = scenario('Publishing the article as unprivileged user')
+
+    @scenario('Publishing the article')
+    def test_publish():
+        pass
+
+
+    @scenario('Publishing the article as unprivileged user')
+    def test_publish_unprivileged():
+        pass
 
 
 You can learn more about `functools.partial <http://docs.python.org/2/library/functools.html#functools.partial>`_ in the Python docs.
 
 
 Hooks
-=====
+-----
 
 pytest-bdd exposes several pytest `hooks <http://pytest.org/latest/plugins.html#well-specified-hooks>`_
 which might be helpful building useful reporting, visualization, etc on top of it:
@@ -488,7 +527,15 @@ which might be helpful building useful reporting, visualization, etc on top of i
 
 
 Browser testing
-===============
+---------------
+
+Tools recommended to use for browser testing:
+
+    *  pytest-splinter - pytest splinter integration for the real browser testing
+
+
+Migration of your tests from versions 0.x.x-1.x.x
+-------------------------------------------------
 
 Tools recommended to use for browser testing:
 
@@ -496,7 +543,7 @@ Tools recommended to use for browser testing:
 
 
 License
-=======
+-------
 
 This software is licensed under the `MIT license <http://en.wikipedia.org/wiki/MIT_License>`_.
 

@@ -4,7 +4,7 @@ import re
 import pytest
 
 from pytest_bdd import given, when, then, scenario
-from pytest_bdd.scenario import ScenarioExamplesNotValidError
+from pytest_bdd import exceptions
 
 
 @scenario(
@@ -13,7 +13,8 @@ from pytest_bdd.scenario import ScenarioExamplesNotValidError
     example_converters=dict(start=int, eat=float, left=str)
 )
 def test_outlined():
-    assert 1
+    assert test_outlined.parametrize.args == (
+        [u'start', u'eat', u'left'], [[12, 5.0, '7'], [5, 4.0, '1']])
 
 
 @given('there are <start> cucumbers')
@@ -39,7 +40,7 @@ def should_have_left_cucumbers(start_cucumbers, start, eat, left):
 def test_wrongly_outlined(request):
     """Test parametrized scenario when the test function lacks parameters."""
 
-    with pytest.raises(ScenarioExamplesNotValidError) as exc:
+    with pytest.raises(exceptions.ScenarioExamplesNotValidError) as exc:
         @scenario(
             'outline.feature',
             'Outlined with wrong examples',
@@ -67,3 +68,14 @@ def other_fixture(request):
 )
 def test_outlined_with_other_fixtures(other_fixture):
     """Test outlined scenario also using other parametrized fixture."""
+
+
+@scenario(
+    'outline.feature',
+    'Outlined with vertical example table',
+    example_converters=dict(start=int, eat=float, left=str)
+)
+def test_vertical_example():
+    """Test outlined scenario with vertical examples table."""
+    assert test_vertical_example.parametrize.args == (
+        [u'start', u'eat', u'left'], [[12, 5.0, '7'], [2, 1.0, '1']])

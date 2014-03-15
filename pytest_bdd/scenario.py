@@ -26,32 +26,9 @@ from _pytest import python
 from pytest_bdd.feature import Feature, force_encode  # pragma: no cover
 from pytest_bdd.steps import execute, recreate_function, get_caller_module, get_caller_function
 from pytest_bdd.types import GIVEN
+from pytest_bdd import exceptions
 
 from pytest_bdd import plugin
-
-
-class ScenarioIsDecoratorOnly(Exception):
-    """Scenario can be only used as decorator."""
-
-
-class ScenarioValidationError(Exception):
-    """Base class for scenario validation."""
-
-
-class ScenarioNotFound(ScenarioValidationError):  # pragma: no cover
-    """Scenario Not Found"""
-
-
-class ScenarioExamplesNotValidError(ScenarioValidationError):  # pragma: no cover
-    """Scenario steps argumets do not match declared scenario examples."""
-
-
-class StepTypeError(ScenarioValidationError):  # pragma: no cover
-    """Step definition is not of the type expected in the scenario."""
-
-
-class GivenAlreadyUsed(ScenarioValidationError):  # pragma: no cover
-    """Fixture that implements the Given has been already used."""
 
 
 def _inject_fixture(request, arg, value):
@@ -122,17 +99,6 @@ def _find_step_function(request, name, encoding):
         raise
 
 
-def _validate_scenario(feature, scenario):
-    """Validate the scenario."""
-    if scenario.params and scenario.example_params and scenario.params != set(scenario.example_params):
-        raise ScenarioExamplesNotValidError(
-            """Scenario "{0}" in the feature "{1}" has not valid examples. """
-            """Set of step parameters {2} should match set of example values {3}.""".format(
-                scenario.name, feature.filename, sorted(scenario.params), sorted(scenario.example_params),
-            )
-        )
-
-
 def _execute_step_function(request, feature, step, step_func, example=None):
     """Execute step function."""
     kwargs = {}
@@ -176,20 +142,20 @@ def _execute_scenario(feature, scenario, request, encoding, example=None):
         try:
             # Check the step types are called in the correct order
             if step_func.step_type != step.type:
-                raise StepTypeError(
+                raise exceptions.StepTypeError(
                     'Wrong step type "{0}" while "{1}" is expected.'.format(step_func.step_type, step.type)
                 )
 
             # Check if the fixture that implements given step has not been yet used by another given step
             if step.type == GIVEN:
                 if step_func.fixture in givens:
-                    raise GivenAlreadyUsed(
+                    raise exceptions.GivenAlreadyUsed(
                         'Fixture "{0}" that implements this "{1}" given step has been already used.'.format(
                             step_func.fixture, step.name,
                         )
                     )
                 givens.add(step_func.fixture)
-        except ScenarioValidationError as exception:
+        except exceptions.ScenarioValidationError as exception:
             request.config.hook.pytest_bdd_step_validation_error(
                 request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
                 exception=exception)
@@ -228,47 +194,15 @@ def get_fixture(caller_module, fixture, path=None, module=None):
     return get_fixture(caller_module, fixture, path=os.path.dirname(path), module=module)
 
 
-def scenario(
-        feature_name, scenario_name, encoding='utf-8', example_converters=None,
-        caller_module=None, caller_function=None):
-    """Scenario."""
-
-    caller_module = caller_module or get_caller_module()
-    caller_function = caller_function or get_caller_function()
-
-    # Get the feature
-    base_path = get_fixture(caller_module, 'pytestbdd_feature_base_dir')
-    feature_path = op.abspath(op.join(base_path, feature_name))
-    feature = Feature.get_feature(feature_path, encoding=encoding)
-
-    # Get the scenario
-    try:
-        scenario = feature.scenarios[scenario_name]
-    except KeyError:
-        raise ScenarioNotFound(
-            'Scenario "{0}" in feature "{1}" is not found.'.format(scenario_name, feature_name)
-        )
-
-    # Validate the scenario
-    _validate_scenario(feature, scenario)
-
-    if scenario.examples:
-        params = []
-        for example in scenario.examples:
-            for index, param in enumerate(scenario.example_params):
-                if example_converters and param in example_converters:
-                    example[index] = example_converters[param](example[index])
-            params.append(example)
-        params = [scenario.example_params, params]
-    else:
-        params = []
-
-    g = globals().copy()
-    g.update(locals())
+def _get_scenario_decorator(
+        feature, feature_name, scenario, scenario_name, caller_module, caller_function, encoding):
+    """Get scenario decorator."""
+    g = locals()
+    g['_execute_scenario'] = _execute_scenario
 
     def decorator(_pytestbdd_function):
         if isinstance(_pytestbdd_function, python.FixtureRequest):
-            raise ScenarioIsDecoratorOnly(
+            raise exceptions.ScenarioIsDecoratorOnly(
                 'scenario function can only be used as a decorator. Refer to the documentation.')
 
         g.update(locals())
@@ -293,6 +227,8 @@ def scenario(
         _scenario = recreate_function(
             g[_pytestbdd_function.__name__], module=caller_module, firstlineno=caller_function.f_lineno)
 
+        params = scenario.get_params()
+
         if params:
             _scenario = pytest.mark.parametrize(*params)(_scenario)
 
@@ -300,6 +236,34 @@ def scenario(
             feature_name=feature_name, scenario_name=scenario_name)
         return _scenario
 
-    decorator = recreate_function(decorator, module=caller_module, firstlineno=caller_function.f_lineno)
+    return recreate_function(decorator, module=caller_module, firstlineno=caller_function.f_lineno)
 
-    return decorator
+
+def scenario(
+        feature_name, scenario_name, encoding='utf-8', example_converters=None,
+        caller_module=None, caller_function=None):
+    """Scenario."""
+
+    caller_module = caller_module or get_caller_module()
+    caller_function = caller_function or get_caller_function()
+
+    # Get the feature
+    base_path = get_fixture(caller_module, 'pytestbdd_feature_base_dir')
+    feature_path = op.abspath(op.join(base_path, feature_name))
+    feature = Feature.get_feature(feature_path, encoding=encoding)
+
+    # Get the scenario
+    try:
+        scenario = feature.scenarios[scenario_name]
+    except KeyError:
+        raise exceptions.ScenarioNotFound(
+            'Scenario "{0}" in feature "{1}" is not found.'.format(scenario_name, feature_name)
+        )
+
+    scenario.example_converters = example_converters
+
+    # Validate the scenario
+    scenario.validate()
+
+    return _get_scenario_decorator(
+        feature, feature_name, scenario, scenario_name, caller_module, caller_function, encoding)

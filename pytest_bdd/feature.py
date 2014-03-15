@@ -26,10 +26,8 @@ one line.
 import re  # pragma: no cover
 import sys  # pragma: no cover
 
-from pytest_bdd.types import (
-    FEATURE, SCENARIO, SCENARIO_OUTLINE, EXAMPLES, EXAMPLES_HEADERS, EXAMPLE_LINE, GIVEN, WHEN,
-    THEN  # pragma: no cover
-)
+from pytest_bdd import types  # pragma: no cover
+from pytest_bdd import exceptions  # pragma: no cover
 
 
 class FeatureError(Exception):  # pragma: no cover
@@ -48,16 +46,17 @@ class FeatureError(Exception):  # pragma: no cover
 features = {}  # pragma: no cover
 
 
-STEP_PREFIXES = {  # pragma: no cover
-    'Feature: ': FEATURE,
-    'Scenario Outline: ': SCENARIO_OUTLINE,
-    'Examples:': EXAMPLES,
-    'Scenario: ': SCENARIO,
-    'Given ': GIVEN,
-    'When ': WHEN,
-    'Then ': THEN,
-    'And ': None,  # Unknown step type
-}
+STEP_PREFIXES = [  # pragma: no cover
+    ('Feature: ', types.FEATURE),
+    ('Scenario Outline: ', types.SCENARIO_OUTLINE),
+    ('Examples: Vertical', types.EXAMPLES_VERTICAL),
+    ('Examples:', types.EXAMPLES),
+    ('Scenario: ', types.SCENARIO),
+    ('Given ', types.GIVEN),
+    ('When ', types.WHEN),
+    ('Then ', types.THEN),
+    ('And ', None),  # Unknown step type
+]
 
 COMMENT_SYMBOLS = '#'  # pragma: no cover
 
@@ -70,9 +69,9 @@ def get_step_type(line):
     :param line: Line of the Feature file
     :return: SCENARIO, GIVEN, WHEN, THEN, or `None` if can't be detected.
     """
-    for prefix in STEP_PREFIXES:
+    for prefix, _type in STEP_PREFIXES:
         if line.startswith(prefix):
-            return STEP_PREFIXES[prefix]
+            return _type
 
 
 def get_step_params(name):
@@ -104,7 +103,7 @@ def remove_prefix(line):
     :return: Line without the prefix.
 
     """
-    for prefix in STEP_PREFIXES:
+    for prefix, _ in STEP_PREFIXES:
         if line.startswith(prefix):
             return line[len(prefix):].strip()
     return line
@@ -156,20 +155,21 @@ class Feature(object):
                     continue
                 mode = get_step_type(line) or mode
 
-                if mode == GIVEN and prev_mode not in (GIVEN, SCENARIO, SCENARIO_OUTLINE):
+                if mode == types.GIVEN and prev_mode not in (types.GIVEN, types.SCENARIO, types.SCENARIO_OUTLINE):
                     raise FeatureError('Given steps must be the first in withing the Scenario',
                                        line_number, line)
 
-                if mode == WHEN and prev_mode not in (SCENARIO, SCENARIO_OUTLINE, GIVEN, WHEN):
+                if mode == types.WHEN and prev_mode not in (
+                        types.SCENARIO, types.SCENARIO_OUTLINE, types.GIVEN, types.WHEN):
                     raise FeatureError('When steps must be the first or follow Given steps',
                                        line_number, line)
 
-                if mode == THEN and prev_mode not in (GIVEN, WHEN, THEN):
+                if mode == types.THEN and prev_mode not in (types.GIVEN, types.WHEN, types.THEN):
                     raise FeatureError('Then steps must follow Given or When steps',
                                        line_number, line)
 
-                if mode == FEATURE:
-                    if prev_mode != FEATURE:
+                if mode == types.FEATURE:
+                    if prev_mode != types.FEATURE:
                         self.name = remove_prefix(line)
                     else:
                         description.append(line)
@@ -178,16 +178,21 @@ class Feature(object):
 
                 # Remove Feature, Given, When, Then, And
                 line = remove_prefix(line)
-                if mode in [SCENARIO, SCENARIO_OUTLINE]:
-                    self.scenarios[line] = scenario = Scenario(line)
-                elif mode == EXAMPLES:
-                    mode = EXAMPLES_HEADERS
-                elif mode == EXAMPLES_HEADERS:
+                if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
+                    self.scenarios[line] = scenario = Scenario(self, line)
+                elif mode == types.EXAMPLES:
+                    mode = types.EXAMPLES_HEADERS
+                elif mode == types.EXAMPLES_VERTICAL:
+                    mode = types.EXAMPLE_LINE_VERTICAL
+                elif mode == types.EXAMPLES_HEADERS:
                     scenario.set_param_names([l.strip() for l in line.split('|') if l.strip()])
-                    mode = EXAMPLE_LINE
-                elif mode == EXAMPLE_LINE:
+                    mode = types.EXAMPLE_LINE
+                elif mode == types.EXAMPLE_LINE:
                     scenario.add_example([l.strip() for l in line.split('|') if l.strip()])
-                elif mode and mode != FEATURE:
+                elif mode == types.EXAMPLE_LINE_VERTICAL:
+                    line = [l.strip() for l in line.split('|') if l.strip()]
+                    scenario.add_example_row(line[0], line[1:])
+                elif mode and mode != types.FEATURE:
                     scenario.add_step(step_name=line, step_type=mode)
 
         self.description = u'\n'.join(description)
@@ -215,12 +220,15 @@ class Feature(object):
 class Scenario(object):
     """Scenario."""
 
-    def __init__(self, name):
+    def __init__(self, feature, name, example_converters=None):
+        self.feature = feature
         self.name = name
         self.params = set()
         self.steps = []
         self.example_params = []
         self.examples = []
+        self.vertical_examples = []
+        self.example_converters = example_converters
 
     def add_step(self, step_name, step_type):
         """Add step to the scenario.
@@ -248,6 +256,58 @@ class Scenario(object):
 
         """
         self.examples.append(values)
+
+    def add_example_row(self, param, values):
+        """Add example row.
+
+        :param param: `str` parameter name
+        :param values: `list` of `string` parameter values
+
+        """
+        if param in self.example_params:
+            raise exceptions.ScenarioExamplesNotValidError(
+                """Scenario "{0}" in the feature "{1}" has not valid examples. """
+                """Example rows should contain unique parameters. {2} appeared more than once.""".format(
+                    self.name, self.feature.filename, param,
+                )
+            )
+        self.example_params.append(param)
+        self.vertical_examples.append(values)
+
+    def get_params(self):
+        """Get scenario pytest parametrization table."""
+        param_count = len(self.example_params)
+        if self.vertical_examples and not self.examples:
+            for value_index in range(len(self.vertical_examples[0])):
+                example = []
+                for param_index in range(param_count):
+                    example.append(self.vertical_examples[param_index][value_index])
+                self.examples.append(example)
+
+        if self.examples:
+            params = []
+            for example in self.examples:
+                for index, param in enumerate(self.example_params):
+                    if self.example_converters and param in self.example_converters:
+                        example[index] = self.example_converters[param](example[index])
+                params.append(example)
+            return [self.example_params, params]
+        else:
+            return []
+
+    def validate(self):
+        """Validate the scenario.
+
+        :raises: `ScenarioValidationError`
+
+        """
+        if self.params and self.example_params and self.params != set(self.example_params):
+            raise exceptions.ScenarioExamplesNotValidError(
+                """Scenario "{0}" in the feature "{1}" has not valid examples. """
+                """Set of step parameters {2} should match set of example values {3}.""".format(
+                    self.name, self.feature.filename, sorted(self.params), sorted(self.example_params),
+                )
+            )
 
 
 class Step(object):

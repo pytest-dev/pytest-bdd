@@ -5,7 +5,9 @@ Changelog
 -----
 
 - Pure pytest parametrization for scenario outlines (bubenkoff)
-- Splitting scenario decorated and non-decorated variants (bubenkoff)
+- Argumented steps now support converters (transformations) (bubenkoff)
+- scenario supports only decorator form (bubenkoff)
+- Code generation refactoring and cleanup (bubenkoff)
 
 
 1.0.0
