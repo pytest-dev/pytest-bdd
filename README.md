@@ -13,6 +13,10 @@ Install pytest-bdd
 Example
 =======
 
+An example test for a blog hosting software could look like this. Note that
+[pytest-bdd- splinter](https://github.com/olegpidsadnyi/pytest-bdd-splinter) is
+used to get the `browser` fixture.
+
 publish_article.feature:
 
     Scenario: Publishing the article
