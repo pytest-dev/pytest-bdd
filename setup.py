@@ -6,7 +6,7 @@ from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
 
-version = '1.0.0'
+version = '2.0.0'
 
 
 class Tox(TestCommand):
@@ -59,8 +59,14 @@ setup(
     entry_points={
         'pytest11': [
             'pytest-bdd = pytest_bdd.plugin',
+        ],
+        'console_scripts': [
+            'pytestbdd_migrate_tests = pytest_bdd.scripts:migrate_tests [migrate]'
         ]
     },
     tests_require=['detox'],
+    extras_require={
+        'migrate': ['glob2']
+    },
     packages=['pytest_bdd'],
 )

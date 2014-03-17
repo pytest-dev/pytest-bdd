@@ -11,34 +11,24 @@ test_publish_article = scenario(
 )
 
 """
+
+import collections
+import os
+import imp
+
 import inspect  # pragma: no cover
 from os import path as op  # pragma: no cover
+
+import pytest
 
 from _pytest import python
 
 from pytest_bdd.feature import Feature, force_encode  # pragma: no cover
-from pytest_bdd.steps import recreate_function, get_caller_module, get_caller_function
+from pytest_bdd.steps import execute, recreate_function, get_caller_module, get_caller_function
 from pytest_bdd.types import GIVEN
+from pytest_bdd import exceptions
 
-
-class ScenarioValidationError(Exception):
-    """Base class for scenario validation."""
-
-
-class ScenarioNotFound(ScenarioValidationError):  # pragma: no cover
-    """Scenario Not Found"""
-
-
-class NotEnoughScenarioParams(ScenarioValidationError):  # pragma: no cover
-    """Scenario function doesn't take enough parameters in the arguments."""
-
-
-class StepTypeError(ScenarioValidationError):  # pragma: no cover
-    """Step definition is not of the type expected in the scenario."""
-
-
-class GivenAlreadyUsed(ScenarioValidationError):  # pragma: no cover
-    """Fixture that implements the Given has been already used."""
+from pytest_bdd import plugin
 
 
 def _inject_fixture(request, arg, value):
@@ -99,39 +89,45 @@ def _find_step_function(request, name, encoding):
 
                 pattern = getattr(fixturedef.func, 'pattern', None)
                 match = pattern.match(name) if pattern else None
-
                 if match:
+                    converters = getattr(fixturedef.func, 'converters', {})
                     for arg, value in match.groupdict().items():
+                        if arg in converters:
+                            value = converters[arg](value)
                         _inject_fixture(request, arg, value)
                     return request.getfuncargvalue(pattern.pattern)
         raise
 
 
-def _validate_scenario(feature, scenario, request):
-    """Validate the scenario."""
-    resolved_params = scenario.params.intersection(request.fixturenames)
-
-    if scenario.params != resolved_params:
-        raise NotEnoughScenarioParams(
-            """Scenario "{0}" in the feature "{1}" was not able to resolve all declared parameters."""
-            """Should resolve params: {2}, but resolved only: {3}.""".format(
-                scenario.name, feature.filename, sorted(scenario.params), sorted(resolved_params),
-            )
-        )
-
-
-def _execute_scenario_outline(feature, scenario, request, encoding):
-    """Execute the scenario outline."""
-    for example in scenario.examples:
-        for key, value in dict(zip(scenario.example_params, example)).items():
+def _execute_step_function(request, feature, step, step_func, example=None):
+    """Execute step function."""
+    kwargs = {}
+    if example:
+        for key in step.params:
+            value = example[key]
+            if step_func.converters and key in step_func.converters:
+                value = step_func.converters[key](value)
             _inject_fixture(request, key, value)
-        _execute_scenario(feature, scenario, request, encoding)
+    try:
+        # Get the step argument values
+        kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
+        request.config.hook.pytest_bdd_before_step(
+            request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
+            step_func_args=kwargs)
+        # Execute the step
+        step_func(**kwargs)
+        request.config.hook.pytest_bdd_after_step(
+            request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
+            step_func_args=kwargs)
+    except Exception as exception:
+        request.config.hook.pytest_bdd_step_error(
+            request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
+            step_func_args=kwargs, exception=exception)
+        raise
 
 
-def _execute_scenario(feature, scenario, request, encoding):
+def _execute_scenario(feature, scenario, request, encoding, example=None):
     """Execute the scenario."""
-
-    _validate_scenario(feature, scenario, request)
 
     givens = set()
     # Execute scenario steps
@@ -146,87 +142,128 @@ def _execute_scenario(feature, scenario, request, encoding):
         try:
             # Check the step types are called in the correct order
             if step_func.step_type != step.type:
-                raise StepTypeError(
+                raise exceptions.StepTypeError(
                     'Wrong step type "{0}" while "{1}" is expected.'.format(step_func.step_type, step.type)
                 )
 
             # Check if the fixture that implements given step has not been yet used by another given step
             if step.type == GIVEN:
                 if step_func.fixture in givens:
-                    raise GivenAlreadyUsed(
+                    raise exceptions.GivenAlreadyUsed(
                         'Fixture "{0}" that implements this "{1}" given step has been already used.'.format(
                             step_func.fixture, step.name,
                         )
                     )
                 givens.add(step_func.fixture)
-        except ScenarioValidationError as exception:
+        except exceptions.ScenarioValidationError as exception:
             request.config.hook.pytest_bdd_step_validation_error(
                 request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
                 exception=exception)
             raise
 
-        kwargs = {}
-        try:
-            # Get the step argument values
-            kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
-            request.config.hook.pytest_bdd_before_step(
-                request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
-                step_func_args=kwargs)
-            # Execute the step
-            step_func(**kwargs)
-            request.config.hook.pytest_bdd_after_step(
-                request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
-                step_func_args=kwargs)
-        except Exception as exception:
-            request.config.hook.pytest_bdd_step_error(
-                request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
-                step_func_args=kwargs, exception=exception)
-            raise
+        _execute_step_function(request, feature, step, step_func, example=example)
 
 
-def scenario(feature_name, scenario_name, encoding='utf-8'):
-    """Scenario. May be called both as decorator and as just normal function."""
+FakeRequest = collections.namedtuple('FakeRequest', ['module'])
 
-    caller_module = get_caller_module()
-    caller_function = get_caller_function()
 
-    def decorator(request):
+def get_fixture(caller_module, fixture, path=None, module=None):
+    """Get first conftest module from given one."""
+    def call_fixture(function):
+        args = []
+        if 'request' in inspect.getargspec(function).args:
+            args = [FakeRequest(module=caller_module)]
+        return function(*args)
 
-        def _scenario(request):
-            # Get the feature
-            base_path = request.getfuncargvalue('pytestbdd_feature_base_dir')
-            feature_path = op.abspath(op.join(base_path, feature_name))
-            feature = Feature.get_feature(feature_path, encoding=encoding)
+    if not module:
+        module = caller_module
 
-            # Get the scenario
-            try:
-                scenario = feature.scenarios[scenario_name]
-            except KeyError:
-                raise ScenarioNotFound(
-                    'Scenario "{0}" in feature "{1}" is not found.'.format(scenario_name, feature_name)
-                )
+    if hasattr(module, fixture):
+        return call_fixture(getattr(module, fixture))
 
-            if scenario.examples:
-                _execute_scenario_outline(feature, scenario, request, encoding)
-            else:
-                _execute_scenario(feature, scenario, request, encoding)
+    if path is None:
+        path = os.path.dirname(module.__file__)
+    if os.path.exists(os.path.join(path, '__init__.py')):
+        file_path = os.path.join(path, 'conftest.py')
+        if os.path.exists(file_path):
+            conftest = imp.load_source('conftest', file_path)
+            if hasattr(conftest, fixture):
+                return get_fixture(caller_module, fixture, module=conftest)
+    else:
+        return get_fixture(caller_module, fixture, module=plugin)
+    return get_fixture(caller_module, fixture, path=os.path.dirname(path), module=module)
 
-        _scenario.pytestbdd_params = set()
 
-        if isinstance(request, python.FixtureRequest):
-            # Called as a normal function.
-            _scenario = recreate_function(_scenario, module=caller_module)
-            return _scenario(request)
+def _get_scenario_decorator(
+        feature, feature_name, scenario, scenario_name, caller_module, caller_function, encoding):
+    """Get scenario decorator."""
+    g = locals()
+    g['_execute_scenario'] = _execute_scenario
 
-        # Used as a decorator. Modify the returned function to add parameters from a decorated function.
-        func_args = inspect.getargspec(request).args
-        if 'request' in func_args:
-            func_args.remove('request')
-        _scenario = recreate_function(_scenario, name=request.__name__, add_args=func_args, module=caller_module)
-        _scenario.pytestbdd_params = set(func_args)
+    def decorator(_pytestbdd_function):
+        if isinstance(_pytestbdd_function, python.FixtureRequest):
+            raise exceptions.ScenarioIsDecoratorOnly(
+                'scenario function can only be used as a decorator. Refer to the documentation.')
 
+        g.update(locals())
+
+        args = inspect.getargspec(_pytestbdd_function).args
+        function_args = list(args)
+        for arg in scenario.example_params:
+            if arg not in function_args:
+                function_args.append(arg)
+        if 'request' not in function_args:
+            function_args.append('request')
+
+        code = """def {name}({function_args}):
+            _execute_scenario(feature, scenario, request, encoding)
+            _pytestbdd_function({args})""".format(
+            name=_pytestbdd_function.__name__,
+            function_args=', '.join(function_args),
+            args=', '.join(args))
+
+        execute(code, g)
+
+        _scenario = recreate_function(
+            g[_pytestbdd_function.__name__], module=caller_module, firstlineno=caller_function.f_lineno)
+
+        params = scenario.get_params()
+
+        if params:
+            _scenario = pytest.mark.parametrize(*params)(_scenario)
+
+        _scenario.__doc__ = '{feature_name}: {scenario_name}'.format(
+            feature_name=feature_name, scenario_name=scenario_name)
         return _scenario
 
-    decorator = recreate_function(decorator, module=caller_module, firstlineno=caller_function.f_lineno)
+    return recreate_function(decorator, module=caller_module, firstlineno=caller_function.f_lineno)
 
-    return decorator
+
+def scenario(
+        feature_name, scenario_name, encoding='utf-8', example_converters=None,
+        caller_module=None, caller_function=None):
+    """Scenario."""
+
+    caller_module = caller_module or get_caller_module()
+    caller_function = caller_function or get_caller_function()
+
+    # Get the feature
+    base_path = get_fixture(caller_module, 'pytestbdd_feature_base_dir')
+    feature_path = op.abspath(op.join(base_path, feature_name))
+    feature = Feature.get_feature(feature_path, encoding=encoding)
+
+    # Get the scenario
+    try:
+        scenario = feature.scenarios[scenario_name]
+    except KeyError:
+        raise exceptions.ScenarioNotFound(
+            'Scenario "{0}" in feature "{1}" is not found.'.format(scenario_name, feature_name)
+        )
+
+    scenario.example_converters = example_converters
+
+    # Validate the scenario
+    scenario.validate()
+
+    return _get_scenario_decorator(
+        feature, feature_name, scenario, scenario_name, caller_module, caller_function, encoding)
