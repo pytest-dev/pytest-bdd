@@ -14,12 +14,12 @@ def test_arg_fixture_mix(testdir):
         def foo():
             return "fine"
 
-
-        test_args = scenario(
+        @scenario(
             'arg_and_fixture_mix.feature',
             'Use the step argument with the same name as fixture of another test',
         )
-
+        def test_args():
+            pass
 
         @given(re.compile(r'foo is "(?P<foo>\w+)"'))
         def foo1(foo):
@@ -30,12 +30,12 @@ def test_arg_fixture_mix(testdir):
         def foo_should_be(foo, foo_value):
             assert foo == foo_value
 
-
-        test_bar = scenario(
+        @scenario(
             'arg_and_fixture_mix.feature',
             'Everything is fine',
         )
-
+        def test_bar():
+            pass
 
         @given(re.compile(r'it is all fine'))
         def fine():
@@ -52,12 +52,12 @@ def test_arg_fixture_mix(testdir):
         import pytest
         from pytest_bdd import scenario, given, then
 
-
-        test_args = scenario(
+        @scenario(
             'arg_and_fixture_mix.feature',
             'Everything is fine',
         )
-
+        def test_args():
+            pass
 
         @pytest.fixture
         def foo():

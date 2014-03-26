@@ -2,10 +2,13 @@ from pytest_bdd.steps import when
 
 from pytest_bdd import given, then, scenario
 
-test_reuse = scenario(
+
+@scenario(
     'reuse.feature',
     'Given and when using the same fixture should not evaluate it twice',
 )
+def test_reuse():
+    pass
 
 
 @given('I have an empty list')

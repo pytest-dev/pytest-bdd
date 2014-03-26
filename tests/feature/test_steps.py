@@ -1,10 +1,12 @@
 import pytest
 
 from pytest_bdd import scenario, given, when, then
-from pytest_bdd.scenario import GivenAlreadyUsed
+from pytest_bdd import exceptions
 
 
-test_steps = scenario('steps.feature', 'Executed step by step')
+@scenario('steps.feature', 'Executed step by step')
+def test_steps():
+    pass
 
 
 @given('I have a foo fixture with value "foo"')
@@ -42,7 +44,9 @@ def check_results(results):
     assert results == [1, 2, 3]
 
 
-test_when_first = scenario('steps.feature', 'When step can be the first')
+@scenario('steps.feature', 'When step can be the first')
+def test_when_first():
+    pass
 
 
 @when('I do nothing')
@@ -55,7 +59,9 @@ def no_errors():
     assert True
 
 
-test_then_after_given = scenario('steps.feature', 'Then step can follow Given step')
+@scenario('steps.feature', 'Then step can follow Given step')
+def test_then_after_given():
+    pass
 
 
 @given('xyz')
@@ -63,16 +69,22 @@ def xyz():
     """Used in the test_same_step_name."""
     return
 
-test_conftest = scenario('steps.feature', 'All steps are declared in the conftest')
+
+@scenario('steps.feature', 'All steps are declared in the conftest')
+def test_conftest():
+    pass
 
 
 def test_multiple_given(request):
     """Using the same given fixture raises an error."""
-    test = scenario(
+    @scenario(
         'steps.feature',
         'Using the same given fixture raises an error',
     )
-    with pytest.raises(GivenAlreadyUsed):
+    def test():
+        pass
+
+    with pytest.raises(exceptions.GivenAlreadyUsed):
         test(request)
 
 
@@ -195,19 +207,25 @@ def test_step_trace(testdir):
         def when_it_fails():
             raise Exception('when fails')
 
-        test_when_fails_inline = scenario('test.feature', 'When step has failure')
+        @scenario('test.feature', 'When step has failure')
+        def test_when_fails_inline():
+            pass
 
         @scenario('test.feature', 'When step has failure')
         def test_when_fails_decorated():
             pass
 
-        test_when_not_found = scenario('test.feature', 'When step is not found')
+        @scenario('test.feature', 'When step is not found')
+        def test_when_not_found():
+            pass
 
         @when('foo')
         def foo():
             return 'foo'
 
-        test_when_step_validation_error = scenario('test.feature', 'When step validation error happens')
+        @scenario('test.feature', 'When step validation error happens')
+        def test_when_step_validation_error():
+            pass
     """)
     result = testdir.runpytest('-k test_when_fails_inline', '-vv')
     assert result.ret == 1

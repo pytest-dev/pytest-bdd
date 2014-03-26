@@ -23,15 +23,17 @@ mentioned in the feature steps with dependency injection, which allows a true BD
 just-enough specification of the requirements without maintaining any context object
 containing the side effects of the Gherkin imperative declarations.
 
+
 Install pytest-bdd
-==================
+------------------
 
 ::
 
     pip install pytest-bdd
 
+
 Example
-=======
+-------
 
 publish_article.feature:
 
@@ -54,7 +56,9 @@ test_publish_article.py:
 
     from pytest_bdd import scenario, given, when, then
 
-    test_publish = scenario('publish_article.feature', 'Publishing the article')
+    @scenario('publish_article.feature', 'Publishing the article')
+    def test_publish():
+        pass
 
 
     @given('I have an article')
@@ -83,8 +87,9 @@ test_publish_article.py:
         article.refresh()  # Refresh the object in the SQLAlchemy session
         assert article.is_published
 
+
 Step aliases
-============
+------------
 
 Sometimes it is needed to declare the same fixtures or steps with the
 different names for better readability. In order to use the same step
@@ -115,8 +120,9 @@ default author.
         Given I'm the admin
         And there is an article
 
+
 Step arguments
-==============
+--------------
 
 Often it's possible to reuse steps giving them a parameter(s).
 This allows to have single implementation and multiple use, so less code.
@@ -143,39 +149,46 @@ The code will look like:
     import re
     from pytest_bdd import scenario, given, when, then
 
-    test_arguments = scenario('arguments.feature', 'Arguments for given, when, thens')
 
-    @given(re.compile('there are (?P<start>\d+) cucumbers'))
+    @scenario('arguments.feature', 'Arguments for given, when, thens')
+    def test_arguments():
+        pass
+
+
+    @given(re.compile('there are (?P<start>\d+) cucumbers'), converters=dict(start=int))
     def start_cucumbers(start):
-        # note that you always get step arguments as strings, convert them on demand
-        start = int(start)
         return dict(start=start, eat=0)
 
 
-    @when(re.compile('I eat (?P<eat>\d+) cucumbers'))
+    @when(re.compile('I eat (?P<eat>\d+) cucumbers'), converters=dict(eat=int))
     def eat_cucumbers(start_cucumbers, eat):
-        eat = int(eat)
         start_cucumbers['eat'] += eat
 
 
-    @then(re.compile('I should have (?P<left>\d+) cucumbers'))
+    @then(re.compile('I should have (?P<left>\d+) cucumbers'), converters=dict(left=int))
     def should_have_left_cucumbers(start_cucumbers, start, left):
-        start, left = int(start), int(left)
         assert start_cucumbers['start'] == start
         assert start - start_cucumbers['eat'] == left
 
+Example code also shows possibility to pass argument converters which may be useful if you need argument types
+different than strings.
+
+
 Scenario parameters
-===================
-Scenario can accept `encoding` param to decode content of feature file in specific encoding. UTF-8 is default.
+-------------------
+Scenario decorator can accept such optional keyword arguments:
+
+    * `encoding` - decode content of feature file in specific encoding. UTF-8 is default.
+    * `example_converters` - mapping to pass functions to convert example values provided in feature files.
+
 
 Scenario outlines
-=================
+-----------------
 
 Scenarios can be parametrized to cover few cases. In Gherkin the variable
 templates are written using corner braces as <somevalue>.
 `Scenario outlines <http://docs.behat.org/guides/1.gherkin.html#scenario-outlines>`_ are supported by pytest-bdd
 exactly as it's described in be behave docs.
-
 
 Example:
 
@@ -190,6 +203,24 @@ Example:
         | start | eat | left |
         |  12   |  5  |  7   |
 
+pytest-bdd feature file format also supports example tables in different way:
+
+
+.. code-block:: feature
+
+    Scenario Outline: Outlined given, when, thens
+        Given there are <start> cucumbers
+        When I eat <eat> cucumbers
+        Then I should have <left> cucumbers
+
+        Examples: Vertical
+        | start | 12 | 2 |
+        | eat   | 5  | 1 |
+        | left  | 7  | 1 |
+
+This form allows to have tables with lots of columns keeping the maximum text width predictable without significant
+readability change.
+
 
 The code will look like:
 
@@ -198,45 +229,53 @@ The code will look like:
     from pytest_bdd import given, when, then, scenario
 
 
-    test_outlined = scenario(
+    @scenario(
         'outline.feature',
         'Outlined given, when, thens',
+        example_converters=dict(start=int, eat=float, left=str)
     )
+    def test_outlined():
+        pass
 
 
     @given('there are <start> cucumbers')
     def start_cucumbers(start):
-        return dict(start=int(start))
+        assert isinstance(start, int)
+        return dict(start=start)
 
 
     @when('I eat <eat> cucumbers')
-    def eat_cucumbers(start_cucumbers, start, eat):
-        start_cucumbers['eat'] = int(eat)
+    def eat_cucumbers(start_cucumbers, eat):
+        assert isinstance(eat, float)
+        start_cucumbers['eat'] = eat
 
 
     @then('I should have <left> cucumbers')
     def should_have_left_cucumbers(start_cucumbers, start, eat, left):
-        assert int(start) - int(eat) == int(left)
-        assert start_cucumbers['start'] == int(start)
-        assert start_cucumbers['eat'] == int(eat)
+        assert isinstance(left, str)
+        assert start - eat == int(left)
+        assert start_cucumbers['start'] == start
+        assert start_cucumbers['eat'] == eat
 
-It's also possible to parametrize the scenario on the python side. This is done using pytest parametrization.
-The reason for this is that it is very often that some simple pythonic type
-is needed in the parameters like a datetime or a dictionary, which makes it
-more difficult to express in the text files and preserve the correct format.
+Example code also shows possibility to pass example converters which may be useful if you need parameter types
+different than strings.
+
+It's also possible to parametrize the scenario on the python side.
+The reason for this is that it is sometimes not needed to mention example table for every scenario.
 
 The code will look like:
 
 .. code-block:: python
 
     import pytest
-    from pytest_bdd import scenario, given, when, then
+    from pytest_bdd import mark, given, when, then
+
 
     # Here we use pytest to parametrize the test with the parameters table
     @pytest.mark.parametrize(
         ['start', 'eat', 'left'],
         [(12, 5, 7)])
-    @scenario(
+    @mark.scenario(
         'parametrized.feature',
         'Parametrized given, when, thens',
     )
@@ -266,7 +305,7 @@ The significant downside of this approach is inability to see the test table fro
 
 
 Test setup
-==========
+----------
 
 Test setup is implemented within the Given section. Even though these steps
 are executed imperatively to apply possible side-effects, pytest-bdd is trying
@@ -356,7 +395,7 @@ Will raise an exception if the step is using the regular expression pattern.
 
 
 Reusing fixtures
-================
+----------------
 
 Sometimes scenarios define new names for the fixture that can be
 inherited. Fixtures can be reused with other names using given():
@@ -367,7 +406,7 @@ inherited. Fixtures can be reused with other names using given():
 
 
 Reusing steps
-=============
+-------------
 
 It is possible to define some common steps in the parent conftest.py and
 simply expect them in the child test file.
@@ -400,14 +439,16 @@ test_common.py:
 
 .. code-block:: python
 
-    test_conftest = scenario('common_steps.feature', 'All steps are declared in the conftest')
+    @scenario('common_steps.feature', 'All steps are declared in the conftest')
+    def test_conftest():
+        pass
 
 There are no definitions of the steps in the test file. They were
 collected from the parent conftests.
 
 
 Feature file paths
-==================
+------------------
 
 But default, pytest-bdd will use current module’s path as base path for
 finding feature files, but this behaviour can be changed by having
@@ -426,11 +467,14 @@ test_publish_article.py:
     def pytestbdd_feature_base_dir():
         return '/home/user/projects/foo.bar/features'
 
-    test_publish = scenario('publish_article.feature', 'Publishing the article')
+
+    @scenario('publish_article.feature', 'Publishing the article')
+    def test_publish():
+        pass
 
 
 Avoid retyping the feature file name
-====================================
+------------------------------------
 
 If you want to avoid retyping the feature file name when defining your scenarios in a test file, use functools.partial.
 This will make your life much easier when defining multiple scenarios in a test file.
@@ -449,14 +493,22 @@ test_publish_article.py:
 
     scenario = partial(pytest_bdd.scenario, '/path/to/publish_article.feature')
 
-    test_publish = scenario('Publishing the article')
-    test_publish_unprivileged = scenario('Publishing the article as unprivileged user')
+
+    @scenario('Publishing the article')
+    def test_publish():
+        pass
+
+
+    @scenario('Publishing the article as unprivileged user')
+    def test_publish_unprivileged():
+        pass
 
 
 You can learn more about `functools.partial <http://docs.python.org/2/library/functools.html#functools.partial>`_ in the Python docs.
 
+
 Hooks
-=====
+-----
 
 pytest-bdd exposes several pytest `hooks <http://pytest.org/latest/plugins.html#well-specified-hooks>`_
 which might be helpful building useful reporting, visualization, etc on top of it:
@@ -476,18 +528,54 @@ which might be helpful building useful reporting, visualization, etc on top of i
     * pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception) - Called when step lookup failed
 
 
-Subplugins
-==========
+Browser testing
+---------------
 
-The pytest BDD has plugin support, and the main purpose of plugins
-(subplugins) is to provide useful and specialized fixtures.
+Tools recommended to use for browser testing:
 
-List of known subplugins:
+    * pytest-splinter - pytest splinter integration for the real browser testing
 
-    *  pytest-bdd-splinter - collection of fixtures for the real browser BDD testing
+
+
+Migration of your tests from versions 0.x.x-1.x.x
+-------------------------------------------------
+
+In version 2.0.0, the backward-incompartible change was introduced: scenario function can now only be used as a
+decorator. Reasons for that:
+
+    * test code readability is much higher using normal python function syntax;
+    * pytest-bdd internals are much cleaner and shorter when using single approach instead of supporting two;
+    * after moving to parsing-on-import-time approach for feature files, it's not possible to detect whether it's a
+        decorator more or not, so to support it along with functional approach there needed to be special parameter
+        for that, which is also a backward-incompartible change.
+To help users migrate to newer version, there's migration console script provided with **migrate** extra:
+
+
+::
+
+    # install extra for migration
+    pip install pytest-bdd[migrate]
+
+    # run migration script
+    pytestbdd_migrate_tests <your test folder>
+
+Under the hood the script does the replacement from this:
+
+.. code-block:: python
+
+    test_function = scenario('publish_article.feature', 'Publishing the article')
+
+to this:
+
+.. code-block:: python
+
+    @scenario('publish_article.feature', 'Publishing the article')
+    def test_function():
+        pass
+
 
 License
-=======
+-------
 
 This software is licensed under the `MIT license <http://en.wikipedia.org/wiki/MIT_License>`_.
 
