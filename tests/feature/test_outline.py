@@ -79,3 +79,27 @@ def test_vertical_example():
     """Test outlined scenario with vertical examples table."""
     assert test_vertical_example.parametrize.args == (
         [u'start', u'eat', u'left'], [[12, 5.0, '7'], [2, 1.0, '1']])
+
+
+def test_empty_example_values():
+    """Test outlined scenario with empty example values."""
+
+    @scenario(
+        'outline.feature',
+        'Outlined with empty example values',
+    )
+    def test_scenario():
+        pass
+
+    assert test_scenario.parametrize.args == (
+        [u'start', u'eat', u'left'], [['#', '', '']])
+
+    @scenario(
+        'outline.feature',
+        'Outlined with empty example values vertical',
+    )
+    def test_scenario():
+        pass
+
+    assert test_scenario.parametrize.args == (
+        [u'start', u'eat', u'left'], [['#', '', '']])

@@ -5,6 +5,7 @@ Changelog
 -----
 
 - Allow more than one parameter per step (bubenkoff)
+- Allow empty example values (bubenkoff)
 
 
 2.0.0

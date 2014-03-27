@@ -79,8 +79,8 @@ def get_step_params(name):
     return tuple(frozenset(STEP_PARAM_RE.findall(name)))
 
 
-def strip(line):
-    """Remove leading and trailing whitespaces and comments.
+def strip_comments(line):
+    """Remove comments.
 
     :param line: Line of the Feature file.
     :return: Stripped line.
@@ -147,7 +147,8 @@ class Feature(object):
         with _open_file(filename, encoding) as f:
             content = force_unicode(f.read(), encoding)
             for line_number, line in enumerate(content.splitlines()):
-                line = strip(line)
+                raw_line = line.strip()
+                line = strip_comments(line)
                 if not line:
                     continue
                 mode = get_step_type(line) or mode
@@ -182,12 +183,12 @@ class Feature(object):
                 elif mode == types.EXAMPLES_VERTICAL:
                     mode = types.EXAMPLE_LINE_VERTICAL
                 elif mode == types.EXAMPLES_HEADERS:
-                    scenario.set_param_names([l.strip() for l in line.split('|') if l.strip()])
+                    scenario.set_param_names([l.strip() for l in line.split('|')[1:-1] if l.strip()])
                     mode = types.EXAMPLE_LINE
                 elif mode == types.EXAMPLE_LINE:
-                    scenario.add_example([l.strip() for l in line.split('|') if l.strip()])
+                    scenario.add_example([l.strip() for l in raw_line.split('|')[1:-1]])
                 elif mode == types.EXAMPLE_LINE_VERTICAL:
-                    line = [l.strip() for l in line.split('|') if l.strip()]
+                    line = [l.strip() for l in raw_line.split('|')[1:-1]]
                     scenario.add_example_row(line[0], line[1:])
                 elif mode and mode != types.FEATURE:
                     scenario.add_step(step_name=line, step_type=mode)

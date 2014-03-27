@@ -13,3 +13,16 @@ def test_scenario_not_found(request):
             'not_found.feature',
             'NOT FOUND'
         )
+
+
+def test_scenario_comments(request):
+    """Test comments inside scenario."""
+
+    @scenario(
+        'comments.feature',
+        'Comments'
+    )
+    def test():
+        pass
+
+    test(request)
