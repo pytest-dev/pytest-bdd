@@ -76,10 +76,7 @@ def get_step_type(line):
 
 def get_step_params(name):
     """Return step parameters."""
-    params = STEP_PARAM_RE.search(name)
-    if params:
-        return params.groups()
-    return ()
+    return tuple(frozenset(STEP_PARAM_RE.findall(name)))
 
 
 def strip(line):

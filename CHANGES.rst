@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.0.1
+-----
+
+- Allow more than one parameter per step (bubenkoff)
+
+
 2.0.0
 -----
 
