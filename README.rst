@@ -38,7 +38,7 @@ Example
 publish_article.feature:
 
 .. code-block:: gherkin
-    
+
     Feature: Blog
         A site where you can publish your articles.
 
@@ -172,6 +172,61 @@ The code will look like:
 
 Example code also shows possibility to pass argument converters which may be useful if you need argument types
 different than strings.
+
+
+Multiline steps
+---------------
+
+As Gherkin, pytest-bdd supports multiline steps (aka `PyStrings <http://docs.behat.org/guides/1.gherkin.html#pystrings>`_).
+But in much cleaner and powerful way:
+
+.. code-block:: gherkin
+
+    Scenario: Multiline step using sub indentation
+        Given I have a step with:
+            Some
+            Extra
+            Lines
+        Then the text should be parsed with correct indentation
+
+Step is considered as multiline one, if the **next** line(s) after it's first line, is indented relatively
+to the first line. The step name is then simply extended by adding futher lines with newlines.
+In the example above, the Given step name will be:
+
+.. code-block:: python
+
+    """I have a step with:\nSome\nExtra\nLines"""
+
+You can of course register step using full name (including the newlines), but it seems more practical to use
+step arguments and capture lines after first line (or some subset of them) into the argument:
+
+.. code-block:: python
+
+    import re
+
+    from pytest_bdd import given, then, scenario
+
+
+    @scenario(
+        'multiline.feature',
+        'Multiline step using sub indentation',
+    )
+    def test_multiline():
+        pass
+
+
+    @given(re.compile(r'I have a step with:\n(?P<text>.+)', re.DOTALL))
+    def i_have_text(text):
+        return text
+
+
+    @then('the text should be parsed with correct indentation')
+    def eat_cucumbers(i_have_text, text):
+        assert i_have_text == text == """Some
+    Extra
+    Lines"""
+
+Pay attention to the re.DOTALL option used for step registration. When used, .+ will also capture newlines.
 
 
 Scenario parameters
