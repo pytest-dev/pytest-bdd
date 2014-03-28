@@ -35,10 +35,13 @@ Install pytest-bdd
 Example
 -------
 
+An example test for a blog hosting software could look like this.
+Note that `pytest-splinter <https://github.com/paylogic/pytest-splinter>`_ is used to get the browser fixture.
+
 publish_article.feature:
 
 .. code-block:: gherkin
-    
+
     Feature: Blog
         A site where you can publish your articles.
 
@@ -178,8 +181,8 @@ Scenario parameters
 -------------------
 Scenario decorator can accept such optional keyword arguments:
 
-    * `encoding` - decode content of feature file in specific encoding. UTF-8 is default.
-    * `example_converters` - mapping to pass functions to convert example values provided in feature files.
+* `encoding` - decode content of feature file in specific encoding. UTF-8 is default.
+* `example_converters` - mapping to pass functions to convert example values provided in feature files.
 
 
 Scenario outlines
@@ -206,7 +209,7 @@ Example:
 pytest-bdd feature file format also supports example tables in different way:
 
 
-.. code-block:: feature
+.. code-block:: gherkin
 
     Scenario Outline: Outlined given, when, thens
         Given there are <start> cucumbers
@@ -513,19 +516,19 @@ Hooks
 pytest-bdd exposes several pytest `hooks <http://pytest.org/latest/plugins.html#well-specified-hooks>`_
 which might be helpful building useful reporting, visualization, etc on top of it:
 
-    * pytest_bdd_before_step(request, feature, scenario, step, step_func, step_func_args) - Called before step function
-      is executed
+* pytest_bdd_before_step(request, feature, scenario, step, step_func, step_func_args) - Called before step function
+  is executed
 
-    * pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args) - Called after step function
-      is successfully executed
+* pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args) - Called after step function
+  is successfully executed
 
-    * pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception) - Called when step
-      function failed to execute
+* pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception) - Called when step
+  function failed to execute
 
-    * pytest_bdd_step_validation_error(request, feature, scenario, step, step_func, step_func_args, exception) - Called
-      when step failed to validate
+* pytest_bdd_step_validation_error(request, feature, scenario, step, step_func, step_func_args, exception) - Called
+  when step failed to validate
 
-    * pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception) - Called when step lookup failed
+* pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception) - Called when step lookup failed
 
 
 Browser testing
@@ -533,23 +536,23 @@ Browser testing
 
 Tools recommended to use for browser testing:
 
-    * pytest-splinter - pytest splinter integration for the real browser testing
+* `pytest-splinter <https://github.com/paylogic/pytest-splinter>`_
+  - pytest `splinter <http://splinter.cobrateam.info/>`_ integration for the real browser testing
 
 
 
 Migration of your tests from versions 0.x.x-1.x.x
 -------------------------------------------------
 
-In version 2.0.0, the backward-incompartible change was introduced: scenario function can now only be used as a
+In version 2.0.0, the backwards-incompartible change was introduced: scenario function can now only be used as a
 decorator. Reasons for that:
 
-    * test code readability is much higher using normal python function syntax;
-    * pytest-bdd internals are much cleaner and shorter when using single approach instead of supporting two;
-    * after moving to parsing-on-import-time approach for feature files, it's not possible to detect whether it's a
-        decorator more or not, so to support it along with functional approach there needed to be special parameter
-        for that, which is also a backward-incompartible change.
+* test code readability is much higher using normal python function syntax;
+* pytest-bdd internals are much cleaner and shorter when using single approach instead of supporting two;
+* after moving to parsing-on-import-time approach for feature files, it's not possible to detect whether it's a
+  decorator more or not, so to support it along with functional approach there needed to be special parameter
+  for that, which is also a backwards-incompartible change.
 To help users migrate to newer version, there's migration console script provided with **migrate** extra:
-
 
 ::
 
