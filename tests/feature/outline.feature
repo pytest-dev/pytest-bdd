@@ -39,3 +39,24 @@ Scenario Outline: Outlined with vertical example table
     | start | 12 | 2 |
     | eat   | 5  | 1 |
     | left  | 7  | 1 |
+
+
+Scenario Outline: Outlined with empty example values vertical
+    Given there are <start> cucumbers
+    When I eat <eat> cucumbers
+    Then I should have <left> cucumbers
+
+    Examples: Vertical
+    | start | # |
+    | eat   |   |
+    | left  |   |
+
+
+Scenario Outline: Outlined with empty example values
+    Given there are <start> cucumbers
+    When I eat <eat> cucumbers
+    Then I should have <left> cucumbers
+
+    Examples:
+    | start | eat | left |
+    | #     |     |      |
