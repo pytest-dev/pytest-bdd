@@ -1,6 +1,7 @@
-Scenario: Multiline step using sub indentation
+Scenario: Multiline step using sub indentation wrong indent
     Given I have a step with:
         Some
-        Extra
-        Lines
+
+    Extra
+    Lines
     Then the text should be parsed with correct indentation

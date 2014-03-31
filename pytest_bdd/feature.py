@@ -25,6 +25,7 @@ one line.
 """
 import re  # pragma: no cover
 import sys  # pragma: no cover
+import textwrap
 
 from pytest_bdd import types  # pragma: no cover
 from pytest_bdd import exceptions  # pragma: no cover
@@ -147,13 +148,18 @@ class Feature(object):
         with _open_file(filename, encoding) as f:
             content = force_unicode(f.read(), encoding)
             step = None
-            for line_number, line in enumerate(content.splitlines()):
+            multiline_step = False
+            for line_number, line in enumerate(content.splitlines(), start=1):
                 unindented_line = line.lstrip()
                 line_indent = len(line) - len(unindented_line)
-                if step and step.indent < line_indent:
+                if step and (step.indent < line_indent or ((not unindented_line) and multiline_step)):
+                    multiline_step = True
                     # multiline step, so just add line and continue
-                    step.add_line(line.lstrip())
+                    step.add_line(line)
                     continue
+                else:
+                    step = None
+                    multiline_step = False
                 stripped_line = line.strip()
                 clean_line = strip_comments(line)
                 if not clean_line:
@@ -185,9 +191,7 @@ class Feature(object):
                 clean_line = remove_prefix(clean_line)
                 if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
                     self.scenarios[clean_line] = scenario = Scenario(self, clean_line)
-                    step = None
                 elif mode == types.EXAMPLES:
-                    step = None
                     mode = types.EXAMPLES_HEADERS
                 elif mode == types.EXAMPLES_VERTICAL:
                     mode = types.EXAMPLE_LINE_VERTICAL
@@ -197,11 +201,11 @@ class Feature(object):
                 elif mode == types.EXAMPLE_LINE:
                     scenario.add_example([l.strip() for l in stripped_line.split('|')[1:-1]])
                 elif mode == types.EXAMPLE_LINE_VERTICAL:
-                    step = None
                     clean_line = [l.strip() for l in stripped_line.split('|')[1:-1]]
                     scenario.add_example_row(clean_line[0], clean_line[1:])
                 elif mode and mode != types.FEATURE:
-                    step = scenario.add_step(step_name=clean_line, step_type=mode, indent=line_indent)
+                    step = scenario.add_step(
+                        step_name=clean_line, step_type=mode, indent=line_indent, line_number=line_number)
 
         self.description = u'\n'.join(description)
 
@@ -238,7 +242,7 @@ class Scenario(object):
         self.vertical_examples = []
         self.example_converters = example_converters
 
-    def add_step(self, step_name, step_type, indent):
+    def add_step(self, step_name, step_type, indent, line_number):
         """Add step to the scenario.
 
         :param step_name: Step name.
@@ -247,7 +251,8 @@ class Scenario(object):
         """
         params = get_step_params(step_name)
         self.params.update(params)
-        step = Step(name=step_name, type=step_type, params=params, scenario=self, indent=indent)
+        step = Step(
+            name=step_name, type=step_type, params=params, scenario=self, indent=indent, line_number=line_number)
         self.steps.append(step)
         return step
 
@@ -323,13 +328,23 @@ class Scenario(object):
 class Step(object):
     """Step."""
 
-    def __init__(self, name, type, params, scenario, indent):
+    def __init__(self, name, type, params, scenario, indent, line_number):
         self.name = name
+        self.lines = []
         self.indent = indent
         self.type = type
         self.params = params
         self.scenario = scenario
+        self.line_number = line_number
 
     def add_line(self, line):
         """Add line to the multiple step."""
-        self.name += '\n' + line
+        self.lines.append(line)
+
+    @property
+    def name(self):
+        return '\n'.join([self._name] + ([textwrap.dedent('\n'.join(self.lines))] if self.lines else []))
+
+    @name.setter
+    def name(self, value):
+        self._name = value

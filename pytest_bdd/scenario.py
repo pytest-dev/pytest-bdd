@@ -70,33 +70,39 @@ def _inject_fixture(request, arg, value):
         request.fixturenames.append(arg)
 
 
-def _find_step_function(request, name, encoding):
+def _find_step_function(request, step, encoding):
     """Match the step defined by the regular expression pattern.
 
     :param request: PyTest request object.
-    :param name: Step name.
+    :param step: `Step`.
 
     :return: Step function.
 
     """
-
+    name = step.name
     try:
         return request.getfuncargvalue(force_encode(name, encoding))
     except python.FixtureLookupError:
+        try:
+            for fixturename, fixturedefs in request._fixturemanager._arg2fixturedefs.items():
+                for fixturedef in fixturedefs:
 
-        for fixturename, fixturedefs in request._fixturemanager._arg2fixturedefs.items():
-            for fixturedef in fixturedefs:
-
-                pattern = getattr(fixturedef.func, 'pattern', None)
-                match = pattern.match(name) if pattern else None
-                if match:
-                    converters = getattr(fixturedef.func, 'converters', {})
-                    for arg, value in match.groupdict().items():
-                        if arg in converters:
-                            value = converters[arg](value)
-                        _inject_fixture(request, arg, value)
-                    return request.getfuncargvalue(pattern.pattern)
-        raise
+                    pattern = getattr(fixturedef.func, 'pattern', None)
+                    match = pattern.match(name) if pattern else None
+                    if match:
+                        converters = getattr(fixturedef.func, 'converters', {})
+                        for arg, value in match.groupdict().items():
+                            if arg in converters:
+                                value = converters[arg](value)
+                            _inject_fixture(request, arg, value)
+                        return request.getfuncargvalue(pattern.pattern)
+            raise
+        except python.FixtureLookupError as e:
+            raise exceptions.StepDefinitionNotFoundError(
+                """Step definition is not found: "{e.argname}"."""
+                """ Line {step.line_number} in scenario "{scenario.name}" in the feature "{feature.filename}""".format(
+                    e=e, step=step, scenario=step.scenario, feature=step.scenario.feature)
+                )
 
 
 def _execute_step_function(request, feature, step, step_func, example=None):
@@ -133,8 +139,8 @@ def _execute_scenario(feature, scenario, request, encoding, example=None):
     # Execute scenario steps
     for step in scenario.steps:
         try:
-            step_func = _find_step_function(request, step.name, encoding=encoding)
-        except python.FixtureLookupError as exception:
+            step_func = _find_step_function(request, step, encoding=encoding)
+        except exceptions.StepDefinitionNotFoundError as exception:
             request.config.hook.pytest_bdd_step_func_lookup_error(
                 request=request, feature=feature, scenario=scenario, step=step, exception=exception)
             raise

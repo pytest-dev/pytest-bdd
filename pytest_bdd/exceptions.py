@@ -23,3 +23,7 @@ class StepTypeError(ScenarioValidationError):  # pragma: no cover
 
 class GivenAlreadyUsed(ScenarioValidationError):  # pragma: no cover
     """Fixture that implements the Given has been already used."""
+
+
+class StepDefinitionNotFoundError(Exception):  # pragma: no cover
+    """Step definition not found."""
