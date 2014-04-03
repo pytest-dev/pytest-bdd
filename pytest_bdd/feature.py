@@ -25,6 +25,7 @@ one line.
 """
 import re  # pragma: no cover
 import sys  # pragma: no cover
+import textwrap
 
 from pytest_bdd import types  # pragma: no cover
 from pytest_bdd import exceptions  # pragma: no cover
@@ -146,52 +147,65 @@ class Feature(object):
 
         with _open_file(filename, encoding) as f:
             content = force_unicode(f.read(), encoding)
-            for line_number, line in enumerate(content.splitlines()):
-                raw_line = line.strip()
-                line = strip_comments(line)
-                if not line:
+            step = None
+            multiline_step = False
+            for line_number, line in enumerate(content.splitlines(), start=1):
+                unindented_line = line.lstrip()
+                line_indent = len(line) - len(unindented_line)
+                if step and (step.indent < line_indent or ((not unindented_line) and multiline_step)):
+                    multiline_step = True
+                    # multiline step, so just add line and continue
+                    step.add_line(line)
                     continue
-                mode = get_step_type(line) or mode
+                else:
+                    step = None
+                    multiline_step = False
+                stripped_line = line.strip()
+                clean_line = strip_comments(line)
+                if not clean_line:
+                    continue
+                mode = get_step_type(clean_line) or mode
 
                 if mode == types.GIVEN and prev_mode not in (types.GIVEN, types.SCENARIO, types.SCENARIO_OUTLINE):
                     raise FeatureError('Given steps must be the first in withing the Scenario',
-                                       line_number, line)
+                                       line_number, clean_line)
 
                 if mode == types.WHEN and prev_mode not in (
                         types.SCENARIO, types.SCENARIO_OUTLINE, types.GIVEN, types.WHEN):
                     raise FeatureError('When steps must be the first or follow Given steps',
-                                       line_number, line)
+                                       line_number, clean_line)
 
                 if mode == types.THEN and prev_mode not in (types.GIVEN, types.WHEN, types.THEN):
                     raise FeatureError('Then steps must follow Given or When steps',
-                                       line_number, line)
+                                       line_number, clean_line)
 
                 if mode == types.FEATURE:
                     if prev_mode != types.FEATURE:
-                        self.name = remove_prefix(line)
+                        self.name = remove_prefix(clean_line)
                     else:
-                        description.append(line)
+                        description.append(clean_line)
 
                 prev_mode = mode
 
                 # Remove Feature, Given, When, Then, And
-                line = remove_prefix(line)
+                clean_line = remove_prefix(clean_line)
                 if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
-                    self.scenarios[line] = scenario = Scenario(self, line)
+                    self.scenarios[clean_line] = scenario = Scenario(self, clean_line)
                 elif mode == types.EXAMPLES:
                     mode = types.EXAMPLES_HEADERS
                 elif mode == types.EXAMPLES_VERTICAL:
                     mode = types.EXAMPLE_LINE_VERTICAL
                 elif mode == types.EXAMPLES_HEADERS:
-                    scenario.set_param_names([l.strip() for l in line.split('|')[1:-1] if l.strip()])
+                    scenario.set_param_names([l.strip() for l in clean_line.split('|')[1:-1] if l.strip()])
                     mode = types.EXAMPLE_LINE
                 elif mode == types.EXAMPLE_LINE:
-                    scenario.add_example([l.strip() for l in raw_line.split('|')[1:-1]])
+                    scenario.add_example([l.strip() for l in stripped_line.split('|')[1:-1]])
                 elif mode == types.EXAMPLE_LINE_VERTICAL:
-                    line = [l.strip() for l in raw_line.split('|')[1:-1]]
-                    scenario.add_example_row(line[0], line[1:])
+                    clean_line = [l.strip() for l in stripped_line.split('|')[1:-1]]
+                    scenario.add_example_row(clean_line[0], clean_line[1:])
                 elif mode and mode != types.FEATURE:
-                    scenario.add_step(step_name=line, step_type=mode)
+                    step = scenario.add_step(
+                        step_name=clean_line, step_type=mode, indent=line_indent, line_number=line_number)
 
         self.description = u'\n'.join(description)
 
@@ -228,7 +242,7 @@ class Scenario(object):
         self.vertical_examples = []
         self.example_converters = example_converters
 
-    def add_step(self, step_name, step_type):
+    def add_step(self, step_name, step_type, indent, line_number):
         """Add step to the scenario.
 
         :param step_name: Step name.
@@ -237,7 +251,10 @@ class Scenario(object):
         """
         params = get_step_params(step_name)
         self.params.update(params)
-        self.steps.append(Step(name=step_name, type=step_type, params=params))
+        step = Step(
+            name=step_name, type=step_type, params=params, scenario=self, indent=indent, line_number=line_number)
+        self.steps.append(step)
+        return step
 
     def set_param_names(self, keys):
         """Set parameter names.
@@ -311,7 +328,23 @@ class Scenario(object):
 class Step(object):
     """Step."""
 
-    def __init__(self, name, type, params):
+    def __init__(self, name, type, params, scenario, indent, line_number):
         self.name = name
+        self.lines = []
+        self.indent = indent
         self.type = type
         self.params = params
+        self.scenario = scenario
+        self.line_number = line_number
+
+    def add_line(self, line):
+        """Add line to the multiple step."""
+        self.lines.append(line)
+
+    @property
+    def name(self):
+        return '\n'.join([self._name] + ([textwrap.dedent('\n'.join(self.lines))] if self.lines else []))
+
+    @name.setter
+    def name(self, value):
+        self._name = value

@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.1.0
+-----
+
+- Implemented multiline steps (bubenkoff)
+
+
 2.0.1
 -----
 

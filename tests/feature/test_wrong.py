@@ -71,5 +71,5 @@ def test_verbose_output(request):
 
     msg, line_number, line = excinfo.value.args
 
-    assert line_number == 4
+    assert line_number == 5
     assert line == 'When I do it again'
