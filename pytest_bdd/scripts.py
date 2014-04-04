@@ -11,7 +11,7 @@ MIGRATE_REGEX = re.compile(r'\s?(\w+)\s\=\sscenario\((.+)\)', flags=re.MULTILINE
 def migrate_tests():
     """Migrate outdated tests to the most recent form."""
     if len(sys.argv) != 2:
-        print 'Usage: pytestbdd_migrate_tests <path>'
+        print('Usage: pytestbdd_migrate_tests <path>')
         sys.exit(1)
     path = sys.argv[1]
     for file_path in glob2.iglob(os.path.join(os.path.abspath(path), '**', '*.py')):
