@@ -59,6 +59,7 @@ setup(
     entry_points={
         'pytest11': [
             'pytest-bdd = pytest_bdd.plugin',
+            'pytest-bdd-cucumber-json = pytest_bdd.cucumber_json',
         ],
         'console_scripts': [
             'pytestbdd_migrate_tests = pytest_bdd.scripts:migrate_tests [migrate]'
