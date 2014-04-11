@@ -1,5 +1,8 @@
 '''Cucumber json output formatter.'''
 import os
+import time
+
+import json
 
 import py
 
@@ -40,96 +43,60 @@ class LogBDDCucumberJSON(object):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.tests = []
-        self.passed = self.skipped = 0
-        self.failed = self.errors = 0
+        self.features = []
 
-    def _opentestcase(self, report):
-        names = mangle_testnames(report.nodeid.split('::'))
-        classnames = names[:-1]
-        if self.prefix:
-            classnames.insert(0, self.prefix)
-        self.tests.append(Junit.testcase(
-            classname='.'.join(classnames),
-            name=bin_xml_escape(names[-1]),
-            time=getattr(report, 'duration', 0)
-        ))
-
-    def _write_captured_output(self, report):
-        for capname in ('out', 'err'):
-            allcontent = ''
-            for name, content in report.get_sections('Captured std%s' % capname):
-                allcontent += content
-            if allcontent:
-                tag = getattr(Junit, 'system-'+capname)
-                self.append(tag(bin_xml_escape(allcontent)))
+    # def _write_captured_output(self, report):
+    #     for capname in ('out', 'err'):
+    #         allcontent = ''
+    #         for name, content in report.get_sections('Captured std%s' % capname):
+    #             allcontent += content
+    #         if allcontent:
+    #             tag = getattr(Junit, 'system-'+capname)
+    #             self.append(tag(bin_xml_escape(allcontent)))
 
     def append(self, obj):
         self.tests[-1].append(obj)
 
-    def append_pass(self, report):
-        self.passed += 1
-        self._write_captured_output(report)
-
-    def append_failure(self, report):
-        #msg = str(report.longrepr.reprtraceback.extraline)
-        if hasattr(report, 'wasxfail'):
-            self.append(
-                Junit.skipped(message='xfail-marked test passes unexpectedly'))
-            self.skipped += 1
-        else:
-            fail = Junit.failure(message='test failure')
-            fail.append(bin_xml_escape(report.longrepr))
-            self.append(fail)
-            self.failed += 1
-        self._write_captured_output(report)
-
-    def append_collect_failure(self, report):
-        #msg = str(report.longrepr.reprtraceback.extraline)
-        self.append(Junit.failure(bin_xml_escape(report.longrepr),
-                                  message='collection failure'))
-        self.errors += 1
-
-    def append_collect_skipped(self, report):
-        #msg = str(report.longrepr.reprtraceback.extraline)
-        self.append(Junit.skipped(bin_xml_escape(report.longrepr),
-                                  message='collection skipped'))
-        self.skipped += 1
-
-    def append_error(self, report):
-        self.append(Junit.error(bin_xml_escape(report.longrepr),
-                                message='test setup failure'))
-        self.errors += 1
-
-    def append_skipped(self, report):
-        if hasattr(report, 'wasxfail'):
-            self.append(Junit.skipped(bin_xml_escape(report.wasxfail),
-                                      message='expected test failure'))
-        else:
-            filename, lineno, skipreason = report.longrepr
-            if skipreason.startswith('Skipped: '):
-                skipreason = bin_xml_escape(skipreason[9:])
-            self.append(
-                Junit.skipped(
-                    '%s:%s: %s' % report.longrepr,
-                    type='pytest.skip',
-                    message=skipreason))
-        self.skipped += 1
-        self._write_captured_output(report)
-
-    def pytest_runtest_logreport(self, report):
+    def _get_result(report):
+        """Get scenario test run result."""
         if report.passed:
             if report.when == 'call':  # ignore setup/teardown
-                self._opentestcase(report)
-                self.append_pass(report)
+                return {'status': 'passed'}
         elif report.failed:
-            self._opentestcase(report)
-            if report.when != 'call':
-                self.append_error(report)
-            else:
-                self.append_failure(report)
+            return {
+                'status': 'failed',
+                'error_message': report.longrepr}
         elif report.skipped:
-            self._opentestcase(report)
-            self.append_skipped(report)
+            return {'status': 'skipped'}
+
+    def pytest_runtest_logreport(self, report):
+        names = mangle_testnames(report.nodeid.split('::'))
+        classnames = names[:-1]
+        test_id = '.'.join(classnames)
+        scenario = report.node.scenario
+        self.tests.append(
+            {
+                "keyword": "Scenario",
+                "id": test_id,
+                "name": scenario.name,
+                "line": scenario.line_number,
+                "description": scenario.description,
+                "tags": [],
+                "type": "scenario",
+                "time": getattr(report, 'duration', 0),
+                "steps": [
+                    {
+                        "keyword": "Given ",
+                        "name": "a failing step",
+                        "line": 10,
+                        "match": {
+                            "location": "features/step_definitions/steps.rb:5"
+                        },
+                        "result": self._get_result(report)
+                    }
+                ]
+            }
+        )
 
     def pytest_collectreport(self, report):
         if not report.passed:
@@ -140,13 +107,12 @@ class LogBDDCucumberJSON(object):
                 self.append_collect_skipped(report)
 
     def pytest_internalerror(self, excrepr):
-        self.errors += 1
-        data = bin_xml_escape(excrepr)
-        self.tests.append(
-            Junit.testcase(
-                Junit.error(data, message='internal error'),
-                classname='pytest',
-                name='internal'))
+        self.tests.append(dict(
+            name='internal',
+            description='pytest',
+            steps=[],
+            error_message=dict(error=excrepr, message='internal error'),
+        ))
 
     def pytest_sessionstart(self):
         self.suite_start_time = time.time()
@@ -157,20 +123,7 @@ class LogBDDCucumberJSON(object):
         else:
             logfile = open(self.logfile, 'w', encoding='utf-8')
 
-        suite_stop_time = time.time()
-        suite_time_delta = suite_stop_time - self.suite_start_time
-        numtests = self.passed + self.failed
-
-        logfile.write('<?xml version="1.0" encoding="utf-8"?>')
-        logfile.write(Junit.testsuite(
-            self.tests,
-            name='pytest',
-            errors=self.errors,
-            failures=self.failed,
-            skips=self.skipped,
-            tests=numtests,
-            time='%.3f' % suite_time_delta,
-        ).unicode(indent=0))
+        logfile.write(json.dumps(self.features))
         logfile.close()
 
     def pytest_terminal_summary(self, terminalreporter):
