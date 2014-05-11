@@ -25,13 +25,13 @@ def pytest_configure(config):
 
 def pytest_unconfigure(config):
     xml = getattr(config, '_bddcucumberjson', None)
-    if xml:
+    if xml is not None:
         del config._bddcucumberjson
         config.pluginmanager.unregister(xml)
 
 
 class LogBDDCucumberJSON(object):
-    """Log plugin for cucumber like json output."""
+    """Logging plugin for cucumber like json output."""
 
     def __init__(self, logfile):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
