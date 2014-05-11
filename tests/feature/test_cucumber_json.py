@@ -83,12 +83,7 @@ def test_step_trace(testdir):
                             }
                         }
                     ],
-                    "tags": [
-                        {
-                            "line": 4,
-                            "name": "@b"
-                        }
-                    ],
+                    "tags": [],
                     "type": "scenario"
                 },
                 {

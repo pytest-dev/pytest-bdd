@@ -78,13 +78,16 @@ class LogBDDCucumberJSON(object):
             # skip reporting for non-bdd tests
             return
 
-        if not(scenario.steps):
+        if not scenario.steps:
             #skip if there are no steps
             return
 
+        # if self._get_result(report) is not None:
+        #     return
+
         def stepMap(step):
             return {
-                        "keyword": step.type,
+                        "keyword": step.type.capitalize(),
                         "name": step._name,
                         "line": step.line_number,
                         "match": {
@@ -93,7 +96,7 @@ class LogBDDCucumberJSON(object):
                         "result": self._get_result(report)
                     }
 
-        steps = map(stepMap, scenario.steps)
+        steps = [stepMap(step) for step in scenario.steps]
 
         if (not(self.features.has_key(scenario.feature.filename))):
             self.features[scenario.feature.filename] = {
