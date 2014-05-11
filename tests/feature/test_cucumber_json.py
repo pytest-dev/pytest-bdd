@@ -31,7 +31,7 @@ def test_step_trace(testdir):
             return 'pass'
 
         @given('a failing step')
-        def a_passing_step():
+        def a_failing_step():
             raise Exception('Error')
 
         @scenario('test.feature', 'Passing')

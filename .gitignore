@@ -41,6 +41,9 @@ nosetests.xml
 # Sublime
 /*.sublime-*
 
+#PyCharm
+/.idea
+
 # virtualenv
 /.Python
 /lib
