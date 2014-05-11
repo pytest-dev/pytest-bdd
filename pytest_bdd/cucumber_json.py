@@ -49,7 +49,7 @@ class LogBDDCucumberJSON(object):
         elif report.failed:
             return {
                 'status': 'failed',
-                'error_message': str(report.longrepr.reprcrash) }
+                'error_message': str(report.longrepr.reprcrash)}
         elif report.skipped:
             return {'status': 'skipped'}
 
@@ -79,7 +79,7 @@ class LogBDDCucumberJSON(object):
                 "result": self._get_result(report)
             }
 
-        if not self.features.has_key(scenario.feature.filename):
+        if scenario.feature.filename not in self.features:
             self.features[scenario.feature.filename] = {
                 "keyword": "Feature",
                 "uri": scenario.feature.rel_filename,
@@ -102,7 +102,6 @@ class LogBDDCucumberJSON(object):
             "steps": [stepmap(step) for step in scenario.steps]
         })
 
-
     def pytest_sessionstart(self):
         self.suite_start_time = time.time()
 
@@ -112,7 +111,7 @@ class LogBDDCucumberJSON(object):
         else:
             logfile = open(self.logfile, 'w', encoding='utf-8')
 
-        logfile.write(json.dumps(self.features.values()))
+        logfile.write(json.dumps(list(self.features.values())))
         logfile.close()
 
     def pytest_terminal_summary(self, terminalreporter):

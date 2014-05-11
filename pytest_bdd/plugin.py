@@ -21,6 +21,9 @@ def pytest_addhooks(pluginmanager):
 def pytest_runtest_makereport(item, call, __multicall__):
     """Store item in the report object."""
     rep = __multicall__.execute()
-    if hasattr(item.obj, '__scenario__'):
+    try:
+        item.obj.__scenario__
         rep.item = item
+    except AttributeError:
+        pass
     return rep
