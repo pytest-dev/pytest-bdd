@@ -82,8 +82,8 @@ class LogBDDCucumberJSON(object):
             #skip if there are no steps
             return
 
-        # if self._get_result(report) is not None:
-        #     return
+        if self._get_result(report) is None:
+            return
 
         def stepMap(step):
             return {
@@ -91,7 +91,7 @@ class LogBDDCucumberJSON(object):
                         "name": step._name,
                         "line": step.line_number,
                         "match": {
-                            "location": "features/step_definitions/steps.rb:5"
+                            "location": ""
                         },
                         "result": self._get_result(report)
                     }
@@ -101,6 +101,7 @@ class LogBDDCucumberJSON(object):
         if (not(self.features.has_key(scenario.feature.filename))):
             self.features[scenario.feature.filename] = {
                 "keyword": "Feature",
+                "uri": scenario.feature.filename,
                 "name": scenario.feature.name,
                 "id": scenario.feature.name.lower().replace(' ', '-'),
                 "line": scenario.feature.line_number,
