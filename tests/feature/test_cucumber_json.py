@@ -7,7 +7,7 @@ def runandparse(testdir, *args):
     """Run tests in testdir and parse json output."""
     resultpath = testdir.tmpdir.join("cucumber.json")
     result = testdir.runpytest('--cucumberjson={0}'.format(resultpath), *args)
-    jsonobject = json.loads(result)
+    jsonobject = json.load(resultpath.open())
     return result, jsonobject
 
 

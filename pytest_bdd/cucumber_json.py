@@ -1,4 +1,4 @@
-'''Cucumber json output formatter.'''
+"""Cucumber json output formatter."""
 import os
 import time
 
@@ -100,7 +100,6 @@ class LogBDDCucumberJSON(object):
 
     def pytest_collectreport(self, report):
         if not report.passed:
-            self._opentestcase(report)
             if report.failed:
                 self.append_collect_failure(report)
             else:
