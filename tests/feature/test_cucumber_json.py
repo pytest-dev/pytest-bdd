@@ -66,7 +66,7 @@ def test_step_trace(testdir):
             "elements": [
                 {
                     "description": "",
-                    "id": "one-passing-scenario,-one-failing-scenario;passing",
+                    "id": "test_passing",
                     "keyword": "Scenario",
                     "line": 5,
                     "name": "Passing",
@@ -93,7 +93,7 @@ def test_step_trace(testdir):
                 },
                 {
                     "description": "",
-                    "id": "one-passing-scenario,-one-failing-scenario;failing",
+                    "id": "test_failing",
                     "keyword": "Scenario",
                     "line": 9,
                     "name": "Failing",
