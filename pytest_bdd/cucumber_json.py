@@ -65,7 +65,7 @@ class LogBDDCucumberJSON(object):
         elif report.failed:
             return {
                 'status': 'failed',
-                'error_message': report.longrepr}
+                'error_message': str(report.longrepr.reprcrash) }
         elif report.skipped:
             return {'status': 'skipped'}
 
@@ -79,7 +79,9 @@ class LogBDDCucumberJSON(object):
             # skip reporting for non-bdd tests
             return
 
-        result = self._get_result(report) or {}
+        if not(scenario.steps):
+            #skip if there are no steps
+            return
 
         def stepMap(step):
             return {
@@ -89,7 +91,7 @@ class LogBDDCucumberJSON(object):
                         "match": {
                             "location": "features/step_definitions/steps.rb:5"
                         },
-                        "result": result.get("status", None)
+                        "result": self._get_result(report)
                     }
 
         steps = map(stepMap, scenario.steps)
