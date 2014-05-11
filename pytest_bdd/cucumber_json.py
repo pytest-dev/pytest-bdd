@@ -49,7 +49,8 @@ class LogBDDCucumberJSON(object):
         elif report.failed:
             return {
                 'status': 'failed',
-                'error_message': str(report.longrepr.reprcrash)}
+                'error_message': str(report.longrepr.reprcrash)
+            }
         elif report.skipped:
             return {'status': 'skipped'}
 
@@ -76,7 +77,7 @@ class LogBDDCucumberJSON(object):
                 "match": {
                     "location": ""
                 },
-                "result": self._get_result(report)
+                "result": self._get_result(report),
             }
 
         if scenario.feature.filename not in self.features:
@@ -88,7 +89,7 @@ class LogBDDCucumberJSON(object):
                 "line": scenario.feature.line_number,
                 "description": scenario.feature.description,
                 "tags": [],
-                "elements": []
+                "elements": [],
             }
 
         self.features[scenario.feature.filename]['elements'].append({
@@ -99,7 +100,7 @@ class LogBDDCucumberJSON(object):
             "description": '',
             "tags": [],
             "type": "scenario",
-            "steps": [stepmap(step) for step in scenario.steps]
+            "steps": [stepmap(step) for step in scenario.steps],
         })
 
     def pytest_sessionstart(self):
