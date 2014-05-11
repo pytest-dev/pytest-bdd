@@ -106,9 +106,9 @@ class LogBDDCucumberJSON(object):
                 "elements": []
             }
 
-        self.features[scenario.feature.filename].elements.add({
+        self.features[scenario.feature.filename]['elements'].append({
                 "keyword": "Scenario",
-                "id": test_id,
+                "id": report.item.name,
                 "name": scenario.name,
                 "line": scenario.line_number,
                 "description": '',
