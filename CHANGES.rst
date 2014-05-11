@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.2.0
+-----
+
+- Implemented cucumber json formatter (bubenkoff, albertjan)
+
+
 2.1.0
 -----
 
