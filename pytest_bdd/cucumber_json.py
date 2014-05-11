@@ -1,4 +1,4 @@
-'''Cucumber json output formatter.'''
+"""Cucumber json output formatter."""
 import os
 import time
 
@@ -73,7 +73,11 @@ class LogBDDCucumberJSON(object):
         names = mangle_testnames(report.nodeid.split('::'))
         classnames = names[:-1]
         test_id = '.'.join(classnames)
-        scenario = report.node.scenario
+        try:
+            scenario = report.item.scenario
+        except AttributeError:
+            # skip reporting for non-bdd tests
+            return
         self.tests.append(
             {
                 "keyword": "Scenario",
@@ -97,22 +101,6 @@ class LogBDDCucumberJSON(object):
                 ]
             }
         )
-
-    def pytest_collectreport(self, report):
-        if not report.passed:
-            self._opentestcase(report)
-            if report.failed:
-                self.append_collect_failure(report)
-            else:
-                self.append_collect_skipped(report)
-
-    def pytest_internalerror(self, excrepr):
-        self.tests.append(dict(
-            name='internal',
-            description='pytest',
-            steps=[],
-            error_message=dict(error=excrepr, message='internal error'),
-        ))
 
     def pytest_sessionstart(self):
         self.suite_start_time = time.time()
