@@ -6,7 +6,7 @@ import textwrap
 def runandparse(testdir, *args):
     """Run tests in testdir and parse json output."""
     resultpath = testdir.tmpdir.join("cucumber.json")
-    result = testdir.runpytest('--cucumberjson={0}'.format(resultpath), *args)
+    result = testdir.runpytest('--cucumberjson={0}'.format(resultpath), '-s', *args)
     jsonobject = json.load(resultpath.open())
     return result, jsonobject
 
