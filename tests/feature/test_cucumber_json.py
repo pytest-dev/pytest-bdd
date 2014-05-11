@@ -27,7 +27,7 @@ def equals_any():
     return equals_any()
 
 
-def test_step_trace(testdir):
+def test_step_trace(testdir, equals_any):
     """Test step trace."""
     testdir.makefile('.feature', test=textwrap.dedent("""
     Feature: One passing scenario, one failing scenario
@@ -68,14 +68,14 @@ def test_step_trace(testdir):
                     "description": "",
                     "id": "test_passing",
                     "keyword": "Scenario",
-                    "line": 5,
+                    "line": 3,
                     "name": "Passing",
                     "steps": [
                         {
-                            "keyword": "Given ",
-                            "line": 6,
+                            "keyword": "Given",
+                            "line": 4,
                             "match": {
-                                "location": "features/step_definitions/steps.rb:1"
+                                "location": ""
                             },
                             "name": "a passing step",
                             "result": {
@@ -90,35 +90,29 @@ def test_step_trace(testdir):
                     "description": "",
                     "id": "test_failing",
                     "keyword": "Scenario",
-                    "line": 9,
+                    "line": 6,
                     "name": "Failing",
                     "steps": [
                         {
-                            "keyword": "Given ",
-                            "line": 10,
+                            "keyword": "Given",
+                            "line": 7,
                             "match": {
-                                "location": "features/step_definitions/steps.rb:5"
+                                "location": ""
                             },
                             "name": "a failing step",
                             "result": {
-                                "error_message": " (RuntimeError)\n./features/step_definitions/steps.rb:6:in /a "
-                                "failing step/'\nfeatures/one_passing_one_failing.feature:10:in Given a failing step'",
+                                "error_message": equals_any,
                                 "status": "failed"
                             }
                         }
                     ],
-                    "tags": [
-                        {
-                            "line": 8,
-                            "name": "@c"
-                        }
-                    ],
+                    "tags": [],
                     "type": "scenario"
                 }
             ],
             "id": "one-passing-scenario,-one-failing-scenario",
             "keyword": "Feature",
-            "line": 2,
+            "line": 1,
             "name": "One passing scenario, one failing scenario",
             "tags": [],
             "uri": "features/one_passing_one_failing.feature"
