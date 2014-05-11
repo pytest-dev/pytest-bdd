@@ -60,12 +60,8 @@ class LogBDDCucumberJSON(object):
             # skip reporting for non-bdd tests
             return
 
-        if not scenario.steps:
-            # skip if there are no steps
-            return
-
-        if self._get_result(report) is None:
-            # skip if there isn't a result
+        if not scenario.steps or self._get_result(report) is None:
+            # skip if there isn't a result or scenario has no steps
             return
 
         def stepmap(step):
