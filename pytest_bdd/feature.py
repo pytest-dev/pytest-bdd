@@ -140,6 +140,7 @@ class Feature(object):
         self.scenarios = {}
 
         self.filename = filename
+        self.line_number = 1
         scenario = None
         mode = None
         prev_mode = None
@@ -182,6 +183,7 @@ class Feature(object):
                 if mode == types.FEATURE:
                     if prev_mode != types.FEATURE:
                         self.name = remove_prefix(clean_line)
+                        self.line_number = line_number
                     else:
                         description.append(clean_line)
 
