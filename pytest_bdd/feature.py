@@ -23,6 +23,8 @@ Syntax example:
 one line.
 
 """
+from os import path as op  # pragma: no cover
+
 import re  # pragma: no cover
 import sys  # pragma: no cover
 import textwrap
@@ -131,15 +133,15 @@ def force_encode(string, encoding='utf-8'):
 class Feature(object):
     """Feature."""
 
-    def __init__(self, filename, encoding='utf-8'):
+    def __init__(self, basedir, filename, encoding='utf-8'):
         """Parse the feature file.
 
         :param filename: Relative path to the feature file.
 
         """
         self.scenarios = {}
-
-        self.filename = filename
+        self.rel_filename = op.join(op.basename(basedir), filename)
+        self.filename = filename = op.abspath(op.join(basedir, filename))
         self.line_number = 1
         scenario = None
         mode = None
@@ -212,9 +214,10 @@ class Feature(object):
         self.description = u'\n'.join(description)
 
     @classmethod
-    def get_feature(cls, filename, encoding='utf-8'):
+    def get_feature(cls, base_path, filename, encoding='utf-8'):
         """Get a feature by the filename.
 
+        :param base_path: Base feature directory.
         :param filename: Filename of the feature file.
 
         :return: `Feature` instance from the parsed feature cache.
@@ -226,7 +229,7 @@ class Feature(object):
         """
         feature = features.get(filename)
         if not feature:
-            feature = Feature(filename, encoding=encoding)
+            feature = Feature(base_path, filename, encoding=encoding)
             features[filename] = feature
         return feature
 
