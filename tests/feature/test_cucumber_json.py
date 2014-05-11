@@ -68,12 +68,12 @@ def test_step_trace(testdir, equals_any):
                     "description": "",
                     "id": "test_passing",
                     "keyword": "Scenario",
-                    "line": 5,
+                    "line": 3,
                     "name": "Passing",
                     "steps": [
                         {
                             "keyword": "Given",
-                            "line": 6,
+                            "line": 4,
                             "match": {
                                 "location": ""
                             },
