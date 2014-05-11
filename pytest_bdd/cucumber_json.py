@@ -111,7 +111,7 @@ class LogBDDCucumberJSON(object):
         else:
             logfile = open(self.logfile, 'w', encoding='utf-8')
 
-        logfile.write(json.dumps(self.features))
+        logfile.write(json.dumps(self.tests))
         logfile.close()
 
     def pytest_terminal_summary(self, terminalreporter):
