@@ -48,7 +48,7 @@ class LogBDDCucumberJSON(object):
         elif report.failed:
             return {
                 'status': 'failed',
-                'error_message': str(report.longrepr.reprcrash)
+                'error_message': str(report.longrepr.reprcrash),
             }
         elif report.skipped:
             return {'status': 'skipped'}
