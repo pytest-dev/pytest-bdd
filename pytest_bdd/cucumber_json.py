@@ -42,8 +42,8 @@ class LogBDDCucumberJSON(object):
     def __init__(self, logfile):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
-        self.tests = []
-        self.features = []
+        self.tests = {}
+        self.features = {}
 
     # def _write_captured_output(self, report):
     #     for capname in ('out', 'err'):
@@ -96,8 +96,17 @@ class LogBDDCucumberJSON(object):
 
         steps = map(stepMap, scenario.steps)
 
-        self.tests.append(
-            {
+        if (not(self.tests.has_key(scenario.feature.filename))):
+            self.tests[scenario.feature.filename] = {
+                "keyword": "Feature",
+                "name": scenario.feature.name,
+                "id": scenario.feature.name.lower().replace(' ', '-'),
+                "line": scenario.feature.line_number,
+                "tags": [],
+                "elements": []
+            }
+
+        self.tests[scenario.feature.filename].elements.add({
                 "keyword": "Scenario",
                 "id": test_id,
                 "name": scenario.name,
@@ -105,10 +114,9 @@ class LogBDDCucumberJSON(object):
                 "description": '',
                 "tags": [],
                 "type": "scenario",
-                "time": getattr(report, 'duration', 0),
                 "steps": steps
-            }
-        )
+            })
+
 
     def pytest_sessionstart(self):
         self.suite_start_time = time.time()
