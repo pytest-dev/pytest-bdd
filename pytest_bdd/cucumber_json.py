@@ -74,7 +74,7 @@ class LogBDDCucumberJSON(object):
         classnames = names[:-1]
         test_id = '.'.join(classnames)
         try:
-            scenario = report.item.scenario
+            scenario = report.item.__scenario__
         except AttributeError:
             # skip reporting for non-bdd tests
             return

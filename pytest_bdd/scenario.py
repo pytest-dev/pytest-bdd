@@ -240,6 +240,7 @@ def _get_scenario_decorator(
 
         _scenario.__doc__ = '{feature_name}: {scenario_name}'.format(
             feature_name=feature_name, scenario_name=scenario_name)
+        _scenario.__scenario__ = scenario
         return _scenario
 
     return recreate_function(decorator, module=caller_module, firstlineno=caller_function.f_lineno)
