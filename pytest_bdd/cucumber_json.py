@@ -38,15 +38,6 @@ class LogBDDCucumberJSON(object):
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.features = {}
 
-    # def _write_captured_output(self, report):
-    #     for capname in ('out', 'err'):
-    #         allcontent = ''
-    #         for name, content in report.get_sections('Captured std%s' % capname):
-    #             allcontent += content
-    #         if allcontent:
-    #             tag = getattr(Junit, 'system-'+capname)
-    #             self.append(tag(bin_xml_escape(allcontent)))
-
     def append(self, obj):
         self.features[-1].append(obj)
 
@@ -91,7 +82,7 @@ class LogBDDCucumberJSON(object):
         if not self.features.has_key(scenario.feature.filename):
             self.features[scenario.feature.filename] = {
                 "keyword": "Feature",
-                "uri": scenario.feature.filename,
+                "uri": scenario.feature.rel_filename,
                 "name": scenario.feature.name,
                 "id": scenario.feature.name.lower().replace(' ', '-'),
                 "line": scenario.feature.line_number,

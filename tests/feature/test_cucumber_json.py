@@ -1,5 +1,6 @@
 """Test cucumber json output."""
 import json
+import os.path
 import textwrap
 import os.path
 
