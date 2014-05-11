@@ -81,6 +81,19 @@ class LogBDDCucumberJSON(object):
 
         result = self._get_result(report) or {}
 
+        def stepMap(step):
+            return {
+                        "keyword": step.type,
+                        "name": step._name,
+                        "line": step.line_number,
+                        "match": {
+                            "location": "features/step_definitions/steps.rb:5"
+                        },
+                        "result": result.get("status", None)
+                    }
+
+        steps = map(stepMap, scenario.steps)
+
         self.tests.append(
             {
                 "keyword": "Scenario",
@@ -91,17 +104,7 @@ class LogBDDCucumberJSON(object):
                 "tags": [],
                 "type": "scenario",
                 "time": getattr(report, 'duration', 0),
-                "steps": [
-                    {
-                        "keyword": "Given ",
-                        "name": "a failing step",
-                        "line": 10,
-                        "match": {
-                            "location": "features/step_definitions/steps.rb:5"
-                        },
-                        "result": result.get("status", None)
-                    }
-                ]
+                "steps": steps
             }
         )
 
