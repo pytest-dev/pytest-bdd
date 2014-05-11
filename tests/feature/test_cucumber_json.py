@@ -125,12 +125,7 @@ def test_step_trace(testdir):
             "keyword": "Feature",
             "line": 2,
             "name": "One passing scenario, one failing scenario",
-            "tags": [
-                {
-                    "line": 1,
-                    "name": "@a"
-                }
-            ],
+            "tags": [],
             "uri": "features/one_passing_one_failing.feature"
         }
     ]
