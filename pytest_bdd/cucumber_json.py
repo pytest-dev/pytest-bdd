@@ -57,7 +57,7 @@ class LogBDDCucumberJSON(object):
     def append(self, obj):
         self.tests[-1].append(obj)
 
-    def _get_result(report):
+    def _get_result(self, report):
         """Get scenario test run result."""
         if report.passed:
             if report.when == 'call':  # ignore setup/teardown
@@ -84,7 +84,7 @@ class LogBDDCucumberJSON(object):
                 "id": test_id,
                 "name": scenario.name,
                 "line": scenario.line_number,
-                "description": scenario.description,
+                "description": '',
                 "tags": [],
                 "type": "scenario",
                 "time": getattr(report, 'duration', 0),

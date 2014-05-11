@@ -190,7 +190,7 @@ class Feature(object):
                 # Remove Feature, Given, When, Then, And
                 clean_line = remove_prefix(clean_line)
                 if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
-                    self.scenarios[clean_line] = scenario = Scenario(self, clean_line)
+                    self.scenarios[clean_line] = scenario = Scenario(self, clean_line, line_number)
                 elif mode == types.EXAMPLES:
                     mode = types.EXAMPLES_HEADERS
                 elif mode == types.EXAMPLES_VERTICAL:
@@ -232,7 +232,7 @@ class Feature(object):
 class Scenario(object):
     """Scenario."""
 
-    def __init__(self, feature, name, example_converters=None):
+    def __init__(self, feature, name, line_number, example_converters=None):
         self.feature = feature
         self.name = name
         self.params = set()
@@ -240,6 +240,7 @@ class Scenario(object):
         self.example_params = []
         self.examples = []
         self.vertical_examples = []
+        self.line_number = line_number
         self.example_converters = example_converters
 
     def add_step(self, step_name, step_type, indent, line_number):
