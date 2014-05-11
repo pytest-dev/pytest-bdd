@@ -115,6 +115,6 @@ def test_step_trace(testdir, equals_any):
             "line": 1,
             "name": "One passing scenario, one failing scenario",
             "tags": [],
-            "uri": "features/one_passing_one_failing.feature"
+            "uri": testdir.tmpdir.join('test.feature').strpath,
         }
     ]

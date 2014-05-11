@@ -227,10 +227,11 @@ class Feature(object):
             when multiple scenarios are referencing the same file.
 
         """
-        feature = features.get(filename)
+        full_name = op.abspath(op.join(base_path, filename))
+        feature = features.get(full_name)
         if not feature:
             feature = Feature(base_path, filename, encoding=encoding)
-            features[filename] = feature
+            features[full_name] = feature
         return feature
 
 
