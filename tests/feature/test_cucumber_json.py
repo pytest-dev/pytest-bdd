@@ -1,5 +1,6 @@
 """Test cucumber json output."""
 import json
+import os.path
 import textwrap
 
 import pytest
@@ -115,6 +116,6 @@ def test_step_trace(testdir, equals_any):
             "line": 1,
             "name": "One passing scenario, one failing scenario",
             "tags": [],
-            "uri": testdir.tmpdir.join('test.feature').strpath,
+            "uri": os.path.join(testdir.tmpdir.basename, 'test.feature'),
         }
     ]
