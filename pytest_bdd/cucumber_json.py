@@ -102,6 +102,7 @@ class LogBDDCucumberJSON(object):
                 "name": scenario.feature.name,
                 "id": scenario.feature.name.lower().replace(' ', '-'),
                 "line": scenario.feature.line_number,
+                "description": scenario.feature.description,
                 "tags": [],
                 "elements": []
             }
