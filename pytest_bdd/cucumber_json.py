@@ -30,12 +30,6 @@ def pytest_unconfigure(config):
         config.pluginmanager.unregister(xml)
 
 
-def mangle_testnames(names):
-    names = [x.replace('.py', '') for x in names if x != '()']
-    names[0] = names[0].replace('/', '.')
-    return names
-
-
 class LogBDDCucumberJSON(object):
     """Log plugin for cucumber like json output."""
 
@@ -69,9 +63,6 @@ class LogBDDCucumberJSON(object):
             return {'status': 'skipped'}
 
     def pytest_runtest_logreport(self, report):
-        names = mangle_testnames(report.nodeid.split('::'))
-        classnames = names[:-1]
-        test_id = '.'.join(classnames)
         try:
             scenario = report.item.obj.__scenario__
         except AttributeError:
@@ -79,26 +70,25 @@ class LogBDDCucumberJSON(object):
             return
 
         if not scenario.steps:
-            #skip if there are no steps
+            # skip if there are no steps
             return
 
         if self._get_result(report) is None:
+            # skip if there isn't a result
             return
 
-        def stepMap(step):
+        def stepmap(step):
             return {
-                        "keyword": step.type.capitalize(),
-                        "name": step._name,
-                        "line": step.line_number,
-                        "match": {
-                            "location": ""
-                        },
-                        "result": self._get_result(report)
-                    }
+                "keyword": step.type.capitalize(),
+                "name": step._name,
+                "line": step.line_number,
+                "match": {
+                    "location": ""
+                },
+                "result": self._get_result(report)
+            }
 
-        steps = [stepMap(step) for step in scenario.steps]
-
-        if (not(self.features.has_key(scenario.feature.filename))):
+        if not self.features.has_key(scenario.feature.filename):
             self.features[scenario.feature.filename] = {
                 "keyword": "Feature",
                 "uri": scenario.feature.filename,
@@ -111,15 +101,15 @@ class LogBDDCucumberJSON(object):
             }
 
         self.features[scenario.feature.filename]['elements'].append({
-                "keyword": "Scenario",
-                "id": report.item.name,
-                "name": scenario.name,
-                "line": scenario.line_number,
-                "description": '',
-                "tags": [],
-                "type": "scenario",
-                "steps": steps
-            })
+            "keyword": "Scenario",
+            "id": report.item.name,
+            "name": scenario.name,
+            "line": scenario.line_number,
+            "description": '',
+            "tags": [],
+            "type": "scenario",
+            "steps": [stepmap(step) for step in scenario.steps]
+        })
 
 
     def pytest_sessionstart(self):
