@@ -42,7 +42,6 @@ class LogBDDCucumberJSON(object):
     def __init__(self, logfile):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
-        self.tests = {}
         self.features = {}
 
     # def _write_captured_output(self, report):
@@ -55,7 +54,7 @@ class LogBDDCucumberJSON(object):
     #             self.append(tag(bin_xml_escape(allcontent)))
 
     def append(self, obj):
-        self.tests[-1].append(obj)
+        self.features[-1].append(obj)
 
     def _get_result(self, report):
         """Get scenario test run result."""
@@ -96,8 +95,8 @@ class LogBDDCucumberJSON(object):
 
         steps = map(stepMap, scenario.steps)
 
-        if (not(self.tests.has_key(scenario.feature.filename))):
-            self.tests[scenario.feature.filename] = {
+        if (not(self.features.has_key(scenario.feature.filename))):
+            self.features[scenario.feature.filename] = {
                 "keyword": "Feature",
                 "name": scenario.feature.name,
                 "id": scenario.feature.name.lower().replace(' ', '-'),
@@ -107,7 +106,7 @@ class LogBDDCucumberJSON(object):
                 "elements": []
             }
 
-        self.tests[scenario.feature.filename].elements.add({
+        self.features[scenario.feature.filename].elements.add({
                 "keyword": "Scenario",
                 "id": test_id,
                 "name": scenario.name,
@@ -128,7 +127,7 @@ class LogBDDCucumberJSON(object):
         else:
             logfile = open(self.logfile, 'w', encoding='utf-8')
 
-        logfile.write(json.dumps(self.tests))
+        logfile.write(json.dumps(self.features.values()))
         logfile.close()
 
     def pytest_terminal_summary(self, terminalreporter):
