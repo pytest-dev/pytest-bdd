@@ -78,6 +78,9 @@ class LogBDDCucumberJSON(object):
         except AttributeError:
             # skip reporting for non-bdd tests
             return
+
+        result = self._get_result(report) or {}
+
         self.tests.append(
             {
                 "keyword": "Scenario",
@@ -96,7 +99,7 @@ class LogBDDCucumberJSON(object):
                         "match": {
                             "location": "features/step_definitions/steps.rb:5"
                         },
-                        "result": self._get_result(report)
+                        "result": result.get("status", None)
                     }
                 ]
             }
