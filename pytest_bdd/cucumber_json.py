@@ -82,8 +82,8 @@ class LogBDDCucumberJSON(object):
             #skip if there are no steps
             return
 
-        # if self._get_result(report) is not None:
-        #     return
+        if self._get_result(report) is None:
+            return
 
         def stepMap(step):
             return {
