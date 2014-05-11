@@ -2,6 +2,8 @@
 import json
 import textwrap
 
+import pytest
+
 
 def runandparse(testdir, *args):
     """Run tests in testdir and parse json output."""
@@ -9,6 +11,20 @@ def runandparse(testdir, *args):
     result = testdir.runpytest('--cucumberjson={0}'.format(resultpath), '-s', *args)
     jsonobject = json.load(resultpath.open())
     return result, jsonobject
+
+
+@pytest.fixture(scope='session')
+def equals_any():
+    """Helper object comparison to which is always 'equal'."""
+    class equals_any(object):
+
+        def __eq__(self, other):
+            return True
+
+        def __cmp__(self, other):
+            return 0
+
+    return equals_any()
 
 
 def test_step_trace(testdir):
