@@ -107,12 +107,11 @@ class LogBDDCucumberJSON(object):
 
     def pytest_sessionfinish(self):
         if py.std.sys.version_info[0] < 3:
-            logfile = py.std.codecs.open(self.logfile, 'w', encoding='utf-8')
+            logfile_open = py.std.codecs.open
         else:
-            logfile = open(self.logfile, 'w', encoding='utf-8')
-
-        logfile.write(json.dumps(list(self.features.values())))
-        logfile.close()
+            logfile_open = open
+        with logfile_open(self.logfile, 'w', encoding='utf-8') as logfile:
+            logfile.write(json.dumps(list(self.features.values())))
 
     def pytest_terminal_summary(self, terminalreporter):
         terminalreporter.write_sep('-', 'generated json file: %s' % (self.logfile))
