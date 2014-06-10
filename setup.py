@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import codecs
 import os
 import sys
 
@@ -25,8 +26,8 @@ class Tox(TestCommand):
 dirname = os.path.dirname(__file__)
 
 long_description = (
-    open(os.path.join(dirname, 'README.rst')).read() + '\n' +
-    open(os.path.join(dirname, 'CHANGES.rst')).read()
+    codecs.open(os.path.join(dirname, 'README.rst'), encoding='utf-8').read() + '\n' +
+    codecs.open(os.path.join(dirname, 'CHANGES.rst'), encoding='utf-8').read()
 )
 
 setup(
