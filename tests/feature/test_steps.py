@@ -229,20 +229,20 @@ def test_step_trace(testdir):
     """)
     result = testdir.runpytest('-k test_when_fails_inline', '-vv')
     assert result.ret == 1
-    result.stdout.fnmatch_lines('test_step_trace.py:*: test_when_fails_inline FAILED')
+    result.stdout.fnmatch_lines('test_step_trace.py*: test_when_fails_inline FAILED')
     assert 'INTERNALERROR' not in result.stdout.str()
 
     result = testdir.runpytest('-k test_when_fails_decorated', '-vv')
     assert result.ret == 1
-    result.stdout.fnmatch_lines('test_step_trace.py:*: test_when_fails_decorated FAILED')
+    result.stdout.fnmatch_lines('test_step_trace.py*: test_when_fails_decorated FAILED')
     assert 'INTERNALERROR' not in result.stdout.str()
 
     result = testdir.runpytest('-k test_when_not_found', '-vv')
     assert result.ret == 1
-    result.stdout.fnmatch_lines('test_step_trace.py:*: test_when_not_found FAILED')
+    result.stdout.fnmatch_lines('test_step_trace.py*: test_when_not_found FAILED')
     assert 'INTERNALERROR' not in result.stdout.str()
 
     result = testdir.runpytest('-k test_when_step_validation_error', '-vv')
     assert result.ret == 1
-    result.stdout.fnmatch_lines('test_step_trace.py:*: test_when_step_validation_error FAILED')
+    result.stdout.fnmatch_lines('test_step_trace.py*: test_when_step_validation_error FAILED')
     assert 'INTERNALERROR' not in result.stdout.str()
