@@ -1,4 +1,4 @@
-__version__ = '2.1.0'
+__version__ = '2.1.1'
 
 try:
     from pytest_bdd.steps import given, when, then  # pragma: no cover
@@ -6,5 +6,5 @@ try:
 
     __all__ = [given.__name__, when.__name__, then.__name__, scenario.__name__]  # pragma: no cover
 except ImportError:
-    # avoid import errors when only __version__ is needed (for setup.py) 
+    # avoid import errors when only __version__ is needed (for setup.py)
     pass

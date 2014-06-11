@@ -35,7 +35,7 @@ setup(
     long_description=long_description,
     author='Oleg Pidsadnyi',
     license='MIT license',
-    author_email='oleg.podsadny@gmail.com',
+    author_email='oleg.pidsadnyi@gmail.com',
     url='https://github.com/olegpidsadnyi/pytest-bdd',
     version=pytest_bdd.__version__,
     classifiers=[
