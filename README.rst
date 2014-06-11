@@ -508,9 +508,9 @@ collected from the parent conftests.
 Feature file paths
 ------------------
 
-But default, pytest-bdd will use current module’s path as base path for
+But default, pytest-bdd will use current module's path as base path for
 finding feature files, but this behaviour can be changed by having
-fixture named 'pytestbdd_feature_base_dir' which should return the
+fixture named `pytestbdd_feature_base_dir` which should return the
 new base path.
 
 test_publish_article.py:
