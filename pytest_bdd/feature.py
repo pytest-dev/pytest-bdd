@@ -34,6 +34,7 @@ from pytest_bdd import exceptions  # pragma: no cover
 
 
 class FeatureError(Exception):  # pragma: no cover
+
     """Feature parse error."""
 
     message = u'{0}.\nLine number: {1}.\nLine: {2}.'
@@ -131,6 +132,7 @@ def force_encode(string, encoding='utf-8'):
 
 
 class Feature(object):
+
     """Feature."""
 
     def __init__(self, basedir, filename, encoding='utf-8'):
@@ -143,6 +145,7 @@ class Feature(object):
         self.rel_filename = op.join(op.basename(basedir), filename)
         self.filename = filename = op.abspath(op.join(basedir, filename))
         self.line_number = 1
+        self.name = None
         scenario = None
         mode = None
         prev_mode = None
@@ -236,6 +239,7 @@ class Feature(object):
 
 
 class Scenario(object):
+
     """Scenario."""
 
     def __init__(self, feature, name, line_number, example_converters=None):
@@ -333,6 +337,7 @@ class Scenario(object):
 
 
 class Step(object):
+
     """Step."""
 
     def __init__(self, name, type, params, scenario, indent, line_number):

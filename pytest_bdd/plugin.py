@@ -22,8 +22,28 @@ def pytest_runtest_makereport(item, call, __multicall__):
     """Store item in the report object."""
     rep = __multicall__.execute()
     try:
-        item.obj.__scenario__
-        rep.item = item
+        scenario = item.obj.__scenario__
     except AttributeError:
         pass
+    else:
+        rep.scenario = {
+            'steps': [{
+                'name': step._name,
+                'type': step.type,
+                'line_number': step.line_number
+            } for step in scenario.steps],
+            'name': scenario.name,
+            'line_number': scenario.line_number,
+            'feature': {
+                'name': scenario.feature.name,
+                'filename': scenario.feature.filename,
+                'rel_filename': scenario.feature.rel_filename,
+                'line_number': scenario.feature.line_number,
+                'description': scenario.feature.description
+            }
+        }
+        rep.item = {
+            'name': item.name
+        }
+
     return rep

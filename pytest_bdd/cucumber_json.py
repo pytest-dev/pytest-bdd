@@ -30,6 +30,7 @@ def pytest_unconfigure(config):
 
 
 class LogBDDCucumberJSON(object):
+
     """Logging plugin for cucumber like json output."""
 
     def __init__(self, logfile):
@@ -55,47 +56,47 @@ class LogBDDCucumberJSON(object):
 
     def pytest_runtest_logreport(self, report):
         try:
-            scenario = report.item.obj.__scenario__
+            scenario = report.scenario
         except AttributeError:
             # skip reporting for non-bdd tests
             return
 
-        if not scenario.steps or self._get_result(report) is None:
+        if not scenario['steps'] or self._get_result(report) is None:
             # skip if there isn't a result or scenario has no steps
             return
 
         def stepmap(step):
             return {
-                "keyword": step.type.capitalize(),
-                "name": step._name,
-                "line": step.line_number,
+                "keyword": step['type'].capitalize(),
+                "name": step['name'],
+                "line": step['line_number'],
                 "match": {
                     "location": ""
                 },
                 "result": self._get_result(report),
             }
 
-        if scenario.feature.filename not in self.features:
-            self.features[scenario.feature.filename] = {
+        if scenario['feature']['filename'] not in self.features:
+            self.features[scenario['feature']['filename']] = {
                 "keyword": "Feature",
-                "uri": scenario.feature.rel_filename,
-                "name": scenario.feature.name,
-                "id": scenario.feature.name.lower().replace(' ', '-'),
-                "line": scenario.feature.line_number,
-                "description": scenario.feature.description,
+                "uri": scenario['feature']['rel_filename'],
+                "name": scenario['feature']['name'],
+                "id": scenario['feature']['name'].lower().replace(' ', '-'),
+                "line": scenario['feature']['line_number'],
+                "description": scenario['feature']['description'],
                 "tags": [],
                 "elements": [],
             }
 
-        self.features[scenario.feature.filename]['elements'].append({
+        self.features[scenario['feature']['filename']]['elements'].append({
             "keyword": "Scenario",
-            "id": report.item.name,
-            "name": scenario.name,
-            "line": scenario.line_number,
+            "id": report.item['name'],
+            "name": scenario['name'],
+            "line": scenario['line_number'],
             "description": '',
             "tags": [],
             "type": "scenario",
-            "steps": [stepmap(step) for step in scenario.steps],
+            "steps": [stepmap(step) for step in scenario['steps']],
         })
 
     def pytest_sessionstart(self):
