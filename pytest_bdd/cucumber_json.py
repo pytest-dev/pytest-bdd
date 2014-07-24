@@ -81,7 +81,7 @@ class LogBDDCucumberJSON(object):
                 "keyword": "Feature",
                 "uri": scenario['feature']['rel_filename'],
                 "name": scenario['feature']['name'],
-                "id": scenario['feature']['name'].lower().replace(' ', '-'),
+                "id": scenario['feature']['rel_filename'].lower().replace(' ', '-'),
                 "line": scenario['feature']['line_number'],
                 "description": scenario['feature']['description'],
                 "tags": [],
