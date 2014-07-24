@@ -1,4 +1,4 @@
-__version__ = '2.1.1'
+__version__ = '2.1.2'
 
 try:
     from pytest_bdd.steps import given, when, then  # pragma: no cover
