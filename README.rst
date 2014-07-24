@@ -236,8 +236,8 @@ Scenario parameters
 -------------------
 Scenario decorator can accept such optional keyword arguments:
 
-* `encoding` - decode content of feature file in specific encoding. UTF-8 is default.
-* `example_converters` - mapping to pass functions to convert example values provided in feature files.
+* ``encoding`` - decode content of feature file in specific encoding. UTF-8 is default.
+* ``example_converters`` - mapping to pass functions to convert example values provided in feature files.
 
 
 Scenario outlines
@@ -508,9 +508,9 @@ collected from the parent conftests.
 Feature file paths
 ------------------
 
-But default, pytest-bdd will use current module’s path as base path for
+But default, pytest-bdd will use current module's path as base path for
 finding feature files, but this behaviour can be changed by having
-fixture named ‘pytestbdd_feature_base_dir’ which should return the
+fixture named ``pytestbdd_feature_base_dir`` which should return the
 new base path.
 
 test_publish_article.py:
@@ -591,8 +591,7 @@ Browser testing
 
 Tools recommended to use for browser testing:
 
-* `pytest-splinter <https://github.com/paylogic/pytest-splinter>`_
-  - pytest `splinter <http://splinter.cobrateam.info/>`_ integration for the real browser testing
+* `pytest-splinter <https://github.com/paylogic/pytest-splinter>`_ - pytest `splinter <http://splinter.cobrateam.info/>`_ integration for the real browser testing
 
 
 Reporting
@@ -621,6 +620,7 @@ decorator. Reasons for that:
 * after moving to parsing-on-import-time approach for feature files, it's not possible to detect whether it's a
   decorator more or not, so to support it along with functional approach there needed to be special parameter
   for that, which is also a backwards-incompartible change.
+
 To help users migrate to newer version, there's migration console script provided with **migrate** extra:
 
 ::

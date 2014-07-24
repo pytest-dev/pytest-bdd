@@ -1,15 +1,18 @@
-#!/usr/bin/env python
+"""pytest-bdd package config."""
+import codecs
 import os
 import sys
 
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
-
-version = '2.2.0'
+import pytest_bdd
 
 
 class Tox(TestCommand):
+
+    """"Custom setup.py test command implementation using tox runner."""
+
     def finalize_options(self):
         TestCommand.finalize_options(self)
         self.test_args = ['--recreate']
@@ -25,8 +28,8 @@ class Tox(TestCommand):
 dirname = os.path.dirname(__file__)
 
 long_description = (
-    open(os.path.join(dirname, 'README.rst')).read() + '\n' +
-    open(os.path.join(dirname, 'CHANGES.rst')).read()
+    codecs.open(os.path.join(dirname, 'README.rst'), encoding='utf-8').read() + '\n' +
+    codecs.open(os.path.join(dirname, 'CHANGES.rst'), encoding='utf-8').read()
 )
 
 setup(
@@ -35,9 +38,9 @@ setup(
     long_description=long_description,
     author='Oleg Pidsadnyi',
     license='MIT license',
-    author_email='oleg.podsadny@gmail.com',
+    author_email='oleg.pidsadnyi@gmail.com',
     url='https://github.com/olegpidsadnyi/pytest-bdd',
-    version=version,
+    version=pytest_bdd.__version__,
     classifiers=[
         'Development Status :: 6 - Mature',
         'Intended Audience :: Developers',
