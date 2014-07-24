@@ -45,7 +45,7 @@ def _inject_fixture(request, arg, value):
         lambda: value, None, None,
         False,
     )
-    fd.cached_result = (value, 0)
+    fd.cached_result = (value, 0, None)
 
     old_fd = getattr(request, '_fixturedefs', {}).get(arg)
     old_value = request._funcargs.get(arg)
@@ -101,7 +101,7 @@ def _find_step_function(request, step, encoding):
                 """Step definition is not found: "{e.argname}"."""
                 """ Line {step.line_number} in scenario "{scenario.name}" in the feature "{feature.filename}""".format(
                     e=e, step=step, scenario=step.scenario, feature=step.scenario.feature)
-                )
+            )
 
 
 def _execute_step_function(request, feature, step, step_func, example=None):
@@ -133,7 +133,6 @@ def _execute_step_function(request, feature, step, step_func, example=None):
 
 def _execute_scenario(feature, scenario, request, encoding, example=None):
     """Execute the scenario."""
-
     givens = set()
     # Execute scenario steps
     for step in scenario.steps:
@@ -249,7 +248,6 @@ def scenario(
         feature_name, scenario_name, encoding='utf-8', example_converters=None,
         caller_module=None, caller_function=None):
     """Scenario."""
-
     caller_module = caller_module or get_caller_module()
     caller_function = caller_function or get_caller_function()
 

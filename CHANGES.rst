@@ -7,6 +7,12 @@ Changelog
 - Implemented cucumber json formatter (bubenkoff, albertjan)
 
 
+2.1.2
+-----
+
+- Latest pytest compartibility fixes (bubenkoff)
+
+
 2.1.1
 -----
 
