@@ -96,18 +96,17 @@ def strip_comments(line):
     return line.strip()
 
 
-def remove_prefix(line):
-    """Remove the step prefix (Scenario, Given, When, Then or And).
+def parse_line(line):
+    """Parse step line to get the step prefix (Scenario, Given, When, Then or And) and the actual step name.
 
     :param line: Line of the Feature file.
 
-    :return: Line without the prefix.
-
+    :return: `tuple` in form ('<prefix>', '<Line without the prefix>').
     """
     for prefix, _ in STEP_PREFIXES:
         if line.startswith(prefix):
-            return line[len(prefix):].strip()
-    return line
+            return prefix.strip(), line[len(prefix):].strip()
+    return '', line
 
 
 def _open_file(filename, encoding):
@@ -187,7 +186,7 @@ class Feature(object):
 
                 if mode == types.FEATURE:
                     if prev_mode != types.FEATURE:
-                        self.name = remove_prefix(clean_line)
+                        _, self.name = parse_line(clean_line)
                         self.line_number = line_number
                     else:
                         description.append(clean_line)
@@ -195,7 +194,7 @@ class Feature(object):
                 prev_mode = mode
 
                 # Remove Feature, Given, When, Then, And
-                clean_line = remove_prefix(clean_line)
+                keyword, clean_line = parse_line(clean_line)
                 if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
                     self.scenarios[clean_line] = scenario = Scenario(self, clean_line, line_number)
                 elif mode == types.EXAMPLES:
@@ -212,7 +211,8 @@ class Feature(object):
                     scenario.add_example_row(clean_line[0], clean_line[1:])
                 elif mode and mode != types.FEATURE:
                     step = scenario.add_step(
-                        step_name=clean_line, step_type=mode, indent=line_indent, line_number=line_number)
+                        step_name=clean_line, step_type=mode, indent=line_indent, line_number=line_number,
+                        keyword=keyword)
 
         self.description = u'\n'.join(description)
 
@@ -253,17 +253,20 @@ class Scenario(object):
         self.line_number = line_number
         self.example_converters = example_converters
 
-    def add_step(self, step_name, step_type, indent, line_number):
+    def add_step(self, step_name, step_type, indent, line_number, keyword):
         """Add step to the scenario.
 
         :param step_name: Step name.
         :param step_type: Step type.
-
+        :param indent: `int` step text indent
+        :param line_number: `int` line number
+        :param keyword: `str` step keyword
         """
         params = get_step_params(step_name)
         self.params.update(params)
         step = Step(
-            name=step_name, type=step_type, params=params, scenario=self, indent=indent, line_number=line_number)
+            name=step_name, type=step_type, params=params, scenario=self, indent=indent, line_number=line_number,
+            keyword=keyword)
         self.steps.append(step)
         return step
 
@@ -340,8 +343,9 @@ class Step(object):
 
     """Step."""
 
-    def __init__(self, name, type, params, scenario, indent, line_number):
+    def __init__(self, name, type, params, scenario, indent, line_number, keyword):
         self.name = name
+        self.keyword = keyword
         self.lines = []
         self.indent = indent
         self.type = type

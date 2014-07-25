@@ -67,7 +67,7 @@ class LogBDDCucumberJSON(object):
 
         def stepmap(step):
             return {
-                "keyword": step['type'].capitalize(),
+                "keyword": step['keyword'],
                 "name": step['name'],
                 "line": step['line_number'],
                 "match": {
@@ -80,7 +80,7 @@ class LogBDDCucumberJSON(object):
             self.features[scenario['feature']['filename']] = {
                 "keyword": "Feature",
                 "uri": scenario['feature']['rel_filename'],
-                "name": scenario['feature']['name'],
+                "name": scenario['feature']['name'] or scenario['feature']['rel_filename'],
                 "id": scenario['feature']['rel_filename'].lower().replace(' ', '-'),
                 "line": scenario['feature']['line_number'],
                 "description": scenario['feature']['description'],

@@ -28,8 +28,9 @@ def pytest_runtest_makereport(item, call, __multicall__):
     else:
         rep.scenario = {
             'steps': [{
-                'name': step._name,
+                'name': step.name,
                 'type': step.type,
+                'keyword': step.keyword,
                 'line_number': step.line_number
             } for step in scenario.steps],
             'name': scenario.name,

@@ -39,13 +39,14 @@ import sys  # pragma: no cover
 
 import pytest  # pragma: no cover
 
-from pytest_bdd.feature import remove_prefix  # pragma: no cover
+from pytest_bdd.feature import parse_line  # pragma: no cover
 from pytest_bdd.types import GIVEN, WHEN, THEN  # pragma: no cover
 
 PY3 = sys.version_info[0] >= 3  # pragma: no cover
 
 
 class StepError(Exception):  # pragma: no cover
+
     """Step declaration error."""
 
 RE_TYPE = type(re.compile(''))  # pragma: no cover
@@ -63,7 +64,6 @@ def given(name, fixture=None, converters=None):
     :note: Can't be used as a decorator when the fixture is specified.
 
     """
-
     if fixture is not None:
         module = get_caller_module()
         step_func = lambda request: request.getfuncargvalue(fixture)
@@ -73,7 +73,8 @@ def given(name, fixture=None, converters=None):
         step_func.fixture = fixture
         func = pytest.fixture(lambda: step_func)
         func.__doc__ = 'Alias for the "{0}" fixture.'.format(fixture)
-        contribute_to_module(module, remove_prefix(name), func)
+        _, name = parse_line(name)
+        contribute_to_module(module, name, func)
         return _not_a_fixture_decorator
 
     return _step_decorator(GIVEN, name, converters=converters)

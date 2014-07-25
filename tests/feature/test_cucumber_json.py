@@ -35,6 +35,7 @@ def test_step_trace(testdir, equals_any):
 
     Scenario: Passing
         Given a passing step
+        And some other passing step
 
     Scenario: Failing
         Given a failing step
@@ -45,6 +46,10 @@ def test_step_trace(testdir, equals_any):
 
         @given('a passing step')
         def a_passing_step():
+            return 'pass'
+
+        @given('some other passing step')
+        def some_other_passing_step():
             return 'pass'
 
         @given('a failing step')
@@ -82,7 +87,19 @@ def test_step_trace(testdir, equals_any):
                             "result": {
                                 "status": "passed"
                             }
+                        },
+                        {
+                            "keyword": "And",
+                            "line": 5,
+                            "match": {
+                                "location": ""
+                            },
+                            "name": "some other passing step",
+                            "result": {
+                                "status": "passed"
+                            }
                         }
+
                     ],
                     "tags": [],
                     "type": "scenario"
@@ -91,12 +108,12 @@ def test_step_trace(testdir, equals_any):
                     "description": "",
                     "id": "test_failing",
                     "keyword": "Scenario",
-                    "line": 6,
+                    "line": 7,
                     "name": "Failing",
                     "steps": [
                         {
                             "keyword": "Given",
-                            "line": 7,
+                            "line": 8,
                             "match": {
                                 "location": ""
                             },
@@ -111,7 +128,7 @@ def test_step_trace(testdir, equals_any):
                     "type": "scenario"
                 }
             ],
-            "id": "one-passing-scenario,-one-failing-scenario",
+            "id": "test_step_trace0/test.feature",
             "keyword": "Feature",
             "line": 1,
             "name": "One passing scenario, one failing scenario",
