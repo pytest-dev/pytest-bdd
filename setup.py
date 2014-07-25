@@ -1,12 +1,12 @@
 #!/usr/bin/env python
+import codecs
 import os
 import sys
 
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
-
-version = '2.1.0'
+import pytest_bdd
 
 
 class Tox(TestCommand):
@@ -25,8 +25,8 @@ class Tox(TestCommand):
 dirname = os.path.dirname(__file__)
 
 long_description = (
-    open(os.path.join(dirname, 'README.rst')).read() + '\n' +
-    open(os.path.join(dirname, 'CHANGES.rst')).read()
+    codecs.open(os.path.join(dirname, 'README.rst'), encoding='utf-8').read() + '\n' +
+    codecs.open(os.path.join(dirname, 'CHANGES.rst'), encoding='utf-8').read()
 )
 
 setup(
@@ -35,9 +35,9 @@ setup(
     long_description=long_description,
     author='Oleg Pidsadnyi',
     license='MIT license',
-    author_email='oleg.podsadny@gmail.com',
+    author_email='oleg.pidsadnyi@gmail.com',
     url='https://github.com/olegpidsadnyi/pytest-bdd',
-    version=version,
+    version=pytest_bdd.__version__,
     classifiers=[
         'Development Status :: 6 - Mature',
         'Intended Audience :: Developers',
@@ -53,7 +53,7 @@ setup(
     ] + [('Programming Language :: Python :: %s' % x) for x in '2.6 2.7 3.0 3.1 3.2 3.3'.split()],
     cmdclass={'test': Tox},
     install_requires=[
-        'pytest',
+        'pytest>=2.6.0',
     ],
     # the following makes a plugin available to py.test
     entry_points={
