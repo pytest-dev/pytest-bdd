@@ -17,6 +17,11 @@ def pytest_addhooks(pluginmanager):
     pluginmanager.addhooks(hooks)
 
 
+def pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception):
+    """Mark step as failed for later reporting."""
+    step.failed = True
+
+
 @pytest.mark.tryfirst
 def pytest_runtest_makereport(item, call, __multicall__):
     """Store item in the report object."""
@@ -31,7 +36,8 @@ def pytest_runtest_makereport(item, call, __multicall__):
                 'name': step.name,
                 'type': step.type,
                 'keyword': step.keyword,
-                'line_number': step.line_number
+                'line_number': step.line_number,
+                'failed': step.failed
             } for step in scenario.steps],
             'name': scenario.name,
             'line_number': scenario.line_number,

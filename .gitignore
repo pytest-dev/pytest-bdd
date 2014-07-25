@@ -1,3 +1,4 @@
+*.rej
 *.py[cod]
 /.env
 *.orig

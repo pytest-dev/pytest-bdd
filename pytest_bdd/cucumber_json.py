@@ -41,15 +41,19 @@ class LogBDDCucumberJSON(object):
     def append(self, obj):
         self.features[-1].append(obj)
 
-    def _get_result(self, report):
-        """Get scenario test run result."""
-        if report.passed:
-            if report.when == 'call':  # ignore setup/teardown
+    def _get_result(self, step, report):
+        """Get scenario test run result.
+
+        :param step: `Step` step we get result for
+        :param report: pytest `Report` object
+        :return: `dict` in form {'status': '<passed|failed|skipped>', ['error_message': '<error_message>']}
+        """
+        if report.passed or not step['failed']:  # ignore setup/teardown
                 return {'status': 'passed'}
-        elif report.failed:
+        elif report.failed and step['failed']:
             return {
                 'status': 'failed',
-                'error_message': str(report.longrepr.reprcrash),
+                'error_message': unicode(report.longrepr),
             }
         elif report.skipped:
             return {'status': 'skipped'}
@@ -61,7 +65,7 @@ class LogBDDCucumberJSON(object):
             # skip reporting for non-bdd tests
             return
 
-        if not scenario['steps'] or self._get_result(report) is None:
+        if not scenario['steps'] or report.when != 'call':
             # skip if there isn't a result or scenario has no steps
             return
 
@@ -73,7 +77,7 @@ class LogBDDCucumberJSON(object):
                 "match": {
                     "location": ""
                 },
-                "result": self._get_result(report),
+                "result": self._get_result(step, report),
             }
 
         if scenario['feature']['filename'] not in self.features:
