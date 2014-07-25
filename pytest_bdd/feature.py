@@ -116,11 +116,19 @@ def _open_file(filename, encoding):
         return open(filename, 'r', encoding=encoding)
 
 
-def force_unicode(string, encoding='utf-8'):
-    if sys.version_info < (3, 0) and isinstance(string, str):
-        return string.decode(encoding)
+def force_unicode(obj, encoding='utf-8'):
+    """Get the unicode string out of given object (python 2 and python 3).
+
+    :param obj: `object`, usually a string
+    :return: unicode string
+    """
+    if sys.version_info < (3, 0):
+        if isinstance(obj, str):
+            return obj.decode(encoding)
+        else:
+            return unicode(obj)
     else:
-        return string
+        return str(obj)
 
 
 def force_encode(string, encoding='utf-8'):

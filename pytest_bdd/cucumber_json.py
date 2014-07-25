@@ -5,6 +5,8 @@ import time
 
 import py
 
+from .feature import force_unicode
+
 
 def pytest_addoption(parser):
     group = parser.getgroup('pytest-bdd')
@@ -53,7 +55,7 @@ class LogBDDCucumberJSON(object):
         elif report.failed and step['failed']:
             return {
                 'status': 'failed',
-                'error_message': unicode(report.longrepr),
+                'error_message': force_unicode(report.longrepr),
             }
         elif report.skipped:
             return {'status': 'skipped'}
