@@ -38,7 +38,8 @@ def test_step_trace(testdir, equals_any):
         And some other passing step
 
     Scenario: Failing
-        Given a failing step
+        Given a passing step
+        And a failing step
     """))
     testdir.makepyfile(textwrap.dedent("""
         import pytest
@@ -114,6 +115,17 @@ def test_step_trace(testdir, equals_any):
                         {
                             "keyword": "Given",
                             "line": 8,
+                            "match": {
+                                "location": ""
+                            },
+                            "name": "a passing step",
+                            "result": {
+                                "status": "passed"
+                            }
+                        },
+                        {
+                            "keyword": "And",
+                            "line": 9,
                             "match": {
                                 "location": ""
                             },
