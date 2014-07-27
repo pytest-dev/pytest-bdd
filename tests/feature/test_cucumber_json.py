@@ -31,15 +31,18 @@ def equals_any():
 def test_step_trace(testdir, equals_any):
     """Test step trace."""
     testdir.makefile('.feature', test=textwrap.dedent("""
+    @feature-tag
     Feature: One passing scenario, one failing scenario
 
-    Scenario: Passing
-        Given a passing step
-        And some other passing step
+        @scenario-passing-tag
+        Scenario: Passing
+            Given a passing step
+            And some other passing step
 
-    Scenario: Failing
-        Given a passing step
-        And a failing step
+        @scenario-failing-tag
+        Scenario: Failing
+            Given a passing step
+            And a failing step
     """))
     testdir.makepyfile(textwrap.dedent("""
         import pytest
@@ -67,7 +70,7 @@ def test_step_trace(testdir, equals_any):
     """))
     result, jsonobject = runandparse(testdir)
     assert result.ret
-    assert jsonobject == [
+    expected = [
         {
             "description": "",
             "elements": [
@@ -75,12 +78,12 @@ def test_step_trace(testdir, equals_any):
                     "description": "",
                     "id": "test_passing",
                     "keyword": "Scenario",
-                    "line": 3,
+                    "line": 5,
                     "name": "Passing",
                     "steps": [
                         {
                             "keyword": "Given",
-                            "line": 4,
+                            "line": 6,
                             "match": {
                                 "location": ""
                             },
@@ -91,7 +94,7 @@ def test_step_trace(testdir, equals_any):
                         },
                         {
                             "keyword": "And",
-                            "line": 5,
+                            "line": 7,
                             "match": {
                                 "location": ""
                             },
@@ -102,19 +105,24 @@ def test_step_trace(testdir, equals_any):
                         }
 
                     ],
-                    "tags": [],
+                    "tags": [
+                        {
+                            'name': '@scenario-passing-tag',
+                            'line': 4,
+                        }
+                    ],
                     "type": "scenario"
                 },
                 {
                     "description": "",
                     "id": "test_failing",
                     "keyword": "Scenario",
-                    "line": 7,
+                    "line": 10,
                     "name": "Failing",
                     "steps": [
                         {
                             "keyword": "Given",
-                            "line": 8,
+                            "line": 11,
                             "match": {
                                 "location": ""
                             },
@@ -125,7 +133,7 @@ def test_step_trace(testdir, equals_any):
                         },
                         {
                             "keyword": "And",
-                            "line": 9,
+                            "line": 12,
                             "match": {
                                 "location": ""
                             },
@@ -136,15 +144,27 @@ def test_step_trace(testdir, equals_any):
                             }
                         }
                     ],
-                    "tags": [],
+                    "tags": [
+                        {
+                            'name': '@scenario-failing-tag',
+                            'line': 9,
+                        }
+                    ],
                     "type": "scenario"
                 }
             ],
             "id": "test_step_trace0/test.feature",
             "keyword": "Feature",
-            "line": 1,
+            "line": 2,
             "name": "One passing scenario, one failing scenario",
-            "tags": [],
+            "tags": [
+                {
+                    'name': '@feature-tag',
+                    'line': 1,
+                }
+            ],
             "uri": os.path.join(testdir.tmpdir.basename, 'test.feature'),
         }
     ]
+
+    assert jsonobject == expected
