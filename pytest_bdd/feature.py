@@ -143,7 +143,7 @@ def get_tags(line):
     """Get tags out of the given line."""
     return (
         set((
-            tag[1:]
+            tag
             for tag in line.split()
             if tag.startswith('@') and len(tag) > 1))
         if line else set()

@@ -430,7 +430,11 @@ scenario test, so we can use standard test selection:
 
 .. code-block:: bash
 
-    py.test -k "backend and login and successful"
+    py.test -k "@backend and @login and @successful"
+
+The `@` helps to separate normal markers from the bdd ones.
+Note that if you use pytest `--strict` option, all bdd tags mentioned in the feature files should be also in the
+`markers` setting of the `pytest.ini` config.
 
 
 Test setup

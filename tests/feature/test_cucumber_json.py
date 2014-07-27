@@ -105,7 +105,12 @@ def test_step_trace(testdir, equals_any):
                         }
 
                     ],
-                    "tags": ['scenario-passing-tag'],
+                    "tags": [
+                        {
+                            'name': '@scenario-passing-tag',
+                            'line': 4,
+                        }
+                    ],
                     "type": "scenario"
                 },
                 {
@@ -139,7 +144,12 @@ def test_step_trace(testdir, equals_any):
                             }
                         }
                     ],
-                    "tags": ['scenario-failing-tag'],
+                    "tags": [
+                        {
+                            'name': '@scenario-failing-tag',
+                            'line': 9,
+                        }
+                    ],
                     "type": "scenario"
                 }
             ],
@@ -147,7 +157,12 @@ def test_step_trace(testdir, equals_any):
             "keyword": "Feature",
             "line": 2,
             "name": "One passing scenario, one failing scenario",
-            "tags": ['feature-tag'],
+            "tags": [
+                {
+                    'name': '@feature-tag',
+                    'line': 1,
+                }
+            ],
             "uri": os.path.join(testdir.tmpdir.basename, 'test.feature'),
         }
     ]

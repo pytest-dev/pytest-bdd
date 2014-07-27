@@ -60,6 +60,25 @@ class LogBDDCucumberJSON(object):
         elif report.skipped:
             return {'status': 'skipped'}
 
+    def _serialize_tags(self, item):
+        """Serialize item's tags.
+
+        :param item: json-serialized `Scenario` or `Feature`.
+        :return: `list` of `dict` in form [
+            {
+                'name': '<tag>',
+                'line': 2
+            }
+        ]
+        """
+        return [
+            {
+                "name": tag,
+                "line": item['line_number'] - 1
+            }
+            for tag in item['tags']
+        ]
+
     def pytest_runtest_logreport(self, report):
         try:
             scenario = report.scenario
@@ -90,7 +109,7 @@ class LogBDDCucumberJSON(object):
                 "id": scenario['feature']['rel_filename'].lower().replace(' ', '-'),
                 "line": scenario['feature']['line_number'],
                 "description": scenario['feature']['description'],
-                "tags": scenario['feature']['tags'],
+                "tags": self._serialize_tags(scenario['feature']),
                 "elements": [],
             }
 
@@ -100,7 +119,7 @@ class LogBDDCucumberJSON(object):
             "name": scenario['name'],
             "line": scenario['line_number'],
             "description": '',
-            "tags": scenario['tags'],
+            "tags": self._serialize_tags(scenario),
             "type": "scenario",
             "steps": [stepmap(step) for step in scenario['steps']],
         })
