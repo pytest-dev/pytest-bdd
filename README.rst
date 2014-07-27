@@ -362,6 +362,77 @@ The code will look like:
 The significant downside of this approach is inability to see the test table from the feature file.
 
 
+Organizing your scenarios
+-------------------------
+
+The more features and scenarios you have, the more important becomes the question about their organization.
+The things you can do (and that is also a recommended way):
+
+* organize your feature files in the folders by semantic groups:
+
+::
+
+    features
+    │
+    ├──frontend
+    │  │
+    │  └──auth
+    │     │
+    │     └──login.feature
+    └──backend
+       │
+       └──auth
+          │
+          └──login.feature
+
+This looks fine, but how do you run tests only for certain feature?
+As pytest-bdd uses pytest, and bdd scenarios are actually normal tests. But test files
+are separate from the feature files, the mapping is up to developers, so the test files structure can look
+completely different:
+
+::
+
+    tests
+    │
+    └──functional
+       │
+       └──test_auth.py
+          │
+          └ """Authentication tests."""
+            from pytest_bdd import scenario
+
+            @scenario('frontend/auth/login.feature')
+            def test_logging_in_frontend():
+                pass
+
+            @scenario('backend/auth/login.feature')
+            def test_logging_in_backend():
+                pass
+
+
+For picking up tests to run we can use
+`tests selection <http://pytest.org/latest/usage.html#specifying-tests-selecting-tests>`_ technique. The problem is that
+you have to know how your tests are organized, knowing ony the feature files organization is not enough.
+`cucumber tags <https://github.com/cucumber/cucumber/wiki/Tags>`_ introduce standard way of categorizing your features
+and scenarios, which pytest-bdd supports. For example, we could have:
+
+.. code-block:: gherkin
+
+    @login @backend
+    Feature: Login
+
+      @successful
+      Scenario: Successful login
+
+
+pytest-bdd uses `pytest markers <http://pytest.org/latest/mark.html#mark>`_ as a `storage` of the tags for the given
+scenario test, so we can use standard test selection:
+
+.. code-block:: bash
+
+    py.test -k "backend and login and successful"
+
+
 Test setup
 ----------
 

@@ -90,7 +90,7 @@ class LogBDDCucumberJSON(object):
                 "id": scenario['feature']['rel_filename'].lower().replace(' ', '-'),
                 "line": scenario['feature']['line_number'],
                 "description": scenario['feature']['description'],
-                "tags": [],
+                "tags": scenario['feature']['tags'],
                 "elements": [],
             }
 
@@ -100,7 +100,7 @@ class LogBDDCucumberJSON(object):
             "name": scenario['name'],
             "line": scenario['line_number'],
             "description": '',
-            "tags": [],
+            "tags": scenario['tags'],
             "type": "scenario",
             "steps": [stepmap(step) for step in scenario['steps']],
         })

@@ -59,7 +59,8 @@ STEP_PREFIXES = [  # pragma: no cover
     ('Given ', types.GIVEN),
     ('When ', types.WHEN),
     ('Then ', types.THEN),
-    ('And ', None),  # Unknown step type
+    ('@', types.TAG),
+    ('And ', None),  # Unknown step type,
 ]
 
 COMMENT_SYMBOLS = '#'  # pragma: no cover
@@ -138,6 +139,17 @@ def force_encode(string, encoding='utf-8'):
         return string
 
 
+def get_tags(line):
+    """Get tags out of the given line."""
+    return (
+        set((
+            tag[1:]
+            for tag in line.split()
+            if tag.startswith('@') and len(tag) > 1))
+        if line else set()
+    )
+
+
 class Feature(object):
 
     """Feature."""
@@ -153,6 +165,7 @@ class Feature(object):
         self.filename = filename = op.abspath(op.join(basedir, filename))
         self.line_number = 1
         self.name = None
+        self.tags = set()
         scenario = None
         mode = None
         prev_mode = None
@@ -162,6 +175,7 @@ class Feature(object):
             content = force_unicode(f.read(), encoding)
             step = None
             multiline_step = False
+            prev_line = None
             for line_number, line in enumerate(content.splitlines(), start=1):
                 unindented_line = line.lstrip()
                 line_indent = len(line) - len(unindented_line)
@@ -196,31 +210,34 @@ class Feature(object):
                     if prev_mode != types.FEATURE:
                         _, self.name = parse_line(clean_line)
                         self.line_number = line_number
+                        self.tags = get_tags(prev_line)
                     else:
                         description.append(clean_line)
 
                 prev_mode = mode
 
                 # Remove Feature, Given, When, Then, And
-                keyword, clean_line = parse_line(clean_line)
+                keyword, parsed_line = parse_line(clean_line)
                 if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
-                    self.scenarios[clean_line] = scenario = Scenario(self, clean_line, line_number)
+                    tags = get_tags(prev_line)
+                    self.scenarios[parsed_line] = scenario = Scenario(self, parsed_line, line_number, tags=tags)
                 elif mode == types.EXAMPLES:
                     mode = types.EXAMPLES_HEADERS
                 elif mode == types.EXAMPLES_VERTICAL:
                     mode = types.EXAMPLE_LINE_VERTICAL
                 elif mode == types.EXAMPLES_HEADERS:
-                    scenario.set_param_names([l.strip() for l in clean_line.split('|')[1:-1] if l.strip()])
+                    scenario.set_param_names([l.strip() for l in parsed_line.split('|')[1:-1] if l.strip()])
                     mode = types.EXAMPLE_LINE
                 elif mode == types.EXAMPLE_LINE:
                     scenario.add_example([l.strip() for l in stripped_line.split('|')[1:-1]])
                 elif mode == types.EXAMPLE_LINE_VERTICAL:
-                    clean_line = [l.strip() for l in stripped_line.split('|')[1:-1]]
-                    scenario.add_example_row(clean_line[0], clean_line[1:])
-                elif mode and mode != types.FEATURE:
+                    param_line_parts = [l.strip() for l in stripped_line.split('|')[1:-1]]
+                    scenario.add_example_row(param_line_parts[0], param_line_parts[1:])
+                elif mode and mode not in (types.FEATURE, types.TAG):
                     step = scenario.add_step(
-                        step_name=clean_line, step_type=mode, indent=line_indent, line_number=line_number,
+                        step_name=parsed_line, step_type=mode, indent=line_indent, line_number=line_number,
                         keyword=keyword)
+                prev_line = clean_line
 
         self.description = u'\n'.join(description)
 
@@ -250,7 +267,7 @@ class Scenario(object):
 
     """Scenario."""
 
-    def __init__(self, feature, name, line_number, example_converters=None):
+    def __init__(self, feature, name, line_number, example_converters=None, tags=None):
         self.feature = feature
         self.name = name
         self.params = set()
@@ -260,6 +277,7 @@ class Scenario(object):
         self.vertical_examples = []
         self.line_number = line_number
         self.example_converters = example_converters
+        self.tags = tags or set()
 
     def add_step(self, step_name, step_type, indent, line_number, keyword):
         """Add step to the scenario.

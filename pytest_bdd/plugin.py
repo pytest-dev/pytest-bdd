@@ -37,16 +37,18 @@ def pytest_runtest_makereport(item, call, __multicall__):
                 'type': step.type,
                 'keyword': step.keyword,
                 'line_number': step.line_number,
-                'failed': step.failed
+                'failed': step.failed,
             } for step in scenario.steps],
             'name': scenario.name,
             'line_number': scenario.line_number,
+            'tags': sorted(scenario.tags),
             'feature': {
                 'name': scenario.feature.name,
                 'filename': scenario.feature.filename,
                 'rel_filename': scenario.feature.rel_filename,
                 'line_number': scenario.feature.line_number,
-                'description': scenario.feature.description
+                'description': scenario.feature.description,
+                'tags': sorted(scenario.feature.tags),
             }
         }
         rep.item = {
