@@ -1,5 +1,5 @@
 """pytest-bdd public api."""
-__version__ = '2.2.0'
+__version__ = '2.3.0'
 
 try:
     from pytest_bdd.steps import given, when, then  # pragma: no cover

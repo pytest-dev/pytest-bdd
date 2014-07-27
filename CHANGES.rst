@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.3.0
+-----
+
+- Implemented cucumber tags support (bubenkoff)
+
+
 2.2.0
 -----
 
