@@ -1,4 +1,7 @@
+*.rej
 *.py[cod]
+/.env
+*.orig
 
 # C extensions
 *.so
@@ -39,6 +42,9 @@ nosetests.xml
 
 # Sublime
 /*.sublime-*
+
+#PyCharm
+/.idea
 
 # virtualenv
 /.Python

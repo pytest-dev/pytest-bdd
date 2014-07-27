@@ -17,7 +17,6 @@ import os
 import imp
 
 import inspect  # pragma: no cover
-from os import path as op  # pragma: no cover
 
 import pytest
 
@@ -239,6 +238,7 @@ def _get_scenario_decorator(
 
         _scenario.__doc__ = '{feature_name}: {scenario_name}'.format(
             feature_name=feature_name, scenario_name=scenario_name)
+        _scenario.__scenario__ = scenario
         return _scenario
 
     return recreate_function(decorator, module=caller_module, firstlineno=caller_function.f_lineno)
@@ -253,8 +253,7 @@ def scenario(
 
     # Get the feature
     base_path = get_fixture(caller_module, 'pytestbdd_feature_base_dir')
-    feature_path = op.abspath(op.join(base_path, feature_name))
-    feature = Feature.get_feature(feature_path, encoding=encoding)
+    feature = Feature.get_feature(base_path, feature_name, encoding=encoding)
 
     # Get the scenario
     try:

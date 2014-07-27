@@ -594,6 +594,20 @@ Tools recommended to use for browser testing:
 * `pytest-splinter <https://github.com/paylogic/pytest-splinter>`_ - pytest `splinter <http://splinter.cobrateam.info/>`_ integration for the real browser testing
 
 
+Reporting
+---------
+
+It's important to have nice reporting out of your bdd tests. Cucumber introduced some kind of standard for
+`json format <https://www.relishapp.com/cucumber/cucumber/docs/json-output-formatter>`_
+which can be used for `this <https://wiki.jenkins-ci.org/display/JENKINS/Cucumber+Test+Result+Plugin>`_ jenkins
+plugin
+
+To have an output in json format:
+
+::
+
+    py.test --cucumberjson=<path to json report>
+
 
 Migration of your tests from versions 0.x.x-1.x.x
 -------------------------------------------------

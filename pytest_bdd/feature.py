@@ -23,6 +23,8 @@ Syntax example:
 one line.
 
 """
+from os import path as op  # pragma: no cover
+
 import re  # pragma: no cover
 import sys  # pragma: no cover
 import textwrap
@@ -32,6 +34,7 @@ from pytest_bdd import exceptions  # pragma: no cover
 
 
 class FeatureError(Exception):  # pragma: no cover
+
     """Feature parse error."""
 
     message = u'{0}.\nLine number: {1}.\nLine: {2}.'
@@ -93,18 +96,17 @@ def strip_comments(line):
     return line.strip()
 
 
-def remove_prefix(line):
-    """Remove the step prefix (Scenario, Given, When, Then or And).
+def parse_line(line):
+    """Parse step line to get the step prefix (Scenario, Given, When, Then or And) and the actual step name.
 
     :param line: Line of the Feature file.
 
-    :return: Line without the prefix.
-
+    :return: `tuple` in form ('<prefix>', '<Line without the prefix>').
     """
     for prefix, _ in STEP_PREFIXES:
         if line.startswith(prefix):
-            return line[len(prefix):].strip()
-    return line
+            return prefix.strip(), line[len(prefix):].strip()
+    return '', line
 
 
 def _open_file(filename, encoding):
@@ -114,11 +116,19 @@ def _open_file(filename, encoding):
         return open(filename, 'r', encoding=encoding)
 
 
-def force_unicode(string, encoding='utf-8'):
-    if sys.version_info < (3, 0) and isinstance(string, str):
-        return string.decode(encoding)
+def force_unicode(obj, encoding='utf-8'):
+    """Get the unicode string out of given object (python 2 and python 3).
+
+    :param obj: `object`, usually a string
+    :return: unicode string
+    """
+    if sys.version_info < (3, 0):
+        if isinstance(obj, str):
+            return obj.decode(encoding)
+        else:
+            return unicode(obj)
     else:
-        return string
+        return str(obj)
 
 
 def force_encode(string, encoding='utf-8'):
@@ -129,17 +139,20 @@ def force_encode(string, encoding='utf-8'):
 
 
 class Feature(object):
+
     """Feature."""
 
-    def __init__(self, filename, encoding='utf-8'):
+    def __init__(self, basedir, filename, encoding='utf-8'):
         """Parse the feature file.
 
         :param filename: Relative path to the feature file.
 
         """
         self.scenarios = {}
-
-        self.filename = filename
+        self.rel_filename = op.join(op.basename(basedir), filename)
+        self.filename = filename = op.abspath(op.join(basedir, filename))
+        self.line_number = 1
+        self.name = None
         scenario = None
         mode = None
         prev_mode = None
@@ -181,16 +194,17 @@ class Feature(object):
 
                 if mode == types.FEATURE:
                     if prev_mode != types.FEATURE:
-                        self.name = remove_prefix(clean_line)
+                        _, self.name = parse_line(clean_line)
+                        self.line_number = line_number
                     else:
                         description.append(clean_line)
 
                 prev_mode = mode
 
                 # Remove Feature, Given, When, Then, And
-                clean_line = remove_prefix(clean_line)
+                keyword, clean_line = parse_line(clean_line)
                 if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
-                    self.scenarios[clean_line] = scenario = Scenario(self, clean_line)
+                    self.scenarios[clean_line] = scenario = Scenario(self, clean_line, line_number)
                 elif mode == types.EXAMPLES:
                     mode = types.EXAMPLES_HEADERS
                 elif mode == types.EXAMPLES_VERTICAL:
@@ -205,14 +219,16 @@ class Feature(object):
                     scenario.add_example_row(clean_line[0], clean_line[1:])
                 elif mode and mode != types.FEATURE:
                     step = scenario.add_step(
-                        step_name=clean_line, step_type=mode, indent=line_indent, line_number=line_number)
+                        step_name=clean_line, step_type=mode, indent=line_indent, line_number=line_number,
+                        keyword=keyword)
 
         self.description = u'\n'.join(description)
 
     @classmethod
-    def get_feature(cls, filename, encoding='utf-8'):
+    def get_feature(cls, base_path, filename, encoding='utf-8'):
         """Get a feature by the filename.
 
+        :param base_path: Base feature directory.
         :param filename: Filename of the feature file.
 
         :return: `Feature` instance from the parsed feature cache.
@@ -222,17 +238,19 @@ class Feature(object):
             when multiple scenarios are referencing the same file.
 
         """
-        feature = features.get(filename)
+        full_name = op.abspath(op.join(base_path, filename))
+        feature = features.get(full_name)
         if not feature:
-            feature = Feature(filename, encoding=encoding)
-            features[filename] = feature
+            feature = Feature(base_path, filename, encoding=encoding)
+            features[full_name] = feature
         return feature
 
 
 class Scenario(object):
+
     """Scenario."""
 
-    def __init__(self, feature, name, example_converters=None):
+    def __init__(self, feature, name, line_number, example_converters=None):
         self.feature = feature
         self.name = name
         self.params = set()
@@ -240,19 +258,23 @@ class Scenario(object):
         self.example_params = []
         self.examples = []
         self.vertical_examples = []
+        self.line_number = line_number
         self.example_converters = example_converters
 
-    def add_step(self, step_name, step_type, indent, line_number):
+    def add_step(self, step_name, step_type, indent, line_number, keyword):
         """Add step to the scenario.
 
         :param step_name: Step name.
         :param step_type: Step type.
-
+        :param indent: `int` step text indent
+        :param line_number: `int` line number
+        :param keyword: `str` step keyword
         """
         params = get_step_params(step_name)
         self.params.update(params)
         step = Step(
-            name=step_name, type=step_type, params=params, scenario=self, indent=indent, line_number=line_number)
+            name=step_name, type=step_type, params=params, scenario=self, indent=indent, line_number=line_number,
+            keyword=keyword)
         self.steps.append(step)
         return step
 
@@ -326,16 +348,19 @@ class Scenario(object):
 
 
 class Step(object):
+
     """Step."""
 
-    def __init__(self, name, type, params, scenario, indent, line_number):
+    def __init__(self, name, type, params, scenario, indent, line_number, keyword):
         self.name = name
+        self.keyword = keyword
         self.lines = []
         self.indent = indent
         self.type = type
         self.params = params
         self.scenario = scenario
         self.line_number = line_number
+        self.failed = False
 
     def add_line(self, line):
         """Add line to the multiple step."""

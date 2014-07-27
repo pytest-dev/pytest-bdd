@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+"""pytest-bdd package config."""
 import codecs
 import os
 import sys
@@ -10,9 +10,12 @@ import pytest_bdd
 
 
 class Tox(TestCommand):
+
+    """"Custom setup.py test command implementation using tox runner."""
+
     def finalize_options(self):
         TestCommand.finalize_options(self)
-        self.test_args = ['--recreate']
+        self.test_args = ['--recreate -vv']
         self.test_suite = True
 
     def run_tests(self):
@@ -59,6 +62,7 @@ setup(
     entry_points={
         'pytest11': [
             'pytest-bdd = pytest_bdd.plugin',
+            'pytest-bdd-cucumber-json = pytest_bdd.cucumber_json',
         ],
         'console_scripts': [
             'pytestbdd_migrate_tests = pytest_bdd.scripts:migrate_tests [migrate]'
