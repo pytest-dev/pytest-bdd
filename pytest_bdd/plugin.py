@@ -4,6 +4,12 @@ import os.path  # pragma: no cover
 
 import pytest  # pragma: no cover
 
+from pytest_bdd import (
+    given,
+    when,
+    then,
+)
+
 
 @pytest.fixture  # pragma: no cover
 def pytestbdd_feature_base_dir(request):
@@ -56,3 +62,11 @@ def pytest_runtest_makereport(item, call, __multicall__):
         }
 
     return rep
+
+
+@given('trace')
+@when('trace')
+@then('trace')
+def trace():
+    """Enter pytest's pdb trace."""
+    pytest.set_trace()

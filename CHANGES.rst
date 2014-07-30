@@ -5,12 +5,8 @@ Changelog
 -----
 
 - Implemented cucumber tags support (bubenkoff)
-
-
-2.2.0
------
-
 - Implemented cucumber json formatter (bubenkoff, albertjan)
+- Added 'trace' keyword (bubenkoff)
 
 
 2.1.2

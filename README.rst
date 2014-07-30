@@ -580,6 +580,19 @@ There are no definitions of the steps in the test file. They were
 collected from the parent conftests.
 
 
+Default steps
+-------------
+
+Here is the list of steps that are implemented inside of the pytest-bdd:
+
+given
+    * trace - enters the `pdb` debugger via `pytest.set_trace()`
+when
+    * trace - enters the `pdb` debugger via `pytest.set_trace()`
+then
+    * trace - enters the `pdb` debugger via `pytest.set_trace()`
+
+
 Feature file paths
 ------------------
 
