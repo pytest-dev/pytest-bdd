@@ -98,9 +98,9 @@ def _find_step_function(request, step, encoding):
             raise
         except python.FixtureLookupError as e:
             raise exceptions.StepDefinitionNotFoundError(
-                """Step definition is not found: "{e.argname}"."""
+                """Step definition is not found: "{step.name}"."""
                 """ Line {step.line_number} in scenario "{scenario.name}" in the feature "{feature.filename}""".format(
-                    e=e, step=step, scenario=step.scenario, feature=step.scenario.feature)
+                    step=step, scenario=step.scenario, feature=step.scenario.feature)
             )
 
 
