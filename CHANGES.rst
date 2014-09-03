@@ -1,6 +1,10 @@
 Changelog
 =========
 
+2.3.2
+-----
+- Fixed incorrect error message using e.argname instead of step.name (hvdklauw)
+
 2.3.1
 -----
 
