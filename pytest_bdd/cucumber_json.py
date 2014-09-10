@@ -50,15 +50,18 @@ class LogBDDCucumberJSON(object):
         :param report: pytest `Report` object
         :return: `dict` in form {'status': '<passed|failed|skipped>', ['error_message': '<error_message>']}
         """
+        result = {}
         if report.passed or not step['failed']:  # ignore setup/teardown
-                return {'status': 'passed'}
+            result = {'status': 'passed'}
         elif report.failed and step['failed']:
-            return {
+            result = {
                 'status': 'failed',
                 'error_message': force_unicode(report.longrepr),
             }
         elif report.skipped:
-            return {'status': 'skipped'}
+            result = {'status': 'skipped'}
+        result['duration'] = step['duration']
+        return result
 
     def _serialize_tags(self, item):
         """Serialize item's tags.

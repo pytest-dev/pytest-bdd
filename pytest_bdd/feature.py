@@ -379,6 +379,8 @@ class Step(object):
         self.scenario = scenario
         self.line_number = line_number
         self.failed = False
+        self.start = 0
+        self.stop = 0
 
     def add_line(self, line):
         """Add line to the multiple step."""
