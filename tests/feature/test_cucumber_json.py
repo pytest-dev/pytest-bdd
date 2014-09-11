@@ -89,7 +89,8 @@ def test_step_trace(testdir, equals_any):
                             },
                             "name": "a passing step",
                             "result": {
-                                "status": "passed"
+                                "status": "passed",
+                                "duration": equals_any
                             }
                         },
                         {
@@ -100,7 +101,8 @@ def test_step_trace(testdir, equals_any):
                             },
                             "name": "some other passing step",
                             "result": {
-                                "status": "passed"
+                                "status": "passed",
+                                "duration": equals_any
                             }
                         }
 
@@ -128,7 +130,8 @@ def test_step_trace(testdir, equals_any):
                             },
                             "name": "a passing step",
                             "result": {
-                                "status": "passed"
+                                "status": "passed",
+                                "duration": equals_any
                             }
                         },
                         {
@@ -140,7 +143,8 @@ def test_step_trace(testdir, equals_any):
                             "name": "a failing step",
                             "result": {
                                 "error_message": equals_any,
-                                "status": "failed"
+                                "status": "failed",
+                                "duration": equals_any
                             }
                         }
                     ],

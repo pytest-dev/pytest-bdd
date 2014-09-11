@@ -1,6 +1,7 @@
 """Pytest plugin entry point. Used for any fixtures needed."""
 
 import os.path  # pragma: no cover
+import time
 
 import pytest  # pragma: no cover
 
@@ -24,8 +25,22 @@ def pytest_addhooks(pluginmanager):
 
 
 def pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception):
-    """Mark step as failed for later reporting."""
+    """Mark step as failed for later reporting.
+
+    Also store step start time.
+    """
     step.failed = True
+    step.stop = time.time()
+
+
+def pytest_bdd_before_step(request, feature, scenario, step, step_func, step_func_args):
+    """Store step start time."""
+    step.start = time.time()
+
+
+def pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args):
+    """Store step duration."""
+    step.stop = time.time()
 
 
 @pytest.mark.tryfirst
@@ -44,6 +59,7 @@ def pytest_runtest_makereport(item, call, __multicall__):
                 'keyword': step.keyword,
                 'line_number': step.line_number,
                 'failed': step.failed,
+                'duration': round(step.stop - step.start, 5)
             } for step in scenario.steps],
             'name': scenario.name,
             'line_number': scenario.line_number,
