@@ -1,4 +1,5 @@
 """Cucumber json output formatter."""
+
 import json
 import os
 import time

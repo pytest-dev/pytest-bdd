@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+2.3.3
+-----
 
 - Added timings to the cucumber json report (bubenkoff)
 

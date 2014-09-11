@@ -9,7 +9,6 @@ test_publish_article = scenario(
     feature_name='publish_article.feature',
     scenario_name='Publishing the article',
 )
-
 """
 
 import collections
@@ -36,7 +35,6 @@ def _inject_fixture(request, arg, value):
     :param request: pytest fixture request
     :param arg: argument name
     :param value: argument value
-
     """
     fd = python.FixtureDef(
         request._fixturemanager,
@@ -76,7 +74,6 @@ def _find_step_function(request, step, encoding):
     :param step: `Step`.
 
     :return: Step function.
-
     """
     name = step.name
     try:
@@ -96,7 +93,7 @@ def _find_step_function(request, step, encoding):
                             _inject_fixture(request, arg, value)
                         return request.getfuncargvalue(pattern.pattern)
             raise
-        except python.FixtureLookupError as e:
+        except python.FixtureLookupError:
             raise exceptions.StepDefinitionNotFoundError(
                 """Step definition is not found: "{step.name}"."""
                 """ Line {step.line_number} in scenario "{scenario.name}" in the feature "{feature.filename}""".format(

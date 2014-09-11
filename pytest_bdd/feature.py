@@ -21,8 +21,8 @@ Syntax example:
 :note: The "#" symbol is used for comments.
 :note: There're no multiline steps, the description of the step must fit in
 one line.
-
 """
+
 from os import path as op  # pragma: no cover
 
 import re  # pragma: no cover

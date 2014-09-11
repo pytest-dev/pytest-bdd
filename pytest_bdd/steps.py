@@ -29,8 +29,8 @@ def article(author):
 Reusing existing fixtures for a different step name:
 
 given('I have a beautiful article', fixture='article')
-
 """
+
 from __future__ import absolute_import  # pragma: no cover
 import re
 from types import CodeType  # pragma: no cover
@@ -62,7 +62,6 @@ def given(name, fixture=None, converters=None):
 
     :raises: StepError in case of wrong configuration.
     :note: Can't be used as a decorator when the fixture is specified.
-
     """
     if fixture is not None:
         module = get_caller_module()
@@ -88,7 +87,6 @@ def when(name, converters=None):
     {<param_name>: <converter function>}.
 
     :raises: StepError in case of wrong configuration.
-
     """
     return _step_decorator(WHEN, name, converters=converters)
 
@@ -101,7 +99,6 @@ def then(name, converters=None):
     {<param_name>: <converter function>}.
 
     :raises: StepError in case of wrong configuration.
-
     """
     return _step_decorator(THEN, name, converters=converters)
 
@@ -112,7 +109,6 @@ def _not_a_fixture_decorator(func):
     :param func: Function that is going to be decorated.
 
     :raises: `StepError` if was used as a decorator.
-
     """
     raise StepError('Cannot be used as a decorator when the fixture is specified')
 
@@ -129,7 +125,6 @@ def _step_decorator(step_type, step_name, converters=None):
 
     :note: If the step type is GIVEN it will automatically apply the pytest
     fixture decorator to the step function.
-
     """
     pattern = None
     if isinstance(step_name, RE_TYPE):
@@ -181,7 +176,6 @@ def recreate_function(func, module=None, name=None, add_args=[], firstlineno=Non
     :param add_args: Additional arguments to add to function.
 
     :return: Function copy.
-
     """
     def get_code(func):
         return func.__code__ if PY3 else func.func_code
@@ -232,7 +226,6 @@ def contribute_to_module(module, name, func):
     :param module: Module to contribute to.
     :param name: Attribute name.
     :param func: Function object.
-
     """
     func = recreate_function(func, module=module)
     setattr(module, name, func)
