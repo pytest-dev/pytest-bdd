@@ -7,10 +7,10 @@ def test_hooks(testdir):
     subdir = testdir.mkpydir("subdir")
     subdir.join("conftest.py").write(py.code.Source(r"""
         def pytest_pyfunc_call(pyfuncitem):
-            print '\npytest_pyfunc_call hook'
+            print('\npytest_pyfunc_call hook')
 
         def pytest_generate_tests(metafunc):
-            print '\npytest_generate_tests hook'
+            print('\npytest_generate_tests hook')
     """))
 
     subdir.join("test_foo.py").write(py.code.Source(r"""
