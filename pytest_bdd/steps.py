@@ -241,7 +241,10 @@ def contribute_to_module(module, name, func):
 def get_caller_module(depth=2):
     """Return the module of the caller."""
     frame = sys._getframe(depth)
-    return inspect.getmodule(frame)
+    module = inspect.getmodule(frame)
+    if module is None:
+        raise Exception('empty module')
+    return module
 
 
 def get_caller_function(depth=2):

@@ -14,7 +14,7 @@ test_publish_article = scenario(
 
 import collections
 import os
-import imp
+import sys
 
 import inspect  # pragma: no cover
 
@@ -26,8 +26,13 @@ from pytest_bdd.feature import Feature, force_encode  # pragma: no cover
 from pytest_bdd.steps import execute, recreate_function, get_caller_module, get_caller_function
 from pytest_bdd.types import GIVEN
 from pytest_bdd import exceptions
-
 from pytest_bdd import plugin
+
+PY3 = sys.version_info[0] >= 3  # pragma: no cover
+
+if PY3:
+    import runpy
+    execfile = runpy.run_path
 
 
 def _inject_fixture(request, arg, value):
@@ -96,7 +101,7 @@ def _find_step_function(request, step, encoding):
                             _inject_fixture(request, arg, value)
                         return request.getfuncargvalue(pattern.pattern)
             raise
-        except python.FixtureLookupError as e:
+        except python.FixtureLookupError:
             raise exceptions.StepDefinitionNotFoundError(
                 """Step definition is not found: "{step.name}"."""
                 """ Line {step.line_number} in scenario "{scenario.name}" in the feature "{feature.filename}""".format(
@@ -171,7 +176,7 @@ def _execute_scenario(feature, scenario, request, encoding, example=None):
 FakeRequest = collections.namedtuple('FakeRequest', ['module'])
 
 
-def get_fixture(caller_module, fixture, path=None, module=None):
+def get_fixture(caller_module, fixture, path=None):
     """Get first conftest module from given one."""
     def call_fixture(function):
         args = []
@@ -179,23 +184,21 @@ def get_fixture(caller_module, fixture, path=None, module=None):
             args = [FakeRequest(module=caller_module)]
         return function(*args)
 
-    if not module:
-        module = caller_module
-
-    if hasattr(module, fixture):
-        return call_fixture(getattr(module, fixture))
-
     if path is None:
-        path = os.path.dirname(module.__file__)
+        if hasattr(caller_module, fixture):
+            return call_fixture(getattr(caller_module, fixture))
+        path = os.path.dirname(caller_module.__file__)
+
     if os.path.exists(os.path.join(path, '__init__.py')):
         file_path = os.path.join(path, 'conftest.py')
         if os.path.exists(file_path):
-            conftest = imp.load_source('conftest', file_path)
-            if hasattr(conftest, fixture):
-                return get_fixture(caller_module, fixture, module=conftest)
+            globs = {}
+            execfile(file_path, globs)
+            if fixture in globs:
+                return call_fixture(globs[fixture])
     else:
-        return get_fixture(caller_module, fixture, module=plugin)
-    return get_fixture(caller_module, fixture, path=os.path.dirname(path), module=module)
+        return call_fixture(plugin.pytestbdd_feature_base_dir)
+    return get_fixture(caller_module, fixture, path=os.path.dirname(path))
 
 
 def _get_scenario_decorator(
