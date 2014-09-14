@@ -527,6 +527,40 @@ Will raise an exception if the step is using the regular expression pattern.
         return create_cucumbers(n)
 
 
+Backgrounds
+-----------
+
+It's often the case that to cover certain feature, you'll need multiple scenarios. And it's logical that the
+setup for those scenarios will have some common parts (if not equal). For this, there are `backgrounds`.
+pytest-bdd implements gherkin `backgrounds <http://docs.behat.org/en/v2.5/guides/1.gherkin.html#backgrounds>` for
+features.
+
+.. code-block:: gherkin
+
+    Feature: Multiple site support
+
+      Background:
+        Given a global administrator named "Greg"
+        And a blog named "Greg's anti-tax rants"
+        And a customer named "Wilson"
+        And a blog named "Expensive Therapy" owned by "Wilson"
+
+      Scenario: Wilson posts to his own blog
+        Given I am logged in as Wilson
+        When I try to post to "Expensive Therapy"
+        Then I should see "Your article was published."
+
+      Scenario: Greg posts to a client's blog
+        Given I am logged in as Greg
+        When I try to post to "Expensive Therapy"
+        Then I should see "Your article was published."
+
+In this example, all steps from the background will be executed before all the scenario's own given
+steps, adding possibility to prepare some common setup for multiple scenarios in a single feature.
+About background best practices, please read
+`here <https://github.com/cucumber/cucumber/wiki/Background#good-practices-for-using-background>`_.
+
+
 Reusing fixtures
 ----------------
 
