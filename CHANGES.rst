@@ -5,12 +5,14 @@ Changelog
 -----
 
 - Added timings to the cucumber json report (bubenkoff)
+- Fixed double collection of the conftest files if scenario decorator is used (ropez, bubenkoff)
 
 
 2.3.2
 -----
 
 - Fixed incorrect error message using e.argname instead of step.name (hvdklauw)
+
 
 2.3.1
 -----
