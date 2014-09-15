@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Background support added (bubenkoff)
+
+
 2.3.3
 -----
 

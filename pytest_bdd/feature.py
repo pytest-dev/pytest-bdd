@@ -56,6 +56,7 @@ STEP_PREFIXES = [  # pragma: no cover
     ('Examples: Vertical', types.EXAMPLES_VERTICAL),
     ('Examples:', types.EXAMPLES),
     ('Scenario: ', types.SCENARIO),
+    ('Background:', types.BACKGROUND),
     ('Given ', types.GIVEN),
     ('When ', types.WHEN),
     ('Then ', types.THEN),
@@ -170,12 +171,13 @@ class Feature(object):
         mode = None
         prev_mode = None
         description = []
+        step = None
+        multiline_step = False
+        prev_line = None
+        background = None
 
         with _open_file(filename, encoding) as f:
             content = force_unicode(f.read(), encoding)
-            step = None
-            multiline_step = False
-            prev_line = None
             for line_number, line in enumerate(content.splitlines(), start=1):
                 unindented_line = line.lstrip()
                 line_indent = len(line) - len(unindented_line)
@@ -193,7 +195,8 @@ class Feature(object):
                     continue
                 mode = get_step_type(clean_line) or mode
 
-                if mode == types.GIVEN and prev_mode not in (types.GIVEN, types.SCENARIO, types.SCENARIO_OUTLINE):
+                if mode == types.GIVEN and prev_mode not in (
+                        types.GIVEN, types.SCENARIO, types.SCENARIO_OUTLINE, types.BACKGROUND):
                     raise FeatureError('Given steps must be the first in withing the Scenario',
                                        line_number, clean_line)
 
@@ -202,7 +205,7 @@ class Feature(object):
                     raise FeatureError('When steps must be the first or follow Given steps',
                                        line_number, clean_line)
 
-                if mode == types.THEN and prev_mode not in (types.GIVEN, types.WHEN, types.THEN):
+                if not background and mode == types.THEN and prev_mode not in (types.GIVEN, types.WHEN, types.THEN):
                     raise FeatureError('Then steps must follow Given or When steps',
                                        line_number, clean_line)
 
@@ -221,6 +224,10 @@ class Feature(object):
                 if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
                     tags = get_tags(prev_line)
                     self.scenarios[parsed_line] = scenario = Scenario(self, parsed_line, line_number, tags=tags)
+                    if background:
+                        scenario.set_background(background)
+                elif mode == types.BACKGROUND:
+                    background = Background(self, line_number)
                 elif mode == types.EXAMPLES:
                     mode = types.EXAMPLES_HEADERS
                 elif mode == types.EXAMPLES_VERTICAL:
@@ -234,7 +241,11 @@ class Feature(object):
                     param_line_parts = [l.strip() for l in stripped_line.split('|')[1:-1]]
                     scenario.add_example_row(param_line_parts[0], param_line_parts[1:])
                 elif mode and mode not in (types.FEATURE, types.TAG):
-                    step = scenario.add_step(
+                    if background and mode == types.GIVEN and not scenario:
+                        target = background
+                    else:
+                        target = scenario
+                    step = target.add_step(
                         step_name=parsed_line, step_type=mode, indent=line_indent, line_number=line_number,
                         keyword=keyword)
                 prev_line = clean_line
@@ -295,6 +306,14 @@ class Scenario(object):
             keyword=keyword)
         self.steps.append(step)
         return step
+
+    def set_background(self, background):
+        """Set scenario background.
+
+        :param background: `Background` background.
+        """
+        for kwargs in background.steps:
+            self.add_step(**kwargs)
 
     def set_param_names(self, keys):
         """Set parameter names.
@@ -393,3 +412,20 @@ class Step(object):
     @name.setter
     def name(self, value):
         self._name = value
+
+
+class Background(object):
+
+    """Background."""
+
+    scenario = None
+
+    def __init__(self, feature, line_number):
+        self.feature = feature
+        self.line_number = line_number
+        self.steps = []
+
+    def add_step(self, **kwargs):
+        """Add step to the background.
+        """
+        self.steps.append(kwargs)
