@@ -532,7 +532,7 @@ Backgrounds
 
 It's often the case that to cover certain feature, you'll need multiple scenarios. And it's logical that the
 setup for those scenarios will have some common parts (if not equal). For this, there are `backgrounds`.
-pytest-bdd implements gherkin `backgrounds <http://docs.behat.org/en/v2.5/guides/1.gherkin.html#backgrounds>` for
+pytest-bdd implements gherkin `backgrounds <http://docs.behat.org/en/v2.5/guides/1.gherkin.html#backgrounds>`_ for
 features.
 
 .. code-block:: gherkin
