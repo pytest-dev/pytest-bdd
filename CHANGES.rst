@@ -1,17 +1,17 @@
 Changelog
 =========
 
-Unreleased
-----------
+2.4.0
+-----
 
 - Background support added (bubenkoff)
+- Fixed double collection of the conftest files if scenario decorator is used (ropez, bubenkoff)
 
 
 2.3.3
 -----
 
 - Added timings to the cucumber json report (bubenkoff)
-- Fixed double collection of the conftest files if scenario decorator is used (ropez, bubenkoff)
 
 
 2.3.2
