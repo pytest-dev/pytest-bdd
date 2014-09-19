@@ -263,7 +263,10 @@ def scenario(
         scenario = feature.scenarios[scenario_name]
     except KeyError:
         raise exceptions.ScenarioNotFound(
-            'Scenario "{0}" in feature "{1}" is not found.'.format(scenario_name, feature_name)
+            'Scenario "{scenario_name}" in feature "{feature_name}" in {feature_filename} is not found.'.format(
+                scenario_name=scenario_name,
+                feature_name=feature.name or '[Empty]',
+                feature_filename=feature.filename)
         )
 
     scenario.example_converters = example_converters

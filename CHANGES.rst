@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Better reporting of a not found scenario (bubenkoff)
+
+
 2.4.0
 -----
 
