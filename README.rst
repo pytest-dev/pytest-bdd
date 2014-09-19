@@ -731,6 +731,25 @@ To have an output in json format:
     py.test --cucumberjson=<path to json report>
 
 
+Test code generation helper
+---------------------------
+
+For newcomers it's sometimes hard to write all needed test code without being frustrated.
+To simplify their life, simple code generator was implemented. It allows to create fully functional
+but of course empty tests and step definitions for given a feature file.
+It's done as a separate console script provided by pytest-bdd package:
+
+::
+
+    pytest-bdd generate <feature file name> .. <feature file nameN>
+
+It will print the generated code to the standard output so you can easily redirect it to the file:
+
+::
+
+    pytest-bdd generate features/some.feature > tests/functional/test_some.py
+
+
 Migration of your tests from versions 0.x.x-1.x.x
 -------------------------------------------------
 
@@ -743,15 +762,12 @@ decorator. Reasons for that:
   decorator more or not, so to support it along with functional approach there needed to be special parameter
   for that, which is also a backwards-incompartible change.
 
-To help users migrate to newer version, there's migration console script provided with **migrate** extra:
+To help users migrate to newer version, there's migration subcommand of the `pytest-bdd` console script:
 
 ::
 
-    # install extra for migration
-    pip install pytest-bdd[migrate]
-
     # run migration script
-    pytestbdd_migrate_tests <your test folder>
+    pytest-bdd migrate <your test folder>
 
 Under the hood the script does the replacement from this:
 

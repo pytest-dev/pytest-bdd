@@ -57,6 +57,8 @@ setup(
     cmdclass={'test': Tox},
     install_requires=[
         'pytest>=2.6.0',
+        'glob2',
+        'Mako',
     ],
     # the following makes a plugin available to py.test
     entry_points={
@@ -65,12 +67,10 @@ setup(
             'pytest-bdd-cucumber-json = pytest_bdd.cucumber_json',
         ],
         'console_scripts': [
-            'pytestbdd_migrate_tests = pytest_bdd.scripts:migrate_tests [migrate]'
+            'pytest-bdd = pytest_bdd.scripts:main'
         ]
     },
     tests_require=['detox'],
-    extras_require={
-        'migrate': ['glob2']
-    },
     packages=['pytest_bdd'],
+    include_package_data=True,
 )

@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 - Better reporting of a not found scenario (bubenkoff)
+- Simple test code generation implemented (bubenkoff)
 
 
 2.4.0
