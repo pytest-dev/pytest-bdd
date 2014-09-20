@@ -7,6 +7,7 @@ Unreleased
 - Better reporting of a not found scenario (bubenkoff)
 - Simple test code generation implemented (bubenkoff)
 - Correct timing values for cucumber json reporting (bubenkoff)
+- BDD tests validation/generation helpers (bubenkoff)
 
 
 2.4.0

@@ -76,6 +76,23 @@ def _inject_fixture(request, arg, value):
         request.fixturenames.append(arg)
 
 
+def _find_argumented_step_fixture_name(name, fixturemanager, request=None):
+    """Find argumented step fixture name."""
+    for fixturename, fixturedefs in fixturemanager._arg2fixturedefs.items():
+        for fixturedef in fixturedefs:
+
+            pattern = getattr(fixturedef.func, 'pattern', None)
+            match = pattern.match(name) if pattern else None
+            if match:
+                converters = getattr(fixturedef.func, 'converters', {})
+                for arg, value in match.groupdict().items():
+                    if arg in converters:
+                        value = converters[arg](value)
+                    if request:
+                        _inject_fixture(request, arg, value)
+                return pattern.pattern
+
+
 def _find_step_function(request, step, encoding):
     """Match the step defined by the regular expression pattern.
 
@@ -89,18 +106,9 @@ def _find_step_function(request, step, encoding):
         return request.getfuncargvalue(force_encode(name, encoding))
     except python.FixtureLookupError:
         try:
-            for fixturename, fixturedefs in request._fixturemanager._arg2fixturedefs.items():
-                for fixturedef in fixturedefs:
-
-                    pattern = getattr(fixturedef.func, 'pattern', None)
-                    match = pattern.match(name) if pattern else None
-                    if match:
-                        converters = getattr(fixturedef.func, 'converters', {})
-                        for arg, value in match.groupdict().items():
-                            if arg in converters:
-                                value = converters[arg](value)
-                            _inject_fixture(request, arg, value)
-                        return request.getfuncargvalue(pattern.pattern)
+            name = _find_argumented_step_fixture_name(name, request._fixturemanager, request)
+            if name:
+                return request.getfuncargvalue(name)
             raise
         except python.FixtureLookupError:
             raise exceptions.StepDefinitionNotFoundError(

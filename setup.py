@@ -65,6 +65,7 @@ setup(
         'pytest11': [
             'pytest-bdd = pytest_bdd.plugin',
             'pytest-bdd-cucumber-json = pytest_bdd.cucumber_json',
+            'pytest-bdd-generation = pytest_bdd.generation',
         ],
         'console_scripts': [
             'pytest-bdd = pytest_bdd.scripts:main'
