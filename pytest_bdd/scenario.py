@@ -10,24 +10,28 @@ test_publish_article = scenario(
     scenario_name='Publishing the article',
 )
 """
-
 import collections
+import inspect
 import os
-import sys
-
-import inspect  # pragma: no cover
 
 import pytest
-
 from _pytest import python
 
-from pytest_bdd.feature import Feature, force_encode  # pragma: no cover
-from pytest_bdd.steps import execute, recreate_function, get_caller_module, get_caller_function
-from pytest_bdd.types import GIVEN
-from pytest_bdd import exceptions
-from pytest_bdd import plugin
+from . import exceptions
+from . import plugin
+from .feature import (
+    Feature,
+    force_encode,
+)
+from .steps import (
+    execute,
+    get_caller_function,
+    get_caller_module,
+    PY3,
+    recreate_function,
+)
+from .types import GIVEN
 
-PY3 = sys.version_info[0] >= 3  # pragma: no cover
 
 if PY3:
     import runpy
@@ -108,6 +112,8 @@ def _find_step_function(request, step, encoding):
 
 def _execute_step_function(request, feature, step, step_func, example=None):
     """Execute step function."""
+    request.config.hook.pytest_bdd_before_step(
+        request=request, feature=feature, scenario=step.scenario, step=step, step_func=step_func)
     kwargs = {}
     if example:
         for key in step.params:
@@ -118,17 +124,14 @@ def _execute_step_function(request, feature, step, step_func, example=None):
     try:
         # Get the step argument values
         kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
-        request.config.hook.pytest_bdd_before_step(
-            request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
-            step_func_args=kwargs)
         # Execute the step
         step_func(**kwargs)
         request.config.hook.pytest_bdd_after_step(
-            request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
+            request=request, feature=feature, scenario=step.scenario, step=step, step_func=step_func,
             step_func_args=kwargs)
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(
-            request=request, feature=feature, scenario=scenario, step=step, step_func=step_func,
+            request=request, feature=feature, scenario=step.scenario, step=step, step_func=step_func,
             step_func_args=kwargs, exception=exception)
         raise
 

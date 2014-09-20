@@ -175,7 +175,7 @@ def test_step_hooks(testdir):
     assert reprec.ret == 1
 
     calls = reprec.getcalls("pytest_bdd_before_step")
-    assert len(calls) == 1
+    assert len(calls) == 2
 
     calls = reprec.getcalls("pytest_bdd_step_error")
     assert calls[0].request

@@ -23,17 +23,17 @@ Syntax example:
 one line.
 """
 
-from os import path as op  # pragma: no cover
+from os import path as op
 
-import re  # pragma: no cover
-import sys  # pragma: no cover
+import re
+import sys
 import textwrap
 
-from pytest_bdd import types  # pragma: no cover
-from pytest_bdd import exceptions  # pragma: no cover
+from . import types
+from . import exceptions
 
 
-class FeatureError(Exception):  # pragma: no cover
+class FeatureError(Exception):
 
     """Feature parse error."""
 
@@ -47,10 +47,10 @@ class FeatureError(Exception):  # pragma: no cover
 
 
 # Global features dictionary
-features = {}  # pragma: no cover
+features = {}
 
 
-STEP_PREFIXES = [  # pragma: no cover
+STEP_PREFIXES = [
     ('Feature: ', types.FEATURE),
     ('Scenario Outline: ', types.SCENARIO_OUTLINE),
     ('Examples: Vertical', types.EXAMPLES_VERTICAL),
@@ -64,9 +64,9 @@ STEP_PREFIXES = [  # pragma: no cover
     ('And ', None),  # Unknown step type,
 ]
 
-COMMENT_SYMBOLS = '#'  # pragma: no cover
+COMMENT_SYMBOLS = '#'
 
-STEP_PARAM_RE = re.compile('\<(.+?)\>')  # pragma: no cover
+STEP_PARAM_RE = re.compile('\<(.+?)\>')
 
 
 def get_step_type(line):
@@ -289,6 +289,7 @@ class Scenario(object):
         self.line_number = line_number
         self.example_converters = example_converters
         self.tags = tags or set()
+        self.failed = False
 
     def add_step(self, step_name, step_type, indent, line_number, keyword):
         """Add step to the scenario.

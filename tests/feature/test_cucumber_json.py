@@ -3,8 +3,6 @@ import json
 import os.path
 import textwrap
 
-import pytest
-
 
 def runandparse(testdir, *args):
     """Run tests in testdir and parse json output."""
@@ -14,21 +12,24 @@ def runandparse(testdir, *args):
     return result, jsonobject
 
 
-@pytest.fixture(scope='session')
-def equals_any():
+class equals_any(object):
+
     """Helper object comparison to which is always 'equal'."""
-    class equals_any(object):
 
-        def __eq__(self, other):
-            return True
+    def __init__(self, type=None):
+        self.type = type
 
-        def __cmp__(self, other):
-            return 0
+    def __eq__(self, other):
+        return isinstance(other, self.type) if self.type else True
 
-    return equals_any()
+    def __cmp__(self, other):
+        return 0 if (isinstance(other, self.type) if self.type else False) else -1
 
 
-def test_step_trace(testdir, equals_any):
+string = type(u'')
+
+
+def test_step_trace(testdir):
     """Test step trace."""
     testdir.makefile('.feature', test=textwrap.dedent("""
     @feature-tag
@@ -90,7 +91,7 @@ def test_step_trace(testdir, equals_any):
                             "name": "a passing step",
                             "result": {
                                 "status": "passed",
-                                "duration": equals_any
+                                "duration": equals_any(int)
                             }
                         },
                         {
@@ -102,7 +103,7 @@ def test_step_trace(testdir, equals_any):
                             "name": "some other passing step",
                             "result": {
                                 "status": "passed",
-                                "duration": equals_any
+                                "duration": equals_any(int)
                             }
                         }
 
@@ -131,7 +132,7 @@ def test_step_trace(testdir, equals_any):
                             "name": "a passing step",
                             "result": {
                                 "status": "passed",
-                                "duration": equals_any
+                                "duration": equals_any(int)
                             }
                         },
                         {
@@ -142,9 +143,9 @@ def test_step_trace(testdir, equals_any):
                             },
                             "name": "a failing step",
                             "result": {
-                                "error_message": equals_any,
+                                "error_message": equals_any(string),
                                 "status": "failed",
-                                "duration": equals_any
+                                "duration": equals_any(int)
                             }
                         }
                     ],

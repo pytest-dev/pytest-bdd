@@ -1,12 +1,16 @@
 """Cucumber json output formatter."""
-
 import json
+import math
 import os
 import time
 
 import py
 
 from .feature import force_unicode
+from .steps import PY3
+
+if PY3:
+    long = int
 
 
 def pytest_addoption(parser):
@@ -44,7 +48,7 @@ class LogBDDCucumberJSON(object):
     def append(self, obj):
         self.features[-1].append(obj)
 
-    def _get_result(self, step, report):
+    def _get_result(self, step, report, error_message=False):
         """Get scenario test run result.
 
         :param step: `Step` step we get result for
@@ -57,11 +61,11 @@ class LogBDDCucumberJSON(object):
         elif report.failed and step['failed']:
             result = {
                 'status': 'failed',
-                'error_message': force_unicode(report.longrepr),
+                'error_message': force_unicode(report.longrepr) if error_message else '',
             }
         elif report.skipped:
             result = {'status': 'skipped'}
-        result['duration'] = step['duration']
+        result['duration'] = long(math.floor((10 ** 9) * step['duration']))  # nanosec
         return result
 
     def _serialize_tags(self, item):
@@ -95,6 +99,11 @@ class LogBDDCucumberJSON(object):
             return
 
         def stepmap(step):
+            error_message = False
+            if step['failed'] and not scenario.setdefault('failed', False):
+                scenario['failed'] = True
+                error_message = True
+
             return {
                 "keyword": step['keyword'],
                 "name": step['name'],
@@ -102,7 +111,7 @@ class LogBDDCucumberJSON(object):
                 "match": {
                     "location": ""
                 },
-                "result": self._get_result(step, report),
+                "result": self._get_result(step, report, error_message),
             }
 
         if scenario['feature']['filename'] not in self.features:

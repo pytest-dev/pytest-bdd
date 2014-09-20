@@ -31,25 +31,25 @@ Reusing existing fixtures for a different step name:
 given('I have a beautiful article', fixture='article')
 """
 
-from __future__ import absolute_import  # pragma: no cover
+from __future__ import absolute_import
 import re
-from types import CodeType  # pragma: no cover
-import inspect  # pragma: no cover  # pragma: no cover
-import sys  # pragma: no cover
+from types import CodeType
+import inspect
+import sys
 
-import pytest  # pragma: no cover
+import pytest
 
-from pytest_bdd.feature import parse_line  # pragma: no cover
-from pytest_bdd.types import GIVEN, WHEN, THEN  # pragma: no cover
+from .feature import parse_line
+from .types import GIVEN, WHEN, THEN
 
-PY3 = sys.version_info[0] >= 3  # pragma: no cover
+PY3 = sys.version_info[0] >= 3
 
 
-class StepError(Exception):  # pragma: no cover
+class StepError(Exception):
 
     """Step declaration error."""
 
-RE_TYPE = type(re.compile(''))  # pragma: no cover
+RE_TYPE = type(re.compile(''))
 
 
 def given(name, fixture=None, converters=None):
