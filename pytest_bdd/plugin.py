@@ -1,18 +1,17 @@
 """Pytest plugin entry point. Used for any fixtures needed."""
-
-import os.path  # pragma: no cover
+import os.path
 import time
 
-import pytest  # pragma: no cover
+import pytest
 
-from pytest_bdd import (
+from . import (
     given,
     when,
     then,
 )
 
 
-@pytest.fixture  # pragma: no cover
+@pytest.fixture
 def pytestbdd_feature_base_dir(request):
     """Base feature directory."""
     return os.path.dirname(request.module.__file__)
@@ -30,20 +29,24 @@ def pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func
     Also store step start time.
     """
     step.failed = True
-    step.stop = time.time()
+    scenario.failed = True
+    if step.start:
+        step.stop = time.time()
+    for step in scenario.steps[scenario.steps.index(step):]:
+        step.failed = True
 
 
-def pytest_bdd_before_step(request, feature, scenario, step, step_func, step_func_args):
+def pytest_bdd_before_step(request, feature, scenario, step, step_func):
     """Store step start time."""
     step.start = time.time()
 
 
 def pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args):
     """Store step duration."""
-    step.stop = time.time()
+    if step.start and not step.stop:
+        step.stop = time.time()
 
 
-@pytest.mark.tryfirst
 def pytest_runtest_makereport(item, call, __multicall__):
     """Store item in the report object."""
     rep = __multicall__.execute()
@@ -59,7 +62,7 @@ def pytest_runtest_makereport(item, call, __multicall__):
                 'keyword': step.keyword,
                 'line_number': step.line_number,
                 'failed': step.failed,
-                'duration': round(step.stop - step.start, 5)
+                'duration': step.stop - step.start
             } for step in scenario.steps],
             'name': scenario.name,
             'line_number': scenario.line_number,
@@ -76,7 +79,6 @@ def pytest_runtest_makereport(item, call, __multicall__):
         rep.item = {
             'name': item.name
         }
-
     return rep
 
 

@@ -9,21 +9,21 @@ class ScenarioValidationError(Exception):
     """Base class for scenario validation."""
 
 
-class ScenarioNotFound(ScenarioValidationError):  # pragma: no cover
+class ScenarioNotFound(ScenarioValidationError):
     """Scenario Not Found"""
 
 
-class ScenarioExamplesNotValidError(ScenarioValidationError):  # pragma: no cover
+class ScenarioExamplesNotValidError(ScenarioValidationError):
     """Scenario steps argumets do not match declared scenario examples."""
 
 
-class StepTypeError(ScenarioValidationError):  # pragma: no cover
+class StepTypeError(ScenarioValidationError):
     """Step definition is not of the type expected in the scenario."""
 
 
-class GivenAlreadyUsed(ScenarioValidationError):  # pragma: no cover
+class GivenAlreadyUsed(ScenarioValidationError):
     """Fixture that implements the Given has been already used."""
 
 
-class StepDefinitionNotFoundError(Exception):  # pragma: no cover
+class StepDefinitionNotFoundError(Exception):
     """Step definition not found."""

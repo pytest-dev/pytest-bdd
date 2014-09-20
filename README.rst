@@ -693,8 +693,8 @@ Hooks
 pytest-bdd exposes several pytest `hooks <http://pytest.org/latest/plugins.html#well-specified-hooks>`_
 which might be helpful building useful reporting, visualization, etc on top of it:
 
-* pytest_bdd_before_step(request, feature, scenario, step, step_func, step_func_args) - Called before step function
-  is executed
+* pytest_bdd_before_step(request, feature, scenario, step, step_func) - Called before step function
+  is executed and it's arguments evaluated
 
 * pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args) - Called after step function
   is successfully executed
