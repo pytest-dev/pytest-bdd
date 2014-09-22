@@ -30,7 +30,7 @@ def test_generate_missing(testdir):
     """))
 
     result = testdir.runpytest(
-        "tests", "--generate-missing", "--feature-file", tests.join('generation.feature').strpath)
+        "tests", "--generate-missing", "--feature", tests.join('generation.feature').strpath)
 
     result.stdout.fnmatch_lines([
         'Scenario is not bound to any test: "Code is generated for scenarios which are not bound to any tests" *'])
@@ -38,3 +38,5 @@ def test_generate_missing(testdir):
     result.stdout.fnmatch_lines([
         'Step is not defined: "I have a custom bar" in scenario: "Code is generated for scenario steps which are not '
         'yet defined(implemented)" *'])
+
+    result.stdout.fnmatch_lines(['Please place the code above to the test file(s):'])

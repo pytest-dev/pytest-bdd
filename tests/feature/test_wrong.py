@@ -1,4 +1,5 @@
 """Test wrong feature syntax."""
+import os.path
 import re
 
 import pytest
@@ -69,7 +70,8 @@ def test_verbose_output(request):
     with pytest.raises(FeatureError) as excinfo:
         scenario('when_after_then.feature', 'When after then')
 
-    msg, line_number, line = excinfo.value.args
+    msg, line_number, line, file = excinfo.value.args
 
     assert line_number == 5
     assert line == 'When I do it again'
+    assert file == os.path.join(os.path.dirname(__file__), 'when_after_then.feature')

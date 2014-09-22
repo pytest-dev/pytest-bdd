@@ -76,7 +76,7 @@ def _inject_fixture(request, arg, value):
         request.fixturenames.append(arg)
 
 
-def _find_argumented_step_fixture_name(name, fixturemanager, request=None):
+def find_argumented_step_fixture_name(name, fixturemanager, request=None):
     """Find argumented step fixture name."""
     for fixturename, fixturedefs in fixturemanager._arg2fixturedefs.items():
         for fixturedef in fixturedefs:
@@ -106,7 +106,7 @@ def _find_step_function(request, step, encoding):
         return request.getfuncargvalue(force_encode(name, encoding))
     except python.FixtureLookupError:
         try:
-            name = _find_argumented_step_fixture_name(name, request._fixturemanager, request)
+            name = find_argumented_step_fixture_name(name, request._fixturemanager, request)
             if name:
                 return request.getfuncargvalue(name)
             raise
@@ -253,6 +253,7 @@ def _get_scenario_decorator(
         _scenario.__doc__ = '{feature_name}: {scenario_name}'.format(
             feature_name=feature_name, scenario_name=scenario_name)
         _scenario.__scenario__ = scenario
+        scenario.test_function = _scenario
         return _scenario
 
     return recreate_function(decorator, module=caller_module, firstlineno=caller_function.f_lineno)
@@ -269,7 +270,7 @@ def scenario(
     base_path = get_fixture(caller_module, 'pytestbdd_feature_base_dir')
     feature = Feature.get_feature(base_path, feature_name, encoding=encoding)
 
-    # Get the scenario
+    # Get the sc_enario
     try:
         scenario = feature.scenarios[scenario_name]
     except KeyError:

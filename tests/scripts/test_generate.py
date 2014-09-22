@@ -17,12 +17,15 @@ def test_generate(monkeypatch, capsys):
     """Code generation feature tests."""
     from functools import partial
 
-    from pytest_bdd import (given, when, then, scenario)
+    from pytest_bdd import (
+        given,
+        scenario,
+        then,
+        when,
+    )
 
-    scenario = partial(scenario, feature.filename)
 
-
-    @scenario('Given and when using the same fixture should not evaluate it twice')
+    @scenario('scripts/generate.feature', 'Given and when using the same fixture should not evaluate it twice')
     def test_Given_and_when_using_the_same_fixture_should_not_evaluate_it_twice():
         """Given and when using the same fixture should not evaluate it twice."""
 
