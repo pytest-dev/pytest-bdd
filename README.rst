@@ -731,8 +731,8 @@ To have an output in json format:
     py.test --cucumberjson=<path to json report>
 
 
-Test code generation helper
----------------------------
+Test code generation helpers
+----------------------------
 
 For newcomers it's sometimes hard to write all needed test code without being frustrated.
 To simplify their life, simple code generator was implemented. It allows to create fully functional
@@ -748,6 +748,46 @@ It will print the generated code to the standard output so you can easily redire
 ::
 
     pytest-bdd generate features/some.feature > tests/functional/test_some.py
+
+
+Advanced code generation
+------------------------
+
+For more experienced users, there's smart code generation/suggestion feature. It will only generate the
+test code which is not yet there, checking existing tests and step definitions the same way it's done during the
+test execution. The code suggestion tool is called via passing additional pytest arguments:
+
+::
+
+    py.test --generate-missing --feature features tests/functional
+
+The output will be like:
+
+::
+
+    ============================= test session starts ==============================
+    platform linux2 -- Python 2.7.6 -- py-1.4.24 -- pytest-2.6.2
+    plugins: xdist, pep8, cov, cache, bdd, bdd, bdd
+    collected 2 items
+
+    Scenario is not bound to any test: "Code is generated for scenarios which are not bound to any tests" in feature "Missing code generation" in /tmp/pytest-552/testdir/test_generate_missing0/tests/generation.feature
+    --------------------------------------------------------------------------------
+
+    Step is not defined: "I have a custom bar" in scenario: "Code is generated for scenario steps which are not yet defined(implemented)" in feature "Missing code generation" in /tmp/pytest-552/testdir/test_generate_missing0/tests/generation.feature
+    --------------------------------------------------------------------------------
+    Please place the code above to the test file(s):
+
+    @scenario('tests/generation.feature', 'Code is generated for scenarios which are not bound to any tests')
+    def test_Code_is_generated_for_scenarios_which_are_not_bound_to_any_tests():
+        """Code is generated for scenarios which are not bound to any tests."""
+
+
+    @given('I have a custom bar')
+    def I_have_a_custom_bar():
+        """I have a custom bar."""
+
+As as side effect, the tool will validate the files for format errors, also some of the logic bugs, for example the
+ordering of the types of the steps.
 
 
 Migration of your tests from versions 0.x.x-1.x.x

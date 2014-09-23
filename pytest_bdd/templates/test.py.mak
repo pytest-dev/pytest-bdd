@@ -1,13 +1,18 @@
-"""${ feature.name or feature.rel_filename } feature tests."""
+% if features:
+"""${ features[0].name or features[0].rel_filename } feature tests."""
 from functools import partial
 
-from pytest_bdd import (given, when, then, scenario)
+from pytest_bdd import (
+    given,
+    scenario,
+    then,
+    when,
+)
 
-scenario = partial(scenario, feature.filename)
 
-
+% endif
 % for scenario in sorted(scenarios, key=lambda scenario: scenario.name):
-@scenario('${scenario.name}')
+@scenario('${scenario.feature.rel_filename}', '${scenario.name}')
 def test_${ make_python_name(scenario.name)}():
     """${scenario.name}."""
 

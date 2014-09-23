@@ -82,6 +82,11 @@ def pytest_runtest_makereport(item, call, __multicall__):
     return rep
 
 
+def pytest_addoption(parser):
+    """Add pytest-bdd options."""
+    parser.getgroup("bdd", "BDD")
+
+
 @given('trace')
 @when('trace')
 @then('trace')
