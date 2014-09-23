@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+2.4.1
+-----
 
 - Better reporting of a not found scenario (bubenkoff)
 - Simple test code generation implemented (bubenkoff)
