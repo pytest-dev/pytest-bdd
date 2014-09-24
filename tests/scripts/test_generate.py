@@ -26,7 +26,7 @@ def test_generate(monkeypatch, capsys):
 
 
     @scenario('scripts/generate.feature', 'Given and when using the same fixture should not evaluate it twice')
-    def test_Given_and_when_using_the_same_fixture_should_not_evaluate_it_twice():
+    def test_given_and_when_using_the_same_fixture_should_not_evaluate_it_twice():
         """Given and when using the same fixture should not evaluate it twice."""
 
 
@@ -36,7 +36,7 @@ def test_generate(monkeypatch, capsys):
 
 
     @given('I have an empty list')
-    def I_have_an_empty_list():
+    def i_have_an_empty_list():
         """I have an empty list."""
 
 
@@ -46,7 +46,7 @@ def test_generate(monkeypatch, capsys):
 
 
     @when('I use this fixture')
-    def I_use_this_fixture():
+    def i_use_this_fixture():
         """I use this fixture."""
 
     '''[1:].replace(u"'", u"'"))

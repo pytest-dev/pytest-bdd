@@ -45,7 +45,7 @@ def pytest_cmdline_main(config):
 def make_python_name(string):
     """Make python attribute name out of a given string."""
     string = re.sub(PYTHON_REPLACE_REGEX, '', string.replace(' ', '_'))
-    return re.sub(ALPHA_REGEX, '', string)
+    return re.sub(ALPHA_REGEX, '', string).lower()
 
 
 def generate_code(features, scenarios, steps):
