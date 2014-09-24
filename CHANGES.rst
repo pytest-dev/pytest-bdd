@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- For --generate-missing, --feature parameter now correctly does the recursion (bubenkoff)
+
+
 2.4.1
 -----
 

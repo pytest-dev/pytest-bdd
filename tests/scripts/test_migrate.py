@@ -24,7 +24,8 @@ def test_migrate(monkeypatch, capsys, testdir):
     monkeypatch.setattr(sys, 'argv', ['', 'migrate', tests.strpath])
     main()
     out, err = capsys.readouterr()
-    assert out == textwrap.dedent('''
+    out = sorted(out.splitlines())
+    expected = textwrap.dedent('''
     migrated: {0}/test_foo.py
     skipped: {0}/__init__.py
     '''.format(tests.strpath)[1:].replace(u"'", u"'"))
