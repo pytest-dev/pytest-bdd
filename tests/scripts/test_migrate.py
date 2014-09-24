@@ -24,10 +24,11 @@ def test_migrate(monkeypatch, capsys, testdir):
     monkeypatch.setattr(sys, 'argv', ['', 'migrate', tests.strpath])
     main()
     out, err = capsys.readouterr()
-    assert out == textwrap.dedent('''
+    out = '\n'.join(sorted(out.splitlines()))
+    expected = textwrap.dedent('''
     migrated: {0}/test_foo.py
-    skipped: {0}/__init__.py
-    '''.format(tests.strpath)[1:].replace(u"'", u"'"))
+    skipped: {0}/__init__.py'''.format(tests.strpath)[1:])
+    assert out == expected
     assert tests.join("test_foo.py").read() == textwrap.dedent('''
     """Foo bar tests."""
     from pytest_bdd import scenario

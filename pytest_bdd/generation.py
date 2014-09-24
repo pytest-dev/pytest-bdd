@@ -45,7 +45,7 @@ def pytest_cmdline_main(config):
 def make_python_name(string):
     """Make python attribute name out of a given string."""
     string = re.sub(PYTHON_REPLACE_REGEX, '', string.replace(' ', '_'))
-    return re.sub(ALPHA_REGEX, '', string)
+    return re.sub(ALPHA_REGEX, '', string).lower()
 
 
 def generate_code(features, scenarios, steps):
@@ -114,6 +114,7 @@ def _find_step_fixturedef(fixturemanager, item, name, encoding='utf-8'):
 
 def get_features(paths):
     """Get features for given paths.
+
     :param paths: `list` of paths (file or dirs)
 
     :return: `list` of `Feature` objects
@@ -125,7 +126,7 @@ def get_features(paths):
             continue
         seen_names.add(path)
         if os.path.isdir(path):
-            features.extend(get_features(glob2.iglob(os.path.join(path, '*.feature'))))
+            features.extend(get_features(glob2.iglob(os.path.join(path, '**', '*.feature'))))
         else:
             base, name = os.path.split(path)
             feature = Feature.get_feature(base, name)
@@ -136,6 +137,7 @@ def get_features(paths):
 
 def parse_feature_files(paths):
     """Parse feature files of given paths.
+
     :param paths: `list` of paths (file or dirs)
 
     :return: `list` of `tuple` in form:
