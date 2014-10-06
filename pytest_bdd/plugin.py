@@ -23,6 +23,7 @@ def pytest_addhooks(pluginmanager):
     pluginmanager.addhooks(hooks)
 
 
+@pytest.mark.tryfirst
 def pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception):
     """Mark step as failed for later reporting.
 
@@ -36,11 +37,13 @@ def pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func
         step.failed = True
 
 
+@pytest.mark.tryfirst
 def pytest_bdd_before_step(request, feature, scenario, step, step_func):
     """Store step start time."""
     step.start = time.time()
 
 
+@pytest.mark.tryfirst
 def pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args):
     """Store step duration."""
     if step.start and not step.stop:
