@@ -80,6 +80,8 @@ def find_argumented_step_fixture_name(name, fixturemanager, request=None):
     """Find argumented step fixture name."""
     for fixturename, fixturedefs in fixturemanager._arg2fixturedefs.items():
         for fixturedef in fixturedefs:
+            if isinstance(name, unicode):
+                name = name.encode('utf8')
 
             pattern = getattr(fixturedef.func, 'pattern', None)
             match = pattern.match(name) if pattern else None
