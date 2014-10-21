@@ -1,10 +1,10 @@
 Changelog
 =========
 
-Unreleased
-----------
+2.4.2
+-----
 
-- For --generate-missing, --feature parameter now correctly does the recursion (bubenkoff)
+- Recursion is fixed for the --generate-missing and the --feature parameters (bubenkoff)
 
 
 2.4.1
