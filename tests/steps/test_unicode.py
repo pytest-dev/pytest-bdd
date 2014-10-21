@@ -29,7 +29,7 @@ def string():
     return {'content': ''}
 
 
-@given(re.compile(r"there is a string with content '{0}'".format('(?P<content>.+)')))
+@given(re.compile(u"есть строка с содержимым '{0}'".format('(?P<content>.+)')))
 def there_is_a_string_with_content(content, string):
     """Create string with unicode content"""
     string['content'] = content

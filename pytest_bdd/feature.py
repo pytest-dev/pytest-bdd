@@ -135,9 +135,9 @@ def force_unicode(obj, encoding='utf-8'):
 
 def force_encode(string, encoding='utf-8'):
     if sys.version_info < (3, 0):
-        return string.encode(encoding)
-    else:
-        return string
+        if isinstance(string, unicode):
+            string = string.encode(encoding)
+    return string
 
 
 def get_tags(line):

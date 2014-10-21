@@ -90,7 +90,7 @@ def find_argumented_step_fixture_name(name, fixturemanager, request=None):
                         value = converters[arg](value)
                     if request:
                         _inject_fixture(request, arg, value)
-                return pattern.pattern
+                return force_encode(pattern.pattern)
 
 
 def _find_step_function(request, step, encoding):
@@ -112,7 +112,7 @@ def _find_step_function(request, step, encoding):
             raise
         except python.FixtureLookupError:
             raise exceptions.StepDefinitionNotFoundError(
-                """Step definition is not found: "{step.name}"."""
+                u"""Step definition is not found: "{step.name}"."""
                 """ Line {step.line_number} in scenario "{scenario.name}" in the feature "{feature.filename}""".format(
                     step=step, scenario=step.scenario, feature=step.scenario.feature)
             )
@@ -167,7 +167,7 @@ def _execute_scenario(feature, scenario, request, encoding, example=None):
             if step.type == GIVEN:
                 if step_func.fixture in givens:
                     raise exceptions.GivenAlreadyUsed(
-                        'Fixture "{0}" that implements this "{1}" given step has been already used.'.format(
+                        u'Fixture "{0}" that implements this "{1}" given step has been already used.'.format(
                             step_func.fixture, step.name,
                         )
                     )

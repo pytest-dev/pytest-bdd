@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Fix unicode regex argumented steps issue (bubenkoff, aohontsev)
+
+
 2.4.2
 -----
 

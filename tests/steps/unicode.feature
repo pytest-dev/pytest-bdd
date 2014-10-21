@@ -1,5 +1,5 @@
 Scenario: Steps in .feature file have unicode
-    Given there is a string with content 'с каким-то контентом'
+    Given есть строка с содержимым 'с каким-то контентом'
     Then I should see that the string equals to content 'с каким-то контентом'
 
 
