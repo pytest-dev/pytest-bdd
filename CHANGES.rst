@@ -5,7 +5,7 @@ Unreleased
 ----------
 
 - Fix unicode regex argumented steps issue (bubenkoff, aohontsev)
-
+- Fix steps timings in the json reporting (bubenkoff)
 
 2.4.2
 -----
