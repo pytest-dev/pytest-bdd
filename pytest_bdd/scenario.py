@@ -82,7 +82,9 @@ def find_argumented_step_fixture_name(name, fixturemanager, request=None):
         for fixturedef in fixturedefs:
 
             pattern = getattr(fixturedef.func, 'pattern', None)
-            match = pattern.match(name) if pattern else None
+            match = pattern.match(name) if pattern and isinstance(name, str) \
+                else pattern.match(name.encode('utf8')) if pattern and isinstance(name, unicode) \
+                else None
             if match:
                 converters = getattr(fixturedef.func, 'converters', {})
                 for arg, value in match.groupdict().items():
@@ -111,6 +113,10 @@ def _find_step_function(request, step, encoding):
                 return request.getfuncargvalue(name)
             raise
         except python.FixtureLookupError:
+            if isinstance(step.name, unicode):
+                step.name = step.name.encode('utf8')
+            if isinstance(step.scenario.name, unicode):
+                step.scenario.name = step.scenario.name.encode('utf8')
             raise exceptions.StepDefinitionNotFoundError(
                 """Step definition is not found: "{step.name}"."""
                 """ Line {step.line_number} in scenario "{scenario.name}" in the feature "{feature.filename}""".format(
