@@ -1,6 +1,6 @@
 """pytest-bdd public API."""
 
-__version__ = '2.4.3'
+__version__ = '2.4.5'
 
 try:
     from pytest_bdd.steps import given, when, then
