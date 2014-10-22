@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+2.4.3
+-----
 
 - Fix unicode regex argumented steps issue (bubenkoff, aohontsev)
 - Fix steps timings in the json reporting (bubenkoff)
