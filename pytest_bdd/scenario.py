@@ -22,6 +22,7 @@ from . import plugin
 from .feature import (
     Feature,
     force_encode,
+    force_unicode,
 )
 from .steps import (
     execute,
@@ -215,6 +216,8 @@ def _get_scenario_decorator(
     g = locals()
     g['_execute_scenario'] = _execute_scenario
 
+    scenario_name = force_encode(scenario_name, encoding)
+
     def decorator(_pytestbdd_function):
         if isinstance(_pytestbdd_function, python.FixtureRequest):
             raise exceptions.ScenarioIsDecoratorOnly(
@@ -263,6 +266,7 @@ def scenario(
         feature_name, scenario_name, encoding='utf-8', example_converters=None,
         caller_module=None, caller_function=None):
     """Scenario."""
+    scenario_name = force_unicode(scenario_name, encoding)
     caller_module = caller_module or get_caller_module()
     caller_function = caller_function or get_caller_function()
 
@@ -275,7 +279,7 @@ def scenario(
         scenario = feature.scenarios[scenario_name]
     except KeyError:
         raise exceptions.ScenarioNotFound(
-            'Scenario "{scenario_name}" in feature "{feature_name}" in {feature_filename} is not found.'.format(
+            u'Scenario "{scenario_name}" in feature "{feature_name}" in {feature_filename} is not found.'.format(
                 scenario_name=scenario_name,
                 feature_name=feature.name or '[Empty]',
                 feature_filename=feature.filename)

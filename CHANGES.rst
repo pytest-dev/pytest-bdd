@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Fix unicode issue with scenario name (bubenkoff, aohontsev)
+
 2.4.3
 -----
 
