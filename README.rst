@@ -614,6 +614,22 @@ There are no definitions of the steps in the test file. They were
 collected from the parent conftests.
 
 
+Using unicode in the feature files
+----------------------------------
+
+As mentioned above, by default, utf-8 encoding is used for parsing feature files.
+For steps definition, you can both use unicode- and bytestrings equally.
+However, for argumented steps, if you need to use unicode symbols in it's regular expression, use `u` sign with regex:
+
+
+.. code-block:: python
+
+    @given(re.compile(u"у мене є рядок який містить '{0}'".format('(?P<content>.+)')))
+    def there_is_a_string_with_content(content, string):
+        """Create string with unicode content."""
+        string['content'] = content
+
+
 Default steps
 -------------
 

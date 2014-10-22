@@ -39,7 +39,7 @@ import sys
 
 import pytest
 
-from .feature import parse_line
+from .feature import parse_line, force_encode
 from .types import GIVEN, WHEN, THEN
 
 PY3 = sys.version_info[0] >= 3
@@ -142,7 +142,7 @@ def _step_decorator(step_type, step_name, converters=None):
             step_func.__doc__ = func.__doc__
             step_func.fixture = func.__name__
 
-        step_func.__name__ = step_name
+        step_func.__name__ = force_encode(step_name)
         step_func.step_type = step_type
         step_func.converters = converters
 
@@ -227,6 +227,7 @@ def contribute_to_module(module, name, func):
     :param name: Attribute name.
     :param func: Function object.
     """
+    name = force_encode(name)
     func = recreate_function(func, module=module)
     setattr(module, name, func)
 
