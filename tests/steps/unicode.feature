@@ -1,8 +1,8 @@
 Scenario: Steps in .feature file have unicode
-    Given есть строка с содержимым 'с каким-то контентом'
-    Then I should see that the string equals to content 'с каким-то контентом'
+    Given у мене є рядок який містить 'якийсь контент'
+    Then I should see that the string equals to content 'якийсь контент'
 
 
 Scenario: Steps in .py file have unicode
-    Given there is an other string with content 'с каким-то контентом'
-    Then I should see that the other string equals to content 'с каким-то контентом'
+    Given there is an other string with content 'якийсь контент'
+    Then I should see that the other string equals to content 'якийсь контент'

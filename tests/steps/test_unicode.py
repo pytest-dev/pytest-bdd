@@ -29,19 +29,19 @@ def string():
     return {'content': ''}
 
 
-@given(re.compile(u"есть строка с содержимым '{0}'".format('(?P<content>.+)')))
+@given(re.compile(u"у мене є рядок який містить '{0}'".format('(?P<content>.+)')))
 def there_is_a_string_with_content(content, string):
-    """Create string with unicode content"""
+    """Create string with unicode content."""
     string['content'] = content
 
 
-@given("there is an other string with content 'с каким-то контентом'")
+@given("there is an other string with content 'якийсь контент'")
 def there_is_an_other_string_with_content(string):
-    """Create other string with unicode content"""
+    """Create other string with unicode content."""
     string['content'] = u"с каким-то контентом"
 
 
-@then("I should see that the other string equals to content 'с каким-то контентом'")
+@then("I should see that the other string equals to content 'якийсь контент'")
 def assert_that_the_other_string_equals_to_content(string):
     """Assert that the other string equals to content."""
     assert string['content'] == u"с каким-то контентом"

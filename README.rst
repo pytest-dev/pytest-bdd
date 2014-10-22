@@ -624,9 +624,9 @@ However, for argumented steps, if you need to use unicode symbols in it's regula
 
 .. code-block:: python
 
-    @given(re.compile(u"есть строка с содержимым '{0}'".format('(?P<content>.+)')))
+    @given(re.compile(u"у мене є рядок який містить '{0}'".format('(?P<content>.+)')))
     def there_is_a_string_with_content(content, string):
-        """Create string with unicode content"""
+        """Create string with unicode content."""
         string['content'] = content
 
 
