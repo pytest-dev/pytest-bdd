@@ -10,12 +10,12 @@ from pytest_bdd import scenario, given, then
 scenario = functools.partial(scenario, 'unicode.feature')
 
 
-@scenario('Steps in .feature file have unicode')
+@scenario('Кроки в .feature файлі містять юнікод')
 def test_steps_in_feature_file_have_unicode():
     pass
 
 
-@scenario('Steps in .py file have unicode')
+@scenario(u'Steps in .py file have unicode')
 def test_steps_in_py_file_have_unicode():
     pass
 
