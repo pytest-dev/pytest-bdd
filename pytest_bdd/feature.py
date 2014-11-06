@@ -430,4 +430,9 @@ class Background(object):
     def add_step(self, **kwargs):
         """Add step to the background.
         """
-        self.steps.append(kwargs)
+        if kwargs['keyword'] == '' and len(self.steps) > 0 and \
+           self.steps[-1]['indent'] < kwargs['indent']:
+            name = '\n'.join((self.steps[-1]['step_name'], kwargs['step_name']))
+            self.steps[-1]['step_name'] = name
+        else:
+            self.steps.append(kwargs)
