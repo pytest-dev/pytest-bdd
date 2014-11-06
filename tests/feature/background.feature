@@ -2,6 +2,9 @@ Feature: Background support
 
     Background:
         Given foo has a value "bar"
+        And a background step with multiple lines:
+            one
+            two
 
     Scenario: Basic usage
         Then foo should have value "bar"
