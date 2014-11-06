@@ -245,9 +245,12 @@ class Feature(object):
                         target = background
                     else:
                         target = scenario
-                    step = target.add_step(
-                        step_name=parsed_line, step_type=mode, indent=line_indent, line_number=line_number,
-                        keyword=keyword)
+
+                    step = Step(name=parsed_line, type=mode,
+                                params=get_step_params(parsed_line),
+                                scenario=scenario, indent=line_indent,
+                                line_number=line_number, keyword=keyword)
+                    target.add_step(step)
                 prev_line = clean_line
 
         self.description = u'\n'.join(description)
@@ -292,30 +295,21 @@ class Scenario(object):
         self.failed = False
         self.test_function = None
 
-    def add_step(self, step_name, step_type, indent, line_number, keyword):
+    def add_step(self, step):
         """Add step to the scenario.
 
-        :param step_name: Step name.
-        :param step_type: Step type.
-        :param indent: `int` step text indent
-        :param line_number: `int` line number
-        :param keyword: `str` step keyword
+        :param step: Step.
         """
-        params = get_step_params(step_name)
-        self.params.update(params)
-        step = Step(
-            name=step_name, type=step_type, params=params, scenario=self, indent=indent, line_number=line_number,
-            keyword=keyword)
+        self.params.update(step.params)
         self.steps.append(step)
-        return step
 
     def set_background(self, background):
         """Set scenario background.
 
         :param background: `Background` background.
         """
-        for kwargs in background.steps:
-            self.add_step(**kwargs)
+        for step in background.steps:
+            self.add_step(step)
 
     def set_param_names(self, keys):
         """Set parameter names.
@@ -427,12 +421,9 @@ class Background(object):
         self.line_number = line_number
         self.steps = []
 
-    def add_step(self, **kwargs):
+    def add_step(self, step):
         """Add step to the background.
+
+        :param step: Step.
         """
-        if kwargs['keyword'] == '' and len(self.steps) > 0 and \
-           self.steps[-1]['indent'] < kwargs['indent']:
-            name = '\n'.join((self.steps[-1]['step_name'], kwargs['step_name']))
-            self.steps[-1]['step_name'] = name
-        else:
-            self.steps.append(kwargs)
+        self.steps.append(step)
