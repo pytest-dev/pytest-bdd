@@ -1,4 +1,5 @@
 """Test feature background."""
+import re
 import pytest
 
 from pytest_bdd import scenario, given, then
@@ -39,6 +40,12 @@ def foo():
 def bar(foo):
     foo['bar'] = 'bar'
     return foo['bar']
+
+
+@given(re.compile('a background step with multiple lines:\n(?P<data>.+)',
+                  re.DOTALL))
+def multi_line(foo, data):
+    assert data == 'one\ntwo\n'
 
 
 @given('foo has a value "dummy"')

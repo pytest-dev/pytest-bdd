@@ -30,11 +30,12 @@ def pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func
     Also store step start time.
     """
     step.failed = True
-    scenario.failed = True
     if step.start and not step.stop:
         step.stop = time.time()
-    for step in scenario.steps[scenario.steps.index(step):]:
-        step.failed = True
+    if scenario:
+        scenario.failed = True
+        for step in scenario.steps[scenario.steps.index(step):]:
+            step.failed = True
 
 
 @pytest.mark.tryfirst
