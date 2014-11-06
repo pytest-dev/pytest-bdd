@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Proper multiline support for backgrounds (bubenkoff, arpe)
+
+
 2.4.5
 -----
 

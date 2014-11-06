@@ -249,7 +249,7 @@ class Feature(object):
                         step_name=parsed_line, step_type=mode, indent=line_indent, line_number=line_number,
                         keyword=keyword)
                 prev_line = clean_line
-
+        self.background = background
         self.description = u'\n'.join(description)
 
     @classmethod
@@ -301,11 +301,10 @@ class Scenario(object):
         :param line_number: `int` line number
         :param keyword: `str` step keyword
         """
-        params = get_step_params(step_name)
-        self.params.update(params)
         step = Step(
-            name=step_name, type=step_type, params=params, scenario=self, indent=indent, line_number=line_number,
+            name=step_name, type=step_type, scenario=self, indent=indent, line_number=line_number,
             keyword=keyword)
+        self.params.update(step.params)
         self.steps.append(step)
         return step
 
@@ -314,8 +313,10 @@ class Scenario(object):
 
         :param background: `Background` background.
         """
-        for kwargs in background.steps:
-            self.add_step(**kwargs)
+        for background_step in background.steps:
+            step = self.add_step(**background_step.kwargs)
+            for line in background_step.lines:
+                step.add_line(line)
 
     def set_param_names(self, keys):
         """Set parameter names.
@@ -390,13 +391,12 @@ class Step(object):
 
     """Step."""
 
-    def __init__(self, name, type, params, scenario, indent, line_number, keyword):
+    def __init__(self, name, type, scenario, indent, line_number, keyword):
         self.name = name
         self.keyword = keyword
         self.lines = []
         self.indent = indent
         self.type = type
-        self.params = params
         self.scenario = scenario
         self.line_number = line_number
         self.failed = False
@@ -406,14 +406,38 @@ class Step(object):
     def add_line(self, line):
         """Add line to the multiple step."""
         self.lines.append(line)
+        self.scenario.params.update(self.params)
 
     @property
     def name(self):
-        return '\n'.join([self._name] + ([textwrap.dedent('\n'.join(self.lines))] if self.lines else []))
+        return '\n'.join([self._name] + ([textwrap.dedent('\n'.join(self.lines))] if self.lines else [])).strip()
+
+    @property
+    def params(self):
+        """Get step params."""
+        return get_step_params(self.name)
 
     @name.setter
     def name(self, value):
         self._name = value
+
+
+class BackgroundStep(object):
+
+    """Simplified background step.
+
+    In fact, just a storage of raw string data for future 'real' Step.
+    Needeed for multiline support.
+    """
+
+    def __init__(self, kwargs):
+        self.kwargs = kwargs
+        self.lines = []
+        self.indent = kwargs['indent']
+
+    def add_line(self, line):
+        """Add step line."""
+        self.lines.append(line)
 
 
 class Background(object):
@@ -428,11 +452,7 @@ class Background(object):
         self.steps = []
 
     def add_step(self, **kwargs):
-        """Add step to the background.
-        """
-        if kwargs['keyword'] == '' and len(self.steps) > 0 and \
-           self.steps[-1]['indent'] < kwargs['indent']:
-            name = '\n'.join((self.steps[-1]['step_name'], kwargs['step_name']))
-            self.steps[-1]['step_name'] = name
-        else:
-            self.steps.append(kwargs)
+        """Add step to the background."""
+        step = BackgroundStep(kwargs)
+        self.steps.append(step)
+        return step
