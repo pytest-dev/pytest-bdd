@@ -1,4 +1,5 @@
 """pytest-bdd missing test code generation."""
+
 import itertools
 import os.path
 import re
@@ -13,27 +14,34 @@ from .scenario import (
     force_encode
 )
 
-PYTHON_REPLACE_REGEX = re.compile('\W')
+PYTHON_REPLACE_REGEX = re.compile("\W")
 
-ALPHA_REGEX = re.compile('^\d+_*')
+ALPHA_REGEX = re.compile("^\d+_*")
 
 tw = py.io.TerminalWriter()
 
-template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), 'templates')])
+template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
 
 
-def pytest_addoption(parser):
+def add_options(parser):
     """Add pytest-bdd options."""
-    group = parser.getgroup("bdd")
+    group = parser.getgroup("bdd", "Generation")
+
     group._addoption(
-        '--generate-missing',
-        action="store_true", dest="generate_missing",
+        "--generate-missing",
+        action="store_true",
+        dest="generate_missing",
         default=False,
-        help="Generate missing bdd test code for given feature files and exit.")
+        help="Generate missing bdd test code for given feature files and exit.",
+    )
+
     group._addoption(
-        '--feature', metavar="FILE_OR_DIR",
-        action="append", dest="features",
-        help="Feature file or directory to generate missing code for. Multiple allowed.")
+        "--feature",
+        metavar="FILE_OR_DIR",
+        action="append",
+        dest="features",
+        help="Feature file or directory to generate missing code for. Multiple allowed.",
+    )
 
 
 def pytest_cmdline_main(config):
@@ -44,14 +52,14 @@ def pytest_cmdline_main(config):
 
 def make_python_name(string):
     """Make python attribute name out of a given string."""
-    string = re.sub(PYTHON_REPLACE_REGEX, '', string.replace(' ', '_'))
-    return re.sub(ALPHA_REGEX, '', string).lower()
+    string = re.sub(PYTHON_REPLACE_REGEX, "", string.replace(" ", "_"))
+    return re.sub(ALPHA_REGEX, "", string).lower()
 
 
 def generate_code(features, scenarios, steps):
     """Generate test code for the given filenames."""
     grouped_steps = group_steps(steps)
-    template = template_lookup.get_template('test.py.mak')
+    template = template_lookup.get_template("test.py.mak")
     return template.render(
         features=features, scenarios=scenarios, steps=grouped_steps, make_python_name=make_python_name)
 
@@ -70,21 +78,30 @@ def print_missing_code(scenarios, steps):
         tw.line()
         tw.line(
             'Scenario is not bound to any test: "{scenario.name}" in feature "{scenario.feature.name}"'
-            ' in {scenario.feature.filename}'.format(scenario=scenario), red=True)
+            " in {scenario.feature.filename}.".format(scenario=scenario), red=True)
 
     if scenario:
-        tw.sep('-', red=True)
+        tw.sep("-", red=True)
 
     for step in steps:
         tw.line()
-        tw.line(
-            'Step is not defined: "{step.name}" in scenario: "{step.scenario.name}" in feature'
-            ' "{step.scenario.feature.name}" in {step.scenario.feature.filename}'.format(step=step), red=True)
+        if step.scenario is not None:
+            tw.line(
+                """Step is not defined: "{step.name}" in scenario: "{step.scenario.name}" in feature"""
+                """ "{step.scenario.feature.name}" in {step.scenario.feature.filename}""".format(step=step),
+                red=True,
+            )
+        elif step.background is not None:
+            tw.line(
+                """Step is not defined: "{step.name}" in feature"""
+                """ "{step.background.feature.name}" in {step.background.feature.filename}""".format(step=step),
+                red=True,
+            )
 
     if step:
-        tw.sep('-', red=True)
+        tw.sep("-", red=True)
 
-    tw.line('Please place the code above to the test file(s):')
+    tw.line("Please place the code above to the test file(s):")
     tw.line()
 
     features = sorted(
@@ -95,7 +112,7 @@ def print_missing_code(scenarios, steps):
     tw.write(code)
 
 
-def _find_step_fixturedef(fixturemanager, item, name, encoding='utf-8'):
+def _find_step_fixturedef(fixturemanager, item, name, encoding="utf-8"):
     """Find step fixturedef.
 
     :param request: PyTest Item object.
@@ -115,9 +132,9 @@ def _find_step_fixturedef(fixturemanager, item, name, encoding='utf-8'):
 def get_features(paths):
     """Get features for given paths.
 
-    :param paths: `list` of paths (file or dirs)
+    :param list paths: `list` of paths (file or dirs)
 
-    :return: `list` of `Feature` objects
+    :return: `list` of `Feature` objects.
     """
     seen_names = set()
     features = []
@@ -126,7 +143,7 @@ def get_features(paths):
             continue
         seen_names.add(path)
         if os.path.isdir(path):
-            features.extend(get_features(glob2.iglob(os.path.join(path, '**', '*.feature'))))
+            features.extend(get_features(glob2.iglob(os.path.join(path, "**", "*.feature"))))
         else:
             base, name = os.path.split(path)
             feature = Feature.get_feature(base, name)
@@ -141,7 +158,7 @@ def parse_feature_files(paths):
     :param paths: `list` of paths (file or dirs)
 
     :return: `list` of `tuple` in form:
-        (`list` of `Feature` objects, `list` of `Scenario` objects, `list` of `Step` objects)
+             (`list` of `Feature` objects, `list` of `Scenario` objects, `list` of `Step` objects).
     """
     features = get_features(paths)
     scenarios = sorted(
@@ -174,15 +191,20 @@ def _show_missing_code_main(config, session):
 
     fm = session._fixturemanager
 
+    if config.option.features is None:
+        tw.line("The --feature parameter is required.", red=True)
+        session.exitstatus = 100
+        return
+
     features, scenarios, steps = parse_feature_files(config.option.features)
 
     for item in session.items:
-        scenario = getattr(item.obj, '__scenario__', None)
+        scenario = getattr(item.obj, "__scenario__", None)
         if scenario:
             if scenario in scenarios:
                 scenarios.remove(scenario)
             for step in scenario.steps:
-                fixturedefs = _find_step_fixturedef(fm, item, step.name, )
+                fixturedefs = _find_step_fixturedef(fm, item, step.name)
                 if fixturedefs:
                     try:
                         steps.remove(step)
@@ -192,5 +214,6 @@ def _show_missing_code_main(config, session):
         for step in scenario.steps:
             steps.remove(step)
     print_missing_code(scenarios, steps)
+
     if scenarios or steps:
         session.exitstatus = 100

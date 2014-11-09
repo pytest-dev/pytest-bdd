@@ -1,4 +1,5 @@
 """Multiline steps tests."""
+
 import re
 import textwrap
 
@@ -7,7 +8,7 @@ import pytest
 from pytest_bdd import given, then, scenario, exceptions
 
 
-@pytest.mark.parametrize(['feature_text', 'expected_text'], [
+@pytest.mark.parametrize(["feature_text", "expected_text"], [
     (
         textwrap.dedent("""
         Scenario: Multiline step using sub indentation
@@ -41,7 +42,6 @@ from pytest_bdd import given, then, scenario, exceptions
 
          Extra
         Lines
-
         """)[1:-1]
     ),
     (
@@ -58,10 +58,9 @@ from pytest_bdd import given, then, scenario, exceptions
         Some
         Extra
         Lines
-
         """)[1:-1]
     ),
-    ])
+])
 def test_multiline(request, tmpdir, feature_text, expected_text):
     file_name = tmpdir.join('test.feature')
     with file_name.open('w') as fd:

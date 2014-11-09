@@ -2,33 +2,33 @@
 
 Example:
 
-@given('I have an article')
+@given("I have an article")
 def article(author):
     return create_test_article(author=author)
 
 
-@when('I go to the article page')
+@when("I go to the article page")
 def go_to_the_article_page(browser, article):
-    browser.visit(urljoin(browser.url, '/articles/{0}/'.format(article.id)))
+    browser.visit(urljoin(browser.url, "/articles/{0}/".format(article.id)))
 
 
-@then('I should not see the error message')
+@then("I should not see the error message")
 def no_error_message(browser):
     with pytest.raises(ElementDoesNotExist):
-        browser.find_by_css('.message.error').first
+        browser.find_by_css(".message.error").first
 
 
 Multiple names for the steps:
 
-@given('I have an article')
-@given('there is an article')
+@given("I have an article")
+@given("there is an article")
 def article(author):
     return create_test_article(author=author)
 
 
 Reusing existing fixtures for a different step name:
 
-given('I have a beautiful article', fixture='article')
+given("I have a beautiful article", fixture="article")
 """
 
 from __future__ import absolute_import
@@ -49,7 +49,7 @@ class StepError(Exception):
 
     """Step declaration error."""
 
-RE_TYPE = type(re.compile(''))
+RE_TYPE = type(re.compile(""))
 
 
 def given(name, fixture=None, converters=None):
@@ -58,7 +58,7 @@ def given(name, fixture=None, converters=None):
     :param name: Given step name.
     :param fixture: Optional name of the fixture to reuse.
     :param converters: Optional `dict` of the argument or parameter converters in form
-    {<param_name>: <converter function>}.
+                       {<param_name>: <converter function>}.
 
     :raises: StepError in case of wrong configuration.
     :note: Can't be used as a decorator when the fixture is specified.
@@ -84,7 +84,7 @@ def when(name, converters=None):
 
     :param name: Step name.
     :param converters: Optional `dict` of the argument or parameter converters in form
-    {<param_name>: <converter function>}.
+                       {<param_name>: <converter function>}.
 
     :raises: StepError in case of wrong configuration.
     """
@@ -96,7 +96,7 @@ def then(name, converters=None):
 
     :param name: Step name.
     :param converters: Optional `dict` of the argument or parameter converters in form
-    {<param_name>: <converter function>}.
+                       {<param_name>: <converter function>}.
 
     :raises: StepError in case of wrong configuration.
     """
@@ -116,15 +116,15 @@ def _not_a_fixture_decorator(func):
 def _step_decorator(step_type, step_name, converters=None):
     """Step decorator for the type and the name.
 
-    :param step_type: Step type (GIVEN, WHEN or THEN).
-    :param step_name: Step name as in the feature file.
+    :param str step_type: Step type (GIVEN, WHEN or THEN).
+    :param str step_name: Step name as in the feature file.
 
     :return: Decorator function for the step.
 
     :raise: StepError if the function doesn't take group names as parameters.
 
     :note: If the step type is GIVEN it will automatically apply the pytest
-    fixture decorator to the step function.
+           fixture decorator to the step function.
     """
     pattern = None
     if isinstance(step_name, RE_TYPE):
@@ -135,7 +135,7 @@ def _step_decorator(step_type, step_name, converters=None):
         step_func = func
 
         if step_type == GIVEN:
-            if not hasattr(func, '_pytestfixturefunction'):
+            if not hasattr(func, "_pytestfixturefunction"):
                 # Avoid multiple wrapping of a fixture
                 func = pytest.fixture(func)
             step_func = lambda request: request.getfuncargvalue(func.__name__)
@@ -158,11 +158,7 @@ def _step_decorator(step_type, step_name, converters=None):
         if converters:
             lazy_step_func.converters = converters
 
-        contribute_to_module(
-            get_caller_module(),
-            step_name,
-            lazy_step_func,
-        )
+        contribute_to_module(get_caller_module(), step_name, lazy_step_func)
         return func
 
     return decorator
@@ -187,11 +183,11 @@ def recreate_function(func, module=None, name=None, add_args=[], firstlineno=Non
             func.func_code = code
 
     argnames = [
-        'co_argcount', 'co_nlocals', 'co_stacksize', 'co_flags', 'co_code', 'co_consts', 'co_names',
-        'co_varnames', 'co_filename', 'co_name', 'co_firstlineno', 'co_lnotab', 'co_freevars', 'co_cellvars',
+        "co_argcount", "co_nlocals", "co_stacksize", "co_flags", "co_code", "co_consts", "co_names",
+        "co_varnames", "co_filename", "co_name", "co_firstlineno", "co_lnotab", "co_freevars", "co_cellvars",
     ]
     if PY3:
-        argnames.insert(1, 'co_kwonlyargcount')
+        argnames.insert(1, "co_kwonlyargcount")
 
     for arg in inspect.getargspec(func).args:
         if arg in add_args:
@@ -200,16 +196,16 @@ def recreate_function(func, module=None, name=None, add_args=[], firstlineno=Non
     args = []
     code = get_code(func)
     for arg in argnames:
-        if module is not None and arg == 'co_filename':
+        if module is not None and arg == "co_filename":
             args.append(module.__file__)
-        elif name is not None and arg == 'co_name':
+        elif name is not None and arg == "co_name":
             args.append(name)
-        elif arg == 'co_argcount':
+        elif arg == "co_argcount":
             args.append(getattr(code, arg) + len(add_args))
-        elif arg == 'co_varnames':
+        elif arg == "co_varnames":
             co_varnames = getattr(code, arg)
             args.append(co_varnames[:code.co_argcount] + tuple(add_args) + co_varnames[code.co_argcount:])
-        elif arg == 'co_firstlineno':
+        elif arg == "co_firstlineno":
             args.append(firstlineno if firstlineno else 1)
         else:
             args.append(getattr(code, arg))
@@ -237,7 +233,7 @@ def get_caller_module(depth=2):
     frame = sys._getframe(depth)
     module = inspect.getmodule(frame)
     if module is None:
-        raise Exception('empty module')
+        raise Exception("empty module")
     return module
 
 

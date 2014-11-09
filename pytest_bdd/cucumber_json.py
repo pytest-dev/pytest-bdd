@@ -1,4 +1,5 @@
 """Cucumber json output formatter."""
+
 import json
 import math
 import os
@@ -13,24 +14,30 @@ if PY3:
     long = int
 
 
-def pytest_addoption(parser):
-    group = parser.getgroup('pytest-bdd')
+def add_options(parser):
+    """Add pytest-bdd options."""
+    group = parser.getgroup("bdd", "Cucumber JSON")
     group.addoption(
-        '--cucumberjson', '--cucumber-json', action='store',
-        dest='cucumber_json_path', metavar='path', default=None,
-        help='create cucumber json style report file at given path.')
+        "--cucumberjson",
+        "--cucumber-json",
+        action="store",
+        dest="cucumber_json_path",
+        metavar="path",
+        default=None,
+        help="create cucumber json style report file at given path.",
+    )
 
 
 def pytest_configure(config):
     cucumber_json_path = config.option.cucumber_json_path
     # prevent opening json log on slave nodes (xdist)
-    if cucumber_json_path and not hasattr(config, 'slaveinput'):
+    if cucumber_json_path and not hasattr(config, "slaveinput"):
         config._bddcucumberjson = LogBDDCucumberJSON(cucumber_json_path)
         config.pluginmanager.register(config._bddcucumberjson)
 
 
 def pytest_unconfigure(config):
-    xml = getattr(config, '_bddcucumberjson', None)
+    xml = getattr(config, "_bddcucumberjson", None)
     if xml is not None:
         del config._bddcucumberjson
         config.pluginmanager.unregister(xml)
@@ -53,38 +60,39 @@ class LogBDDCucumberJSON(object):
 
         :param step: `Step` step we get result for
         :param report: pytest `Report` object
-        :return: `dict` in form {'status': '<passed|failed|skipped>', ['error_message': '<error_message>']}
+        :return: `dict` in form {"status": "<passed|failed|skipped>", ["error_message": "<error_message>"]}
         """
         result = {}
-        if report.passed or not step['failed']:  # ignore setup/teardown
-            result = {'status': 'passed'}
-        elif report.failed and step['failed']:
+        if report.passed or not step["failed"]:  # ignore setup/teardown
+            result = {"status": "passed"}
+        elif report.failed and step["failed"]:
             result = {
-                'status': 'failed',
-                'error_message': force_unicode(report.longrepr) if error_message else '',
+                "status": "failed",
+                "error_message": force_unicode(report.longrepr) if error_message else "",
             }
         elif report.skipped:
-            result = {'status': 'skipped'}
-        result['duration'] = long(math.floor((10 ** 9) * step['duration']))  # nanosec
+            result = {"status": "skipped"}
+        result['duration'] = long(math.floor((10 ** 9) * step["duration"]))  # nanosec
         return result
 
     def _serialize_tags(self, item):
         """Serialize item's tags.
 
         :param item: json-serialized `Scenario` or `Feature`.
-        :return: `list` of `dict` in form [
-            {
-                'name': '<tag>',
-                'line': 2
-            }
-        ]
+        :return: `list` of `dict` in the form of:
+            [
+                {
+                    "name": "<tag>",
+                    "line": 2,
+                }
+            ]
         """
         return [
             {
                 "name": tag,
-                "line": item['line_number'] - 1
+                "line": item["line_number"] - 1
             }
-            for tag in item['tags']
+            for tag in item["tags"]
         ]
 
     def pytest_runtest_logreport(self, report):
@@ -94,7 +102,7 @@ class LogBDDCucumberJSON(object):
             # skip reporting for non-bdd tests
             return
 
-        if not scenario['steps'] or report.when != 'call':
+        if not scenario["steps"] or report.when != "call":
             # skip if there isn't a result or scenario has no steps
             return
 
@@ -109,32 +117,32 @@ class LogBDDCucumberJSON(object):
                 "name": step['name'],
                 "line": step['line_number'],
                 "match": {
-                    "location": ""
+                    "location": "",
                 },
                 "result": self._get_result(step, report, error_message),
             }
 
-        if scenario['feature']['filename'] not in self.features:
-            self.features[scenario['feature']['filename']] = {
+        if scenario["feature"]["filename"] not in self.features:
+            self.features[scenario["feature"]["filename"]] = {
                 "keyword": "Feature",
-                "uri": scenario['feature']['rel_filename'],
-                "name": scenario['feature']['name'] or scenario['feature']['rel_filename'],
-                "id": scenario['feature']['rel_filename'].lower().replace(' ', '-'),
-                "line": scenario['feature']['line_number'],
-                "description": scenario['feature']['description'],
-                "tags": self._serialize_tags(scenario['feature']),
+                "uri": scenario["feature"]["rel_filename"],
+                "name": scenario["feature"]["name"] or scenario["feature"]["rel_filename"],
+                "id": scenario["feature"]["rel_filename"].lower().replace(" ", "-"),
+                "line": scenario['feature']["line_number"],
+                "description": scenario["feature"]["description"],
+                "tags": self._serialize_tags(scenario["feature"]),
                 "elements": [],
             }
 
-        self.features[scenario['feature']['filename']]['elements'].append({
+        self.features[scenario["feature"]["filename"]]["elements"].append({
             "keyword": "Scenario",
-            "id": report.item['name'],
-            "name": scenario['name'],
-            "line": scenario['line_number'],
-            "description": '',
+            "id": report.item["name"],
+            "name": scenario["name"],
+            "line": scenario["line_number"],
+            "description": "",
             "tags": self._serialize_tags(scenario),
             "type": "scenario",
-            "steps": [stepmap(step) for step in scenario['steps']],
+            "steps": [stepmap(step) for step in scenario["steps"]],
         })
 
     def pytest_sessionstart(self):
@@ -145,8 +153,8 @@ class LogBDDCucumberJSON(object):
             logfile_open = py.std.codecs.open
         else:
             logfile_open = open
-        with logfile_open(self.logfile, 'w', encoding='utf-8') as logfile:
+        with logfile_open(self.logfile, "w", encoding="utf-8") as logfile:
             logfile.write(json.dumps(list(self.features.values())))
 
     def pytest_terminal_summary(self, terminalreporter):
-        terminalreporter.write_sep('-', 'generated json file: %s' % (self.logfile))
+        terminalreporter.write_sep("-", "generated json file: %s" % (self.logfile))
