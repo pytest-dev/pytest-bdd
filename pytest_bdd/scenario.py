@@ -283,12 +283,10 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, call
 
         code = """def {name}({function_args}):
             _execute_scenario(feature, scenario, request, encoding)
-            _pytestbdd_function({args})
-        """.format(
+            _pytestbdd_function({args})""".format(
             name=_pytestbdd_function.__name__,
             function_args=", ".join(function_args),
-            args=", ".join(args)
-        )
+            args=", ".join(args))
 
         execute(code, g)
 
