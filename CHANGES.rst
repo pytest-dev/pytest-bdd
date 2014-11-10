@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+2.5.0
+-----
 
 - Fix multiline steps in the Background section (bubenkoff, arpe)
 - Code cleanup (olegpidsadnyi)
