@@ -1,6 +1,5 @@
 % if features:
 """${ features[0].name or features[0].rel_filename } feature tests."""
-from functools import partial
 
 from pytest_bdd import (
     given,

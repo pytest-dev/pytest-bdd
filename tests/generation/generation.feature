@@ -1,5 +1,8 @@
 Feature: Missing code generation
 
+    Background:
+        Given I have a foobar
+
     Scenario: Scenario tests which are already bound to the tests stay as is
         Given I have a bar
 

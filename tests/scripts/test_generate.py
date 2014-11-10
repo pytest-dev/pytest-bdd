@@ -15,7 +15,6 @@ def test_generate(monkeypatch, capsys):
     out, err = capsys.readouterr()
     assert out == textwrap.dedent('''
     """Code generation feature tests."""
-    from functools import partial
 
     from pytest_bdd import (
         given,

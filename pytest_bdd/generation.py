@@ -77,8 +77,10 @@ def print_missing_code(scenarios, steps):
     for scenario in scenarios:
         tw.line()
         tw.line(
-            'Scenario is not bound to any test: "{scenario.name}" in feature "{scenario.feature.name}"'
-            " in {scenario.feature.filename}.".format(scenario=scenario), red=True)
+            'Scenario "{scenario.name}" is not bound to any test in the feature "{scenario.feature.name}"'
+            " in the file {scenario.feature.filename}:{scenario.line_number}".format(scenario=scenario),
+            red=True,
+        )
 
     if scenario:
         tw.sep("-", red=True)
@@ -87,14 +89,16 @@ def print_missing_code(scenarios, steps):
         tw.line()
         if step.scenario is not None:
             tw.line(
-                """Step is not defined: "{step.name}" in scenario: "{step.scenario.name}" in feature"""
-                """ "{step.scenario.feature.name}" in {step.scenario.feature.filename}""".format(step=step),
+                """Step "{step.name}" is not defined in the scenario "{step.scenario.name}" in the feature"""
+                """ "{step.scenario.feature.name}" in the file"""
+                """ {step.scenario.feature.filename}:{step.line_number}""".format(step=step),
                 red=True,
             )
         elif step.background is not None:
             tw.line(
-                """Step is not defined: "{step.name}" in feature"""
-                """ "{step.background.feature.name}" in {step.background.feature.filename}""".format(step=step),
+                """Step "{step.name}" is not defined in the background of the feature"""
+                """ "{step.background.feature.name}" in the file"""
+                """ {step.background.feature.filename}:{step.line_number}""".format(step=step),
                 red=True,
             )
 
@@ -166,8 +170,9 @@ def parse_feature_files(paths):
         key=lambda scenario: (
             scenario.feature.name or scenario.feature.filename, scenario.name))
     steps = sorted(
-        itertools.chain.from_iterable(scenario.steps for scenario in scenarios),
-        key=lambda step: step.name)
+        set(itertools.chain.from_iterable(scenario.steps for scenario in scenarios)),
+        key=lambda step: step.name,
+    )
     return features, scenarios, steps
 
 
@@ -212,7 +217,8 @@ def _show_missing_code_main(config, session):
                         pass
     for scenario in scenarios:
         for step in scenario.steps:
-            steps.remove(step)
+            if step.background is None:
+                steps.remove(step)
     print_missing_code(scenarios, steps)
 
     if scenarios or steps:
