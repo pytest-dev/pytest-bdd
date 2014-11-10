@@ -1,6 +1,10 @@
 """Pytest-bdd pytest hooks."""
 
 
+def pytest_bdd_before_scenario(request, feature, scenario):
+    """Called before scenario is executed."""
+
+
 def pytest_bdd_before_step(request, feature, scenario, step, step_func):
     """Called before step function is executed."""
 

@@ -37,10 +37,10 @@ class FeatureError(Exception):
 
     """Feature parse error."""
 
-    message = u'{0}.\nLine number: {1}.\nLine: {2}.\nFile: {3}'
+    message = u"{0}.\nLine number: {1}.\nLine: {2}.\nFile: {3}"
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return unicode(self).encode("utf-8")
 
     def __unicode__(self):
         return self.message.format(*self.args)
@@ -51,28 +51,29 @@ features = {}
 
 
 STEP_PREFIXES = [
-    ('Feature: ', types.FEATURE),
-    ('Scenario Outline: ', types.SCENARIO_OUTLINE),
-    ('Examples: Vertical', types.EXAMPLES_VERTICAL),
-    ('Examples:', types.EXAMPLES),
-    ('Scenario: ', types.SCENARIO),
-    ('Background:', types.BACKGROUND),
-    ('Given ', types.GIVEN),
-    ('When ', types.WHEN),
-    ('Then ', types.THEN),
-    ('@', types.TAG),
-    ('And ', None),  # Unknown step type,
+    ("Feature: ", types.FEATURE),
+    ("Scenario Outline: ", types.SCENARIO_OUTLINE),
+    ("Examples: Vertical", types.EXAMPLES_VERTICAL),
+    ("Examples:", types.EXAMPLES),
+    ("Scenario: ", types.SCENARIO),
+    ("Background:", types.BACKGROUND),
+    ("Given ", types.GIVEN),
+    ("When ", types.WHEN),
+    ("Then ", types.THEN),
+    ("@", types.TAG),
+    ("And ", None),  # Unknown step type,
 ]
 
-COMMENT_SYMBOLS = '#'
+COMMENT_SYMBOLS = "#"
 
-STEP_PARAM_RE = re.compile('\<(.+?)\>')
+STEP_PARAM_RE = re.compile("\<(.+?)\>")
 
 
 def get_step_type(line):
     """Detect step type by the beginning of the line.
 
-    :param line: Line of the Feature file
+    :param str line: Line of the Feature file.
+
     :return: SCENARIO, GIVEN, WHEN, THEN, or `None` if can't be detected.
     """
     for prefix, _type in STEP_PREFIXES:
@@ -80,15 +81,11 @@ def get_step_type(line):
             return _type
 
 
-def get_step_params(name):
-    """Return step parameters."""
-    return tuple(frozenset(STEP_PARAM_RE.findall(name)))
-
-
 def strip_comments(line):
     """Remove comments.
 
-    :param line: Line of the Feature file.
+    :param str line: Line of the Feature file.
+
     :return: Stripped line.
     """
     try:
@@ -103,26 +100,34 @@ def parse_line(line):
 
     :param line: Line of the Feature file.
 
-    :return: `tuple` in form ('<prefix>', '<Line without the prefix>').
+    :return: `tuple` in form ("<prefix>", "<Line without the prefix>").
     """
     for prefix, _ in STEP_PREFIXES:
         if line.startswith(prefix):
             return prefix.strip(), line[len(prefix):].strip()
-    return '', line
+    return "", line
 
 
 def _open_file(filename, encoding):
+    """Open file for reading (Python compatibility function).
+
+    :param str filename: File name.
+    :param str encoding: Encoding.
+
+    :return: File object.
+    """
     if sys.version_info < (3, 0):
-        return open(filename, 'r')
+        return open(filename, "r")
     else:
-        return open(filename, 'r', encoding=encoding)
+        return open(filename, "r", encoding=encoding)
 
 
-def force_unicode(obj, encoding='utf-8'):
+def force_unicode(obj, encoding="utf-8"):
     """Get the unicode string out of given object (python 2 and python 3).
 
-    :param obj: `object`, usually a string
-    :return: unicode string
+    :param obj: An `object`, usually a string.
+
+    :return: unicode string.
     """
     if sys.version_info < (3, 0):
         if isinstance(obj, str):
@@ -133,7 +138,14 @@ def force_unicode(obj, encoding='utf-8'):
         return str(obj)
 
 
-def force_encode(string, encoding='utf-8'):
+def force_encode(string, encoding="utf-8"):
+    """Force string encoding (Python compatibility function).
+
+    :param str string: A string value.
+    :param str encoding: Encoding.
+
+    :return: Encoded string.
+    """
     if sys.version_info < (3, 0):
         if isinstance(string, unicode):
             string = string.encode(encoding)
@@ -141,12 +153,14 @@ def force_encode(string, encoding='utf-8'):
 
 
 def get_tags(line):
-    """Get tags out of the given line."""
+    """Get tags out of the given line.
+
+    :param str line: Feature file text line.
+
+    :return: List of tags.
+    """
     return (
-        set((
-            tag
-            for tag in line.split()
-            if tag.startswith('@') and len(tag) > 1))
+        set((tag for tag in line.split() if tag.startswith("@") and len(tag) > 1))
         if line else set()
     )
 
@@ -155,11 +169,12 @@ class Feature(object):
 
     """Feature."""
 
-    def __init__(self, basedir, filename, encoding='utf-8'):
+    def __init__(self, basedir, filename, encoding="utf-8"):
         """Parse the feature file.
 
-        :param filename: Relative path to the feature file.
-
+        :param str basedir: Feature files base directory.
+        :param str filename: Relative path to the feature file.
+        :param str encoding: Feature file encoding (utf-8 by default).
         """
         self.scenarios = {}
         self.rel_filename = op.join(op.basename(basedir), filename)
@@ -174,7 +189,7 @@ class Feature(object):
         step = None
         multiline_step = False
         prev_line = None
-        background = None
+        self.background = None
 
         with _open_file(filename, encoding) as f:
             content = force_unicode(f.read(), encoding)
@@ -197,16 +212,16 @@ class Feature(object):
 
                 if mode == types.GIVEN and prev_mode not in (
                         types.GIVEN, types.SCENARIO, types.SCENARIO_OUTLINE, types.BACKGROUND):
-                    raise FeatureError('Given steps must be the first in withing the Scenario',
+                    raise FeatureError("Given steps must be the first in withing the Scenario",
                                        line_number, clean_line, filename)
 
                 if mode == types.WHEN and prev_mode not in (
                         types.SCENARIO, types.SCENARIO_OUTLINE, types.GIVEN, types.WHEN):
-                    raise FeatureError('When steps must be the first or follow Given steps',
+                    raise FeatureError("When steps must be the first or follow Given steps",
                                        line_number, clean_line, filename)
 
-                if not background and mode == types.THEN and prev_mode not in (types.GIVEN, types.WHEN, types.THEN):
-                    raise FeatureError('Then steps must follow Given or When steps',
+                if not self.background and mode == types.THEN and prev_mode not in types.STEP_TYPES:
+                    raise FeatureError("Then steps must follow Given or When steps",
                                        line_number, clean_line, filename)
 
                 if mode == types.FEATURE:
@@ -224,47 +239,52 @@ class Feature(object):
                 if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
                     tags = get_tags(prev_line)
                     self.scenarios[parsed_line] = scenario = Scenario(self, parsed_line, line_number, tags=tags)
-                    if background:
-                        scenario.set_background(background)
                 elif mode == types.BACKGROUND:
-                    background = Background(self, line_number)
+                    self.background = Background(
+                        feature=self,
+                        line_number=line_number,
+                    )
                 elif mode == types.EXAMPLES:
                     mode = types.EXAMPLES_HEADERS
                 elif mode == types.EXAMPLES_VERTICAL:
                     mode = types.EXAMPLE_LINE_VERTICAL
                 elif mode == types.EXAMPLES_HEADERS:
-                    scenario.set_param_names([l.strip() for l in parsed_line.split('|')[1:-1] if l.strip()])
+                    scenario.set_param_names([l.strip() for l in parsed_line.split("|")[1:-1] if l.strip()])
                     mode = types.EXAMPLE_LINE
                 elif mode == types.EXAMPLE_LINE:
-                    scenario.add_example([l.strip() for l in stripped_line.split('|')[1:-1]])
+                    scenario.add_example([l.strip() for l in stripped_line.split("|")[1:-1]])
                 elif mode == types.EXAMPLE_LINE_VERTICAL:
-                    param_line_parts = [l.strip() for l in stripped_line.split('|')[1:-1]]
+                    param_line_parts = [l.strip() for l in stripped_line.split("|")[1:-1]]
                     scenario.add_example_row(param_line_parts[0], param_line_parts[1:])
                 elif mode and mode not in (types.FEATURE, types.TAG):
-                    if background and mode == types.GIVEN and not scenario:
-                        target = background
+                    step = Step(
+                        name=parsed_line,
+                        type=mode,
+                        indent=line_indent,
+                        line_number=line_number,
+                        keyword=keyword,
+                    )
+                    if self.background and mode == types.GIVEN and not scenario:
+                        target = self.background
                     else:
                         target = scenario
-                    step = target.add_step(
-                        step_name=parsed_line, step_type=mode, indent=line_indent, line_number=line_number,
-                        keyword=keyword)
+                    target.add_step(step)
                 prev_line = clean_line
 
-        self.description = u'\n'.join(description)
+        self.description = u"\n".join(description)
 
     @classmethod
-    def get_feature(cls, base_path, filename, encoding='utf-8'):
+    def get_feature(cls, base_path, filename, encoding="utf-8"):
         """Get a feature by the filename.
 
-        :param base_path: Base feature directory.
-        :param filename: Filename of the feature file.
+        :param str base_path: Base feature directory.
+        :param str filename: Filename of the feature file.
 
         :return: `Feature` instance from the parsed feature cache.
 
         :note: The features are parsed on the execution of the test and
-            stored in the global variable cache to improve the performance
-            when multiple scenarios are referencing the same file.
-
+               stored in the global variable cache to improve the performance
+               when multiple scenarios are referencing the same file.
         """
         full_name = op.abspath(op.join(base_path, filename))
         feature = features.get(full_name)
@@ -279,10 +299,17 @@ class Scenario(object):
     """Scenario."""
 
     def __init__(self, feature, name, line_number, example_converters=None, tags=None):
+        """Scenario constructor.
+
+        :param pytest_bdd.feature.Feature feature: Feature.
+        :param str name: Scenario name.
+        :param int line_number: Scenario line number.
+        :param dict example_converters: Example table parameter converters.
+        :param set tags: Set of tags.
+        """
         self.feature = feature
         self.name = name
-        self.params = set()
-        self.steps = []
+        self._steps = []
         self.example_params = []
         self.examples = []
         self.vertical_examples = []
@@ -292,44 +319,46 @@ class Scenario(object):
         self.failed = False
         self.test_function = None
 
-    def add_step(self, step_name, step_type, indent, line_number, keyword):
+    def add_step(self, step):
         """Add step to the scenario.
 
-        :param step_name: Step name.
-        :param step_type: Step type.
-        :param indent: `int` step text indent
-        :param line_number: `int` line number
-        :param keyword: `str` step keyword
+        :param pytest_bdd.feature.Step step: Step.
         """
-        params = get_step_params(step_name)
-        self.params.update(params)
-        step = Step(
-            name=step_name, type=step_type, params=params, scenario=self, indent=indent, line_number=line_number,
-            keyword=keyword)
-        self.steps.append(step)
-        return step
+        step.scenario = self
+        self._steps.append(step)
 
-    def set_background(self, background):
-        """Set scenario background.
+    @property
+    def steps(self):
+        """Get scenario steps including background steps.
 
-        :param background: `Background` background.
+        :return: List of steps.
         """
-        for kwargs in background.steps:
-            self.add_step(**kwargs)
+        result = []
+        if self.feature.background:
+            result.extend(self.feature.background.steps)
+        result.extend(self._steps)
+        return result
+
+    @property
+    def params(self):
+        """Get parameter names.
+
+        :return: Parameter names.
+        :rtype: frozenset
+        """
+        return frozenset(sum((list(step.params) for step in self.steps), []))
 
     def set_param_names(self, keys):
         """Set parameter names.
 
-        :param names: `list` of `string` parameter names
-
+        :param names: `list` of `string` parameter names.
         """
         self.example_params = [str(key) for key in keys]
 
     def add_example(self, values):
         """Add example.
 
-        :param values: `list` of `string` parameter values
-
+        :param values: `list` of `string` parameter values.
         """
         self.examples.append(values)
 
@@ -338,7 +367,6 @@ class Scenario(object):
 
         :param param: `str` parameter name
         :param values: `list` of `string` parameter values
-
         """
         if param in self.example_params:
             raise exceptions.ScenarioExamplesNotValidError(
@@ -374,14 +402,14 @@ class Scenario(object):
     def validate(self):
         """Validate the scenario.
 
-        :raises: `ScenarioValidationError`
-
+        :raises ScenarioValidationError: when scenario is not valid
         """
-        if self.params and self.example_params and self.params != set(self.example_params):
+        params = self.params
+        if params and self.example_params and params != set(self.example_params):
             raise exceptions.ScenarioExamplesNotValidError(
                 """Scenario "{0}" in the feature "{1}" has not valid examples. """
                 """Set of step parameters {2} should match set of example values {3}.""".format(
-                    self.name, self.feature.filename, sorted(self.params), sorted(self.example_params),
+                    self.name, self.feature.filename, sorted(params), sorted(self.example_params),
                 )
             )
 
@@ -390,44 +418,66 @@ class Step(object):
 
     """Step."""
 
-    def __init__(self, name, type, params, scenario, indent, line_number, keyword):
+    def __init__(self, name, type, indent, line_number, keyword):
+        """Step constructor.
+
+        :param str name: step name.
+        :param str type: step type.
+        :param int indent: step text indent.
+        :param int line_number: line number.
+        :param str keyword: step keyword.
+        """
         self.name = name
         self.keyword = keyword
         self.lines = []
         self.indent = indent
         self.type = type
-        self.params = params
-        self.scenario = scenario
         self.line_number = line_number
         self.failed = False
         self.start = 0
         self.stop = 0
+        self.scenario = None
+        self.background = None
 
     def add_line(self, line):
-        """Add line to the multiple step."""
+        """Add line to the multiple step.
+
+        :param str line: Line of text - the continuation of the step name.
+        """
         self.lines.append(line)
 
     @property
     def name(self):
-        return '\n'.join([self._name] + ([textwrap.dedent('\n'.join(self.lines))] if self.lines else []))
+        """Get step name."""
+        lines = [self._name] + ([textwrap.dedent("\n".join(self.lines))] if self.lines else [])
+        return "\n".join(lines).strip()
 
     @name.setter
     def name(self, value):
+        """Set step name."""
         self._name = value
+
+    @property
+    def params(self):
+        """Get step params."""
+        return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
 
 class Background(object):
 
     """Background."""
 
-    scenario = None
-
     def __init__(self, feature, line_number):
+        """Background constructor.
+
+        :param pytest_bdd.feature.Feature feature: Feature.
+        :param int line_number: Line number.
+        """
         self.feature = feature
         self.line_number = line_number
         self.steps = []
 
-    def add_step(self, **kwargs):
-        """Add step to the background.
-        """
-        self.steps.append(kwargs)
+    def add_step(self, step):
+        """Add step to the background."""
+        step.background = self
+        self.steps.append(step)

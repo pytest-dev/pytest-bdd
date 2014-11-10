@@ -90,7 +90,7 @@ def test_multiple_given(request):
 
 def test_step_hooks(testdir):
     """When step fails."""
-    testdir.makefile('.feature', test="""
+    testdir.makefile(".feature", test="""
     Scenario: When step has hook on failure
         Given I have a bar
         When it fails
