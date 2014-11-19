@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.5.1
+-----
+
+- Fix error report serialization (olegpidsadnyi)
+
+
 2.5.0
 -----
 

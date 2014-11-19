@@ -13,6 +13,9 @@ class StepReport(object):
 
     """Step excecution report."""
 
+    failed = False
+    stopped = None
+
     def __init__(self, step):
         """Step report constructor.
 
@@ -49,8 +52,11 @@ class StepReport(object):
         """Step excecution duration.
 
         :return: Step excecution duration.
-        :rtype: int
+        :rtype: float
         """
+        if self.stopped is None:
+            return 0
+
         return self.stopped - self.started
 
 
