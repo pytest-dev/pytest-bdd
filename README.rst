@@ -564,12 +564,30 @@ About background best practices, please read
 Reusing fixtures
 ----------------
 
-Sometimes scenarios define new names for the fixture that can be
-inherited. Fixtures can be reused with other names using given():
+Sometimes scenarios define new names for the existing fixture that can be
+inherited (reused). For example, if we have pytest fixture:
+
+.. code-block:: python
+
+@pytest.fixture
+def article():
+   """Test article."""
+   return Article()
+
+Then this fixture can be reused with other names using given():
 
 .. code-block:: python
 
     given('I have beautiful article', fixture='article')
+
+This will be equivalent to:
+
+.. code-block:: python
+
+@given('I have beautiful article')
+def i_have_an_article(article):
+   """I have an article."""
+   return article
 
 
 Reusing steps
