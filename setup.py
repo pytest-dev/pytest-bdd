@@ -31,14 +31,15 @@ dirname = os.path.dirname(__file__)
 
 long_description = (
     codecs.open(os.path.join(dirname, "README.rst"), encoding="utf-8").read() + "\n" +
-    codecs.open(os.path.join(dirname, "CHANGES.rst"), encoding="utf-8").read()
+    codecs.open(os.path.join(dirname, "CHANGES.rst"), encoding="utf-8").read() + "\n" +
+    codecs.open(os.path.join(dirname, "AUTHORS.rst"), encoding="utf-8").read()
 )
 
 setup(
     name="pytest-bdd",
     description="BDD for pytest",
     long_description=long_description,
-    author="Oleg Pidsadnyi",
+    author="Oleg Pidsadnyi, Anatoly Bubenkov and others",
     license="MIT license",
     author_email="oleg.pidsadnyi@gmail.com",
     url="https://github.com/olegpidsadnyi/pytest-bdd",

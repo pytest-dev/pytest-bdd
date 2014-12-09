@@ -863,4 +863,4 @@ License
 
 This software is licensed under the `MIT license <http://en.wikipedia.org/wiki/MIT_License>`_.
 
-© 2013 Oleg Pidsadnyi
+© 2013-2014 Oleg Pidsadnyi, Anatoly Bubenkov and others
