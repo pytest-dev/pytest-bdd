@@ -39,13 +39,13 @@ def test_generate(monkeypatch, capsys):
         """I have an empty list."""
 
 
-    @then('my list should be [1]')
-    def my_list_should_be_1():
-        """my list should be [1]."""
-
-
     @when('I use this fixture')
     def i_use_this_fixture():
         """I use this fixture."""
+
+
+    @then('my list should be [1]')
+    def my_list_should_be_1():
+        """my list should be [1]."""
 
     '''[1:].replace(u"'", u"'"))

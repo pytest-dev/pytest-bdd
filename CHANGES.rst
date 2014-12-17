@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Fix code generation steps ordering (bubenkoff)
+
+
 2.5.1
 -----
 
