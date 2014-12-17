@@ -13,6 +13,7 @@ from .scenario import (
     find_argumented_step_fixture_name,
     force_encode
 )
+from .types import STEP_TYPES
 
 PYTHON_REPLACE_REGEX = re.compile("\W")
 
@@ -187,6 +188,7 @@ def group_steps(steps):
         if step.name not in seen_steps:
             grouped_steps.append(step)
             seen_steps.add(step.name)
+    grouped_steps.sort(key=lambda step: STEP_TYPES.index(step.type))
     return grouped_steps
 
 
@@ -219,7 +221,8 @@ def _show_missing_code_main(config, session):
         for step in scenario.steps:
             if step.background is None:
                 steps.remove(step)
-    print_missing_code(scenarios, steps)
+    grouped_steps = group_steps(steps)
+    print_missing_code(scenarios, grouped_steps)
 
     if scenarios or steps:
         session.exitstatus = 100
