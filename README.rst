@@ -570,7 +570,6 @@ inherited (reused). For example, if we have pytest fixture:
 
 .. code-block:: python
 
-
     @pytest.fixture
     def article():
        """Test article."""
@@ -587,7 +586,6 @@ This will be equivalent to:
 
 
 .. code-block:: python
-
 
     @given('I have beautiful article')
     def i_have_an_article(article):
