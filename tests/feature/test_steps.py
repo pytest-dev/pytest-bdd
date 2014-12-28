@@ -153,6 +153,12 @@ def test_step_hooks(testdir):
     reprec = testdir.inline_run("-k test_when_fails")
     assert reprec.ret == 1
 
+    calls = reprec.getcalls("pytest_bdd_before_scenario")
+    assert calls[0].request
+
+    calls = reprec.getcalls("pytest_bdd_after_scenario")
+    assert calls[0].request
+
     calls = reprec.getcalls("pytest_bdd_before_step")
     assert calls[0].request
 

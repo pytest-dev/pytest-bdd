@@ -730,6 +730,11 @@ Hooks
 pytest-bdd exposes several pytest `hooks <http://pytest.org/latest/plugins.html#well-specified-hooks>`_
 which might be helpful building useful reporting, visualization, etc on top of it:
 
+* pytest_bdd_before_scenario(request, feature, scenario) - Called before scenario is executed
+
+* pytest_bdd_after_scenario(request, feature, scenario) - Called after scenario is executed
+  (even if one of steps has failed)
+
 * pytest_bdd_before_step(request, feature, scenario, step, step_func) - Called before step function
   is executed and it's arguments evaluated
 
