@@ -185,49 +185,56 @@ def _execute_scenario(feature, scenario, request, encoding, example=None):
         scenario=scenario,
     )
 
-    givens = set()
-    # Execute scenario steps
-    for step in scenario.steps:
-        try:
-            step_func = _find_step_function(request, step, scenario, encoding=encoding)
-        except exceptions.StepDefinitionNotFoundError as exception:
-            request.config.hook.pytest_bdd_step_func_lookup_error(
-                request=request,
-                feature=feature,
-                scenario=scenario,
-                step=step,
-                exception=exception,
-            )
-            raise
-
-        try:
-            # Check the step types are called in the correct order
-            if step_func.step_type != step.type:
-                raise exceptions.StepTypeError(
-                    'Wrong step type "{0}" while "{1}" is expected.'.format(step_func.step_type, step.type)
+    try:
+        givens = set()
+        # Execute scenario steps
+        for step in scenario.steps:
+            try:
+                step_func = _find_step_function(request, step, scenario, encoding=encoding)
+            except exceptions.StepDefinitionNotFoundError as exception:
+                request.config.hook.pytest_bdd_step_func_lookup_error(
+                    request=request,
+                    feature=feature,
+                    scenario=scenario,
+                    step=step,
+                    exception=exception,
                 )
+                raise
 
-            # Check if the fixture that implements given step has not been yet used by another given step
-            if step.type == GIVEN:
-                if step_func.fixture in givens:
-                    raise exceptions.GivenAlreadyUsed(
-                        u'Fixture "{0}" that implements this "{1}" given step has been already used.'.format(
-                            step_func.fixture, step.name,
-                        )
+            try:
+                # Check the step types are called in the correct order
+                if step_func.step_type != step.type:
+                    raise exceptions.StepTypeError(
+                        'Wrong step type "{0}" while "{1}" is expected.'.format(step_func.step_type, step.type)
                     )
-                givens.add(step_func.fixture)
-        except exceptions.ScenarioValidationError as exception:
-            request.config.hook.pytest_bdd_step_validation_error(
-                request=request,
-                feature=feature,
-                scenario=scenario,
-                step=step,
-                step_func=step_func,
-                exception=exception,
-            )
-            raise
 
-        _execute_step_function(request, scenario, step, step_func, example=example)
+                # Check if the fixture that implements given step has not been yet used by another given step
+                if step.type == GIVEN:
+                    if step_func.fixture in givens:
+                        raise exceptions.GivenAlreadyUsed(
+                            u'Fixture "{0}" that implements this "{1}" given step has been already used.'.format(
+                                step_func.fixture, step.name,
+                            )
+                        )
+                    givens.add(step_func.fixture)
+            except exceptions.ScenarioValidationError as exception:
+                request.config.hook.pytest_bdd_step_validation_error(
+                    request=request,
+                    feature=feature,
+                    scenario=scenario,
+                    step=step,
+                    step_func=step_func,
+                    exception=exception,
+                )
+                raise
+
+            _execute_step_function(request, scenario, step, step_func, example=example)
+    finally:
+        request.config.hook.pytest_bdd_after_scenario(
+            request=request,
+            feature=feature,
+            scenario=scenario,
+        )
 
 
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])

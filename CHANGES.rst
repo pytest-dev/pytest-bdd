@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.5.3
+-----
+
+- Add after scenario hook, document both before and after scenario hooks (bubenkoff)
+
+
 2.5.2
 -----
 
