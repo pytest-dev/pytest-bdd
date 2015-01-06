@@ -69,9 +69,12 @@ setup(
     ] + [("Programming Language :: Python :: %s" % x) for x in "2.6 2.7 3.0 3.1 3.2 3.3 3.4".split()],
     cmdclass={"test": ToxTestCommand},
     install_requires=[
-        "pytest>=2.6.0",
         "glob2",
         "Mako",
+        "parse",
+        "parse_type",
+        "pytest>=2.6.0",
+        "six",
     ],
     # the following makes a plugin available to py.test
     entry_points={

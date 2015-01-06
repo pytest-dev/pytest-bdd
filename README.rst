@@ -23,6 +23,8 @@ mentioned in the feature steps with dependency injection, which allows a true BD
 just-enough specification of the requirements without maintaining any context object
 containing the side effects of the Gherkin imperative declarations.
 
+.. _behave: https://pypi.python.org/pypi/behave
+.. _pytest-splinter: https://github.com/paylogic/pytest-splinter
 
 Install pytest-bdd
 ------------------
@@ -36,7 +38,7 @@ Example
 -------
 
 An example test for a blog hosting software could look like this.
-Note that `pytest-splinter <https://github.com/paylogic/pytest-splinter>`_ is used to get the browser fixture.
+Note that pytest-splinter_ is used to get the browser fixture.
 
 publish_article.feature:
 
@@ -130,7 +132,62 @@ Step arguments
 Often it's possible to reuse steps giving them a parameter(s).
 This allows to have single implementation and multiple use, so less code.
 Also opens the possibility to use same step twice in single scenario and with different arguments!
-Important thing that argumented step names are not just strings but regular expressions.
+And even more, there are several types of step parameter parsers at your disposal
+(idea taken from behave_ implementation):
+
+.. _pypi_parse: http://pypi.python.org/pypi/parse
+.. _pypi_parse_type: http://pypi.python.org/pypi/parse_type
+
+**string** (the default)
+    This is the default and can be considered as a `null` or `exact` parser. It parses no parameters
+    and matches the step name by equality of strings.
+**parse** (based on: pypi_parse_)
+    Provides a simple parser that replaces regular expressions for
+    step parameters with a readable syntax like ``{param:Type}``.
+    The syntax is inspired by the Python builtin ``string.format()``
+    function.
+    Step parameters must use the named fields syntax of pypi_parse_
+    in step definitions. The named fields are extracted,
+    optionally type converted and then used as step function arguments.
+    Supports type conversions by using type converters passed via `extra_types`
+**cfparse** (extends: pypi_parse_, based on: pypi_parse_type_)
+    Provides an extended parser with "Cardinality Field" (CF) support.
+    Automatically creates missing type converters for related cardinality
+    as long as a type converter for cardinality=1 is provided.
+    Supports parse expressions like:
+    * ``{values:Type+}`` (cardinality=1..N, many)
+    * ``{values:Type*}`` (cardinality=0..N, many0)
+    * ``{value:Type?}``  (cardinality=0..1, optional)
+    Supports type conversions (as above).
+**re**
+    This uses full regular expressions to parse the clause text. You will
+    need to use named groups "(?P<name>...)" to define the variables pulled
+    from the text and passed to your ``step()`` function.
+    Type conversion can only be done via `converters` step decorator argument (see example below).
+
+The default parser is `parse`, so you have to do nothing in addition to use it.
+Parsers, as well as their optional arguments are specified like:
+
+for `cfparse` parser
+
+.. code-block:: python
+
+    from pytest_bdd import parsers
+
+    @given(parsers.cfparse('there are {start:Number} cucumbers', extra_types=dict(Number=int)))
+    def start_cucumbers(start):
+        return dict(start=start, eat=0)
+
+for `re` parser
+
+.. code-block:: python
+
+    from pytest_bdd import parsers
+
+    @given(parsers.re(r'there are (?P<start>\d+) cucumbers'), converters=dict(start=int))
+    def start_cucumbers(start):
+        return dict(start=start, eat=0)
+
 
 Example:
 
@@ -150,7 +207,7 @@ The code will look like:
 .. code-block:: python
 
     import re
-    from pytest_bdd import scenario, given, when, then
+    from pytest_bdd import scenario, given, when, then, parsers
 
 
     @scenario('arguments.feature', 'Arguments for given, when, thens')
@@ -158,29 +215,63 @@ The code will look like:
         pass
 
 
-    @given(re.compile('there are (?P<start>\d+) cucumbers'), converters=dict(start=int))
+    @given(parsers.parse('there are {start:d} cucumbers'))
     def start_cucumbers(start):
         return dict(start=start, eat=0)
 
 
-    @when(re.compile('I eat (?P<eat>\d+) cucumbers'), converters=dict(eat=int))
+    @when(parsers.parse('I eat {eat:d} cucumbers'))
     def eat_cucumbers(start_cucumbers, eat):
         start_cucumbers['eat'] += eat
 
 
-    @then(re.compile('I should have (?P<left>\d+) cucumbers'), converters=dict(left=int))
+    @then(parsers.parse('I should have {left:d} cucumbers'))
     def should_have_left_cucumbers(start_cucumbers, start, left):
         assert start_cucumbers['start'] == start
         assert start - start_cucumbers['eat'] == left
 
-Example code also shows possibility to pass argument converters which may be useful if you need argument types
-different than strings.
+Example code also shows possibility to pass argument converters which may be useful if you need to postprocess step
+arguments after the parser.
+
+You can implement your own step parser. It's interface is quite simple. The code can looks like:
+
+
+.. code-block:: python
+
+    import re
+
+    from pytest_bdd import given, parsers
+
+    class MyParser(parsers.StepParser):
+
+        """Custom parser."""
+
+        def __init__(self, name, **kwargs):
+            """Compile regex."""
+            super(re, self).__init__(name)
+            self.regex = re.compile(re.sub('%(.+)%', '(?P<\1>.+)', self.name), **kwargs)
+
+        def parse_arguments(self, name):
+            """Get step arguments.
+
+            :return: `dict` of step arguments
+            """
+            return self.regex.match(name).groupdict()
+
+        def is_matching(self, name):
+            """Match given name with the step name."""
+            return bool(self.regex.match(name))
+
+    @given(parsers.parse('there are %start% cucumbers'))
+    def start_cucumbers(start):
+        return dict(start=start, eat=0)
 
 
 Multiline steps
 ---------------
 
-As Gherkin, pytest-bdd supports multiline steps (aka `PyStrings <http://docs.behat.org/guides/1.gherkin.html#pystrings>`_).
+As Gherkin, pytest-bdd supports multiline steps
+(aka `PyStrings <http://docs.behat.org/guides/1.gherkin.html#pystrings>`_).
 But in much cleaner and powerful way:
 
 .. code-block:: gherkin
@@ -245,8 +336,8 @@ Scenario outlines
 
 Scenarios can be parametrized to cover few cases. In Gherkin the variable
 templates are written using corner braces as <somevalue>.
-`Scenario outlines <http://docs.behat.org/guides/1.gherkin.html#scenario-outlines>`_ are supported by pytest-bdd
-exactly as it's described in be behave docs.
+`Gherkin scenario outlines <http://docs.behat.org/guides/1.gherkin.html#scenario-outlines>`_ are supported by pytest-bdd
+exactly as it's described in be behave_ docs.
 
 Example:
 
@@ -532,7 +623,7 @@ Backgrounds
 
 It's often the case that to cover certain feature, you'll need multiple scenarios. And it's logical that the
 setup for those scenarios will have some common parts (if not equal). For this, there are `backgrounds`.
-pytest-bdd implements gherkin `backgrounds <http://docs.behat.org/en/v2.5/guides/1.gherkin.html#backgrounds>`_ for
+pytest-bdd implements `Gherkin backgrounds <http://docs.behat.org/en/v2.5/guides/1.gherkin.html#backgrounds>`_ for
 features.
 
 .. code-block:: gherkin
@@ -721,13 +812,14 @@ test_publish_article.py:
         pass
 
 
-You can learn more about `functools.partial <http://docs.python.org/2/library/functools.html#functools.partial>`_ in the Python docs.
+You can learn more about `functools.partial <http://docs.python.org/2/library/functools.html#functools.partial>`_
+in the Python docs.
 
 
 Hooks
 -----
 
-pytest-bdd exposes several pytest `hooks <http://pytest.org/latest/plugins.html#well-specified-hooks>`_
+pytest-bdd exposes several `pytest hooks <http://pytest.org/latest/plugins.html#well-specified-hooks>`_
 which might be helpful building useful reporting, visualization, etc on top of it:
 
 * pytest_bdd_before_scenario(request, feature, scenario) - Called before scenario is executed
@@ -755,7 +847,7 @@ Browser testing
 
 Tools recommended to use for browser testing:
 
-* `pytest-splinter <https://github.com/paylogic/pytest-splinter>`_ - pytest `splinter <http://splinter.cobrateam.info/>`_ integration for the real browser testing
+* pytest-splinter_ - pytest `splinter <http://splinter.cobrateam.info/>`_ integration for the real browser testing
 
 
 Reporting

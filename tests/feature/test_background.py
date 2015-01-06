@@ -1,15 +1,18 @@
 """Test feature background."""
-
 import re
 
 import pytest
 
-from pytest_bdd import scenario, given, then
+from pytest_bdd import (
+    given,
+    parsers,
+    scenario,
+    then,
+)
 
 
 def test_background_basic(request):
     """Test feature background."""
-
     @scenario(
         "background.feature",
         "Basic usage",
@@ -22,7 +25,6 @@ def test_background_basic(request):
 
 def test_background_check_order(request):
     """Test feature background to ensure that backound steps are executed first."""
-
     @scenario(
         "background.feature",
         "Background steps are executed first",
@@ -38,7 +40,7 @@ def foo():
     return {}
 
 
-@given(re.compile("a background step with multiple lines:\n(?P<data>.+)", re.DOTALL))
+@given(parsers.re(r'a background step with multiple lines:\n(?P<data>.+)', flags=re.DOTALL))
 def multi_line(foo, data):
     assert data == "one\ntwo"
 

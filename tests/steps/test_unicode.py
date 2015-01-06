@@ -2,10 +2,14 @@
 """Tests for testing cases when we have unicode in feature file."""
 
 import sys
-import re
 import pytest
 import functools
-from pytest_bdd import scenario, given, then
+from pytest_bdd import (
+    given,
+    parsers,
+    scenario,
+    then,
+)
 
 scenario = functools.partial(scenario, 'unicode.feature')
 
@@ -29,7 +33,7 @@ def string():
     return {'content': ''}
 
 
-@given(re.compile(u"у мене є рядок який містить '{0}'".format('(?P<content>.+)')))
+@given(parsers.parse(u"у мене є рядок який містить '{content}'"))
 def there_is_a_string_with_content(content, string):
     """Create string with unicode content."""
     string['content'] = content
@@ -47,7 +51,7 @@ def assert_that_the_other_string_equals_to_content(string):
     assert string['content'] == u"с каким-то контентом"
 
 
-@then(re.compile(r"I should see that the string equals to content '(?P<content>.+)'"))
+@then(parsers.parse("I should see that the string equals to content '{content}'"))
 def assert_that_the_string_equals_to_content(content, string):
     """Assert that the string equals to content."""
     assert string['content'] == content

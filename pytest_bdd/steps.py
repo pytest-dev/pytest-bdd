@@ -32,24 +32,19 @@ given("I have a beautiful article", fixture="article")
 """
 
 from __future__ import absolute_import
-import re
 from types import CodeType
 import inspect
 import sys
 
 import pytest
+import six
 
 from .feature import parse_line, force_encode
 from .types import GIVEN, WHEN, THEN
-
-PY3 = sys.version_info[0] >= 3
-
-
-class StepError(Exception):
-
-    """Step declaration error."""
-
-RE_TYPE = type(re.compile(""))
+from .exceptions import (
+    StepError,
+)
+from .parsers import get_parser
 
 
 def given(name, fixture=None, converters=None):
@@ -59,7 +54,8 @@ def given(name, fixture=None, converters=None):
     :param fixture: Optional name of the fixture to reuse.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
-
+    :param parser: name of the step parser to use
+    :param parser_args: optional `dict` of arguments to pass to step parser
     :raises: StepError in case of wrong configuration.
     :note: Can't be used as a decorator when the fixture is specified.
     """
@@ -85,6 +81,8 @@ def when(name, converters=None):
     :param name: Step name.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
+    :param parser: name of the step parser to use
+    :param parser_args: optional `dict` of arguments to pass to step parser
 
     :raises: StepError in case of wrong configuration.
     """
@@ -97,6 +95,8 @@ def then(name, converters=None):
     :param name: Step name.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
+    :param parser: name of the step parser to use
+    :param parser_args: optional `dict` of arguments to pass to step parser
 
     :raises: StepError in case of wrong configuration.
     """
@@ -118,6 +118,8 @@ def _step_decorator(step_type, step_name, converters=None):
 
     :param str step_type: Step type (GIVEN, WHEN or THEN).
     :param str step_name: Step name as in the feature file.
+    :param str parser: name of the step parser to use
+    :param dict parser_args: optional `dict` of arguments to pass to step parser
 
     :return: Decorator function for the step.
 
@@ -126,13 +128,10 @@ def _step_decorator(step_type, step_name, converters=None):
     :note: If the step type is GIVEN it will automatically apply the pytest
            fixture decorator to the step function.
     """
-    pattern = None
-    if isinstance(step_name, RE_TYPE):
-        pattern = step_name
-        step_name = pattern.pattern
-
     def decorator(func):
         step_func = func
+        parser_instance = get_parser(step_name)
+        parsed_step_name = parser_instance.name
 
         if step_type == GIVEN:
             if not hasattr(func, "_pytestfixturefunction"):
@@ -142,23 +141,25 @@ def _step_decorator(step_type, step_name, converters=None):
             step_func.__doc__ = func.__doc__
             step_func.fixture = func.__name__
 
-        step_func.__name__ = force_encode(step_name)
-        step_func.step_type = step_type
-        step_func.converters = converters
+        step_func.__name__ = force_encode(parsed_step_name)
 
         @pytest.fixture
         def lazy_step_func():
             return step_func
 
+        step_func.step_type = step_type
+
+        lazy_step_func = contribute_to_module(get_caller_module(), parsed_step_name, lazy_step_func)
+
+        lazy_step_func.step_type = step_type
+
         # Preserve the docstring
         lazy_step_func.__doc__ = func.__doc__
 
-        if pattern:
-            lazy_step_func.pattern = pattern
+        step_func.parser = lazy_step_func.parser = parser_instance
         if converters:
-            lazy_step_func.converters = converters
+            step_func.converters = lazy_step_func.converters = converters
 
-        contribute_to_module(get_caller_module(), step_name, lazy_step_func)
         return func
 
     return decorator
@@ -174,10 +175,10 @@ def recreate_function(func, module=None, name=None, add_args=[], firstlineno=Non
     :return: Function copy.
     """
     def get_code(func):
-        return func.__code__ if PY3 else func.func_code
+        return func.__code__ if six.PY3 else func.func_code
 
     def set_code(func, code):
-        if PY3:
+        if six.PY3:
             func.__code__ = code
         else:
             func.func_code = code
@@ -186,7 +187,7 @@ def recreate_function(func, module=None, name=None, add_args=[], firstlineno=Non
         "co_argcount", "co_nlocals", "co_stacksize", "co_flags", "co_code", "co_consts", "co_names",
         "co_varnames", "co_filename", "co_name", "co_firstlineno", "co_lnotab", "co_freevars", "co_cellvars",
     ]
-    if PY3:
+    if six.PY3:
         argnames.insert(1, "co_kwonlyargcount")
 
     for arg in inspect.getargspec(func).args:
@@ -222,10 +223,13 @@ def contribute_to_module(module, name, func):
     :param module: Module to contribute to.
     :param name: Attribute name.
     :param func: Function object.
+
+    :return: New function copy contributed to the module
     """
     name = force_encode(name)
     func = recreate_function(func, module=module)
     setattr(module, name, func)
+    return func
 
 
 def get_caller_module(depth=2):
