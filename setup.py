@@ -11,19 +11,29 @@ from setuptools.command.test import test as TestCommand
 import pytest_bdd
 
 
-class Tox(TestCommand):
+class ToxTestCommand(TestCommand):
 
-    """"Custom setup.py test command implementation using tox runner."""
+    """Test command which runs tox under the hood."""
+
+    user_options = [('tox-args=', 'a', "Arguments to pass to tox")]
+
+    def initialize_options(self):
+        """Initialize options and set their defaults."""
+        TestCommand.initialize_options(self)
+        self.tox_args = '--recreate'
 
     def finalize_options(self):
+        """Add options to the test runner (tox)."""
         TestCommand.finalize_options(self)
-        self.test_args = ["--recreate -vv"]
+        self.test_args = []
         self.test_suite = True
 
     def run_tests(self):
-        #import here, cause outside the eggs aren"t loaded
-        import detox.main
-        errno = detox.main.main(self.test_args)
+        """Invoke the test runner (tox)."""
+        # import here, cause outside the eggs aren't loaded
+        import tox
+        import shlex
+        errno = tox.cmdline(args=shlex.split(self.tox_args))
         sys.exit(errno)
 
 
@@ -56,8 +66,8 @@ setup(
         "Topic :: Utilities",
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3"
-    ] + [("Programming Language :: Python :: %s" % x) for x in "2.6 2.7 3.0 3.1 3.2 3.3".split()],
-    cmdclass={"test": Tox},
+    ] + [("Programming Language :: Python :: %s" % x) for x in "2.6 2.7 3.0 3.1 3.2 3.3 3.4".split()],
+    cmdclass={"test": ToxTestCommand},
     install_requires=[
         "pytest>=2.6.0",
         "glob2",
@@ -72,7 +82,7 @@ setup(
             "pytest-bdd = pytest_bdd.scripts:main",
         ]
     },
-    tests_require=["detox"],
+    tests_require=["tox"],
     packages=["pytest_bdd"],
     include_package_data=True,
 )

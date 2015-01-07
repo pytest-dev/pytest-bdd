@@ -54,8 +54,8 @@ def print_generated_code(args):
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(prog="pytest-bdd")
-    subparsers = parser.add_subparsers(help="sub-command help")
-
+    subparsers = parser.add_subparsers(help="sub-command help", dest='command')
+    subparsers.required = True
     parser_generate = subparsers.add_parser("generate", help="generate help")
     parser_generate.add_argument(
         "files",
@@ -75,4 +75,5 @@ def main():
     parser_migrate.set_defaults(func=migrate_tests)
 
     args = parser.parse_args()
-    args.func(args)
+    if hasattr(args, 'func'):
+        args.func(args)
