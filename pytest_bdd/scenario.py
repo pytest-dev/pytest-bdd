@@ -26,9 +26,11 @@ from .feature import (
     force_unicode,
 )
 from .steps import (
+    contribute_to_module,
     execute,
     get_caller_function,
     get_caller_module,
+    get_function_name,
     recreate_function,
 )
 from .types import GIVEN
@@ -294,19 +296,25 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, call
         if "request" not in function_args:
             function_args.append("request")
 
+        name = _pytestbdd_function.__name__
+
+        re_contribute = not name.startswith('test_')
+        name = get_function_name(scenario_name, prefix='test_') if re_contribute else name
+
         code = """def {name}({function_args}):
             _execute_scenario(feature, scenario, request, encoding)
             _pytestbdd_function({args})""".format(
-            name=_pytestbdd_function.__name__,
+            name=name,
             function_args=", ".join(function_args),
             args=", ".join(args))
 
         execute(code, g)
 
         _scenario = recreate_function(
-            g[_pytestbdd_function.__name__],
+            g[name],
             module=caller_module,
             firstlineno=caller_function.f_lineno,
+            name=name,
         )
 
         params = scenario.get_params()
@@ -321,9 +329,13 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, call
             feature_name=feature_name, scenario_name=scenario_name)
         _scenario.__scenario__ = scenario
         scenario.test_function = _scenario
+
+        if re_contribute:
+            contribute_to_module(caller_module, name, _scenario)
         return _scenario
 
-    return recreate_function(decorator, module=caller_module, firstlineno=caller_function.f_lineno)
+    return recreate_function(
+        decorator, module=caller_module, firstlineno=caller_function.f_lineno)
 
 
 def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None,
