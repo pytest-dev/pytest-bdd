@@ -93,6 +93,31 @@ test_publish_article.py:
         assert article.is_published
 
 
+Less code for scenario test function
+------------------------------------
+
+pytest-bdd `scenario` decorator can manage the scenario function name for you automatically to reduce the amount of
+code you need to write:
+
+.. code-block:: python
+
+    from pytest_bdd import scenario
+
+    @scenario('publish_article.feature', 'Publishing the article')
+    def _():
+        pass
+
+As a result, module will get the function:
+
+
+.. code-block:: python
+
+
+    def test_publishing_the_article():
+        """publish_article.feature: Publishing the article"""
+
+so docstring is also automatically generated.
+
 Step aliases
 ------------
 
@@ -124,6 +149,33 @@ default author.
     Scenario: I'm the admin
         Given I'm the admin
         And there is an article
+
+
+Less code for step functions
+----------------------------
+
+pytest-bdd `when` and `then` decorators can manage the function names for you automatically (as well as `scenario`),
+and it's not necessary to choose unique function names manually, instead you can have for example `_` as a function
+name:
+
+.. code-block:: python
+
+    from pytest_bdd import when, then
+
+    @when('I press the publish button')
+    def _(browser):
+        browser.find_by_css('button[name=publish]').first.click()
+
+
+    @then('I should not see the error message')
+    def _(browser):
+        with pytest.raises(ElementDoesNotExist):
+            browser.find_by_css('.message.error').first
+
+docstrings are also automatically generated.
+Note that for `given` steps you still have to choose unique names as givens are a bit special in a sense that they are
+also normal pytest fixtures which you can use later.
+
 
 
 Step arguments

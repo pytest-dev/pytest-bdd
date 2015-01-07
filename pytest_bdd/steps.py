@@ -34,6 +34,7 @@ given("I have a beautiful article", fixture="article")
 from __future__ import absolute_import
 from types import CodeType
 import inspect
+import re
 import sys
 
 import pytest
@@ -45,6 +46,8 @@ from .exceptions import (
     StepError,
 )
 from .parsers import get_parser
+
+PYTHON_NAME_RE = re.compile('[^0-9a-zA-Z\s]+')
 
 
 def given(name, fixture=None, converters=None):
@@ -248,3 +251,8 @@ def get_caller_function(depth=2):
 
 def execute(code, g):
     exec(code, g)
+
+
+def get_function_name(name, prefix=''):
+    """Get python function name out of arbitrary string."""
+    return prefix + PYTHON_NAME_RE.sub('', name.lower()).replace(' ', '_')
