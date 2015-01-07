@@ -1,11 +1,16 @@
 """Multiline steps tests."""
-
 import re
 import textwrap
 
 import pytest
 
-from pytest_bdd import given, then, scenario, exceptions
+from pytest_bdd import (
+    exceptions,
+    given,
+    parsers,
+    scenario,
+    then,
+)
 
 
 @pytest.mark.parametrize(["feature_text", "expected_text"], [
@@ -72,7 +77,7 @@ def test_multiline(request, tmpdir, feature_text, expected_text):
     test_multiline(request)
 
 
-@given(re.compile(r'I have a step with:\n(?P<text>.+)', re.DOTALL))
+@given(parsers.re(r'I have a step with:\n(?P<text>.+)', flags=re.DOTALL))
 def i_have_text(text):
     return text
 

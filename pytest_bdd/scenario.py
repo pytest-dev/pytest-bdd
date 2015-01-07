@@ -16,6 +16,7 @@ import os
 
 import pytest
 from _pytest import python
+import six
 
 from . import exceptions
 from . import fixtures
@@ -28,13 +29,12 @@ from .steps import (
     execute,
     get_caller_function,
     get_caller_module,
-    PY3,
     recreate_function,
 )
 from .types import GIVEN
 
 
-if PY3:
+if six.PY3:
     import runpy
     execfile = runpy.run_path
 
@@ -79,19 +79,25 @@ def _inject_fixture(request, arg, value):
 
 def find_argumented_step_fixture_name(name, fixturemanager, request=None):
     """Find argumented step fixture name."""
-    for fixturename, fixturedefs in fixturemanager._arg2fixturedefs.items():
+    # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
+    for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
         for fixturedef in fixturedefs:
-
-            pattern = getattr(fixturedef.func, "pattern", None)
-            match = pattern.match(name) if pattern else None
+            parser = getattr(fixturedef.func, "parser", None)
+            match = parser.is_matching(name) if parser else None
             if match:
                 converters = getattr(fixturedef.func, "converters", {})
-                for arg, value in match.groupdict().items():
+                for arg, value in parser.parse_arguments(name).items():
                     if arg in converters:
                         value = converters[arg](value)
                     if request:
                         _inject_fixture(request, arg, value)
-                return force_encode(pattern.pattern)
+                parser_name = force_encode(parser.name)
+                if request:
+                    try:
+                        request.getfuncargvalue(parser_name)
+                    except python.FixtureLookupError:
+                        continue
+                return parser_name
 
 
 def _find_step_function(request, step, scenario, encoding):

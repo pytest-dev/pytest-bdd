@@ -1,4 +1,12 @@
-from pytest_bdd import scenario, given, then
+"""Test step arguments with complex folder structure."""
+
+from pytest_bdd import (
+    given,
+    parsers,
+    scenario,
+    then,
+    when,
+)
 
 
 @scenario(
@@ -17,6 +25,11 @@ def foo():
 @given('there is a list')
 def results():
     return []
+
+
+@when(parsers.parse('I append {n:d} to the list'))
+def append_to_list(results, n):
+    results.append(n)
 
 
 @then('foo should have value "foo"')

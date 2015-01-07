@@ -7,7 +7,7 @@ def test_arg_fixture_mix(testdir):
     subdir.join("test_a.py").write(py.code.Source("""
         import re
         import pytest
-        from pytest_bdd import scenario, given, then
+        from pytest_bdd import scenario, given, then, parsers
 
 
         @pytest.fixture
@@ -21,12 +21,12 @@ def test_arg_fixture_mix(testdir):
         def test_args():
             pass
 
-        @given(re.compile(r'foo is "(?P<foo>\w+)"'))
+        @given(parsers.parse('foo is "{foo}"'))
         def foo1(foo):
             pass
 
 
-        @then(re.compile(r'foo should be "(?P<foo_value>\w+)"'))
+        @then(parsers.parse('foo should be "{foo_value}"'))
         def foo_should_be(foo, foo_value):
             assert foo == foo_value
 
@@ -37,12 +37,12 @@ def test_arg_fixture_mix(testdir):
         def test_bar():
             pass
 
-        @given(re.compile(r'it is all fine'))
+        @given('it is all fine')
         def fine():
             return "fine"
 
 
-        @then(re.compile(r'foo should be fine'))
+        @then('foo should be fine')
         def foo_should_be_fine(foo):
             assert foo == "fine"
     """))
@@ -64,12 +64,12 @@ def test_arg_fixture_mix(testdir):
             return "fine"
 
 
-        @given(re.compile(r'it is all fine'))
+        @given('it is all fine')
         def fine():
             return "fine"
 
 
-        @then(re.compile(r'foo should be fine'))
+        @then('foo should be fine')
         def foo_should_be(foo):
             assert foo == "fine"
 

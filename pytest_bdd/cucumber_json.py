@@ -6,11 +6,11 @@ import os
 import time
 
 import py
+import six
 
 from .feature import force_unicode
-from .steps import PY3
 
-if PY3:
+if six.PY3:
     long = int
 
 
