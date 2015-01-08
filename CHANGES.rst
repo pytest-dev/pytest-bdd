@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+2.6.0
+-----
 
 - Correctly handle `pytest-bdd` command called without the subcommand under python3 (bubenkoff, spinus)
 - Pluggable parsers for step definitions (bubenkoff, spinus)
