@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.6.0
+2.6.1
 -----
 
 - Correctly handle `pytest-bdd` command called without the subcommand under python3 (bubenkoff, spinus)

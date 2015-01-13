@@ -2,11 +2,11 @@
 
 from __future__ import absolute_import
 import re as base_re
+import warnings
 
 import parse as base_parse
 from parse_type import cfparse as base_cfparse
 
-import pytest
 import six
 
 from .exceptions import InvalidStepParserError
@@ -115,7 +115,12 @@ def get_parser(step_name):
     """
     if isinstance(step_name, RE_TYPE):
         # backwards compartibility
-        pytest.config.warn('bdd', "Direct usage of regex is deprecated. Please use pytest_bdd.parsers.re instead.")
+        warn = (
+            'pytest-bdd [{0}]: Direct usage of regex is deprecated. Please use pytest_bdd.parsers.re instead.'.format(
+                step_name.pattern)
+        )
+        warnings.warn(warn)
+        print(warn)
         return re(step_name.pattern, flags=step_name.flags)
     elif isinstance(step_name, six.string_types):
         return string(step_name)
