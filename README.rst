@@ -24,7 +24,7 @@ just-enough specification of the requirements without maintaining any context ob
 containing the side effects of the Gherkin imperative declarations.
 
 .. _behave: https://pypi.python.org/pypi/behave
-.. _pytest-splinter: https://github.com/paylogic/pytest-splinter
+.. _pytest-splinter: https://github.com/pytest-dev/pytest-splinter
 
 Install pytest-bdd
 ------------------
