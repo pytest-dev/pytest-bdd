@@ -61,7 +61,10 @@ def given(name, fixture=None, converters=None):
     """
     if fixture is not None:
         module = get_caller_module()
-        step_func = lambda request: request.getfuncargvalue(fixture)
+
+        def step_func(request):
+            return request.getfuncargvalue(fixture)
+
         step_func.step_type = GIVEN
         step_func.converters = converters
         step_func.__name__ = name
@@ -137,7 +140,9 @@ def _step_decorator(step_type, step_name, converters=None):
             if not hasattr(func, "_pytestfixturefunction"):
                 # Avoid multiple wrapping of a fixture
                 func = pytest.fixture(func)
-            step_func = lambda request: request.getfuncargvalue(func.__name__)
+
+            def step_func(request):
+                return request.getfuncargvalue(func.__name__)
             step_func.__doc__ = func.__doc__
             step_func.fixture = func.__name__
 
