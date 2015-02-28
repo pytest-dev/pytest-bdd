@@ -1,14 +1,14 @@
 BDD library for the py.test runner
 ==================================
 
-.. image:: https://api.travis-ci.org/olegpidsadnyi/pytest-bdd.png
-   :target: https://travis-ci.org/olegpidsadnyi/pytest-bdd
+.. image:: https://api.travis-ci.org/pytest-dev/pytest-bdd.png
+   :target: https://travis-ci.org/pytest-dev/pytest-bdd
 
 .. image:: https://pypip.in/v/pytest-bdd/badge.png
    :target: https://crate.io/packages/pytest-bdd/
 
-.. image:: https://coveralls.io/repos/olegpidsadnyi/pytest-bdd/badge.png?branch=master
-   :target: https://coveralls.io/r/olegpidsadnyi/pytest-bdd
+.. image:: https://coveralls.io/repos/pytest-dev/pytest-bdd/badge.png?branch=master
+   :target: https://coveralls.io/r/pytest-dev/pytest-bdd
 
 pytest-bdd implements a subset of Gherkin language for the automation of the project
 requirements testing and easier behavioral driven development.
