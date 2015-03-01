@@ -52,7 +52,7 @@ setup(
     author="Oleg Pidsadnyi, Anatoly Bubenkov and others",
     license="MIT license",
     author_email="oleg.pidsadnyi@gmail.com",
-    url="https://github.com/olegpidsadnyi/pytest-bdd",
+    url="https://github.com/pytest-dev/pytest-bdd",
     version=pytest_bdd.__version__,
     classifiers=[
         "Development Status :: 6 - Mature",
