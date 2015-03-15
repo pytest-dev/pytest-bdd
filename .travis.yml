@@ -1,4 +1,5 @@
 language: python
+sudo: false
 # command to install dependencies
 install:
   - pip install python-coveralls
