@@ -23,8 +23,8 @@ Syntax example:
 one line.
 """
 
+import codecs
 from os import path as op
-
 import re
 import sys
 import textwrap
@@ -106,20 +106,6 @@ def parse_line(line):
     return "", line
 
 
-def _open_file(filename, encoding):
-    """Open file for reading (Python compatibility function).
-
-    :param str filename: File name.
-    :param str encoding: Encoding.
-
-    :return: File object.
-    """
-    if sys.version_info < (3, 0):
-        return open(filename, "r")
-    else:
-        return open(filename, "r", encoding=encoding)
-
-
 def force_unicode(obj, encoding="utf-8"):
     """Get the unicode string out of given object (python 2 and python 3).
 
@@ -189,7 +175,7 @@ class Feature(object):
         prev_line = None
         self.background = None
 
-        with _open_file(filename, encoding) as f:
+        with codecs.open(filename, encoding=encoding) as f:
             content = force_unicode(f.read(), encoding)
             for line_number, line in enumerate(content.splitlines(), start=1):
                 unindented_line = line.lstrip()
