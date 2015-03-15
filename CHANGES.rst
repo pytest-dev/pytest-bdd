@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.6.2
+-----
+
+- Parse comments only in the begining of words
+
+
 2.6.1
 -----
 

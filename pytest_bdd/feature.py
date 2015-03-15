@@ -64,9 +64,8 @@ STEP_PREFIXES = [
     ("And ", None),  # Unknown step type,
 ]
 
-COMMENT_SYMBOLS = "#"
-
 STEP_PARAM_RE = re.compile("\<(.+?)\>")
+COMMENT_RE = re.compile('(^|(?<=\s))#')
 
 
 def get_step_type(line):
@@ -88,10 +87,9 @@ def strip_comments(line):
 
     :return: Stripped line.
     """
-    try:
-        line = line[:line.index(COMMENT_SYMBOLS)]
-    except ValueError:
-        pass
+    res = COMMENT_RE.search(line)
+    if res:
+        line = line[:res.start()]
     return line.strip()
 
 
