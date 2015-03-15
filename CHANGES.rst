@@ -4,7 +4,7 @@ Changelog
 2.6.2
 -----
 
-- Parse comments only in the begining of words
+- Parse comments only in the begining of words (santagada)
 
 
 2.6.1
