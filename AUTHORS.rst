@@ -14,4 +14,5 @@ These people have contributed to `pytest-bdd`, in alphabetical order:
 * `Dmitrijs Milajevs <dimazest@gmail.com>`_
 * `Floris Bruynooghe <flub@devork.be>`_
 * `Harro van der Klauw <hvdklauw@gmail.com>`_
+* `Leonardo Santagada <santagada@github.com>`_
 * `Robin Pedersen <ropez@github.com>`_
