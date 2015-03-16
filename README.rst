@@ -289,7 +289,7 @@ In the example above, the Given step name will be:
 
 .. code-block:: python
 
-    """I have a step with:\nSome\nExtra\nLines"""
+    'I have a step with:\nSome\nExtra\nLines'
 
 You can of course register step using full name (including the newlines), but it seems more practical to use
 step arguments and capture lines after first line (or some subset of them) into the argument:
@@ -315,10 +315,8 @@ step arguments and capture lines after first line (or some subset of them) into 
 
 
     @then('the text should be parsed with correct indentation')
-    def eat_cucumbers(i_have_text, text):
-        assert i_have_text == text == """Some
-    Extra
-    Lines"""
+    def text_should_be_correct(i_have_text, text):
+        assert i_have_text == text == 'Some\nExtra\nLines'
 
 Pay attention to the re.DOTALL option used for step registration. When used, .+ will also capture newlines.
 
