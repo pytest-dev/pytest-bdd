@@ -1,5 +1,4 @@
 """Multiline steps tests."""
-import re
 import textwrap
 
 import pytest
@@ -77,7 +76,7 @@ def test_multiline(request, tmpdir, feature_text, expected_text):
     test_multiline(request)
 
 
-@given(parsers.re(r'I have a step with:\n(?P<text>.+)', flags=re.DOTALL))
+@given(parsers.parse('I have a step with:\n{text}'))
 def i_have_text(text):
     return text
 

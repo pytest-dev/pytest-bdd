@@ -235,7 +235,6 @@ arguments after the parser.
 
 You can implement your own step parser. It's interface is quite simple. The code can looks like:
 
-
 .. code-block:: python
 
     import re
@@ -265,6 +264,15 @@ You can implement your own step parser. It's interface is quite simple. The code
     @given(parsers.parse('there are %start% cucumbers'))
     def start_cucumbers(start):
         return dict(start=start, eat=0)
+
+Step arguments are fixtures as well!
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Step arguments are injected into pytest `request` context as normal fixtures with the names equal to the names of the
+arguments. This opens a number of possibilies:
+
+* you can access step's argument as a fixture in other step function just by mentioning it as an argument (just like any othe pytest fixture)
+* if the name of the step argument clashes with existing fixture, it will be overridden by step's argument value; this way you can set/override the value for some fixture deeply inside of the fixture tree in a ad-hoc way by just choosing the proper name for the step argument.
 
 
 Multiline steps
@@ -309,7 +317,7 @@ step arguments and capture lines after first line (or some subset of them) into 
         pass
 
 
-    @given(re.compile(r'I have a step with:\n(?P<text>.+)', re.DOTALL))
+    @given(parsers.parse('I have a step with:\n{text}'))
     def i_have_text(text):
         return text
 
@@ -318,8 +326,9 @@ step arguments and capture lines after first line (or some subset of them) into 
     def text_should_be_correct(i_have_text, text):
         assert i_have_text == text == 'Some\nExtra\nLines'
 
-Pay attention to the re.DOTALL option used for step registration. When used, .+ will also capture newlines.
-
+Note that `then` step definition (`text_should_be_correct`) in this example uses `text` fixture which is provided
+by a a `given` step (`i_have_text`) argument with the same name (`text`). This possibility is described in
+the `Step arguments are fixtures as well!`_ section.
 
 Scenario parameters
 -------------------
