@@ -14,6 +14,7 @@ def test_generate(monkeypatch, capsys):
     main()
     out, err = capsys.readouterr()
     assert out == textwrap.dedent('''
+    # coding=utf-8
     """Code generation feature tests."""
 
     from pytest_bdd import (

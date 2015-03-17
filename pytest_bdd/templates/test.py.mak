@@ -1,4 +1,5 @@
 % if features:
+# coding=utf-8
 """${ features[0].name or features[0].rel_filename } feature tests."""
 
 from pytest_bdd import (
