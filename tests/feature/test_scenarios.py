@@ -52,12 +52,12 @@ def test_scenarios(testdir):
 
 def test_scenarios_none_found(testdir):
     """Test scenarios shortcut when no scenarios found."""
-    testdir.makepyfile("""
+    testpath = testdir.makepyfile("""
         import pytest
         from pytest_bdd import scenarios
 
         scenarios('.')
     """)
-    result = testdir.runpytest('-vv')
-    result.stdout.fnmatch_lines(['*collected 0 items / 1 errors'])
-    result.stdout.fnmatch_lines(['*NoScenariosFound*'])
+    reprec = testdir.inline_run(testpath)
+    reprec.assertoutcome(failed=1)
+    assert 'NoScenariosFound' in str(reprec.getreports()[1].longrepr)
