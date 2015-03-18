@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.7.0
+-----
+
+- Implemented `scenarios` shortcut to automatically bind scenarios to tests (bubenkoff)
+
+
 2.6.2
 -----
 

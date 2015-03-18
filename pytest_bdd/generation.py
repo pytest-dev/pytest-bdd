@@ -2,22 +2,17 @@
 
 import itertools
 import os.path
-import re
 
 from mako.lookup import TemplateLookup
-import glob2
 import py
 
-from .feature import Feature
 from .scenario import (
     find_argumented_step_fixture_name,
-    force_encode
+    force_encode,
+    make_python_name,
 )
+from .feature import get_features
 from .types import STEP_TYPES
-
-PYTHON_REPLACE_REGEX = re.compile("\W")
-
-ALPHA_REGEX = re.compile("^\d+_*")
 
 tw = py.io.TerminalWriter()
 
@@ -49,12 +44,6 @@ def pytest_cmdline_main(config):
     """Check config option to show missing code."""
     if config.option.generate_missing:
         return show_missing_code(config)
-
-
-def make_python_name(string):
-    """Make python attribute name out of a given string."""
-    string = re.sub(PYTHON_REPLACE_REGEX, "", string.replace(" ", "_"))
-    return re.sub(ALPHA_REGEX, "", string).lower()
 
 
 def generate_code(features, scenarios, steps):
@@ -132,29 +121,6 @@ def _find_step_fixturedef(fixturemanager, item, name, encoding="utf-8"):
             return _find_step_fixturedef(fixturemanager, item, name, encoding)
     else:
         return fixturedefs
-
-
-def get_features(paths):
-    """Get features for given paths.
-
-    :param list paths: `list` of paths (file or dirs)
-
-    :return: `list` of `Feature` objects.
-    """
-    seen_names = set()
-    features = []
-    for path in paths:
-        if path in seen_names:
-            continue
-        seen_names.add(path)
-        if os.path.isdir(path):
-            features.extend(get_features(glob2.iglob(os.path.join(path, "**", "*.feature"))))
-        else:
-            base, name = os.path.split(path)
-            feature = Feature.get_feature(base, name)
-            features.append(feature)
-    features.sort(key=lambda feature: feature.name or feature.filename)
-    return features
 
 
 def parse_feature_files(paths):

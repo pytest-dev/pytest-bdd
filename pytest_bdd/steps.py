@@ -242,7 +242,7 @@ def get_caller_module(depth=2):
     frame = sys._getframe(depth)
     module = inspect.getmodule(frame)
     if module is None:
-        raise Exception("empty module")
+        return get_caller_module(depth=depth)
     return module
 
 
