@@ -29,6 +29,8 @@ import re
 import sys
 import textwrap
 
+import glob2
+
 from . import types
 from . import exceptions
 
@@ -147,6 +149,29 @@ def get_tags(line):
         set((tag for tag in line.split() if tag.startswith("@") and len(tag) > 1))
         if line else set()
     )
+
+
+def get_features(paths):
+    """Get features for given paths.
+
+    :param list paths: `list` of paths (file or dirs)
+
+    :return: `list` of `Feature` objects.
+    """
+    seen_names = set()
+    features = []
+    for path in paths:
+        if path in seen_names:
+            continue
+        seen_names.add(path)
+        if op.isdir(path):
+            features.extend(get_features(glob2.iglob(op.join(path, "**", "*.feature"))))
+        else:
+            base, name = op.split(path)
+            feature = Feature.get_feature(base, name)
+            features.append(feature)
+    features.sort(key=lambda feature: feature.name or feature.filename)
+    return features
 
 
 class Feature(object):

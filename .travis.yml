@@ -1,15 +1,9 @@
 language: python
 sudo: false
-# command to install dependencies
-install:
-  - pip install python-coveralls
-  - pip install -U virtualenv py
 # # command to run tests
-script: python setup.py test
+script: make test
 after_success:
-  - pip install -r requirements-testing.txt -e .
-  - py.test --cov=pytest_bdd --cov-report=term-missing tests
-  - coveralls
+  - make coveralls
 notifications:
     email:
         - bubenkoff@gmail.com

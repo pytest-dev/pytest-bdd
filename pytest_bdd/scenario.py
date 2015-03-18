@@ -13,6 +13,7 @@ test_publish_article = scenario(
 import collections
 import inspect
 import os
+import re
 
 import pytest
 from _pytest import python
@@ -24,6 +25,7 @@ from .feature import (
     Feature,
     force_encode,
     force_unicode,
+    get_features,
 )
 from .steps import (
     execute,
@@ -33,10 +35,13 @@ from .steps import (
 )
 from .types import GIVEN
 
-
 if six.PY3:
     import runpy
     execfile = runpy.run_path
+
+
+PYTHON_REPLACE_REGEX = re.compile("\W")
+ALPHA_REGEX = re.compile("^\d+_*")
 
 
 def _inject_fixture(request, arg, value):
@@ -363,3 +368,57 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
         caller_function,
         encoding,
     )
+
+
+def make_python_name(string):
+    """Make python attribute name out of a given string."""
+    string = re.sub(PYTHON_REPLACE_REGEX, "", string.replace(" ", "_"))
+    return re.sub(ALPHA_REGEX, "", string).lower()
+
+
+def get_python_name_generator(name):
+    python_name = make_python_name(name)
+    suffix = ''
+    index = 0
+
+    def get_name():
+        return 'test_{0}{1}'.format(python_name, suffix)
+    while True:
+        yield get_name()
+        index += 1
+        suffix = '_{0}'.format(index)
+
+
+def scenarios(*feature_paths):
+    """Parse features from the paths and put all found scenarios in the caller module.
+
+    :param: paths
+    """
+    frame = inspect.stack()[1]
+    module = inspect.getmodule(frame[0])
+    base_path = get_fixture(module, "pytestbdd_feature_base_dir")
+    abs_feature_paths = []
+    for path in feature_paths:
+        if not os.path.isabs(path):
+            path = os.path.abspath(os.path.join(base_path, path))
+        abs_feature_paths.append(path)
+    found = False
+
+    module_scenarios = frozenset(
+        (attr.__scenario__.feature.filename, attr.__scenario__.name)
+        for name, attr in module.__dict__.items() if hasattr(attr, '__scenario__'))
+    for feature in get_features(abs_feature_paths):
+        for scenario_name, scenario_object in feature.scenarios.items():
+            # skip already bound scenarios
+            if (scenario_object.feature.filename, scenario_name) not in module_scenarios:
+                @scenario(feature.filename, scenario_name)
+                def _scenario():
+                    pass
+                for test_name in get_python_name_generator(scenario_name):
+                    if test_name not in module.__dict__:
+                        # found an unique test name
+                        module.__dict__[test_name] = _scenario
+                        break
+            found = True
+    if not found:
+        raise exceptions.NoScenariosFound(abs_feature_paths)

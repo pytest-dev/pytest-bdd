@@ -44,3 +44,8 @@ class StepDefinitionNotFoundError(Exception):
 class InvalidStepParserError(Exception):
 
     """Invalid step parser."""
+
+
+class NoScenariosFound(Exception):
+
+    """No scenarios found."""

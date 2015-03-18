@@ -330,12 +330,59 @@ Note that `then` step definition (`text_should_be_correct`) in this example uses
 by a a `given` step (`i_have_text`) argument with the same name (`text`). This possibility is described in
 the `Step arguments are fixtures as well!`_ section.
 
+
 Scenario parameters
 -------------------
 Scenario decorator can accept such optional keyword arguments:
 
 * ``encoding`` - decode content of feature file in specific encoding. UTF-8 is default.
 * ``example_converters`` - mapping to pass functions to convert example values provided in feature files.
+
+
+Scenarios shortcut
+------------------
+
+If you have relatively large set of feature files, it's boring to manually bind scenarios to the tests using the
+scenario decorator. Of course with the manual approach you get all the power to be able to additionally parametrize
+the test, give the test function a nice name, document it, etc, but in the majority of the cases you don't need that.
+Instead you want to bind `all` scenarios found in the `feature` folder(s) recursively automatically.
+For this - there's a `scenarios` helper.
+
+.. code-block:: python
+
+    from pytest_bdd import scenarios
+
+    # assume 'features' subfolder is in this file's directory
+    scenarios('features')
+
+That's all you need to do to bind all scenarios found in the `features` folder!
+Note that you can pass multiple paths, and those paths can be either feature files or feature folders.
+
+
+.. code-block:: python
+
+    from pytest_bdd import scenarios
+
+    # pass multiple paths/files
+    scenarios('features', 'other_features/some.feature', 'some_other_features')
+
+But what if you need to manually bind certain scenario, leaving others to be automatically bound?
+Just write your scenario in a `normal` way, but ensure you do it `BEFORE` the call of `scenarios` helper.
+
+
+.. code-block:: python
+
+    from pytest_bdd import scenario, scenarios
+
+    @scenario('features/some.feature', 'Test something')
+    def test_something():
+        pass
+
+    # assume 'features' subfolder is in this file's directory
+    scenarios('features')
+
+In the example above `test_something` scenario binding will be kept manual, other scenarios found in the `features`
+folder will be bound automatically.
 
 
 Scenario outlines
@@ -376,7 +423,6 @@ pytest-bdd feature file format also supports example tables in different way:
 
 This form allows to have tables with lots of columns keeping the maximum text width predictable without significant
 readability change.
-
 
 The code will look like:
 
