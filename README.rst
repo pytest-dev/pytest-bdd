@@ -67,6 +67,11 @@ test_publish_article.py:
         pass
 
 
+    @given("I'm an author user")
+    def author_user(auth, author):
+        auth['user'] = author.user
+
+
     @given('I have an article')
     def article(author):
         return create_test_article(author=author)
