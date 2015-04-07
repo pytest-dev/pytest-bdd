@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.7.1
+-----
+
+- Allow to pass ``scope`` for ``given`` steps (bubenkoff, sureshvv)
+
+
 2.7.0
 -----
 

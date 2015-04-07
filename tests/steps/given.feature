@@ -6,3 +6,8 @@ Scenario: Test reusing root fixture
 Scenario: Test reusing local fixture
 	Given I have alias for foo
 	Then foo should be "foo"
+
+
+Scenario: Test session given
+    Given I have session foo
+    Then session foo should be "session foo"

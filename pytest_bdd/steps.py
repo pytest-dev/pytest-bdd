@@ -47,7 +47,7 @@ from .exceptions import (
 from .parsers import get_parser
 
 
-def given(name, fixture=None, converters=None):
+def given(name, fixture=None, converters=None, scope='function'):
     """Given step decorator.
 
     :param name: Given step name.
@@ -69,13 +69,13 @@ def given(name, fixture=None, converters=None):
         step_func.converters = converters
         step_func.__name__ = name
         step_func.fixture = fixture
-        func = pytest.fixture(lambda: step_func)
+        func = pytest.fixture(scope=scope)(lambda: step_func)
         func.__doc__ = 'Alias for the "{0}" fixture.'.format(fixture)
         _, name = parse_line(name)
         contribute_to_module(module, name, func)
         return _not_a_fixture_decorator
 
-    return _step_decorator(GIVEN, name, converters=converters)
+    return _step_decorator(GIVEN, name, converters=converters, scope=scope)
 
 
 def when(name, converters=None):
@@ -116,7 +116,7 @@ def _not_a_fixture_decorator(func):
     raise StepError('Cannot be used as a decorator when the fixture is specified')
 
 
-def _step_decorator(step_type, step_name, converters=None):
+def _step_decorator(step_type, step_name, converters=None, scope='function'):
     """Step decorator for the type and the name.
 
     :param str step_type: Step type (GIVEN, WHEN or THEN).
@@ -139,7 +139,7 @@ def _step_decorator(step_type, step_name, converters=None):
         if step_type == GIVEN:
             if not hasattr(func, "_pytestfixturefunction"):
                 # Avoid multiple wrapping of a fixture
-                func = pytest.fixture(func)
+                func = pytest.fixture(scope=scope)(func)
 
             def step_func(request):
                 return request.getfuncargvalue(func.__name__)
@@ -148,7 +148,7 @@ def _step_decorator(step_type, step_name, converters=None):
 
         step_func.__name__ = force_encode(parsed_step_name)
 
-        @pytest.fixture
+        @pytest.fixture(scope=scope)
         def lazy_step_func():
             return step_func
 
