@@ -37,7 +37,10 @@ from .types import GIVEN
 
 if six.PY3:
     import runpy
-    execfile = runpy.run_path
+
+    def execfile(filename, init_globals):
+        result = runpy.run_path(filename, init_globals=init_globals)
+        init_globals.update(result)
 
 
 PYTHON_REPLACE_REGEX = re.compile("\W")

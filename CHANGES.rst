@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.7.2
+-----
+
+- Correct base feature path lookup for python3 (bubenkoff)
+
+
 2.7.1
 -----
 
