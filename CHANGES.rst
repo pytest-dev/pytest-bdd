@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Added hook before the step is executed with evaluated parameters (olegpidsadnyi)
+
+
 2.7.2
 -----
 

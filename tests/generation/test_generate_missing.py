@@ -6,7 +6,8 @@ import py
 
 
 def test_generate_missing(testdir):
-    tests = testdir.mkpydir("tests")
+    dirname = "test_generate_missing"
+    tests = testdir.mkpydir(dirname)
     with open(os.path.join(os.path.dirname(__file__), "generation.feature")) as fd:
         tests.join('generation.feature').write(fd.read())
 
@@ -30,8 +31,7 @@ def test_generate_missing(testdir):
             pass
     """))
 
-    result = testdir.runpytest(
-        "tests", "--generate-missing", "--feature", tests.join('generation.feature').strpath)
+    result = testdir.runpytest(dirname, "--generate-missing", "--feature", tests.join('generation.feature').strpath)
 
     result.stdout.fnmatch_lines([
         'Scenario "Code is generated for scenarios which are not bound to any tests" is not bound to any test *']

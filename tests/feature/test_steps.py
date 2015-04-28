@@ -162,6 +162,9 @@ def test_step_hooks(testdir):
     calls = reprec.getcalls("pytest_bdd_before_step")
     assert calls[0].request
 
+    calls = reprec.getcalls("pytest_bdd_before_step_call")
+    assert calls[0].request
+
     calls = reprec.getcalls("pytest_bdd_after_step")
     assert calls[0].request
 
@@ -182,6 +185,9 @@ def test_step_hooks(testdir):
 
     calls = reprec.getcalls("pytest_bdd_before_step")
     assert len(calls) == 2
+
+    calls = reprec.getcalls("pytest_bdd_before_step_call")
+    assert len(calls) == 1
 
     calls = reprec.getcalls("pytest_bdd_step_error")
     assert calls[0].request

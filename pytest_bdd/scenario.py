@@ -55,11 +55,13 @@ def _inject_fixture(request, arg, value):
     :param value: argument value
     """
     fd = python.FixtureDef(
-        request._fixturemanager,
-        None,
-        arg,
-        lambda: value, None, None,
-        False,
+        fixturemanager=request._fixturemanager,
+        baseid=None,
+        argname=arg,
+        func=lambda: value,
+        scope="function",
+        params=None,
+        yieldctx=False,
     )
     fd.cached_result = (value, 0, None)
 
@@ -147,14 +149,16 @@ def _execute_step_function(request, scenario, step, step_func, example=None):
     :param function step_func: Step function.
     :param example: Example table.
     """
-    request.config.hook.pytest_bdd_before_step(
+    kw = dict(
         request=request,
         feature=scenario.feature,
         scenario=scenario,
         step=step,
         step_func=step_func,
     )
-    kwargs = {}
+
+    request.config.hook.pytest_bdd_before_step(**kw)
+
     if example:
         for key in step.params:
             value = example[key]
@@ -162,22 +166,15 @@ def _execute_step_function(request, scenario, step, step_func, example=None):
                 value = step_func.converters[key](value)
             _inject_fixture(request, key, value)
 
-    kw = dict(
-        request=request,
-        feature=scenario.feature,
-        scenario=scenario,
-        step=step,
-        step_func=step_func,
-        step_func_args=kwargs,
-    )
-
+    kw["step_func_args"] = {}
     try:
         # Get the step argument values.
         kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
+        kw["step_func_args"] = kwargs
 
+        request.config.hook.pytest_bdd_before_step_call(**kw)
         # Execute the step.
         step_func(**kwargs)
-        kw["step_func_args"] = kwargs
         request.config.hook.pytest_bdd_after_step(**kw)
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
