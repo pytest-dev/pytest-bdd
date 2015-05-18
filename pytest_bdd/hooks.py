@@ -10,6 +10,10 @@ def pytest_bdd_after_scenario(request, feature, scenario):
 
 
 def pytest_bdd_before_step(request, feature, scenario, step, step_func):
+    """Called before step function is set up."""
+
+
+def pytest_bdd_before_step_call(request, feature, scenario, step, step_func, step_func_args):
     """Called before step function is executed."""
 
 

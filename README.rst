@@ -919,6 +919,9 @@ which might be helpful building useful reporting, visualization, etc on top of i
 * pytest_bdd_before_step(request, feature, scenario, step, step_func) - Called before step function
   is executed and it's arguments evaluated
 
+* pytest_bdd_before_step_call(request, feature, scenario, step, step_func, step_func_args) - Called before step
+* function is executed with evaluated arguments
+
 * pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args) - Called after step function
   is successfully executed
 

@@ -14,7 +14,6 @@ from .scenario import (
 from .feature import get_features
 from .types import STEP_TYPES
 
-tw = py.io.TerminalWriter()
 
 template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
 
@@ -62,6 +61,7 @@ def show_missing_code(config):
 
 def print_missing_code(scenarios, steps):
     """Print missing code with TerminalWriter."""
+    tw = py.io.TerminalWriter()
     scenario = step = None
 
     for scenario in scenarios:
@@ -160,6 +160,7 @@ def group_steps(steps):
 
 def _show_missing_code_main(config, session):
     """Preparing fixture duplicates for output."""
+    tw = py.io.TerminalWriter()
     session.perform_collect()
 
     fm = session._fixturemanager
