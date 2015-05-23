@@ -311,6 +311,42 @@ arguments. This opens a number of possibilies:
 * if the name of the step argument clashes with existing fixture, it will be overridden by step's argument value; this way you can set/override the value for some fixture deeply inside of the fixture tree in a ad-hoc way by just choosing the proper name for the step argument.
 
 
+Override fixtures via given steps
+---------------------------------
+
+Dependency injection is not a panacea if you have complex structure of your test setup data. Sometimes there's a need
+such a given step which would imperatively change the fixture only for certain test (scenario), while for other tests
+it will stay untouched. To allow this, special parameter `target_fixture` exists in the `given` decorator:
+
+.. code-block:: python
+
+    from pytest_bdd import given
+
+    @pytest.fixture
+    def foo():
+        return "foo"
+
+
+    @given("I have injecting given", target_fixture="foo")
+    def injecting_given():
+        return "injected foo"
+
+
+    @then('foo should be "injected foo"')
+    def foo_is_foo(foo):
+        assert foo == 'injected foo'
+
+
+.. code-block:: gherkin
+
+    Scenario: Test given fixture injection
+        Given I have injecting given
+        Then foo should be "injected foo"
+
+In this example existing fixture `foo` will be overridden by given step `I have injecting given` only for scenario it's
+used in.
+
+
 Multiline steps
 ---------------
 
