@@ -31,6 +31,7 @@ from .steps import (
     execute,
     get_caller_function,
     get_caller_module,
+    inject_fixture,
     recreate_function,
 )
 from .types import GIVEN
@@ -39,52 +40,13 @@ if six.PY3:
     import runpy
 
     def execfile(filename, init_globals):
+        """Execute given file as a python script in given globals environment."""
         result = runpy.run_path(filename, init_globals=init_globals)
         init_globals.update(result)
 
 
 PYTHON_REPLACE_REGEX = re.compile("\W")
 ALPHA_REGEX = re.compile("^\d+_*")
-
-
-def _inject_fixture(request, arg, value):
-    """Inject fixture into pytest fixture request.
-
-    :param request: pytest fixture request
-    :param arg: argument name
-    :param value: argument value
-    """
-    fd = python.FixtureDef(
-        fixturemanager=request._fixturemanager,
-        baseid=None,
-        argname=arg,
-        func=lambda: value,
-        scope="function",
-        params=None,
-        yieldctx=False,
-    )
-    fd.cached_result = (value, 0, None)
-
-    old_fd = getattr(request, "_fixturedefs", {}).get(arg)
-    old_value = request._funcargs.get(arg)
-    add_fixturename = arg not in request.fixturenames
-
-    def fin():
-        request._fixturemanager._arg2fixturedefs[arg].remove(fd)
-        getattr(request, "_fixturedefs", {})[arg] = old_fd
-        request._funcargs[arg] = old_value
-        if add_fixturename:
-            request.fixturenames.remove(arg)
-
-    request.addfinalizer(fin)
-
-    # inject fixture definition
-    request._fixturemanager._arg2fixturedefs.setdefault(arg, []).insert(0, fd)
-    # inject fixture value in request cache
-    getattr(request, "_fixturedefs", {})[arg] = fd
-    request._funcargs[arg] = value
-    if add_fixturename:
-        request.fixturenames.append(arg)
 
 
 def find_argumented_step_fixture_name(name, fixturemanager, request=None):
@@ -100,7 +62,7 @@ def find_argumented_step_fixture_name(name, fixturemanager, request=None):
                     if arg in converters:
                         value = converters[arg](value)
                     if request:
-                        _inject_fixture(request, arg, value)
+                        inject_fixture(request, arg, value)
                 parser_name = force_encode(parser.name)
                 if request:
                     try:
@@ -164,7 +126,7 @@ def _execute_step_function(request, scenario, step, step_func, example=None):
             value = example[key]
             if step_func.converters and key in step_func.converters:
                 value = step_func.converters[key](value)
-            _inject_fixture(request, key, value)
+            inject_fixture(request, key, value)
 
     kw["step_func_args"] = {}
     try:
@@ -377,6 +339,7 @@ def make_python_name(string):
 
 
 def get_python_name_generator(name):
+    """Generate a sequence of suitable python names out of given arbitrary string name."""
     python_name = make_python_name(name)
     suffix = ''
     index = 0

@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.9.0
+-----
+
+- Added possibility to inject fixtures from given keywords (bubenkoff)
+
+
 2.8.0
 -----
 

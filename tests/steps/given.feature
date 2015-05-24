@@ -11,3 +11,8 @@ Scenario: Test reusing local fixture
 Scenario: Test session given
     Given I have session foo
     Then session foo should be "session foo"
+
+
+Scenario: Test given fixture injection
+    Given I have injecting given
+    Then foo should be "injected foo"

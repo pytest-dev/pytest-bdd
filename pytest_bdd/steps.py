@@ -37,6 +37,7 @@ import inspect
 import sys
 
 import pytest
+from _pytest import python
 import six
 
 from .feature import parse_line, force_encode
@@ -47,15 +48,15 @@ from .exceptions import (
 from .parsers import get_parser
 
 
-def given(name, fixture=None, converters=None, scope='function'):
+def given(name, fixture=None, converters=None, scope='function', target_fixture=None):
     """Given step decorator.
 
     :param name: Given step name.
     :param fixture: Optional name of the fixture to reuse.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
-    :param parser: name of the step parser to use
-    :param parser_args: optional `dict` of arguments to pass to step parser
+    :scope: Optional fixture scope
+    :param target_fixture: Target fixture name to replace by steps definition function
     :raises: StepError in case of wrong configuration.
     :note: Can't be used as a decorator when the fixture is specified.
     """
@@ -75,7 +76,7 @@ def given(name, fixture=None, converters=None, scope='function'):
         contribute_to_module(module, name, func)
         return _not_a_fixture_decorator
 
-    return _step_decorator(GIVEN, name, converters=converters, scope=scope)
+    return _step_decorator(GIVEN, name, converters=converters, scope=scope, target_fixture=target_fixture)
 
 
 def when(name, converters=None):
@@ -116,13 +117,14 @@ def _not_a_fixture_decorator(func):
     raise StepError('Cannot be used as a decorator when the fixture is specified')
 
 
-def _step_decorator(step_type, step_name, converters=None, scope='function'):
+def _step_decorator(step_type, step_name, converters=None, scope='function', target_fixture=None):
     """Step decorator for the type and the name.
 
     :param str step_type: Step type (GIVEN, WHEN or THEN).
     :param str step_name: Step name as in the feature file.
-    :param str parser: name of the step parser to use
-    :param dict parser_args: optional `dict` of arguments to pass to step parser
+    :param dict converters: Optional step arguments converters mapping
+    :param str scope: Optional step definition fixture scope
+    :param target_fixture: Optional fixture name to replace by step definition
 
     :return: Decorator function for the step.
 
@@ -142,7 +144,11 @@ def _step_decorator(step_type, step_name, converters=None, scope='function'):
                 func = pytest.fixture(scope=scope)(func)
 
             def step_func(request):
-                return request.getfuncargvalue(func.__name__)
+                result = request.getfuncargvalue(func.__name__)
+                if target_fixture:
+                    inject_fixture(request, target_fixture, result)
+                return result
+
             step_func.__doc__ = func.__doc__
             step_func.fixture = func.__name__
 
@@ -252,4 +258,45 @@ def get_caller_function(depth=2):
 
 
 def execute(code, g):
+    """Execute given code in given globals environment."""
     exec(code, g)
+
+
+def inject_fixture(request, arg, value):
+    """Inject fixture into pytest fixture request.
+
+    :param request: pytest fixture request
+    :param arg: argument name
+    :param value: argument value
+    """
+    fd = python.FixtureDef(
+        fixturemanager=request._fixturemanager,
+        baseid=None,
+        argname=arg,
+        func=lambda: value,
+        scope="function",
+        params=None,
+        yieldctx=False,
+    )
+    fd.cached_result = (value, 0, None)
+
+    old_fd = getattr(request, "_fixturedefs", {}).get(arg)
+    old_value = request._funcargs.get(arg)
+    add_fixturename = arg not in request.fixturenames
+
+    def fin():
+        request._fixturemanager._arg2fixturedefs[arg].remove(fd)
+        getattr(request, "_fixturedefs", {})[arg] = old_fd
+        request._funcargs[arg] = old_value
+        if add_fixturename:
+            request.fixturenames.remove(arg)
+
+    request.addfinalizer(fin)
+
+    # inject fixture definition
+    request._fixturemanager._arg2fixturedefs.setdefault(arg, []).insert(0, fd)
+    # inject fixture value in request cache
+    getattr(request, "_fixturedefs", {})[arg] = fd
+    request._funcargs[arg] = value
+    if add_fixturename:
+        request.fixturenames.append(arg)

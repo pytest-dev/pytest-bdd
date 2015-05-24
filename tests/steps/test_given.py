@@ -33,6 +33,21 @@ def test_session_given():
     pass
 
 
+@scenario('given.feature', 'Test given fixture injection')
+def test_given_injection():
+    pass
+
+
+@given("I have injecting given", target_fixture='foo')
+def injecting_given():
+    return "injected foo"
+
+
+@then('foo should be "injected foo"')
+def foo_is_foo(foo):
+    assert foo == 'injected foo'
+
+
 @then('foo should be "foo"')
 def foo_is_foo(foo):
     assert foo == 'foo'
