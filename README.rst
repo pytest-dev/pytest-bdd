@@ -93,7 +93,7 @@ test_publish_article.py:
             browser.find_by_css('.message.error').first
 
 
-    @then('And the article should be published')
+    @then('the article should be published')
     def article_is_published(article):
         article.refresh()  # Refresh the object in the SQLAlchemy session
         assert article.is_published
