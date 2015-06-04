@@ -11,13 +11,53 @@ def test_tags(request):
     def test():
         pass
 
-    assert test.__scenario__.tags == set(['@scenario-tag-1', '@scenario-tag-2'])
-    assert test.__scenario__.feature.tags == set(['@feature-tag-1', '@feature-tag-2'])
+    assert test.__scenario__.tags == set(['scenario_tag_1', 'scenario_tag_2'])
+    assert test.__scenario__.feature.tags == set(['feature_tag_1', 'feature_tag_2'])
 
-    assert getattr(test, '@scenario-tag-1')
-    assert getattr(test, '@scenario-tag-2')
+    assert getattr(test, 'scenario_tag_1')
+    assert getattr(test, 'scenario_tag_2')
 
-    assert getattr(test, '@feature-tag-1')
-    assert getattr(test, '@feature-tag-2')
+    assert getattr(test, 'feature_tag_1')
+    assert getattr(test, 'feature_tag_2')
 
     test(request)
+
+
+def test_tags_selector(testdir):
+    """Test tests selection by tags."""
+    testdir.makefile('.feature', test="""
+    @feature_tag_1 @feature_tag_2
+    Feature: Tags
+
+    @scenario_tag_01 @scenario_tag_02
+    Scenario: Tags
+        Given I have a bar
+
+    @scenario_tag_10 @scenario_tag_20
+    Scenario: Tags 2
+        Given I have a bar
+
+    """)
+    testdir.makepyfile("""
+        import pytest
+        from pytest_bdd import given, scenarios
+
+        @given('I have a bar')
+        def i_have_bar():
+            return 'bar'
+
+        scenarios('test.feature')
+    """)
+    result = testdir.runpytest('-k', 'scenario_tag_10 and not scenario_tag_01', '-vv').parseoutcomes()
+    assert result['passed'] == 1
+    assert result['deselected'] == 1
+
+    result = testdir.runpytest('-k', 'scenario_tag_01 and not scenario_tag_10', '-vv').parseoutcomes()
+    assert result['passed'] == 1
+    assert result['deselected'] == 1
+
+    result = testdir.runpytest('-k', 'feature_tag_1', '-vv').parseoutcomes()
+    assert result['passed'] == 2
+
+    result = testdir.runpytest('-k', 'feature_tag_10', '-vv').parseoutcomes()
+    assert result['deselected'] == 2

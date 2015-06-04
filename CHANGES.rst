@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.10.0
+------
+
+- Make feature and scenario tags to be fully compartible with pytest markers (bubenkoff, kevinastone)
+
 2.9.1
 -----
 
