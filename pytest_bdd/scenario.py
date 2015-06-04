@@ -370,7 +370,9 @@ def scenarios(*feature_paths):
     module_scenarios = frozenset(
         (attr.__scenario__.feature.filename, attr.__scenario__.name)
         for name, attr in module.__dict__.items() if hasattr(attr, '__scenario__'))
-    for feature in get_features(abs_feature_paths):
+    feature_list = get_features(abs_feature_paths)
+    feature_list.sort()
+    for feature in feature_list:
         for scenario_name, scenario_object in feature.scenarios.items():
             # skip already bound scenarios
             if (scenario_object.feature.filename, scenario_name) not in module_scenarios:
