@@ -30,11 +30,13 @@ import sys
 import textwrap
 
 import glob2
+import six
 
 from . import types
 from . import exceptions
 
 
+@six.python_2_unicode_compatible
 class FeatureError(Exception):
 
     """Feature parse error."""
@@ -42,9 +44,7 @@ class FeatureError(Exception):
     message = u"{0}.\nLine number: {1}.\nLine: {2}.\nFile: {3}"
 
     def __str__(self):
-        return unicode(self).encode("utf-8")
-
-    def __unicode__(self):
+        """String representation."""
         return self.message.format(*self.args)
 
 

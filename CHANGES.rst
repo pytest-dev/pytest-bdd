@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.9.1
+-----
+
+- Fixed FeatureError string representation to correctly support python3 (bubenkoff, lrowe)
+
 2.9.0
 -----
 
