@@ -41,11 +41,15 @@ class FeatureError(Exception):
 
     message = u"{0}.\nLine number: {1}.\nLine: {2}.\nFile: {3}"
 
-    def __str__(self):
-        return unicode(self).encode("utf-8")
-
     def __unicode__(self):
         return self.message.format(*self.args)
+
+    if sys.version_info[0] == 2:
+        def __str__(self):
+            return unicode(self).encode("utf-8")
+    else:
+        __str__ = __unicode__
+
 
 
 # Global features dictionary
