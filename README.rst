@@ -646,11 +646,14 @@ scenario test, so we can use standard test selection:
 
 .. code-block:: bash
 
-    py.test -k "@backend and @login and @successful"
+    py.test -k "backend and login and successful"
 
-The `@` helps to separate normal markers from the bdd ones.
+The feature and scenario markers are not different from standard pytest markers, and the `@` symbol is stripped out
+automatically to allow test selector expressions. If you want to have bdd-related tags to be distinguishable from the
+other test markers, use prefix like `bdd`.
 Note that if you use pytest `--strict` option, all bdd tags mentioned in the feature files should be also in the
-`markers` setting of the `pytest.ini` config.
+`markers` setting of the `pytest.ini` config. Also for tags please use names which are python-compartible variable
+names, eg starts with a non-number, underscore alphanumberic, etc. That way you can safely use tags for tests filtering.
 
 
 Test setup

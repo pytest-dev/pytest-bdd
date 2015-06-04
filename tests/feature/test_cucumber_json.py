@@ -110,7 +110,7 @@ def test_step_trace(testdir):
                     ],
                     "tags": [
                         {
-                            'name': '@scenario-passing-tag',
+                            'name': 'scenario-passing-tag',
                             'line': 4,
                         }
                     ],
@@ -151,7 +151,7 @@ def test_step_trace(testdir):
                     ],
                     "tags": [
                         {
-                            'name': '@scenario-failing-tag',
+                            'name': 'scenario-failing-tag',
                             'line': 9,
                         }
                     ],
@@ -164,7 +164,7 @@ def test_step_trace(testdir):
             "name": "One passing scenario, one failing scenario",
             "tags": [
                 {
-                    'name': '@feature-tag',
+                    'name': 'feature-tag',
                     'line': 1,
                 }
             ],
