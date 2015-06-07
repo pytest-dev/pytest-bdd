@@ -11,6 +11,7 @@ from .scenario import (
     force_encode,
     make_python_name,
 )
+from .steps import get_step_fixture_name
 from .feature import get_features
 from .types import STEP_TYPES
 
@@ -106,7 +107,7 @@ def print_missing_code(scenarios, steps):
     tw.write(code)
 
 
-def _find_step_fixturedef(fixturemanager, item, name, encoding="utf-8"):
+def _find_step_fixturedef(fixturemanager, item, name, type_, encoding="utf-8"):
     """Find step fixturedef.
 
     :param request: PyTest Item object.
@@ -114,9 +115,9 @@ def _find_step_fixturedef(fixturemanager, item, name, encoding="utf-8"):
 
     :return: Step function.
     """
-    fixturedefs = fixturemanager.getfixturedefs(force_encode(name, encoding), item.nodeid)
+    fixturedefs = fixturemanager.getfixturedefs(get_step_fixture_name(name, type_, encoding), item.nodeid)
     if not fixturedefs:
-        name = find_argumented_step_fixture_name(name, fixturemanager)
+        name = find_argumented_step_fixture_name(name, type_, fixturemanager)
         if name:
             return _find_step_fixturedef(fixturemanager, item, name, encoding)
     else:
@@ -178,7 +179,7 @@ def _show_missing_code_main(config, session):
             if scenario in scenarios:
                 scenarios.remove(scenario)
             for step in scenario.steps:
-                fixturedefs = _find_step_fixturedef(fm, item, step.name)
+                fixturedefs = _find_step_fixturedef(fm, item, step.name, step.type)
                 if fixturedefs:
                     try:
                         steps.remove(step)

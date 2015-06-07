@@ -1,6 +1,12 @@
 Changelog
 =========
 
+
+2.11.0
+------
+
+- Prefix step definition fixture names to avoid name collisions (bubenkoff, lrowe)
+
 2.10.0
 ------
 
@@ -16,36 +22,30 @@ Changelog
 
 - Added possibility to inject fixtures from given keywords (bubenkoff)
 
-
 2.8.0
 -----
 
 - Added hook before the step is executed with evaluated parameters (olegpidsadnyi)
-
 
 2.7.2
 -----
 
 - Correct base feature path lookup for python3 (bubenkoff)
 
-
 2.7.1
 -----
 
 - Allow to pass ``scope`` for ``given`` steps (bubenkoff, sureshvv)
-
 
 2.7.0
 -----
 
 - Implemented `scenarios` shortcut to automatically bind scenarios to tests (bubenkoff)
 
-
 2.6.2
 -----
 
 - Parse comments only in the begining of words (santagada)
-
 
 2.6.1
 -----
@@ -53,24 +53,20 @@ Changelog
 - Correctly handle `pytest-bdd` command called without the subcommand under python3 (bubenkoff, spinus)
 - Pluggable parsers for step definitions (bubenkoff, spinus)
 
-
 2.5.3
 -----
 
 - Add after scenario hook, document both before and after scenario hooks (bubenkoff)
-
 
 2.5.2
 -----
 
 - Fix code generation steps ordering (bubenkoff)
 
-
 2.5.1
 -----
 
 - Fix error report serialization (olegpidsadnyi)
-
 
 2.5.0
 -----
@@ -95,7 +91,6 @@ Changelog
 
 - Recursion is fixed for the --generate-missing and the --feature parameters (bubenkoff)
 
-
 2.4.1
 -----
 
@@ -104,25 +99,21 @@ Changelog
 - Correct timing values for cucumber json reporting (bubenkoff)
 - Validation/generation helpers (bubenkoff)
 
-
 2.4.0
 -----
 
 - Background support added (bubenkoff)
 - Fixed double collection of the conftest files if scenario decorator is used (ropez, bubenkoff)
 
-
 2.3.3
 -----
 
 - Added timings to the cucumber json report (bubenkoff)
 
-
 2.3.2
 -----
 
 - Fixed incorrect error message using e.argname instead of step.name (hvdklauw)
-
 
 2.3.1
 -----
@@ -131,31 +122,26 @@ Changelog
 - Implemented cucumber json formatter (bubenkoff, albertjan)
 - Added 'trace' keyword (bubenkoff)
 
-
 2.1.2
 -----
 
 - Latest pytest compartibility fixes (bubenkoff)
-
 
 2.1.1
 -----
 
 - Bugfixes (bubenkoff)
 
-
 2.1.0
 -----
 
 - Implemented multiline steps (bubenkoff)
-
 
 2.0.1
 -----
 
 - Allow more than one parameter per step (bubenkoff)
 - Allow empty example values (bubenkoff)
-
 
 2.0.0
 -----
@@ -164,7 +150,6 @@ Changelog
 - Argumented steps now support converters (transformations) (bubenkoff)
 - scenario supports only decorator form (bubenkoff)
 - Code generation refactoring and cleanup (bubenkoff)
-
 
 1.0.0
 -----
@@ -177,54 +162,45 @@ Changelog
 
 - Fixed step arguments conflict with the fixtures having the same name (olegpidsadnyi)
 
-
 0.6.9
 -----
 
 - Implemented support of Gherkin "Feature:" (olegpidsadnyi)
-
 
 0.6.8
 -----
 
 - Implemented several hooks to allow reporting/error handling (bubenkoff)
 
-
 0.6.6
 -----
 
 - Fixes to unnecessary mentioning of pytest-bdd package files in py.test log with -v (bubenkoff)
-
 
 0.6.5
 -----
 
 - Compartibility with recent pytest (bubenkoff)
 
-
 0.6.4
 -----
 
 - More unicode fixes (amakhnach)
-
 
 0.6.3
 -----
 
 - Added unicode support for feature files. Removed buggy module replacement for scenario. (amakhnach)
 
-
 0.6.2
 -----
 
 - Removed unnecessary mention of pytest-bdd package files in py.test log with -v (bubenkoff)
 
-
 0.6.1
 -----
 
 - Step arguments in whens when there are no given arguments used. (amakhnach, bubenkoff)
-
 
 0.6.0
 -----
@@ -232,12 +208,10 @@ Changelog
 - Added step arguments support. (curzona, olegpidsadnyi, bubenkoff)
 - Added checking of the step type order. (markon, olegpidsadnyi)
 
-
 0.5.2
 -----
 
 - Added extra info into output when FeatureError exception raises. (amakhnach)
-
 
 0.5.0
 -----
@@ -247,24 +221,20 @@ Changelog
 - Test coverage improvement/fixes
 - Correct wrapping of step functions to preserve function docstring
 
-
 0.4.7
 -----
 
 - Fixed Python 3.3 support
-
 
 0.4.6
 -----
 
 - Fixed a bug when py.test --fixtures showed incorrect filenames for the steps.
 
-
 0.4.5
 -----
 
 - Fixed a bug with the reuse of the fixture by given steps being evaluated multiple times.
-
 
 0.4.3
 -----

@@ -2,6 +2,7 @@
 
 import pytest
 from pytest_bdd import given, when, then
+from pytest_bdd.steps import get_step_fixture_name, WHEN, THEN
 
 
 @when('I do stuff')
@@ -20,10 +21,10 @@ def test_when_then(request):
     This test checks that when and then are not evaluated
     during fixture collection that might break the scenario.
     """
-    do_stuff_ = request.getfuncargvalue('I do stuff')
+    do_stuff_ = request.getfuncargvalue(get_step_fixture_name('I do stuff', WHEN))
     assert callable(do_stuff_)
 
-    check_stuff_ = request.getfuncargvalue('I check stuff')
+    check_stuff_ = request.getfuncargvalue(get_step_fixture_name('I check stuff', THEN))
     assert callable(check_stuff_)
 
 
@@ -38,4 +39,4 @@ def test_preserve_decorator(step, keyword):
     def func():
         """Doc string."""
 
-    assert globals()[keyword].__doc__ == 'Doc string.'
+    assert globals()[get_step_fixture_name(keyword, step.__name__)].__doc__ == 'Doc string.'

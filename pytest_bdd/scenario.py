@@ -31,6 +31,7 @@ from .steps import (
     execute,
     get_caller_function,
     get_caller_module,
+    get_step_fixture_name,
     inject_fixture,
     recreate_function,
 )
@@ -49,7 +50,7 @@ PYTHON_REPLACE_REGEX = re.compile("\W")
 ALPHA_REGEX = re.compile("^\d+_*")
 
 
-def find_argumented_step_fixture_name(name, fixturemanager, request=None):
+def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None):
     """Find argumented step fixture name."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
@@ -63,7 +64,7 @@ def find_argumented_step_fixture_name(name, fixturemanager, request=None):
                         value = converters[arg](value)
                     if request:
                         inject_fixture(request, arg, value)
-                parser_name = force_encode(parser.name)
+                parser_name = get_step_fixture_name(parser.name, type_)
                 if request:
                     try:
                         request.getfuncargvalue(parser_name)
@@ -84,10 +85,10 @@ def _find_step_function(request, step, scenario, encoding):
     """
     name = step.name
     try:
-        return request.getfuncargvalue(force_encode(name, encoding))
+        return request.getfuncargvalue(get_step_fixture_name(name, step.type, encoding))
     except python.FixtureLookupError:
         try:
-            name = find_argumented_step_fixture_name(name, request._fixturemanager, request)
+            name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager, request)
             if name:
                 return request.getfuncargvalue(name)
             raise
@@ -175,12 +176,6 @@ def _execute_scenario(feature, scenario, request, encoding, example=None):
                 raise
 
             try:
-                # Check the step types are called in the correct order
-                if step_func.step_type != step.type:
-                    raise exceptions.StepTypeError(
-                        'Wrong step type "{0}" while "{1}" is expected.'.format(step_func.step_type, step.type)
-                    )
-
                 # Check if the fixture that implements given step has not been yet used by another given step
                 if step.type == GIVEN:
                     if step_func.fixture in givens:
