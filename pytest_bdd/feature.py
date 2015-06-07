@@ -36,18 +36,6 @@ from . import types
 from . import exceptions
 
 
-@six.python_2_unicode_compatible
-class FeatureError(Exception):
-
-    """Feature parse error."""
-
-    message = u"{0}.\nLine number: {1}.\nLine: {2}.\nFile: {3}"
-
-    def __str__(self):
-        """String representation."""
-        return self.message.format(*self.args)
-
-
 # Global features dictionary
 features = {}
 
@@ -218,20 +206,6 @@ class Feature(object):
                 if not clean_line:
                     continue
                 mode = get_step_type(clean_line) or mode
-
-                if mode == types.GIVEN and prev_mode not in (
-                        types.GIVEN, types.SCENARIO, types.SCENARIO_OUTLINE, types.BACKGROUND):
-                    raise FeatureError("Given steps must be the first in withing the Scenario",
-                                       line_number, clean_line, filename)
-
-                if mode == types.WHEN and prev_mode not in (
-                        types.SCENARIO, types.SCENARIO_OUTLINE, types.GIVEN, types.WHEN):
-                    raise FeatureError("When steps must be the first or follow Given steps",
-                                       line_number, clean_line, filename)
-
-                if not self.background and mode == types.THEN and prev_mode not in types.STEP_TYPES:
-                    raise FeatureError("Then steps must follow Given or When steps",
-                                       line_number, clean_line, filename)
 
                 if mode == types.FEATURE:
                     if prev_mode != types.FEATURE:
