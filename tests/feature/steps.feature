@@ -23,6 +23,12 @@ Scenario: Then step can follow Given step
 	Then foo should have value "foo"
 
 
+Scenario: Any step ordering is allowed
+    Then I make no mistakes
+    When I do nothing
+    Given there is a list
+
+
 Scenario: All steps are declared in the conftest
     Given I have a bar
     Then bar should have value "bar"
