@@ -48,6 +48,19 @@ from .exceptions import (
 from .parsers import get_parser
 
 
+def get_step_fixture_name(name, type_, encoding=None):
+    """Get step fixture name.
+
+    :param name: unicode string
+    :param type: step type
+    :param encoding: encoding
+    :return: step fixture name
+    :rtype: string
+    """
+    return "pytestbdd_{type}_{name}".format(
+        type=type_, name=force_encode(name, **(dict(encoding=encoding) if encoding else {})))
+
+
 def given(name, fixture=None, converters=None, scope='function', target_fixture=None):
     """Given step decorator.
 
@@ -73,7 +86,7 @@ def given(name, fixture=None, converters=None, scope='function', target_fixture=
         func = pytest.fixture(scope=scope)(lambda: step_func)
         func.__doc__ = 'Alias for the "{0}" fixture.'.format(fixture)
         _, name = parse_line(name)
-        contribute_to_module(module, name, func)
+        contribute_to_module(module, get_step_fixture_name(name, GIVEN), func)
         return _not_a_fixture_decorator
 
     return _step_decorator(GIVEN, name, converters=converters, scope=scope, target_fixture=target_fixture)
@@ -160,7 +173,8 @@ def _step_decorator(step_type, step_name, converters=None, scope='function', tar
 
         step_func.step_type = step_type
 
-        lazy_step_func = contribute_to_module(get_caller_module(), parsed_step_name, lazy_step_func)
+        lazy_step_func = contribute_to_module(
+            get_caller_module(), get_step_fixture_name(parsed_step_name, step_type), lazy_step_func)
 
         lazy_step_func.step_type = step_type
 

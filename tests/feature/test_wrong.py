@@ -60,9 +60,9 @@ def test_wrong_type_order(request, scenario_name):
     def test_wrong_type_order(request):
         pass
 
-    with pytest.raises(exceptions.StepTypeError) as excinfo:
+    with pytest.raises(exceptions.StepDefinitionNotFoundError) as excinfo:
         test_wrong_type_order(request)
-    assert re.match(r'Wrong step type \"(\w+)\" while \"(\w+)\" is expected\.', excinfo.value.args[0])
+    assert re.match(r'Step definition is not found: "(.+)".+', excinfo.value.args[0])
 
 
 def test_verbose_output(request):
