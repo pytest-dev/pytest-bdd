@@ -62,7 +62,7 @@ def test_wrong_type_order(request, scenario_name):
 
     with pytest.raises(exceptions.StepDefinitionNotFoundError) as excinfo:
         test_wrong_type_order(request)
-    assert re.match(r'Step definition is not found: "(.+)".+', excinfo.value.args[0])
+    assert re.match(r'Step definition is not found: (.+)', excinfo.value.args[0])
 
 
 def test_verbose_output(request):

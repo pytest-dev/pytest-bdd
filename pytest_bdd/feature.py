@@ -423,6 +423,7 @@ class Scenario(object):
             )
 
 
+@six.python_2_unicode_compatible
 class Step(object):
 
     """Step."""
@@ -465,6 +466,10 @@ class Step(object):
     def name(self, value):
         """Set step name."""
         self._name = value
+
+    def __str__(self):
+        """Full step name including the type."""
+        return '{type} "{name}"'.format(type=self.type.capitalize(), name=self.name)
 
     @property
     def params(self):
