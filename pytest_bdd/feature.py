@@ -247,7 +247,7 @@ class Feature(object):
                         line_number=line_number,
                         keyword=keyword,
                     )
-                    if self.background and mode == types.GIVEN and not scenario:
+                    if self.background and not scenario:
                         target = self.background
                     else:
                         target = scenario
