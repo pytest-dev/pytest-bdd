@@ -8,7 +8,6 @@ import py
 
 from .scenario import (
     find_argumented_step_fixture_name,
-    force_encode,
     make_python_name,
 )
 from .steps import get_step_fixture_name
@@ -80,14 +79,14 @@ def print_missing_code(scenarios, steps):
         tw.line()
         if step.scenario is not None:
             tw.line(
-                """Step "{step.name}" is not defined in the scenario "{step.scenario.name}" in the feature"""
+                """Step {step} is not defined in the scenario "{step.scenario.name}" in the feature"""
                 """ "{step.scenario.feature.name}" in the file"""
                 """ {step.scenario.feature.filename}:{step.line_number}""".format(step=step),
                 red=True,
             )
         elif step.background is not None:
             tw.line(
-                """Step "{step.name}" is not defined in the background of the feature"""
+                """Step {step} is not defined in the background of the feature"""
                 """ "{step.background.feature.name}" in the file"""
                 """ {step.background.feature.filename}:{step.line_number}""".format(step=step),
                 red=True,

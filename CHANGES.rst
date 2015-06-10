@@ -1,6 +1,10 @@
 Changelog
 =========
 
+2.11.1
+------
+
+- Mention step type on step definition not found errors and in code generation (bubenkoff, lrowe)
 
 2.11.0
 ------

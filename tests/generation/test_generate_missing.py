@@ -39,13 +39,13 @@ def test_generate_missing(testdir):
 
     result.stdout.fnmatch_lines(
         [
-            'Step "I have a custom bar" is not defined in the scenario '
+            'Step Given "I have a custom bar" is not defined in the scenario '
             '"Code is generated for scenario steps which are not yet defined(implemented)" *',
         ]
     )
 
     result.stdout.fnmatch_lines(
-        ['Step "I have a foobar" is not defined in the background of the feature "Missing code generation" *']
+        ['Step Given "I have a foobar" is not defined in the background of the feature "Missing code generation" *']
     )
 
     result.stdout.fnmatch_lines(["Please place the code above to the test file(s):"])
