@@ -110,7 +110,16 @@ Scenario decorator can accept such optional keyword arguments:
 Function decorated with `scenario` decorator behaves like a normal test function,
 which will be executed after all scenario steps.
 You can consider it as a normal pytest test function, e.g. order fixtures there,
-call other funnctions and make assertions.
+call other functions and make assertions:
+
+
+.. code-block:: python
+
+    from pytest_bdd import scenario, given, when, then
+
+    @scenario('publish_article.feature', 'Publishing the article')
+    def test_publish(browser):
+        assert article.title in browser.html
 
 
 Step aliases
