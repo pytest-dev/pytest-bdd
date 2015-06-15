@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.11.2
+------
+
+- Fix minimal `six` version (bubenkoff, dustinfarris)
+
 2.11.1
 ------
 

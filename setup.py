@@ -74,7 +74,7 @@ setup(
         "parse",
         "parse_type",
         "pytest>=2.6.0",
-        "six",
+        "six>=1.9.0",
     ],
     # the following makes a plugin available to py.test
     entry_points={

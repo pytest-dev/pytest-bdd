@@ -99,6 +99,20 @@ test_publish_article.py:
         assert article.is_published
 
 
+Scenario decorator
+------------------
+
+Scenario decorator can accept such optional keyword arguments:
+
+* ``encoding`` - decode content of feature file in specific encoding. UTF-8 is default.
+* ``example_converters`` - mapping to pass functions to convert example values provided in feature files.
+
+Function decorated with `scenario` decorator behaves like a normal test function,
+which will be executed after all scenario steps.
+You can consider it as a normal pytest test function, e.g. order fixtures there,
+call other funnctions and make assertions.
+
+
 Step aliases
 ------------
 
@@ -403,14 +417,6 @@ by a a `given` step (`i_have_text`) argument with the same name (`text`). This p
 the `Step arguments are fixtures as well!`_ section.
 
 
-Scenario parameters
--------------------
-Scenario decorator can accept such optional keyword arguments:
-
-* ``encoding`` - decode content of feature file in specific encoding. UTF-8 is default.
-* ``example_converters`` - mapping to pass functions to convert example values provided in feature files.
-
-
 Scenarios shortcut
 ------------------
 
@@ -533,6 +539,10 @@ The code will look like:
 
 Example code also shows possibility to pass example converters which may be useful if you need parameter types
 different than strings.
+
+
+Combine scenario outline and pytest parametrization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It's also possible to parametrize the scenario on the python side.
 The reason for this is that it is sometimes not needed to mention example table for every scenario.
