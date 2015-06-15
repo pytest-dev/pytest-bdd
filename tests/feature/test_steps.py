@@ -64,6 +64,11 @@ def test_then_after_given():
     pass
 
 
+@scenario('steps.feature', 'Any step ordering is allowed')
+def test_any_step_ordering():
+    pass
+
+
 @given('xyz')
 def xyz():
     """Used in the test_same_step_name."""

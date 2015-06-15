@@ -8,6 +8,7 @@ from pytest_bdd import (
     parsers,
     scenario,
     then,
+    when,
 )
 
 
@@ -63,9 +64,19 @@ def no_bar(foo):
     del foo["bar"]
 
 
+@when('I set foo with a value "foo"')
+def set_foo_foo(foo):
+    foo["foo"] = "foo"
+
+
 @then('foo should have value "bar"')
 def foo_has_bar(foo):
     assert foo["bar"] == "bar"
+
+
+@then('foo should have value "foo"')
+def foo_has_foo(foo):
+    assert foo["foo"] == "foo"
 
 
 @then('foo should have value "dummy"')
