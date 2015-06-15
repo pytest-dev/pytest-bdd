@@ -3,12 +3,11 @@
 
 import codecs
 import os
+import re
 import sys
 
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
-
-import pytest_bdd
 
 
 class ToxTestCommand(TestCommand):
@@ -45,6 +44,9 @@ long_description = (
     codecs.open(os.path.join(dirname, "CHANGES.rst"), encoding="utf-8").read()
 )
 
+with codecs.open(os.path.join(dirname, 'pytest_bdd', '__init__.py'), encoding='utf-8') as fd:
+    VERSION = re.compile(r".*__version__ = '(.*?)'", re.S).match(fd.read()).group(1)
+
 setup(
     name="pytest-bdd",
     description="BDD for pytest",
@@ -53,7 +55,7 @@ setup(
     license="MIT license",
     author_email="oleg.pidsadnyi@gmail.com",
     url="https://github.com/pytest-dev/pytest-bdd",
-    version=pytest_bdd.__version__,
+    version=VERSION,
     classifiers=[
         "Development Status :: 6 - Mature",
         "Intended Audience :: Developers",
