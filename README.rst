@@ -963,6 +963,31 @@ You can learn more about `functools.partial <http://docs.python.org/2/library/fu
 in the Python docs.
 
 
+Relax strict Gherkin language validation
+----------------------------------------
+
+If your scenarios are not written in `proper` Gherkin language, e.g. they are more like textual scripts, then
+you might find it hard to use `pytest-bdd` as by default it validates the order of step types (given-when-then).
+To relax that validation, just override a fixture `pytestbdd_strict_gherkin` to return `False`:
+
+test_publish_article.py:
+
+.. code-block:: python
+
+    import pytest
+    from pytest_bdd import scenario
+
+
+    @pytest.fixture
+    def pytestbdd_strict_gherkin():
+        return False
+
+
+    @scenario('publish_article.feature', 'Publishing the article in a wierd way')
+    def test_publish():
+        pass
+
+
 Hooks
 -----
 

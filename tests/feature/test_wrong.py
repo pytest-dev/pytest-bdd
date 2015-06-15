@@ -2,10 +2,12 @@
 import os.path
 import re
 
+import mock
+
 import pytest
 
 from pytest_bdd import scenario, given, when, then
-from pytest_bdd.feature import FeatureError
+from pytest_bdd.feature import FeatureError, features
 from pytest_bdd import exceptions
 
 
@@ -33,14 +35,27 @@ def then_nevermind():
         ('given_after_then.feature', 'Given after Then'),
     ]
 )
-def test_wrong(request, feature, scenario_name):
+@pytest.mark.parametrize('strict_gherkin', [True, False])
+@mock.patch('pytest_bdd.fixtures.pytestbdd_strict_gherkin', autospec=True)
+def test_wrong(mocked_strict_gherkin, request, feature, scenario_name, strict_gherkin):
     """Test wrong feature scenarios."""
+    mocked_strict_gherkin.return_value = strict_gherkin
 
-    with pytest.raises(FeatureError):
+    def declare_scenario():
         @scenario(feature, scenario_name)
         def test_scenario():
             pass
-    # TODO: assert the exception args from parameters
+
+    if strict_gherkin:
+        with pytest.raises(FeatureError):
+            declare_scenario()
+        # TODO: assert the exception args from parameters
+    else:
+        declare_scenario()
+
+    def clean_cache():
+        features.clear()
+    request.addfinalizer(clean_cache)
 
 
 @pytest.mark.parametrize(
@@ -65,8 +80,8 @@ def test_wrong_type_order(request, scenario_name):
     assert re.match(r'Step definition is not found: (.+)', excinfo.value.args[0])
 
 
-def test_verbose_output(request):
-    """Test verbose output of failed feature scenario"""
+def test_verbose_output():
+    """Test verbose output of failed feature scenario."""
     with pytest.raises(FeatureError) as excinfo:
         scenario('when_after_then.feature', 'When after then')
 

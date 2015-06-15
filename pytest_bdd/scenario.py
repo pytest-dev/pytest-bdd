@@ -229,7 +229,7 @@ def get_fixture(caller_module, fixture, path=None):
             if fixture in globs:
                 return call_fixture(globs[fixture])
     else:
-        return call_fixture(fixtures.pytestbdd_feature_base_dir)
+        return call_fixture(getattr(fixtures, fixture))
     return get_fixture(caller_module, fixture, path=os.path.dirname(path))
 
 
@@ -290,14 +290,22 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, call
 
 def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None,
              caller_module=None, caller_function=None):
-    """Scenario."""
+    """Scenario decorator.
+
+    :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
+    :param str scenario_name: Scenario name.
+    :param str encoding: Feature file encoding.
+    :param dict example_converters: optional `dict` of example converter function, where key is the name of the
+        example parameter, and value is the converter function.
+    """
     scenario_name = force_unicode(scenario_name, encoding)
     caller_module = caller_module or get_caller_module()
     caller_function = caller_function or get_caller_function()
 
     # Get the feature
     base_path = get_fixture(caller_module, "pytestbdd_feature_base_dir")
-    feature = Feature.get_feature(base_path, feature_name, encoding=encoding)
+    strict_gherkin = get_fixture(caller_module, "pytestbdd_strict_gherkin")
+    feature = Feature.get_feature(base_path, feature_name, encoding=encoding, strict_gherkin=strict_gherkin)
 
     # Get the sc_enario
     try:
@@ -347,10 +355,10 @@ def get_python_name_generator(name):
         suffix = '_{0}'.format(index)
 
 
-def scenarios(*feature_paths):
+def scenarios(*feature_paths, **kwargs):
     """Parse features from the paths and put all found scenarios in the caller module.
 
-    :param: paths
+    :param *feature_paths: feature file paths to use for scenarios
     """
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
@@ -369,7 +377,7 @@ def scenarios(*feature_paths):
         for scenario_name, scenario_object in feature.scenarios.items():
             # skip already bound scenarios
             if (scenario_object.feature.filename, scenario_name) not in module_scenarios:
-                @scenario(feature.filename, scenario_name)
+                @scenario(feature.filename, scenario_name, **kwargs)
                 def _scenario():
                     pass
                 for test_name in get_python_name_generator(scenario_name):
