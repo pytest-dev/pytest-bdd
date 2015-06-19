@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.12.0
+2.12.1
 ------
 
 - Make it possible to relax strict Gherkin scenario validation (bubenkoff)

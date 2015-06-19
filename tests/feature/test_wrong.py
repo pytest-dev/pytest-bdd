@@ -29,6 +29,7 @@ def then_nevermind():
 @pytest.mark.parametrize(
     ('feature', 'scenario_name'),
     [
+        ('when_in_background.feature', 'When in background'),
         ('when_after_then.feature', 'When after then'),
         ('then_first.feature', 'Then first'),
         ('given_after_when.feature', 'Given after When'),

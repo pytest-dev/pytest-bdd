@@ -222,6 +222,11 @@ class Feature(object):
                 mode = get_step_type(clean_line) or mode
 
                 if strict_gherkin:
+                    if (self.background and not scenario and mode not in (
+                            types.SCENARIO, types.SCENARIO_OUTLINE, types.GIVEN)):
+                        raise FeatureError(
+                            "Background section can only contain Given steps", line_number, clean_line, filename)
+
                     if mode == types.GIVEN and prev_mode not in (
                             types.GIVEN, types.SCENARIO, types.SCENARIO_OUTLINE, types.BACKGROUND):
                         raise FeatureError("Given steps must be the first within the Scenario",
@@ -276,7 +281,7 @@ class Feature(object):
                         line_number=line_number,
                         keyword=keyword,
                     )
-                    if self.background and mode == types.GIVEN and not scenario:
+                    if self.background and (mode == types.GIVEN or not strict_gherkin) and not scenario:
                         target = self.background
                     else:
                         target = scenario
