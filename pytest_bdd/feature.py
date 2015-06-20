@@ -174,6 +174,78 @@ def get_features(paths, **kwargs):
     return features
 
 
+class Examples(object):
+
+    """Example table."""
+
+    def __init__(self):
+        """Initialize examples instance."""
+        self.example_params = []
+        self.examples = []
+        self.vertical_examples = []
+
+    def __nonzero__(self):
+        """Bool check equals to the example list check."""
+        return self.__bool__()
+
+    def __bool__(self):
+        """Bool check equals to the example list check."""
+        return bool(self.examples or self.vertical_examples)
+
+    def set_param_names(self, keys):
+        """Set parameter names.
+
+        :param names: `list` of `string` parameter names.
+        """
+        self.example_params = [str(key) for key in keys]
+
+    def add_example(self, values):
+        """Add example.
+
+        :param values: `list` of `string` parameter values.
+        """
+        self.examples.append(values)
+
+    def add_example_row(self, param, values):
+        """Add example row.
+
+        :param param: `str` parameter name
+        :param values: `list` of `string` parameter values
+        """
+        if param in self.example_params:
+            raise exceptions.ExamplesNotValidError(
+                """Example rows should contain unique parameters. {0} appeared more than once.""".format(
+                    param,
+                )
+            )
+        self.example_params.append(param)
+        self.vertical_examples.append(values)
+
+    def get_params(self, converters):
+        """Get scenario pytest parametrization table.
+
+        :param converters: `dict` of converter functions to convert parameter values
+        """
+        param_count = len(self.example_params)
+        if self.vertical_examples and not self.examples:
+            for value_index in range(len(self.vertical_examples[0])):
+                example = []
+                for param_index in range(param_count):
+                    example.append(self.vertical_examples[param_index][value_index])
+                self.examples.append(example)
+
+        if self.examples:
+            params = []
+            for example in self.examples:
+                for index, param in enumerate(self.example_params):
+                    if converters and param in converters:
+                        example[index] = converters[param](example[index])
+                params.append(example)
+            return [self.example_params, params]
+        else:
+            return []
+
+
 class Feature(object):
 
     """Feature."""
@@ -193,6 +265,7 @@ class Feature(object):
         self.line_number = 1
         self.name = None
         self.tags = set()
+        self.examples = Examples()
         scenario = None
         mode = None
         prev_mode = None
@@ -266,13 +339,20 @@ class Feature(object):
                 elif mode == types.EXAMPLES_VERTICAL:
                     mode = types.EXAMPLE_LINE_VERTICAL
                 elif mode == types.EXAMPLES_HEADERS:
-                    scenario.set_param_names([l.strip() for l in parsed_line.split("|")[1:-1] if l.strip()])
+                    (scenario or self).examples.set_param_names(
+                        [l.strip() for l in parsed_line.split("|")[1:-1] if l.strip()])
                     mode = types.EXAMPLE_LINE
                 elif mode == types.EXAMPLE_LINE:
-                    scenario.add_example([l.strip() for l in stripped_line.split("|")[1:-1]])
+                    (scenario or self).examples.add_example([l.strip() for l in stripped_line.split("|")[1:-1]])
                 elif mode == types.EXAMPLE_LINE_VERTICAL:
                     param_line_parts = [l.strip() for l in stripped_line.split("|")[1:-1]]
-                    scenario.add_example_row(param_line_parts[0], param_line_parts[1:])
+                    try:
+                        (scenario or self).examples.add_example_row(param_line_parts[0], param_line_parts[1:])
+                    except exceptions.ExamplesNotValidError as exc:
+                        if scenario:
+                            raise exceptions.ScenarioExamplesNotValidError(exc.args[0])
+                        else:
+                            raise exceptions.FeatureExamplesNotValidError(exc.args[0])
                 elif mode and mode not in (types.FEATURE, types.TAG):
                     step = Step(
                         name=parsed_line,
@@ -330,9 +410,7 @@ class Scenario(object):
         self.feature = feature
         self.name = name
         self._steps = []
-        self.example_params = []
-        self.examples = []
-        self.vertical_examples = []
+        self.examples = Examples()
         self.line_number = line_number
         self.example_converters = example_converters
         self.tags = tags or set()
@@ -368,56 +446,13 @@ class Scenario(object):
         """
         return frozenset(sum((list(step.params) for step in self.steps), []))
 
-    def set_param_names(self, keys):
-        """Set parameter names.
-
-        :param names: `list` of `string` parameter names.
-        """
-        self.example_params = [str(key) for key in keys]
-
-    def add_example(self, values):
-        """Add example.
-
-        :param values: `list` of `string` parameter values.
-        """
-        self.examples.append(values)
-
-    def add_example_row(self, param, values):
-        """Add example row.
-
-        :param param: `str` parameter name
-        :param values: `list` of `string` parameter values
-        """
-        if param in self.example_params:
-            raise exceptions.ScenarioExamplesNotValidError(
-                """Scenario "{0}" in the feature "{1}" has not valid examples. """
-                """Example rows should contain unique parameters. {2} appeared more than once.""".format(
-                    self.name, self.feature.filename, param,
-                )
-            )
-        self.example_params.append(param)
-        self.vertical_examples.append(values)
+    def get_examples(self):
+        """Get examples."""
+        return self.examples or self.feature.examples
 
     def get_params(self):
-        """Get scenario pytest parametrization table."""
-        param_count = len(self.example_params)
-        if self.vertical_examples and not self.examples:
-            for value_index in range(len(self.vertical_examples[0])):
-                example = []
-                for param_index in range(param_count):
-                    example.append(self.vertical_examples[param_index][value_index])
-                self.examples.append(example)
-
-        if self.examples:
-            params = []
-            for example in self.examples:
-                for index, param in enumerate(self.example_params):
-                    if self.example_converters and param in self.example_converters:
-                        example[index] = self.example_converters[param](example[index])
-                params.append(example)
-            return [self.example_params, params]
-        else:
-            return []
+        """Get example params."""
+        return self.get_examples().get_params(self.example_converters)
 
     def validate(self):
         """Validate the scenario.
@@ -425,11 +460,11 @@ class Scenario(object):
         :raises ScenarioValidationError: when scenario is not valid
         """
         params = self.params
-        if params and self.example_params and params != set(self.example_params):
+        if params and self.examples.example_params and params != set(self.examples.example_params):
             raise exceptions.ScenarioExamplesNotValidError(
                 """Scenario "{0}" in the feature "{1}" has not valid examples. """
                 """Set of step parameters {2} should match set of example values {3}.""".format(
-                    self.name, self.feature.filename, sorted(params), sorted(self.example_params),
+                    self.name, self.feature.filename, sorted(params), sorted(self.examples.example_params),
                 )
             )
 

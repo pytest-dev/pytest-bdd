@@ -103,3 +103,13 @@ def test_empty_example_values():
 
     assert test_scenario.parametrize.args == (
         [u'start', u'eat', u'left'], [['#', '', '']])
+
+
+@scenario(
+    'outline_feature.feature',
+    'Outlined given, when, thens',
+    example_converters=dict(start=int, eat=float, left=str)
+)
+def test_outlined_feature():
+    assert test_outlined.parametrize.args == (
+        [u'start', u'eat', u'left'], [[12, 5.0, '7'], [5, 4.0, '1']])
