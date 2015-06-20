@@ -363,6 +363,7 @@ def scenarios(*feature_paths, **kwargs):
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
     base_path = get_fixture(module, "pytestbdd_feature_base_dir")
+    strict_gherkin = get_fixture(module, "pytestbdd_strict_gherkin")
     abs_feature_paths = []
     for path in feature_paths:
         if not os.path.isabs(path):
@@ -373,7 +374,7 @@ def scenarios(*feature_paths, **kwargs):
     module_scenarios = frozenset(
         (attr.__scenario__.feature.filename, attr.__scenario__.name)
         for name, attr in module.__dict__.items() if hasattr(attr, '__scenario__'))
-    for feature in get_features(abs_feature_paths):
+    for feature in get_features(abs_feature_paths, strict_gherkin=strict_gherkin):
         for scenario_name, scenario_object in feature.scenarios.items():
             # skip already bound scenarios
             if (scenario_object.feature.filename, scenario_name) not in module_scenarios:

@@ -151,7 +151,7 @@ def get_tags(line):
     )
 
 
-def get_features(paths):
+def get_features(paths, **kwargs):
     """Get features for given paths.
 
     :param list paths: `list` of paths (file or dirs)
@@ -168,7 +168,7 @@ def get_features(paths):
             features.extend(get_features(glob2.iglob(op.join(path, "**", "*.feature"))))
         else:
             base, name = op.split(path)
-            feature = Feature.get_feature(base, name)
+            feature = Feature.get_feature(base, name, **kwargs)
             features.append(feature)
     features.sort(key=lambda feature: feature.name or feature.filename)
     return features

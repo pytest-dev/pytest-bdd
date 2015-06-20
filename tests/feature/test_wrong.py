@@ -6,7 +6,7 @@ import mock
 
 import pytest
 
-from pytest_bdd import scenario, given, when, then
+from pytest_bdd import scenario, scenarios, given, when, then
 from pytest_bdd.feature import FeatureError, features
 from pytest_bdd import exceptions
 
@@ -37,15 +37,20 @@ def then_nevermind():
     ]
 )
 @pytest.mark.parametrize('strict_gherkin', [True, False])
+@pytest.mark.parametrize('multiple', [True, False])
 @mock.patch('pytest_bdd.fixtures.pytestbdd_strict_gherkin', autospec=True)
-def test_wrong(mocked_strict_gherkin, request, feature, scenario_name, strict_gherkin):
+def test_wrong(mocked_strict_gherkin, request, feature, scenario_name, strict_gherkin, multiple):
     """Test wrong feature scenarios."""
     mocked_strict_gherkin.return_value = strict_gherkin
 
     def declare_scenario():
-        @scenario(feature, scenario_name)
-        def test_scenario():
-            pass
+        if multiple:
+            scenarios(feature)
+        else:
+            @scenario(feature, scenario_name)
+            def test_scenario():
+                pass
+
 
     if strict_gherkin:
         with pytest.raises(FeatureError):
