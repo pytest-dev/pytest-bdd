@@ -37,7 +37,7 @@ from .steps import (
 )
 from .types import GIVEN
 
-if six.PY3:
+if six.PY3:  # pragma: no cover
     import runpy
 
     def execfile(filename, init_globals):
@@ -103,7 +103,7 @@ def _find_step_function(request, step, scenario, encoding):
             )
 
 
-def _execute_step_function(request, scenario, step, step_func, example=None):
+def _execute_step_function(request, scenario, step, step_func):
     """Execute step function.
 
     :param request: PyTest request.
@@ -122,13 +122,6 @@ def _execute_step_function(request, scenario, step, step_func, example=None):
 
     request.config.hook.pytest_bdd_before_step(**kw)
 
-    if example:
-        for key in step.params:
-            value = example[key]
-            if step_func.converters and key in step_func.converters:
-                value = step_func.converters[key](value)
-            inject_fixture(request, key, value)
-
     kw["step_func_args"] = {}
     try:
         # Get the step argument values.
@@ -144,14 +137,13 @@ def _execute_step_function(request, scenario, step, step_func, example=None):
         raise
 
 
-def _execute_scenario(feature, scenario, request, encoding, example=None):
+def _execute_scenario(feature, scenario, request, encoding):
     """Execute the scenario.
 
     :param feature: Feature.
     :param scenario: Scenario.
     :param request: request.
     :param encoding: Encoding.
-    :param example: Example.
     """
     request.config.hook.pytest_bdd_before_scenario(
         request=request,
@@ -196,7 +188,7 @@ def _execute_scenario(feature, scenario, request, encoding, example=None):
                 )
                 raise
 
-            _execute_step_function(request, scenario, step, step_func, example=example)
+            _execute_step_function(request, scenario, step, step_func)
     finally:
         request.config.hook.pytest_bdd_after_scenario(
             request=request,
@@ -379,7 +371,7 @@ def scenarios(*feature_paths, **kwargs):
             if (scenario_object.feature.filename, scenario_name) not in module_scenarios:
                 @scenario(feature.filename, scenario_name, **kwargs)
                 def _scenario():
-                    pass
+                    pass  # pragma: no cover
                 for test_name in get_python_name_generator(scenario_name):
                     if test_name not in module.__dict__:
                         # found an unique test name

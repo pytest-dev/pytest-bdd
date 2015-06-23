@@ -36,18 +36,6 @@ from . import types
 from . import exceptions
 
 
-@six.python_2_unicode_compatible
-class FeatureError(Exception):
-
-    """Feature parse error."""
-
-    message = u"{0}.\nLine number: {1}.\nLine: {2}.\nFile: {3}"
-
-    def __str__(self):
-        """String representation."""
-        return self.message.format(*self.args)
-
-
 # Global features dictionary
 features = {}
 
@@ -120,7 +108,7 @@ def force_unicode(obj, encoding="utf-8"):
             return obj.decode(encoding)
         else:
             return unicode(obj)
-    else:
+    else:  # pragma: no cover
         return str(obj)
 
 
@@ -161,15 +149,14 @@ def get_features(paths, **kwargs):
     seen_names = set()
     features = []
     for path in paths:
-        if path in seen_names:
-            continue
-        seen_names.add(path)
-        if op.isdir(path):
-            features.extend(get_features(glob2.iglob(op.join(path, "**", "*.feature"))))
-        else:
-            base, name = op.split(path)
-            feature = Feature.get_feature(base, name, **kwargs)
-            features.append(feature)
+        if path not in seen_names:
+            seen_names.add(path)
+            if op.isdir(path):
+                features.extend(get_features(glob2.iglob(op.join(path, "**", "*.feature"))))
+            else:
+                base, name = op.split(path)
+                feature = Feature.get_feature(base, name, **kwargs)
+                features.append(feature)
     features.sort(key=lambda feature: feature.name or feature.filename)
     return features
 
@@ -183,14 +170,6 @@ class Examples(object):
         self.example_params = []
         self.examples = []
         self.vertical_examples = []
-
-    def __nonzero__(self):
-        """Bool check equals to the example list check."""
-        return self.__bool__()
-
-    def __bool__(self):
-        """Bool check equals to the example list check."""
-        return bool(self.examples or self.vertical_examples)
 
     def set_param_names(self, keys):
         """Set parameter names.
@@ -214,7 +193,7 @@ class Examples(object):
         """
         if param in self.example_params:
             raise exceptions.ExamplesNotValidError(
-                """Example rows should contain unique parameters. {0} appeared more than once.""".format(
+                """Example rows should contain unique parameters. "{0}" appeared more than once""".format(
                     param,
                 )
             )
@@ -297,22 +276,22 @@ class Feature(object):
                 if strict_gherkin:
                     if (self.background and not scenario and mode not in (
                             types.SCENARIO, types.SCENARIO_OUTLINE, types.GIVEN)):
-                        raise FeatureError(
+                        raise exceptions.FeatureError(
                             "Background section can only contain Given steps", line_number, clean_line, filename)
 
                     if mode == types.GIVEN and prev_mode not in (
                             types.GIVEN, types.SCENARIO, types.SCENARIO_OUTLINE, types.BACKGROUND):
-                        raise FeatureError("Given steps must be the first within the Scenario",
-                                           line_number, clean_line, filename)
+                        raise exceptions.FeatureError(
+                            "Given steps must be the first within the Scenario", line_number, clean_line, filename)
 
                     if mode == types.WHEN and prev_mode not in (
                             types.SCENARIO, types.SCENARIO_OUTLINE, types.GIVEN, types.WHEN):
-                        raise FeatureError("When steps must be the first or follow Given steps",
-                                           line_number, clean_line, filename)
+                        raise exceptions.FeatureError(
+                            "When steps must be the first or follow Given steps", line_number, clean_line, filename)
 
                     if not self.background and mode == types.THEN and prev_mode not in types.STEP_TYPES:
-                        raise FeatureError("Then steps must follow Given or When steps",
-                                           line_number, clean_line, filename)
+                        raise exceptions.FeatureError(
+                            "Then steps must follow Given or When steps", line_number, clean_line, filename)
 
                 if mode == types.FEATURE:
                     if prev_mode != types.FEATURE:
@@ -350,9 +329,13 @@ class Feature(object):
                         (scenario or self).examples.add_example_row(param_line_parts[0], param_line_parts[1:])
                     except exceptions.ExamplesNotValidError as exc:
                         if scenario:
-                            raise exceptions.ScenarioExamplesNotValidError(exc.args[0])
+                            raise exceptions.FeatureError(
+                                """Scenario has not valid examples. {0}""".format(
+                                    exc.args[0]), line_number, clean_line, filename)
                         else:
-                            raise exceptions.FeatureExamplesNotValidError(exc.args[0])
+                            raise exceptions.FeatureError(
+                                """Feature has not valid examples. {0}""".format(
+                                    exc.args[0]), line_number, clean_line, filename)
                 elif mode and mode not in (types.FEATURE, types.TAG):
                     step = Step(
                         name=parsed_line,

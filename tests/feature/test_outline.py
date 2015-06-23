@@ -1,5 +1,6 @@
 """Scenario Outline tests."""
 import re
+import textwrap
 
 import pytest
 
@@ -39,7 +40,6 @@ def should_have_left_cucumbers(start_cucumbers, start, eat, left):
 
 def test_wrongly_outlined(request):
     """Test parametrized scenario when the test function lacks parameters."""
-
     with pytest.raises(exceptions.ScenarioExamplesNotValidError) as exc:
         @scenario(
             'outline.feature',
@@ -54,6 +54,64 @@ def test_wrongly_outlined(request):
         """(.+)\.""",
         exc.value.args[0]
     )
+
+
+def test_wrong_vertical_examples_scenario(testdir):
+    """Test parametrized scenario vertical example table has wrong format."""
+    features = testdir.mkdir('features')
+    feature = features.join('test.feature')
+    feature.write_text(textwrap.dedent(u"""
+    Scenario Outline: Outlined with wrong vertical example table
+        Given there are <start> cucumbers
+        When I eat <eat> cucumbers
+        Then I should have <left> cucumbers
+
+        Examples: Vertical
+        | start | 12 | 2 |
+        | start | 10 | 1 |
+        | left  | 7  | 1 |
+    """), 'utf-8', ensure=True)
+    with pytest.raises(exceptions.FeatureError) as exc:
+        @scenario(
+            feature.strpath,
+            'Outlined with wrong vertical example table',
+        )
+        def wrongly_outlined():
+            pass
+
+    assert exc.value.args[0] == (
+        'Scenario has not valid examples. Example rows should contain unique parameters.'
+        ' "start" appeared more than once')
+
+
+def test_wrong_vertical_examples_feature(testdir):
+    """Test parametrized feature vertical example table has wrong format."""
+    features = testdir.mkdir('features')
+    feature = features.join('test.feature')
+    feature.write_text(textwrap.dedent(u"""
+    Feature: Outlines
+
+        Examples: Vertical
+        | start | 12 | 2 |
+        | start | 10 | 1 |
+        | left  | 7  | 1 |
+
+        Scenario Outline: Outlined with wrong vertical example table
+            Given there are <start> cucumbers
+            When I eat <eat> cucumbers
+            Then I should have <left> cucumbers
+    """), 'utf-8', ensure=True)
+    with pytest.raises(exceptions.FeatureError) as exc:
+        @scenario(
+            feature.strpath,
+            'Outlined with wrong vertical example table',
+        )
+        def wrongly_outlined():
+            pass
+
+    assert exc.value.args[0] == (
+        'Feature has not valid examples. Example rows should contain unique parameters.'
+        ' "start" appeared more than once')
 
 
 @pytest.fixture(params=[1, 2, 3])
@@ -83,7 +141,6 @@ def test_vertical_example():
 
 def test_empty_example_values():
     """Test outlined scenario with empty example values."""
-
     @scenario(
         'outline.feature',
         'Outlined with empty example values',

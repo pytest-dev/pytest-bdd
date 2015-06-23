@@ -55,3 +55,13 @@ def test_scenario_comments(request):
 
     test(request)
     test2(request)
+
+
+def test_scenario_not_decorator(request):
+    """Test scenario function is used not as decorator."""
+    func = scenario(
+        'comments.feature',
+        'Strings that are not comments')
+
+    with pytest.raises(exceptions.ScenarioIsDecoratorOnly):
+        func(request)

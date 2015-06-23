@@ -1,13 +1,22 @@
-language: python
 sudo: false
-# # command to run tests
-script: make test
-after_success:
-  - make coveralls
+language: python
+python: "3.4"
+env:
+  matrix:
+    - TESTENV=linters
+    - TESTENV=py26
+    - TESTENV=py27
+    - TESTENV=py27-xdist
+    - TESTENV=py27-pytest-latest
+    - TESTENV=py34
+    - TESTENV=coveralls
+install:
+  - pip install tox
+script: tox -e $TESTENV --recreate
 branches:
-    except:
-        - /^\d/
+  except:
+    - /^\d/
 notifications:
-    email:
-        - bubenkoff@gmail.com
-        - oleg.pidsadnyi@gmail.com
+  email:
+  - bubenkoff@gmail.com
+  - oleg.pidsadnyi@gmail.com
