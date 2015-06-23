@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.13.0
+------
+
+- Feature example table (bubenkoff, sureshvv)
+
 2.12.2
 ------
 

@@ -51,7 +51,6 @@ def test_wrong(mocked_strict_gherkin, request, feature, scenario_name, strict_gh
             def test_scenario():
                 pass
 
-
     if strict_gherkin:
         with pytest.raises(FeatureError):
             declare_scenario()

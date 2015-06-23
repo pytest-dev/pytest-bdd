@@ -550,6 +550,32 @@ Example code also shows possibility to pass example converters which may be usef
 different than strings.
 
 
+Feature examples
+^^^^^^^^^^^^^^^^
+
+It's possible to declare example table once for the whole feature, and it will be shared
+among all the scenarios of that feature:
+
+..code-block:: gherkin
+
+    Feature: Outline
+
+        Examples:
+        | start | eat | left |
+        |  12   |  5  |  7   |
+        |  5    |  4  |  1   |
+
+        Scenario Outline: Eat cucumbers
+            Given there are <start> cucumbers
+            When I eat <eat> cucumbers
+            Then I should have <left> cucumbers
+
+        Scenario Outline: Eat apples
+            Given there are <start> apples
+            When I eat <eat> apples
+            Then I should have <left> apples
+
+
 Combine scenario outline and pytest parametrization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

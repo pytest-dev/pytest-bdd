@@ -21,9 +21,19 @@ class ScenarioNotFound(ScenarioValidationError):
     """Scenario Not Found."""
 
 
+class ExamplesNotValidError(ScenarioValidationError):
+
+    """Example table is not valid."""
+
+
 class ScenarioExamplesNotValidError(ScenarioValidationError):
 
-    """Scenario steps argumets do not match declared scenario examples."""
+    """Scenario steps parameters do not match declared scenario examples."""
+
+
+class FeatureExamplesNotValidError(ScenarioValidationError):
+
+    """Feature example table is not valid."""
 
 
 class StepTypeError(ScenarioValidationError):
