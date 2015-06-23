@@ -105,11 +105,35 @@ def test_empty_example_values():
         [u'start', u'eat', u'left'], [['#', '', '']])
 
 
+@given('there are <start> <fruits>')
+def start_fruits(start, fruits):
+    assert isinstance(start, int)
+    return {fruits: dict(start=start)}
+
+
+@when('I eat <eat> <fruits>')
+def eat_fruits(start_fruits, eat, fruits):
+    assert isinstance(eat, float)
+    start_fruits[fruits]['eat'] = eat
+
+
+@then('I should have <left> <fruits>')
+def should_have_left_fruits(start_fruits, start, eat, left, fruits):
+    assert isinstance(left, str)
+    assert start - eat == int(left)
+    assert start_fruits[fruits]['start'] == start
+    assert start_fruits[fruits]['eat'] == eat
+
+
 @scenario(
     'outline_feature.feature',
     'Outlined given, when, thens',
     example_converters=dict(start=int, eat=float, left=str)
 )
 def test_outlined_feature():
-    assert test_outlined.parametrize.args == (
-        [u'start', u'eat', u'left'], [[12, 5.0, '7'], [5, 4.0, '1']])
+    assert test_outlined_feature.parametrize.args == (
+        ['start', 'eat', 'left'],
+        [[12, 5.0, '7'], [5, 4.0, '1']],
+        ['fruits'],
+        [[u'oranges'], [u'apples']]
+    )

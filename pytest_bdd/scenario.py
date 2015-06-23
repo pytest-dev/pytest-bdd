@@ -250,7 +250,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, call
 
         args = inspect.getargspec(_pytestbdd_function).args
         function_args = list(args)
-        for arg in scenario.get_examples().example_params:
+        for arg in scenario.get_example_params():
             if arg not in function_args:
                 function_args.append(arg)
         if "request" not in function_args:
@@ -271,9 +271,9 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, call
             firstlineno=caller_function.f_lineno,
         )
 
-        params = scenario.get_params()
-        if params:
-            _scenario = pytest.mark.parametrize(*params)(_scenario)
+        for param_set in scenario.get_params():
+            if param_set:
+                _scenario = pytest.mark.parametrize(*param_set)(_scenario)
 
         for tag in scenario.tags.union(feature.tags):
             _scenario = getattr(pytest.mark, tag)(_scenario)

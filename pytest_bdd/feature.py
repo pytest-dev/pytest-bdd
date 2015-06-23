@@ -446,13 +446,14 @@ class Scenario(object):
         """
         return frozenset(sum((list(step.params) for step in self.steps), []))
 
-    def get_examples(self):
+    def get_example_params(self):
         """Get examples."""
-        return self.examples or self.feature.examples
+        return set(self.examples.example_params + self.feature.examples.example_params)
 
     def get_params(self):
         """Get example params."""
-        return self.get_examples().get_params(self.example_converters)
+        for examples in [self.feature.examples, self.examples]:
+            yield examples.get_params(self.example_converters)
 
     def validate(self):
         """Validate the scenario.
@@ -460,11 +461,12 @@ class Scenario(object):
         :raises ScenarioValidationError: when scenario is not valid
         """
         params = self.params
-        if params and self.examples.example_params and params != set(self.examples.example_params):
+        example_params = self.get_example_params()
+        if params and example_params and params != example_params:
             raise exceptions.ScenarioExamplesNotValidError(
                 """Scenario "{0}" in the feature "{1}" has not valid examples. """
                 """Set of step parameters {2} should match set of example values {3}.""".format(
-                    self.name, self.feature.filename, sorted(params), sorted(self.examples.example_params),
+                    self.name, self.feature.filename, sorted(params), sorted(example_params),
                 )
             )
 
