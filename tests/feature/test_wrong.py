@@ -7,7 +7,7 @@ import mock
 import pytest
 
 from pytest_bdd import scenario, scenarios, given, when, then
-from pytest_bdd.feature import FeatureError, features
+from pytest_bdd.feature import features
 from pytest_bdd import exceptions
 
 
@@ -52,7 +52,7 @@ def test_wrong(mocked_strict_gherkin, request, feature, scenario_name, strict_gh
                 pass
 
     if strict_gherkin:
-        with pytest.raises(FeatureError):
+        with pytest.raises(exceptions.FeatureError):
             declare_scenario()
         # TODO: assert the exception args from parameters
     else:
@@ -87,7 +87,7 @@ def test_wrong_type_order(request, scenario_name):
 
 def test_verbose_output():
     """Test verbose output of failed feature scenario."""
-    with pytest.raises(FeatureError) as excinfo:
+    with pytest.raises(exceptions.FeatureError) as excinfo:
         scenario('when_after_then.feature', 'When after then')
 
     msg, line_number, line, file = excinfo.value.args
@@ -95,3 +95,4 @@ def test_verbose_output():
     assert line_number == 5
     assert line == 'When I do it again'
     assert file == os.path.join(os.path.dirname(__file__), 'when_after_then.feature')
+    assert line in str(excinfo.value)

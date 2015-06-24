@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.13.1
+------
+
+- Allow mixing feature example table with scenario example table (bubenkoff, olegpidsadnyi)
+
 2.13.0
 ------
 

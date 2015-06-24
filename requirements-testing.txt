@@ -1,5 +1,5 @@
 mock
 pytest-pep8
-pytest-cov
+coverage<4.0a1
 pytest-cache
 pytest-xdist

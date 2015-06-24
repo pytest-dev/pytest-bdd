@@ -575,6 +575,38 @@ among all the scenarios of that feature:
             When I eat <eat> apples
             Then I should have <left> apples
 
+For some more complex case, you might want to parametrize on both levels: feature and scenario.
+This is allowed as long as parameter names do not clash:
+
+
+..code-block:: gherkin
+    Feature: Outline
+
+        Examples:
+        | start | eat | left |
+        |  12   |  5  |  7   |
+        |  5    |  4  |  1   |
+
+        Scenario Outline: Eat fruits
+            Given there are <start> <fruits>
+            When I eat <eat> <fruits>
+            Then I should have <left> <fruits>
+
+            Examples:
+            | fruits  |
+            | oranges |
+            | apples  |
+
+        Scenario Outline: Eat vegetables
+            Given there are <start> <vegetables>
+            When I eat <eat> <vegetables>
+            Then I should have <left> <vegetables>
+
+            Examples:
+            | vegetables |
+            | carrots    |
+            | tomatoes   |
+
 
 Combine scenario outline and pytest parametrization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
