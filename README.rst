@@ -1,12 +1,12 @@
 BDD library for the py.test runner
 ==================================
 
-.. image:: https://api.travis-ci.org/pytest-dev/pytest-bdd.png
-   :target: https://travis-ci.org/pytest-dev/pytest-bdd
-.. image:: https://pypip.in/v/pytest-bdd/badge.png
-   :target: https://crate.io/packages/pytest-bdd/
-.. image:: https://coveralls.io/repos/pytest-dev/pytest-bdd/badge.png?branch=master
+.. image:: http://img.shields.io/pypi/v/pytest-bdd.svg
+   :target: https://pypi.python.org/pypi/pytest-bdd
+.. image:: http://img.shields.io/coveralls/pytest-dev/pytest-bdd/master.svg
    :target: https://coveralls.io/r/pytest-dev/pytest-bdd
+.. image:: https://travis-ci.org/pytest-dev/pytest-bdd.svg?branch=master
+    :target: https://travis-ci.org/pytest-dev/pytest-bdd
 .. image:: https://readthedocs.org/projects/pytest-bdd/badge/?version=latest
     :target: https://readthedocs.org/projects/pytest-bdd/?badge=latest
     :alt: Documentation Status
