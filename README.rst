@@ -56,6 +56,8 @@ publish_article.feature:
         Then I should not see the error message
         And the article should be published  # Note: will query the database
 
+Note that only one feature is allowed per feature file.
+
 test_publish_article.py:
 
 .. code-block:: python

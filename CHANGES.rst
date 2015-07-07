@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.14.0
+------
+
+- Add validation check which prevents having multiple features in a single feature file (bubenkoff)
+
 2.13.1
 ------
 

@@ -96,3 +96,10 @@ def test_verbose_output():
     assert line == 'When I do it again'
     assert file == os.path.join(os.path.dirname(__file__), 'when_after_then.feature')
     assert line in str(excinfo.value)
+
+
+def test_multiple_features_single_file():
+    """Test validation error when multiple features are placed in a single file."""
+    with pytest.raises(exceptions.FeatureError) as excinfo:
+        scenarios('wrong_multiple_features.feature')
+    assert excinfo.value.args[0] == 'Multiple features are not allowed in a single feature file'
