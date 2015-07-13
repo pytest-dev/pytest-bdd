@@ -294,12 +294,16 @@ class Feature(object):
                             "Then steps must follow Given or When steps", line_number, clean_line, filename)
 
                 if mode == types.FEATURE:
-                    if prev_mode != types.FEATURE:
+                    if prev_mode is None or prev_mode == types.TAG:
                         _, self.name = parse_line(clean_line)
                         self.line_number = line_number
                         self.tags = get_tags(prev_line)
-                    else:
+                    elif prev_mode == types.FEATURE:
                         description.append(clean_line)
+                    else:
+                        raise exceptions.FeatureError(
+                            "Multiple features are not allowed in a single feature file",
+                            line_number, clean_line, filename)
 
                 prev_mode = mode
 

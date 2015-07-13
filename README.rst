@@ -1,12 +1,12 @@
 BDD library for the py.test runner
 ==================================
 
-.. image:: https://api.travis-ci.org/pytest-dev/pytest-bdd.png
-   :target: https://travis-ci.org/pytest-dev/pytest-bdd
-.. image:: https://pypip.in/v/pytest-bdd/badge.png
-   :target: https://crate.io/packages/pytest-bdd/
-.. image:: https://coveralls.io/repos/pytest-dev/pytest-bdd/badge.png?branch=master
+.. image:: http://img.shields.io/pypi/v/pytest-bdd.svg
+   :target: https://pypi.python.org/pypi/pytest-bdd
+.. image:: http://img.shields.io/coveralls/pytest-dev/pytest-bdd/master.svg
    :target: https://coveralls.io/r/pytest-dev/pytest-bdd
+.. image:: https://travis-ci.org/pytest-dev/pytest-bdd.svg?branch=master
+    :target: https://travis-ci.org/pytest-dev/pytest-bdd
 .. image:: https://readthedocs.org/projects/pytest-bdd/badge/?version=latest
     :target: https://readthedocs.org/projects/pytest-bdd/?badge=latest
     :alt: Documentation Status
@@ -55,6 +55,8 @@ publish_article.feature:
         And I press the publish button
         Then I should not see the error message
         And the article should be published  # Note: will query the database
+
+Note that only one feature is allowed per feature file.
 
 test_publish_article.py:
 
@@ -224,8 +226,8 @@ And even more, there are several types of step parameter parsers at your disposa
     from the text and passed to your ``step()`` function.
     Type conversion can only be done via `converters` step decorator argument (see example below).
 
-The default parser is `parse`, so you have to do nothing in addition to use it.
-Parsers, as well as their optional arguments are specified like:
+The default parser is `string`, so just plain one-to-one match to the keyword definition.
+Parsers except `string`, as well as their optional arguments are specified like:
 
 for `cfparse` parser
 
