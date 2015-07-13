@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.13.2
+------
+
+- Pass additional arguments to parsers (bubenkoff)
+
 2.13.1
 ------
 

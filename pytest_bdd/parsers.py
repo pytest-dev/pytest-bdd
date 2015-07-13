@@ -38,10 +38,10 @@ class re(StepParser):
 
     """Regex step parser."""
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, *args, **kwargs):
         """Compile regex."""
         super(re, self).__init__(name)
-        self.regex = base_re.compile(self.name, **kwargs)
+        self.regex = base_re.compile(self.name, *args, **kwargs)
 
     def parse_arguments(self, name):
         """Get step arguments.
@@ -59,10 +59,10 @@ class parse(StepParser):
 
     """parse step parser."""
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, *args, **kwargs):
         """Compile parse expression."""
         super(parse, self).__init__(name)
-        self.parser = base_parse.compile(self.name, **kwargs)
+        self.parser = base_parse.compile(self.name, *args, **kwargs)
 
     def parse_arguments(self, name):
         """Get step arguments.
@@ -83,10 +83,10 @@ class cfparse(parse):
 
     """cfparse step parser."""
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, *args, **kwargs):
         """Compile parse expression."""
         super(parse, self).__init__(name)
-        self.parser = base_cfparse.Parser(self.name, **kwargs)
+        self.parser = base_cfparse.Parser(self.name, *args, **kwargs)
 
 
 class string(StepParser):
