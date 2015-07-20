@@ -31,6 +31,7 @@ import textwrap
 
 import glob2
 import six
+from gherkin_parser import parse_from_filename, ParseError
 
 from . import types
 from . import exceptions
@@ -241,9 +242,15 @@ class Feature(object):
         self.scenarios = {}
         self.rel_filename = op.join(op.basename(basedir), filename)
         self.filename = filename = op.abspath(op.join(basedir, filename))
+        try:
+            parsed = parse_from_filename(filename)
+        except ParseError as exc:
+            raise exceptions.FeatureError(exc.message, exc.line_index, None, filename)
+        self.name = parsed['title']['content']
+        self.description = parsed['description']
+        self.language = parsed['language']
+        self.tags = set(parsed['tag'])
         self.line_number = 1
-        self.name = None
-        self.tags = set()
         self.examples = Examples()
         scenario = None
         mode = None

@@ -79,14 +79,16 @@ def test_arg_fixture_mix(testdir):
     """))
 
     subdir.join("arg_and_fixture_mix.feature").write("""
-        Scenario: Use the step argument with the same name as fixture of another test
-        Given foo is "Hello"
-        Then foo should be "Hello"
+        Feature: Arg and fixture mix
+
+            Scenario: Use the step argument with the same name as fixture of another test
+            Given foo is "Hello"
+            Then foo should be "Hello"
 
 
-        Scenario: Everything is fine
-            Given it is all fine
-            Then foo should be fine
+            Scenario: Everything is fine
+                Given it is all fine
+                Then foo should be fine
     """)
 
     result = testdir.runpytest("-k arg_fixture_mix")
