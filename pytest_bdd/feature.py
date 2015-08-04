@@ -23,8 +23,9 @@ Syntax example:
 one line.
 """
 
-import codecs
+from collections import OrderedDict
 from os import path as op
+import codecs
 import re
 import sys
 import textwrap
@@ -238,7 +239,7 @@ class Feature(object):
         :param bool strict_gherkin: Flag whether it's a strictly gherkin scenario or not (e.g. it will validate correct
             gherkin language (given-when-then))
         """
-        self.scenarios = {}
+        self.scenarios = OrderedDict()
         self.rel_filename = op.join(op.basename(basedir), filename)
         self.filename = filename = op.abspath(op.join(basedir, filename))
         self.line_number = 1

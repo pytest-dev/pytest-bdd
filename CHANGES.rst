@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.14.2
+2.14.3
 ------
 
 - Avoid potentially random collection order for xdist compartibility (bubenkoff)
