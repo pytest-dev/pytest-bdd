@@ -365,6 +365,8 @@ def scenarios(*feature_paths, **kwargs):
     module_scenarios = frozenset(
         (attr.__scenario__.feature.filename, attr.__scenario__.name)
         for name, attr in module.__dict__.items() if hasattr(attr, '__scenario__'))
+
+    index = 0
     for feature in get_features(abs_feature_paths, strict_gherkin=strict_gherkin):
         for scenario_name, scenario_object in feature.scenarios.items():
             # skip already bound scenarios
@@ -375,6 +377,9 @@ def scenarios(*feature_paths, **kwargs):
                 for test_name in get_python_name_generator(scenario_name):
                     if test_name not in module.__dict__:
                         # found an unique test name
+                        # recreate function to set line number
+                        _scenario = recreate_function(_scenario, module=module, firstlineno=index * 4)
+                        index += 1
                         module.__dict__[test_name] = _scenario
                         break
             found = True
