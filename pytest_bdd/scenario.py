@@ -366,7 +366,7 @@ def scenarios(*feature_paths, **kwargs):
         (attr.__scenario__.feature.filename, attr.__scenario__.name)
         for name, attr in module.__dict__.items() if hasattr(attr, '__scenario__'))
 
-    index = 0
+    index = 10
     for feature in get_features(abs_feature_paths, strict_gherkin=strict_gherkin):
         for scenario_name, scenario_object in feature.scenarios.items():
             # skip already bound scenarios
