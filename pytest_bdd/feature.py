@@ -171,6 +171,8 @@ class Examples(object):
         self.example_params = []
         self.examples = []
         self.vertical_examples = []
+        self.line_number = None
+        self.name = None
 
     def set_param_names(self, keys):
         """Set parameter names.
@@ -224,6 +226,13 @@ class Examples(object):
             return [self.example_params, params]
         else:
             return []
+
+    def __bool__(self):
+        """Bool comparison."""
+        return bool(self.vertical_examples or self.examples)
+
+    if six.PY2:
+        __nonzero__ = __bool__
 
 
 class Feature(object):
@@ -320,8 +329,10 @@ class Feature(object):
                     )
                 elif mode == types.EXAMPLES:
                     mode = types.EXAMPLES_HEADERS
+                    (scenario or self).examples.line_number = line_number
                 elif mode == types.EXAMPLES_VERTICAL:
                     mode = types.EXAMPLE_LINE_VERTICAL
+                    (scenario or self).examples.line_number = line_number
                 elif mode == types.EXAMPLES_HEADERS:
                     (scenario or self).examples.set_param_names(
                         [l.strip() for l in parsed_line.split("|")[1:-1] if l.strip()])

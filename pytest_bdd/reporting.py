@@ -64,13 +64,25 @@ class ScenarioReport(object):
 
     """Scenario excecution report."""
 
-    def __init__(self, scenario):
+    def __init__(self, scenario, node):
         """Scenario report constructor.
 
         :param pytest_bdd.feature.Scenario scenario: Scenario.
+        :param node: pytest test node object
         """
         self.scenario = scenario
         self.step_reports = []
+        self.param_index = None
+        parametrize = node.keywords._markers.get('parametrize')
+        if parametrize and scenario.examples:
+            param_names = parametrize.args[0] if isinstance(parametrize.args[0], (tuple, list)) else [
+                parametrize.args[0]]
+            param_values = parametrize.args[1]
+            node_param_values = [node.funcargs[param_name] for param_name in param_names]
+            if node_param_values in param_values:
+                self.param_index = param_values.index(node_param_values)
+            elif tuple(node_param_values) in param_values:
+                self.param_index = param_values.index(tuple(node_param_values))
 
     @property
     def current_step_report(self):
@@ -90,14 +102,14 @@ class ScenarioReport(object):
         self.step_reports.append(step_report)
 
     def serialize(self):
-        """Serialize scenario excecution report in order to exchange
-        the information between nodes in the distributed mode.
+        """Serialize scenario excecution report in order to transfer reportin from nodes in the distributed mode.
 
         :return: Serialized report.
         :rtype: dict
         """
         scenario = self.scenario
         feature = scenario.feature
+        params = scenario.examples.get_params({}) if scenario.examples else None
         return {
             "steps": [step_report.serialize() for step_report in self.step_reports],
             "name": scenario.name,
@@ -110,7 +122,15 @@ class ScenarioReport(object):
                 "line_number": feature.line_number,
                 "description": feature.description,
                 "tags": sorted(feature.tags),
-            }
+            },
+            "examples": [
+                {
+                    "name": scenario.examples.name,
+                    "line_number": scenario.examples.line_number,
+                    "rows": params,
+                    "row_index": self.param_index
+                }
+            ] if scenario.examples else []
         }
 
     def fail(self):
@@ -141,7 +161,7 @@ def pytest_runtest_makereport(item, call, __multicall__):
 @pytest.mark.tryfirst
 def pytest_bdd_before_scenario(request, feature, scenario):
     """Create scenario report for the item."""
-    request.node.__scenario_report__ = ScenarioReport(scenario=scenario)
+    request.node.__scenario_report__ = ScenarioReport(scenario=scenario, node=request.node)
 
 
 @pytest.mark.tryfirst

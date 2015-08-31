@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.15.0
+------
+
+- Add examples data in the scenario report (bubenkoff)
+
 2.14.5
 ------
 
