@@ -4,7 +4,6 @@ python: "3.4"
 env:
   matrix:
     - TESTENV=linters
-    - TESTENV=py26
     - TESTENV=py27
     - TESTENV=py27-xdist
     - TESTENV=py27-pytest-latest

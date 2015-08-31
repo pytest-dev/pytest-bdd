@@ -270,7 +270,7 @@ class Feature(object):
                     multiline_step = False
                 stripped_line = line.strip()
                 clean_line = strip_comments(line)
-                if not clean_line and prev_mode not in types.FEATURE:
+                if not clean_line and (not prev_mode or prev_mode not in types.FEATURE):
                     continue
                 mode = get_step_type(clean_line) or mode
 
