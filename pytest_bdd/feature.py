@@ -270,7 +270,7 @@ class Feature(object):
                     multiline_step = False
                 stripped_line = line.strip()
                 clean_line = strip_comments(line)
-                if not clean_line:
+                if not clean_line and prev_mode not in types.FEATURE:
                     continue
                 mode = get_step_type(clean_line) or mode
 
@@ -356,7 +356,7 @@ class Feature(object):
                     target.add_step(step)
                 prev_line = clean_line
 
-        self.description = u"\n".join(description)
+        self.description = u"\n".join(description).strip()
 
     @classmethod
     def get_feature(cls, base_path, filename, encoding="utf-8", strict_gherkin=True):

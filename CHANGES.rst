@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.14.4
+------
+
+- Properly parse feature description (bubenkoff)
+
 2.14.3
 ------
 
