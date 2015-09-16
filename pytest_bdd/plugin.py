@@ -5,12 +5,14 @@ import pytest
 from . import given, when, then
 from . import cucumber_json
 from . import generation
+from . import gherkin_terminal_reporter
 
 
 # Import hook handlers:
 from .reporting import *
 from .cucumber_json import *
 from .generation import *
+from .gherkin_terminal_reporter import *
 
 from .fixtures import *
 
@@ -38,3 +40,4 @@ def pytest_addoption(parser):
     """Add pytest-bdd options."""
     cucumber_json.add_options(parser)
     generation.add_options(parser)
+    gherkin_terminal_reporter.add_options(parser)
