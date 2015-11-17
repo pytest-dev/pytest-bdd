@@ -36,6 +36,7 @@ from .steps import (
     recreate_function,
 )
 from .types import GIVEN
+from .utils import get_args
 
 if six.PY3:  # pragma: no cover
     import runpy
@@ -125,7 +126,7 @@ def _execute_step_function(request, scenario, step, step_func):
     kw["step_func_args"] = {}
     try:
         # Get the step argument values.
-        kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in inspect.getargspec(step_func).args)
+        kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in get_args(step_func))
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
@@ -204,7 +205,7 @@ def get_fixture(caller_module, fixture, path=None):
     """Get first conftest module from given one."""
     def call_fixture(function):
         args = []
-        if "request" in inspect.getargspec(function).args:
+        if "request" in get_args(function):
             args = [FakeRequest(module=caller_module)]
         return function(*args)
 
@@ -240,7 +241,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, call
 
         g.update(locals())
 
-        args = inspect.getargspec(_pytestbdd_function).args
+        args = get_args(_pytestbdd_function)
         function_args = list(args)
         for arg in scenario.get_example_params():
             if arg not in function_args:
