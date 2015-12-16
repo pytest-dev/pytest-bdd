@@ -18,7 +18,12 @@ from .fixtures import *
 def pytest_addhooks(pluginmanager):
     """Register plugin hooks."""
     from pytest_bdd import hooks
-    pluginmanager.addhooks(hooks)
+    try:
+        # pytest >= 2.8
+        pluginmanager.add_hookspecs(hooks)
+    except AttributeError:
+        # pytest < 2.8
+        pluginmanager.addhooks(hooks)
 
 
 @given('trace')

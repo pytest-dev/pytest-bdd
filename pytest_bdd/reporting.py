@@ -145,9 +145,11 @@ class ScenarioReport(object):
             self.add_step_report(report)
 
 
-def pytest_runtest_makereport(item, call, __multicall__):
+@pytest.mark.hookwrapper
+def pytest_runtest_makereport(item, call):
     """Store item in the report object."""
-    rep = __multicall__.execute()
+    outcome = yield
+    rep = outcome.get_result()
     try:
         scenario_report = item.__scenario_report__
     except AttributeError:
@@ -155,7 +157,6 @@ def pytest_runtest_makereport(item, call, __multicall__):
     else:
         rep.scenario = scenario_report.serialize()
         rep.item = {"name": item.name}
-    return rep
 
 
 @pytest.mark.tryfirst
