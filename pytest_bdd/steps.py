@@ -46,6 +46,7 @@ from .exceptions import (
     StepError,
 )
 from .parsers import get_parser
+from .utils import get_args
 
 
 def get_step_fixture_name(name, type_, encoding=None):
@@ -215,7 +216,7 @@ def recreate_function(func, module=None, name=None, add_args=[], firstlineno=Non
     if six.PY3:
         argnames.insert(1, "co_kwonlyargcount")
 
-    for arg in inspect.getargspec(func).args:
+    for arg in get_args(func):
         if arg in add_args:
             add_args.remove(arg)
 
