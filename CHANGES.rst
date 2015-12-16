@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.16.0
+------
+
+- Depends on pytest 2.8 and fixes the registration of hooks (olegpidsadnyi)
+
+
 2.15.0
 ------
 
