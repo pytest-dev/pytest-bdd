@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.16.0
+------
+
+- Fixed deprecation warnings with pytest 2.8 (The-Compiler)
+- Fixed deprecation warnings with Python 3.5 (The-Compiler)
+
 2.15.0
 ------
 
