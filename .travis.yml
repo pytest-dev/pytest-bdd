@@ -5,7 +5,7 @@ env:
   matrix:
     - TESTENV=linters
     - TESTENV=py27
-    - TESTENV=py27-xdist
+#    - TESTENV=py27-xdist
     - TESTENV=py27-pytest-latest
     - TESTENV=py34
     - TESTENV=coveralls
