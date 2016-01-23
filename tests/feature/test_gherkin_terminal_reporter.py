@@ -3,8 +3,7 @@ import re
 
 import pytest
 
-from pytest_bdd import scenario, scenarios, given, when, then
-from pytest_bdd import exceptions
+from pytest_bdd import scenario, given, when, then
 
 
 @scenario('gherkin_terminal_reporter.feature',
@@ -133,7 +132,7 @@ def tests_are_run_with_verbose_mode(testdir, test_execution):
 
 
 @when("tests are run with very verbose mode")
-def tests_are_run_with_verbose_mode(testdir, test_execution):
+def tests_are_run_with_very_verbose_mode(testdir, test_execution):
     test_execution['regular'] = testdir.runpytest('-vv')
     test_execution['gherkin'] = testdir.runpytest('--gherkin-terminal-reporter', '-vv')
 
@@ -153,7 +152,7 @@ def output_should_contain_single_line_scenario_description(test_execution):
 
 
 @then("output must contain full gherkin scenario description")
-def output_should_contain_single_line_scenario_description(test_execution):
+def output_should_contain_full_gherkin_scenario_description(test_execution):
     ghe = test_execution['gherkin']
     assert ghe.ret == 0
     ghe.stdout.fnmatch_lines('*Scenario: Scenario example 1')

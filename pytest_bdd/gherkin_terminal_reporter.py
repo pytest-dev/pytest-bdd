@@ -1,6 +1,4 @@
 # -*- encoding: utf-8 -*-
-import py
-import pytest
 
 from _pytest.terminal import TerminalReporter
 
@@ -18,8 +16,7 @@ def add_options(parser):
     )
 
 
-@pytest.mark.trylast
-def pytest_configure(config):
+def configure(config):
     if config.option.gherkin_terminal_reporter:
         # Get the standard terminal reporter plugin and replace it with our
         current_reporter = config.pluginmanager.getplugin('terminalreporter')

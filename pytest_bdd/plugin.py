@@ -5,14 +5,8 @@ import pytest
 from . import given, when, then
 from . import cucumber_json
 from . import generation
+from . import reporting
 from . import gherkin_terminal_reporter
-
-
-# Import hook handlers:
-from .reporting import *
-from .cucumber_json import *
-from .generation import *
-from .gherkin_terminal_reporter import *
 
 from .fixtures import *
 
@@ -41,3 +35,44 @@ def pytest_addoption(parser):
     cucumber_json.add_options(parser)
     generation.add_options(parser)
     gherkin_terminal_reporter.add_options(parser)
+
+
+def pytest_configure(config):
+    """Configure all subplugins."""
+    cucumber_json.configure(config)
+    gherkin_terminal_reporter.configure(config)
+
+
+def pytest_unconfigure(config):
+    """Unconfigure all subplugins."""
+    cucumber_json.unconfigure(config)
+
+
+@pytest.mark.hookwrapper
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    reporting.runtest_makereport(item, call, outcome.get_result())
+
+
+@pytest.mark.tryfirst
+def pytest_bdd_before_scenario(request, feature, scenario):
+    reporting.before_scenario(request, feature, scenario)
+
+
+@pytest.mark.tryfirst
+def pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception):
+    reporting.step_error(request, feature, scenario, step, step_func, step_func_args, exception)
+
+
+@pytest.mark.tryfirst
+def pytest_bdd_before_step(request, feature, scenario, step, step_func):
+    reporting.before_step(request, feature, scenario, step, step_func)
+
+
+@pytest.mark.tryfirst
+def pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args):
+    reporting.after_step(request, feature, scenario, step, step_func, step_func_args)
+
+
+def pytest_cmdline_main(config):
+    generation.cmdline_main(config)
