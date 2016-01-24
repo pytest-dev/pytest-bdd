@@ -37,6 +37,7 @@ def pytest_addoption(parser):
     gherkin_terminal_reporter.add_options(parser)
 
 
+@pytest.mark.trylast
 def pytest_configure(config):
     """Configure all subplugins."""
     cucumber_json.configure(config)
