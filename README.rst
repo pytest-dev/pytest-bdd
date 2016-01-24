@@ -621,14 +621,14 @@ The code will look like:
 .. code-block:: python
 
     import pytest
-    from pytest_bdd import mark, given, when, then
+    from pytest_bdd import scenario, given, when, then
 
 
     # Here we use pytest to parametrize the test with the parameters table
     @pytest.mark.parametrize(
         ['start', 'eat', 'left'],
         [(12, 5, 7)])
-    @mark.scenario(
+    @scenario(
         'parametrized.feature',
         'Parametrized given, when, thens',
     )
@@ -653,6 +653,18 @@ The code will look like:
         assert start - eat == left
         assert start_cucumbers['start'] == start
         assert start_cucumbers['eat'] == eat
+
+With a parametrized.feature file:
+
+.. code-block:: gherkin
+
+    Feature: parametrized
+
+    Scenario: Parametrized given, when, thens
+        Given there are <start> cucumbers
+        When I eat <eat> cucumbers
+        Then I should have <left> cucumbers
+
 
 The significant downside of this approach is inability to see the test table from the feature file.
 
