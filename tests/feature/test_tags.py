@@ -61,3 +61,37 @@ def test_tags_selector(testdir):
 
     result = testdir.runpytest('-k', 'feature_tag_10', '-vv').parseoutcomes()
     assert result['deselected'] == 2
+
+
+def test_tags_after_background_issue_160(testdir):
+    """Make sure using a tag after background works."""
+    testdir.makefile('.feature', test="""
+    Feature: Tags after background
+
+        Background:
+            Given I have a bar
+
+        @tag
+        Scenario: Tags
+            Given I have a baz
+
+        Scenario: Tags 2
+            Given I have a baz
+    """)
+    testdir.makepyfile("""
+        import pytest
+        from pytest_bdd import given, scenarios
+
+        @given('I have a bar')
+        def i_have_bar():
+            return 'bar'
+
+        @given('I have a baz')
+        def i_have_baz():
+            return 'baz'
+
+        scenarios('test.feature')
+    """)
+    result = testdir.runpytest('-m', 'tag', '-vv').parseoutcomes()
+    assert result['passed'] == 1
+    assert result['deselected'] == 1
