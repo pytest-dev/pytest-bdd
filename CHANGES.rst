@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.17.0
+------
+
+- Add gherkin terminal reporter (spinus)
+
 2.16.0
 ------
 
