@@ -34,6 +34,7 @@ def configure(config):
 
 
 class GherkinTerminalReporter(TerminalReporter):
+
     def __init__(self, config):
         TerminalReporter.__init__(self, config)
 
@@ -46,7 +47,7 @@ class GherkinTerminalReporter(TerminalReporter):
         rep = report
         res = self.config.hook.pytest_report_teststatus(report=rep)
         cat, letter, word = res
-        self.stats.setdefault(cat, []).append(rep)
+
         if not letter and not word:
             # probably passed setup/teardown
             return
@@ -94,3 +95,4 @@ class GherkinTerminalReporter(TerminalReporter):
                 self._tw.write('\n\n')
             else:
                 return TerminalReporter.pytest_runtest_logreport(self, rep)
+        self.stats.setdefault(cat, []).append(rep)
