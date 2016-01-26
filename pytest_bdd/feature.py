@@ -285,7 +285,7 @@ class Feature(object):
 
                 if strict_gherkin:
                     if (self.background and not scenario and mode not in (
-                            types.SCENARIO, types.SCENARIO_OUTLINE, types.GIVEN)):
+                            types.SCENARIO, types.SCENARIO_OUTLINE, types.GIVEN, types.TAG)):
                         raise exceptions.FeatureError(
                             "Background section can only contain Given steps", line_number, clean_line, filename)
 
