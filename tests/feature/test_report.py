@@ -1,6 +1,8 @@
 """Test scenario reporting."""
 import textwrap
 
+import execnet.gateway_base
+
 
 class equals_any(object):
 
@@ -207,3 +209,50 @@ def test_step_trace(testdir):
                                        [[12, 5.0, '7'], [5, 4.0, '1']]]}],
                 }
     assert report == expected
+
+
+def test_complex_types(testdir):
+    """Test serialization of the complex types."""
+    testdir.makefile('.feature', test=textwrap.dedent("""
+    Feature: Report serialization containing parameters of complex types
+
+        Scenario: Complex
+            Given there is a coordinate <point>
+
+            Examples:
+            |  point  |
+            |  10,20  |
+    """))
+    testdir.makepyfile(textwrap.dedent("""
+        import pytest
+        from pytest_bdd import given, when, then, scenario
+
+        class Point(object):
+
+            def __init__(self, x, y):
+                self.x = x
+                self.y = y
+
+            @classmethod
+            def parse(cls, value):
+                return cls(*(int(x) for x in value.split(',')))
+
+        class Alien(object):
+            pass
+
+        @given('there is a coordinate <point>')
+        def point(point):
+            assert isinstance(point, Point)
+            return point
+
+
+        @pytest.mark.parametrize('alien', [Alien()])
+        @scenario('test.feature', 'Complex', example_converters=dict(point=Point.parse))
+        def test_complex(alien):
+            pass
+
+    """))
+    result = testdir.inline_run('-vvl')
+    report = result.matchreport('test_complex[point0-alien0]', when='call')
+    assert execnet.gateway_base.dumps(report.item)
+    assert execnet.gateway_base.dumps(report.scenario)

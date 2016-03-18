@@ -39,7 +39,7 @@ def add_options(parser):
     )
 
 
-def pytest_cmdline_main(config):
+def cmdline_main(config):
     """Check config option to show missing code."""
     if config.option.generate_missing:
         return show_missing_code(config)
