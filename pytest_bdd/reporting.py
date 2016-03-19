@@ -6,8 +6,6 @@ that enriches the pytest test reporting.
 
 import time
 
-import pytest
-
 
 class StepReport(object):
 
@@ -109,7 +107,8 @@ class ScenarioReport(object):
         """
         scenario = self.scenario
         feature = scenario.feature
-        params = scenario.examples.get_params({}) if scenario.examples else None
+
+        params = sum(scenario.get_params(builtin=True), []) if scenario.examples else None
         return {
             "steps": [step_report.serialize() for step_report in self.step_reports],
             "name": scenario.name,
@@ -128,7 +127,7 @@ class ScenarioReport(object):
                     "name": scenario.examples.name,
                     "line_number": scenario.examples.line_number,
                     "rows": params,
-                    "row_index": self.param_index
+                    "row_index": self.param_index,
                 }
             ] if scenario.examples else []
         }
@@ -145,11 +144,8 @@ class ScenarioReport(object):
             self.add_step_report(report)
 
 
-@pytest.mark.hookwrapper
-def pytest_runtest_makereport(item, call):
+def runtest_makereport(item, call, rep):
     """Store item in the report object."""
-    outcome = yield
-    rep = outcome.get_result()
     try:
         scenario_report = item.__scenario_report__
     except AttributeError:
@@ -159,25 +155,21 @@ def pytest_runtest_makereport(item, call):
         rep.item = {"name": item.name}
 
 
-@pytest.mark.tryfirst
-def pytest_bdd_before_scenario(request, feature, scenario):
+def before_scenario(request, feature, scenario):
     """Create scenario report for the item."""
     request.node.__scenario_report__ = ScenarioReport(scenario=scenario, node=request.node)
 
 
-@pytest.mark.tryfirst
-def pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception):
+def step_error(request, feature, scenario, step, step_func, step_func_args, exception):
     """Finalize the step report as failed."""
     request.node.__scenario_report__.fail()
 
 
-@pytest.mark.tryfirst
-def pytest_bdd_before_step(request, feature, scenario, step, step_func):
+def before_step(request, feature, scenario, step, step_func):
     """Store step start time."""
     request.node.__scenario_report__.add_step_report(StepReport(step=step))
 
 
-@pytest.mark.tryfirst
-def pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args):
+def after_step(request, feature, scenario, step, step_func, step_func_args):
     """Finalize the step report as successful."""
     request.node.__scenario_report__.current_step_report.finalize(failed=False)

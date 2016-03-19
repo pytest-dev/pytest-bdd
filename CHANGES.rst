@@ -1,6 +1,14 @@
 Changelog
 =========
 
+
+2.16.1
+------
+
+- Cleaned up hooks of the plugin (olegpidsadnyi)
+- Fixed report serialization (olegpidsadnyi)
+
+
 2.16.0
 ------
 

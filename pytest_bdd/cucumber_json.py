@@ -28,7 +28,7 @@ def add_options(parser):
     )
 
 
-def pytest_configure(config):
+def configure(config):
     cucumber_json_path = config.option.cucumber_json_path
     # prevent opening json log on slave nodes (xdist)
     if cucumber_json_path and not hasattr(config, "slaveinput"):
@@ -36,7 +36,7 @@ def pytest_configure(config):
         config.pluginmanager.register(config._bddcucumberjson)
 
 
-def pytest_unconfigure(config):
+def unconfigure(config):
     xml = getattr(config, "_bddcucumberjson", None)
     if xml is not None:
         del config._bddcucumberjson

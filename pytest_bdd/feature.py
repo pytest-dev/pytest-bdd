@@ -203,7 +203,7 @@ class Examples(object):
         self.example_params.append(param)
         self.vertical_examples.append(values)
 
-    def get_params(self, converters):
+    def get_params(self, converters, builtin=False):
         """Get scenario pytest parametrization table.
 
         :param converters: `dict` of converter functions to convert parameter values
@@ -219,9 +219,13 @@ class Examples(object):
         if self.examples:
             params = []
             for example in self.examples:
+                example = list(example)
                 for index, param in enumerate(self.example_params):
+                    raw_value = example[index]
                     if converters and param in converters:
-                        example[index] = converters[param](example[index])
+                        value = converters[param](raw_value)
+                        if not builtin or value.__class__.__module__ in {'__builtin__', 'builtins'}:
+                            example[index] = value
                 params.append(example)
             return [self.example_params, params]
         else:
@@ -446,13 +450,13 @@ class Scenario(object):
         return frozenset(sum((list(step.params) for step in self.steps), []))
 
     def get_example_params(self):
-        """Get examples."""
+        """Get example parameter names."""
         return set(self.examples.example_params + self.feature.examples.example_params)
 
-    def get_params(self):
-        """Get example params."""
+    def get_params(self, builtin=False):
+        """Get converted example params."""
         for examples in [self.feature.examples, self.examples]:
-            yield examples.get_params(self.example_converters)
+            yield examples.get_params(self.example_converters, builtin=builtin)
 
     def validate(self):
         """Validate the scenario.
