@@ -158,6 +158,28 @@ def get_features(paths, **kwargs):
     return features
 
 
+def is_table_line(line):
+    """Detects table line.
+
+    :param `string` line: the line to inspect
+
+    :return: `bool`.
+
+    """
+    return line.startswith('|') and line.endswith('|')
+
+
+def parse_table_line(line):
+    """Returns cells contained in a table line.
+
+    :param `string` line: the line to parse (stripped)
+
+    :return: `string list`.
+
+    """
+    return [l.strip() for l in line.split("|")[1:-1]]
+
+
 class Table(object):
 
     """Example or data table."""
@@ -239,6 +261,10 @@ class Examples(Table):
     pass
 
 
+class DataTable(Table):
+    pass
+
+
 class Feature(object):
 
     """Feature."""
@@ -272,17 +298,28 @@ class Feature(object):
             content = force_unicode(f.read(), encoding)
             for line_number, line in enumerate(content.splitlines(), start=1):
                 unindented_line = line.lstrip()
+                stripped_line = line.strip()
+                clean_line = strip_comments(line)
                 line_indent = len(line) - len(unindented_line)
                 if step and (step.indent < line_indent or ((not unindented_line) and multiline_step)):
-                    multiline_step = True
-                    # multiline step, so just add line and continue
-                    step.add_line(line)
+                    if is_table_line(stripped_line):
+                        # This line is part of a data table attached to the
+                        # current step
+                        if step.datatable.params:
+                            # We already met the headers row
+                            step.datatable.add_row(
+                                    parse_table_line(stripped_line))
+                        else:
+                            step.datatable.set_param_names(
+                                    parse_table_line(stripped_line))
+                    else:
+                        multiline_step = True
+                        # multiline step, so just add line and continue
+                        step.add_line(line)
                     continue
                 else:
                     step = None
                     multiline_step = False
-                stripped_line = line.strip()
-                clean_line = strip_comments(line)
                 if not clean_line and (not prev_mode or prev_mode not in types.FEATURE):
                     continue
                 mode = get_step_type(clean_line) or mode
@@ -339,12 +376,12 @@ class Feature(object):
                     (scenario or self).examples.line_number = line_number
                 elif mode == types.EXAMPLES_HEADERS:
                     (scenario or self).examples.set_param_names(
-                        [l.strip() for l in parsed_line.split("|")[1:-1] if l.strip()])
+                            parse_table_line(parsed_line))
                     mode = types.EXAMPLE_LINE
                 elif mode == types.EXAMPLE_LINE:
-                    (scenario or self).examples.add_row([l.strip() for l in stripped_line.split("|")[1:-1]])
+                    (scenario or self).examples.add_row(parse_table_line(stripped_line))
                 elif mode == types.EXAMPLE_LINE_VERTICAL:
-                    param_line_parts = [l.strip() for l in stripped_line.split("|")[1:-1]]
+                    param_line_parts = parse_table_line(stripped_line)
                     try:
                         (scenario or self).examples.add_col(param_line_parts[0], param_line_parts[1:])
                     except exceptions.ExamplesNotValidError as exc:
@@ -499,6 +536,7 @@ class Step(object):
         self.stop = 0
         self.scenario = None
         self.background = None
+        self.datatable = DataTable()
 
     def add_line(self, line):
         """Add line to the multiple step.
