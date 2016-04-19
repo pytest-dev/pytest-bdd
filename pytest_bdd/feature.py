@@ -158,15 +158,15 @@ def get_features(paths, **kwargs):
     return features
 
 
-class Examples(object):
+class Table(object):
 
-    """Example table."""
+    """Example or data table."""
 
     def __init__(self):
-        """Initialize examples instance."""
-        self.example_params = []
-        self.examples = []
-        self.vertical_examples = []
+        """Initialize table instance."""
+        self.params = []
+        self.entries = []
+        self.vertical_entries = []
         self.line_number = None
         self.name = None
 
@@ -175,64 +175,68 @@ class Examples(object):
 
         :param names: `list` of `string` parameter names.
         """
-        self.example_params = [str(key) for key in keys]
+        self.params = [str(key) for key in keys]
 
-    def add_example(self, values):
-        """Add example.
+    def add_row(self, values):
+        """Add a table row from a line in horizontal mode.
 
         :param values: `list` of `string` parameter values.
         """
-        self.examples.append(values)
+        self.entries.append(values)
 
-    def add_example_row(self, param, values):
-        """Add example row.
+    def add_col(self, param, values):
+        """Add a table column from a line in vertical mode.
 
         :param param: `str` parameter name
         :param values: `list` of `string` parameter values
         """
-        if param in self.example_params:
+        if param in self.params:
             raise exceptions.ExamplesNotValidError(
                 """Example rows should contain unique parameters. "{0}" appeared more than once""".format(
                     param,
                 )
             )
-        self.example_params.append(param)
-        self.vertical_examples.append(values)
+        self.params.append(param)
+        self.vertical_entries.append(values)
 
     def get_params(self, converters, builtin=False):
         """Get scenario pytest parametrization table.
 
         :param converters: `dict` of converter functions to convert parameter values
         """
-        param_count = len(self.example_params)
-        if self.vertical_examples and not self.examples:
-            for value_index in range(len(self.vertical_examples[0])):
-                example = []
+        param_count = len(self.params)
+        if self.vertical_entries and not self.entries:
+            for value_index in range(len(self.vertical_entries[0])):
+                entry = []
                 for param_index in range(param_count):
-                    example.append(self.vertical_examples[param_index][value_index])
-                self.examples.append(example)
+                    entry.append(self.vertical_entries[param_index][value_index])
+                self.entries.append(entry)
 
-        if self.examples:
+        if self.entries:
             params = []
-            for example in self.examples:
-                example = list(example)
-                for index, param in enumerate(self.example_params):
-                    raw_value = example[index]
+            for entry in self.entries:
+                entry = list(entry)
+                for index, param in enumerate(self.params):
+                    raw_value = entry[index]
                     if converters and param in converters:
                         value = converters[param](raw_value)
                         if not builtin or value.__class__.__module__ in {'__builtin__', 'builtins'}:
-                            example[index] = value
-                params.append(example)
-            return [self.example_params, params]
+                            entry[index] = value
+                params.append(entry)
+            return [self.params, params]
         else:
             return []
 
     def __bool__(self):
         """Bool comparison."""
-        return bool(self.vertical_examples or self.examples)
+        return bool(self.vertical_entries or self.entries)
 
     if six.PY2:
         __nonzero__ = __bool__
+
+
+class Examples(Table):
+    pass
 
 
 class Feature(object):
@@ -338,11 +342,11 @@ class Feature(object):
                         [l.strip() for l in parsed_line.split("|")[1:-1] if l.strip()])
                     mode = types.EXAMPLE_LINE
                 elif mode == types.EXAMPLE_LINE:
-                    (scenario or self).examples.add_example([l.strip() for l in stripped_line.split("|")[1:-1]])
+                    (scenario or self).examples.add_row([l.strip() for l in stripped_line.split("|")[1:-1]])
                 elif mode == types.EXAMPLE_LINE_VERTICAL:
                     param_line_parts = [l.strip() for l in stripped_line.split("|")[1:-1]]
                     try:
-                        (scenario or self).examples.add_example_row(param_line_parts[0], param_line_parts[1:])
+                        (scenario or self).examples.add_col(param_line_parts[0], param_line_parts[1:])
                     except exceptions.ExamplesNotValidError as exc:
                         if scenario:
                             raise exceptions.FeatureError(
@@ -447,7 +451,7 @@ class Scenario(object):
 
     def get_example_params(self):
         """Get example parameter names."""
-        return set(self.examples.example_params + self.feature.examples.example_params)
+        return set(self.examples.params + self.feature.examples.params)
 
     def get_params(self, builtin=False):
         """Get converted example params."""
