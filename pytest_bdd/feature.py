@@ -1,9 +1,7 @@
 """Feature.
 
 The way of describing the behavior is based on Gherkin language, but a very
-limited version. It doesn't support any parameter tables.
-If the parametrization is needed to generate more test cases it can be done
-on the fixture level of the pytest.
+limited version.
 The <variable> syntax can be used here to make a connection between steps and
 it will also validate the parameters mentioned in the steps with ones
 provided in the pytest parametrization table.
@@ -19,8 +17,6 @@ Syntax example:
         And the article should be published  # Note: will query the database
 
 :note: The "#" symbol is used for comments.
-:note: There're no multiline steps, the description of the step must fit in
-one line.
 """
 
 from collections import OrderedDict
