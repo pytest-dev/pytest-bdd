@@ -87,7 +87,7 @@ setup(
             "pytest-bdd = pytest_bdd.scripts:main",
         ]
     },
-    tests_require=["tox"],
+    tests_require=["tox", "mock", "execnet"],
     packages=["pytest_bdd"],
     include_package_data=True,
 )

@@ -73,7 +73,7 @@ def given(name, fixture=None, converters=None, scope='function', target_fixture=
     :param fixture: Optional name of the fixture to reuse.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
-    :scope: Optional fixture scope
+    :param scope: Optional fixture scope
     :param target_fixture: Target fixture name to replace by steps definition function
     :raises: StepError in case of wrong configuration.
     :note: Can't be used as a decorator when the fixture is specified.
