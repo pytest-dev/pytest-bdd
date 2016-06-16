@@ -558,7 +558,7 @@ Feature examples
 It's possible to declare example table once for the whole feature, and it will be shared
 among all the scenarios of that feature:
 
-..code-block:: gherkin
+.. code-block:: gherkin
 
     Feature: Outline
 
@@ -581,7 +581,8 @@ For some more complex case, you might want to parametrize on both levels: featur
 This is allowed as long as parameter names do not clash:
 
 
-..code-block:: gherkin
+.. code-block:: gherkin
+
     Feature: Outline
 
         Examples:
