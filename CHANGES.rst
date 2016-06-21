@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.16.2
+------
+
+- Fix FixtureDef signature for newer pytest versions (The-Compiler)
+- Better error explanation for the steps defined outside of scenarios (olegpidsadnyi)
+
 
 2.16.1
 ------
