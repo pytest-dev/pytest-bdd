@@ -284,15 +284,19 @@ def inject_fixture(request, arg, value):
     :param arg: argument name
     :param value: argument value
     """
-    fd = python.FixtureDef(
-        fixturemanager=request._fixturemanager,
-        baseid=None,
-        argname=arg,
-        func=lambda: value,
-        scope="function",
-        params=None,
-        yieldctx=False,
-    )
+    fd_kwargs = {
+        'fixturemanager': request._fixturemanager,
+        'baseid': None,
+        'argname': arg,
+        'func': lambda: value,
+        'scope': "function",
+        'params': None,
+    }
+
+    if 'yieldctx' in get_args(python.FixtureDef.__init__):
+        fd_kwargs['yieldctx'] = False
+
+    fd = python.FixtureDef(**fd_kwargs)
     fd.cached_result = (value, 0, None)
 
     old_fd = getattr(request, "_fixturedefs", {}).get(arg)
