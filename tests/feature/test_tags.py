@@ -132,10 +132,10 @@ def test_apply_tag_hook(testdir):
         scenarios('test.feature')
     """)
     result = testdir.runpytest('-rs')
+    result.stdout.fnmatch_lines(["SKIP *: Not implemented yet"])
     result.stdout.fnmatch_lines(
         [
-            "SKIP *: Not implemented yet",
             "SKIP *: unconditional skip",
-            "*= 2 skipped * =*"
-        ]
+            "*= 2 skipped * =*",
+        ],
     )
