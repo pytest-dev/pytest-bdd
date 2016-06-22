@@ -269,7 +269,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, call
                 _scenario = pytest.mark.parametrize(*param_set)(_scenario)
 
         for tag in scenario.tags.union(feature.tags):
-            _scenario = getattr(pytest.mark, tag)(_scenario)
+            pytest.config.hook.pytest_bdd_apply_tag(tag=tag, function=_scenario)
 
         _scenario.__doc__ = "{feature_name}: {scenario_name}".format(
             feature_name=feature_name, scenario_name=scenario_name)

@@ -95,3 +95,47 @@ def test_tags_after_background_issue_160(testdir):
     result = testdir.runpytest('-m', 'tag', '-vv').parseoutcomes()
     assert result['passed'] == 1
     assert result['deselected'] == 1
+
+
+def test_apply_tag_hook(testdir):
+    testdir.makeconftest("""
+        import pytest
+
+        @pytest.hookimpl(tryfirst=True)
+        def pytest_bdd_apply_tag(tag, function):
+            if tag == 'todo':
+                marker = pytest.mark.skipif(True, reason="Not implemented yet")
+                marker(function)
+                return True
+            else:
+                # Fall back to pytest-bdd's default behavior
+                return None
+    """)
+    testdir.makefile('.feature', test="""
+    Feature: Customizing tag handling
+
+        @todo
+        Scenario: Tags
+            Given I have a bar
+
+        @skip
+        Scenario: Tags 2
+            Given I have a bar
+    """)
+    testdir.makepyfile("""
+        from pytest_bdd import given, scenarios
+
+        @given('I have a bar')
+        def i_have_bar():
+            return 'bar'
+
+        scenarios('test.feature')
+    """)
+    result = testdir.runpytest('-rs')
+    result.stdout.fnmatch_lines(
+        [
+            "SKIP *: Not implemented yet",
+            "SKIP *: unconditional skip",
+            "*= 2 skipped * =*"
+        ]
+    )

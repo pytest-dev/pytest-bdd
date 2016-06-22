@@ -747,6 +747,19 @@ Note that if you use pytest `--strict` option, all bdd tags mentioned in the fea
 `markers` setting of the `pytest.ini` config. Also for tags please use names which are python-compartible variable
 names, eg starts with a non-number, underscore alphanumberic, etc. That way you can safely use tags for tests filtering.
 
+You can customize how hooks are converted to pytest marks by implementing the
+``pytest_bdd_apply_tag`` hook and returning ``True`` from it:
+
+.. code-block:: python
+
+   def pytest_bdd_apply_tag(tag, function):
+       if tag == 'todo':
+           marker = pytest.mark.skip(reason="Not implemented yet")
+           marker(function)
+           return True
+       else:
+           # Fall back to pytest-bdd's default behavior
+           return None
 
 Test setup
 ----------

@@ -1,3 +1,5 @@
+import pytest
+
 """Pytest-bdd pytest hooks."""
 
 
@@ -31,3 +33,13 @@ def pytest_bdd_step_validation_error(request, feature, scenario, step, step_func
 
 def pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception):
     """Called when step lookup failed."""
+
+
+@pytest.hookspec(firstresult=True)
+def pytest_bdd_apply_tag(tag, function):
+    """Apply a tag (from a ``.feature`` file) to the given scenario.
+
+    The default implementation does the equivalent of
+    ``getattr(pytest.mark, tag)(function)``, but you can override this hook and
+    return ``True`` to do more sophisticated handling of tags.
+    """

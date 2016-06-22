@@ -6,6 +6,7 @@ Changelog
 
 - Fix FixtureDef signature for newer pytest versions (The-Compiler)
 - Better error explanation for the steps defined outside of scenarios (olegpidsadnyi)
+- Add a ``pytest_bdd_apply_tag`` hook to customize handling of tags (The-Compiler)
 
 
 2.16.1
