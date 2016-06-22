@@ -78,5 +78,4 @@ def pytest_cmdline_main(config):
 
 def pytest_bdd_apply_tag(tag, function):
     mark = getattr(pytest.mark, tag)
-    mark(function)
-    return True
+    return mark(function)
