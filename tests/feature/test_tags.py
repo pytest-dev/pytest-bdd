@@ -179,7 +179,10 @@ def test_tag_with_spaces(testdir):
     ('@foo @bar', {'foo', 'bar'}),
     ('@with spaces @bar', {'with spaces', 'bar'}),
     ('@double @double', {'double'}),
-    ('    @indented', {'indented'})
+    ('    @indented', {'indented'}),
+    (None, set()),
+    ('foobar', set()),
+    ('', set()),
 ])
 def test_get_tags(line, expected):
     assert feature.get_tags(line) == expected
