@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.16.2
+2.17.0
 ------
 
 - Fix FixtureDef signature for newer pytest versions (The-Compiler)
