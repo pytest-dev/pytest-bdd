@@ -139,3 +139,35 @@ def test_apply_tag_hook(testdir):
             "*= 2 skipped * =*",
         ],
     )
+
+
+def test_tag_with_spaces(testdir):
+    testdir.makeconftest("""
+        import pytest
+
+        @pytest.hookimpl(tryfirst=True)
+        def pytest_bdd_apply_tag(tag, function):
+            assert tag == 'test with spaces'
+    """)
+    testdir.makefile('.feature', test="""
+    Feature: Tag with spaces
+
+        @test with spaces
+        Scenario: Tags
+            Given I have a bar
+    """)
+    testdir.makepyfile("""
+        from pytest_bdd import given, scenarios
+
+        @given('I have a bar')
+        def i_have_bar():
+            return 'bar'
+
+        scenarios('test.feature')
+    """)
+    result = testdir.runpytest_subprocess()
+    result.stdout.fnmatch_lines(
+        [
+            "*= 1 passed * =*",
+        ],
+    )
