@@ -118,7 +118,7 @@ def test_apply_tag_hook(testdir):
         Scenario: Tags
             Given I have a bar
 
-        @skip
+        @xfail
         Scenario: Tags 2
             Given I have a bar
     """)
@@ -131,11 +131,6 @@ def test_apply_tag_hook(testdir):
 
         scenarios('test.feature')
     """)
-    result = testdir.runpytest('-rs')
+    result = testdir.runpytest('-rsx')
     result.stdout.fnmatch_lines(["SKIP *: Not implemented yet"])
-    result.stdout.fnmatch_lines(
-        [
-            "SKIP *: unconditional skip",
-            "*= 2 skipped * =*",
-        ],
-    )
+    result.stdout.fnmatch_lines(["*= 1 skipped, 1 xpassed * =*"])
