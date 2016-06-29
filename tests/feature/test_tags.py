@@ -1,5 +1,7 @@
 """Test tags."""
-from pytest_bdd import scenario
+import pytest
+
+from pytest_bdd import scenario, feature
 
 
 def test_tags(request):
@@ -171,3 +173,13 @@ def test_tag_with_spaces(testdir):
             "*= 1 passed * =*",
         ],
     )
+
+
+@pytest.mark.parametrize('line, expected', [
+    ('@foo @bar', {'foo', 'bar'}),
+    ('@with spaces @bar', {'with spaces', 'bar'}),
+    ('@double @double', {'double'}),
+    ('    @indented', {'indented'})
+])
+def test_get_tags(line, expected):
+    assert feature.get_tags(line) == expected
