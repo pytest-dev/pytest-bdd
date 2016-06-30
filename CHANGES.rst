@@ -1,12 +1,14 @@
 Changelog
 =========
 
-2.16.2
+2.17.0
 ------
 
 - Fix FixtureDef signature for newer pytest versions (The-Compiler)
 - Better error explanation for the steps defined outside of scenarios (olegpidsadnyi)
 - Add a ``pytest_bdd_apply_tag`` hook to customize handling of tags (The-Compiler)
+- Allow spaces in tag names. This can be useful when using the
+  ``pytest_bdd_apply_tag`` hook with tags like ``@xfail: Some reason``.
 
 
 2.16.1
