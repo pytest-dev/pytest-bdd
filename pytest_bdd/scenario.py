@@ -16,7 +16,10 @@ import os
 import re
 
 import pytest
-from _pytest import python
+try:
+    from _pytest import fixtures as pytest_fixtures
+except ImportError:
+    from _pytest import python as pytest_fixtures
 import six
 
 from . import exceptions
@@ -69,7 +72,7 @@ def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None)
                 if request:
                     try:
                         request.getfuncargvalue(parser_name)
-                    except python.FixtureLookupError:
+                    except pytest_fixtures.FixtureLookupError:
                         continue
                 return parser_name
 
@@ -87,13 +90,13 @@ def _find_step_function(request, step, scenario, encoding):
     name = step.name
     try:
         return request.getfuncargvalue(get_step_fixture_name(name, step.type, encoding))
-    except python.FixtureLookupError:
+    except pytest_fixtures.FixtureLookupError:
         try:
             name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager, request)
             if name:
                 return request.getfuncargvalue(name)
             raise
-        except python.FixtureLookupError:
+        except pytest_fixtures.FixtureLookupError:
             raise exceptions.StepDefinitionNotFoundError(
                 u"""Step definition is not found: {step}."""
                 """ Line {step.line_number} in scenario "{scenario.name}" in the feature "{feature.filename}""".format(
@@ -234,7 +237,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, call
     scenario_name = force_encode(scenario_name, encoding)
 
     def decorator(_pytestbdd_function):
-        if isinstance(_pytestbdd_function, python.FixtureRequest):
+        if isinstance(_pytestbdd_function, pytest_fixtures.FixtureRequest):
             raise exceptions.ScenarioIsDecoratorOnly(
                 "scenario function can only be used as a decorator. Refer to the documentation.",
             )

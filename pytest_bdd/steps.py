@@ -37,7 +37,10 @@ import inspect
 import sys
 
 import pytest
-from _pytest import python
+try:
+    from _pytest import fixtures as pytest_fixtures
+except ImportError:
+    from _pytest import python as pytest_fixtures
 import six
 
 from .feature import parse_line, force_encode
@@ -293,10 +296,10 @@ def inject_fixture(request, arg, value):
         'params': None,
     }
 
-    if 'yieldctx' in get_args(python.FixtureDef.__init__):
+    if 'yieldctx' in get_args(pytest_fixtures.FixtureDef.__init__):
         fd_kwargs['yieldctx'] = False
 
-    fd = python.FixtureDef(**fd_kwargs)
+    fd = pytest_fixtures.FixtureDef(**fd_kwargs)
     fd.cached_result = (value, 0, None)
 
     old_fd = getattr(request, "_fixturedefs", {}).get(arg)
