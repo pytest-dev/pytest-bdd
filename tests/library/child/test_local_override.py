@@ -5,6 +5,7 @@ Check the parent given steps are collected, override them locally.
 
 from pytest_bdd import given
 from pytest_bdd.steps import get_step_fixture_name, GIVEN
+from pytest_bdd.utils import get_fixture_value
 
 
 @given('I have locally overriden fixture')
@@ -21,10 +22,12 @@ def test_override(request, overridable):
     """Test locally overriden fixture."""
 
     # Test the fixture is also collected by the text name
-    assert request.getfuncargvalue(get_step_fixture_name('I have locally overriden fixture', GIVEN))(request) == 'local'
+    fixture = get_fixture_value(request, get_step_fixture_name('I have locally overriden fixture', GIVEN))
+    assert fixture(request) == 'local'
 
     # 'I have the overriden fixture' stands for overridable and is overriden locally
-    assert request.getfuncargvalue(get_step_fixture_name('I have the overriden fixture', GIVEN))(request) == 'local'
+    fixture = get_fixture_value(request, get_step_fixture_name('I have the overriden fixture', GIVEN))
+    assert fixture(request) == 'local'
 
     assert overridable == 'local'
 

@@ -3,6 +3,7 @@
 import pytest
 from pytest_bdd import given, when, then
 from pytest_bdd.steps import get_step_fixture_name, WHEN, THEN
+from pytest_bdd.utils import get_fixture_value
 
 
 @when('I do stuff')
@@ -21,10 +22,10 @@ def test_when_then(request):
     This test checks that when and then are not evaluated
     during fixture collection that might break the scenario.
     """
-    do_stuff_ = request.getfuncargvalue(get_step_fixture_name('I do stuff', WHEN))
+    do_stuff_ = get_fixture_value(request, get_step_fixture_name('I do stuff', WHEN))
     assert callable(do_stuff_)
 
-    check_stuff_ = request.getfuncargvalue(get_step_fixture_name('I check stuff', THEN))
+    check_stuff_ = get_fixture_value(request, get_step_fixture_name('I check stuff', THEN))
     assert callable(check_stuff_)
 
 

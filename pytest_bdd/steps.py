@@ -49,7 +49,7 @@ from .exceptions import (
     StepError,
 )
 from .parsers import get_parser
-from .utils import get_args
+from .utils import get_args, get_fixture_value, get_fixture_value_raw, set_fixture_value
 
 
 def get_step_fixture_name(name, type_, encoding=None):
@@ -81,7 +81,7 @@ def given(name, fixture=None, converters=None, scope='function', target_fixture=
         module = get_caller_module()
 
         def step_func(request):
-            return request.getfuncargvalue(fixture)
+            return get_fixture_value(request, fixture)
 
         step_func.step_type = GIVEN
         step_func.converters = converters
@@ -161,7 +161,7 @@ def _step_decorator(step_type, step_name, converters=None, scope='function', tar
                 func = pytest.fixture(scope=scope)(func)
 
             def step_func(request):
-                result = request.getfuncargvalue(func.__name__)
+                result = get_fixture_value(request, func.__name__)
                 if target_fixture:
                     inject_fixture(request, target_fixture, result)
                 return result
@@ -303,13 +303,13 @@ def inject_fixture(request, arg, value):
     fd.cached_result = (value, 0, None)
 
     old_fd = getattr(request, "_fixturedefs", {}).get(arg)
-    old_value = request._funcargs.get(arg)
+    old_value = get_fixture_value_raw(request, arg)
     add_fixturename = arg not in request.fixturenames
 
     def fin():
         request._fixturemanager._arg2fixturedefs[arg].remove(fd)
         getattr(request, "_fixturedefs", {})[arg] = old_fd
-        request._funcargs[arg] = old_value
+        set_fixture_value(request, arg, old_value)
         if add_fixturename:
             request.fixturenames.remove(arg)
 
@@ -319,6 +319,6 @@ def inject_fixture(request, arg, value):
     request._fixturemanager._arg2fixturedefs.setdefault(arg, []).insert(0, fd)
     # inject fixture value in request cache
     getattr(request, "_fixturedefs", {})[arg] = fd
-    request._funcargs[arg] = value
+    set_fixture_value(request, arg, value)
     if add_fixturename:
         request.fixturenames.append(arg)

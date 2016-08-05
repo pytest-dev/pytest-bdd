@@ -39,7 +39,7 @@ from .steps import (
     recreate_function,
 )
 from .types import GIVEN
-from .utils import get_args
+from .utils import get_args, get_fixture_value
 
 if six.PY3:  # pragma: no cover
     import runpy
@@ -71,7 +71,7 @@ def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None)
                 parser_name = get_step_fixture_name(parser.name, type_)
                 if request:
                     try:
-                        request.getfuncargvalue(parser_name)
+                        get_fixture_value(request, parser_name)
                     except pytest_fixtures.FixtureLookupError:
                         continue
                 return parser_name
@@ -89,12 +89,12 @@ def _find_step_function(request, step, scenario, encoding):
     """
     name = step.name
     try:
-        return request.getfuncargvalue(get_step_fixture_name(name, step.type, encoding))
+        return get_fixture_value(request, get_step_fixture_name(name, step.type, encoding))
     except pytest_fixtures.FixtureLookupError:
         try:
             name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager, request)
             if name:
-                return request.getfuncargvalue(name)
+                return get_fixture_value(request, name)
             raise
         except pytest_fixtures.FixtureLookupError:
             raise exceptions.StepDefinitionNotFoundError(
@@ -129,7 +129,7 @@ def _execute_step_function(request, scenario, step, step_func):
     kw["step_func_args"] = {}
     try:
         # Get the step argument values.
-        kwargs = dict((arg, request.getfuncargvalue(arg)) for arg in get_args(step_func))
+        kwargs = dict((arg, get_fixture_value(request, arg)) for arg in get_args(step_func))
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
