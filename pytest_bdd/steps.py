@@ -49,7 +49,8 @@ from .exceptions import (
     StepError,
 )
 from .parsers import get_parser
-from .utils import get_args, get_fixture_value, get_fixture_value_raw, set_fixture_value
+from .utils import get_args, get_fixture_value, get_fixture_value_raw, set_fixture_value, get_request_fixture_defs, \
+    get_request_fixture_names
 
 
 def get_step_fixture_name(name, type_, encoding=None):
@@ -302,23 +303,23 @@ def inject_fixture(request, arg, value):
     fd = pytest_fixtures.FixtureDef(**fd_kwargs)
     fd.cached_result = (value, 0, None)
 
-    old_fd = getattr(request, "_fixturedefs", {}).get(arg)
+    old_fd = get_request_fixture_defs(request).get(arg)
     old_value = get_fixture_value_raw(request, arg)
     add_fixturename = arg not in request.fixturenames
 
     def fin():
         request._fixturemanager._arg2fixturedefs[arg].remove(fd)
-        getattr(request, "_fixturedefs", {})[arg] = old_fd
+        get_request_fixture_defs(request)[arg] = old_fd
         set_fixture_value(request, arg, old_value)
         if add_fixturename:
-            request.fixturenames.remove(arg)
+            get_request_fixture_names(request).remove(arg)
 
     request.addfinalizer(fin)
 
     # inject fixture definition
     request._fixturemanager._arg2fixturedefs.setdefault(arg, []).insert(0, fd)
     # inject fixture value in request cache
-    getattr(request, "_fixturedefs", {})[arg] = fd
+    get_request_fixture_defs(request)[arg] = fd
     set_fixture_value(request, arg, value)
     if add_fixturename:
-        request.fixturenames.append(arg)
+        get_request_fixture_names(request).append(arg)

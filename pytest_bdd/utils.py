@@ -39,7 +39,7 @@ def get_fixture_value(request, name):
 def get_fixture_value_raw(request, name):
     """Set the given raw fixture value from the pytest request object."""
     try:
-        return request._fixture_values.get((name, request.scope))
+        return request._fixture_values.get(name)
     except AttributeError:
         return request._funcargs.get(name)
 
@@ -47,6 +47,28 @@ def get_fixture_value_raw(request, name):
 def set_fixture_value(request, name, value):
     """Set the given fixture value on the pytest request object."""
     try:
-        request._fixture_values[(name, request.scope)] = value
+        request._fixture_values[name] = value
     except AttributeError:
         request._funcargs[name] = value
+
+
+def get_request_fixture_defs(request):
+    """Get the internal list of FixtureDefs cached into the given request object.
+
+    Compatibility with pytest 3.0.
+    """
+    try:
+        return request._fixture_defs
+    except AttributeError:
+        return getattr(request, "_fixturedefs", {})
+
+
+def get_request_fixture_names(request):
+    """Get list of fixture names for the given FixtureRequest.
+
+    Get the internal and mutable list of fixture names in the enclosing scope of
+    the given request object.
+
+    Compatibility with pytest 3.0.
+    """
+    return request._pyfuncitem._fixtureinfo.names_closure
