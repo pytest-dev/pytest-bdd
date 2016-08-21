@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.17.1
+------
+
+- Add support for pytest 3.0
+
 2.17.0
 ------
 
