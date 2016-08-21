@@ -3,6 +3,7 @@
 Check the parent givens are collected and overriden in the local conftest.
 """
 from pytest_bdd.steps import get_step_fixture_name, WHEN
+from pytest_bdd.utils import get_fixture_value
 
 
 def test_parent(parent, overridable):
@@ -16,4 +17,4 @@ def test_parent(parent, overridable):
 
 def test_global_when_step(request):
     """Test when step defined in the parent conftest."""
-    request.getfuncargvalue(get_step_fixture_name('I use a when step from the parent conftest', WHEN))
+    get_fixture_value(request, get_step_fixture_name('I use a when step from the parent conftest', WHEN))
