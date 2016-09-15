@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.17.2
+------
+
+- Fix scenairo lines containing an ``@`` being parsed as a tag. (The-Compiler)
+
 2.17.1
 ------
 
