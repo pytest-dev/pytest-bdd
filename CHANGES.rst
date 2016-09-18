@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.18.0
+------
+
+- Add gherkin terminal reporter (spinus + thedrow)
+
 2.17.1
 ------
 
