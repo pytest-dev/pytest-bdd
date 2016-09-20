@@ -170,6 +170,37 @@ def test_tag_with_spaces(testdir):
     )
 
 
+def test_at_in_scenario(testdir):
+    testdir.makefile('.feature', test="""
+    Feature: At sign in a scenario
+
+        Scenario: Tags
+            Given I have a foo@bar
+
+        Scenario: Second
+            Given I have a baz
+    """)
+    testdir.makepyfile("""
+        from pytest_bdd import given, scenarios
+
+        @given('I have a foo@bar')
+        def i_have_at():
+            return 'foo@bar'
+
+        @given('I have a baz')
+        def i_have_baz():
+            return 'baz'
+
+        scenarios('test.feature')
+    """)
+    result = testdir.runpytest_subprocess('--strict')
+    result.stdout.fnmatch_lines(
+        [
+            "*= 2 passed * =*",
+        ],
+    )
+
+
 @pytest.mark.parametrize('line, expected', [
     ('@foo @bar', {'foo', 'bar'}),
     ('@with spaces @bar', {'with spaces', 'bar'}),

@@ -134,7 +134,7 @@ def get_tags(line):
 
     :return: List of tags.
     """
-    if not line or '@' not in line.strip():
+    if not line or not line.strip().startswith('@'):
         return set()
     return (
         set((tag.lstrip('@') for tag in line.strip().split(' @') if len(tag) > 1))
