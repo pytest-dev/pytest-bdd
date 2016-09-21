@@ -1,10 +1,15 @@
 Changelog
 =========
 
+2.18.0
+------
+
+- Add gherkin terminal reporter (spinus + thedrow)
+
 2.17.2
 ------
 
-- Fix scenairo lines containing an ``@`` being parsed as a tag. (The-Compiler)
+- Fix scenario lines containing an ``@`` being parsed as a tag. (The-Compiler)
 
 2.17.1
 ------

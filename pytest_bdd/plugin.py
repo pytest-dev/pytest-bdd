@@ -6,6 +6,7 @@ from . import given, when, then
 from . import cucumber_json
 from . import generation
 from . import reporting
+from . import gherkin_terminal_reporter
 
 from .fixtures import *
 
@@ -33,12 +34,14 @@ def pytest_addoption(parser):
     """Add pytest-bdd options."""
     cucumber_json.add_options(parser)
     generation.add_options(parser)
+    gherkin_terminal_reporter.add_options(parser)
 
 
 @pytest.mark.trylast
 def pytest_configure(config):
     """Configure all subplugins."""
     cucumber_json.configure(config)
+    gherkin_terminal_reporter.configure(config)
 
 
 def pytest_unconfigure(config):

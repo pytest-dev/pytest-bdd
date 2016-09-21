@@ -1126,6 +1126,13 @@ To have an output in json format:
     py.test --cucumberjson=<path to json report>
 
 
+To enable gherkin-formatted output on terminal, use
+
+::
+
+    py.test --gherkin-terminal-reporter
+
+
 Test code generation helpers
 ----------------------------
 
