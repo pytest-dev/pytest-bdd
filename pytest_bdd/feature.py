@@ -154,7 +154,12 @@ def get_features(paths, **kwargs):
         if path not in seen_names:
             seen_names.add(path)
             if op.isdir(path):
-                features.extend(get_features(glob2.iglob(op.join(path, "**", "*.feature"))))
+                features.extend(
+                    get_features(
+                        glob2.iglob(op.join(path, "**", "*.feature")),
+                        **kwargs
+                    )
+                )
             else:
                 base, name = op.split(path)
                 feature = Feature.get_feature(base, name, **kwargs)
