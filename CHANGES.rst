@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.18.1
+------
+
+- Relay fixture results to recursive call of 'get_features' (coddingtonbear)
+
 2.18.0
 ------
 

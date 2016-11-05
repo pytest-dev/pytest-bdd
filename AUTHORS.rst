@@ -8,6 +8,7 @@ Authors
 
 These people have contributed to `pytest-bdd`, in alphabetical order:
 
+* `Adam Coddington <me@adamcoddington.net>`_
 * `Albert-Jan Nijburg <albertjan@curit.com>`_
 * `Andrey Makhnach <andrey.makhnach@gmail.com>`_
 * `Aron Curzon <curzona@gmail.com>`_
