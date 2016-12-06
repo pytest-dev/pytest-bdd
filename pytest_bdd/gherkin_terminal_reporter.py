@@ -21,7 +21,7 @@ def configure(config):
         # Get the standard terminal reporter plugin and replace it with our
         current_reporter = config.pluginmanager.getplugin('terminalreporter')
         if current_reporter.__class__ != TerminalReporter:
-            raise Exception("gherkin-terminal-reporter is not compatibile with any other terminal reporter."
+            raise Exception("gherkin-terminal-reporter is not compatible with any other terminal reporter."
                             "You can use only one terminal reporter."
                             "Currently '{0}' is used."
                             "Please decide to use one by deactivating {0} or gherkin-terminal-reporter."
