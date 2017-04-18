@@ -19,3 +19,4 @@ These people have contributed to `pytest-bdd`, in alphabetical order:
 * `Laurence Rowe <l@lrowe.co.uk>`_
 * `Leonardo Santagada <santagada@github.com>`_
 * `Robin Pedersen <ropez@github.com>`_
+* `Sergey Kraynev <sergejyit@gmail.com>`_
