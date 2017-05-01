@@ -293,7 +293,11 @@ class Feature(object):
                     continue
                 mode = get_step_type(clean_line) or mode
 
-                if not scenario and prev_mode not in (types.BACKGROUND, types.GIVEN) and mode in types.STEP_TYPES:
+                allowed_prev_mode = (types.BACKGROUND, types.GIVEN)
+                if not strict_gherkin:
+                    allowed_prev_mode += (types.WHEN, )
+
+                if not scenario and prev_mode not in allowed_prev_mode  and mode in types.STEP_TYPES:
                     raise exceptions.FeatureError(
                         "Step definition outside of a Scenario or a Background", line_number, clean_line, filename)
 

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.18.2
+------
+
+- Fix check for out section steps definitions for no strict gherkin feature
+
 2.18.1
 ------
 
