@@ -1,6 +1,6 @@
 Feature: Datatables
 
-  Scenario Outline: I use datatables
+  Scenario: I use datatables
     Given the following users exist:
       | name   | email              | twitter         |
       | Aslak  | aslak@cucumber.io  | @aslak_hellesoy |
@@ -13,7 +13,7 @@ Feature: Datatables
       | Matt   |
 
 
-  Scenario Outline: I use datatables for emails
+  Scenario: I use datatables for emails
     Given the following users exist:
       | name   | email              | twitter         |
       | Aslak  | aslak@cucumber.io  | @aslak_hellesoy |
