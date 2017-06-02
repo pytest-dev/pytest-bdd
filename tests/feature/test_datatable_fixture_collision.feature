@@ -6,6 +6,7 @@ Feature: Datatables with colliding datatables
     Given There is an existing fixture named datatable
     Then datatable contents match existing fixture
 
+
   Scenario: Ensure that datatable does not conflict with existing fixture
     Given There is an existing fixture named datatable
     And I have the following cars:
