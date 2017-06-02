@@ -17,9 +17,18 @@ def datatable():
 def test_ensure_existing_fixture():
     """Ensure existing fixture is used."""
 
+@scenario('test_datatable_fixture_collision.feature', 'Ensure that datatable does not conflict with existing fixture')
+def test_datatable_does_not_conflict_with_existing_fixture():
+    """Ensure that there is no collision between existing fixture and datatable"""
+
 @given('There is an existing fixture named datatable')
 def there_is_an_existing_datatable_fixture(datatable):
     return datatable
+
+@given('I have the following cars')
+def i_have_the_following_cars(datatable):
+    return datatable
+
 
 @then(parsers.re('datatable contents (?P<negation>(don\'t |do not )?)match existing fixture'))
 def check_if_contents_match_existing(negation, there_is_an_existing_datatable_fixture, datatable):
