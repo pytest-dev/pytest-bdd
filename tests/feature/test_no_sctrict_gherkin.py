@@ -25,6 +25,7 @@ def test_background_no_strict_gherkin(request):
 
     test(request)
 
+
 def test_scenario_no_strict_gherkin(request):
     """Test scenario no strict gherkin."""
     @scenario(
@@ -56,4 +57,3 @@ def not_boolean(foo):
 @when('foo has not a value "baz"')
 def has_not_baz(foo):
     assert "baz" not in foo
-
