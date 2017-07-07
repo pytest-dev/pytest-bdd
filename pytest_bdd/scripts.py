@@ -47,7 +47,7 @@ def check_existense(file_name):
 def print_generated_code(args):
     """Print generated test code for the given filenames."""
     features, scenarios, steps = parse_feature_files(args.files)
-    code = generate_code(features, scenarios, steps)
+    code = generate_code(features, scenarios, steps, args.template)
     print(code)
 
 
@@ -63,6 +63,12 @@ def main():
         type=check_existense,
         nargs="+",
         help="Feature files to generate test code with",
+    )
+    parser_generate.add_argument(
+        "--template",
+        metavar="TEMPLATE_FILE",
+        type=check_existense,
+        help="Template file to use when generating test code"
     )
     parser_generate.set_defaults(func=print_generated_code)
 

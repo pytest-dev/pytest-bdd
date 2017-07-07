@@ -50,3 +50,47 @@ def test_generate(monkeypatch, capsys):
         """my list should be [1]."""
 
     '''[1:].replace(u"'", u"'"))
+
+
+def test_generate_with_custom_template(monkeypatch, capsys):
+    monkeypatch.setattr(
+        sys, 'argv',
+        ['', 'generate', os.path.join(PATH, 'generate.feature'),
+         '--template', os.path.join(PATH, 'other_template.py.mak')])
+    main()
+    out, err = capsys.readouterr()
+    assert out == textwrap.dedent('''
+    """Code generation feature tests generated with an alternative template."""
+    from pytest_bdd import given, then, when
+
+    from my_helpers import set_full_scenario_path
+
+
+    scenario = set_full_scenario_path('scripts/generate.feature')
+
+
+    @scenario('Given and when using the same fixture should not evaluate it twice')
+    def test_given_and_when_using_the_same_fixture_should_not_evaluate_it_twice():
+        pass
+
+
+    @given('1 have a fixture (appends 1 to a list) in reuse syntax')
+    def have_a_fixture_appends_1_to_a_list_in_reuse_syntax():
+        pass
+
+
+    @given('I have an empty list')
+    def i_have_an_empty_list():
+        pass
+
+
+    @when('I use this fixture')
+    def i_use_this_fixture():
+        pass
+
+
+    @then('my list should be [1]')
+    def my_list_should_be_1():
+        pass
+
+    '''[1:].replace(u"'", u"'"))

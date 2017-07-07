@@ -1159,6 +1159,16 @@ It will print the generated code to the standard output so you can easily redire
 
     pytest-bdd generate features/some.feature > tests/functional/test_some.py
 
+If you want to use a custom template to generate the test file you can pass the ``--template`` parameter to the command.
+
+::
+
+    pytest-bdd generate features/some.feature --template path/to/your/template.py.mak
+
+Templates are created using mako, more information about the required syntax can be found `here <http://docs.makotemplates.org/en/latest/syntax.html>`_.
+
+
+
 
 Advanced code generation
 ------------------------
