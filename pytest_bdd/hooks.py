@@ -19,6 +19,11 @@ def pytest_bdd_before_step_call(request, feature, scenario, step, step_func, ste
     """Called before step function is executed."""
 
 
+@pytest.hookspec(firstresult=True)
+def pytest_bdd_call_step(request, feature, scenario, step, step_func, step_func_args):
+    """Call the underlying step."""
+
+
 def pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args):
     """Called after step function is successfully executed."""
 

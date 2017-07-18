@@ -70,6 +70,12 @@ def pytest_bdd_before_step(request, feature, scenario, step, step_func):
     reporting.before_step(request, feature, scenario, step, step_func)
 
 
+@pytest.mark.trylast
+def pytest_bdd_call_step(request, feature, scenario, step, step_func, step_func_args):
+    step_func(**step_func_args)
+    return True
+
+
 @pytest.mark.tryfirst
 def pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args):
     reporting.after_step(request, feature, scenario, step, step_func, step_func_args)
