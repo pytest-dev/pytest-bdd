@@ -5,6 +5,9 @@ Feature: Datatables with colliding datatables
   Scenario: Ensure that there is an existing datatable fixture
     Given There is an existing fixture named datatable
     Then datatable contents match existing fixture
+    And I should see the following existing datatable:
+      | header    |
+      | test body |
 
 
   Scenario: Ensure that datatable does not conflict with existing fixture
@@ -24,5 +27,3 @@ Feature: Datatables with colliding datatables
       | Cressida  |
       | Econoline |
       | Corolla   |
-
-
