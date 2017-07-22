@@ -22,9 +22,9 @@ def test_ensure_existing_fixture():
     """Ensure existing fixture is used."""
 
 
-@scenario('test_datatable_fixture_collision.feature', 'Ensure that datatable does not conflict with existing fixture')
-def test_datatable_does_not_conflict_with_existing_fixture():
-    """Ensure that there is no collision between existing fixture and datatable"""
+#@scenario('test_datatable_fixture_collision.feature', 'Ensure that datatable does not conflict with existing fixture')
+#def test_datatable_does_not_conflict_with_existing_fixture():
+#    """Ensure that there is no collision between existing fixture and datatable"""
 
 
 # Steps
@@ -49,10 +49,9 @@ def check_that_contents_dont_match(i_have_the_following_cars, datatable):
     assert i_have_the_following_cars != datatable
 
 
-@then('I should see the following existing datatable')
+@then("I should see that the existing database has the following structure")
 def i_should_see_the_following_existing_datatable(there_is_an_existing_datatable_fixture, datatable):
     column = there_is_an_existing_datatable_fixture[0][0]
-    import pdb; pdb.set_trace()
     body = there_is_an_existing_datatable_fixture[1][0]
 
 
