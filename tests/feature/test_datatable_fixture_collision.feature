@@ -5,7 +5,7 @@ Feature: Datatables with colliding datatables
   Scenario: Ensure that there is an existing datatable fixture
     Given There is an existing fixture named datatable
     Then datatable contents match existing fixture
-    And I should see the following existing datatable:
+    And I should see that the existing database has the following structure
       | header    |
       | test body |
 
