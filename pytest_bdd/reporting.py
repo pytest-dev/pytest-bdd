@@ -6,6 +6,8 @@ that enriches the pytest test reporting.
 
 import time
 
+from .utils import format_step_name
+
 
 class StepReport(object):
 
@@ -29,7 +31,7 @@ class StepReport(object):
         :rtype: dict
         """
         return {
-            "name": self.step.name,
+            "name": self.step.reporting_name,
             "type": self.step.type,
             "keyword": self.step.keyword,
             "line_number": self.step.line_number,
@@ -157,6 +159,9 @@ def runtest_makereport(item, call, rep):
 
 def before_scenario(request, feature, scenario):
     """Create scenario report for the item."""
+    for step in scenario.steps:
+        step.reporting_name = format_step_name(request, step)
+
     request.node.__scenario_report__ = ScenarioReport(scenario=scenario, node=request.node)
 
 
