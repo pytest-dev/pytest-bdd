@@ -72,3 +72,11 @@ def get_request_fixture_names(request):
     Compatibility with pytest 3.0.
     """
     return request._pyfuncitem._fixtureinfo.names_closure
+
+
+def format_step_name(request, step):
+    name = step.name
+    for param in step.params:
+        name = name.replace('<{}>'.format(param), str(get_fixture_value(request, param)))
+
+    return name
