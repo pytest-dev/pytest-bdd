@@ -6,6 +6,7 @@ import os
 import time
 
 import py
+import re
 import six
 
 from .feature import force_unicode
@@ -27,12 +28,21 @@ def add_options(parser):
         help="create cucumber json style report file at given path.",
     )
 
+    group._addoption(
+        "--cucumberjson-expanded",
+        "--cucumber-json-expanded",
+        action="store_true",
+        dest="expand",
+        default=False,
+        help="expand scenario outlines into scenarios and fill in the step names",
+    )
+
 
 def configure(config):
     cucumber_json_path = config.option.cucumber_json_path
     # prevent opening json log on slave nodes (xdist)
     if cucumber_json_path and not hasattr(config, "slaveinput"):
-        config._bddcucumberjson = LogBDDCucumberJSON(cucumber_json_path)
+        config._bddcucumberjson = LogBDDCucumberJSON(cucumber_json_path, expand=config.option.expand)
         config.pluginmanager.register(config._bddcucumberjson)
 
 
@@ -47,10 +57,11 @@ class LogBDDCucumberJSON(object):
 
     """Logging plugin for cucumber like json output."""
 
-    def __init__(self, logfile):
+    def __init__(self, logfile, expand=False):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.features = {}
+        self.expand = expand
 
     def append(self, obj):
         self.features[-1].append(obj)
@@ -95,6 +106,23 @@ class LogBDDCucumberJSON(object):
             for tag in item["tags"]
         ]
 
+    def _format_name(self, name, keys, values):
+        for param, value in zip(keys, values):
+            name = name.replace('<{}>'.format(param), value)
+        return name
+
+    def _format_step_name(self, report, step):
+        examples = report.scenario["examples"]
+        if len(examples) == 0:
+            return step["name"]
+
+        # we take the keys from the first "examples", but in each table, the keys should
+        # be the same anyway since all the variables need to be filled in.
+        keys, values = examples[0]["rows"]
+        row_index = examples[0]["row_index"]
+
+        return self._format_name(step["name"], keys, values[row_index])
+
     def pytest_runtest_logreport(self, report):
         try:
             scenario = report.scenario
@@ -112,9 +140,17 @@ class LogBDDCucumberJSON(object):
                 scenario['failed'] = True
                 error_message = True
 
+            if self.expand:
+                # XXX The format is already 'expanded' (scenario oultines -> scenarios),
+                # but the step names were not filled in with parameters. To be backwards
+                # compatible, do not fill in the step names unless explicitly asked for.
+                step_name = self._format_step_name(report, step)
+            else:
+                step_name = step["name"]
+
             return {
                 "keyword": step['keyword'],
-                "name": step['name'],
+                "name": step_name,
                 "line": step['line_number'],
                 "match": {
                     "location": "",

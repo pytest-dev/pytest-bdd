@@ -44,6 +44,16 @@ def test_step_trace(testdir):
         Scenario: Failing
             Given a passing step
             And a failing step
+
+        @scenario-outline-passing-tag
+        Scenario: Passing outline
+            Given type <type> and value <value>
+
+            Examples: example1
+            | type    | value  |
+            | str     | hello  |
+            | int     | 42     |
+            | float   | 1.0    |
     """))
     testdir.makepyfile(textwrap.dedent("""
         import pytest
@@ -61,12 +71,20 @@ def test_step_trace(testdir):
         def a_failing_step():
             raise Exception('Error')
 
+        @given('type <type> and value <value>')
+        def type_type_and_value_value():
+            return 'pass'
+
         @scenario('test.feature', 'Passing')
         def test_passing():
             pass
 
         @scenario('test.feature', 'Failing')
         def test_failing():
+            pass
+
+        @scenario('test.feature', 'Passing outline')
+        def test_passing_outline():
             pass
     """))
     result, jsonobject = runandparse(testdir)
@@ -156,6 +174,84 @@ def test_step_trace(testdir):
                         }
                     ],
                     "type": "scenario"
+                },
+                {
+                    "description": "",
+                    "keyword": "Scenario",
+                    "tags": [
+                        {
+                            "line": 14,
+                            "name": "scenario-outline-passing-tag"
+                        }
+                    ],
+                    "steps": [
+                        {
+                            "line": 16,
+                            "match": {"location": ""},
+                            "result": {
+                                "status": "passed",
+                                "duration": equals_any(int)
+                            },
+                            "keyword": "Given",
+                            "name": "type <type> and value <value>"
+                        }
+                    ],
+                    "line": 15,
+                    "type": "scenario",
+                    "id": "test_passing_outline[str-hello]",
+                    "name": "Passing outline"
+                },
+                {
+                    "description": "",
+                    "keyword": "Scenario",
+                    "tags": [
+                        {
+                            "line": 14,
+                            "name": "scenario-outline-passing-tag"
+                        }
+                    ],
+                    "steps": [
+                        {
+                            "line": 16,
+                            "match": {"location": ""},
+                            "result": {
+                                "status": "passed",
+                                "duration": equals_any(int)
+                            },
+                            "keyword": "Given",
+                            "name": "type <type> and value <value>"
+                        }
+                    ],
+                    "line": 15,
+                    "type": "scenario",
+                    "id": "test_passing_outline[int-42]",
+                    "name": "Passing outline"
+                },
+                {
+                    "description": "",
+                    "keyword": "Scenario",
+                    "tags": [
+                        {
+                            "line": 14,
+                            "name": "scenario-outline-passing-tag"
+                        }
+                    ],
+                    "steps": [
+                        {
+                            "line": 16,
+                            "match": {"location": ""},
+                            "result": {
+                                "status": "passed",
+                                "duration": equals_any(int)
+                            },
+                            "keyword": "Given",
+                            "name": "type <type> and value <value>"
+                        }
+                    ],
+                    "line": 15,
+                    "type": "scenario",
+                    "id": "test_passing_outline[float-1.0]",
+                    "name": "Passing outline"
                 }
             ],
             "id": os.path.join("test_step_trace0", "test.feature"),
@@ -173,3 +269,39 @@ def test_step_trace(testdir):
     ]
 
     assert jsonobject == expected
+
+
+def test_step_trace_with_expand_option(testdir):
+    """Test step trace."""
+    testdir.makefile('.feature', test=textwrap.dedent("""
+    @feature-tag
+    Feature: One scenario outline, expanded to multiple scenarios
+
+        @scenario-outline-passing-tag
+        Scenario: Passing outline
+            Given type <type> and value <value>
+
+            Examples: example1
+            | type    | value  |
+            | str     | hello  |
+            | int     | 42     |
+            | float   | 1.0    |
+    """))
+    testdir.makepyfile(textwrap.dedent("""
+        import pytest
+        from pytest_bdd import given, scenario
+
+        @given('type <type> and value <value>')
+        def type_type_and_value_value():
+            return 'pass'
+
+        @scenario('test.feature', 'Passing outline')
+        def test_passing_outline():
+            pass
+    """))
+    result, jsonobject = runandparse(testdir, '--cucumber-json-expand')
+    assert result.ret == 0
+
+    assert jsonobject[0]["elements"][0]["steps"][0]["name"] == "type str and value hello"
+    assert jsonobject[0]["elements"][1]["steps"][0]["name"] == "type int and value 42"
+    assert jsonobject[0]["elements"][2]["steps"][0]["name"] == "type float and value 1.0"
