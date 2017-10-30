@@ -43,6 +43,47 @@ def unconfigure(config):
         config.pluginmanager.unregister(xml)
 
 
+class StepNames(object):
+    def __init__(self):
+        self.prev_scenario = None
+        self.prev_generator = None
+
+    def name_generator(self, scenario):
+        if self.prev_scenario is None or self.prev_scenario["name"] != scenario["name"]:
+            self.prev_scenario = scenario
+            self.prev_generator = self._example_generator(scenario)
+
+        return next(self.prev_generator)
+
+    def _example_generator(self, scenario):
+        """Generates generators that produce sample names
+        :param scenario: the current scenario
+        :return: a `generator` that produces sample names
+        """
+        for example in scenario["examples"]:
+            params, examples = example["rows"]
+            for example in examples:
+                yield self._step_names(scenario["steps"], params, example)
+        else:
+            yield self._step_names(scenario["steps"], None, None)
+
+    def _step_names(self, steps, params, example):
+        for step in steps:
+            name = step["name"]
+            if example is not None:
+                name = self.format_step_name(step, params, example)
+
+            yield name
+
+    def format_step_name(self, step, params, example):
+        name = step["name"]
+
+        for param, value in zip(params, example):
+            name = name.replace('<{}>'.format(param), value)
+
+        return name
+
+
 class LogBDDCucumberJSON(object):
 
     """Logging plugin for cucumber like json output."""
@@ -51,6 +92,7 @@ class LogBDDCucumberJSON(object):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.features = {}
+        self.step_names = StepNames()
 
     def append(self, obj):
         self.features[-1].append(obj)
@@ -106,7 +148,7 @@ class LogBDDCucumberJSON(object):
             # skip if there isn't a result or scenario has no steps
             return
 
-        def stepmap(step):
+        def stepmap(step, step_names):
             error_message = False
             if step['failed'] and not scenario.setdefault('failed', False):
                 scenario['failed'] = True
@@ -114,7 +156,7 @@ class LogBDDCucumberJSON(object):
 
             return {
                 "keyword": step['keyword'],
-                "name": step['name'],
+                "name": next(step_names),
                 "line": step['line_number'],
                 "match": {
                     "location": "",
@@ -134,6 +176,8 @@ class LogBDDCucumberJSON(object):
                 "elements": [],
             }
 
+        step_names = self.step_names.name_generator(scenario)
+
         self.features[scenario["feature"]["filename"]]["elements"].append({
             "keyword": "Scenario",
             "id": report.item["name"],
@@ -142,7 +186,7 @@ class LogBDDCucumberJSON(object):
             "description": "",
             "tags": self._serialize_tags(scenario),
             "type": "scenario",
-            "steps": [stepmap(step) for step in scenario["steps"]],
+            "steps": [stepmap(step, step_names) for step in scenario["steps"]],
         })
 
     def pytest_sessionstart(self):
