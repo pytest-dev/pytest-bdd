@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.19.0
+------
+
+- Added --cucumber-json-expanded option for explicit selection of expanded format (mjholtkamp)
+- Step names are filled in when --cucumber-json-expanded is used (mjholtkamp)
+
 2.18.2
 ------
 
