@@ -1133,6 +1133,12 @@ To have an output in json format:
 
     py.test --cucumberjson=<path to json report>
 
+This will output an expanded (meaning scenario outlines will be expanded to several scenarios) cucumber format.
+To also fill in parameters in the step name, you have to explicitly tell pytest-bdd to use the expanded format:
+
+::
+
+    py.test --cucumberjson=<path to json report> --cucumberjson-expanded
 
 To enable gherkin-formatted output on terminal, use
 
