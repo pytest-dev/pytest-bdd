@@ -4,6 +4,10 @@ import textwrap
 
 def test_scenarios(testdir):
     """Test scenarios shortcut."""
+    testdir.makeini("""
+            [pytest]
+            console_output_style=classic
+        """)
     testdir.makeconftest("""
         import pytest
         from pytest_bdd import given

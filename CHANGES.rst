@@ -1,6 +1,15 @@
 Changelog
 =========
 
+
+2.20.0
+------
+
+- Added support for But steps (olegpidsadnyi)
+- Fixed compatibility with pytest 3.3.2 (olegpidsadnyi)
+- MInimal required version of pytest is now 2.8.1 since it doesn't support earlier versions (olegpidsadnyi)
+
+
 2.19.0
 ------
 

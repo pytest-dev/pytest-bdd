@@ -304,15 +304,18 @@ def inject_fixture(request, arg, value):
     fd.cached_result = (value, 0, None)
 
     old_fd = get_request_fixture_defs(request).get(arg)
-    old_value = get_fixture_value_raw(request, arg)
     add_fixturename = arg not in request.fixturenames
+
+    old_value = get_fixture_value_raw(request, arg)  # Compatibility with pytest < 3.3.2
 
     def fin():
         request._fixturemanager._arg2fixturedefs[arg].remove(fd)
         get_request_fixture_defs(request)[arg] = old_fd
-        set_fixture_value(request, arg, old_value)
+
         if add_fixturename:
             get_request_fixture_names(request).remove(arg)
+
+        set_fixture_value(request, arg, old_value)  # Compatibility with pytest < 3.3.2
 
     request.addfinalizer(fin)
 

@@ -9,6 +9,7 @@ from pytest_bdd.steps import StepError
 def foo():
     return "foo"
 
+
 given("I have alias for foo", fixture="foo")
 given("I have an alias to the root fixture", fixture="root")
 
