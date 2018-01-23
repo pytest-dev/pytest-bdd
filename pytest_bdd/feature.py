@@ -52,8 +52,9 @@ STEP_PREFIXES = [
     ("When ", types.WHEN),
     ("Then ", types.THEN),
     ("@", types.TAG),
-    ("And ", None),  # Unknown step type,
-    ("But ", None),  # Unknown step type,
+    # Continuation of the previously mentioned step type
+    ("And ", None),
+    ("But ", None),
 ]
 
 STEP_PARAM_RE = re.compile("\<(.+?)\>")
