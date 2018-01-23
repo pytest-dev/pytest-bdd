@@ -52,7 +52,9 @@ STEP_PREFIXES = [
     ("When ", types.WHEN),
     ("Then ", types.THEN),
     ("@", types.TAG),
-    ("And ", None),  # Unknown step type,
+    # Continuation of the previously mentioned step type
+    ("And ", None),
+    ("But ", None),
 ]
 
 STEP_PARAM_RE = re.compile("\<(.+?)\>")
@@ -297,7 +299,7 @@ class Feature(object):
                 if not strict_gherkin:
                     allowed_prev_mode += (types.WHEN, )
 
-                if not scenario and prev_mode not in allowed_prev_mode  and mode in types.STEP_TYPES:
+                if not scenario and prev_mode not in allowed_prev_mode and mode in types.STEP_TYPES:
                     raise exceptions.FeatureError(
                         "Step definition outside of a Scenario or a Background", line_number, clean_line, filename)
 

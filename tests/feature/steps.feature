@@ -10,7 +10,7 @@ Scenario: Executed step by step
     And I append 2 to the list
     And I append 3 to the list
     Then foo should have value "foo"
-    And the list should be [1, 2, 3]
+    But the list should be [1, 2, 3]
 
 
 Scenario: When step can be the first

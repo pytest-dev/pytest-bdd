@@ -75,7 +75,7 @@ setup(
         "Mako",
         "parse",
         "parse_type",
-        "pytest>=2.6.0",
+        "pytest>=2.8.1",
         "six>=1.9.0",
     ],
     # the following makes a plugin available to py.test

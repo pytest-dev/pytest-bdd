@@ -195,6 +195,11 @@ def test_step_hooks(testdir):
 
 def test_step_trace(testdir):
     """Test step trace."""
+    testdir.makeini("""
+        [pytest]
+        console_output_style=classic
+    """)
+
     testdir.makefile('.feature', test="""
     Scenario: When step has failure
         Given I have a bar
