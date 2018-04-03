@@ -6,6 +6,8 @@ that enriches the pytest test reporting.
 
 import time
 
+from .feature import force_unicode
+
 
 class StepReport(object):
 
@@ -60,7 +62,7 @@ class StepReport(object):
 
 class ScenarioReport(object):
 
-    """Scenario excecution report."""
+    """Scenario execution report."""
 
     def __init__(self, scenario, node):
         """Scenario report constructor.
@@ -81,6 +83,10 @@ class ScenarioReport(object):
                 self.param_index = param_values.index(node_param_values)
             elif tuple(node_param_values) in param_values:
                 self.param_index = param_values.index(tuple(node_param_values))
+        self.example_kwargs = {
+            example_param: force_unicode(node.funcargs[example_param])
+            for example_param in scenario.get_example_params()
+        }
 
     @property
     def current_step_report(self):
@@ -129,7 +135,8 @@ class ScenarioReport(object):
                     "rows": params,
                     "row_index": self.param_index,
                 }
-            ] if scenario.examples else []
+            ] if scenario.examples else [],
+            "example_kwargs": self.example_kwargs,
         }
 
     def fail(self):

@@ -40,3 +40,8 @@ Feature: Gherkin terminal reporter
     Given there is gherkin scenario with broken implementation
     When tests are run with --showlocals
     Then error traceback contains local variable descriptions
+
+  Scenario: Should step parameters be replaced by their values
+    Given there is gherkin scenario outline implemented
+    When tests are run with step expanded mode
+    Then output must contain parameters values

@@ -109,7 +109,8 @@ def test_step_trace(testdir):
                            'name': u'some other passing step',
                            'type': 'given'}],
                 'tags': [u'scenario-passing-tag'],
-                'examples': []}
+                'examples': [],
+                'example_kwargs': {}}
 
     assert report == expected
 
@@ -135,7 +136,8 @@ def test_step_trace(testdir):
                            'name': u'a failing step',
                            'type': 'given'}],
                 'tags': [u'scenario-failing-tag'],
-                'examples': []}
+                'examples': [],
+                'example_kwargs': {}}
     assert report == expected
 
     report = result.matchreport('test_outlined[12-5.0-7]', when='call').scenario
@@ -171,6 +173,7 @@ def test_step_trace(testdir):
                               'row_index': 0,
                               'rows': [['start', 'eat', 'left'],
                                        [[12, 5.0, '7'], [5, 4.0, '1']]]}],
+                'example_kwargs': {'eat': '5.0', 'left': '7', 'start': '12'},
                 }
     assert report == expected
 
@@ -207,6 +210,7 @@ def test_step_trace(testdir):
                               'row_index': 1,
                               'rows': [['start', 'eat', 'left'],
                                        [[12, 5.0, '7'], [5, 4.0, '1']]]}],
+                'example_kwargs': {'eat': '4.0', 'left': '1', 'start': '5'},
                 }
     assert report == expected
 
