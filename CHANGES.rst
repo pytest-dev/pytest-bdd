@@ -2,6 +2,12 @@ Changelog
 =========
 
 
+2.21.0
+------
+
+- Gherkin terminal reporter expanded format (pauk-slon)
+
+
 2.20.0
 ------
 

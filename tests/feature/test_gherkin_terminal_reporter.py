@@ -123,7 +123,7 @@ def gherkin_scenario_outline(testdir):
         Given there are <start> cucumbers
         When I eat <eat> cucumbers
         Then I should have <left> cucumbers
-        
+
         Examples:
         | start | eat | left |
         |{start}|{eat}|{left}|
@@ -135,7 +135,7 @@ def gherkin_scenario_outline(testdir):
         @given('there are <start> cucumbers')
         def start_cucumbers(start):
             return start
-        
+
         @when('I eat <eat> cucumbers')
         def eat_cucumbers(start_cucumbers, eat):
             pass

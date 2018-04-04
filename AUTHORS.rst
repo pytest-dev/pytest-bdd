@@ -13,6 +13,7 @@ These people have contributed to `pytest-bdd`, in alphabetical order:
 * `Andrey Makhnach <andrey.makhnach@gmail.com>`_
 * `Aron Curzon <curzona@gmail.com>`_
 * `Dmitrijs Milajevs <dimazest@gmail.com>`_
+* `Dmitry Kolyagin <pauk-slon>`_
 * `Florian Bruhin <me@the-compiler.org>`_
 * `Floris Bruynooghe <flub@devork.be>`_
 * `Harro van der Klauw <hvdklauw@gmail.com>`_

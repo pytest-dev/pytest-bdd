@@ -1150,6 +1150,14 @@ To enable gherkin-formatted output on terminal, use
     py.test --gherkin-terminal-reporter
 
 
+Terminal reporter supports expanded format as well
+
+::
+
+    py.test --gherkin-terminal-reporter-expanded
+
+
+
 Test code generation helpers
 ----------------------------
 
