@@ -54,6 +54,12 @@ def test_Should_local_variables_be_displayed_when___showlocals_option_is_used():
     pass
 
 
+@scenario('gherkin_terminal_reporter.feature',
+          'Should step parameters be replaced by their values')
+def test_Should_step_parameters_be_replaced_by_their_values():
+    pass
+
+
 @pytest.fixture(params=[0, 1, 2],
                 ids=['compact mode', 'line per test', 'verbose'])
 def verbosity_mode(request):
@@ -104,6 +110,47 @@ def gherkin_scenario(testdir):
     """)
 
 
+@given("there is gherkin scenario outline implemented")
+def gherkin_scenario_outline(testdir):
+    example = {
+        'start': 12,
+        'eat': 5,
+        'left': 7,
+    }
+    testdir.makefile('.feature', test="""
+    Feature: Gherkin terminal output feature
+    Scenario Outline: Scenario example 2
+        Given there are <start> cucumbers
+        When I eat <eat> cucumbers
+        Then I should have <left> cucumbers
+        
+        Examples:
+        | start | eat | left |
+        |{start}|{eat}|{left}|
+    """.format(**example))
+    testdir.makepyfile(test_gherkin="""
+        import pytest
+        from pytest_bdd import given, when, scenario, then
+
+        @given('there are <start> cucumbers')
+        def start_cucumbers(start):
+            return start
+        
+        @when('I eat <eat> cucumbers')
+        def eat_cucumbers(start_cucumbers, eat):
+            pass
+
+        @then('I should have <left> cucumbers')
+        def should_have_left_cucumbers(start_cucumbers, start, eat, left):
+            pass
+
+        @scenario('test.feature', 'Scenario example 2')
+        def test_scenario_2():
+            pass
+    """)
+    return example
+
+
 @when("tests are run")
 def tests_are_run(testdir, test_execution):
     test_execution['regular'] = testdir.runpytest()
@@ -135,6 +182,16 @@ def tests_are_run_with_verbose_mode(testdir, test_execution):
 def tests_are_run_with_very_verbose_mode(testdir, test_execution):
     test_execution['regular'] = testdir.runpytest('-vv')
     test_execution['gherkin'] = testdir.runpytest('--gherkin-terminal-reporter', '-vv')
+
+
+@when("tests are run with step expanded mode")
+def tests_are_run_with_step_expanded_mode(testdir, test_execution):
+    test_execution['regular'] = testdir.runpytest('-vv')
+    test_execution['gherkin'] = testdir.runpytest(
+        '--gherkin-terminal-reporter',
+        '--gherkin-terminal-reporter-expanded',
+        '-vv',
+    )
 
 
 @then("output should contain single line feature description")
@@ -276,3 +333,14 @@ def error_traceback_contains_local_variable_descriptions(test_execution):
     assert ghe.ret
     ghe.stdout.fnmatch_lines('''request*=*<FixtureRequest for *''')
     ghe.stdout.fnmatch_lines('''local_var*=*''')
+
+
+@then("output must contain parameters values")
+def output_output_must_contain_parameters_values(test_execution, gherkin_scenario_outline):
+    ghe = test_execution['gherkin']
+    assert ghe.ret == 0
+    ghe.stdout.fnmatch_lines('*Scenario: Scenario example 2')
+    ghe.stdout.fnmatch_lines('*Given there are {start} cucumbers'.format(**gherkin_scenario_outline))
+    ghe.stdout.fnmatch_lines('*When I eat {eat} cucumbers'.format(**gherkin_scenario_outline))
+    ghe.stdout.fnmatch_lines('*Then I should have {left} cucumbers'.format(**gherkin_scenario_outline))
+    ghe.stdout.fnmatch_lines('*PASSED')
