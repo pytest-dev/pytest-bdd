@@ -38,7 +38,7 @@ def migrate_tests_in_file(file_path):
 
 
 def check_existense(file_name):
-    """Check file or directory name  for existense."""
+    """Check file or directory name for existence."""
     if not os.path.exists(file_name):
         raise argparse.ArgumentTypeError("{0} is an invalid file or directory name".format(file_name))
     return file_name
