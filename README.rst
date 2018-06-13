@@ -157,7 +157,7 @@ default author.
 
     Scenario: I'm the admin
         Given I'm the admin
-        And there is an article
+        And there's an article
 
 
 Given step scope
