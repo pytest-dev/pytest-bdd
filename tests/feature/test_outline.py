@@ -49,9 +49,9 @@ def test_wrongly_outlined(request):
             pass
 
     assert re.match(
-        """Scenario \"Outlined with wrong examples\" in the feature \"(.+)\" has not valid examples\. """
-        """Set of step parameters (.+) should match set of example values """
-        """(.+)\.""",
+        r"""Scenario \"Outlined with wrong examples\" in the feature \"(.+)\" has not valid examples\. """
+        r"""Set of step parameters (.+) should match set of example values """
+        r"""(.+)\.""",
         exc.value.args[0]
     )
 

@@ -24,7 +24,7 @@ def test_steps_in_py_file_have_unicode():
     pass
 
 
-pattern = '(?P<content>\'\w+\')'
+pattern = r"(?P<content>'\w+')"
 
 
 @pytest.fixture
