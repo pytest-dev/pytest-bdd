@@ -50,8 +50,8 @@ if six.PY3:  # pragma: no cover
         init_globals.update(result)
 
 
-PYTHON_REPLACE_REGEX = re.compile("\W")
-ALPHA_REGEX = re.compile("^\d+_*")
+PYTHON_REPLACE_REGEX = re.compile(r"\W")
+ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
 def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None):

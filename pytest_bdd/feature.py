@@ -57,8 +57,8 @@ STEP_PREFIXES = [
     ("But ", None),
 ]
 
-STEP_PARAM_RE = re.compile("\<(.+?)\>")
-COMMENT_RE = re.compile('(^|(?<=\s))#')
+STEP_PARAM_RE = re.compile(r"\<(.+?)\>")
+COMMENT_RE = re.compile(r'(^|(?<=\s))#')
 
 
 def get_step_type(line):
