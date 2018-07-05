@@ -1,11 +1,11 @@
-import py
+import textwrap
 
 
 def test_hooks(testdir):
     testdir.makeconftest("")
 
     subdir = testdir.mkpydir("subdir")
-    subdir.join("conftest.py").write(py.code.Source(r"""
+    subdir.join("conftest.py").write(textwrap.dedent(r"""
         def pytest_pyfunc_call(pyfuncitem):
             print('\npytest_pyfunc_call hook')
 
@@ -13,7 +13,7 @@ def test_hooks(testdir):
             print('\npytest_generate_tests hook')
     """))
 
-    subdir.join("test_foo.py").write(py.code.Source(r"""
+    subdir.join("test_foo.py").write(textwrap.dedent(r"""
         from pytest_bdd import scenario
 
         @scenario('foo.feature', 'Some scenario')
@@ -21,7 +21,7 @@ def test_hooks(testdir):
             pass
     """))
 
-    subdir.join("foo.feature").write(py.code.Source(r"""
+    subdir.join("foo.feature").write(textwrap.dedent(r"""
         Feature: The feature
         Scenario: Some scenario
     """))

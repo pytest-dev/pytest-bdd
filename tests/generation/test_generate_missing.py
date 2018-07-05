@@ -1,8 +1,7 @@
 """Code generation and assertion tests."""
 import itertools
 import os.path
-
-import py
+import textwrap
 
 from pytest_bdd.scenario import get_python_name_generator
 
@@ -19,7 +18,7 @@ def test_generate_missing(testdir):
     with open(os.path.join(os.path.dirname(__file__), "generation.feature")) as fd:
         tests.join('generation.feature').write(fd.read())
 
-    tests.join("test_foo.py").write(py.code.Source("""
+    tests.join("test_foo.py").write(textwrap.dedent("""
         import functools
 
         from pytest_bdd import scenario, given

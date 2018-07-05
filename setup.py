@@ -75,6 +75,7 @@ setup(
         "Mako",
         "parse",
         "parse_type",
+        "py",
         "pytest>=2.8.1",
         "six>=1.9.0",
     ],

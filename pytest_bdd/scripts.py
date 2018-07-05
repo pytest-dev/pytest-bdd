@@ -28,6 +28,9 @@ def migrate_tests_in_file(file_path):
             content = fd.read()
             new_content = MIGRATE_REGEX.sub(r"\n@scenario(\2)\ndef \1():\n    pass\n", content)
             if new_content != content:
+                # the regex above potentially causes the end of the file to
+                # have an extra newline
+                new_content = new_content.rstrip('\n') + '\n'
                 fd.seek(0)
                 fd.write(new_content)
                 print("migrated: {0}".format(file_path))
