@@ -1,6 +1,5 @@
 """Test no scenarios defined in the feature file."""
 
-import py
 import textwrap
 
 
@@ -12,7 +11,7 @@ def test_no_scenarios(testdir):
         When bar
         Then baz
     """), 'utf-8', ensure=True)
-    testdir.makepyfile(py.code.Source("""
+    testdir.makepyfile(textwrap.dedent("""
 
         from pytest_bdd import scenarios
 
@@ -34,7 +33,7 @@ def test_only_background_strict_mode(testdir):
         Given foo
         When bar
     """), 'utf-8', ensure=True)
-    testdir.makepyfile(py.code.Source("""
+    testdir.makepyfile(textwrap.dedent("""
 
         from pytest_bdd import scenarios
 

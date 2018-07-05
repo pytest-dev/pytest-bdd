@@ -26,7 +26,7 @@ def migrate_tests_in_file(file_path):
     try:
         with open(file_path, "r+") as fd:
             content = fd.read()
-            new_content = MIGRATE_REGEX.sub(r"\n@scenario(\2)\ndef \1():\n    pass\n", content)
+            new_content = MIGRATE_REGEX.sub(r"\n@scenario(\2)\ndef \1():\n    pass", content)
             if new_content != content:
                 fd.seek(0)
                 fd.write(new_content)

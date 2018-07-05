@@ -3,8 +3,6 @@ import os
 import sys
 import textwrap
 
-import py
-
 from pytest_bdd.scripts import main
 
 PATH = os.path.dirname(__file__)
@@ -14,7 +12,7 @@ def test_migrate(monkeypatch, capsys, testdir):
     """Test if the code is migrated by a given file mask."""
     tests = testdir.mkpydir('tests')
 
-    tests.join("test_foo.py").write(py.code.Source('''
+    tests.join("test_foo.py").write(textwrap.dedent('''
         """Foo bar tests."""
         from pytest_bdd import scenario
 
