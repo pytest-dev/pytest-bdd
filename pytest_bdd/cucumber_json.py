@@ -1,12 +1,12 @@
 """Cucumber json output formatter."""
 
+import codecs
 import json
 import math
 import os
+import sys
 import time
 
-import py
-import re
 import six
 
 from .feature import force_unicode
@@ -185,8 +185,8 @@ class LogBDDCucumberJSON(object):
         self.suite_start_time = time.time()
 
     def pytest_sessionfinish(self):
-        if py.std.sys.version_info[0] < 3:
-            logfile_open = py.std.codecs.open
+        if sys.version_info[0] < 3:
+            logfile_open = codecs.open
         else:
             logfile_open = open
         with logfile_open(self.logfile, "w", encoding="utf-8") as logfile:

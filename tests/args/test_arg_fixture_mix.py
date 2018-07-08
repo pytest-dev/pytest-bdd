@@ -1,10 +1,10 @@
-import py
+import textwrap
 
 
 def test_arg_fixture_mix(testdir):
 
     subdir = testdir.mkpydir("arg_fixture_mix")
-    subdir.join("test_a.py").write(py.code.Source("""
+    subdir.join("test_a.py").write(textwrap.dedent("""
         import re
         import pytest
         from pytest_bdd import scenario, given, then, parsers
@@ -47,7 +47,7 @@ def test_arg_fixture_mix(testdir):
             assert foo == "fine"
     """))
 
-    subdir.join("test_b.py").write(py.code.Source("""
+    subdir.join("test_b.py").write(textwrap.dedent("""
         import re
         import pytest
         from pytest_bdd import scenario, given, then
