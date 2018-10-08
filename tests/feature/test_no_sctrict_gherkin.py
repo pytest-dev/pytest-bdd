@@ -1,58 +1,96 @@
 """Test no strict gherkin for sections."""
 
-import pytest
 
-from pytest_bdd import (
-    when,
-    scenario,
-)
-
-
-@pytest.fixture
-def pytestbdd_strict_gherkin():
-    return False
-
-
-def test_background_no_strict_gherkin(request):
+def test_background_no_strict_gherkin(testdir):
     """Test background no strict gherkin."""
-    @scenario(
-        "no_sctrict_gherkin_background.feature",
-        "Test background",
-    )
-    def test():
-        pass
+    prepare_test_dir(testdir)
 
-    test(request)
+    testdir.makefile('.feature', no_strict_gherkin_background="""
+    Feature: No strict Gherkin Background support
+
+        Background:
+            When foo has a value "bar"
+            And foo is not boolean
+            And foo has not a value "baz"
+
+        Scenario: Test background
+
+    """)
+
+    result = testdir.runpytest('-k', 'test_background_ok')
+    result.assert_outcomes(passed=1)
 
 
-def test_scenario_no_strict_gherkin(request):
+def test_scenario_no_strict_gherkin(testdir):
     """Test scenario no strict gherkin."""
-    @scenario(
-        "no_sctrict_gherkin_scenario.feature",
-        "Test scenario",
-    )
-    def test():
-        pass
+    prepare_test_dir(testdir)
 
-    test(request)
+    testdir.makefile('.feature', no_strict_gherkin_scenario="""
+    Feature: No strict Gherkin Scenario support
 
+        Scenario: Test scenario
+            When foo has a value "bar"
+            And foo is not boolean
+            And foo has not a value "baz"
 
-@pytest.fixture
-def foo():
-    return {}
+    """)
 
-
-@when('foo has a value "bar"')
-def bar(foo):
-    foo["bar"] = "bar"
-    return foo["bar"]
+    result = testdir.runpytest('-k', 'test_scenario_ok')
+    result.assert_outcomes(passed=1)
 
 
-@when('foo is not boolean')
-def not_boolean(foo):
-    assert foo is not bool
+def prepare_test_dir(testdir):
+    """Test scenario no strict gherkin."""
+    testdir.makeini("""
+            [pytest]
+            bdd_strict_gherkin=false
+        """
+                    )
+
+    testdir.makepyfile(test_gherkin="""
+        import pytest
+
+        from pytest_bdd import (
+            when,
+            scenario,
+        )
+
+        def test_scenario_ok(request):
+            @scenario(
+                "no_strict_gherkin_scenario.feature",
+                "Test scenario",
+            )
+            def test():
+                pass
+
+            test(request)
+
+        def test_background_ok(request):
+            @scenario(
+                "no_strict_gherkin_background.feature",
+                "Test background",
+            )
+            def test():
+                pass
+
+            test(request)
+
+        @pytest.fixture
+        def foo():
+            return {}
+
+        @when('foo has a value "bar"')
+        def bar(foo):
+            foo["bar"] = "bar"
+            return foo["bar"]
 
 
-@when('foo has not a value "baz"')
-def has_not_baz(foo):
-    assert "baz" not in foo
+        @when('foo is not boolean')
+        def not_boolean(foo):
+            assert foo is not bool
+
+
+        @when('foo has not a value "baz"')
+        def has_not_baz(foo):
+            assert "baz" not in foo
+    """)

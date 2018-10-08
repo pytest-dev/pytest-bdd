@@ -1,6 +1,7 @@
 """Test wrong feature syntax."""
 import os.path
 import re
+import sys
 
 import mock
 
@@ -38,7 +39,7 @@ def then_nevermind():
 )
 @pytest.mark.parametrize('strict_gherkin', [True, False])
 @pytest.mark.parametrize('multiple', [True, False])
-@mock.patch('pytest_bdd.fixtures.pytestbdd_strict_gherkin', autospec=True)
+@mock.patch.object(sys.modules['pytest_bdd.scenario'], 'get_strict_gherkin', return_value=True)
 def test_wrong(mocked_strict_gherkin, request, feature, scenario_name, strict_gherkin, multiple):
     """Test wrong feature scenarios."""
     mocked_strict_gherkin.return_value = strict_gherkin
