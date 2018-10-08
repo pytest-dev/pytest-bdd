@@ -8,8 +8,6 @@ from . import generation
 from . import reporting
 from . import gherkin_terminal_reporter
 
-from .fixtures import *
-
 
 def pytest_addhooks(pluginmanager):
     """Register plugin hooks."""
@@ -32,9 +30,18 @@ def trace():
 
 def pytest_addoption(parser):
     """Add pytest-bdd options."""
+    add_bdd_ini(parser)
     cucumber_json.add_options(parser)
     generation.add_options(parser)
     gherkin_terminal_reporter.add_options(parser)
+
+
+def add_bdd_ini(parser):
+    parser.addini('bdd_feature_base_dir',
+                  'Base feature directory.')
+    parser.addini('bdd_strict_gherkin',
+                  'Parse features to be strict gherkin.',
+                  type='bool', default=True)
 
 
 @pytest.mark.trylast

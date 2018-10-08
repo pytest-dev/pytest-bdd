@@ -1,7 +1,6 @@
 """Configuration for pytest runner."""
 
 from pytest_bdd import given, when
-from pytest_bdd.fixtures import *
 
 pytest_plugins = "pytester"
 

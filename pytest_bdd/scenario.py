@@ -23,7 +23,6 @@ except ImportError:
 import six
 
 from . import exceptions
-from . import fixtures
 from .feature import (
     Feature,
     force_encode,
@@ -204,31 +203,6 @@ def _execute_scenario(feature, scenario, request, encoding):
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
-def get_fixture(caller_module, fixture, path=None):
-    """Get first conftest module from given one."""
-    def call_fixture(function):
-        args = []
-        if "request" in get_args(function):
-            args = [FakeRequest(module=caller_module)]
-        return function(*args)
-
-    if path is None:
-        if hasattr(caller_module, fixture):
-            return call_fixture(getattr(caller_module, fixture))
-        path = os.path.dirname(caller_module.__file__)
-
-    if os.path.exists(os.path.join(path, "__init__.py")):
-        file_path = os.path.join(path, "conftest.py")
-        if os.path.exists(file_path):
-            globs = {}
-            execfile(file_path, globs)
-            if fixture in globs:
-                return call_fixture(globs[fixture])
-    else:
-        return call_fixture(getattr(fixtures, fixture))
-    return get_fixture(caller_module, fixture, path=os.path.dirname(path))
-
-
 def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, caller_module, caller_function, encoding):
     """Get scenario decorator."""
     g = locals()
@@ -298,9 +272,9 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     caller_function = caller_function or get_caller_function()
 
     # Get the feature
-    base_path = get_fixture(caller_module, "pytestbdd_feature_base_dir")
-    strict_gherkin = get_fixture(caller_module, "pytestbdd_strict_gherkin")
-    feature = Feature.get_feature(base_path, feature_name, encoding=encoding, strict_gherkin=strict_gherkin)
+    base_dir = get_base_dir(caller_module)
+    strict_gherkin = get_strict_gherkin()
+    feature = Feature.get_feature(base_dir, feature_name, encoding=encoding, strict_gherkin=strict_gherkin)
 
     # Get the sc_enario
     try:
@@ -330,6 +304,20 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     )
 
 
+def get_base_dir(caller_module):
+    default_base_dir = os.path.dirname(caller_module.__file__)
+    return get_from_ini('bdd_feature_base_dir', default_base_dir)
+
+
+def get_strict_gherkin():
+    return get_from_ini('bdd_strict_gherkin', True)
+
+
+def get_from_ini(key, default):
+    value = pytest.config.getini(key)
+    return value if value != '' else default
+
+
 def make_python_name(string):
     """Make python attribute name out of a given string."""
     string = re.sub(PYTHON_REPLACE_REGEX, "", string.replace(" ", "_"))
@@ -357,12 +345,12 @@ def scenarios(*feature_paths, **kwargs):
     """
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
-    base_path = get_fixture(module, "pytestbdd_feature_base_dir")
-    strict_gherkin = get_fixture(module, "pytestbdd_strict_gherkin")
+    base_dir = get_base_dir(module)
+    strict_gherkin = get_strict_gherkin()
     abs_feature_paths = []
     for path in feature_paths:
         if not os.path.isabs(path):
-            path = os.path.abspath(os.path.join(base_path, path))
+            path = os.path.abspath(os.path.join(base_dir, path))
         abs_feature_paths.append(path)
     found = False
 
