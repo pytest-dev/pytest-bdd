@@ -39,16 +39,13 @@ def then_nevermind():
 )
 @pytest.mark.parametrize('strict_gherkin', [True, False])
 @pytest.mark.parametrize('multiple', [True, False])
-@mock.patch.object(sys.modules['pytest_bdd.scenario'], 'get_strict_gherkin', return_value=True)
-def test_wrong(mocked_strict_gherkin, request, feature, scenario_name, strict_gherkin, multiple):
+def test_wrong(request, feature, scenario_name, strict_gherkin, multiple):
     """Test wrong feature scenarios."""
-    mocked_strict_gherkin.return_value = strict_gherkin
-
     def declare_scenario():
         if multiple:
-            scenarios(feature)
+            scenarios(feature, strict_gherkin=strict_gherkin)
         else:
-            @scenario(feature, scenario_name)
+            @scenario(feature, scenario_name, strict_gherkin=strict_gherkin)
             def test_scenario():
                 pass
 

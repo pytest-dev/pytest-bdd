@@ -263,7 +263,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, call
 
 
 def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None,
-             caller_module=None, caller_function=None):
+             caller_module=None, caller_function=None, feature_base_dir=None, strict_gherkin=None):
     """Scenario decorator.
 
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
@@ -277,9 +277,11 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     caller_function = caller_function or get_caller_function()
 
     # Get the feature
-    base_dir = get_base_dir(caller_module)
-    strict_gherkin = get_strict_gherkin()
-    feature = Feature.get_feature(base_dir, feature_name, encoding=encoding, strict_gherkin=strict_gherkin)
+    if feature_base_dir is None:
+        feature_base_dir = get_feature_base_dir(caller_module)
+    if strict_gherkin is None:
+        strict_gherkin = get_strict_gherkin()
+    feature = Feature.get_feature(feature_base_dir, feature_name, encoding=encoding, strict_gherkin=strict_gherkin)
 
     # Get the sc_enario
     try:
@@ -309,18 +311,22 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     )
 
 
-def get_base_dir(caller_module):
+def get_feature_base_dir(caller_module):
     default_base_dir = os.path.dirname(caller_module.__file__)
     return get_from_ini('bdd_feature_base_dir', default_base_dir)
 
 
-def get_strict_gherkin():
-    return get_from_ini('bdd_strict_gherkin', True)
-
-
 def get_from_ini(key, default):
+    """Get value from ini config. Return default if value has not been set.
+
+    Use if the default value is dynamic. Otherwise set default on addini call.
+    """
     value = pytest.config.getini(key)
     return value if value != '' else default
+
+
+def get_strict_gherkin():
+    return pytest.config.getini('bdd_strict_gherkin')
 
 
 def make_python_name(string):
@@ -350,12 +356,19 @@ def scenarios(*feature_paths, **kwargs):
     """
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
-    base_dir = get_base_dir(module)
-    strict_gherkin = get_strict_gherkin()
+
+    feature_base_dir = kwargs.get('feature_base_dir')
+    if feature_base_dir is None:
+        feature_base_dir = get_feature_base_dir(module)
+
+    strict_gherkin = kwargs.get('strict_gherkin')
+    if strict_gherkin is None:
+        strict_gherkin = get_strict_gherkin()
+
     abs_feature_paths = []
     for path in feature_paths:
         if not os.path.isabs(path):
-            path = os.path.abspath(os.path.join(base_dir, path))
+            path = os.path.abspath(os.path.join(feature_base_dir, path))
         abs_feature_paths.append(path)
     found = False
 
