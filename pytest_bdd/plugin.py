@@ -37,8 +37,8 @@ def pytest_addoption(parser):
 
 
 def add_bdd_ini(parser):
-    parser.addini('bdd_feature_base_dir',
-                  'Base feature directory.')
+    parser.addini('bdd_features_base_dir',
+                  'Base features directory.')
     parser.addini('bdd_strict_gherkin',
                   'Parse features to be strict gherkin.',
                   type='bool', default=True)
