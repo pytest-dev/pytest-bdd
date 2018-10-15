@@ -258,7 +258,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, call
 
 
 def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None,
-             caller_module=None, caller_function=None, feature_base_dir=None, strict_gherkin=None):
+             caller_module=None, caller_function=None, features_base_dir=None, strict_gherkin=None):
     """Scenario decorator.
 
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
@@ -272,11 +272,11 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     caller_function = caller_function or get_caller_function()
 
     # Get the feature
-    if feature_base_dir is None:
-        feature_base_dir = get_feature_base_dir(caller_module)
+    if features_base_dir is None:
+        features_base_dir = get_features_base_dir(caller_module)
     if strict_gherkin is None:
         strict_gherkin = get_strict_gherkin()
-    feature = Feature.get_feature(feature_base_dir, feature_name, encoding=encoding, strict_gherkin=strict_gherkin)
+    feature = Feature.get_feature(features_base_dir, feature_name, encoding=encoding, strict_gherkin=strict_gherkin)
 
     # Get the sc_enario
     try:
@@ -306,9 +306,9 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     )
 
 
-def get_feature_base_dir(caller_module):
+def get_features_base_dir(caller_module):
     default_base_dir = os.path.dirname(caller_module.__file__)
-    return get_from_ini('bdd_feature_base_dir', default_base_dir)
+    return get_from_ini('bdd_features_base_dir', default_base_dir)
 
 
 def get_from_ini(key, default):
@@ -352,9 +352,9 @@ def scenarios(*feature_paths, **kwargs):
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
 
-    feature_base_dir = kwargs.get('feature_base_dir')
-    if feature_base_dir is None:
-        feature_base_dir = get_feature_base_dir(module)
+    features_base_dir = kwargs.get('features_base_dir')
+    if features_base_dir is None:
+        features_base_dir = get_features_base_dir(module)
 
     strict_gherkin = kwargs.get('strict_gherkin')
     if strict_gherkin is None:
@@ -363,7 +363,7 @@ def scenarios(*feature_paths, **kwargs):
     abs_feature_paths = []
     for path in feature_paths:
         if not os.path.isabs(path):
-            path = os.path.abspath(os.path.join(feature_base_dir, path))
+            path = os.path.abspath(os.path.join(features_base_dir, path))
         abs_feature_paths.append(path)
     found = False
 

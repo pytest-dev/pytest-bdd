@@ -51,7 +51,7 @@ def test_feature_path_by_param_ok(testdir, base_dir):
 def prepare_testdir(testdir, ini_base_dir):
     testdir.makeini("""
             [pytest]
-            bdd_feature_base_dir={}
+            bdd_features_base_dir={}
         """.format(ini_base_dir))
 
     feature_file = testdir.mkdir('features').join('steps.feature')
@@ -112,9 +112,9 @@ def prepare_testdir(testdir, ini_base_dir):
     def test_not_found_by_param(scenario_name, param_base_dir, multiple):
         with pytest.raises(IOError) as exc:
             if multiple:
-                scenarios(FEATURE, feature_base_dir=param_base_dir)
+                scenarios(FEATURE, features_base_dir=param_base_dir)
             else:
-                scenario(FEATURE, scenario_name, feature_base_dir=param_base_dir)
+                scenario(FEATURE, scenario_name, features_base_dir=param_base_dir)
         assert os.path.abspath(os.path.join(param_base_dir, FEATURE)) in str(exc.value)
 
 
@@ -122,10 +122,10 @@ def prepare_testdir(testdir, ini_base_dir):
         'multiple', [True, False]
     )
     def test_ok_by_param(scenario_name, multiple):
-        # Shouldn't raise any exception no matter of bdd_feature_base_dir in ini
+        # Shouldn't raise any exception no matter of bdd_features_base_dir in ini
         if multiple:
-            scenarios(FEATURE, feature_base_dir='features')
+            scenarios(FEATURE, features_base_dir='features')
         else:
-            scenario(FEATURE, scenario_name, feature_base_dir='features')
+            scenario(FEATURE, scenario_name, features_base_dir='features')
 
     """.format(ini_base_dir))
