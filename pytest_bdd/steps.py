@@ -172,15 +172,10 @@ def _step_decorator(step_type, step_name, converters=None, scope='function', tar
 
         step_func.__name__ = force_encode(parsed_step_name)
 
-        @pytest.fixture(scope=scope)
         def lazy_step_func():
             return step_func
 
         step_func.step_type = step_type
-
-        lazy_step_func = contribute_to_module(
-            get_caller_module(), get_step_fixture_name(parsed_step_name, step_type), lazy_step_func)
-
         lazy_step_func.step_type = step_type
 
         # Preserve the docstring
@@ -189,6 +184,13 @@ def _step_decorator(step_type, step_name, converters=None, scope='function', tar
         step_func.parser = lazy_step_func.parser = parser_instance
         if converters:
             step_func.converters = lazy_step_func.converters = converters
+
+        lazy_step_func = pytest.fixture(scope=scope)(lazy_step_func)
+        contribute_to_module(
+            module=get_caller_module(),
+            name=get_step_fixture_name(parsed_step_name, step_type),
+            func=lazy_step_func,
+        )
 
         return func
 
