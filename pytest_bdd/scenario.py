@@ -59,10 +59,15 @@ def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None)
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
         for fixturedef in fixturedefs:
-            parser = getattr(fixturedef.func, "parser", None)
+            if fixturedef.func.__name__ == 'lazy_step_func':
+                func = fixturedef.func()
+            else:
+                func = fixturedef.func
+
+            parser = getattr(func, "parser", None)
             match = parser.is_matching(name) if parser else None
             if match:
-                converters = getattr(fixturedef.func, "converters", {})
+                converters = getattr(func, "converters", {})
                 for arg, value in parser.parse_arguments(name).items():
                     if arg in converters:
                         value = converters[arg](value)
