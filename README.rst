@@ -1002,27 +1002,33 @@ then
 Feature file paths
 ------------------
 
-By default, pytest-bdd will use current module's path as base path for
-finding feature files, but this behaviour can be changed by having
-fixture named ``pytestbdd_feature_base_dir`` which should return the
-new base path.
+By default, pytest-bdd will use current module's path as base path for finding feature files, but this behaviour can be changed in the pytest configuration file (i.e. `pytest.ini`, `tox.ini` or `setup.cfg`) by declaring the new base path in the `bdd_features_base_dir` key. The path is interpreted as relative to the working directory when starting pytest.
+You can also override features base path on a per-scenario basis, in order to override the path for specific tests.
 
-test_publish_article.py:
+.. code-block:: ini
+
+    [pytest]
+    bdd_features_base_dir = features/
+
+tests/test_publish_article.py:
 
 .. code-block:: python
 
-    import pytest
     from pytest_bdd import scenario
 
-
-    @pytest.fixture
-    def pytestbdd_feature_base_dir():
-        return '/home/user/projects/foo.bar/features'
-
-
-    @scenario('publish_article.feature', 'Publishing the article')
-    def test_publish():
+    @scenario('foo.feature', 'Foo feature in features/foo.feature')
+    def test_foo():
         pass
+
+    @scenario(
+        'foo.feature',
+        'Foo feature in tests/local-features/foo.feature',
+        features_base_dir='./local-features/',
+    )
+    def test_foo_local():
+        pass
+
+The `features_base_dir` parameter can also be passed to the `@scenario` decorator.
 
 
 Avoid retyping the feature file name
@@ -1065,22 +1071,15 @@ Relax strict Gherkin language validation
 
 If your scenarios are not written in `proper` Gherkin language, e.g. they are more like textual scripts, then
 you might find it hard to use `pytest-bdd` as by default it validates the order of step types (given-when-then).
-To relax that validation, just override a fixture `pytestbdd_strict_gherkin` to return `False`:
+To relax that validation, just pass ``strict_gherkin=False`` to the ``scenario`` and ``scenarios`` decorators:
 
 test_publish_article.py:
 
 .. code-block:: python
 
-    import pytest
     from pytest_bdd import scenario
 
-
-    @pytest.fixture
-    def pytestbdd_strict_gherkin():
-        return False
-
-
-    @scenario('publish_article.feature', 'Publishing the article in a weird way')
+    @scenario('publish_article.feature', 'Publishing the article in a weird way', strict_gherkin=False)
     def test_publish():
         pass
 
@@ -1215,6 +1214,31 @@ The output will be like:
 
 As as side effect, the tool will validate the files for format errors, also some of the logic bugs, for example the
 ordering of the types of the steps.
+
+Migration of your tests from versions 2.x.x
+------------------------------------------------
+
+In version 3.0.0, the fixtures ``pytestbdd_feature_base_dir`` and ``pytestbdd_strict_gherkin`` have been removed. The reason for it is that those fixtures had to be evaluated at module import time, but fixtures are not meant to invoked directly.
+Pytest is going to not allow calling fixtures directly in version 4.
+
+If you used ``pytestbdd_feature_base_dir`` fixture to override the path discovery, you can instead configure it in ``pytest.ini``:
+
+.. code-block:: ini
+
+    [pytest]
+    bdd_features_base_dir = features/
+
+For more details, check the `Feature file paths`_ section.
+
+If you used ``pytestbdd_strict_gherkin`` fixture to relax the parser, you can instead specify ``strict_gherking=False`` in the declaration of your scenarios, or change it globally in the pytest configuration file:
+
+.. code-block:: ini
+
+    [pytest]
+    bdd_strict_gherkin = false
+
+For more details, check the `Relax strict Gherkin language validation`_ section.
+
 
 
 Migration of your tests from versions 0.x.x-1.x.x
