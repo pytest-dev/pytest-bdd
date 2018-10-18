@@ -1217,8 +1217,7 @@ ordering of the types of the steps.
 Migration of your tests from versions 2.x.x
 ------------------------------------------------
 
-In version 3.0.0, the fixtures ``pytestbdd_feature_base_dir`` and ``pytestbdd_strict_gherkin`` have been removed. The reason for it is that those fixtures had to be evaluated at module import time, but fixtures are not meant to invoked directly.
-Pytest is going to not allow calling fixtures directly in version 4.
+In version 3.0.0, the fixtures ``pytestbdd_feature_base_dir`` and ``pytestbdd_strict_gherkin`` have been removed.
 
 If you used ``pytestbdd_feature_base_dir`` fixture to override the path discovery, you can instead configure it in ``pytest.ini``:
 
