@@ -10,6 +10,7 @@ These people have contributed to `pytest-bdd`, in alphabetical order:
 
 * `Adam Coddington <me@adamcoddington.net>`_
 * `Albert-Jan Nijburg <albertjan@curit.com>`_
+* `Alessio Bogon <youtux>`_
 * `Andrey Makhnach <andrey.makhnach@gmail.com>`_
 * `Aron Curzon <curzona@gmail.com>`_
 * `Dmitrijs Milajevs <dimazest@gmail.com>`_
@@ -19,6 +20,7 @@ These people have contributed to `pytest-bdd`, in alphabetical order:
 * `Harro van der Klauw <hvdklauw@gmail.com>`_
 * `Laurence Rowe <l@lrowe.co.uk>`_
 * `Leonardo Santagada <santagada@github.com>`_
+* `Milosz Sliwinski <sliwinski-milosz>`_
 * `Michiel Holtkamp <github@elfstone.nl>`_
 * `Robin Pedersen <ropez@github.com>`_
 * `Sergey Kraynev <sergejyit@gmail.com>`_
