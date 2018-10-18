@@ -1005,6 +1005,8 @@ Feature file paths
 By default, pytest-bdd will use current module's path as base path for finding feature files, but this behaviour can be changed in the pytest configuration file (i.e. `pytest.ini`, `tox.ini` or `setup.cfg`) by declaring the new base path in the `bdd_features_base_dir` key. The path is interpreted as relative to the working directory when starting pytest.
 You can also override features base path on a per-scenario basis, in order to override the path for specific tests.
 
+pytest.ini:
+
 .. code-block:: ini
 
     [pytest]
@@ -1035,10 +1037,7 @@ Avoid retyping the feature file name
 ------------------------------------
 
 If you want to avoid retyping the feature file name when defining your scenarios in a test file, use functools.partial.
-This will make your life much easier when defining multiple scenarios in a test file.
-
-For example:
-
+This will make your life much easier when defining multiple scenarios in a test file. For example:
 
 test_publish_article.py:
 
