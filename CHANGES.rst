@@ -4,7 +4,7 @@ Changelog
 3.0.0
 ------
 
-- Stop invoking fixtures `pytestbdd_feature_base_dir` and `pytestbdd_strict_gherkin` directly. These two fixtures had been removed, since it was not possible to use them anymore (sliwinski-milosz) #255
+- Fixtures `pytestbdd_feature_base_dir` and `pytestbdd_strict_gherkin` have been removed. Check the `Migration of your tests from versions 2.x.x <README.rst>`_ for more information (sliwinski-milosz) #255
 - Fix step definitions not being found when using parsers or converters (youtux) #257
 
 2.21.0
