@@ -76,7 +76,7 @@ setup(
         "parse",
         "parse_type",
         "py",
-        "pytest>=2.8.1",
+        "pytest>=2.9.0",
         "six>=1.9.0",
     ],
     # the following makes a plugin available to py.test
