@@ -6,6 +6,7 @@ import pytest
 
 from pytest_bdd import given, when, then, scenario
 from pytest_bdd import exceptions
+from tests.utils import get_parametrize_markers_args
 
 
 @scenario(
@@ -13,8 +14,8 @@ from pytest_bdd import exceptions
     'Outlined given, when, thens',
     example_converters=dict(start=int, eat=float, left=str)
 )
-def test_outlined():
-    assert test_outlined.parametrize.args == (
+def test_outlined(request):
+    assert get_parametrize_markers_args(request.node) == (
         [u'start', u'eat', u'left'], [[12, 5.0, '7'], [5, 4.0, '1']])
 
 
@@ -133,9 +134,9 @@ def test_outlined_with_other_fixtures(other_fixture):
     'Outlined with vertical example table',
     example_converters=dict(start=int, eat=float, left=str)
 )
-def test_vertical_example():
+def test_vertical_example(request):
     """Test outlined scenario with vertical examples table."""
-    assert test_vertical_example.parametrize.args == (
+    assert get_parametrize_markers_args(request.node) == (
         [u'start', u'eat', u'left'], [[12, 5.0, '7'], [2, 1.0, '1']])
 
 
@@ -187,8 +188,8 @@ def should_have_left_fruits(start_fruits, start, eat, left, fruits):
     'Outlined given, when, thens',
     example_converters=dict(start=int, eat=float, left=str)
 )
-def test_outlined_feature():
-    assert test_outlined_feature.parametrize.args == (
+def test_outlined_feature(request):
+    assert get_parametrize_markers_args(request.node) == (
         ['start', 'eat', 'left'],
         [[12, 5.0, '7'], [5, 4.0, '1']],
         ['fruits'],
