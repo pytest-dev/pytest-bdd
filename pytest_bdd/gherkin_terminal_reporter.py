@@ -21,14 +21,14 @@ def add_options(parser):
     group._addoption(
         "--gherkin-terminal-reporter-expanded",
         action="store_true",
-        dest="expand",
+        dest="gherkin_expanded",
         default=False,
-        help="expand scenario outlines into scenarios and fill in the step names",
+        help="enable gherkin output, expand scenario outlines into scenarios and fill in the step names",
     )
 
 
 def configure(config):
-    if config.option.gherkin_terminal_reporter:
+    if config.option.gherkin_terminal_reporter or config.option.gherkin_expanded:
         # Get the standard terminal reporter plugin and replace it with our
         current_reporter = config.pluginmanager.getplugin('terminalreporter')
         if current_reporter.__class__ != TerminalReporter:
@@ -100,7 +100,7 @@ class GherkinTerminalReporter(TerminalReporter):
                 self._tw.write(report.scenario['name'], **scenario_markup)
                 self._tw.write('\n')
                 for step in report.scenario['steps']:
-                    if self.config.option.expand:
+                    if self.config.option.gherkin_expanded:
                         step_name = self._format_step_name(step['name'], **report.scenario['example_kwargs'])
                     else:
                         step_name = step['name']
