@@ -22,7 +22,7 @@ matrix:
     - env: TESTENV=py27-pytestlatest-coveralls
 install:
   - pip install tox
-script: tox -e $TESTENV --recreate
+script: tox -e "$TESTENV" --recreate
 branches:
   except:
     - /^\d/
