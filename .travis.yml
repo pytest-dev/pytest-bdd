@@ -4,36 +4,36 @@ python: "2.7"
 
 matrix:
   include:
-    - env: TESTENV=py27-pytestlatest-linters
-    - env: TESTENV=py27-pytest29
-    - env: TESTENV=py27-pytest30
-    - env: TESTENV=py27-pytest31
-    - env: TESTENV=py27-pytest32
-    - env: TESTENV=py27-pytest33
-    - env: TESTENV=py27-pytest34
-    - env: TESTENV=py27-pytest35
-    - env: TESTENV=py27-pytest36
-    - env: TESTENV=py27-pytest37
-    - env: TESTENV=py27-pytest38
-    - env: TESTENV=py27-pytest39
-    - env: TESTENV=py27-pytestlatest
-    - env: TESTENV=py27-pytestlatest-xdist
-    - env: TESTENV=py34-pytestlatest
+    - env: TOXENV=py27-pytestlatest-linters
+    - env: TOXENV=py27-pytest29
+    - env: TOXENV=py27-pytest30
+    - env: TOXENV=py27-pytest31
+    - env: TOXENV=py27-pytest32
+    - env: TOXENV=py27-pytest33
+    - env: TOXENV=py27-pytest34
+    - env: TOXENV=py27-pytest35
+    - env: TOXENV=py27-pytest36
+    - env: TOXENV=py27-pytest37
+    - env: TOXENV=py27-pytest38
+    - env: TOXENV=py27-pytest39
+    - env: TOXENV=py27-pytestlatest
+    - env: TOXENV=py27-pytestlatest-xdist
+    - env: TOXENV=py34-pytestlatest
       python: "3.4"
-    - env: TESTENV=py35-pytestlatest
+    - env: TOXENV=py35-pytestlatest
       python: "3.5"
-    - env: TESTENV=py36-pytestlatest
+    - env: TOXENV=py36-pytestlatest
       python: "3.6"
-    - env: TESTENV=py37-pytestlatest
+    - env: TOXENV=py37-pytestlatest
       python: "3.7"
       # Currently, python 3.7 is a little bit tricky to install:
       # https://github.com/travis-ci/travis-ci/issues/9069#issuecomment-425720905
       sudo: required
       dist: xenial
-    - env: TESTENV=py27-pytestlatest-coveralls
+    - env: TOXENV=py27-pytestlatest-coveralls
 install:
   - pip install tox
-script: echo tox -e "$TESTENV" --recreate
+script: tox --recreate
 branches:
   except:
     - /^\d/
