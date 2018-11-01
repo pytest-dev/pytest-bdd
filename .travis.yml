@@ -1,14 +1,21 @@
 sudo: false
 language: python
-python: "3.4"
-env:
-  matrix:
-    - TESTENV=linters
-    - TESTENV=py27
-#    - TESTENV=py27-xdist
-    - TESTENV=py27-pytest-latest
-    - TESTENV=py34
-    - TESTENV=coveralls
+python: "2.7"
+
+matrix:
+  include:
+    - env: TESTENV=py27-pytestlatest-linters
+    - env: TESTENV=py27-pytest{29,30,31,32,33,34,35,36,37,38,39,latest}
+    - env: TESTENV=py27-pytestlatest-xdist
+    - env: TESTENV=py34-pytestlatest
+      python: "3.4"
+    - env: TESTENV=py35-pytestlatest
+      python: "3.5"
+    - env: TESTENV=py36-pytestlatest
+      python: "3.6"
+    - env: TESTENV=py37-pytestlatest
+      python: "3.7"
+    - env: TESTENV=py27-pytestlatest-coveralls
 install:
   - pip install tox
 script: tox -e $TESTENV --recreate
