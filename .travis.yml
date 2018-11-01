@@ -5,7 +5,18 @@ python: "2.7"
 matrix:
   include:
     - env: TESTENV=py27-pytestlatest-linters
-    - env: TESTENV=py27-pytest{29,30,31,32,33,34,35,36,37,38,39,latest}
+    - env: TESTENV=py27-pytest29
+    - env: TESTENV=py27-pytest30
+    - env: TESTENV=py27-pytest31
+    - env: TESTENV=py27-pytest32
+    - env: TESTENV=py27-pytest33
+    - env: TESTENV=py27-pytest34
+    - env: TESTENV=py27-pytest35
+    - env: TESTENV=py27-pytest36
+    - env: TESTENV=py27-pytest37
+    - env: TESTENV=py27-pytest38
+    - env: TESTENV=py27-pytest39
+    - env: TESTENV=py27-pytestlatest
     - env: TESTENV=py27-pytestlatest-xdist
     - env: TESTENV=py34-pytestlatest
       python: "3.4"
@@ -22,7 +33,7 @@ matrix:
     - env: TESTENV=py27-pytestlatest-coveralls
 install:
   - pip install tox
-script: tox -e "$TESTENV" --recreate
+script: echo tox -e "$TESTENV" --recreate
 branches:
   except:
     - /^\d/
