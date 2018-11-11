@@ -7,7 +7,7 @@ that enriches the pytest test reporting.
 import time
 
 from .feature import force_unicode
-from .utils import get_closest_marker_args
+from .utils import get_parametrize_markers_args
 
 
 class StepReport(object):
@@ -74,7 +74,7 @@ class ScenarioReport(object):
         self.scenario = scenario
         self.step_reports = []
         self.param_index = None
-        parametrize_args = get_closest_marker_args(node, 'parametrize')
+        parametrize_args = get_parametrize_markers_args(node)
         if parametrize_args and scenario.examples:
             param_names = parametrize_args[0] if isinstance(parametrize_args[0], (tuple, list)) else [
                 parametrize_args[0]]

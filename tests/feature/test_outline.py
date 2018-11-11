@@ -6,7 +6,7 @@ import pytest
 
 from pytest_bdd import given, when, then, scenario
 from pytest_bdd import exceptions
-from tests.utils import get_parametrize_markers_args
+from pytest_bdd.utils import get_parametrize_markers_args
 
 
 @scenario(
