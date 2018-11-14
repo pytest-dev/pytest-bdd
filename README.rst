@@ -1228,7 +1228,7 @@ If you used ``pytestbdd_feature_base_dir`` fixture to override the path discover
 
 For more details, check the `Feature file paths`_ section.
 
-If you used ``pytestbdd_strict_gherkin`` fixture to relax the parser, you can instead specify ``strict_gherking=False`` in the declaration of your scenarios, or change it globally in the pytest configuration file:
+If you used ``pytestbdd_strict_gherkin`` fixture to relax the parser, you can instead specify ``strict_gherkin=False`` in the declaration of your scenarios, or change it globally in the pytest configuration file:
 
 .. code-block:: ini
 

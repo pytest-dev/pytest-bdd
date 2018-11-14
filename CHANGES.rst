@@ -1,6 +1,11 @@
 Changelog
 =========
 
+3.0.1
+------
+
+- Minimal supported version of `pytest` is now 2.9.0 as lower versions do not support `bool` type ini options (sliwinski-milosz) #260
+
 3.0.0
 ------
 
