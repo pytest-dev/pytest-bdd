@@ -14,6 +14,17 @@ def test_parametrized(request, start, eat, left):
     """Test parametrized scenario."""
 
 
+@pytest.mark.parametrize(
+    'start', [12]
+)
+@scenario(
+    'parametrized.feature',
+    'Parametrized given - single param',
+)
+def test_parametrized_single_param(request, start):
+    """Test parametrized scenario."""
+
+
 @pytest.fixture(params=[1, 2])
 def foo_bar(request):
     return 'bar' * request.param

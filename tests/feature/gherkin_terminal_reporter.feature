@@ -43,5 +43,10 @@ Feature: Gherkin terminal reporter
 
   Scenario: Should step parameters be replaced by their values
     Given there is gherkin scenario outline implemented
-    When tests are run with step expanded mode
+    When tests are run with step expanded option
+    Then output must contain parameters values
+
+  Scenario: Should step parameters be replaced by their values also when used together with gherkin reporter option
+    Given there is gherkin scenario outline implemented
+    When tests are run with step expanded and gherkin reporter options
     Then output must contain parameters values

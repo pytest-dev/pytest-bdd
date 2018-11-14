@@ -168,7 +168,7 @@ def should_have_left_fruits(start_fruits, start, eat, left, fruits):
 def test_outlined_feature(request):
     assert get_parametrize_markers_args(request.node) == (
         ['start', 'eat', 'left'],
-        [[12, 5.0, '7'], [5, 4.0, '1']],
+        [[12, 5.0, '7'], [5, 4.0, '1'], [4, 2.0, '2']],
         ['fruits'],
         [[u'oranges'], [u'apples']]
     )
