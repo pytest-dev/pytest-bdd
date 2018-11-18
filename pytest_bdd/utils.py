@@ -113,9 +113,9 @@ def get_markers_args_using_get_marker(node, mark_name):
 
 
 def get_parametrize_params(parametrize_args):
-    """Group parametrize markers arugments names and values.
+    """Group parametrize markers arguments names and values.
 
-    :param marker_args: json-serialized `Scenario` or `Feature`.
+    :param parametrize_args: parametrize markers arguments.
     :return: `list` of `dict` in the form of:
         [
             {
