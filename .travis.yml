@@ -16,6 +16,8 @@ matrix:
     - env: TOXENV=py27-pytest37
     - env: TOXENV=py27-pytest38
     - env: TOXENV=py27-pytest39
+    - env: TOXENV=py27-pytest310
+    - env: TOXENV=py27-pytest40
     - env: TOXENV=py27-pytestlatest
     - env: TOXENV=py27-pytestlatest-xdist
     - env: TOXENV=py34-pytestlatest
