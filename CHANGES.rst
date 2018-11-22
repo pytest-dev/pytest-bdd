@@ -5,6 +5,7 @@ Changelog
 ------
 
 - Minimal supported version of `pytest` is now 2.9.0 as lower versions do not support `bool` type ini options (sliwinski-milosz) #260
+- Fix RemovedInPytest4Warning warnings (sliwinski-milosz) #261.
 
 3.0.0
 ------
