@@ -110,3 +110,33 @@ def get_markers_args_using_iter_markers(node, mark_name):
 def get_markers_args_using_get_marker(node, mark_name):
     """Deprecated on pytest>=3.6"""
     return getattr(node.get_marker(mark_name), 'args', ())
+
+
+def get_parametrize_params(parametrize_args):
+    """Group parametrize markers arguments names and values.
+
+    :param parametrize_args: parametrize markers arguments.
+    :return: `list` of `dict` in the form of:
+        [
+            {
+                "names": ["name1", "name2", ...],
+                "values": [value1, value2, ...],
+            },
+            ...
+        ]
+    """
+    params = []
+    for i in range(0, len(parametrize_args), 2):
+        params.append({
+            'names': _get_param_names(parametrize_args[i]),
+            'values': parametrize_args[i+1]
+        })
+    return params
+
+
+def _get_param_names(names):
+    if not isinstance(names, (tuple, list)):
+        # As pytest.mark.parametrize has only one param name,
+        # it is not returned as a list. Convert it to list:
+        names = [names]
+    return names
