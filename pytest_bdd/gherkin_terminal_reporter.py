@@ -104,8 +104,8 @@ class GherkinTerminalReporter(TerminalReporter):
                         step_name = self._format_step_name(step['name'], **report.scenario['example_kwargs'])
                     else:
                         step_name = step['name']
-                    self._tw.write('        {} {}\n'.format(step['keyword'],
-                                                            step_name), **scenario_markup)
+                    self._tw.write(u'        {} {}\n'.format(step['keyword'],
+                                                             step_name), **scenario_markup)
                 self._tw.write('    ' + word, **word_markup)
                 self._tw.write('\n\n')
             else:
