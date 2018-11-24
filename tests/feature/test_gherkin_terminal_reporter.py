@@ -60,6 +60,12 @@ def test_Should_step_parameters_be_replaced_by_their_values():
     pass
 
 
+@scenario('gherkin_terminal_reporter.feature',
+          'Should step parameters be replaced by their values also when used together with gherkin reporter option')
+def test_Should_step_parameters_be_replaced_by_their_values_also_when_used_together_with_gherkin_reporter_option():
+    pass
+
+
 @pytest.fixture(params=[0, 1, 2],
                 ids=['compact mode', 'line per test', 'verbose'])
 def verbosity_mode(request):
@@ -184,8 +190,17 @@ def tests_are_run_with_very_verbose_mode(testdir, test_execution):
     test_execution['gherkin'] = testdir.runpytest('--gherkin-terminal-reporter', '-vv')
 
 
-@when("tests are run with step expanded mode")
-def tests_are_run_with_step_expanded_mode(testdir, test_execution):
+@when("tests are run with step expanded option")
+def tests_are_run_with_step_expanded_option(testdir, test_execution):
+    test_execution['regular'] = testdir.runpytest('-vv')
+    test_execution['gherkin'] = testdir.runpytest(
+        '--gherkin-terminal-reporter-expanded',
+        '-vv',
+    )
+
+
+@when("tests are run with step expanded and gherkin reporter options")
+def tests_are_run_with_step_expanded_and_gherkin_reporter_options(testdir, test_execution):
     test_execution['regular'] = testdir.runpytest('-vv')
     test_execution['gherkin'] = testdir.runpytest(
         '--gherkin-terminal-reporter',
