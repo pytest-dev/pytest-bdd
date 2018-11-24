@@ -1,9 +1,11 @@
+# coding: utf-8
 import re
 
 
 import pytest
 
 from pytest_bdd import scenario, given, when, then
+from tests.utils import get_test_filepath, prepare_feature_and_py_files
 
 
 @scenario('gherkin_terminal_reporter.feature',
@@ -344,3 +346,22 @@ def output_output_must_contain_parameters_values(test_execution, gherkin_scenari
     ghe.stdout.fnmatch_lines('*When I eat {eat} cucumbers'.format(**gherkin_scenario_outline))
     ghe.stdout.fnmatch_lines('*Then I should have {left} cucumbers'.format(**gherkin_scenario_outline))
     ghe.stdout.fnmatch_lines('*PASSED')
+
+
+@pytest.mark.parametrize(
+    'feature_file, py_file, name', [
+        ('./steps/unicode.feature', './steps/test_unicode.py', 'test_steps_in_feature_file_have_unicode')
+    ]
+)
+def test_scenario_in_expanded_mode(testdir, test_execution, feature_file, py_file, name):
+    prepare_feature_and_py_files(testdir, feature_file, py_file)
+
+    test_execution['gherkin'] = testdir.runpytest(
+        '-k %s' % name,
+        '--gherkin-terminal-reporter',
+        '--gherkin-terminal-reporter-expanded',
+        '-vv',
+    )
+
+    ghe = test_execution['gherkin']
+    ghe.assert_outcomes(passed=1)
