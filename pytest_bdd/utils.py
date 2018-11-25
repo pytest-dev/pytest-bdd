@@ -139,4 +139,4 @@ def _coerce_list(names):
         # As pytest.mark.parametrize has only one param name,
         # it is not returned as a list. Convert it to list:
         names = [names]
-    return names
+    return list(names)
