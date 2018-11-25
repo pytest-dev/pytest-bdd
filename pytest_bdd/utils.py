@@ -128,13 +128,13 @@ def get_parametrize_params(parametrize_args):
     params = []
     for i in range(0, len(parametrize_args), 2):
         params.append({
-            'names': _get_param_names(parametrize_args[i]),
+            'names': _coerce_list(parametrize_args[i]),
             'values': parametrize_args[i+1]
         })
     return params
 
 
-def _get_param_names(names):
+def _coerce_list(names):
     if not isinstance(names, (tuple, list)):
         # As pytest.mark.parametrize has only one param name,
         # it is not returned as a list. Convert it to list:
