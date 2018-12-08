@@ -38,7 +38,7 @@ from .steps import (
     recreate_function,
 )
 from .types import GIVEN
-from .utils import get_args, get_fixture_value
+from .utils import ConfigStack, get_args, get_fixture_value
 
 if six.PY3:  # pragma: no cover
     import runpy
@@ -246,7 +246,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, call
                 _scenario = pytest.mark.parametrize(*param_set)(_scenario)
 
         for tag in scenario.tags.union(feature.tags):
-            pytest.config.hook.pytest_bdd_apply_tag(tag=tag, function=_scenario)
+            ConfigStack.get_pytest_bdd_apply_tag_hook()(tag=tag, function=_scenario)
 
         _scenario.__doc__ = "{feature_name}: {scenario_name}".format(
             feature_name=feature_name, scenario_name=scenario_name)
@@ -272,11 +272,9 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     caller_function = caller_function or get_caller_function()
 
     # Get the feature
-    if features_base_dir is None:
-        features_base_dir = get_features_base_dir(caller_module)
-    if strict_gherkin is None:
-        strict_gherkin = get_strict_gherkin()
-    feature = Feature.get_feature(features_base_dir, feature_name, encoding=encoding, strict_gherkin=strict_gherkin)
+    feature = Feature.get_feature(
+        features_base_dir, feature_name, caller_module, encoding=encoding, strict_gherkin=strict_gherkin
+    )
 
     # Get the sc_enario
     try:
@@ -304,24 +302,6 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
         caller_function,
         encoding,
     )
-
-
-def get_features_base_dir(caller_module):
-    default_base_dir = os.path.dirname(caller_module.__file__)
-    return get_from_ini('bdd_features_base_dir', default_base_dir)
-
-
-def get_from_ini(key, default):
-    """Get value from ini config. Return default if value has not been set.
-
-    Use if the default value is dynamic. Otherwise set default on addini call.
-    """
-    value = pytest.config.getini(key)
-    return value if value != '' else default
-
-
-def get_strict_gherkin():
-    return pytest.config.getini('bdd_strict_gherkin')
 
 
 def make_python_name(string):
@@ -354,11 +334,11 @@ def scenarios(*feature_paths, **kwargs):
 
     features_base_dir = kwargs.get('features_base_dir')
     if features_base_dir is None:
-        features_base_dir = get_features_base_dir(module)
+        features_base_dir = Feature._get_default_base_dir(module)
 
     strict_gherkin = kwargs.get('strict_gherkin')
     if strict_gherkin is None:
-        strict_gherkin = get_strict_gherkin()
+        strict_gherkin = Feature.strict_gherkin
 
     abs_feature_paths = []
     for path in feature_paths:
@@ -372,7 +352,7 @@ def scenarios(*feature_paths, **kwargs):
         for name, attr in module.__dict__.items() if hasattr(attr, '__scenario__'))
 
     index = 10
-    for feature in get_features(abs_feature_paths, strict_gherkin=strict_gherkin):
+    for feature in get_features(abs_feature_paths, module, strict_gherkin=strict_gherkin):
         for scenario_name, scenario_object in feature.scenarios.items():
             # skip already bound scenarios
             if (scenario_object.feature.filename, scenario_name) not in module_scenarios:

@@ -143,7 +143,7 @@ def get_tags(line):
     )
 
 
-def get_features(paths, **kwargs):
+def get_features(paths, caller_module, **kwargs):
     """Get features for given paths.
 
     :param list paths: `list` of paths (file or dirs)
@@ -159,12 +159,13 @@ def get_features(paths, **kwargs):
                 features.extend(
                     get_features(
                         glob2.iglob(op.join(path, "**", "*.feature")),
+                        caller_module,
                         **kwargs
                     )
                 )
             else:
                 base, name = op.split(path)
-                feature = Feature.get_feature(base, name, **kwargs)
+                feature = Feature.get_feature(base, name, caller_module, **kwargs)
                 features.append(feature)
     features.sort(key=lambda feature: feature.name or feature.filename)
     return features
@@ -250,6 +251,8 @@ class Examples(object):
 class Feature(object):
 
     """Feature."""
+    strict_gherkin = None
+    base_dir = None
 
     def __init__(self, basedir, filename, encoding="utf-8", strict_gherkin=True):
         """Parse the feature file.
@@ -390,11 +393,25 @@ class Feature(object):
         self.description = u"\n".join(description).strip()
 
     @classmethod
-    def get_feature(cls, base_path, filename, encoding="utf-8", strict_gherkin=True):
+    def configure(cls, config):
+        cls.base_dir = config.getini('bdd_features_base_dir')
+        cls.strict_gherkin = config.getini('bdd_strict_gherkin')
+
+    @classmethod
+    def unconfigure(cls, config):
+        if config:
+            cls.configure(config)
+        else:
+            cls.base_dir = None
+            cls.strict_gherkin = None
+
+    @classmethod
+    def get_feature(cls, base_dir, filename, caller_module, encoding="utf-8", strict_gherkin=True):
         """Get a feature by the filename.
 
         :param str base_path: Base feature directory.
         :param str filename: Filename of the feature file.
+        :param module caller_module
         :param str encoding: Feature file encoding.
         :param bool strict_gherkin: Flag whether it's a strictly gherkin scenario or not (e.g. it will validate correct
             gherkin language (given-when-then))
@@ -405,12 +422,21 @@ class Feature(object):
                stored in the global variable cache to improve the performance
                when multiple scenarios are referencing the same file.
         """
-        full_name = op.abspath(op.join(base_path, filename))
+        if base_dir is None:
+            base_dir = cls._get_default_base_dir(caller_module)
+        if strict_gherkin is None:
+            strict_gherkin = cls.strict_gherkin
+        full_name = op.abspath(op.join(base_dir, filename))
+
         feature = features.get(full_name)
         if not feature:
-            feature = Feature(base_path, filename, encoding=encoding, strict_gherkin=strict_gherkin)
+            feature = Feature(base_dir, filename, encoding=encoding, strict_gherkin=strict_gherkin)
             features[full_name] = feature
         return feature
+
+    @classmethod
+    def _get_default_base_dir(cls, caller_module):
+        return cls.base_dir if cls.base_dir else op.dirname(caller_module.__file__)
 
 
 class Scenario(object):

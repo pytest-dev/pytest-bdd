@@ -110,3 +110,22 @@ def get_markers_args_using_iter_markers(node, mark_name):
 def get_markers_args_using_get_marker(node, mark_name):
     """Deprecated on pytest>=3.6"""
     return getattr(node.get_marker(mark_name), 'args', ())
+
+
+class ConfigStack(object):
+
+    _stack = []
+
+    @classmethod
+    def add(cls, config):
+        cls._stack.append(config)
+
+    @classmethod
+    def get_previous(cls):
+        cls._stack.pop()
+        if cls._stack:
+            return cls._stack[-1]
+
+    @classmethod
+    def get_pytest_bdd_apply_tag_hook(cls):
+        return cls._stack[-1].hook.pytest_bdd_apply_tag
