@@ -273,7 +273,7 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
 
     # Get the feature
     feature = Feature.get_feature(
-        features_base_dir, feature_name, caller_module, encoding=encoding, strict_gherkin=strict_gherkin
+        feature_name, features_base_dir, caller_module, strict_gherkin=strict_gherkin, encoding=encoding
     )
 
     # Get the sc_enario
@@ -352,7 +352,7 @@ def scenarios(*feature_paths, **kwargs):
         for name, attr in module.__dict__.items() if hasattr(attr, '__scenario__'))
 
     index = 10
-    for feature in get_features(abs_feature_paths, module, strict_gherkin=strict_gherkin):
+    for feature in get_features(abs_feature_paths, caller_module=module, strict_gherkin=strict_gherkin):
         for scenario_name, scenario_object in feature.scenarios.items():
             # skip already bound scenarios
             if (scenario_object.feature.filename, scenario_name) not in module_scenarios:

@@ -131,7 +131,7 @@ def parse_feature_files(paths):
     :return: `list` of `tuple` in form:
              (`list` of `Feature` objects, `list` of `Scenario` objects, `list` of `Step` objects).
     """
-    features = get_features(paths, None)
+    features = get_features(paths)
     scenarios = sorted(
         itertools.chain.from_iterable(feature.scenarios.values() for feature in features),
         key=lambda scenario: (

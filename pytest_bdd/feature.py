@@ -143,7 +143,7 @@ def get_tags(line):
     )
 
 
-def get_features(paths, caller_module, **kwargs):
+def get_features(paths, **kwargs):
     """Get features for given paths.
 
     :param list paths: `list` of paths (file or dirs)
@@ -159,13 +159,12 @@ def get_features(paths, caller_module, **kwargs):
                 features.extend(
                     get_features(
                         glob2.iglob(op.join(path, "**", "*.feature")),
-                        caller_module,
                         **kwargs
                     )
                 )
             else:
                 base, name = op.split(path)
-                feature = Feature.get_feature(base, name, caller_module, **kwargs)
+                feature = Feature.get_feature(name, base, **kwargs)
                 features.append(feature)
     features.sort(key=lambda feature: feature.name or feature.filename)
     return features
@@ -406,7 +405,7 @@ class Feature(object):
             cls.strict_gherkin = None
 
     @classmethod
-    def get_feature(cls, base_dir, filename, caller_module, encoding="utf-8", strict_gherkin=True):
+    def get_feature(cls, filename, base_dir=None, caller_module=None, strict_gherkin=True, encoding="utf-8"):
         """Get a feature by the filename.
 
         :param str base_path: Base feature directory.
