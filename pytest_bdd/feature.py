@@ -408,12 +408,12 @@ class Feature(object):
     def get_feature(cls, filename, base_dir=None, caller_module=None, strict_gherkin=True, encoding="utf-8"):
         """Get a feature by the filename.
 
-        :param str base_path: Base feature directory.
         :param str filename: Filename of the feature file.
+        :param str base_dir: Base feature directory.
         :param module caller_module
-        :param str encoding: Feature file encoding.
         :param bool strict_gherkin: Flag whether it's a strictly gherkin scenario or not (e.g. it will validate correct
             gherkin language (given-when-then))
+        :param str encoding: Feature file encoding.
 
         :return: `Feature` instance from the parsed feature cache.
 
