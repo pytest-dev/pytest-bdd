@@ -1,6 +1,7 @@
 """Configuration for pytest runner."""
 
 from pytest_bdd import given, when
+from tests.testdir_patch import testdir
 
 pytest_plugins = "pytester"
 
