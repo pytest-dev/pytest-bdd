@@ -1,9 +1,9 @@
+import os
 import re
-
 
 import pytest
 
-from pytest_bdd import scenario, given, when, then
+from pytest_bdd import given, scenario, then, when
 from tests.utils import get_test_filepath, prepare_feature_and_py_files
 
 
@@ -349,18 +349,18 @@ def output_output_must_contain_parameters_values(test_execution, gherkin_scenari
 
 @pytest.mark.parametrize(
     'feature_file, py_file, name', [
-        ('./steps/unicode.feature', './steps/test_unicode.py', 'test_steps_in_feature_file_have_unicode')
+        ('./steps/unicode.feature', './steps/test_unicode.py', 'test_steps_in_feature_file_have_unicode'),
+        ('./feature/parametrized.feature', './feature/test_parametrized.py', 'test_parametrized')
     ]
 )
-def test_scenario_in_expanded_mode(testdir, test_execution, feature_file, py_file, name):
+def test_scenario_in_expanded_mode(testdir, feature_file, py_file, name):
     prepare_feature_and_py_files(testdir, feature_file, py_file)
 
-    test_execution['gherkin'] = testdir.runpytest(
-        '-k %s' % name,
+    py_filename = os.path.basename(py_file)
+    result = testdir.runpytest(
+        '%s::%s' % (py_filename, name),
         '--gherkin-terminal-reporter',
         '--gherkin-terminal-reporter-expanded',
         '-vv',
     )
-
-    ghe = test_execution['gherkin']
-    ghe.assert_outcomes(passed=1)
+    result.assert_outcomes(passed=1)
