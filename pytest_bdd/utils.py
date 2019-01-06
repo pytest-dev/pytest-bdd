@@ -125,7 +125,8 @@ class ConfigStack(object):
         cls._stack.pop()
         if cls._stack:
             return cls._stack[-1]
+        return None
 
     @classmethod
-    def get_pytest_bdd_apply_tag_hook(cls):
-        return cls._stack[-1].hook.pytest_bdd_apply_tag
+    def pytest_bdd_apply_tag_hook(cls, *args, **kwargs):
+        return cls._stack[-1].hook.pytest_bdd_apply_tag(*args, **kwargs)
