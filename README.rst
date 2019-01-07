@@ -107,7 +107,7 @@ test_publish_article.py:
 Scenario decorator
 ------------------
 
-Scenario decorator can accept the following optional keyword arguments:
+The scenario decorator can accept the following optional keyword arguments:
 
 * ``encoding`` - decode content of feature file in specific encoding. UTF-8 is default.
 * ``example_converters`` - mapping to pass functions to convert example values provided in feature files.
