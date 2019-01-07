@@ -124,9 +124,9 @@ class ConfigStack(object):
     def get_previous(cls):
         cls._stack.pop()
         if cls._stack:
-            return cls._stack[-1]
+            return cls.get_current()
         return None
 
     @classmethod
-    def pytest_bdd_apply_tag_hook(cls, *args, **kwargs):
-        return cls._stack[-1].hook.pytest_bdd_apply_tag(*args, **kwargs)
+    def get_current(cls):
+        return cls._stack[-1]
