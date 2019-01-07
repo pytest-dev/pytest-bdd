@@ -130,7 +130,7 @@ call other functions and make assertions:
 Step aliases
 ------------
 
-Sometimes it is needed to declare the same fixtures or steps with
+Sometimes, one has to declare the same fixtures or steps with
 different names for better readability. In order to use the same step
 function with multiple step names simply decorate it multiple times:
 
