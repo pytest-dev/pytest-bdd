@@ -112,7 +112,7 @@ The scenario decorator can accept the following optional keyword arguments:
 * ``encoding`` - decode content of feature file in specific encoding. UTF-8 is default.
 * ``example_converters`` - mapping to pass functions to convert example values provided in feature files.
 
-Functions decorated with `scenario` decorator behave like a normal test function,
+Functions decorated with the `scenario` decorator behave like a normal test function,
 and they will be executed after all scenario steps.
 You can consider it as a normal pytest test function, e.g. order fixtures there,
 call other functions and make assertions:
