@@ -14,7 +14,7 @@ BDD library for the py.test runner
 pytest-bdd implements a subset of the Gherkin language to enable automating project
 requirements testing and to facilitate behavioral driven development.
 
-Unlike many other BDD tools, it doesn't require a separate runner and benefits from
+Unlike many other BDD tools, it does not require a separate runner and benefits from
 the power and flexibility of pytest. It enables unifying unit and functional
 tests, reduces the burden of continuous integration server configuration and allows the reuse of
 test setups.
