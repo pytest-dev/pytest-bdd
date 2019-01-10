@@ -15,13 +15,6 @@ def test_tags(request):
 
     assert test.__scenario__.tags == set(['scenario_tag_1', 'scenario_tag_2'])
     assert test.__scenario__.feature.tags == set(['feature_tag_1', 'feature_tag_2'])
-
-    assert getattr(test, 'scenario_tag_1')
-    assert getattr(test, 'scenario_tag_2')
-
-    assert getattr(test, 'feature_tag_1')
-    assert getattr(test, 'feature_tag_2')
-
     test(request)
 
 
@@ -50,18 +43,18 @@ def test_tags_selector(testdir):
 
         scenarios('test.feature')
     """)
-    result = testdir.runpytest('-k', 'scenario_tag_10 and not scenario_tag_01', '-vv').parseoutcomes()
+    result = testdir.runpytest('-m', 'scenario_tag_10 and not scenario_tag_01', '-vv').parseoutcomes()
     assert result['passed'] == 1
     assert result['deselected'] == 1
 
-    result = testdir.runpytest('-k', 'scenario_tag_01 and not scenario_tag_10', '-vv').parseoutcomes()
+    result = testdir.runpytest('-m', 'scenario_tag_01 and not scenario_tag_10', '-vv').parseoutcomes()
     assert result['passed'] == 1
     assert result['deselected'] == 1
 
-    result = testdir.runpytest('-k', 'feature_tag_1', '-vv').parseoutcomes()
+    result = testdir.runpytest('-m', 'feature_tag_1', '-vv').parseoutcomes()
     assert result['passed'] == 2
 
-    result = testdir.runpytest('-k', 'feature_tag_10', '-vv').parseoutcomes()
+    result = testdir.runpytest('-m', 'feature_tag_10', '-vv').parseoutcomes()
     assert result['deselected'] == 2
 
 
