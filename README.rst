@@ -11,18 +11,18 @@ BDD library for the py.test runner
     :target: https://readthedocs.org/projects/pytest-bdd/?badge=latest
     :alt: Documentation Status
 
-pytest-bdd implements a subset of Gherkin language for the automation of the project
-requirements testing and easier behavioral driven development.
+pytest-bdd implements a subset of the Gherkin language to enable automating project
+requirements testing and to facilitate behavioral driven development.
 
-Unlike many other BDD tools it doesn't require a separate runner and benefits from
-the power and flexibility of the pytest. It allows to unify your unit and functional
-tests, easier continuous integration server configuration and maximal reuse of the
-tests setup.
+Unlike many other BDD tools, it does not require a separate runner and benefits from
+the power and flexibility of pytest. It enables unifying unit and functional
+tests, reduces the burden of continuous integration server configuration and allows the reuse of
+test setups.
 
-Pytest fixtures written for the unit tests can be reused for the setup and actions
-mentioned in the feature steps with dependency injection, which allows a true BDD
+Pytest fixtures written for unit tests can be reused for setup and actions
+mentioned in feature steps with dependency injection. This allows a true BDD
 just-enough specification of the requirements without maintaining any context object
-containing the side effects of the Gherkin imperative declarations.
+containing the side effects of Gherkin imperative declarations.
 
 .. _behave: https://pypi.python.org/pypi/behave
 .. _pytest-splinter: https://github.com/pytest-dev/pytest-splinter
@@ -35,7 +35,7 @@ Install pytest-bdd
     pip install pytest-bdd
 
 
-The minimal required version of pytest is 2.8.1.
+The minimum required version of pytest is 2.8.1.
 
 
 Example
@@ -107,13 +107,13 @@ test_publish_article.py:
 Scenario decorator
 ------------------
 
-Scenario decorator can accept such optional keyword arguments:
+The scenario decorator can accept the following optional keyword arguments:
 
 * ``encoding`` - decode content of feature file in specific encoding. UTF-8 is default.
 * ``example_converters`` - mapping to pass functions to convert example values provided in feature files.
 
-Function decorated with `scenario` decorator behaves like a normal test function,
-which will be executed after all scenario steps.
+Functions decorated with the `scenario` decorator behave like a normal test function,
+and they will be executed after all scenario steps.
 You can consider it as a normal pytest test function, e.g. order fixtures there,
 call other functions and make assertions:
 
@@ -130,7 +130,7 @@ call other functions and make assertions:
 Step aliases
 ------------
 
-Sometimes it is needed to declare the same fixtures or steps with the
+Sometimes, one has to declare the same fixtures or steps with
 different names for better readability. In order to use the same step
 function with multiple step names simply decorate it multiple times:
 
