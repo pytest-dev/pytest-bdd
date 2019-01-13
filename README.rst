@@ -741,7 +741,7 @@ scenario test, so we can use standard test selection:
 
 .. code-block:: bash
 
-    py.test -k "backend and login and successful"
+    py.test -m "backend and login and successful"
 
 The feature and scenario markers are not different from standard pytest markers, and the `@` symbol is stripped out
 automatically to allow test selector expressions. If you want to have bdd-related tags to be distinguishable from the
