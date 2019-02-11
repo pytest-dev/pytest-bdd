@@ -7,6 +7,7 @@ from . import cucumber_json
 from . import generation
 from . import reporting
 from . import gherkin_terminal_reporter
+from .utils import CONFIG_STACK
 
 
 def pytest_addhooks(pluginmanager):
@@ -47,12 +48,14 @@ def add_bdd_ini(parser):
 @pytest.mark.trylast
 def pytest_configure(config):
     """Configure all subplugins."""
+    CONFIG_STACK.append(config)
     cucumber_json.configure(config)
     gherkin_terminal_reporter.configure(config)
 
 
 def pytest_unconfigure(config):
     """Unconfigure all subplugins."""
+    CONFIG_STACK.pop()
     cucumber_json.unconfigure(config)
 
 
