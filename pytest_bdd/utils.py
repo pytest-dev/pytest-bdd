@@ -2,6 +2,8 @@
 
 import inspect
 
+CONFIG_STACK = []
+
 
 def get_args(func):
     """Get a list of argument names for a function.
@@ -110,23 +112,3 @@ def get_markers_args_using_iter_markers(node, mark_name):
 def get_markers_args_using_get_marker(node, mark_name):
     """Deprecated on pytest>=3.6"""
     return getattr(node.get_marker(mark_name), 'args', ())
-
-
-class ConfigStack(object):
-
-    _stack = []
-
-    @classmethod
-    def add(cls, config):
-        cls._stack.append(config)
-
-    @classmethod
-    def get_previous(cls):
-        cls._stack.pop()
-        if cls._stack:
-            return cls.get_current()
-        return None
-
-    @classmethod
-    def get_current(cls):
-        return cls._stack[-1]

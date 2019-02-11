@@ -8,7 +8,7 @@ from . import generation
 from . import reporting
 from . import gherkin_terminal_reporter
 from .feature import Feature
-from .utils import ConfigStack
+from .utils import CONFIG_STACK
 
 
 def pytest_addhooks(pluginmanager):
@@ -49,7 +49,7 @@ def add_bdd_ini(parser):
 @pytest.mark.trylast
 def pytest_configure(config):
     """Configure all subplugins."""
-    ConfigStack.add(config)
+    CONFIG_STACK.append(config)
     cucumber_json.configure(config)
     gherkin_terminal_reporter.configure(config)
     Feature.configure(config)
@@ -57,9 +57,10 @@ def pytest_configure(config):
 
 def pytest_unconfigure(config):
     """Unconfigure all subplugins."""
+    CONFIG_STACK.pop()
     cucumber_json.unconfigure(config)
 
-    previous_config = ConfigStack.get_previous()
+    previous_config = CONFIG_STACK[-1] if CONFIG_STACK else None
     Feature.unconfigure(previous_config)
 
 

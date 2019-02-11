@@ -38,7 +38,7 @@ from .steps import (
     recreate_function,
 )
 from .types import GIVEN
-from .utils import ConfigStack, get_args, get_fixture_value
+from .utils import CONFIG_STACK, get_args, get_fixture_value
 
 if six.PY3:  # pragma: no cover
     import runpy
@@ -246,7 +246,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, call
                 _scenario = pytest.mark.parametrize(*param_set)(_scenario)
 
         for tag in scenario.tags.union(feature.tags):
-            config = ConfigStack.get_current()
+            config = CONFIG_STACK[-1]
             config.hook.pytest_bdd_apply_tag(tag=tag, function=_scenario)
 
         _scenario.__doc__ = "{feature_name}: {scenario_name}".format(
