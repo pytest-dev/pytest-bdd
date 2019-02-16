@@ -127,7 +127,7 @@ def test_apply_tag_hook(testdir):
         scenarios('test.feature')
     """)
     result = testdir.runpytest('-rsx')
-    result.stdout.fnmatch_lines(["SKIP *: Not implemented yet"])
+    result.stdout.fnmatch_lines(["SKIP*: Not implemented yet"])
     result.stdout.fnmatch_lines(["*= 1 skipped, 1 xpassed * =*"])
 
 
