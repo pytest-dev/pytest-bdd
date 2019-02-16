@@ -1,5 +1,7 @@
 # -*- encoding: utf-8 -*-
 
+from __future__ import unicode_literals
+
 import re
 
 from _pytest.terminal import TerminalReporter
@@ -56,7 +58,7 @@ class GherkinTerminalReporter(TerminalReporter):
 
     def pytest_runtest_logreport(self, report):
         rep = report
-        res = self.config.hook.pytest_report_teststatus(report=rep)
+        res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
         cat, letter, word = res
 
         if not letter and not word:
