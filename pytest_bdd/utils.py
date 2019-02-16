@@ -2,6 +2,8 @@
 
 import inspect
 
+CONFIG_STACK = []
+
 
 def get_args(func):
     """Get a list of argument names for a function.

@@ -38,7 +38,7 @@ from .steps import (
     recreate_function,
 )
 from .types import GIVEN
-from .utils import get_args, get_fixture_value
+from .utils import CONFIG_STACK, get_args, get_fixture_value
 
 if six.PY3:  # pragma: no cover
     import runpy
@@ -246,7 +246,8 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, call
                 _scenario = pytest.mark.parametrize(*param_set)(_scenario)
 
         for tag in scenario.tags.union(feature.tags):
-            pytest.config.hook.pytest_bdd_apply_tag(tag=tag, function=_scenario)
+            config = CONFIG_STACK[-1]
+            config.hook.pytest_bdd_apply_tag(tag=tag, function=_scenario)
 
         _scenario.__doc__ = "{feature_name}: {scenario_name}".format(
             feature_name=feature_name, scenario_name=scenario_name)
@@ -316,12 +317,14 @@ def get_from_ini(key, default):
 
     Use if the default value is dynamic. Otherwise set default on addini call.
     """
-    value = pytest.config.getini(key)
+    config = CONFIG_STACK[-1]
+    value = config.getini(key)
     return value if value != '' else default
 
 
 def get_strict_gherkin():
-    return pytest.config.getini('bdd_strict_gherkin')
+    config = CONFIG_STACK[-1]
+    return config.getini('bdd_strict_gherkin')
 
 
 def make_python_name(string):
