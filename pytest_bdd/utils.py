@@ -25,17 +25,6 @@ def get_args(func):
         return inspect.getargspec(func).args
 
 
-def get_request_fixture_names(request):
-    """Get list of fixture names for the given FixtureRequest.
-
-    Get the internal and mutable list of fixture names in the enclosing scope of
-    the given request object.
-
-    Compatibility with pytest 3.0.
-    """
-    return request._pyfuncitem._fixtureinfo.names_closure
-
-
 def get_parametrize_markers_args(node):
     """In pytest 3.6 new API to access markers has been introduced and it deprecated
     MarkInfo objects.
