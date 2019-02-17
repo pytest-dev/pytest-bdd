@@ -49,7 +49,7 @@ from .exceptions import (
     StepError,
 )
 from .parsers import get_parser
-from .utils import get_args, get_request_fixture_names
+from .utils import get_args
 
 
 def get_step_fixture_name(name, type_, encoding=None):
@@ -312,7 +312,7 @@ def inject_fixture(request, arg, value):
         request._fixture_defs[arg] = old_fd
 
         if add_fixturename:
-            get_request_fixture_names(request).remove(arg)
+            request._pyfuncitem._fixtureinfo.names_closure.remove(arg)
 
     request.addfinalizer(fin)
 
@@ -321,4 +321,4 @@ def inject_fixture(request, arg, value):
     # inject fixture value in request cache
     request._fixture_defs[arg] = fd
     if add_fixturename:
-        get_request_fixture_names(request).append(arg)
+        request._pyfuncitem._fixtureinfo.names_closure.append(arg)
