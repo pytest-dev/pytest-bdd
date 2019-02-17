@@ -1,11 +1,11 @@
-sudo: false
+dist: xenial
 language: python
 python: "2.7"
 
 matrix:
   include:
-    - env: TOXENV=py27-pytestlatest-linters
-    - env: TOXENV=py27-pytest29
+    - python: "2.7"
+      env: TOXENV=py27-pytestlatest-linters
     - env: TOXENV=py27-pytest30
     - env: TOXENV=py27-pytest31
     - env: TOXENV=py27-pytest32
@@ -30,17 +30,16 @@ matrix:
       python: "3.6"
     - env: TOXENV=py37-pytestlatest
       python: "3.7"
-      # Currently, python 3.7 is a little bit tricky to install:
-      # https://github.com/travis-ci/travis-ci/issues/9069#issuecomment-425720905
-      sudo: required
-      dist: xenial
     - env: TOXENV=py27-pytestlatest-coveralls
-install:
-  - pip install tox
+
+install: pip install tox
+
 script: tox --recreate
+
 branches:
   except:
     - /^\d/
+
 notifications:
   email:
   - bubenkoff@gmail.com
