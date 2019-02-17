@@ -25,17 +25,6 @@ def get_args(func):
         return inspect.getargspec(func).args
 
 
-def get_request_fixture_defs(request):
-    """Get the internal list of FixtureDefs cached into the given request object.
-
-    Compatibility with pytest 3.0.
-    """
-    try:
-        return request._fixture_defs
-    except AttributeError:
-        return getattr(request, "_fixturedefs", {})
-
-
 def get_request_fixture_names(request):
     """Get list of fixture names for the given FixtureRequest.
 

@@ -49,7 +49,7 @@ from .exceptions import (
     StepError,
 )
 from .parsers import get_parser
-from .utils import get_args, get_request_fixture_defs, get_request_fixture_names
+from .utils import get_args, get_request_fixture_names
 
 
 def get_step_fixture_name(name, type_, encoding=None):
@@ -304,12 +304,12 @@ def inject_fixture(request, arg, value):
     fd = pytest_fixtures.FixtureDef(**fd_kwargs)
     fd.cached_result = (value, 0, None)
 
-    old_fd = get_request_fixture_defs(request).get(arg)
+    old_fd = request._fixture_defs.get(arg)
     add_fixturename = arg not in request.fixturenames
 
     def fin():
         request._fixturemanager._arg2fixturedefs[arg].remove(fd)
-        get_request_fixture_defs(request)[arg] = old_fd
+        request._fixture_defs[arg] = old_fd
 
         if add_fixturename:
             get_request_fixture_names(request).remove(arg)
@@ -319,6 +319,6 @@ def inject_fixture(request, arg, value):
     # inject fixture definition
     request._fixturemanager._arg2fixturedefs.setdefault(arg, []).insert(0, fd)
     # inject fixture value in request cache
-    get_request_fixture_defs(request)[arg] = fd
+    request._fixture_defs[arg] = fd
     if add_fixturename:
         get_request_fixture_names(request).append(arg)
