@@ -49,7 +49,7 @@ from .exceptions import (
     StepError,
 )
 from .parsers import get_parser
-from .utils import get_args, get_fixture_value, get_fixture_value_raw, set_fixture_value, get_request_fixture_defs, \
+from .utils import get_args, get_fixture_value_raw, set_fixture_value, get_request_fixture_defs, \
     get_request_fixture_names
 
 
@@ -82,7 +82,7 @@ def given(name, fixture=None, converters=None, scope='function', target_fixture=
         module = get_caller_module()
 
         def step_func(request):
-            return get_fixture_value(request, fixture)
+            return request.getfixturevalue(fixture)
 
         step_func.step_type = GIVEN
         step_func.converters = converters
@@ -162,7 +162,7 @@ def _step_decorator(step_type, step_name, converters=None, scope='function', tar
                 func = pytest.fixture(scope=scope)(func)
 
             def step_func(request):
-                result = get_fixture_value(request, func.__name__)
+                result = request.getfixturevalue(func.__name__)
                 if target_fixture:
                     inject_fixture(request, target_fixture, result)
                 return result
