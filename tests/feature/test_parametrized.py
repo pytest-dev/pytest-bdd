@@ -15,13 +15,13 @@ def test_parametrized(request, start, eat, left):
 
 
 @pytest.mark.parametrize(
-    'start', [12]
+    'start', [12, 5]
 )
 @scenario(
     'parametrized.feature',
-    'Parametrized given - single param',
+    'Parametrized given, then - single parameter name',
 )
-def test_parametrized_single_param(request, start):
+def test_parametrized_single_parameter_name(request, start):
     """Test parametrized scenario."""
 
 

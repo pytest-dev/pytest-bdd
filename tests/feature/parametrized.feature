@@ -4,7 +4,7 @@ Scenario: Parametrized given, when, thens
     Then I should have <left> cucumbers
 
 
-Scenario: Parametrized given - single param
+Scenario: Parametrized given, then - single parameter name
     Given there are <start> cucumbers
     When I do not eat any cucumber
     Then I still should have <start> cucumbers
