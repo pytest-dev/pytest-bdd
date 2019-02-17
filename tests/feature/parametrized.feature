@@ -6,3 +6,5 @@ Scenario: Parametrized given, when, thens
 
 Scenario: Parametrized given - single param
     Given there are <start> cucumbers
+    When I do not eat any cucumber
+    Then I still should have <start> cucumbers
