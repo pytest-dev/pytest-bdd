@@ -25,34 +25,6 @@ def get_args(func):
         return inspect.getargspec(func).args
 
 
-def get_fixture_value_raw(request, name):
-    """Set the given raw fixture value from the pytest request object.
-
-    :note: Compatibility with pytest < 3.3.2
-    """
-    try:
-        return request._fixture_values.get(name)
-    except AttributeError:
-        try:
-            return request._funcargs.get(name)
-        except AttributeError:
-            pass
-
-
-def set_fixture_value(request, name, value):
-    """Set the given fixture value on the pytest request object.
-
-    :note: Compatibility with pytest < 3.3.2
-    """
-    try:
-        request._fixture_values[name] = value
-    except AttributeError:
-        try:
-            request._funcargs[name] = value
-        except AttributeError:
-            pass
-
-
 def get_request_fixture_defs(request):
     """Get the internal list of FixtureDefs cached into the given request object.
 
