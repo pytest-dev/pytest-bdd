@@ -1,6 +1,11 @@
 Changelog
 =========
 
+3.0.2
+------
+
+- Add compatibility with pytest 4.2 (sliwinski-milosz) #288.
+
 3.0.1
 ------
 
