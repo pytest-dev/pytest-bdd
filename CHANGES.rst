@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Drop support for pytest < 3.0
+
 3.0.2
 ------
 

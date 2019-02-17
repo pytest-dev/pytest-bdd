@@ -10,7 +10,6 @@ from pytest_bdd import (
     scenario,
     then,
 )
-from pytest_bdd.utils import get_fixture_value
 
 
 @pytest.mark.parametrize(["feature_text", "expected_text"], [
@@ -73,7 +72,7 @@ def test_multiline(request, tmpdir, feature_text, expected_text):
 
     @scenario(file_name.strpath, 'Multiline step using sub indentation')
     def test_multiline(request):
-        assert get_fixture_value(request, 'i_have_text') == expected_text
+        assert request.getfixturevalue('i_have_text') == expected_text
     test_multiline(request)
 
 

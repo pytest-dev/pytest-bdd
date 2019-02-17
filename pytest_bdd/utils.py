@@ -25,19 +25,6 @@ def get_args(func):
         return inspect.getargspec(func).args
 
 
-def get_fixture_value(request, name):
-    """Get the given fixture from the pytest request object.
-
-    getfuncargvalue() is deprecated in pytest 3.0, so we need to use
-    getfixturevalue() there.
-    """
-    try:
-        getfixturevalue = request.getfixturevalue
-    except AttributeError:
-        getfixturevalue = request.getfuncargvalue
-    return getfixturevalue(name)
-
-
 def get_fixture_value_raw(request, name):
     """Set the given raw fixture value from the pytest request object.
 
