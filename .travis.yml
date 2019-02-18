@@ -6,9 +6,6 @@ matrix:
   include:
     - python: "2.7"
       env: TOXENV=py27-pytestlatest-linters
-    - env: TOXENV=py27-pytest30
-    - env: TOXENV=py27-pytest31
-    - env: TOXENV=py27-pytest32
     - env: TOXENV=py27-pytest33
     - env: TOXENV=py27-pytest34
     - env: TOXENV=py27-pytest35
