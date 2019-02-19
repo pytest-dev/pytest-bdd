@@ -188,6 +188,7 @@ def _execute_scenario(feature, scenario, request, encoding):
                     step=step,
                     step_func=step_func,
                     exception=exception,
+                    step_func_args=dict((arg, request.getfixturevalue(arg)) for arg in get_args(step_func)),
                 )
                 raise
 
