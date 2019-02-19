@@ -113,17 +113,8 @@ def get_parser(step_name):
     :return: step parser object
     :rtype: StepArgumentParser
     """
-    if isinstance(step_name, RE_TYPE):
-        # backwards compartibility
-        warn = (
-            'pytest-bdd [{0}]: Direct usage of regex is deprecated. Please use pytest_bdd.parsers.re instead.'.format(
-                step_name.pattern)
-        )
-        warnings.warn(warn)
-        print(warn)
-        return re(step_name.pattern, flags=step_name.flags)
-    elif isinstance(step_name, six.string_types):
-        if isinstance(step_name, six.binary_type):
+    if isinstance(step_name, six.string_types):
+        if isinstance(step_name, six.binary_type):  # Python 2 compatibility
             step_name = step_name.decode('utf-8')
         return string(step_name)
     elif not hasattr(step_name, 'is_matching') or not hasattr(step_name, 'parse_arguments'):
