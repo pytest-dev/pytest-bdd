@@ -58,8 +58,7 @@ def i_should_have(euro, values):
     assert euro == values.pop(0)
 
 
-# test backwards compartibility
-@given(re.compile(r'I have an argument (?P<arg>\d+)'))
+@given(parsers.re(r'I have an argument (?P<arg>\d+)'))
 def argument(arg):
     """I have an argument."""
     return dict(arg=arg)
