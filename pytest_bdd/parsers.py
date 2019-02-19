@@ -123,6 +123,8 @@ def get_parser(step_name):
         print(warn)
         return re(step_name.pattern, flags=step_name.flags)
     elif isinstance(step_name, six.string_types):
+        if isinstance(step_name, six.binary_type):
+            step_name = step_name.decode('utf-8')
         return string(step_name)
     elif not hasattr(step_name, 'is_matching') or not hasattr(step_name, 'parse_arguments'):
         raise InvalidStepParserError(step_name)
