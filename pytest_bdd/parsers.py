@@ -1,22 +1,17 @@
 """Step parsers."""
 
 from __future__ import absolute_import
+
 import re as base_re
-import warnings
 
 import parse as base_parse
-from parse_type import cfparse as base_cfparse
-
 import six
+from parse_type import cfparse as base_cfparse
 
 from .exceptions import InvalidStepParserError
 
 
-RE_TYPE = type(base_re.compile(''))
-
-
 class StepParser(object):
-
     """Parser of the individual step."""
 
     def __init__(self, name):
@@ -35,7 +30,6 @@ class StepParser(object):
 
 
 class re(StepParser):
-
     """Regex step parser."""
 
     def __init__(self, name, *args, **kwargs):
@@ -56,7 +50,6 @@ class re(StepParser):
 
 
 class parse(StepParser):
-
     """parse step parser."""
 
     def __init__(self, name, *args, **kwargs):
@@ -80,7 +73,6 @@ class parse(StepParser):
 
 
 class cfparse(parse):
-
     """cfparse step parser."""
 
     def __init__(self, name, *args, **kwargs):
@@ -90,7 +82,6 @@ class cfparse(parse):
 
 
 class string(StepParser):
-
     """Exact string step parser."""
 
     def parse_arguments(self, name):
