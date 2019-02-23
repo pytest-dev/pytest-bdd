@@ -38,7 +38,7 @@ from .steps import (
     recreate_function,
 )
 from .types import GIVEN
-from .utils import CONFIG_STACK, get_args, get_fixture_value
+from .utils import CONFIG_STACK, get_args
 
 if six.PY3:  # pragma: no cover
     import runpy
@@ -70,7 +70,7 @@ def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None)
                 parser_name = get_step_fixture_name(parser.name, type_)
                 if request:
                     try:
-                        get_fixture_value(request, parser_name)
+                        request.getfixturevalue(parser_name)
                     except pytest_fixtures.FixtureLookupError:
                         continue
                 return parser_name
@@ -88,12 +88,12 @@ def _find_step_function(request, step, scenario, encoding):
     """
     name = step.name
     try:
-        return get_fixture_value(request, get_step_fixture_name(name, step.type, encoding))
+        return request.getfixturevalue(get_step_fixture_name(name, step.type, encoding))
     except pytest_fixtures.FixtureLookupError:
         try:
             name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager, request)
             if name:
-                return get_fixture_value(request, name)
+                return request.getfixturevalue(name)
             raise
         except pytest_fixtures.FixtureLookupError:
             raise exceptions.StepDefinitionNotFoundError(
@@ -128,7 +128,7 @@ def _execute_step_function(request, scenario, step, step_func):
     kw["step_func_args"] = {}
     try:
         # Get the step argument values.
-        kwargs = dict((arg, get_fixture_value(request, arg)) for arg in get_args(step_func))
+        kwargs = dict((arg, request.getfixturevalue(arg)) for arg in get_args(step_func))
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
@@ -188,6 +188,7 @@ def _execute_scenario(feature, scenario, request, encoding):
                     step=step,
                     step_func=step_func,
                     exception=exception,
+                    step_func_args=dict((arg, request.getfixturevalue(arg)) for arg in get_args(step_func)),
                 )
                 raise
 

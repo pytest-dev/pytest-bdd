@@ -33,20 +33,24 @@ def test_generate(monkeypatch, capsys):
     @given('1 have a fixture (appends 1 to a list) in reuse syntax')
     def have_a_fixture_appends_1_to_a_list_in_reuse_syntax():
         """1 have a fixture (appends 1 to a list) in reuse syntax."""
+        raise NotImplementedError
 
 
     @given('I have an empty list')
     def i_have_an_empty_list():
         """I have an empty list."""
+        raise NotImplementedError
 
 
     @when('I use this fixture')
     def i_use_this_fixture():
         """I use this fixture."""
+        raise NotImplementedError
 
 
     @then('my list should be [1]')
     def my_list_should_be_1():
         """my list should be [1]."""
+        raise NotImplementedError
 
     '''[1:].replace(u"'", u"'"))

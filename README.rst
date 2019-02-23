@@ -35,7 +35,7 @@ Install pytest-bdd
     pip install pytest-bdd
 
 
-The minimum required version of pytest is 2.8.1.
+The minimum required version of pytest is 3.3.2
 
 
 Example
@@ -168,7 +168,7 @@ pass optional ``scope`` argument:
 
 .. code-block:: python
 
-    @given('I have an article', scope='session')
+    @given('there is an article', scope='session')
     def article(author):
         return create_test_article(author=author)
 
@@ -176,7 +176,7 @@ pass optional ``scope`` argument:
 
     Scenario: I'm the author
         Given I'm an author
-        And I have an article
+        And there is an article
 
 
     Scenario: I'm the admin
@@ -184,8 +184,8 @@ pass optional ``scope`` argument:
         And there is an article
 
 
-For this example, step function for 'I have an article' given step will be executed once even though there are 2
-scenarios using it.
+In this example, the step function for the 'there is an article' given step will be executed once, even though there
+are 2 scenarios using it.
 Note that for other step types, it makes no sense to have scope larger than 'function' (the default) as they represent
 an action (when step), and assertion (then step).
 
@@ -974,13 +974,13 @@ Using unicode in the feature files
 ----------------------------------
 
 As mentioned above, by default, utf-8 encoding is used for parsing feature files.
-For steps definition, you can both use unicode- and bytestrings equally.
-However, for argumented steps, if you need to use unicode symbols in it's regular expression, use `u` sign with regex:
+For steps definition, you should use unicode strings, which is the default in python 3.
+If you are on python 2, make sure you use unicode strings by prefixing them with the `u` sign.
 
 
 .. code-block:: python
 
-    @given(re.compile(u"у мене є рядок який містить '{0}'".format('(?P<content>.+)')))
+    @given(parsers.re(u"у мене є рядок який містить '{0}'".format(u'(?P<content>.+)')))
     def there_is_a_string_with_content(content, string):
         """Create string with unicode content."""
         string['content'] = content
