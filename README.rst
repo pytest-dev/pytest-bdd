@@ -379,7 +379,7 @@ Multiline steps
 ---------------
 
 As Gherkin, pytest-bdd supports multiline steps
-(aka `PyStrings <http://docs.behat.org/guides/1.gherkin.html#pystrings>`_).
+(aka `PyStrings <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#pystrings>`_).
 But in much cleaner and powerful way:
 
 .. code-block:: gherkin
@@ -482,7 +482,7 @@ Scenario outlines
 
 Scenarios can be parametrized to cover few cases. In Gherkin the variable
 templates are written using corner braces as <somevalue>.
-`Gherkin scenario outlines <http://docs.behat.org/guides/1.gherkin.html#scenario-outlines>`_ are supported by pytest-bdd
+`Gherkin scenario outlines <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#scenario-outlines>`_ are supported by pytest-bdd
 exactly as it's described in be behave_ docs.
 
 Example:
@@ -859,7 +859,7 @@ Backgrounds
 
 It's often the case that to cover certain feature, you'll need multiple scenarios. And it's logical that the
 setup for those scenarios will have some common parts (if not equal). For this, there are `backgrounds`.
-pytest-bdd implements `Gherkin backgrounds <http://docs.behat.org/en/v2.5/guides/1.gherkin.html#backgrounds>`_ for
+pytest-bdd implements `Gherkin backgrounds <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#backgrounds>`_ for
 features.
 
 .. code-block:: gherkin
