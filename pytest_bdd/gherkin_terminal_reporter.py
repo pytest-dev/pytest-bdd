@@ -6,7 +6,7 @@ import re
 
 from _pytest.terminal import TerminalReporter
 
-from .feature import STEP_PARAM_RE
+from .feature import OUTLINE_PARAM_RE
 
 
 def add_options(parser):
@@ -76,7 +76,7 @@ class GherkinTerminalReporter(TerminalReporter):
                 word_markup = {'yellow': True}
         feature_markup = {'blue': True}
         scenario_markup = word_markup
-
+  
         if self.verbosity <= 0:
             return TerminalReporter.pytest_runtest_logreport(self, rep)
         elif self.verbosity == 1:
@@ -98,12 +98,17 @@ class GherkinTerminalReporter(TerminalReporter):
                 self._tw.write('Feature: ', **feature_markup)
                 self._tw.write(report.scenario['feature']['name'], **feature_markup)
                 self._tw.write('\n')
+                scenario_name = ''
+                if self.config.option.expand:
+                    scenario_name = self._format_outline_name(report.scenario['name'], **report.scenario['example_kwargs'])
+                else:
+                    scenario_name = report.scenario['name']
                 self._tw.write('    Scenario: ', **scenario_markup)
-                self._tw.write(report.scenario['name'], **scenario_markup)
-                self._tw.write('\n')
+                self._tw.write('{}\n'.format(scenario_name), **scenario_markup)
+
                 for step in report.scenario['steps']:
                     if self.config.option.expand:
-                        step_name = self._format_step_name(step['name'], **report.scenario['example_kwargs'])
+                        step_name = self._format_outline_name(step['name'], **report.scenario['example_kwargs'])
                     else:
                         step_name = step['name']
                     self._tw.write('        {} {}\n'.format(step['keyword'],
@@ -114,13 +119,13 @@ class GherkinTerminalReporter(TerminalReporter):
                 return TerminalReporter.pytest_runtest_logreport(self, rep)
         self.stats.setdefault(cat, []).append(rep)
 
-    def _format_step_name(self, step_name, **example_kwargs):
+    def _format_outline_name(self, outline_name, **example_kwargs):
         while True:
-            param_match = re.search(STEP_PARAM_RE, step_name)
+            param_match = re.search(OUTLINE_PARAM_RE, outline_name)
             if not param_match:
                 break
             param_token = param_match.group(0)
             param_name = param_match.group(1)
             param_value = example_kwargs[param_name]
-            step_name = step_name.replace(param_token, param_value)
-        return step_name
+            outline_name = outline_name.replace(param_token, param_value)
+        return outline_name

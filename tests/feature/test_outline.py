@@ -8,10 +8,9 @@ from pytest_bdd import given, when, then, scenario
 from pytest_bdd import exceptions
 from pytest_bdd.utils import get_parametrize_markers_args
 
-
 @scenario(
     'outline.feature',
-    'Outlined given, when, thens',
+    'Outlined given when thens <start>',
     example_converters=dict(start=int, eat=float, left=str)
 )
 def test_outlined(request):
@@ -122,7 +121,7 @@ def other_fixture(request):
 
 @scenario(
     'outline.feature',
-    'Outlined given, when, thens',
+    'Outlined given when thens <start>',
     example_converters=dict(start=int, eat=float, left=str)
 )
 def test_outlined_with_other_fixtures(other_fixture):
@@ -162,7 +161,7 @@ def should_have_left_fruits(start_fruits, start, eat, left, fruits):
 
 @scenario(
     'outline_feature.feature',
-    'Outlined given, when, thens',
+    'Outlined given when thens <start>',
     example_converters=dict(start=int, eat=float, left=str)
 )
 def test_outlined_feature(request):

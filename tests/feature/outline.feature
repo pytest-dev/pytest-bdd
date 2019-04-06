@@ -1,4 +1,4 @@
-Scenario Outline: Outlined given, when, thens
+Scenario Outline: Outlined given when thens <start>
     Given there are <start> cucumbers
     When I eat <eat> cucumbers
     Then I should have <left> cucumbers

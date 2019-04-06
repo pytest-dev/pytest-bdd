@@ -5,7 +5,7 @@ Feature: Outline
     |  12   |  5  |  7   |
     |  5    |  4  |  1   |
 
-    Scenario Outline: Outlined given, when, thens
+    Scenario Outline: Outlined given when thens <start>
         Given there are <start> <fruits>
         When I eat <eat> <fruits>
         Then I should have <left> <fruits>

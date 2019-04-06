@@ -57,9 +57,8 @@ STEP_PREFIXES = [
     ("But ", None),
 ]
 
-STEP_PARAM_RE = re.compile(r"\<(.+?)\>")
+OUTLINE_PARAM_RE = re.compile(r"\<(.+?)\>")
 COMMENT_RE = re.compile(r'(^|(?<=\s))#')
-
 
 def get_step_type(line):
     """Detect step type by the beginning of the line.
@@ -541,7 +540,7 @@ class Step(object):
     @property
     def params(self):
         """Get step params."""
-        return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
+        return tuple(frozenset(OUTLINE_PARAM_RE.findall(self.name)))
 
 
 class Background(object):

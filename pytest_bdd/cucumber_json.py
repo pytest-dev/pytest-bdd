@@ -6,10 +6,11 @@ import math
 import os
 import sys
 import time
+import re
 
 import six
 
-from .feature import force_unicode
+from .feature import force_unicode, OUTLINE_PARAM_RE
 
 if six.PY3:
     long = int
@@ -106,22 +107,16 @@ class LogBDDCucumberJSON(object):
             for tag in item["tags"]
         ]
 
-    def _format_name(self, name, keys, values):
-        for param, value in zip(keys, values):
-            name = name.replace('<{}>'.format(param), value)
-        return name
-
-    def _format_step_name(self, report, step):
-        examples = report.scenario["examples"]
-        if len(examples) == 0:
-            return step["name"]
-
-        # we take the keys from the first "examples", but in each table, the keys should
-        # be the same anyway since all the variables need to be filled in.
-        keys, values = examples[0]["rows"]
-        row_index = examples[0]["row_index"]
-
-        return self._format_name(step["name"], keys, values[row_index])
+    def _format_outline_line(self, report, line, **example_kwargs):
+        while True:
+            param_match = re.search(OUTLINE_PARAM_RE, line)
+            if not param_match:
+                break
+            param_token = param_match.group(0)
+            param_name = param_match.group(1)
+            param_value = example_kwargs[param_name]
+            line = line.replace(param_token, param_value)
+        return line
 
     def pytest_runtest_logreport(self, report):
         try:
@@ -144,7 +139,7 @@ class LogBDDCucumberJSON(object):
                 # XXX The format is already 'expanded' (scenario oultines -> scenarios),
                 # but the step names were not filled in with parameters. To be backwards
                 # compatible, do not fill in the step names unless explicitly asked for.
-                step_name = self._format_step_name(report, step)
+                step_name = self._format_outline_line(report, step["name"], **scenario["example_kwargs"])
             else:
                 step_name = step["name"]
 
@@ -173,7 +168,7 @@ class LogBDDCucumberJSON(object):
         self.features[scenario["feature"]["filename"]]["elements"].append({
             "keyword": "Scenario",
             "id": report.item["name"],
-            "name": scenario["name"],
+            "name": self._format_outline_line(report, scenario["name"], **scenario["example_kwargs"]),
             "line": scenario["line_number"],
             "description": "",
             "tags": self._serialize_tags(scenario),
