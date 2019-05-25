@@ -22,5 +22,6 @@ These people have contributed to `pytest-bdd`, in alphabetical order:
 * `Leonardo Santagada <santagada@github.com>`_
 * `Milosz Sliwinski <sliwinski-milosz>`_
 * `Michiel Holtkamp <github@elfstone.nl>`_
+* `Nick Farrell <nicholas.farrell@gmail.com>`_
 * `Robin Pedersen <ropez@github.com>`_
 * `Sergey Kraynev <sergejyit@gmail.com>`_

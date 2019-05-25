@@ -136,6 +136,10 @@ def test_tag_with_spaces(testdir):
         import pytest
 
         @pytest.hookimpl(tryfirst=True)
+        def pytest_configure(config):
+            config.addinivalue_line("markers", "test with spaces")
+
+        @pytest.hookimpl(tryfirst=True)
         def pytest_bdd_apply_tag(tag, function):
             assert tag == 'test with spaces'
     """)

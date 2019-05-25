@@ -24,12 +24,13 @@ one line.
 """
 
 from collections import OrderedDict
+from itertools import product
 from os import path as op
 import codecs
+from copy import deepcopy
 import re
 import sys
 import textwrap
-
 import glob2
 import six
 
@@ -261,6 +262,7 @@ class Feature(object):
             gherkin language (given-when-then))
         """
         self.scenarios = OrderedDict()
+        self.legacy_scenarios = OrderedDict()
         self.rel_filename = op.join(op.basename(basedir), filename)
         self.filename = filename = op.abspath(op.join(basedir, filename))
         self.line_number = 1
@@ -341,7 +343,8 @@ class Feature(object):
                 keyword, parsed_line = parse_line(clean_line)
                 if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
                     tags = get_tags(prev_line)
-                    self.scenarios[parsed_line] = scenario = Scenario(self, parsed_line, line_number, tags=tags)
+                    self.scenarios[parsed_line] = scenario = \
+                        Scenario(self, parsed_line, line_number, tags=tags, modern=False)
                 elif mode == types.BACKGROUND:
                     self.background = Background(
                         feature=self,
@@ -386,8 +389,39 @@ class Feature(object):
                         target = scenario
                     target.add_step(step)
                 prev_line = clean_line
+        for scenario_name in set(self.scenarios):
+            # We are not iterating directly over 'scenarios' as
+            # we may need to mutate it
+            scenario = self.scenarios[scenario_name]
+            params = list(scenario.get_params())
+            processed_examples = False
+            if (not params[0]) or getattr(scenario, 'example_converters', None):
+                # Either this has no examples, or it has legacy example_converters.
+                # We cannot safely treat this in the normal way, and fall back on
+                # old approach.
+                continue
 
-        self.description = u"\n".join(description).strip()
+            grouped_params = [[dict(zip(param_names, param_values))
+                              for param_values in param_values_list]
+                              for param_names, param_values_list in params]
+            for parameter_permutation in product(*grouped_params):
+                params_map = dict()
+                for parameter_part in parameter_permutation:
+                    params_map.update(parameter_part)
+                processed_examples = True
+                new_scenario = Scenario(feature=scenario.feature,
+                                        name=scenario.name + str(params_map),
+                                        line_number=scenario.line_number,
+                                        tags=scenario.tags,
+                                        modern=True)
+                for step in scenario.steps:
+                    applied_step = step.apply_example(params_map)
+                    new_scenario.add_step(applied_step)
+                self.scenarios[new_scenario.name] = new_scenario
+            if processed_examples:
+                self.legacy_scenarios[scenario_name] = self.scenarios.pop(scenario_name)
+
+        self.description = "\n".join(description).strip()
 
     @classmethod
     def get_feature(cls, base_path, filename, encoding="utf-8", strict_gherkin=True):
@@ -417,7 +451,7 @@ class Scenario(object):
 
     """Scenario."""
 
-    def __init__(self, feature, name, line_number, example_converters=None, tags=None):
+    def __init__(self, feature, name, line_number, example_converters=None, tags=None, modern=False):
         """Scenario constructor.
 
         :param pytest_bdd.feature.Feature feature: Feature.
@@ -425,6 +459,7 @@ class Scenario(object):
         :param int line_number: Scenario line number.
         :param dict example_converters: Example table parameter converters.
         :param set tags: Set of tags.
+        :param bool modern: Is this a modern scenario outline, with expanded examples?
         """
         self.feature = feature
         self.name = name
@@ -435,6 +470,10 @@ class Scenario(object):
         self.tags = tags or set()
         self.failed = False
         self.test_function = None
+        self.modern = modern
+
+    def __repr__(self):
+        return str(self._steps)
 
     def add_step(self, step):
         """Add step to the scenario.
@@ -467,10 +506,14 @@ class Scenario(object):
 
     def get_example_params(self):
         """Get example parameter names."""
+        if self.modern:
+            return set()
         return set(self.examples.example_params + self.feature.examples.example_params)
 
     def get_params(self, builtin=False):
         """Get converted example params."""
+        if self.modern:
+            return
         for examples in [self.feature.examples, self.examples]:
             yield examples.get_params(self.example_converters, builtin=builtin)
 
@@ -515,6 +558,19 @@ class Step(object):
         self.stop = 0
         self.scenario = None
         self.background = None
+
+    def __repr__(self):
+        return "%s with %s" % (self.type, self.lines)
+
+    def apply_example(self, params_map):
+        if not params_map:
+            # Nothing to do; no example data applies to this step
+            return self
+        result = deepcopy(self)
+        for param_name, param_value in params_map.items():
+            result._name = result._name.replace(("<%s>" % param_name), param_value)
+            result.lines = [line.replace(("<%s>" % param_name), param_value) for line in result.lines]
+        return result
 
     def add_line(self, line):
         """Add line to the multiple step.

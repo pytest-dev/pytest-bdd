@@ -280,9 +280,10 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
         strict_gherkin = get_strict_gherkin()
     feature = Feature.get_feature(features_base_dir, feature_name, encoding=encoding, strict_gherkin=strict_gherkin)
 
-    # Get the sc_enario
+    # Get the sc_enario. First look in the normal place, but fall back
+    # to looking in the 'legacy' location.
     try:
-        scenario = feature.scenarios[scenario_name]
+        scenario = feature.scenarios.get(scenario_name) or feature.legacy_scenarios[scenario_name]
     except KeyError:
         raise exceptions.ScenarioNotFound(
             u'Scenario "{scenario_name}" in feature "{feature_name}" in {feature_filename} is not found.'.format(

@@ -1,10 +1,11 @@
 """Scenario Outline tests."""
 import re
 import textwrap
-
+from six import text_type
 import pytest
 
-from pytest_bdd import given, when, then, scenario
+from pytest_bdd import given, when, then, scenario, scenarios
+from pytest_bdd.parsers import parse
 from pytest_bdd import exceptions
 from pytest_bdd.utils import get_parametrize_markers_args
 
@@ -160,6 +161,26 @@ def should_have_left_fruits(start_fruits, start, eat, left, fruits):
     assert start_fruits[fruits]['eat'] == eat
 
 
+@given(parse('there were {start:d} {fruits}'))
+def started_fruits(start, fruits):
+    assert isinstance(start, int)
+    return {fruits: dict(start=start)}
+
+
+@when(parse('I ate {eat:g} {fruits}'))
+def ate_fruits(started_fruits, eat, fruits):
+    assert isinstance(eat, float)
+    started_fruits[fruits]['eat'] = eat
+
+
+@then(parse('I should have had {left} {fruits}'))
+def should_have_had_left_fruits(started_fruits, start, eat, left, fruits):
+    assert isinstance(left, (text_type, str))
+    assert start - eat == int(left)
+    assert started_fruits[fruits]['start'] == start
+    assert started_fruits[fruits]['eat'] == eat
+
+
 @scenario(
     'outline_feature.feature',
     'Outlined given, when, thens',
@@ -172,3 +193,5 @@ def test_outlined_feature(request):
         ['fruits'],
         [[u'oranges'], [u'apples']]
     )
+
+scenarios('outline_modern.feature')
