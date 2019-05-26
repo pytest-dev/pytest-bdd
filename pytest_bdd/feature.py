@@ -393,9 +393,9 @@ class Feature(object):
             # We are not iterating directly over 'scenarios' as
             # we may need to mutate it
             scenario = self.scenarios[scenario_name]
-            params = list(scenario.get_params())
+            params = [param for param in scenario.get_params() if param]
             processed_examples = False
-            if (not params[0]) or getattr(scenario, 'example_converters', None):
+            if (not params) or getattr(scenario, 'example_converters', None):
                 # Either this has no examples, or it has legacy example_converters.
                 # We cannot safely treat this in the normal way, and fall back on
                 # old approach.
