@@ -53,22 +53,33 @@ STEP_PREFIXES = [
     ("Then ", types.THEN),
     ("@", types.TAG),
     # Continuation of the previously mentioned step type
-    ("And ", None),
-    ("But ", None),
+    ("And ", types.AND),
+    ("But ", types.BUT),
 ]
 
 STEP_PARAM_RE = re.compile(r"\<(.+?)\>")
 COMMENT_RE = re.compile(r'(^|(?<=\s))#')
 
 
-def get_step_type(line):
+def get_prefixes(prefixes=None):
+    if prefixes is None:
+        return STEP_PREFIXES
+
+    step_prefixes = [
+        (prefixes.get(type_, prefix), type_)
+        for prefix, type_ in STEP_PREFIXES
+    ]
+    return step_prefixes
+
+
+def get_step_type(line, prefixes=None):
     """Detect step type by the beginning of the line.
 
     :param str line: Line of the Feature file.
 
     :return: SCENARIO, GIVEN, WHEN, THEN, or `None` if can't be detected.
     """
-    for prefix, _type in STEP_PREFIXES:
+    for prefix, _type in get_prefixes(prefixes):
         if line.startswith(prefix):
             return _type
 
@@ -86,14 +97,14 @@ def strip_comments(line):
     return line.strip()
 
 
-def parse_line(line):
+def parse_line(line, prefixes=None):
     """Parse step line to get the step prefix (Scenario, Given, When, Then or And) and the actual step name.
 
     :param line: Line of the Feature file.
 
     :return: `tuple` in form ("<prefix>", "<Line without the prefix>").
     """
-    for prefix, _ in STEP_PREFIXES:
+    for prefix, _ in get_prefixes(prefixes):
         if line.startswith(prefix):
             return prefix.strip(), line[len(prefix):].strip()
     return "", line
@@ -251,7 +262,7 @@ class Feature(object):
 
     """Feature."""
 
-    def __init__(self, basedir, filename, encoding="utf-8", strict_gherkin=True):
+    def __init__(self, basedir, filename, encoding="utf-8", strict_gherkin=True, prefixes=None):
         """Parse the feature file.
 
         :param str basedir: Feature files base directory.
@@ -275,6 +286,7 @@ class Feature(object):
         multiline_step = False
         prev_line = None
         self.background = None
+        self.prefixes = prefixes
 
         with codecs.open(filename, encoding=encoding) as f:
             content = force_unicode(f.read(), encoding)
@@ -293,7 +305,10 @@ class Feature(object):
                 clean_line = strip_comments(line)
                 if not clean_line and (not prev_mode or prev_mode not in types.FEATURE):
                     continue
-                mode = get_step_type(clean_line) or mode
+                mode = get_step_type(clean_line, self.prefixes)
+
+                if mode in (types.AND, types.BUT):
+                    mode = prev_mode
 
                 allowed_prev_mode = (types.BACKGROUND, types.GIVEN)
                 if not strict_gherkin:
@@ -325,7 +340,7 @@ class Feature(object):
 
                 if mode == types.FEATURE:
                     if prev_mode is None or prev_mode == types.TAG:
-                        _, self.name = parse_line(clean_line)
+                        _, self.name = parse_line(clean_line, self.prefixes)
                         self.line_number = line_number
                         self.tags = get_tags(prev_line)
                     elif prev_mode == types.FEATURE:
@@ -338,7 +353,7 @@ class Feature(object):
                 prev_mode = mode
 
                 # Remove Feature, Given, When, Then, And
-                keyword, parsed_line = parse_line(clean_line)
+                keyword, parsed_line = parse_line(clean_line, self.prefixes)
                 if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
                     tags = get_tags(prev_line)
                     self.scenarios[parsed_line] = scenario = Scenario(self, parsed_line, line_number, tags=tags)
@@ -390,7 +405,7 @@ class Feature(object):
         self.description = u"\n".join(description).strip()
 
     @classmethod
-    def get_feature(cls, base_path, filename, encoding="utf-8", strict_gherkin=True):
+    def get_feature(cls, base_path, filename, encoding="utf-8", strict_gherkin=True, prefixes=None):
         """Get a feature by the filename.
 
         :param str base_path: Base feature directory.
@@ -408,7 +423,13 @@ class Feature(object):
         full_name = op.abspath(op.join(base_path, filename))
         feature = features.get(full_name)
         if not feature:
-            feature = Feature(base_path, filename, encoding=encoding, strict_gherkin=strict_gherkin)
+            feature = Feature(
+                base_path,
+                filename,
+                encoding=encoding,
+                strict_gherkin=strict_gherkin,
+                prefixes=prefixes,
+            )
             features[full_name] = feature
         return feature
 

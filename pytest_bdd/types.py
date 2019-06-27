@@ -13,5 +13,7 @@ GIVEN = "given"
 WHEN = "when"
 THEN = "then"
 TAG = "tag"
+AND = "and"
+BUT = "but"
 
 STEP_TYPES = (GIVEN, WHEN, THEN)

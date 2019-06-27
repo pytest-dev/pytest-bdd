@@ -65,7 +65,7 @@ def get_step_fixture_name(name, type_, encoding=None):
         type=type_, name=force_encode(name, **(dict(encoding=encoding) if encoding else {})))
 
 
-def given(name, fixture=None, converters=None, scope='function', target_fixture=None):
+def given(name, fixture=None, converters=None, scope='function', target_fixture=None, prefixes=None):
     """Given step decorator.
 
     :param name: Given step name.
@@ -89,7 +89,7 @@ def given(name, fixture=None, converters=None, scope='function', target_fixture=
         step_func.fixture = fixture
         func = pytest.fixture(scope=scope)(lambda: step_func)
         func.__doc__ = 'Alias for the "{0}" fixture.'.format(fixture)
-        _, name = parse_line(name)
+        _, name = parse_line(name, prefixes)
         contribute_to_module(module, get_step_fixture_name(name, GIVEN), func)
         return _not_a_fixture_decorator
 

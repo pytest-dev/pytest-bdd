@@ -260,7 +260,8 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, call
 
 
 def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None,
-             caller_module=None, caller_function=None, features_base_dir=None, strict_gherkin=None):
+             caller_module=None, caller_function=None, features_base_dir=None,
+             strict_gherkin=None, prefixes=None):
     """Scenario decorator.
 
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
@@ -278,7 +279,13 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
         features_base_dir = get_features_base_dir(caller_module)
     if strict_gherkin is None:
         strict_gherkin = get_strict_gherkin()
-    feature = Feature.get_feature(features_base_dir, feature_name, encoding=encoding, strict_gherkin=strict_gherkin)
+    feature = Feature.get_feature(
+        features_base_dir,
+        feature_name,
+        encoding=encoding,
+        strict_gherkin=strict_gherkin,
+        prefixes=prefixes,
+    )
 
     # Get the sc_enario
     try:
