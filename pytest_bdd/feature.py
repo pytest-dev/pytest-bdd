@@ -24,41 +24,65 @@ one line.
 """
 
 from collections import OrderedDict
-from os import path as op
+from os import path as op, environ
 import codecs
 import re
 import sys
 import textwrap
 
+import gettext
 import glob2
 import six
 
 from . import types
 from . import exceptions
 
+BASE_DIR = op.dirname(op.realpath(__file__))
+STEP_PARAM_RE = re.compile(r"\<(.+?)\>")
+COMMENT_RE = re.compile(r'(^|(?<=\s))#')
 
 # Global features dictionary
 features = {}
+_step_prefixes = None
 
 
-STEP_PREFIXES = [
-    ("Feature: ", types.FEATURE),
-    ("Scenario Outline: ", types.SCENARIO_OUTLINE),
-    ("Examples: Vertical", types.EXAMPLES_VERTICAL),
-    ("Examples:", types.EXAMPLES),
-    ("Scenario: ", types.SCENARIO),
-    ("Background:", types.BACKGROUND),
-    ("Given ", types.GIVEN),
-    ("When ", types.WHEN),
-    ("Then ", types.THEN),
-    ("@", types.TAG),
-    # Continuation of the previously mentioned step type
-    ("And ", None),
-    ("But ", None),
-]
+def set_step_prefixes(languages=None):
+    global _step_prefixes
 
-STEP_PARAM_RE = re.compile(r"\<(.+?)\>")
-COMMENT_RE = re.compile(r'(^|(?<=\s))#')
+    if _step_prefixes is None or languages:
+        if languages is None:
+            languages = environ.get('PYTEST_BDD_LANGS', 'en')
+
+        _ = gettext.translation(
+            'step-prefixes',
+            localedir=op.join(BASE_DIR, 'locales'),
+            languages=languages.split(','),
+        ).gettext
+
+        _step_prefixes = [
+            (_("Feature: "), types.FEATURE),
+            (_("Scenario Outline: "), types.SCENARIO_OUTLINE),
+            (_("Examples: Vertical"), types.EXAMPLES_VERTICAL),
+            (_("Examples:"), types.EXAMPLES),
+            (_("Scenario: "), types.SCENARIO),
+            (_("Background:"), types.BACKGROUND),
+            (_("Given "), types.GIVEN),
+            (_("When "), types.WHEN),
+            (_("Then "), types.THEN),
+            ("@", types.TAG),
+            # Continuation of the previously mentioned step type
+            (_("And "), None),
+            (_("But "), None),
+        ]
+
+    return _step_prefixes
+
+
+set_step_prefixes()
+
+
+def get_step_prefixes():
+    return _step_prefixes
 
 
 def get_step_type(line):
@@ -68,7 +92,7 @@ def get_step_type(line):
 
     :return: SCENARIO, GIVEN, WHEN, THEN, or `None` if can't be detected.
     """
-    for prefix, _type in STEP_PREFIXES:
+    for prefix, _type in get_step_prefixes():
         if line.startswith(prefix):
             return _type
 
@@ -93,7 +117,7 @@ def parse_line(line):
 
     :return: `tuple` in form ("<prefix>", "<Line without the prefix>").
     """
-    for prefix, _ in STEP_PREFIXES:
+    for prefix, _ in get_step_prefixes():
         if line.startswith(prefix):
             return prefix.strip(), line[len(prefix):].strip()
     return "", line

@@ -6,7 +6,9 @@ python:
   - "3.6"
   - "3.7"
 
-install: pip install tox tox-travis
+install:
+  - make translate
+  - pip install tox tox-travis
 
 script: tox --recreate
 

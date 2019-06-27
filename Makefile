@@ -8,7 +8,13 @@ PATH := .env/bin:$(PATH)
 develop: .env
 	pip install -e . -r requirements-testing.txt tox python-coveralls
 
-coverage: develop
+translate:
+	msgfmt pytest_bdd/locales/en/LC_MESSAGES/step-prefixes.po \
+		-o pytest_bdd/locales/en/LC_MESSAGES/step-prefixes.mo
+	msgfmt pytest_bdd/locales/pt_BR/LC_MESSAGES/step-prefixes.po \
+		-o pytest_bdd/locales/pt_BR/LC_MESSAGES/step-prefixes.mo
+
+coverage: develop translate
 	coverage run --source=pytest_bdd .env/bin/py.test tests
 	coverage report -m
 
