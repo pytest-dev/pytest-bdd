@@ -3,21 +3,7 @@ import textwrap
 
 import pytest
 
-from pytest_bdd import scenario, feature
-
-
-def test_tags(request):
-    """Test tags for the scenario and the feature."""
-    @scenario(
-        'tags.feature',
-        'Tags'
-    )
-    def test():
-        pass
-
-    assert test.__scenario__.tags == set(['scenario_tag_1', 'scenario_tag_2'])
-    assert test.__scenario__.feature.tags == set(['feature_tag_1', 'feature_tag_2'])
-    test(request)
+from pytest_bdd import feature
 
 
 def test_tags_selector(testdir):
