@@ -6,7 +6,7 @@ python:
   - "3.6"
   - "3.7"
 
-install: pip install tox tox-travis
+install: pip install tox tox-travis coveralls
 
 script: tox --recreate
 
@@ -14,7 +14,10 @@ branches:
   except:
     - /^\d/
 
+after_success: coveralls
 notifications:
   email:
     - bubenkoff@gmail.com
     - oleg.pidsadnyi@gmail.com
+  webhooks:
+    - "https://coveralls.io/webhook"  # Tell coveralls that this build has finished. Necessary when using PARALLEL mode

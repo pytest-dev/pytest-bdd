@@ -1,4 +1,4 @@
 mock
-coverage<4.0a1
+pytest-cov
 pytest-cache
 pycodestyle
