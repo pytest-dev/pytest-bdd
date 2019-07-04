@@ -1,4 +1,6 @@
 """Test tags."""
+import textwrap
+
 import pytest
 
 from pytest_bdd import scenario, feature
@@ -20,6 +22,15 @@ def test_tags(request):
 
 def test_tags_selector(testdir):
     """Test tests selection by tags."""
+    testdir.makefile(".ini", pytest=textwrap.dedent("""
+    [pytest]
+    markers =
+        feature_tag_1
+        feature_tag_2
+        scenario_tag_01
+        scenario_tag_02
+    """)
+    )
     testdir.makefile('.feature', test="""
     @feature_tag_1 @feature_tag_2
     Feature: Tags
