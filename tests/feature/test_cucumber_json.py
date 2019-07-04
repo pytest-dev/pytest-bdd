@@ -281,6 +281,12 @@ def test_step_trace(testdir):
 
 def test_step_trace_with_expand_option(testdir):
     """Test step trace."""
+    testdir.makefile(".ini", pytest=textwrap.dedent("""
+    [pytest]
+    markers =
+        feature-tag
+        scenario-outline-passing-tag
+    """))
     testdir.makefile('.feature', test=textwrap.dedent("""
     @feature-tag
     Feature: One scenario outline, expanded to multiple scenarios
