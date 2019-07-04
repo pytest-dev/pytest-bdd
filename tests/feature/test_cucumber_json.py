@@ -38,8 +38,7 @@ def test_step_trace(testdir):
         scenario-failing-tag
         scenario-outline-passing-tag
         feature-tag
-    """)
-    )
+    """))
     testdir.makefile('.feature', test=textwrap.dedent("""
     @feature-tag
     Feature: One passing scenario, one failing scenario
