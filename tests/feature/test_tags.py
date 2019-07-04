@@ -15,8 +15,9 @@ def test_tags_selector(testdir):
         feature_tag_2
         scenario_tag_01
         scenario_tag_02
-    """)
-    )
+        scenario_tag_10
+        scenario_tag_20
+    """))
     testdir.makefile('.feature', test="""
     @feature_tag_1 @feature_tag_2
     Feature: Tags
@@ -40,9 +41,10 @@ def test_tags_selector(testdir):
 
         scenarios('test.feature')
     """)
-    result = testdir.runpytest('-m', 'scenario_tag_10 and not scenario_tag_01', '-vv').parseoutcomes()
-    assert result['passed'] == 1
-    assert result['deselected'] == 1
+    result = testdir.runpytest('-m', 'scenario_tag_10 and not scenario_tag_01', '-vv')
+    outcomes = result.parseoutcomes()
+    assert outcomes['passed'] == 1
+    assert outcomes['deselected'] == 1
 
     result = testdir.runpytest('-m', 'scenario_tag_01 and not scenario_tag_10', '-vv').parseoutcomes()
     assert result['passed'] == 1
@@ -57,6 +59,10 @@ def test_tags_selector(testdir):
 
 def test_tags_after_background_issue_160(testdir):
     """Make sure using a tag after background works."""
+    testdir.makefile(".ini", pytest=textwrap.dedent("""
+    [pytest]
+    markers = tag
+    """))
     testdir.makefile('.feature', test="""
     Feature: Tags after background
 
@@ -129,6 +135,12 @@ def test_apply_tag_hook(testdir):
 
 
 def test_tag_with_spaces(testdir):
+    testdir.makefile(".ini", pytest=textwrap.dedent("""
+    [pytest]
+    markers =
+        test with spaces
+    """)
+    )
     testdir.makeconftest("""
         import pytest
 
