@@ -313,7 +313,7 @@ def test_step_trace_with_expand_option(testdir):
         def test_passing_outline():
             pass
     """))
-    result, jsonobject = runandparse(testdir, '--cucumber-json-expand')
+    result, jsonobject = runandparse(testdir, '--cucumber-json-expanded')
     assert result.ret == 0
 
     assert jsonobject[0]["elements"][0]["steps"][0]["name"] == "type str and value hello"
