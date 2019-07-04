@@ -139,8 +139,7 @@ def test_tag_with_spaces(testdir):
     [pytest]
     markers =
         test with spaces
-    """)
-    )
+    """))
     testdir.makeconftest("""
         import pytest
 
