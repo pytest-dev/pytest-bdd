@@ -13,12 +13,7 @@ from .utils import CONFIG_STACK
 def pytest_addhooks(pluginmanager):
     """Register plugin hooks."""
     from pytest_bdd import hooks
-    try:
-        # pytest >= 2.8
-        pluginmanager.add_hookspecs(hooks)
-    except AttributeError:
-        # pytest < 2.8
-        pluginmanager.addhooks(hooks)
+    pluginmanager.add_hookspecs(hooks)
 
 
 @given('trace')
