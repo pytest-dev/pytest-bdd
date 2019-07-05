@@ -88,9 +88,11 @@ def _find_step_function(request, step, scenario, encoding):
     """
     name = step.name
     try:
+        # Simple case where no parser is used for the step
         return request.getfixturevalue(get_step_fixture_name(name, step.type, encoding))
     except pytest_fixtures.FixtureLookupError:
         try:
+            # Could not find a fixture with the same name, let's see if there is a parser involved
             name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager, request)
             if name:
                 return request.getfixturevalue(name)
