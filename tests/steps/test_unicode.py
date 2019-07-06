@@ -33,6 +33,9 @@ def string():
     return {'content': ''}
 
 
+given(u"I have an alias with a unicode type for foo", fixture="foo")
+
+
 @given(parsers.parse(u"у мене є рядок який містить '{content}'"))
 def there_is_a_string_with_content(content, string):
     """Create string with unicode content."""
