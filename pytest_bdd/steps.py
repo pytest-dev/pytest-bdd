@@ -85,7 +85,7 @@ def given(name, fixture=None, converters=None, scope='function', target_fixture=
 
         step_func.step_type = GIVEN
         step_func.converters = converters
-        step_func.__name__ = name
+        step_func.__name__ = force_encode(name, 'ascii')
         step_func.fixture = fixture
         func = pytest.fixture(scope=scope)(lambda: step_func)
         func.__doc__ = 'Alias for the "{0}" fixture.'.format(fixture)
