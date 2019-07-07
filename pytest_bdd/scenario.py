@@ -49,6 +49,11 @@ PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
+# We have to keep track of the invocation of @scenario() so that we can reorder test item accordingly.
+# In python 3.6+ this is no longer necessary, as the order is automatically retained.
+_py2_scenario_creation_counter = 0
+
+
 def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None):
     """Find argumented step fixture name."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
@@ -200,11 +205,6 @@ def _execute_scenario(feature, scenario, request, encoding):
 
 
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
-
-
-# We have to keep track of the invocation of @scenario() so that we can reorder test item accordingly.
-# In python 3.6+ this is no longer necessary, as the order is automatically retained.
-_py2_scenario_creation_counter = 0
 
 
 def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None,
