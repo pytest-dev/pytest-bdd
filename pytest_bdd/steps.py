@@ -32,7 +32,6 @@ given("I have a beautiful article", fixture="article")
 """
 
 from __future__ import absolute_import
-from types import CodeType
 import inspect
 import sys
 
@@ -41,7 +40,6 @@ try:
     from _pytest import fixtures as pytest_fixtures
 except ImportError:
     from _pytest import python as pytest_fixtures
-import six
 
 from .feature import parse_line, force_encode
 from .types import GIVEN, WHEN, THEN
@@ -90,7 +88,7 @@ def given(name, fixture=None, converters=None, scope='function', target_fixture=
         func = pytest.fixture(scope=scope)(lambda: step_func)
         func.__doc__ = 'Alias for the "{0}" fixture.'.format(fixture)
         _, name = parse_line(name)
-        contribute_to_module(module, get_step_fixture_name(name, GIVEN), func)
+        setattr(module, get_step_fixture_name(name, GIVEN), func)
         return _not_a_fixture_decorator
 
     return _step_decorator(GIVEN, name, converters=converters, scope=scope, target_fixture=target_fixture)
@@ -185,82 +183,10 @@ def _step_decorator(step_type, step_name, converters=None, scope='function', tar
             step_func.converters = lazy_step_func.converters = converters
 
         lazy_step_func = pytest.fixture(scope=scope)(lazy_step_func)
-        contribute_to_module(
-            module=get_caller_module(),
-            name=get_step_fixture_name(parsed_step_name, step_type),
-            func=lazy_step_func,
-        )
-
+        setattr(get_caller_module(), get_step_fixture_name(parsed_step_name, step_type), lazy_step_func)
         return func
 
     return decorator
-
-
-def recreate_function(func, module=None, name=None, add_args=[], firstlineno=None):
-    """Recreate a function, replacing some info.
-
-    :param func: Function object.
-    :param module: Module to contribute to.
-    :param add_args: Additional arguments to add to function.
-
-    :return: Function copy.
-    """
-    def get_code(func):
-        return func.__code__ if six.PY3 else func.func_code
-
-    def set_code(func, code):
-        if six.PY3:
-            func.__code__ = code
-        else:
-            func.func_code = code
-
-    argnames = [
-        "co_argcount", "co_nlocals", "co_stacksize", "co_flags", "co_code", "co_consts", "co_names",
-        "co_varnames", "co_filename", "co_name", "co_firstlineno", "co_lnotab", "co_freevars", "co_cellvars",
-    ]
-    if six.PY3:
-        argnames.insert(1, "co_kwonlyargcount")
-
-    for arg in get_args(func):
-        if arg in add_args:
-            add_args.remove(arg)
-
-    args = []
-    code = get_code(func)
-    for arg in argnames:
-        if module is not None and arg == "co_filename":
-            args.append(module.__file__)
-        elif name is not None and arg == "co_name":
-            args.append(name)
-        elif arg == "co_argcount":
-            args.append(getattr(code, arg) + len(add_args))
-        elif arg == "co_varnames":
-            co_varnames = getattr(code, arg)
-            args.append(co_varnames[:code.co_argcount] + tuple(add_args) + co_varnames[code.co_argcount:])
-        elif arg == "co_firstlineno":
-            args.append(firstlineno if firstlineno else 1)
-        else:
-            args.append(getattr(code, arg))
-
-    set_code(func, CodeType(*args))
-    if name is not None:
-        func.__name__ = name
-    return func
-
-
-def contribute_to_module(module, name, func):
-    """Contribute a function to a module.
-
-    :param module: Module to contribute to.
-    :param name: Attribute name.
-    :param func: Function object.
-
-    :return: New function copy contributed to the module
-    """
-    name = force_encode(name)
-    func = recreate_function(func, module=module)
-    setattr(module, name, func)
-    return func
 
 
 def get_caller_module(depth=2):
