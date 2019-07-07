@@ -29,7 +29,6 @@ from .feature import (
     get_features,
 )
 from .steps import (
-    get_caller_function,
     get_caller_module,
     get_step_fixture_name,
     inject_fixture,
@@ -209,7 +208,7 @@ _py2_scenario_creation_counter = 0
 
 
 def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None,
-             caller_module=None, caller_function=None, features_base_dir=None, strict_gherkin=None):
+             caller_module=None, features_base_dir=None, strict_gherkin=None):
     """Scenario decorator.
 
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
@@ -225,7 +224,6 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
 
     scenario_name = force_unicode(scenario_name, encoding)
     caller_module = caller_module or get_caller_module()
-    caller_function = caller_function or get_caller_function()
 
     # Get the feature
     if features_base_dir is None:
@@ -251,7 +249,7 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     # Validate the scenario
     scenario.validate()
 
-    # extract from here
+    # TODO: extract from here
     def wrapper(*args):
         if not args:
             raise exceptions.ScenarioIsDecoratorOnly(
@@ -284,16 +282,6 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
         return scenario_wrapper
     return wrapper
     # to here
-
-    return _get_scenario_decorator(
-        feature,
-        feature_name,
-        scenario,
-        scenario_name,
-        caller_module,
-        caller_function,
-        encoding,
-    )
 
 
 def get_features_base_dir(caller_module):
