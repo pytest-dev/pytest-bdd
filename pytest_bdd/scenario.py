@@ -204,11 +204,13 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, enco
     counter = _py2_scenario_creation_counter
     _py2_scenario_creation_counter += 1
 
-    # Ideally we would use `def wrapper(fn)`, but we want to return a custom exception when the decorator is misused.
-    # Pytest inspect the signature do find the fixtures, and in that case it would look for a fixture called "fn" that
-    # doesn't exist (if it exists then it's even worse) and it will error with a "fixture 'fn' not found" message
-    # instead.
-    def wrapper(*args):
+    # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
+    # when the decorator is misused.
+    # Pytest inspect the signature to determine the required fixtures, and in that case it would look
+    # for a fixture called "fn" that doesn't exist (if it exists then it's even worse).
+    # It will error with a "fixture 'fn' not found" message instead.
+    # We can avoid this hack by using a pytest hook and check for misuse instead.
+    def decorator(*args):
         if not args:
             raise exceptions.ScenarioIsDecoratorOnly(
                 "scenario function can only be used as a decorator. Refer to the documentation.",
@@ -238,7 +240,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, enco
         scenario_wrapper.__pytest_bdd_counter__ = counter
         scenario.test_function = scenario_wrapper
         return scenario_wrapper
-    return wrapper
+    return decorator
 
 
 def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None,
