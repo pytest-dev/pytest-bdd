@@ -11,7 +11,6 @@ test_publish_article = scenario(
 )
 """
 import collections
-import functools
 import inspect
 import os
 import re
@@ -26,17 +25,14 @@ import six
 from . import exceptions
 from .feature import (
     Feature,
-    force_encode,
     force_unicode,
     get_features,
 )
 from .steps import (
-    execute,
     get_caller_function,
     get_caller_module,
     get_step_fixture_name,
     inject_fixture,
-    recreate_function,
 )
 from .types import GIVEN
 from .utils import CONFIG_STACK, get_args
@@ -205,61 +201,6 @@ def _execute_scenario(feature, scenario, request, encoding):
 
 
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
-
-
-def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, caller_module, caller_function, encoding):
-    """Get scenario decorator."""
-    g = locals()
-    g["_execute_scenario"] = _execute_scenario
-
-    scenario_name = force_encode(scenario_name, encoding)
-
-    def decorator(_pytestbdd_function):
-        if isinstance(_pytestbdd_function, pytest_fixtures.FixtureRequest):
-            raise exceptions.ScenarioIsDecoratorOnly(
-                "scenario function can only be used as a decorator. Refer to the documentation.",
-            )
-
-        g.update(locals())
-
-        args = get_args(_pytestbdd_function)
-        function_args = list(args)
-        for arg in scenario.get_example_params():
-            if arg not in function_args:
-                function_args.append(arg)
-        if "request" not in function_args:
-            function_args.append("request")
-
-        code = """def {name}({function_args}):
-            _execute_scenario(feature, scenario, request, encoding)
-            _pytestbdd_function({args})""".format(
-            name=_pytestbdd_function.__name__,
-            function_args=", ".join(function_args),
-            args=", ".join(args))
-
-        execute(code, g)
-
-        _scenario = recreate_function(
-            g[_pytestbdd_function.__name__],
-            module=caller_module,
-            firstlineno=caller_function.f_lineno,
-        )
-
-        for param_set in scenario.get_params():
-            if param_set:
-                _scenario = pytest.mark.parametrize(*param_set)(_scenario)
-
-        for tag in scenario.tags.union(feature.tags):
-            config = CONFIG_STACK[-1]
-            config.hook.pytest_bdd_apply_tag(tag=tag, function=_scenario)
-
-        _scenario.__doc__ = "{feature_name}: {scenario_name}".format(
-            feature_name=feature_name, scenario_name=scenario_name)
-        _scenario.__scenario__ = scenario
-        scenario.test_function = _scenario
-        return _scenario
-
-    return recreate_function(decorator, module=caller_module, firstlineno=caller_function.f_lineno)
 
 
 # We have to keep track of the invocation of @scenario() so that we can reorder test item accordingly.
