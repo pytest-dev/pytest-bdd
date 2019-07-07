@@ -65,7 +65,7 @@ def test_scenario_not_decorator(testdir):
         """)
     testdir.makepyfile("""
         from pytest_bdd import scenario
-        
+
         test_foo = scenario('foo.feature', 'Foo')
         """)
 
