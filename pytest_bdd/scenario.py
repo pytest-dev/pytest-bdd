@@ -20,7 +20,6 @@ try:
     from _pytest import fixtures as pytest_fixtures
 except ImportError:
     from _pytest import python as pytest_fixtures
-import six
 
 from . import exceptions
 from .feature import (
@@ -35,14 +34,6 @@ from .steps import (
 )
 from .types import GIVEN
 from .utils import CONFIG_STACK, get_args
-
-if six.PY3:  # pragma: no cover
-    import runpy
-
-    def execfile(filename, init_globals):
-        """Execute given file as a python script in given globals environment."""
-        result = runpy.run_path(filename, init_globals=init_globals)
-        init_globals.update(result)
 
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
