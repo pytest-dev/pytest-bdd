@@ -198,11 +198,6 @@ def get_caller_module(depth=2):
     return module
 
 
-def execute(code, g):
-    """Execute given code in given globals environment."""
-    exec(code, g)
-
-
 def inject_fixture(request, arg, value):
     """Inject fixture into pytest fixture request.
 
