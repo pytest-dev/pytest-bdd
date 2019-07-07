@@ -11,6 +11,7 @@ test_publish_article = scenario(
 )
 """
 import collections
+import functools
 import inspect
 import os
 import re
@@ -282,7 +283,7 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
         strict_gherkin = get_strict_gherkin()
     feature = Feature.get_feature(features_base_dir, feature_name, encoding=encoding, strict_gherkin=strict_gherkin)
 
-    # Get the sc_enario
+    # Get the scenario
     try:
         scenario = feature.scenarios[scenario_name]
     except KeyError:
@@ -298,6 +299,39 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
 
     # Validate the scenario
     scenario.validate()
+
+    # extract from here
+    def wrapper(*args):
+        if not args:
+            raise exceptions.ScenarioIsDecoratorOnly(
+                "scenario function can only be used as a decorator. Refer to the documentation.",
+            )
+        [fn] = args
+        args = get_args(fn)
+        function_args = list(args)
+        for arg in scenario.get_example_params():
+            if arg not in function_args:
+                function_args.append(arg)
+
+        @pytest.mark.usefixtures(*function_args)
+        def scenario_wrapper(request):
+            _execute_scenario(feature, scenario, request, encoding)
+            return fn(*[request.getfixturevalue(arg) for arg in args])
+
+        for param_set in scenario.get_params():
+            if param_set:
+                scenario_wrapper = pytest.mark.parametrize(*param_set)(scenario_wrapper)
+        for tag in scenario.tags.union(feature.tags):
+            config = CONFIG_STACK[-1]
+            config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
+
+        scenario_wrapper.__doc__ = "{feature_name}: {scenario_name}".format(
+            feature_name=feature_name, scenario_name=scenario_name)
+        scenario_wrapper.__scenario__ = scenario
+        scenario.test_function = scenario_wrapper
+        return scenario_wrapper
+    return wrapper
+    # to here
 
     return _get_scenario_decorator(
         feature,
@@ -389,7 +423,7 @@ def scenarios(*feature_paths, **kwargs):
                     if test_name not in module.__dict__:
                         # found an unique test name
                         # recreate function to set line number
-                        _scenario = recreate_function(_scenario, module=module, firstlineno=index * 4)
+                        # _scenario = recreate_function(_scenario, module=module, firstlineno=index * 4)
                         index += 1
                         module.__dict__[test_name] = _scenario
                         break
