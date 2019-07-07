@@ -198,11 +198,6 @@ def get_caller_module(depth=2):
     return module
 
 
-def get_caller_function(depth=2):
-    """Return caller function."""
-    return sys._getframe(depth)
-
-
 def execute(code, g):
     """Execute given code in given globals environment."""
     exec(code, g)
