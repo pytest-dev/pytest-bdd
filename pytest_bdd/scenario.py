@@ -198,13 +198,7 @@ def _execute_scenario(feature, scenario, request, encoding):
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
-def _get_scenario_decorator(
-    feature,
-    feature_name,
-    scenario,
-    scenario_name,
-    encoding,
-):
+def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, encoding):
     global _py2_scenario_creation_counter
 
     counter = _py2_scenario_creation_counter
