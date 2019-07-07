@@ -88,6 +88,7 @@ def pytest_bdd_apply_tag(tag, function):
     mark = getattr(pytest.mark, tag)
     return mark(function)
 
+
 @pytest.mark.tryfirst
 def pytest_collection_modifyitems(session, config, items):
     """Re-order items using the creation counter as fallback.
