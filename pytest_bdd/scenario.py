@@ -262,6 +262,11 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, call
     return recreate_function(decorator, module=caller_module, firstlineno=caller_function.f_lineno)
 
 
+# We have to keep track of the invocation of @scenario() so that we can reorder test item accordingly.
+# In python 3.6+ this is no longer necessary, as the order is automatically retained.
+_py2_scenario_creation_counter = 0
+
+
 def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None,
              caller_module=None, caller_function=None, features_base_dir=None, strict_gherkin=None):
     """Scenario decorator.
@@ -272,6 +277,11 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     :param dict example_converters: optional `dict` of example converter function, where key is the name of the
         example parameter, and value is the converter function.
     """
+    global _py2_scenario_creation_counter
+
+    this_counter = _py2_scenario_creation_counter
+    _py2_scenario_creation_counter += 1
+
     scenario_name = force_unicode(scenario_name, encoding)
     caller_module = caller_module or get_caller_module()
     caller_function = caller_function or get_caller_function()
@@ -325,9 +335,10 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
             config = CONFIG_STACK[-1]
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 
-        scenario_wrapper.__doc__ = "{feature_name}: {scenario_name}".format(
+        scenario_wrapper.__doc__ = u"{feature_name}: {scenario_name}".format(
             feature_name=feature_name, scenario_name=scenario_name)
         scenario_wrapper.__scenario__ = scenario
+        scenario_wrapper.__pytest_bdd_counter__ = this_counter
         scenario.test_function = scenario_wrapper
         return scenario_wrapper
     return wrapper
