@@ -241,8 +241,8 @@ def gherkin_scenario_that_has_parametrized_scenario(testdir):
     """)
 
 
-@when("tests are run")
-def tests_are_run(testdir, test_execution):
+@when("I run tests")
+def run_tests(testdir, test_execution):
     test_execution['regular'] = testdir.runpytest()
     test_execution['gherkin'] = testdir.runpytest('--gherkin-terminal-reporter')
 
@@ -262,20 +262,20 @@ def output_must_be_the_same_as_regular_reporter(test_execution):
         assert l1 == l2
 
 
-@when("tests are run with verbose mode")
-def tests_are_run_with_verbose_mode(testdir, test_execution):
+@when("I run tests with verbose mode")
+def run_tests_with_verbose_mode(testdir, test_execution):
     test_execution['regular'] = testdir.runpytest('-v')
     test_execution['gherkin'] = testdir.runpytest('--gherkin-terminal-reporter', '-v')
 
 
-@when("tests are run with very verbose mode")
-def tests_are_run_with_very_verbose_mode(testdir, test_execution):
+@when("I run tests with very verbose mode")
+def run_tests_with_very_verbose_mode(testdir, test_execution):
     test_execution['regular'] = testdir.runpytest('-vv')
     test_execution['gherkin'] = testdir.runpytest('--gherkin-terminal-reporter', '-vv')
 
 
-@when("tests are run with step expanded mode")
-def tests_are_run_with_step_expanded_mode(testdir, test_execution):
+@when("I run tests with step expanded mode")
+def run_tests_with_step_expanded_mode(testdir, test_execution):
     test_execution['regular'] = testdir.runpytest('-vv')
     test_execution['gherkin'] = testdir.runpytest(
         '--gherkin-terminal-reporter',
@@ -327,8 +327,8 @@ def gherkin_scenario_without_implementation(testdir):
     """)
 
 
-@when('tests are run with any verbosity mode')
-def tests_are_run_with_any_verbosity_mode(
+@when('I run tests with any verbosity mode')
+def run_tests_with_any_verbosity_mode(
         test_execution, verbosity_mode, testdir,
         gherkin_scenario_without_implementation):
     #  test_execution['gherkin'] = testdir.runpytest(
@@ -412,8 +412,8 @@ def there_is_gherkin_scenario_with_broken_implementation(testdir):
     """)
 
 
-@when('tests are run with --showlocals')
-def tests_are_run_with___showlocals(test_execution, testdir):
+@when('I run tests with --showlocals')
+def run_tests_with___showlocals(test_execution, testdir):
     test_execution['gherkin'] = testdir.runpytest('--gherkin-terminal-reporter', '--showlocals')
 
 

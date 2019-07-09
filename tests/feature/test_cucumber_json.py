@@ -31,6 +31,14 @@ string = type(u'')
 
 def test_step_trace(testdir):
     """Test step trace."""
+    testdir.makefile(".ini", pytest=textwrap.dedent("""
+    [pytest]
+    markers =
+        scenario-passing-tag
+        scenario-failing-tag
+        scenario-outline-passing-tag
+        feature-tag
+    """))
     testdir.makefile('.feature', test=textwrap.dedent("""
     @feature-tag
     Feature: One passing scenario, one failing scenario
@@ -273,6 +281,12 @@ def test_step_trace(testdir):
 
 def test_step_trace_with_expand_option(testdir):
     """Test step trace."""
+    testdir.makefile(".ini", pytest=textwrap.dedent("""
+    [pytest]
+    markers =
+        feature-tag
+        scenario-outline-passing-tag
+    """))
     testdir.makefile('.feature', test=textwrap.dedent("""
     @feature-tag
     Feature: One scenario outline, expanded to multiple scenarios
@@ -299,7 +313,7 @@ def test_step_trace_with_expand_option(testdir):
         def test_passing_outline():
             pass
     """))
-    result, jsonobject = runandparse(testdir, '--cucumber-json-expand')
+    result, jsonobject = runandparse(testdir, '--cucumber-json-expanded')
     assert result.ret == 0
 
     assert jsonobject[0]["elements"][0]["steps"][0]["name"] == "type str and value hello"

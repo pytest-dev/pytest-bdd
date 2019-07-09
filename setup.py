@@ -68,7 +68,7 @@ setup(
         "Topic :: Utilities",
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3"
-    ] + [("Programming Language :: Python :: %s" % x) for x in "2.7 3.0 3.1 3.2 3.3 3.4".split()],
+    ] + [("Programming Language :: Python :: %s" % x) for x in "2.7 3.4 3.5 3.6 3.7".split()],
     cmdclass={"test": ToxTestCommand},
     install_requires=[
         "glob2",
@@ -76,7 +76,7 @@ setup(
         "parse",
         "parse_type",
         "py",
-        "pytest>=2.9.0",
+        "pytest>=3.0.0",
         "six>=1.9.0",
     ],
     # the following makes a plugin available to py.test

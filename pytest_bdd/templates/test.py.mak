@@ -22,6 +22,7 @@ def test_${ make_python_name(scenario.name)}():
 @${step.type}('${step.name}')
 def ${ make_python_name(step.name)}():
     """${step.name}."""
+    raise NotImplementedError
 % if not loop.last:
 
 
