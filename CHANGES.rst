@@ -4,6 +4,12 @@ Changelog
 Unreleased
 ----------
 
+3.1.1
+----------
+
+- Allow unicode string in ``@given()`` step names when using python2.
+  This makes the transition of projects from python 2 to 3 easier.
+
 3.1.0
 ----------
 

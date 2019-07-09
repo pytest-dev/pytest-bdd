@@ -21,6 +21,7 @@ def appends_1(empty_list):
     empty_list.append(1)
     return empty_list
 
+
 given('I have a fixture (appends 1 to a list) in reuse syntax', fixture='appends_1')
 
 

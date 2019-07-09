@@ -23,6 +23,13 @@ string = type(u'')
 
 def test_step_trace(testdir):
     """Test step trace."""
+    testdir.makefile(".ini", pytest=textwrap.dedent("""
+    [pytest]
+    markers =
+        feature-tag
+        scenario-passing-tag
+        scenario-failing-tag
+    """))
     feature = testdir.makefile('.feature', test=textwrap.dedent("""
     @feature-tag
     Feature: One passing scenario, one failing scenario
