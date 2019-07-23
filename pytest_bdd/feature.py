@@ -60,6 +60,8 @@ STEP_PREFIXES = [
 STEP_PARAM_RE = re.compile(r"\<(.+?)\>")
 COMMENT_RE = re.compile(r'(^|(?<=\s))#')
 
+TYPES_WITH_DESCRIPTIONS = [types.FEATURE, types.SCENARIO, types.SCENARIO_OUTLINE]
+
 
 def get_step_type(line):
     """Detect step type by the beginning of the line.
@@ -291,7 +293,8 @@ class Feature(object):
                     multiline_step = False
                 stripped_line = line.strip()
                 clean_line = strip_comments(line)
-                if not clean_line and (not prev_mode or prev_mode not in types.FEATURE):
+                if not clean_line and (not prev_mode or prev_mode not in TYPES_WITH_DESCRIPTIONS):
+                    # Blank lines are included in feature and scenario descriptions
                     continue
                 mode = get_step_type(clean_line) or mode
 
@@ -340,6 +343,13 @@ class Feature(object):
                 # Remove Feature, Given, When, Then, And
                 keyword, parsed_line = parse_line(clean_line)
                 if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
+                    # Lines between the scenario declaration
+                    # and the scenario's first step line
+                    # are considered part of the scenario description.
+                    if scenario and not keyword:
+                        scenario.add_description_line(parsed_line)
+                        continue
+
                     tags = get_tags(prev_line)
                     self.scenarios[parsed_line] = scenario = Scenario(self, parsed_line, line_number, tags=tags)
                 elif mode == types.BACKGROUND:
@@ -435,6 +445,7 @@ class Scenario(object):
         self.tags = tags or set()
         self.failed = False
         self.test_function = None
+        self._description_lines = []
 
     def add_step(self, step):
         """Add step to the scenario.
@@ -455,6 +466,22 @@ class Scenario(object):
             result.extend(self.feature.background.steps)
         result.extend(self._steps)
         return result
+
+    def add_description_line(self, description_line):
+        """Add a description line to the scenario.
+
+        :param str description_line:
+        """
+        self._description_lines.append(description_line)
+
+    @property
+    def description(self):
+        """Get the scenario's description.
+
+        :return: The scenario description
+        """
+        return u"\n".join(self._description_lines).strip()
+
 
     @property
     def params(self):
