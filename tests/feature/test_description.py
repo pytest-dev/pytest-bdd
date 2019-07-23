@@ -17,5 +17,9 @@ Because it will be cool
 
 
 Some description goes here."""
+    assert test.__scenario__.description == """Also, the scenario can have a description.
+
+It goes here between the scenario name
+and the first step."""
 
     test(request)
