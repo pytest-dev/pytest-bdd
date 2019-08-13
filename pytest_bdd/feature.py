@@ -482,7 +482,6 @@ class Scenario(object):
         """
         return u"\n".join(self._description_lines).strip()
 
-
     @property
     def params(self):
         """Get parameter names.
