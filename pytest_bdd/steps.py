@@ -220,6 +220,8 @@ def recreate_function(func, module=None, name=None, add_args=[], firstlineno=Non
     ]
     if six.PY3:
         argnames.insert(1, "co_kwonlyargcount")
+        if sys.version_info.minor >= 8:
+            argnames.insert(1, "co_posonlyargcount")
 
     for arg in get_args(func):
         if arg in add_args:
