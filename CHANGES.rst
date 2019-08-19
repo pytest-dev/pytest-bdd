@@ -4,6 +4,8 @@ Changelog
 Unreleased
 ----------
 
+- Fix Python 3.8 support
+
 3.1.1
 ----------
 
