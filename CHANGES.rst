@@ -4,7 +4,11 @@ Changelog
 Unreleased
 ----------
 
+3.2b0
+----------
+
 - Fix Python 3.8 support
+- Remove code that rewrites code. This should help with the maintenance of this project and make debugging easier.
 
 3.1.1
 ----------
