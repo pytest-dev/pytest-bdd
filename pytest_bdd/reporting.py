@@ -7,7 +7,7 @@ that enriches the pytest test reporting.
 import time
 
 from .feature import force_unicode
-from .utils import get_parametrize_markers_args
+from .utils import get_parametrize_markers_args, get_parametrize_params
 
 
 class StepReport(object):
@@ -73,20 +73,30 @@ class ScenarioReport(object):
         """
         self.scenario = scenario
         self.step_reports = []
-        self.param_index = None
+
         parametrize_args = get_parametrize_markers_args(node)
-        if parametrize_args and scenario.examples:
-            param_names = parametrize_args[0] if isinstance(parametrize_args[0], (tuple, list)) else [
-                parametrize_args[0]]
-            param_values = parametrize_args[1]
+        params = get_parametrize_params(parametrize_args)
+
+        self.param_index = self.get_param_index(node, params)
+        self.example_kwargs = self.get_example_kwargs(node, params)
+
+    def get_param_index(self, node, params):
+        if params:
+            param_names = params[0]['names']
+            param_values = params[0]['values']
             node_param_values = [node.funcargs[param_name] for param_name in param_names]
             if node_param_values in param_values:
-                self.param_index = param_values.index(node_param_values)
+                return param_values.index(node_param_values)
             elif tuple(node_param_values) in param_values:
-                self.param_index = param_values.index(tuple(node_param_values))
-        self.example_kwargs = {
-            example_param: force_unicode(node.funcargs[example_param])
-            for example_param in scenario.get_example_params()
+                return param_values.index(tuple(node_param_values))
+        return None
+
+    def get_example_kwargs(self, node, params):
+        params_names = (param['names'] for param in params)
+        all_names = sum(params_names, [])
+        return {
+            example_param_name: force_unicode(node.funcargs[example_param_name])
+            for example_param_name in all_names
         }
 
     @property

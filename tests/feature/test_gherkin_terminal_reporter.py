@@ -1,10 +1,8 @@
+# coding: utf-8
 import re
 
-
 import pytest
-
-from pytest_bdd import scenario, given, when, then
-from tests.utils import get_test_filepath, prepare_feature_and_py_files
+from pytest_bdd import given, parsers, scenario, then, when
 
 
 @scenario('gherkin_terminal_reporter.feature',
@@ -58,6 +56,18 @@ def test_Should_local_variables_be_displayed_when___showlocals_option_is_used():
 @scenario('gherkin_terminal_reporter.feature',
           'Should step parameters be replaced by their values')
 def test_Should_step_parameters_be_replaced_by_their_values():
+    pass
+
+
+@scenario('gherkin_terminal_reporter.feature',
+          'Should handle unicode output in expanded mode')
+def test_Should_handle_unicode_output_in_expanded_mode():
+    pass
+
+
+@scenario('gherkin_terminal_reporter.feature',
+          'Should handle test parametrized using @pytest.mark.parametrize decorator in expanded mode')
+def test_Should_handle_test_parametrized_using_pytest_mark_parametrize_decorator_in_expanded_mode():
     pass
 
 
@@ -150,6 +160,85 @@ def gherkin_scenario_outline(testdir):
             pass
     """)
     return example
+
+
+@given("there is gherkin scenario that has unicode characters")
+def gherkin_scenario_that_has_unicode_characters(testdir):
+    testdir.makefile('.feature', test="""
+    Feature: Юнікодні символи
+
+    Scenario: Кроки в .feature файлі містять юнікод
+        Given у мене є рядок який містить 'якийсь контент'
+        Then I should see that the string equals to content 'якийсь контент'
+    """)
+    testdir.makepyfile(test_gherkin="""
+        # coding: utf-8
+        import functools
+        import sys
+
+        import pytest
+
+        from pytest_bdd import given, parsers, scenario, then
+
+        scenario = functools.partial(scenario, 'test.feature')
+
+        @scenario('Кроки в .feature файлі містять юнікод')
+        def test_steps_in_feature_file_have_unicode():
+            pass
+
+        @pytest.fixture
+        def string():
+            return {'content': ''}
+
+        @given(parsers.parse(u"у мене є рядок який містить '{content}'"))
+        def there_is_a_string_with_content(content, string):
+            string['content'] = content
+
+        @then(parsers.parse("I should see that the string equals to content '{content}'"))
+        def assert_that_the_string_equals_to_content(content, string):
+            assert string['content'] == content
+            if sys.version_info < (3, 0):
+                assert isinstance(content, unicode)
+    """)
+
+
+@given("there is gherkin scenario that has parametrized scenario")
+def gherkin_scenario_that_has_parametrized_scenario(testdir):
+    testdir.makefile('.feature', test="""
+    Scenario: Parametrized given, when, thens
+        Given there are <start> cucumbers
+        When I eat <eat> cucumbers
+        Then I should have <left> cucumbers
+    """)
+    testdir.makepyfile(test_gherkin="""
+        import pytest
+
+        from pytest_bdd import given, when, then, scenario
+
+        @pytest.mark.parametrize(
+            ['start', 'eat', 'left'],
+            [(12, 5, 7)])
+        @scenario(
+            'test.feature',
+            'Parametrized given, when, thens',
+        )
+        def test_parametrized(request, start, eat, left):
+            pass
+
+        @given('there are <start> cucumbers')
+        def start_cucumbers(start):
+            return dict(start=start)
+
+        @when('I eat <eat> cucumbers')
+        def eat_cucumbers(start_cucumbers, start, eat):
+            start_cucumbers['eat'] = eat
+
+        @then('I should have <left> cucumbers')
+        def should_have_left_cucumbers(start_cucumbers, start, eat, left):
+            assert start - eat == left
+            assert start_cucumbers['start'] == start
+            assert start_cucumbers['eat'] == eat
+    """)
 
 
 @when("I run tests")
@@ -347,20 +436,13 @@ def output_output_must_contain_parameters_values(test_execution, gherkin_scenari
     ghe.stdout.fnmatch_lines('*PASSED')
 
 
-@pytest.mark.parametrize(
-    'feature_file, py_file, name', [
-        ('./steps/unicode.feature', './steps/test_unicode.py', 'test_steps_in_feature_file_have_unicode')
-    ]
-)
-def test_scenario_in_expanded_mode(testdir, test_execution, feature_file, py_file, name):
-    prepare_feature_and_py_files(testdir, feature_file, py_file)
+@then(parsers.parse('{error} is not raised during test execution'))
+def error_is_not_raised_during_test_execution(test_execution, error):
+    ghe = test_execution['gherkin']
+    assert error not in ghe.stdout.str()
 
-    test_execution['gherkin'] = testdir.runpytest(
-        '-k %s' % name,
-        '--gherkin-terminal-reporter',
-        '--gherkin-terminal-reporter-expanded',
-        '-vv',
-    )
 
+@then("output should contain single passing test case")
+def output_must_contain_single_passing_test_case(test_execution):
     ghe = test_execution['gherkin']
     ghe.assert_outcomes(passed=1)

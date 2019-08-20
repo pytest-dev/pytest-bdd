@@ -45,3 +45,15 @@ Feature: Gherkin terminal reporter
     Given there is gherkin scenario outline implemented
     When I run tests with step expanded mode
     Then output must contain parameters values
+
+  Scenario: Should handle unicode output in expanded mode
+    Given there is gherkin scenario that has unicode characters
+    When I run tests with step expanded mode
+    Then UnicodeEncodeError is not raised during test execution
+    And output should contain single passing test case
+
+  Scenario: Should handle test parametrized using @pytest.mark.parametrize decorator in expanded mode
+    Given there is gherkin scenario that has parametrized scenario
+    When I run tests with step expanded mode
+    Then KeyError is not raised during test execution
+    And output should contain single passing test case
