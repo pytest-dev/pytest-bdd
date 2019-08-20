@@ -185,13 +185,12 @@ def run_tests_with_very_verbose_mode(testdir, test_execution):
     test_execution['gherkin'] = testdir.runpytest('--gherkin-terminal-reporter', '-vv')
 
 
-@when("I run tests with step expanded mode")
-def run_tests_with_step_expanded_mode(testdir, test_execution):
+@when("I run tests with <gherkin_options>")
+def run_tests_with_step_expanded_mode(testdir, test_execution, gherkin_options):
     test_execution['regular'] = testdir.runpytest('-vv')
+    options = gherkin_options + ' -vv'
     test_execution['gherkin'] = testdir.runpytest(
-        '--gherkin-terminal-reporter',
-        '--gherkin-terminal-reporter-expanded',
-        '-vv',
+        *options.split()
     )
 
 

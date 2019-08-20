@@ -41,7 +41,12 @@ Feature: Gherkin terminal reporter
     When I run tests with --showlocals
     Then error traceback contains local variable descriptions
 
-  Scenario: Should step parameters be replaced by their values
+  Scenario Outline: Should step parameters be replaced by their values
     Given there is gherkin scenario outline implemented
-    When I run tests with step expanded mode
+    When I run tests with <gherkin_options>
     Then output must contain parameters values
+
+    Examples:
+    | gherkin_options                                                    |
+    |  --gherkin-terminal-reporter-expanded                              |
+    |  --gherkin-terminal-reporter --gherkin-terminal-reporter-expanded  |
