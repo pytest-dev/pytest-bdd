@@ -20,37 +20,29 @@ try:
     from _pytest import fixtures as pytest_fixtures
 except ImportError:
     from _pytest import python as pytest_fixtures
-import six
 
 from . import exceptions
 from .feature import (
     Feature,
-    force_encode,
     force_unicode,
     get_features,
 )
 from .steps import (
-    execute,
-    get_caller_function,
     get_caller_module,
     get_step_fixture_name,
     inject_fixture,
-    recreate_function,
 )
 from .types import GIVEN
 from .utils import CONFIG_STACK, get_args
 
-if six.PY3:  # pragma: no cover
-    import runpy
-
-    def execfile(filename, init_globals):
-        """Execute given file as a python script in given globals environment."""
-        result = runpy.run_path(filename, init_globals=init_globals)
-        init_globals.update(result)
-
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
+
+
+# We have to keep track of the invocation of @scenario() so that we can reorder test item accordingly.
+# In python 3.6+ this is no longer necessary, as the order is automatically retained.
+_py2_scenario_creation_counter = 0
 
 
 def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None):
@@ -88,9 +80,11 @@ def _find_step_function(request, step, scenario, encoding):
     """
     name = step.name
     try:
+        # Simple case where no parser is used for the step
         return request.getfixturevalue(get_step_fixture_name(name, step.type, encoding))
     except pytest_fixtures.FixtureLookupError:
         try:
+            # Could not find a fixture with the same name, let's see if there is a parser involved
             name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager, request)
             if name:
                 return request.getfixturevalue(name)
@@ -204,63 +198,53 @@ def _execute_scenario(feature, scenario, request, encoding):
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
-def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, caller_module, caller_function, encoding):
-    """Get scenario decorator."""
-    g = locals()
-    g["_execute_scenario"] = _execute_scenario
+def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, encoding):
+    global _py2_scenario_creation_counter
 
-    scenario_name = force_encode(scenario_name, encoding)
+    counter = _py2_scenario_creation_counter
+    _py2_scenario_creation_counter += 1
 
-    def decorator(_pytestbdd_function):
-        if isinstance(_pytestbdd_function, pytest_fixtures.FixtureRequest):
+    # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
+    # when the decorator is misused.
+    # Pytest inspect the signature to determine the required fixtures, and in that case it would look
+    # for a fixture called "fn" that doesn't exist (if it exists then it's even worse).
+    # It will error with a "fixture 'fn' not found" message instead.
+    # We can avoid this hack by using a pytest hook and check for misuse instead.
+    def decorator(*args):
+        if not args:
             raise exceptions.ScenarioIsDecoratorOnly(
                 "scenario function can only be used as a decorator. Refer to the documentation.",
             )
-
-        g.update(locals())
-
-        args = get_args(_pytestbdd_function)
+        [fn] = args
+        args = get_args(fn)
         function_args = list(args)
         for arg in scenario.get_example_params():
             if arg not in function_args:
                 function_args.append(arg)
-        if "request" not in function_args:
-            function_args.append("request")
 
-        code = """def {name}({function_args}):
+        @pytest.mark.usefixtures(*function_args)
+        def scenario_wrapper(request):
             _execute_scenario(feature, scenario, request, encoding)
-            _pytestbdd_function({args})""".format(
-            name=_pytestbdd_function.__name__,
-            function_args=", ".join(function_args),
-            args=", ".join(args))
-
-        execute(code, g)
-
-        _scenario = recreate_function(
-            g[_pytestbdd_function.__name__],
-            module=caller_module,
-            firstlineno=caller_function.f_lineno,
-        )
+            return fn(*[request.getfixturevalue(arg) for arg in args])
 
         for param_set in scenario.get_params():
             if param_set:
-                _scenario = pytest.mark.parametrize(*param_set)(_scenario)
-
+                scenario_wrapper = pytest.mark.parametrize(*param_set)(scenario_wrapper)
         for tag in scenario.tags.union(feature.tags):
             config = CONFIG_STACK[-1]
-            config.hook.pytest_bdd_apply_tag(tag=tag, function=_scenario)
+            config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 
-        _scenario.__doc__ = "{feature_name}: {scenario_name}".format(
+        scenario_wrapper.__doc__ = u"{feature_name}: {scenario_name}".format(
             feature_name=feature_name, scenario_name=scenario_name)
-        _scenario.__scenario__ = scenario
-        scenario.test_function = _scenario
-        return _scenario
-
-    return recreate_function(decorator, module=caller_module, firstlineno=caller_function.f_lineno)
+        scenario_wrapper.__scenario__ = scenario
+        scenario_wrapper.__pytest_bdd_counter__ = counter
+        scenario.test_function = scenario_wrapper
+        return scenario_wrapper
+    return decorator
 
 
 def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None,
-             caller_module=None, caller_function=None, features_base_dir=None, strict_gherkin=None):
+             caller_module=None, features_base_dir=None, strict_gherkin=None):
     """Scenario decorator.
 
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
@@ -269,9 +253,9 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     :param dict example_converters: optional `dict` of example converter function, where key is the name of the
         example parameter, and value is the converter function.
     """
+
     scenario_name = force_unicode(scenario_name, encoding)
     caller_module = caller_module or get_caller_module()
-    caller_function = caller_function or get_caller_function()
 
     # Get the feature
     if features_base_dir is None:
@@ -280,7 +264,7 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
         strict_gherkin = get_strict_gherkin()
     feature = Feature.get_feature(features_base_dir, feature_name, encoding=encoding, strict_gherkin=strict_gherkin)
 
-    # Get the sc_enario
+    # Get the scenario
     try:
         scenario = feature.scenarios[scenario_name]
     except KeyError:
@@ -298,13 +282,11 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     scenario.validate()
 
     return _get_scenario_decorator(
-        feature,
-        feature_name,
-        scenario,
-        scenario_name,
-        caller_module,
-        caller_function,
-        encoding,
+        feature=feature,
+        feature_name=feature_name,
+        scenario=scenario,
+        scenario_name=scenario_name,
+        encoding=encoding,
     )
 
 
@@ -375,7 +357,6 @@ def scenarios(*feature_paths, **kwargs):
         (attr.__scenario__.feature.filename, attr.__scenario__.name)
         for name, attr in module.__dict__.items() if hasattr(attr, '__scenario__'))
 
-    index = 10
     for feature in get_features(abs_feature_paths, strict_gherkin=strict_gherkin):
         for scenario_name, scenario_object in feature.scenarios.items():
             # skip already bound scenarios
@@ -386,9 +367,6 @@ def scenarios(*feature_paths, **kwargs):
                 for test_name in get_python_name_generator(scenario_name):
                     if test_name not in module.__dict__:
                         # found an unique test name
-                        # recreate function to set line number
-                        _scenario = recreate_function(_scenario, module=module, firstlineno=index * 4)
-                        index += 1
                         module.__dict__[test_name] = _scenario
                         break
             found = True
