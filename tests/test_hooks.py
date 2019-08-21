@@ -36,11 +36,11 @@ def test_item_collection_does_not_break_on_non_function_items(testdir):
     """Regression test for https://github.com/pytest-dev/pytest-bdd/issues/317"""
     testdir.makeconftest("""
     import pytest
-    
+
     @pytest.mark.tryfirst
     def pytest_collection_modifyitems(session, config, items):
         items[:] = [CustomItem(name=item.name, parent=item.parent) for item in items]
-    
+
     class CustomItem(pytest.Item):
         def runtest(self):
             assert True
