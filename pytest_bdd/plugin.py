@@ -101,6 +101,9 @@ def pytest_collection_modifyitems(session, config, items):
     # TODO: Try to only re-sort the items that have __pytest_bdd_counter__, and not the others,
     #  since there may be other hooks that are executed before this and that want to reorder item as well
     def item_key(item):
-        pytest_bdd_counter = getattr(item.function, '__pytest_bdd_counter__', 0)
-        return (item.reportinfo()[:2], pytest_bdd_counter)
+        if isinstance(item, pytest.Function):
+            declaration_order = getattr(item.function, '__pytest_bdd_counter__', 0)
+        else:
+            declaration_order = 0
+        return (item.reportinfo()[:2], declaration_order)
     items.sort(key=item_key)

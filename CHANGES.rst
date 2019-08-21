@@ -4,6 +4,11 @@ Changelog
 Unreleased
 ----------
 
+3.2.1
+----------
+
+- Fix regression introduced in 3.2.0 where pytest-bdd would break in presence of test items that are not functions.
+
 3.2.0
 ----------
 
