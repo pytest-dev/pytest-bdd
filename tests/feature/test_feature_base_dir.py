@@ -1,66 +1,66 @@
 """Test feature base dir."""
 import pytest
 
-NOT_EXISTING_FEATURE_PATHS = [
-    '.',
-    '/does/not/exist/',
-]
+NOT_EXISTING_FEATURE_PATHS = [".", "/does/not/exist/"]
 
 
-@pytest.mark.parametrize(
-    'base_dir', NOT_EXISTING_FEATURE_PATHS
-)
+@pytest.mark.parametrize("base_dir", NOT_EXISTING_FEATURE_PATHS)
 def test_feature_path_not_found(testdir, base_dir):
     """Test feature base dir."""
     prepare_testdir(testdir, base_dir)
 
-    result = testdir.runpytest('-k', 'test_not_found_by_ini')
+    result = testdir.runpytest("-k", "test_not_found_by_ini")
     result.assert_outcomes(passed=2)
 
 
 def test_feature_path_ok(testdir):
-    base_dir = 'features'
+    base_dir = "features"
     prepare_testdir(testdir, base_dir)
 
-    result = testdir.runpytest('-k', 'test_ok_by_ini')
+    result = testdir.runpytest("-k", "test_ok_by_ini")
     result.assert_outcomes(passed=2)
 
 
 def test_feature_path_by_param_not_found(testdir):
     """As param takes precendence even if ini config is correct it should fail
     if passed param is incorrect"""
-    base_dir = 'features'
+    base_dir = "features"
     prepare_testdir(testdir, base_dir)
 
-    result = testdir.runpytest('-k', 'test_not_found_by_param')
+    result = testdir.runpytest("-k", "test_not_found_by_param")
     result.assert_outcomes(passed=4)
 
 
-@pytest.mark.parametrize(
-    'base_dir', NOT_EXISTING_FEATURE_PATHS
-)
+@pytest.mark.parametrize("base_dir", NOT_EXISTING_FEATURE_PATHS)
 def test_feature_path_by_param_ok(testdir, base_dir):
     """If ini config is incorrect but param path is fine it should be able
     to find features"""
     prepare_testdir(testdir, base_dir)
 
-    result = testdir.runpytest('-k', 'test_ok_by_param')
+    result = testdir.runpytest("-k", "test_ok_by_param")
     result.assert_outcomes(passed=2)
 
 
 def prepare_testdir(testdir, ini_base_dir):
-    testdir.makeini("""
+    testdir.makeini(
+        """
             [pytest]
             bdd_features_base_dir={}
-        """.format(ini_base_dir))
+        """.format(
+            ini_base_dir
+        )
+    )
 
-    feature_file = testdir.mkdir('features').join('steps.feature')
-    feature_file.write("""
+    feature_file = testdir.mkdir("features").join("steps.feature")
+    feature_file.write(
+        """
     Scenario: When scenario found
         Given found
-    """)
+    """
+    )
 
-    testdir.makepyfile("""
+    testdir.makepyfile(
+        """
     import os.path
 
     import pytest
@@ -128,4 +128,7 @@ def prepare_testdir(testdir, ini_base_dir):
         else:
             scenario(FEATURE, scenario_name, features_base_dir='features')
 
-    """.format(ini_base_dir))
+    """.format(
+            ini_base_dir
+        )
+    )

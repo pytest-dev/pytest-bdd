@@ -106,9 +106,9 @@ def get_parser(step_name):
     """
     if isinstance(step_name, six.string_types):
         if isinstance(step_name, six.binary_type):  # Python 2 compatibility
-            step_name = step_name.decode('utf-8')
+            step_name = step_name.decode("utf-8")
         return string(step_name)
-    elif not hasattr(step_name, 'is_matching') or not hasattr(step_name, 'parse_arguments'):
+    elif not hasattr(step_name, "is_matching") or not hasattr(step_name, "parse_arguments"):
         raise InvalidStepParserError(step_name)
     else:
         return step_name

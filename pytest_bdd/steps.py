@@ -36,6 +36,7 @@ import inspect
 import sys
 
 import pytest
+
 try:
     from _pytest import fixtures as pytest_fixtures
 except ImportError:
@@ -43,9 +44,7 @@ except ImportError:
 
 from .feature import parse_line, force_encode
 from .types import GIVEN, WHEN, THEN
-from .exceptions import (
-    StepError,
-)
+from .exceptions import StepError
 from .parsers import get_parser
 from .utils import get_args
 
@@ -60,10 +59,11 @@ def get_step_fixture_name(name, type_, encoding=None):
     :rtype: string
     """
     return "pytestbdd_{type}_{name}".format(
-        type=type_, name=force_encode(name, **(dict(encoding=encoding) if encoding else {})))
+        type=type_, name=force_encode(name, **(dict(encoding=encoding) if encoding else {}))
+    )
 
 
-def given(name, fixture=None, converters=None, scope='function', target_fixture=None):
+def given(name, fixture=None, converters=None, scope="function", target_fixture=None):
     """Given step decorator.
 
     :param name: Given step name.
@@ -83,7 +83,7 @@ def given(name, fixture=None, converters=None, scope='function', target_fixture=
 
         step_func.step_type = GIVEN
         step_func.converters = converters
-        step_func.__name__ = force_encode(name, 'ascii')
+        step_func.__name__ = force_encode(name, "ascii")
         step_func.fixture = fixture
         func = pytest.fixture(scope=scope)(lambda: step_func)
         func.__doc__ = 'Alias for the "{0}" fixture.'.format(fixture)
@@ -129,10 +129,10 @@ def _not_a_fixture_decorator(func):
 
     :raises: `StepError` if was used as a decorator.
     """
-    raise StepError('Cannot be used as a decorator when the fixture is specified')
+    raise StepError("Cannot be used as a decorator when the fixture is specified")
 
 
-def _step_decorator(step_type, step_name, converters=None, scope='function', target_fixture=None):
+def _step_decorator(step_type, step_name, converters=None, scope="function", target_fixture=None):
     """Step decorator for the type and the name.
 
     :param str step_type: Step type (GIVEN, WHEN or THEN).
@@ -148,6 +148,7 @@ def _step_decorator(step_type, step_name, converters=None, scope='function', tar
     :note: If the step type is GIVEN it will automatically apply the pytest
            fixture decorator to the step function.
     """
+
     def decorator(func):
         step_func = func
         parser_instance = get_parser(step_name)
@@ -206,16 +207,16 @@ def inject_fixture(request, arg, value):
     :param value: argument value
     """
     fd_kwargs = {
-        'fixturemanager': request._fixturemanager,
-        'baseid': None,
-        'argname': arg,
-        'func': lambda: value,
-        'scope': "function",
-        'params': None,
+        "fixturemanager": request._fixturemanager,
+        "baseid": None,
+        "argname": arg,
+        "func": lambda: value,
+        "scope": "function",
+        "params": None,
     }
 
-    if 'yieldctx' in get_args(pytest_fixtures.FixtureDef.__init__):
-        fd_kwargs['yieldctx'] = False
+    if "yieldctx" in get_args(pytest_fixtures.FixtureDef.__init__):
+        fd_kwargs["yieldctx"] = False
 
     fd = pytest_fixtures.FixtureDef(**fd_kwargs)
     fd.cached_result = (value, 0, None)

@@ -10,7 +10,7 @@ def prepare_feature_and_py_files(testdir, feature_file, py_file):
     feature_filepath = get_test_filepath(feature_file)
     with open(feature_filepath) as feature_file:
         feature_content = feature_file.read()
-    testdir.makefile('.feature', unicode=feature_content)
+    testdir.makefile(".feature", unicode=feature_content)
 
     py_filepath = get_test_filepath(py_file)
     with open(py_filepath) as py_file:
