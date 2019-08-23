@@ -81,7 +81,7 @@ def pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func
 
 
 def pytest_cmdline_main(config):
-    generation.cmdline_main(config)
+    return generation.cmdline_main(config)
 
 
 def pytest_bdd_apply_tag(tag, function):
