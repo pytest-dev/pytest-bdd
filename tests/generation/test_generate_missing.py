@@ -8,7 +8,7 @@ from pytest_bdd.scenario import get_python_name_generator
 
 def test_python_name_generator():
     """Test python name generator function."""
-    itertools.islice(get_python_name_generator('Some name'), 2) == ['some_name', 'some_name_2']
+    itertools.islice(get_python_name_generator("Some name"), 2) == ["some_name", "some_name_2"]
 
 
 def test_generate_missing(testdir):
@@ -16,9 +16,11 @@ def test_generate_missing(testdir):
     dirname = "test_generate_missing"
     tests = testdir.mkpydir(dirname)
     with open(os.path.join(os.path.dirname(__file__), "generation.feature")) as fd:
-        tests.join('generation.feature').write(fd.read())
+        tests.join("generation.feature").write(fd.read())
 
-    tests.join("test_foo.py").write(textwrap.dedent("""
+    tests.join("test_foo.py").write(
+        textwrap.dedent(
+            """
         import functools
 
         from pytest_bdd import scenario, given
@@ -36,18 +38,20 @@ def test_generate_missing(testdir):
         @scenario("Code is generated for scenario steps which are not yet defined(implemented)")
         def test_missing_steps():
             pass
-    """))
+    """
+        )
+    )
 
-    result = testdir.runpytest(dirname, "--generate-missing", "--feature", tests.join('generation.feature').strpath)
+    result = testdir.runpytest(dirname, "--generate-missing", "--feature", tests.join("generation.feature").strpath)
 
-    result.stdout.fnmatch_lines([
-        'Scenario "Code is generated for scenarios which are not bound to any tests" is not bound to any test *']
+    result.stdout.fnmatch_lines(
+        ['Scenario "Code is generated for scenarios which are not bound to any tests" is not bound to any test *']
     )
 
     result.stdout.fnmatch_lines(
         [
             'Step Given "I have a custom bar" is not defined in the scenario '
-            '"Code is generated for scenario steps which are not yet defined(implemented)" *',
+            '"Code is generated for scenario steps which are not yet defined(implemented)" *'
         ]
     )
 

@@ -18,19 +18,27 @@ class equals_any(object):
         return 0 if (isinstance(other, self.type) if self.type else False) else -1
 
 
-string = type(u'')
+string = type(u"")
 
 
 def test_step_trace(testdir):
     """Test step trace."""
-    testdir.makefile(".ini", pytest=textwrap.dedent("""
+    testdir.makefile(
+        ".ini",
+        pytest=textwrap.dedent(
+            """
     [pytest]
     markers =
         feature-tag
         scenario-passing-tag
         scenario-failing-tag
-    """))
-    feature = testdir.makefile('.feature', test=textwrap.dedent("""
+    """
+        ),
+    )
+    feature = testdir.makefile(
+        ".feature",
+        test=textwrap.dedent(
+            """
     @feature-tag
     Feature: One passing scenario, one failing scenario
 
@@ -53,9 +61,13 @@ def test_step_trace(testdir):
             | start | eat | left |
             |  12   |  5  |  7   |
             |  5    |  4  |  1   |
-    """))
+    """
+        ),
+    )
     relpath = feature.relto(testdir.tmpdir.dirname)
-    testdir.makepyfile(textwrap.dedent("""
+    testdir.makepyfile(
+        textwrap.dedent(
+            """
         import pytest
         from pytest_bdd import given, when, then, scenarios
 
@@ -91,140 +103,193 @@ def test_step_trace(testdir):
             assert start_cucumbers['eat'] == eat
 
         scenarios('test.feature', example_converters=dict(start=int, eat=float, left=str))
-    """))
-    result = testdir.inline_run('-vvl')
+    """
+        )
+    )
+    result = testdir.inline_run("-vvl")
     assert result.ret
-    report = result.matchreport('test_passing', when='call').scenario
-    expected = {'feature': {'description': u'',
-                            'filename': feature.strpath,
-                            'line_number': 2,
-                            'name': u'One passing scenario, one failing scenario',
-                            'rel_filename': relpath,
-                            'tags': [u'feature-tag']},
-                'line_number': 5,
-                'name': u'Passing',
-                'steps': [{'duration': equals_any(float),
-                           'failed': False,
-                           'keyword': 'Given',
-                           'line_number': 6,
-                           'name': u'a passing step',
-                           'type': 'given'},
-                          {'duration': equals_any(float),
-                           'failed': False,
-                           'keyword': 'And',
-                           'line_number': 7,
-                           'name': u'some other passing step',
-                           'type': 'given'}],
-                'tags': [u'scenario-passing-tag'],
-                'examples': [],
-                'example_kwargs': {}}
+    report = result.matchreport("test_passing", when="call").scenario
+    expected = {
+        "feature": {
+            "description": u"",
+            "filename": feature.strpath,
+            "line_number": 2,
+            "name": u"One passing scenario, one failing scenario",
+            "rel_filename": relpath,
+            "tags": [u"feature-tag"],
+        },
+        "line_number": 5,
+        "name": u"Passing",
+        "steps": [
+            {
+                "duration": equals_any(float),
+                "failed": False,
+                "keyword": "Given",
+                "line_number": 6,
+                "name": u"a passing step",
+                "type": "given",
+            },
+            {
+                "duration": equals_any(float),
+                "failed": False,
+                "keyword": "And",
+                "line_number": 7,
+                "name": u"some other passing step",
+                "type": "given",
+            },
+        ],
+        "tags": [u"scenario-passing-tag"],
+        "examples": [],
+        "example_kwargs": {},
+    }
 
     assert report == expected
 
-    report = result.matchreport('test_failing', when='call').scenario
-    expected = {'feature': {'description': u'',
-                            'filename': feature.strpath,
-                            'line_number': 2,
-                            'name': u'One passing scenario, one failing scenario',
-                            'rel_filename': relpath,
-                            'tags': [u'feature-tag']},
-                'line_number': 10,
-                'name': u'Failing',
-                'steps': [{'duration': equals_any(float),
-                           'failed': False,
-                           'keyword': 'Given',
-                           'line_number': 11,
-                           'name': u'a passing step',
-                           'type': 'given'},
-                          {'duration': equals_any(float),
-                           'failed': True,
-                           'keyword': 'And',
-                           'line_number': 12,
-                           'name': u'a failing step',
-                           'type': 'given'}],
-                'tags': [u'scenario-failing-tag'],
-                'examples': [],
-                'example_kwargs': {}}
+    report = result.matchreport("test_failing", when="call").scenario
+    expected = {
+        "feature": {
+            "description": u"",
+            "filename": feature.strpath,
+            "line_number": 2,
+            "name": u"One passing scenario, one failing scenario",
+            "rel_filename": relpath,
+            "tags": [u"feature-tag"],
+        },
+        "line_number": 10,
+        "name": u"Failing",
+        "steps": [
+            {
+                "duration": equals_any(float),
+                "failed": False,
+                "keyword": "Given",
+                "line_number": 11,
+                "name": u"a passing step",
+                "type": "given",
+            },
+            {
+                "duration": equals_any(float),
+                "failed": True,
+                "keyword": "And",
+                "line_number": 12,
+                "name": u"a failing step",
+                "type": "given",
+            },
+        ],
+        "tags": [u"scenario-failing-tag"],
+        "examples": [],
+        "example_kwargs": {},
+    }
     assert report == expected
 
-    report = result.matchreport('test_outlined[12-5.0-7]', when='call').scenario
-    expected = {'feature': {'description': u'',
-                            'filename': feature.strpath,
-                            'line_number': 2,
-                            'name': u'One passing scenario, one failing scenario',
-                            'rel_filename': relpath,
-                            'tags': [u'feature-tag']},
-                'line_number': 14,
-                'name': u'Outlined',
-                'steps': [{'duration': equals_any(float),
-                           'failed': False,
-                           'keyword': 'Given',
-                           'line_number': 15,
-                           'name': u'there are <start> cucumbers',
-                           'type': 'given'},
-                          {'duration': equals_any(float),
-                           'failed': False,
-                           'keyword': 'When',
-                           'line_number': 16,
-                           'name': u'I eat <eat> cucumbers',
-                           'type': 'when'},
-                          {'duration': equals_any(float),
-                           'failed': False,
-                           'keyword': 'Then',
-                           'line_number': 17,
-                           'name': u'I should have <left> cucumbers',
-                           'type': 'then'}],
-                'tags': [],
-                'examples': [{'line_number': 19,
-                              'name': None,
-                              'row_index': 0,
-                              'rows': [['start', 'eat', 'left'],
-                                       [[12, 5.0, '7'], [5, 4.0, '1']]]}],
-                'example_kwargs': {'eat': '5.0', 'left': '7', 'start': '12'},
-                }
+    report = result.matchreport("test_outlined[12-5.0-7]", when="call").scenario
+    expected = {
+        "feature": {
+            "description": u"",
+            "filename": feature.strpath,
+            "line_number": 2,
+            "name": u"One passing scenario, one failing scenario",
+            "rel_filename": relpath,
+            "tags": [u"feature-tag"],
+        },
+        "line_number": 14,
+        "name": u"Outlined",
+        "steps": [
+            {
+                "duration": equals_any(float),
+                "failed": False,
+                "keyword": "Given",
+                "line_number": 15,
+                "name": u"there are <start> cucumbers",
+                "type": "given",
+            },
+            {
+                "duration": equals_any(float),
+                "failed": False,
+                "keyword": "When",
+                "line_number": 16,
+                "name": u"I eat <eat> cucumbers",
+                "type": "when",
+            },
+            {
+                "duration": equals_any(float),
+                "failed": False,
+                "keyword": "Then",
+                "line_number": 17,
+                "name": u"I should have <left> cucumbers",
+                "type": "then",
+            },
+        ],
+        "tags": [],
+        "examples": [
+            {
+                "line_number": 19,
+                "name": None,
+                "row_index": 0,
+                "rows": [["start", "eat", "left"], [[12, 5.0, "7"], [5, 4.0, "1"]]],
+            }
+        ],
+        "example_kwargs": {"eat": "5.0", "left": "7", "start": "12"},
+    }
     assert report == expected
 
-    report = result.matchreport('test_outlined[5-4.0-1]', when='call').scenario
-    expected = {'feature': {'description': u'',
-                            'filename': feature.strpath,
-                            'line_number': 2,
-                            'name': u'One passing scenario, one failing scenario',
-                            'rel_filename': relpath,
-                            'tags': [u'feature-tag']},
-                'line_number': 14,
-                'name': u'Outlined',
-                'steps': [{'duration': equals_any(float),
-                           'failed': False,
-                           'keyword': 'Given',
-                           'line_number': 15,
-                           'name': u'there are <start> cucumbers',
-                           'type': 'given'},
-                          {'duration': equals_any(float),
-                           'failed': False,
-                           'keyword': 'When',
-                           'line_number': 16,
-                           'name': u'I eat <eat> cucumbers',
-                           'type': 'when'},
-                          {'duration': equals_any(float),
-                           'failed': False,
-                           'keyword': 'Then',
-                           'line_number': 17,
-                           'name': u'I should have <left> cucumbers',
-                           'type': 'then'}],
-                'tags': [],
-                'examples': [{'line_number': 19,
-                              'name': None,
-                              'row_index': 1,
-                              'rows': [['start', 'eat', 'left'],
-                                       [[12, 5.0, '7'], [5, 4.0, '1']]]}],
-                'example_kwargs': {'eat': '4.0', 'left': '1', 'start': '5'},
-                }
+    report = result.matchreport("test_outlined[5-4.0-1]", when="call").scenario
+    expected = {
+        "feature": {
+            "description": u"",
+            "filename": feature.strpath,
+            "line_number": 2,
+            "name": u"One passing scenario, one failing scenario",
+            "rel_filename": relpath,
+            "tags": [u"feature-tag"],
+        },
+        "line_number": 14,
+        "name": u"Outlined",
+        "steps": [
+            {
+                "duration": equals_any(float),
+                "failed": False,
+                "keyword": "Given",
+                "line_number": 15,
+                "name": u"there are <start> cucumbers",
+                "type": "given",
+            },
+            {
+                "duration": equals_any(float),
+                "failed": False,
+                "keyword": "When",
+                "line_number": 16,
+                "name": u"I eat <eat> cucumbers",
+                "type": "when",
+            },
+            {
+                "duration": equals_any(float),
+                "failed": False,
+                "keyword": "Then",
+                "line_number": 17,
+                "name": u"I should have <left> cucumbers",
+                "type": "then",
+            },
+        ],
+        "tags": [],
+        "examples": [
+            {
+                "line_number": 19,
+                "name": None,
+                "row_index": 1,
+                "rows": [["start", "eat", "left"], [[12, 5.0, "7"], [5, 4.0, "1"]]],
+            }
+        ],
+        "example_kwargs": {"eat": "4.0", "left": "1", "start": "5"},
+    }
     assert report == expected
 
 
 def test_complex_types(testdir):
     """Test serialization of the complex types."""
-    testdir.makefile('.feature', test=textwrap.dedent("""
+    testdir.makefile(
+        ".feature",
+        test=textwrap.dedent(
+            """
     Feature: Report serialization containing parameters of complex types
 
         Scenario: Complex
@@ -233,8 +298,12 @@ def test_complex_types(testdir):
             Examples:
             |  point  |
             |  10,20  |
-    """))
-    testdir.makepyfile(textwrap.dedent("""
+    """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """
         import pytest
         from pytest_bdd import given, when, then, scenario
 
@@ -262,8 +331,10 @@ def test_complex_types(testdir):
         def test_complex(alien):
             pass
 
-    """))
-    result = testdir.inline_run('-vvl')
-    report = result.matchreport('test_complex[point0-alien0]', when='call')
+    """
+        )
+    )
+    result = testdir.inline_run("-vvl")
+    report = result.matchreport("test_complex[point0-alien0]", when="call")
     assert execnet.gateway_base.dumps(report.item)
     assert execnet.gateway_base.dumps(report.scenario)

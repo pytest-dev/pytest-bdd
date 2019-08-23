@@ -3,18 +3,15 @@ import textwrap
 
 import pytest
 
-from pytest_bdd import (
-    exceptions,
-    given,
-    parsers,
-    scenario,
-    then,
-)
+from pytest_bdd import exceptions, given, parsers, scenario, then
 
 
-@pytest.mark.parametrize(["feature_text", "expected_text"], [
-    (
-        textwrap.dedent("""
+@pytest.mark.parametrize(
+    ["feature_text", "expected_text"],
+    [
+        (
+            textwrap.dedent(
+                """
         Scenario: Multiline step using sub indentation
             Given I have a step with:
                 Some
@@ -22,16 +19,20 @@ from pytest_bdd import (
                 Extra
                 Lines
             Then the text should be parsed with correct indentation
-        """),
-        textwrap.dedent("""
+        """
+            ),
+            textwrap.dedent(
+                """
         Some
 
         Extra
         Lines
-        """)[1: -1]
-    ),
-    (
-        textwrap.dedent("""
+        """
+            )[1:-1],
+        ),
+        (
+            textwrap.dedent(
+                """
         Scenario: Multiline step using sub indentation
             Given I have a step with:
                 Some
@@ -40,16 +41,20 @@ from pytest_bdd import (
              Lines
 
             Then the text should be parsed with correct indentation
-        """),
-        textwrap.dedent("""
+        """
+            ),
+            textwrap.dedent(
+                """
            Some
 
          Extra
         Lines
-        """)[1:-1]
-    ),
-    (
-        textwrap.dedent("""
+        """
+            )[1:-1],
+        ),
+        (
+            textwrap.dedent(
+                """
         Feature:
         Scenario: Multiline step using sub indentation
             Given I have a step with:
@@ -57,42 +62,46 @@ from pytest_bdd import (
                 Extra
                 Lines
 
-        """),
-        textwrap.dedent("""
+        """
+            ),
+            textwrap.dedent(
+                """
         Some
         Extra
         Lines
-        """)[1:-1]
-    ),
-])
+        """
+            )[1:-1],
+        ),
+    ],
+)
 def test_multiline(request, tmpdir, feature_text, expected_text):
-    file_name = tmpdir.join('test.feature')
-    with file_name.open('w') as fd:
+    file_name = tmpdir.join("test.feature")
+    with file_name.open("w") as fd:
         fd.write(feature_text)
 
-    @scenario(file_name.strpath, 'Multiline step using sub indentation')
+    @scenario(file_name.strpath, "Multiline step using sub indentation")
     def test_multiline(request):
-        assert request.getfixturevalue('i_have_text') == expected_text
+        assert request.getfixturevalue("i_have_text") == expected_text
+
     test_multiline(request)
 
 
-@given(parsers.parse('I have a step with:\n{text}'))
+@given(parsers.parse("I have a step with:\n{text}"))
 def i_have_text(text):
     return text
 
 
-@then('the text should be parsed with correct indentation')
+@then("the text should be parsed with correct indentation")
 def text_should_be_correct(i_have_text, text, expected_text):
     assert i_have_text == text == expected_text
 
 
 def test_multiline_wrong_indent(request):
     """Multiline step using sub indentation wrong indent."""
-    @scenario(
-        'multiline.feature',
-        'Multiline step using sub indentation wrong indent',
-    )
+
+    @scenario("multiline.feature", "Multiline step using sub indentation wrong indent")
     def test_multiline():
         pass
+
     with pytest.raises(exceptions.StepDefinitionNotFoundError):
         test_multiline(request)

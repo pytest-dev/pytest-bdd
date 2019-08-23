@@ -7,7 +7,7 @@ import textwrap
 def runandparse(testdir, *args):
     """Run tests in testdir and parse json output."""
     resultpath = testdir.tmpdir.join("cucumber.json")
-    result = testdir.runpytest('--cucumberjson={0}'.format(resultpath), '-s', *args)
+    result = testdir.runpytest("--cucumberjson={0}".format(resultpath), "-s", *args)
     jsonobject = json.load(resultpath.open())
     return result, jsonobject
 
@@ -26,20 +26,28 @@ class equals_any(object):
         return 0 if (isinstance(other, self.type) if self.type else False) else -1
 
 
-string = type(u'')
+string = type(u"")
 
 
 def test_step_trace(testdir):
     """Test step trace."""
-    testdir.makefile(".ini", pytest=textwrap.dedent("""
+    testdir.makefile(
+        ".ini",
+        pytest=textwrap.dedent(
+            """
     [pytest]
     markers =
         scenario-passing-tag
         scenario-failing-tag
         scenario-outline-passing-tag
         feature-tag
-    """))
-    testdir.makefile('.feature', test=textwrap.dedent("""
+    """
+        ),
+    )
+    testdir.makefile(
+        ".feature",
+        test=textwrap.dedent(
+            """
     @feature-tag
     Feature: One passing scenario, one failing scenario
 
@@ -62,8 +70,12 @@ def test_step_trace(testdir):
             | str     | hello  |
             | int     | 42     |
             | float   | 1.0    |
-    """))
-    testdir.makepyfile(textwrap.dedent("""
+    """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """
         import pytest
         from pytest_bdd import given, when, scenario
 
@@ -94,7 +106,9 @@ def test_step_trace(testdir):
         @scenario('test.feature', 'Passing outline')
         def test_passing_outline():
             pass
-    """))
+    """
+        )
+    )
     result, jsonobject = runandparse(testdir)
     assert result.ret
     expected = [
@@ -111,36 +125,20 @@ def test_step_trace(testdir):
                         {
                             "keyword": "Given",
                             "line": 6,
-                            "match": {
-                                "location": ""
-                            },
+                            "match": {"location": ""},
                             "name": "a passing step",
-                            "result": {
-                                "status": "passed",
-                                "duration": equals_any(int)
-                            }
+                            "result": {"status": "passed", "duration": equals_any(int)},
                         },
                         {
                             "keyword": "And",
                             "line": 7,
-                            "match": {
-                                "location": ""
-                            },
+                            "match": {"location": ""},
                             "name": "some other passing step",
-                            "result": {
-                                "status": "passed",
-                                "duration": equals_any(int)
-                            }
-                        }
-
+                            "result": {"status": "passed", "duration": equals_any(int)},
+                        },
                     ],
-                    "tags": [
-                        {
-                            'name': 'scenario-passing-tag',
-                            'line': 4,
-                        }
-                    ],
-                    "type": "scenario"
+                    "tags": [{"name": "scenario-passing-tag", "line": 4}],
+                    "type": "scenario",
                 },
                 {
                     "description": "",
@@ -152,127 +150,86 @@ def test_step_trace(testdir):
                         {
                             "keyword": "Given",
                             "line": 11,
-                            "match": {
-                                "location": ""
-                            },
+                            "match": {"location": ""},
                             "name": "a passing step",
-                            "result": {
-                                "status": "passed",
-                                "duration": equals_any(int)
-                            }
+                            "result": {"status": "passed", "duration": equals_any(int)},
                         },
                         {
                             "keyword": "And",
                             "line": 12,
-                            "match": {
-                                "location": ""
-                            },
+                            "match": {"location": ""},
                             "name": "a failing step",
                             "result": {
                                 "error_message": equals_any(string),
                                 "status": "failed",
-                                "duration": equals_any(int)
-                            }
-                        }
+                                "duration": equals_any(int),
+                            },
+                        },
                     ],
-                    "tags": [
-                        {
-                            'name': 'scenario-failing-tag',
-                            'line': 9,
-                        }
-                    ],
-                    "type": "scenario"
+                    "tags": [{"name": "scenario-failing-tag", "line": 9}],
+                    "type": "scenario",
                 },
                 {
                     "description": "",
                     "keyword": "Scenario",
-                    "tags": [
-                        {
-                            "line": 14,
-                            "name": "scenario-outline-passing-tag"
-                        }
-                    ],
+                    "tags": [{"line": 14, "name": "scenario-outline-passing-tag"}],
                     "steps": [
                         {
                             "line": 16,
                             "match": {"location": ""},
-                            "result": {
-                                "status": "passed",
-                                "duration": equals_any(int)
-                            },
+                            "result": {"status": "passed", "duration": equals_any(int)},
                             "keyword": "Given",
-                            "name": "type <type> and value <value>"
+                            "name": "type <type> and value <value>",
                         }
                     ],
                     "line": 15,
                     "type": "scenario",
                     "id": "test_passing_outline[str-hello]",
-                    "name": "Passing outline"
+                    "name": "Passing outline",
                 },
                 {
                     "description": "",
                     "keyword": "Scenario",
-                    "tags": [
-                        {
-                            "line": 14,
-                            "name": "scenario-outline-passing-tag"
-                        }
-                    ],
+                    "tags": [{"line": 14, "name": "scenario-outline-passing-tag"}],
                     "steps": [
                         {
                             "line": 16,
                             "match": {"location": ""},
-                            "result": {
-                                "status": "passed",
-                                "duration": equals_any(int)
-                            },
+                            "result": {"status": "passed", "duration": equals_any(int)},
                             "keyword": "Given",
-                            "name": "type <type> and value <value>"
+                            "name": "type <type> and value <value>",
                         }
                     ],
                     "line": 15,
                     "type": "scenario",
                     "id": "test_passing_outline[int-42]",
-                    "name": "Passing outline"
+                    "name": "Passing outline",
                 },
                 {
                     "description": "",
                     "keyword": "Scenario",
-                    "tags": [
-                        {
-                            "line": 14,
-                            "name": "scenario-outline-passing-tag"
-                        }
-                    ],
+                    "tags": [{"line": 14, "name": "scenario-outline-passing-tag"}],
                     "steps": [
                         {
                             "line": 16,
                             "match": {"location": ""},
-                            "result": {
-                                "status": "passed",
-                                "duration": equals_any(int)
-                            },
+                            "result": {"status": "passed", "duration": equals_any(int)},
                             "keyword": "Given",
-                            "name": "type <type> and value <value>"
+                            "name": "type <type> and value <value>",
                         }
                     ],
                     "line": 15,
                     "type": "scenario",
                     "id": "test_passing_outline[float-1.0]",
-                    "name": "Passing outline"
-                }
+                    "name": "Passing outline",
+                },
             ],
             "id": os.path.join("test_step_trace0", "test.feature"),
             "keyword": "Feature",
             "line": 2,
             "name": "One passing scenario, one failing scenario",
-            "tags": [
-                {
-                    'name': 'feature-tag',
-                    'line': 1,
-                }
-            ],
-            "uri": os.path.join(testdir.tmpdir.basename, 'test.feature'),
+            "tags": [{"name": "feature-tag", "line": 1}],
+            "uri": os.path.join(testdir.tmpdir.basename, "test.feature"),
         }
     ]
 
@@ -281,13 +238,21 @@ def test_step_trace(testdir):
 
 def test_step_trace_with_expand_option(testdir):
     """Test step trace."""
-    testdir.makefile(".ini", pytest=textwrap.dedent("""
+    testdir.makefile(
+        ".ini",
+        pytest=textwrap.dedent(
+            """
     [pytest]
     markers =
         feature-tag
         scenario-outline-passing-tag
-    """))
-    testdir.makefile('.feature', test=textwrap.dedent("""
+    """
+        ),
+    )
+    testdir.makefile(
+        ".feature",
+        test=textwrap.dedent(
+            """
     @feature-tag
     Feature: One scenario outline, expanded to multiple scenarios
 
@@ -300,8 +265,12 @@ def test_step_trace_with_expand_option(testdir):
             | str     | hello  |
             | int     | 42     |
             | float   | 1.0    |
-    """))
-    testdir.makepyfile(textwrap.dedent("""
+    """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """
         import pytest
         from pytest_bdd import given, scenario
 
@@ -312,8 +281,10 @@ def test_step_trace_with_expand_option(testdir):
         @scenario('test.feature', 'Passing outline')
         def test_passing_outline():
             pass
-    """))
-    result, jsonobject = runandparse(testdir, '--cucumber-json-expanded')
+    """
+        )
+    )
+    result, jsonobject = runandparse(testdir, "--cucumber-json-expanded")
     assert result.ret == 0
 
     assert jsonobject[0]["elements"][0]["steps"][0]["name"] == "type str and value hello"

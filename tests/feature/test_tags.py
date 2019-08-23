@@ -8,7 +8,10 @@ from pytest_bdd import feature
 
 def test_tags_selector(testdir):
     """Test tests selection by tags."""
-    testdir.makefile(".ini", pytest=textwrap.dedent("""
+    testdir.makefile(
+        ".ini",
+        pytest=textwrap.dedent(
+            """
     [pytest]
     markers =
         feature_tag_1
@@ -17,8 +20,12 @@ def test_tags_selector(testdir):
         scenario_tag_02
         scenario_tag_10
         scenario_tag_20
-    """))
-    testdir.makefile('.feature', test="""
+    """
+        ),
+    )
+    testdir.makefile(
+        ".feature",
+        test="""
     @feature_tag_1 @feature_tag_2
     Feature: Tags
 
@@ -30,8 +37,10 @@ def test_tags_selector(testdir):
     Scenario: Tags 2
         Given I have a bar
 
-    """)
-    testdir.makepyfile("""
+    """,
+    )
+    testdir.makepyfile(
+        """
         import pytest
         from pytest_bdd import given, scenarios
 
@@ -40,30 +49,38 @@ def test_tags_selector(testdir):
             return 'bar'
 
         scenarios('test.feature')
-    """)
-    result = testdir.runpytest('-m', 'scenario_tag_10 and not scenario_tag_01', '-vv')
+    """
+    )
+    result = testdir.runpytest("-m", "scenario_tag_10 and not scenario_tag_01", "-vv")
     outcomes = result.parseoutcomes()
-    assert outcomes['passed'] == 1
-    assert outcomes['deselected'] == 1
+    assert outcomes["passed"] == 1
+    assert outcomes["deselected"] == 1
 
-    result = testdir.runpytest('-m', 'scenario_tag_01 and not scenario_tag_10', '-vv').parseoutcomes()
-    assert result['passed'] == 1
-    assert result['deselected'] == 1
+    result = testdir.runpytest("-m", "scenario_tag_01 and not scenario_tag_10", "-vv").parseoutcomes()
+    assert result["passed"] == 1
+    assert result["deselected"] == 1
 
-    result = testdir.runpytest('-m', 'feature_tag_1', '-vv').parseoutcomes()
-    assert result['passed'] == 2
+    result = testdir.runpytest("-m", "feature_tag_1", "-vv").parseoutcomes()
+    assert result["passed"] == 2
 
-    result = testdir.runpytest('-m', 'feature_tag_10', '-vv').parseoutcomes()
-    assert result['deselected'] == 2
+    result = testdir.runpytest("-m", "feature_tag_10", "-vv").parseoutcomes()
+    assert result["deselected"] == 2
 
 
 def test_tags_after_background_issue_160(testdir):
     """Make sure using a tag after background works."""
-    testdir.makefile(".ini", pytest=textwrap.dedent("""
+    testdir.makefile(
+        ".ini",
+        pytest=textwrap.dedent(
+            """
     [pytest]
     markers = tag
-    """))
-    testdir.makefile('.feature', test="""
+    """
+        ),
+    )
+    testdir.makefile(
+        ".feature",
+        test="""
     Feature: Tags after background
 
         Background:
@@ -75,8 +92,10 @@ def test_tags_after_background_issue_160(testdir):
 
         Scenario: Tags 2
             Given I have a baz
-    """)
-    testdir.makepyfile("""
+    """,
+    )
+    testdir.makepyfile(
+        """
         import pytest
         from pytest_bdd import given, scenarios
 
@@ -89,14 +108,16 @@ def test_tags_after_background_issue_160(testdir):
             return 'baz'
 
         scenarios('test.feature')
-    """)
-    result = testdir.runpytest('-m', 'tag', '-vv').parseoutcomes()
-    assert result['passed'] == 1
-    assert result['deselected'] == 1
+    """
+    )
+    result = testdir.runpytest("-m", "tag", "-vv").parseoutcomes()
+    assert result["passed"] == 1
+    assert result["deselected"] == 1
 
 
 def test_apply_tag_hook(testdir):
-    testdir.makeconftest("""
+    testdir.makeconftest(
+        """
         import pytest
 
         @pytest.hookimpl(tryfirst=True)
@@ -108,8 +129,11 @@ def test_apply_tag_hook(testdir):
             else:
                 # Fall back to pytest-bdd's default behavior
                 return None
-    """)
-    testdir.makefile('.feature', test="""
+    """
+    )
+    testdir.makefile(
+        ".feature",
+        test="""
     Feature: Customizing tag handling
 
         @todo
@@ -119,8 +143,10 @@ def test_apply_tag_hook(testdir):
         @xfail
         Scenario: Tags 2
             Given I have a bar
-    """)
-    testdir.makepyfile("""
+    """,
+    )
+    testdir.makepyfile(
+        """
         from pytest_bdd import given, scenarios
 
         @given('I have a bar')
@@ -128,33 +154,45 @@ def test_apply_tag_hook(testdir):
             return 'bar'
 
         scenarios('test.feature')
-    """)
-    result = testdir.runpytest('-rsx')
+    """
+    )
+    result = testdir.runpytest("-rsx")
     result.stdout.fnmatch_lines(["SKIP*: Not implemented yet"])
     result.stdout.fnmatch_lines(["*= 1 skipped, 1 xpassed * =*"])
 
 
 def test_tag_with_spaces(testdir):
-    testdir.makefile(".ini", pytest=textwrap.dedent("""
+    testdir.makefile(
+        ".ini",
+        pytest=textwrap.dedent(
+            """
     [pytest]
     markers =
         test with spaces
-    """))
-    testdir.makeconftest("""
+    """
+        ),
+    )
+    testdir.makeconftest(
+        """
         import pytest
 
         @pytest.hookimpl(tryfirst=True)
         def pytest_bdd_apply_tag(tag, function):
             assert tag == 'test with spaces'
-    """)
-    testdir.makefile('.feature', test="""
+    """
+    )
+    testdir.makefile(
+        ".feature",
+        test="""
     Feature: Tag with spaces
 
         @test with spaces
         Scenario: Tags
             Given I have a bar
-    """)
-    testdir.makepyfile("""
+    """,
+    )
+    testdir.makepyfile(
+        """
         from pytest_bdd import given, scenarios
 
         @given('I have a bar')
@@ -162,17 +200,16 @@ def test_tag_with_spaces(testdir):
             return 'bar'
 
         scenarios('test.feature')
-    """)
-    result = testdir.runpytest_subprocess()
-    result.stdout.fnmatch_lines(
-        [
-            "*= 1 passed * =*",
-        ],
+    """
     )
+    result = testdir.runpytest_subprocess()
+    result.stdout.fnmatch_lines(["*= 1 passed * =*"])
 
 
 def test_at_in_scenario(testdir):
-    testdir.makefile('.feature', test="""
+    testdir.makefile(
+        ".feature",
+        test="""
     Feature: At sign in a scenario
 
         Scenario: Tags
@@ -180,8 +217,10 @@ def test_at_in_scenario(testdir):
 
         Scenario: Second
             Given I have a baz
-    """)
-    testdir.makepyfile("""
+    """,
+    )
+    testdir.makepyfile(
+        """
         from pytest_bdd import given, scenarios
 
         @given('I have a foo@bar')
@@ -193,23 +232,23 @@ def test_at_in_scenario(testdir):
             return 'baz'
 
         scenarios('test.feature')
-    """)
-    result = testdir.runpytest_subprocess('--strict')
-    result.stdout.fnmatch_lines(
-        [
-            "*= 2 passed * =*",
-        ],
+    """
     )
+    result = testdir.runpytest_subprocess("--strict")
+    result.stdout.fnmatch_lines(["*= 2 passed * =*"])
 
 
-@pytest.mark.parametrize('line, expected', [
-    ('@foo @bar', {'foo', 'bar'}),
-    ('@with spaces @bar', {'with spaces', 'bar'}),
-    ('@double @double', {'double'}),
-    ('    @indented', {'indented'}),
-    (None, set()),
-    ('foobar', set()),
-    ('', set()),
-])
+@pytest.mark.parametrize(
+    "line, expected",
+    [
+        ("@foo @bar", {"foo", "bar"}),
+        ("@with spaces @bar", {"with spaces", "bar"}),
+        ("@double @double", {"double"}),
+        ("    @indented", {"indented"}),
+        (None, set()),
+        ("foobar", set()),
+        ("", set()),
+    ],
+)
 def test_get_tags(line, expected):
     assert feature.get_tags(line) == expected

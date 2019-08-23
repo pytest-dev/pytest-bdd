@@ -16,22 +16,15 @@ import os
 import re
 
 import pytest
+
 try:
     from _pytest import fixtures as pytest_fixtures
 except ImportError:
     from _pytest import python as pytest_fixtures
 
 from . import exceptions
-from .feature import (
-    Feature,
-    force_unicode,
-    get_features,
-)
-from .steps import (
-    get_caller_module,
-    get_step_fixture_name,
-    inject_fixture,
-)
+from .feature import Feature, force_unicode, get_features
+from .steps import get_caller_module, get_step_fixture_name, inject_fixture
 from .types import GIVEN
 from .utils import CONFIG_STACK, get_args
 
@@ -93,9 +86,7 @@ def _find_step_function(request, step, scenario, encoding):
             raise exceptions.StepDefinitionNotFoundError(
                 u"""Step definition is not found: {step}."""
                 """ Line {step.line_number} in scenario "{scenario.name}" in the feature "{feature.filename}""".format(
-                    step=step,
-                    scenario=scenario,
-                    feature=scenario.feature,
+                    step=step, scenario=scenario, feature=scenario.feature
                 )
             )
 
@@ -109,13 +100,7 @@ def _execute_step_function(request, scenario, step, step_func):
     :param function step_func: Step function.
     :param example: Example table.
     """
-    kw = dict(
-        request=request,
-        feature=scenario.feature,
-        scenario=scenario,
-        step=step,
-        step_func=step_func,
-    )
+    kw = dict(request=request, feature=scenario.feature, scenario=scenario, step=step, step_func=step_func)
 
     request.config.hook.pytest_bdd_before_step(**kw)
 
@@ -142,11 +127,7 @@ def _execute_scenario(feature, scenario, request, encoding):
     :param request: request.
     :param encoding: Encoding.
     """
-    request.config.hook.pytest_bdd_before_scenario(
-        request=request,
-        feature=feature,
-        scenario=scenario,
-    )
+    request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
 
     try:
         givens = set()
@@ -156,11 +137,7 @@ def _execute_scenario(feature, scenario, request, encoding):
                 step_func = _find_step_function(request, step, scenario, encoding=encoding)
             except exceptions.StepDefinitionNotFoundError as exception:
                 request.config.hook.pytest_bdd_step_func_lookup_error(
-                    request=request,
-                    feature=feature,
-                    scenario=scenario,
-                    step=step,
-                    exception=exception,
+                    request=request, feature=feature, scenario=scenario, step=step, exception=exception
                 )
                 raise
 
@@ -170,7 +147,7 @@ def _execute_scenario(feature, scenario, request, encoding):
                     if step_func.fixture in givens:
                         raise exceptions.GivenAlreadyUsed(
                             u'Fixture "{0}" that implements this "{1}" given step has been already used.'.format(
-                                step_func.fixture, step.name,
+                                step_func.fixture, step.name
                             )
                         )
                     givens.add(step_func.fixture)
@@ -188,11 +165,7 @@ def _execute_scenario(feature, scenario, request, encoding):
 
             _execute_step_function(request, scenario, step, step_func)
     finally:
-        request.config.hook.pytest_bdd_after_scenario(
-            request=request,
-            feature=feature,
-            scenario=scenario,
-        )
+        request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
 
 
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
@@ -213,7 +186,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, enco
     def decorator(*args):
         if not args:
             raise exceptions.ScenarioIsDecoratorOnly(
-                "scenario function can only be used as a decorator. Refer to the documentation.",
+                "scenario function can only be used as a decorator. Refer to the documentation."
             )
         [fn] = args
         args = get_args(fn)
@@ -235,16 +208,25 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, enco
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 
         scenario_wrapper.__doc__ = u"{feature_name}: {scenario_name}".format(
-            feature_name=feature_name, scenario_name=scenario_name)
+            feature_name=feature_name, scenario_name=scenario_name
+        )
         scenario_wrapper.__scenario__ = scenario
         scenario_wrapper.__pytest_bdd_counter__ = counter
         scenario.test_function = scenario_wrapper
         return scenario_wrapper
+
     return decorator
 
 
-def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None,
-             caller_module=None, features_base_dir=None, strict_gherkin=None):
+def scenario(
+    feature_name,
+    scenario_name,
+    encoding="utf-8",
+    example_converters=None,
+    caller_module=None,
+    features_base_dir=None,
+    strict_gherkin=None,
+):
     """Scenario decorator.
 
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
@@ -270,9 +252,7 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     except KeyError:
         raise exceptions.ScenarioNotFound(
             u'Scenario "{scenario_name}" in feature "{feature_name}" in {feature_filename} is not found.'.format(
-                scenario_name=scenario_name,
-                feature_name=feature.name or "[Empty]",
-                feature_filename=feature.filename,
+                scenario_name=scenario_name, feature_name=feature.name or "[Empty]", feature_filename=feature.filename
             )
         )
 
@@ -282,17 +262,13 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     scenario.validate()
 
     return _get_scenario_decorator(
-        feature=feature,
-        feature_name=feature_name,
-        scenario=scenario,
-        scenario_name=scenario_name,
-        encoding=encoding,
+        feature=feature, feature_name=feature_name, scenario=scenario, scenario_name=scenario_name, encoding=encoding
     )
 
 
 def get_features_base_dir(caller_module):
     default_base_dir = os.path.dirname(caller_module.__file__)
-    return get_from_ini('bdd_features_base_dir', default_base_dir)
+    return get_from_ini("bdd_features_base_dir", default_base_dir)
 
 
 def get_from_ini(key, default):
@@ -302,12 +278,12 @@ def get_from_ini(key, default):
     """
     config = CONFIG_STACK[-1]
     value = config.getini(key)
-    return value if value != '' else default
+    return value if value != "" else default
 
 
 def get_strict_gherkin():
     config = CONFIG_STACK[-1]
-    return config.getini('bdd_strict_gherkin')
+    return config.getini("bdd_strict_gherkin")
 
 
 def make_python_name(string):
@@ -319,15 +295,16 @@ def make_python_name(string):
 def get_python_name_generator(name):
     """Generate a sequence of suitable python names out of given arbitrary string name."""
     python_name = make_python_name(name)
-    suffix = ''
+    suffix = ""
     index = 0
 
     def get_name():
-        return 'test_{0}{1}'.format(python_name, suffix)
+        return "test_{0}{1}".format(python_name, suffix)
+
     while True:
         yield get_name()
         index += 1
-        suffix = '_{0}'.format(index)
+        suffix = "_{0}".format(index)
 
 
 def scenarios(*feature_paths, **kwargs):
@@ -338,11 +315,11 @@ def scenarios(*feature_paths, **kwargs):
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
 
-    features_base_dir = kwargs.get('features_base_dir')
+    features_base_dir = kwargs.get("features_base_dir")
     if features_base_dir is None:
         features_base_dir = get_features_base_dir(module)
 
-    strict_gherkin = kwargs.get('strict_gherkin')
+    strict_gherkin = kwargs.get("strict_gherkin")
     if strict_gherkin is None:
         strict_gherkin = get_strict_gherkin()
 
@@ -355,15 +332,19 @@ def scenarios(*feature_paths, **kwargs):
 
     module_scenarios = frozenset(
         (attr.__scenario__.feature.filename, attr.__scenario__.name)
-        for name, attr in module.__dict__.items() if hasattr(attr, '__scenario__'))
+        for name, attr in module.__dict__.items()
+        if hasattr(attr, "__scenario__")
+    )
 
     for feature in get_features(abs_feature_paths, strict_gherkin=strict_gherkin):
         for scenario_name, scenario_object in feature.scenarios.items():
             # skip already bound scenarios
             if (scenario_object.feature.filename, scenario_name) not in module_scenarios:
+
                 @scenario(feature.filename, scenario_name, **kwargs)
                 def _scenario():
                     pass  # pragma: no cover
+
                 for test_name in get_python_name_generator(scenario_name):
                     if test_name not in module.__dict__:
                         # found an unique test name
