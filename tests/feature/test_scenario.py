@@ -57,11 +57,19 @@ def test_scenario_comments(request):
     test2(request)
 
 
-def test_scenario_not_decorator(request):
+def test_scenario_not_decorator(testdir):
     """Test scenario function is used not as decorator."""
-    func = scenario(
-        'comments.feature',
-        'Strings that are not comments')
+    testdir.makefile('.feature', foo="""
+        Scenario: Foo
+            Given I have a bar
+        """)
+    testdir.makepyfile("""
+        from pytest_bdd import scenario
 
-    with pytest.raises(exceptions.ScenarioIsDecoratorOnly):
-        func(request)
+        test_foo = scenario('foo.feature', 'Foo')
+        """)
+
+    result = testdir.runpytest()
+
+    result.assert_outcomes(failed=1)
+    result.stdout.fnmatch_lines("*ScenarioIsDecoratorOnly: scenario function can only be used as a decorator*")

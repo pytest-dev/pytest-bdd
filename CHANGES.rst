@@ -4,6 +4,23 @@ Changelog
 Unreleased
 ----------
 
+3.2.1
+----------
+
+- Fix regression introduced in 3.2.0 where pytest-bdd would break in presence of test items that are not functions.
+
+3.2.0
+----------
+
+- Fix Python 3.8 support
+- Remove code that rewrites code. This should help with the maintenance of this project and make debugging easier.
+
+3.1.1
+----------
+
+- Allow unicode string in ``@given()`` step names when using python2.
+  This makes the transition of projects from python 2 to 3 easier.
+
 3.1.0
 ----------
 

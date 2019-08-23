@@ -30,3 +30,26 @@ def test_hooks(testdir):
 
     assert result.stdout.lines.count('pytest_pyfunc_call hook') == 1
     assert result.stdout.lines.count('pytest_generate_tests hook') == 1
+
+
+def test_item_collection_does_not_break_on_non_function_items(testdir):
+    """Regression test for https://github.com/pytest-dev/pytest-bdd/issues/317"""
+    testdir.makeconftest("""
+    import pytest
+
+    @pytest.mark.tryfirst
+    def pytest_collection_modifyitems(session, config, items):
+        items[:] = [CustomItem(name=item.name, parent=item.parent) for item in items]
+
+    class CustomItem(pytest.Item):
+        def runtest(self):
+            assert True
+    """)
+
+    testdir.makepyfile("""
+    def test_convert_me_to_custom_item_and_assert_true():
+        assert False
+    """)
+
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1)
