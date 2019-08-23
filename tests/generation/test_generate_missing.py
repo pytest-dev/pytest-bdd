@@ -56,3 +56,6 @@ def test_generate_missing(testdir):
     )
 
     result.stdout.fnmatch_lines(["Please place the code above to the test file(s):"])
+
+    assert not result.stderr.str()
+    assert result.ret == 0
