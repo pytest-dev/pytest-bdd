@@ -7,7 +7,9 @@ python:
   - "3.7"
   - "3.8-dev"
 
-install: pip install tox tox-travis
+install:
+  - make translate
+  - pip install tox tox-travis
 
 script: tox --recreate
 

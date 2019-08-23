@@ -2,3 +2,4 @@ include *.rst
 include *.txt
 include setup.py
 include pytest_bdd/templates/*.mak
+include pytest_bdd/locales/*/LC_MESSAGES/*.mo
