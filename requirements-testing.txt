@@ -1,4 +1,3 @@
 mock
 coverage<4.0a1
 pytest-cache
-pycodestyle
