@@ -4,6 +4,8 @@ Changelog
 Unreleased
 ----------
 
+- Fix ``pytest --generate-missing`` functionality being broken.
+
 3.2.1
 ----------
 
