@@ -16,8 +16,6 @@ branches:
     - /^\d/
 
 after_success:
-# Temporarely enabling debug to figure out why sources are not loaded by coveralls
-  - coveralls debug
   - coveralls
 notifications:
   email:
