@@ -1,7 +1,6 @@
 """Test scenario reporting."""
 import textwrap
-
-import execnet.gateway_base
+import pytest
 
 
 class equals_any(object):
@@ -224,6 +223,11 @@ def test_step_trace(testdir):
 
 def test_complex_types(testdir):
     """Test serialization of the complex types."""
+    try:
+        import execnet.gateway_base
+    except ImportError:
+        pytest.skip("Execnet not installed")
+
     testdir.makefile('.feature', test=textwrap.dedent("""
     Feature: Report serialization containing parameters of complex types
 
