@@ -10,7 +10,7 @@ python:
 env:
   COVERALLS_PARALLEL = true
 
-install: pip install tox tox-travis coveralls
+install: pip install tox tox-travis coveralls coverage
 
 script: tox --recreate
 
