@@ -7,4 +7,3 @@ branch = true
 include =
     pytest_bdd/*
     tests/*
-    */site-packages/pytest_bdd/*
