@@ -16,6 +16,7 @@ branches:
     - /^\d/
 
 after_success:
+  - coverage combine
   - coveralls
 notifications:
   email:
