@@ -1,28 +1,26 @@
 dist: xenial
 language: python
 python:
-  - "2.7"
-  - "3.5"
-  - "3.6"
-  - "3.7"
-  - "3.8-dev"
-
+- '2.7'
+- '3.5'
+- '3.6'
+- '3.7'
+- 3.8-dev
 env:
-  COVERALLS_PARALLEL = true
-
+  matrix:
+  - COVERALLS_PARALLEL = true
+  global:
+    secure: PgNhR0as/5szhZYPx3fRTYGjpnDvabBsN3XbYLssU4HbAn84fe8BrGX49zUdqbU0DdGgVStWNfJrXy8A+o0phZRjvbaUAKB22NR2t2xW7d/SmvmkaUaJkFGVhjxu4uB31rkS4OzjRaDewZpKVJK4xg38A/YN/ijQKstlEGIjtM8=
 install: pip install tox tox-travis coveralls coverage
-
 script: tox --recreate
-
 branches:
   except:
-    - /^\d/
-
+  - "/^\\d/"
 after_success:
-  - coveralls
+- coveralls
 notifications:
   email:
-    - bubenkoff@gmail.com
-    - oleg.pidsadnyi@gmail.com
+  - bubenkoff@gmail.com
+  - oleg.pidsadnyi@gmail.com
   webhooks:
-    - "https://coveralls.io/webhook"  # Tell coveralls that this build has finished. Necessary when using PARALLEL mode
+  - https://coveralls.io/webhook
