@@ -6,9 +6,6 @@ python:
 - '3.6'
 - '3.7'
 - 3.8-dev
-env:
-  global:
-    secure: PgNhR0as/5szhZYPx3fRTYGjpnDvabBsN3XbYLssU4HbAn84fe8BrGX49zUdqbU0DdGgVStWNfJrXy8A+o0phZRjvbaUAKB22NR2t2xW7d/SmvmkaUaJkFGVhjxu4uB31rkS4OzjRaDewZpKVJK4xg38A/YN/ijQKstlEGIjtM8=
 install: pip install tox tox-travis coverage codecov
 script: tox --recreate
 branches:
