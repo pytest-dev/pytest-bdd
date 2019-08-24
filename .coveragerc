@@ -1,10 +1,10 @@
 [paths]
-source =
-    pytest_bdd/
+source = pytest_bdd
     */site-packages/pytest_bdd
 
 [run]
 branch = true
-source =
-    pytest_bdd
-    tests
+include =
+    pytest_bdd/*
+    tests/*
+    */site-packages/pytest_bdd/*
