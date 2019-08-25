@@ -15,9 +15,6 @@ from .feature import get_features
 from .types import STEP_TYPES
 
 
-template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
-
-
 def add_options(parser):
     """Add pytest-bdd options."""
     group = parser.getgroup("bdd", "Generation")
@@ -45,12 +42,21 @@ def cmdline_main(config):
         return show_missing_code(config)
 
 
-def generate_code(features, scenarios, steps):
+def generate_code(features, scenarios, steps, template_path=None):
     """Generate test code for the given filenames."""
     grouped_steps = group_steps(steps)
-    template = template_lookup.get_template("test.py.mak")
-    return template.render(
-        features=features, scenarios=scenarios, steps=grouped_steps, make_python_name=make_python_name)
+    if template_path is None:
+        template_lookup = TemplateLookup(
+            directories=[os.path.join(os.path.dirname(__file__), "templates")])
+        template = template_lookup.get_template("test.py.mak")
+    else:
+        template_lookup = TemplateLookup(
+            directories=os.path.abspath(os.path.dirname(template_path)))
+        template = template_lookup.get_template(
+            os.path.split(template_path)[1])
+    return template.render(features=features, scenarios=scenarios,
+                           steps=grouped_steps,
+                           make_python_name=make_python_name)
 
 
 def show_missing_code(config):
