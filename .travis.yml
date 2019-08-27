@@ -1,21 +1,19 @@
 dist: xenial
 language: python
 python:
-  - "2.7"
-  - "3.5"
-  - "3.6"
-  - "3.7"
-  - "3.8-dev"
-
-install: pip install tox tox-travis
-
+- '2.7'
+- '3.5'
+- '3.6'
+- '3.7'
+- 3.8-dev
+install: pip install tox tox-travis coverage codecov
 script: tox --recreate
-
 branches:
   except:
-    - /^\d/
-
+  - "/^\\d/"
+after_success:
+- codecov
 notifications:
   email:
-    - bubenkoff@gmail.com
-    - oleg.pidsadnyi@gmail.com
+  - bubenkoff@gmail.com
+  - oleg.pidsadnyi@gmail.com
