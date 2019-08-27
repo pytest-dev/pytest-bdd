@@ -4,37 +4,8 @@
 import codecs
 import os
 import re
-import sys
 
 from setuptools import setup
-from setuptools.command.test import test as TestCommand
-
-
-class ToxTestCommand(TestCommand):
-
-    """Test command which runs tox under the hood."""
-
-    user_options = [("tox-args=", "a", "Arguments to pass to tox")]
-
-    def initialize_options(self):
-        """Initialize options and set their defaults."""
-        TestCommand.initialize_options(self)
-        self.tox_args = "--recreate"
-
-    def finalize_options(self):
-        """Add options to the test runner (tox)."""
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        """Invoke the test runner (tox)."""
-        # import here, cause outside the eggs aren't loaded
-        import tox
-        import shlex
-
-        errno = tox.cmdline(args=shlex.split(self.tox_args))
-        sys.exit(errno)
 
 
 dirname = os.path.dirname(__file__)
@@ -73,7 +44,6 @@ setup(
         "Programming Language :: Python :: 3",
     ]
     + [("Programming Language :: Python :: %s" % x) for x in "2.7 3.5 3.6 3.7 3.8".split()],
-    cmdclass={"test": ToxTestCommand},
     install_requires=["glob2", "Mako", "parse", "parse_type", "py", "pytest>=3.6.0", "six>=1.9.0"],
     # the following makes a plugin available to py.test
     entry_points={
