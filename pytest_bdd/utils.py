@@ -30,4 +30,4 @@ def get_parametrize_markers_args(node):
 
     This function uses that API if it is available otherwise it uses MarkInfo objects.
     """
-    return tuple(arg for mark in node.iter_markers("parametrize") for arg in mark)
+    return tuple(arg for mark in node.iter_markers("parametrize") for arg in mark.args)
