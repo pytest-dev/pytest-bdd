@@ -292,6 +292,11 @@ def make_python_name(string):
     return re.sub(ALPHA_REGEX, "", string).lower()
 
 
+def make_string(string):
+    """Make a string literal."""
+    return "'{}'".format(string.replace("'", r"\'"))
+
+
 def get_python_name_generator(name):
     """Generate a sequence of suitable python names out of given arbitrary string name."""
     python_name = make_python_name(name)
