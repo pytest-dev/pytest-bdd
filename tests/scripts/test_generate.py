@@ -14,7 +14,7 @@ def test_generate(monkeypatch, capsys):
     main()
     out, err = capsys.readouterr()
     assert out == textwrap.dedent(
-        '''
+        r'''
     # coding=utf-8
     """Code generation feature tests."""
 
@@ -40,6 +40,12 @@ def test_generate(monkeypatch, capsys):
     @given('I have an empty list')
     def i_have_an_empty_list():
         """I have an empty list."""
+        raise NotImplementedError
+
+
+    @given('There\'s a step with a quote')
+    def theres_a_step_with_a_quote():
+        """There's a step with a quote."""
         raise NotImplementedError
 
 

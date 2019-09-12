@@ -3,6 +3,7 @@ Feature: Code generation
     Scenario: Given and when using the same fixture should not evaluate it twice
         Given I have an empty list
         And 1 have a fixture (appends 1 to a list) in reuse syntax
+		And There's a step with a quote
 
         When I use this fixture
 
