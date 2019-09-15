@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 - Fix ``pytest --generate-missing`` functionality being broken.
+- Drop compatibility with pytest < 3.6
 
 3.2.1
 ----------
