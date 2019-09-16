@@ -549,6 +549,7 @@ class Step(object):
 
         json_attachment = \
             {
+                "data": attachment,
                 "media": {
                     "type": "text/plain"
                 }
