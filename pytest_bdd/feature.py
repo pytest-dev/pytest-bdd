@@ -460,7 +460,7 @@ class Scenario(object):
         :param data: actual data of Attachment, can be plain text or base64 encoded
         :param media_type: actual media type of Attachment, such as text/plain, image/png
         """
-        self.steps[0].attach(data, media_type)
+        self.steps[-1].attach(data, media_type)
 
     @property
     def steps(self):
