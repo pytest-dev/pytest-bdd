@@ -548,9 +548,7 @@ class Step(object):
         :param data: actual data of Attachment, can be plain text or base64 encoded
         :param media_type: actual media type of Attachment, such as text/plain, image/png
         """
-
-        json_attachment = \
-            {
+        json_attachment = {
                 "data": data,
                 "media": {
                     "type": media_type

@@ -199,6 +199,7 @@ def test_step_trace(testdir):
                     "steps": [
                         {
                             "line": 16,
+                            "embeddings": [],
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": equals_any(int)},
                             "keyword": "Given",
