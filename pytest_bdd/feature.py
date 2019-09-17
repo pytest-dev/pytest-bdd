@@ -454,12 +454,13 @@ class Scenario(object):
         step.scenario = self
         self._steps.append(step)
 
-    def attach(self, attachment):
-        """Add step to the scenario.
+    def attach(self, data, media_type="text/plain"):
+        """Add attachment to step, such as text, images.
 
-        :param pytest_bdd.feature.Attachment attachment: Attachment.
+        :param data: actual data of Attachment, can be plain text or base64 encoded
+        :param media_type: actual media type of Attachment, such as text/plain, image/png
         """
-        self.steps[0].attach(attachment)
+        self.steps[0].attach(data, media_type)
 
     @property
     def steps(self):
@@ -541,17 +542,18 @@ class Step(object):
         """
         self.lines.append(line)
 
-    def attach(self, attachment):
-        """Add line to the multiple step.
+    def attach(self, data, media_type="text/plain"):
+        """Add attachment to step, such as text, images.
 
-        :param pytest_bdd.feature.Attachment attachment: Attachment.
+        :param data: actual data of Attachment, can be plain text or base64 encoded
+        :param media_type: actual media type of Attachment, such as text/plain, image/png
         """
 
         json_attachment = \
             {
-                "data": attachment,
+                "data": data,
                 "media": {
-                    "type": "text/plain"
+                    "type": media_type
                 }
             }
         self.embeddings.append(json_attachment)
