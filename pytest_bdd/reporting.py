@@ -33,6 +33,7 @@ class StepReport(object):
         """
         return {
             "name": self.step.name,
+            "embeddings": self.step.embeddings,
             "type": self.step.type,
             "keyword": self.step.keyword,
             "line_number": self.step.line_number,
