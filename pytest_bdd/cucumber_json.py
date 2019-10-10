@@ -11,7 +11,7 @@ import six
 
 from .feature import force_unicode
 
-if six.PY3:
+if not six.PY2:
     long = int
 
 
