@@ -7,12 +7,7 @@ import os
 import sys
 import time
 
-import six
-
 from .feature import force_unicode
-
-if not six.PY2:
-    long = int
 
 
 def add_options(parser):
@@ -80,7 +75,7 @@ class LogBDDCucumberJSON(object):
             result = {"status": "failed", "error_message": force_unicode(report.longrepr) if error_message else ""}
         elif report.skipped:
             result = {"status": "skipped"}
-        result["duration"] = long(math.floor((10 ** 9) * step["duration"]))  # nanosec
+        result["duration"] = int(math.floor((10 ** 9) * step["duration"]))  # nanosec
         return result
 
     def _serialize_tags(self, item):
