@@ -12,16 +12,16 @@ from pytest_bdd import (
 
 % endif
 % for scenario in sorted(scenarios, key=lambda scenario: scenario.name):
-@scenario('${scenario.feature.rel_filename}', ${ make_string(scenario.name)})
+@scenario('${scenario.feature.rel_filename}', ${ repr(scenario.name)})
 def test_${ make_python_name(scenario.name)}():
-    """${scenario.name}."""
+    ${make_python_docstring(scenario.name)}
 
 
 % endfor
 % for step in steps:
-@${step.type}(${ make_string(step.name)})
+@${step.type}(${ repr(step.name)})
 def ${ make_python_name(step.name)}():
-    """${step.name}."""
+    ${make_python_docstring(step.name)}
     raise NotImplementedError
 % if not loop.last:
 

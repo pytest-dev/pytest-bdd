@@ -14,7 +14,7 @@ def test_generate(monkeypatch, capsys):
     main()
     out, err = capsys.readouterr()
     assert out == textwrap.dedent(
-        r'''
+        '''
     # coding=utf-8
     """Code generation feature tests."""
 
@@ -43,12 +43,6 @@ def test_generate(monkeypatch, capsys):
         raise NotImplementedError
 
 
-    @given('There\'s a step with a quote')
-    def theres_a_step_with_a_quote():
-        """There's a step with a quote."""
-        raise NotImplementedError
-
-
     @when('I use this fixture')
     def i_use_this_fixture():
         """I use this fixture."""
@@ -58,6 +52,72 @@ def test_generate(monkeypatch, capsys):
     @then('my list should be [1]')
     def my_list_should_be_1():
         """my list should be [1]."""
+        raise NotImplementedError
+
+    '''[
+            1:
+        ].replace(
+            u"'", u"'"
+        )
+    )
+
+
+def test_generate_with_quotes(monkeypatch, capsys):
+    """Test that generated code escapes quote characters by a given feature."""
+    monkeypatch.setattr(sys, "argv", ["", "generate", os.path.join(PATH, "generate_with_quotes.feature")])
+    main()
+    out, err = capsys.readouterr()
+    assert out == textwrap.dedent(
+        '''
+    # coding=utf-8
+    """Handling quotes in code generation feature tests."""
+
+    from pytest_bdd import (
+        given,
+        scenario,
+        then,
+        when,
+    )
+
+
+    @scenario('scripts/generate_with_quotes.feature', 'A step definition with quotes should be escaped as needed')
+    def test_a_step_definition_with_quotes_should_be_escaped_as_needed():
+        """A step definition with quotes should be escaped as needed."""
+
+
+    @given('I have a fixture with "double" quotes')
+    def i_have_a_fixture_with_double_quotes():
+        """I have a fixture with "double" quotes."""
+        raise NotImplementedError
+
+
+    @given("I have a fixture with 'single' quotes")
+    def i_have_a_fixture_with_single_quotes():
+        """I have a fixture with 'single' quotes."""
+        raise NotImplementedError
+
+
+    @given('I have a fixture with double-quote """triple""" quotes')
+    def i_have_a_fixture_with_doublequote_triple_quotes():
+        """I have a fixture with double-quote \\"\\"\\"triple\\"\\"\\" quotes."""
+        raise NotImplementedError
+
+
+    @given("I have a fixture with single-quote \'\'\'triple\'\'\' quotes")
+    def i_have_a_fixture_with_singlequote_triple_quotes():
+        """I have a fixture with single-quote \'\'\'triple\'\'\' quotes."""
+        raise NotImplementedError
+
+
+    @when('I generate the code')
+    def i_generate_the_code():
+        """I generate the code."""
+        raise NotImplementedError
+
+
+    @then('The generated string should be written')
+    def the_generated_string_should_be_written():
+        """The generated string should be written."""
         raise NotImplementedError
 
     '''[
