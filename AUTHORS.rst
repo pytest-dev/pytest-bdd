@@ -18,6 +18,7 @@ These people have contributed to `pytest-bdd`, in alphabetical order:
 * `Florian Bruhin <me@the-compiler.org>`_
 * `Floris Bruynooghe <flub@devork.be>`_
 * `Harro van der Klauw <hvdklauw@gmail.com>`_
+* `Hugo van Kemenade <https://github.com/hugovk>`_
 * `Laurence Rowe <l@lrowe.co.uk>`_
 * `Leonardo Santagada <santagada@github.com>`_
 * `Milosz Sliwinski <sliwinski-milosz>`_
