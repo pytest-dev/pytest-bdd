@@ -62,13 +62,30 @@ def test_generate(monkeypatch, capsys):
     )
 
 
-def test_generate_with_quotes(monkeypatch, capsys):
-    """Test that generated code escapes quote characters by a given feature."""
-    monkeypatch.setattr(sys, "argv", ["", "generate", os.path.join(PATH, "generate_with_quotes.feature")])
-    main()
-    out, err = capsys.readouterr()
-    assert out == textwrap.dedent(
+def test_generate_with_quotes(testdir):
+    """Test that code generation escapes quote characters properly."""
+    testdir.makefile(
+        ".feature",
+        generate_with_quotes=textwrap.dedent(
+            '''\
+        Feature: Handling quotes in code generation
+
+            Scenario: A step definition with quotes should be escaped as needed
+                Given I have a fixture with 'single' quotes
+                And I have a fixture with "double" quotes
+                And I have a fixture with single-quote \'\'\'triple\'\'\' quotes
+                And I have a fixture with double-quote """triple""" quotes
+        
+                When I generate the code
+        
+                Then The generated string should be written
         '''
+        ),
+    )
+
+    result = testdir.run("pytest-bdd", "generate", "generate_with_quotes.feature")
+    assert result.stdout.str() == textwrap.dedent(
+        '''\
     # coding=utf-8
     """Handling quotes in code generation feature tests."""
 
@@ -80,7 +97,7 @@ def test_generate_with_quotes(monkeypatch, capsys):
     )
 
 
-    @scenario('scripts/generate_with_quotes.feature', 'A step definition with quotes should be escaped as needed')
+    @scenario('generate_with_quotes.feature', 'A step definition with quotes should be escaped as needed')
     def test_a_step_definition_with_quotes_should_be_escaped_as_needed():
         """A step definition with quotes should be escaped as needed."""
 
@@ -119,10 +136,5 @@ def test_generate_with_quotes(monkeypatch, capsys):
     def the_generated_string_should_be_written():
         """The generated string should be written."""
         raise NotImplementedError
-
-    '''[
-            1:
-        ].replace(
-            u"'", u"'"
-        )
+    '''
     )
