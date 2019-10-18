@@ -1,7 +1,10 @@
+# coding=utf-8
 """Test code generation command."""
 import os
 import sys
 import textwrap
+
+import six
 
 from pytest_bdd.scripts import main
 
@@ -138,3 +141,66 @@ def test_generate_with_quotes(testdir):
         raise NotImplementedError
     '''
     )
+
+
+def test_unicode_characters(testdir):
+    """Test generating code with unicode characters.
+
+    Primary purpose is to ensure compatibility with Python2.
+    """
+
+    testdir.makefile(
+        ".feature",
+        unicode_characters=textwrap.dedent(
+            """\
+        # coding=utf-8
+        Feature: Generating unicode characters
+
+            Scenario: Calculating the circumference of a circle
+                Given We have a circle
+                When We want to know its circumference
+                Then We calculate 2 * ℼ * 𝑟
+        """
+        ),
+    )
+
+    result = testdir.run("pytest-bdd", "generate", "unicode_characters.feature")
+    expected_output = textwrap.dedent(
+        u'''\
+            # coding=utf-8
+            """Generating unicode characters feature tests."""
+
+            from pytest_bdd import (
+                given,
+                scenario,
+                then,
+                when,
+            )
+
+
+            @scenario('unicode_characters.feature', 'Calculating the circumference of a circle')
+            def test_calculating_the_circumference_of_a_circle():
+                """Calculating the circumference of a circle."""
+
+
+            @given('We have a circle')
+            def we_have_a_circle():
+                """We have a circle."""
+                raise NotImplementedError
+
+
+            @when('We want to know its circumference')
+            def we_want_to_know_its_circumference():
+                """We want to know its circumference."""
+                raise NotImplementedError
+
+
+            @then('We calculate 2 * ℼ * 𝑟')
+            def {function_with_unicode_chars}():
+                """We calculate 2 * ℼ * 𝑟."""
+                raise NotImplementedError
+            '''.format(
+            function_with_unicode_chars=u"we_calculate_2__ℼ__𝑟" if not six.PY2 else u"we_calculate_2____"
+        )
+    )
+    assert result.stdout.str() == expected_output
