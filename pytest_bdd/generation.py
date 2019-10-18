@@ -6,7 +6,7 @@ import os.path
 from mako.lookup import TemplateLookup
 import py
 
-from .scenario import find_argumented_step_fixture_name, make_python_docstring, make_python_name
+from .scenario import find_argumented_step_fixture_name, make_python_docstring, make_python_name, make_string_literal
 from .steps import get_step_fixture_name
 from .feature import get_features
 from .types import STEP_TYPES
@@ -52,6 +52,7 @@ def generate_code(features, scenarios, steps):
         steps=grouped_steps,
         make_python_name=make_python_name,
         make_python_docstring=make_python_docstring,
+        make_string_literal=make_string_literal,
     )
 
 

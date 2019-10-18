@@ -293,7 +293,13 @@ def make_python_name(string):
 
 
 def make_python_docstring(string):
-    return '"""{}."""'.format(string.replace('"""', '\\"\\"\\"'))
+    """Make a python docstring literal out of a given string."""
+    return u'"""{}."""'.format(string.replace(u'"""', u'\\"\\"\\"'))
+
+
+def make_string_literal(string):
+    """Make python string literal out of a given string."""
+    return u"'{}'".format(string.replace(u"'", u"\\'"))
 
 
 def get_python_name_generator(name):

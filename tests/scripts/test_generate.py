@@ -108,7 +108,7 @@ def test_generate_with_quotes(testdir):
         raise NotImplementedError
 
 
-    @given("I have a fixture with 'single' quotes")
+    @given('I have a fixture with \\'single\\' quotes')
     def i_have_a_fixture_with_single_quotes():
         """I have a fixture with 'single' quotes."""
         raise NotImplementedError
@@ -120,7 +120,7 @@ def test_generate_with_quotes(testdir):
         raise NotImplementedError
 
 
-    @given("I have a fixture with single-quote \'\'\'triple\'\'\' quotes")
+    @given('I have a fixture with single-quote \\'\\'\\'triple\\'\\'\\' quotes')
     def i_have_a_fixture_with_singlequote_triple_quotes():
         """I have a fixture with single-quote \'\'\'triple\'\'\' quotes."""
         raise NotImplementedError
