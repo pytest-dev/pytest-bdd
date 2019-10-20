@@ -5,6 +5,7 @@ from pytest_bdd.feature import Feature, FeatureOld
 
 def test_tags_after_background_issue_160(testdir):
     from pytest_bdd.feature import Feature
+
     """Make sure using a tag after background works."""
 
     f = testdir.makefile(

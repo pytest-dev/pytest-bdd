@@ -35,7 +35,7 @@ Install pytest-bdd
     pip install pytest-bdd
 
 
-The minimum required version of pytest is 3.3.2
+The minimum required version of pytest is 4.3.
 
 
 Example
