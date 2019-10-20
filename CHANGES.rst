@@ -7,7 +7,7 @@ Unreleased
 - Drop support for pytest < 4.3.
 - Fix a Python 4.0 bug.
 - Fix ``pytest --generate-missing`` functionality being broken.
-- Drop compatibility with pytest < 3.6
+- Fix problematic missing step definition from strings containing quotes.
 
 3.2.1
 ----------
