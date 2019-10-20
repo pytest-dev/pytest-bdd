@@ -292,6 +292,16 @@ def make_python_name(string):
     return re.sub(ALPHA_REGEX, "", string).lower()
 
 
+def make_python_docstring(string):
+    """Make a python docstring literal out of a given string."""
+    return u'"""{}."""'.format(string.replace(u'"""', u'\\"\\"\\"'))
+
+
+def make_string_literal(string):
+    """Make python string literal out of a given string."""
+    return u"'{}'".format(string.replace(u"'", u"\\'"))
+
+
 def get_python_name_generator(name):
     """Generate a sequence of suitable python names out of given arbitrary string name."""
     python_name = make_python_name(name)

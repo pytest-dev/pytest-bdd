@@ -5,6 +5,7 @@ import os.path
 import re
 
 import glob2
+import six
 
 from .generation import generate_code, parse_feature_files
 
@@ -48,7 +49,10 @@ def print_generated_code(args):
     """Print generated test code for the given filenames."""
     features, scenarios, steps = parse_feature_files(args.files)
     code = generate_code(features, scenarios, steps)
-    print (code)
+    if six.PY2:
+        print (code.encode("utf-8"))
+    else:
+        print (code)
 
 
 def main():
