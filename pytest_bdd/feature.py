@@ -29,6 +29,7 @@ import codecs
 import re
 import sys
 import textwrap
+import gherkin.parser
 
 import glob2
 import six
@@ -237,8 +238,251 @@ class Examples(object):
     if six.PY2:
         __nonzero__ = __bool__
 
-
 class Feature(object):
+    def __init__(self, basedir, filename, encoding="utf-8", strict_gherkin=True):
+        """Parse the feature file.
+
+        :param str basedir: Feature files base directory.
+        :param str filename: Relative path to the feature file.
+        :param str encoding: Feature file encoding (utf-8 by default).
+        :param bool strict_gherkin: Flag whether it's a strictly gherkin scenario or not (e.g. it will validate correct
+            gherkin language (given-when-then))
+        """
+        self.scenarios = OrderedDict()
+        self.rel_filename = op.join(op.basename(basedir), filename)
+        self.filename = filename = op.abspath(op.join(basedir, filename))
+        self.line_number = 1
+        self.name = None
+        self.tags = set()
+        self.examples = Examples()
+        scenario = None
+        mode = None
+        prev_mode = None
+        description = []
+        step = None
+        multiline_step = False
+        prev_line = None
+        self.background = None
+
+        with codecs.open(filename, encoding=encoding) as f:
+            content = f.read()
+        parsed = gherkin.parser.Parser().parse(content)
+
+        self.description = textwrap.dedent(parsed['feature'].get('description', ''))
+        if self.description.startswith('Examples:'):
+            feature_examples = (
+                gherkin.parser.Parser()
+                .parse('Feature: asd\n    Scenario Outline: fasd\n    ' + self.description)
+                ['feature']['children'][0]['examples']
+            )
+            self.description = ''
+        # f = FeatureOld(basedir, filename, encoding, strict_gherkin)
+
+        parsed_scenarios = [c for c in parsed['feature']['children'] if c['type'] == 'Scenario']
+        for parsed_child in parsed['feature']['children']:
+            if parsed_child['type'] in ('Scenario', 'ScenarioOutline'):
+                parsed_scenario = parsed_child
+                scenario = Scenario(
+                    self,
+                    parsed_scenario['name'],
+                    line_number=parsed_scenario['location']['line'],
+                )
+                self.scenarios[parsed_scenario['name']] = scenario
+                target = scenario
+            elif parsed_child['type'] == 'Background':
+                parsed_background = parsed_child
+                self.background = Background(self, line_number=parsed_background['location']['line'])
+                target = self.background
+            else:
+                raise NotImplementedError
+            if 'examples' in parsed_child:
+                parsed_child == 32
+                [parsed_example_table] = parsed_child['examples']
+                if parsed_example_table['name'] == 'Vertical':
+                    # raise NotImplementedError
+                    pass
+                else:
+                    examples = Examples()
+                    examples.set_param_names([cell['value'] for cell in parsed_example_table['tableHeader']['cells']])
+                    for row in parsed_example_table['tableBody']:
+                        examples.add_example([cell['value'] for cell in row['cells']])
+                    target.examples = examples
+            last_keyword = None
+            for parsed_step in parsed_child['steps']:
+                modes = {
+                    'Given ': types.GIVEN,
+                    'When ': types.WHEN,
+                    'Then ': types.THEN,
+                }
+                if parsed_step['keyword'] in ('And ', 'But '):
+                    keyword = last_keyword
+                else:
+                    keyword = parsed_step['keyword']
+                    last_keyword = keyword
+                step = Step(
+                    name=parsed_step['text'],
+                    type=modes[keyword],
+                    indent=None,
+                    line_number=parsed_step['location']['line'],
+                    keyword=parsed_step['keyword'].strip(),
+                )
+                target.add_step(step)
+        return
+        content = force_unicode(f.read(), encoding)
+        for line_number, line in enumerate(content.splitlines(), start=1):
+            unindented_line = line.lstrip()
+            line_indent = len(line) - len(unindented_line)
+            if step and (step.indent < line_indent or ((not unindented_line) and multiline_step)):
+                multiline_step = True
+                # multiline step, so just add line and continue
+                step.add_line(line)
+                continue
+            else:
+                step = None
+                multiline_step = False
+            stripped_line = line.strip()
+            clean_line = strip_comments(line)
+            if not clean_line and (not prev_mode or prev_mode not in types.FEATURE):
+                continue
+            mode = get_step_type(clean_line) or mode
+
+            allowed_prev_mode = (types.BACKGROUND, types.GIVEN)
+            if not strict_gherkin:
+                allowed_prev_mode += (types.WHEN,)
+
+            if not scenario and prev_mode not in allowed_prev_mode and mode in types.STEP_TYPES:
+                raise exceptions.FeatureError(
+                    "Step definition outside of a Scenario or a Background", line_number, clean_line, filename
+                )
+
+            if strict_gherkin:
+                if (
+                    self.background
+                    and not scenario
+                    and mode not in (types.SCENARIO, types.SCENARIO_OUTLINE, types.GIVEN, types.TAG)
+                ):
+                    raise exceptions.FeatureError(
+                        "Background section can only contain Given steps", line_number, clean_line, filename
+                    )
+
+                if mode == types.GIVEN and prev_mode not in (
+                    types.GIVEN,
+                    types.SCENARIO,
+                    types.SCENARIO_OUTLINE,
+                    types.BACKGROUND,
+                ):
+                    raise exceptions.FeatureError(
+                        "Given steps must be the first within the Scenario", line_number, clean_line, filename
+                    )
+
+                if mode == types.WHEN and prev_mode not in (
+                    types.SCENARIO,
+                    types.SCENARIO_OUTLINE,
+                    types.GIVEN,
+                    types.WHEN,
+                ):
+                    raise exceptions.FeatureError(
+                        "When steps must be the first or follow Given steps", line_number, clean_line, filename
+                    )
+
+                if not self.background and mode == types.THEN and prev_mode not in types.STEP_TYPES:
+                    raise exceptions.FeatureError(
+                        "Then steps must follow Given or When steps", line_number, clean_line, filename
+                    )
+
+            if mode == types.FEATURE:
+                if prev_mode is None or prev_mode == types.TAG:
+                    _, self.name = parse_line(clean_line)
+                    self.line_number = line_number
+                    self.tags = get_tags(prev_line)
+                elif prev_mode == types.FEATURE:
+                    description.append(clean_line)
+                else:
+                    raise exceptions.FeatureError(
+                        "Multiple features are not allowed in a single feature file",
+                        line_number,
+                        clean_line,
+                        filename,
+                    )
+
+            prev_mode = mode
+
+            # Remove Feature, Given, When, Then, And
+            keyword, parsed_line = parse_line(clean_line)
+            if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
+                tags = get_tags(prev_line)
+                self.scenarios[parsed_line] = scenario = Scenario(self, parsed_line, line_number, tags=tags)
+            elif mode == types.BACKGROUND:
+                self.background = Background(feature=self, line_number=line_number)
+            elif mode == types.EXAMPLES:
+                mode = types.EXAMPLES_HEADERS
+                (scenario or self).examples.line_number = line_number
+            elif mode == types.EXAMPLES_VERTICAL:
+                mode = types.EXAMPLE_LINE_VERTICAL
+                (scenario or self).examples.line_number = line_number
+            elif mode == types.EXAMPLES_HEADERS:
+                (scenario or self).examples.set_param_names(
+                    [l.strip() for l in parsed_line.split("|")[1:-1] if l.strip()]
+                )
+                mode = types.EXAMPLE_LINE
+            elif mode == types.EXAMPLE_LINE:
+                (scenario or self).examples.add_example([l.strip() for l in stripped_line.split("|")[1:-1]])
+            elif mode == types.EXAMPLE_LINE_VERTICAL:
+                param_line_parts = [l.strip() for l in stripped_line.split("|")[1:-1]]
+                try:
+                    (scenario or self).examples.add_example_row(param_line_parts[0], param_line_parts[1:])
+                except exceptions.ExamplesNotValidError as exc:
+                    if scenario:
+                        raise exceptions.FeatureError(
+                            """Scenario has not valid examples. {0}""".format(exc.args[0]),
+                            line_number,
+                            clean_line,
+                            filename,
+                        )
+                    else:
+                        raise exceptions.FeatureError(
+                            """Feature has not valid examples. {0}""".format(exc.args[0]),
+                            line_number,
+                            clean_line,
+                            filename,
+                        )
+            elif mode and mode not in (types.FEATURE, types.TAG):
+                step = Step(
+                    name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword
+                )
+                if self.background and (mode == types.GIVEN or not strict_gherkin) and not scenario:
+                    target = self.background
+                else:
+                    target = scenario
+                target.add_step(step)
+            prev_line = clean_line
+
+        self.description = u"\n".join(description).strip()
+
+    @classmethod
+    def get_feature(cls, base_path, filename, encoding="utf-8", strict_gherkin=True):
+        """Get a feature by the filename.
+
+        :param str base_path: Base feature directory.
+        :param str filename: Filename of the feature file.
+        :param str encoding: Feature file encoding.
+        :param bool strict_gherkin: Flag whether it's a strictly gherkin scenario or not (e.g. it will validate correct
+            gherkin language (given-when-then))
+
+        :return: `Feature` instance from the parsed feature cache.
+
+        :note: The features are parsed on the execution of the test and
+               stored in the global variable cache to improve the performance
+               when multiple scenarios are referencing the same file.
+        """
+        full_name = op.abspath(op.join(base_path, filename))
+        feature = features.get(full_name)
+        if not feature:
+            feature = Feature(base_path, filename, encoding=encoding, strict_gherkin=strict_gherkin)
+            features[full_name] = feature
+        return feature
+
+class FeatureOld(object):
 
     """Feature."""
 
@@ -418,7 +662,7 @@ class Feature(object):
         full_name = op.abspath(op.join(base_path, filename))
         feature = features.get(full_name)
         if not feature:
-            feature = Feature(base_path, filename, encoding=encoding, strict_gherkin=strict_gherkin)
+            feature = cls(base_path, filename, encoding=encoding, strict_gherkin=strict_gherkin)
             features[full_name] = feature
         return feature
 

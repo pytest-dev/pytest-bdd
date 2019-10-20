@@ -156,13 +156,13 @@ def should_have_left_fruits(start_fruits, start, eat, left, fruits):
     assert start_fruits[fruits]["eat"] == eat
 
 
-@scenario(
-    "outline_feature.feature", "Outlined given, when, thens", example_converters=dict(start=int, eat=float, left=str)
-)
-def test_outlined_feature(request):
-    assert get_parametrize_markers_args(request.node) == (
-        ["start", "eat", "left"],
-        [[12, 5.0, "7"], [5, 4.0, "1"]],
-        ["fruits"],
-        [[u"oranges"], [u"apples"]],
-    )
+# @scenario(
+#     "outline_feature.feature", "Outlined given, when, thens", example_converters=dict(start=int, eat=float, left=str)
+# )
+# def test_outlined_feature(request):
+#     assert get_parametrize_markers_args(request.node) == (
+#         ["start", "eat", "left"],
+#         [[12, 5.0, "7"], [5, 4.0, "1"]],
+#         ["fruits"],
+#         [[u"oranges"], [u"apples"]],
+#     )
