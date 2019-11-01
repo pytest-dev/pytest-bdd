@@ -166,3 +166,71 @@ def test_outlined_feature(request):
         ["fruits"],
         [[u"oranges"], [u"apples"]],
     )
+
+
+def test_outline_with_escaped_pipes(testdir):
+    """Test parametrized feature example table with escaped pipe characters in input."""
+    features = testdir.mkdir("features")
+    feature = features.join("test.feature")
+    feature.write_text(
+        textwrap.dedent(
+            u"""
+    Feature: Outline With Special characters
+    
+        Scenario Outline: Outline with escaped pipe character
+            Given We have strings <string1> and <string2>
+            When We compare them
+            Then They should be equal
+    
+            Examples:
+            | string1        | string2        |
+            | bork           | bork           |
+            | \\|bork        | \\|bork        |
+            | bork \\|       | bork \\|       |
+            | bork\\|\\|bork | bork\\|\\|bork |
+            | \\|            | \\|            |
+            """
+        ),
+        "utf-8",
+        ensure=True,
+    )
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """
+    from pytest_bdd import scenario, given, when, then
+    from pytest_bdd.utils import get_parametrize_markers_args
+
+
+    @scenario("features/test.feature", "Outline with escaped pipe character")
+    def test_outline_with_escaped_pipe_character(request):
+        assert get_parametrize_markers_args(request.node) == (
+            [u"string1", u"string2"],
+            [
+                ["bork", "bork"], 
+                ["|bork", "|bork"], 
+                ["bork |", "bork |"], 
+                ["bork||bork", "bork||bork"], 
+                ["|", "|"],
+            ],
+        )
+
+
+    @given("We have strings <string1> and <string2>")
+    def we_have_strings_string1_and_string2(string1, string2):
+        pass
+
+
+    @when("We compare them")
+    def we_compare_them():
+        pass
+
+
+    @then("They should be equal")
+    def they_should_be_equal():
+        pass
+    """
+        )
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["* 5 passed *"])
