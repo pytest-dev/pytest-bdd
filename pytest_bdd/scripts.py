@@ -31,9 +31,9 @@ def migrate_tests_in_file(file_path):
                 new_content = new_content.rstrip("\n") + "\n"
                 fd.seek(0)
                 fd.write(new_content)
-                print ("migrated: {0}".format(file_path))
+                print("migrated: {0}".format(file_path))
             else:
-                print ("skipped: {0}".format(file_path))
+                print("skipped: {0}".format(file_path))
     except IOError:
         pass
 
@@ -50,9 +50,9 @@ def print_generated_code(args):
     features, scenarios, steps = parse_feature_files(args.files)
     code = generate_code(features, scenarios, steps)
     if six.PY2:
-        print (code.encode("utf-8"))
+        print(code.encode("utf-8"))
     else:
-        print (code)
+        print(code)
 
 
 def main():
