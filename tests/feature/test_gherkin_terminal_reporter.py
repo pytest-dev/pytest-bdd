@@ -174,9 +174,9 @@ def output_must_be_the_same_as_regular_reporter(test_execution):
     assert ghe.ret == 0
     #  last line can be different because of test execution time is printed
     reg_lines = reg.stdout.lines if reg.stdout.lines[-1] else reg.stdout.lines[:-2]
-    reg_lines[-1] = re.sub(r" \d+\.\d+ ", " X ", reg_lines[-1])
+    reg_lines[-1] = re.sub(r" in [^=]*", " in X ", reg_lines[-1])
     ghe_lines = ghe.stdout.lines if ghe.stdout.lines[-1] else ghe.stdout.lines[:-2]
-    ghe_lines[-1] = re.sub(r" \d+\.\d+ ", " X ", ghe_lines[-1])
+    ghe_lines[-1] = re.sub(r" in [^=]*", " in X ", ghe_lines[-1])
     for l1, l2 in zip(reg_lines, ghe_lines):
         assert l1 == l2
 
