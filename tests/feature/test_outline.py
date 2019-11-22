@@ -1,4 +1,5 @@
 """Scenario Outline tests."""
+from __future__ import unicode_literals
 import re
 import textwrap
 
@@ -11,7 +12,7 @@ from pytest_bdd.utils import get_parametrize_markers_args
 
 @scenario("outline.feature", "Outlined given, when, thens", example_converters=dict(start=int, eat=float, left=str))
 def test_outlined(request):
-    assert get_parametrize_markers_args(request.node) == ([u"start", u"eat", u"left"], [[12, 5.0, "7"], [5, 4.0, "1"]])
+    assert get_parametrize_markers_args(request.node) == (["start", "eat", "left"], [[12, 5.0, "7"], [5, 4.0, "1"]])
 
 
 @given("there are <start> cucumbers")
@@ -56,7 +57,7 @@ def test_wrong_vertical_examples_scenario(testdir):
     feature = features.join("test.feature")
     feature.write_text(
         textwrap.dedent(
-            u"""
+            """
     Scenario Outline: Outlined with wrong vertical example table
         Given there are <start> cucumbers
         When I eat <eat> cucumbers
@@ -89,7 +90,7 @@ def test_wrong_vertical_examples_feature(testdir):
     feature = features.join("test.feature")
     feature.write_text(
         textwrap.dedent(
-            u"""
+            """
     Feature: Outlines
 
         Examples: Vertical
@@ -133,7 +134,7 @@ def test_outlined_with_other_fixtures(other_fixture):
 )
 def test_vertical_example(request):
     """Test outlined scenario with vertical examples table."""
-    assert get_parametrize_markers_args(request.node) == ([u"start", u"eat", u"left"], [[12, 5.0, "7"], [2, 1.0, "1"]])
+    assert get_parametrize_markers_args(request.node) == (["start", "eat", "left"], [[12, 5.0, "7"], [2, 1.0, "1"]])
 
 
 @given("there are <start> <fruits>")
@@ -164,7 +165,7 @@ def test_outlined_feature(request):
         ["start", "eat", "left"],
         [[12, 5.0, "7"], [5, 4.0, "1"]],
         ["fruits"],
-        [[u"oranges"], [u"apples"]],
+        [["oranges"], ["apples"]],
     )
 
 
