@@ -174,21 +174,22 @@ def test_outline_with_escaped_pipes(testdir):
     feature = features.join("test.feature")
     feature.write_text(
         textwrap.dedent(
-            u"""
+            r"""
     Feature: Outline With Special characters
     
         Scenario Outline: Outline with escaped pipe character
             Given We have strings <string1> and <string2>
-            When We compare them
-            Then They should be equal
-    
+            Then <string2> should be the base64 encoding of <string1>
+
             Examples:
-            | string1        | string2        |
-            | bork           | bork           |
-            | \\|bork        | \\|bork        |
-            | bork \\|       | bork \\|       |
-            | bork\\|\\|bork | bork\\|\\|bork |
-            | \\|            | \\|            |
+            | string1      | string2          |
+            | bork         | Ym9yaw==         |
+            | \|bork       | fGJvcms=         |
+            | bork \|      | Ym9yayB8         |
+            | bork\|\|bork | Ym9ya3x8Ym9yaw== |
+            | \|           | fA==             |
+            | bork      \\ | Ym9yayAgICAgIFxc |
+            | bork    \\\| | Ym9yayAgICBcXHw= |
             """
         ),
         "utf-8",
@@ -198,22 +199,15 @@ def test_outline_with_escaped_pipes(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """
+    import base64
+
     from pytest_bdd import scenario, given, when, then
     from pytest_bdd.utils import get_parametrize_markers_args
 
 
     @scenario("features/test.feature", "Outline with escaped pipe character")
     def test_outline_with_escaped_pipe_character(request):
-        assert get_parametrize_markers_args(request.node) == (
-            [u"string1", u"string2"],
-            [
-                ["bork", "bork"], 
-                ["|bork", "|bork"], 
-                ["bork |", "bork |"], 
-                ["bork||bork", "bork||bork"], 
-                ["|", "|"],
-            ],
-        )
+        pass
 
 
     @given("We have strings <string1> and <string2>")
@@ -221,16 +215,11 @@ def test_outline_with_escaped_pipes(testdir):
         pass
 
 
-    @when("We compare them")
-    def we_compare_them():
-        pass
-
-
-    @then("They should be equal")
-    def they_should_be_equal():
-        pass
+    @then("<string2> should be the base64 encoding of <string1>")
+    def string2_should_be_base64_encoding_of_string1(string2, string1):
+        assert string1.encode() == base64.b64decode(string2.encode())
     """
         )
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines(["* 5 passed *"])
+    result.stdout.fnmatch_lines(["* 7 passed *"])
