@@ -1,4 +1,5 @@
 """Scenario Outline tests."""
+from __future__ import unicode_literals
 import re
 import textwrap
 
@@ -11,7 +12,7 @@ from pytest_bdd.utils import get_parametrize_markers_args
 
 @scenario("outline.feature", "Outlined given, when, thens", example_converters=dict(start=int, eat=float, left=str))
 def test_outlined(request):
-    assert get_parametrize_markers_args(request.node) == ([u"start", u"eat", u"left"], [[12, 5.0, "7"], [5, 4.0, "1"]])
+    assert get_parametrize_markers_args(request.node) == (["start", "eat", "left"], [[12, 5.0, "7"], [5, 4.0, "1"]])
 
 
 @given("there are <start> cucumbers")
@@ -56,7 +57,7 @@ def test_wrong_vertical_examples_scenario(testdir):
     feature = features.join("test.feature")
     feature.write_text(
         textwrap.dedent(
-            u"""
+            """
     Scenario Outline: Outlined with wrong vertical example table
         Given there are <start> cucumbers
         When I eat <eat> cucumbers
@@ -89,7 +90,7 @@ def test_wrong_vertical_examples_feature(testdir):
     feature = features.join("test.feature")
     feature.write_text(
         textwrap.dedent(
-            u"""
+            """
     Feature: Outlines
 
         Examples: Vertical
@@ -133,7 +134,7 @@ def test_outlined_with_other_fixtures(other_fixture):
 )
 def test_vertical_example(request):
     """Test outlined scenario with vertical examples table."""
-    assert get_parametrize_markers_args(request.node) == ([u"start", u"eat", u"left"], [[12, 5.0, "7"], [2, 1.0, "1"]])
+    assert get_parametrize_markers_args(request.node) == (["start", "eat", "left"], [[12, 5.0, "7"], [2, 1.0, "1"]])
 
 
 @given("there are <start> <fruits>")
@@ -164,5 +165,62 @@ def test_outlined_feature(request):
         ["start", "eat", "left"],
         [[12, 5.0, "7"], [5, 4.0, "1"]],
         ["fruits"],
-        [[u"oranges"], [u"apples"]],
+        [["oranges"], ["apples"]],
     )
+
+
+def test_outline_with_escaped_pipes(testdir):
+    """Test parametrized feature example table with escaped pipe characters in input."""
+    features = testdir.mkdir("features")
+    feature = features.join("test.feature")
+    feature.write_text(
+        textwrap.dedent(
+            r"""
+    Feature: Outline With Special characters
+    
+        Scenario Outline: Outline with escaped pipe character
+            Given We have strings <string1> and <string2>
+            Then <string2> should be the base64 encoding of <string1>
+
+            Examples:
+            | string1      | string2          |
+            | bork         | Ym9yaw==         |
+            | \|bork       | fGJvcms=         |
+            | bork \|      | Ym9yayB8         |
+            | bork\|\|bork | Ym9ya3x8Ym9yaw== |
+            | \|           | fA==             |
+            | bork      \\ | Ym9yayAgICAgIFxc |
+            | bork    \\\| | Ym9yayAgICBcXHw= |
+            """
+        ),
+        "utf-8",
+        ensure=True,
+    )
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """
+    import base64
+
+    from pytest_bdd import scenario, given, when, then
+    from pytest_bdd.utils import get_parametrize_markers_args
+
+
+    @scenario("features/test.feature", "Outline with escaped pipe character")
+    def test_outline_with_escaped_pipe_character(request):
+        pass
+
+
+    @given("We have strings <string1> and <string2>")
+    def we_have_strings_string1_and_string2(string1, string2):
+        pass
+
+
+    @then("<string2> should be the base64 encoding of <string1>")
+    def string2_should_be_base64_encoding_of_string1(string2, string1):
+        assert string1.encode() == base64.b64decode(string2.encode())
+    """
+        )
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["* 7 passed *"])
