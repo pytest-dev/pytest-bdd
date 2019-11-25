@@ -292,7 +292,6 @@ def test_step_trace_with_expand_option(testdir):
     assert jsonobject[0]["elements"][2]["steps"][0]["name"] == "type float and value 1.0"
 
 
-
 def test_converters_dict_with_expand_option(testdir):
     """Test step trace."""
     testdir.makefile(
