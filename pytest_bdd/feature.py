@@ -59,6 +59,7 @@ STEP_PREFIXES = [
 
 STEP_PARAM_RE = re.compile(r"\<(.+?)\>")
 COMMENT_RE = re.compile(r"(^|(?<=\s))#")
+SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
 
 
 def get_step_type(line):
@@ -139,6 +140,16 @@ def get_tags(line):
     if not line or not line.strip().startswith("@"):
         return set()
     return set((tag.lstrip("@") for tag in line.strip().split(" @") if len(tag) > 1))
+
+
+def split_line(line):
+    """Split the given Examples line.
+
+    :param str|unicode line: Feature file Examples line.
+
+    :return: List of strings.
+    """
+    return [cell.replace("\\|", "|").strip() for cell in SPLIT_LINE_RE.split(line[1:-1])]
 
 
 def get_features(paths, **kwargs):
@@ -361,14 +372,12 @@ class Feature(object):
                     mode = types.EXAMPLE_LINE_VERTICAL
                     (scenario or self).examples.line_number = line_number
                 elif mode == types.EXAMPLES_HEADERS:
-                    (scenario or self).examples.set_param_names(
-                        [l.strip() for l in parsed_line.split("|")[1:-1] if l.strip()]
-                    )
+                    (scenario or self).examples.set_param_names([l for l in split_line(parsed_line) if l])
                     mode = types.EXAMPLE_LINE
                 elif mode == types.EXAMPLE_LINE:
-                    (scenario or self).examples.add_example([l.strip() for l in stripped_line.split("|")[1:-1]])
+                    (scenario or self).examples.add_example([l for l in split_line(stripped_line)])
                 elif mode == types.EXAMPLE_LINE_VERTICAL:
-                    param_line_parts = [l.strip() for l in stripped_line.split("|")[1:-1]]
+                    param_line_parts = [l for l in split_line(stripped_line)]
                     try:
                         (scenario or self).examples.add_example_row(param_line_parts[0], param_line_parts[1:])
                     except exceptions.ExamplesNotValidError as exc:
