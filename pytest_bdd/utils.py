@@ -17,10 +17,9 @@ def get_args(func):
     :return: A list of argument names.
     :rtype: list
     """
-    if hasattr(inspect, 'signature'):
+    if hasattr(inspect, "signature"):
         params = inspect.signature(func).parameters.values()
-        return [param.name for param in params
-                if param.kind == param.POSITIONAL_OR_KEYWORD]
+        return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
     else:
         return inspect.getargspec(func).args
 
@@ -31,21 +30,4 @@ def get_parametrize_markers_args(node):
 
     This function uses that API if it is available otherwise it uses MarkInfo objects.
     """
-    mark_name = 'parametrize'
-    try:
-        return get_markers_args_using_iter_markers(node, mark_name)
-    except AttributeError:
-        return get_markers_args_using_get_marker(node, mark_name)
-
-
-def get_markers_args_using_iter_markers(node, mark_name):
-    """Recommended on pytest>=3.6"""
-    args = []
-    for mark in node.iter_markers(mark_name):
-        args += mark.args
-    return tuple(args)
-
-
-def get_markers_args_using_get_marker(node, mark_name):
-    """Deprecated on pytest>=3.6"""
-    return getattr(node.get_marker(mark_name), 'args', ())
+    return tuple(arg for mark in node.iter_markers("parametrize") for arg in mark.args)

@@ -3,20 +3,13 @@ import re
 
 import pytest
 
-from pytest_bdd import (
-    given,
-    parsers,
-    scenario,
-    then,
-)
+from pytest_bdd import given, parsers, scenario, then
 
 
 def test_background_basic(request):
     """Test feature background."""
-    @scenario(
-        "background.feature",
-        "Basic usage",
-    )
+
+    @scenario("background.feature", "Basic usage")
     def test():
         pass
 
@@ -25,10 +18,8 @@ def test_background_basic(request):
 
 def test_background_check_order(request):
     """Test feature background to ensure that backound steps are executed first."""
-    @scenario(
-        "background.feature",
-        "Background steps are executed first",
-    )
+
+    @scenario("background.feature", "Background steps are executed first")
     def test():
         pass
 
@@ -40,7 +31,7 @@ def foo():
     return {}
 
 
-@given(parsers.re(r'a background step with multiple lines:\n(?P<data>.+)', flags=re.DOTALL))
+@given(parsers.re(r"a background step with multiple lines:\n(?P<data>.+)", flags=re.DOTALL))
 def multi_line(foo, data):
     assert data == "one\ntwo"
 
@@ -70,7 +61,7 @@ def foo_has_bar(foo):
 
 @then('foo should have value "dummy"')
 def foo_has_dummy(foo):
-    assert foo['dummy'] == "dummy"
+    assert foo["dummy"] == "dummy"
 
 
 @then('foo should not have value "bar"')
