@@ -2,7 +2,7 @@
 from pytest_bdd import scenario
 
 
-test_file_contents = """
+TEST_FILE_CONTENTS = """
 import pytest
 from pytest_bdd import given, scenario
 
@@ -23,7 +23,19 @@ def nothing():
 """
 
 with open("./tests/feature/description.feature") as f:
-    feature_file_contents = f.read()
+    FEATURE_FILE_CONTENTS = f.read()
+
+EXPECTED_FEATURE_DESCRIPTION = """In order to achieve something
+I want something
+Because it will be cool
+
+
+Some description goes here."""
+
+EXPECTED_SCENARIO_DESCRIPTION = """Also, the scenario can have a description.
+
+It goes here between the scenario name
+and the first step."""
 
 
 def test_description(request):
@@ -33,29 +45,15 @@ def test_description(request):
     def test():
         pass
 
-    assert (
-        test.__scenario__.feature.description
-        == """In order to achieve something
-I want something
-Because it will be cool
-
-
-Some description goes here."""
-    )
-    assert (
-        test.__scenario__.description
-        == """Also, the scenario can have a description.
-
-It goes here between the scenario name
-and the first step."""
-    )
+    assert test.__scenario__.feature.description == EXPECTED_FEATURE_DESCRIPTION
+    assert test.__scenario__.description == EXPECTED_SCENARIO_DESCRIPTION
 
     test(request)
 
 
 def test_scenarios_are_created_when_they_have_scenario_descriptions(testdir):
-    testdir.makepyfile(test_descriptions=test_file_contents)
-    testdir.makefile(".feature", descriptions=feature_file_contents)
+    testdir.makepyfile(test_descriptions=TEST_FILE_CONTENTS)
+    testdir.makefile(".feature", descriptions=FEATURE_FILE_CONTENTS)
 
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)
