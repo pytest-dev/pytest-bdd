@@ -10,12 +10,14 @@ test_publish_article = scenario(
     scenario_name="Publishing the article",
 )
 """
+import asyncio
 import collections
 import inspect
 import os
 import re
 
 import pytest
+from _pytest.fixtures import FixtureLookupError
 
 try:
     from _pytest import fixtures as pytest_fixtures
@@ -111,8 +113,16 @@ def _execute_step_function(request, scenario, step, step_func):
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
+
         # Execute the step.
-        step_func(**kwargs)
+        result_or_coro = step_func(**kwargs)
+        if inspect.iscoroutine(result_or_coro):
+            try:
+                event_loop = request.getfixturevalue("event_loop")
+            except FixtureLookupError:
+                raise ValueError("Install pytest-asyncio plugin to run asynchronous steps.")
+            event_loop.run_until_complete(result_or_coro)
+
         request.config.hook.pytest_bdd_after_step(**kw)
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
