@@ -7,7 +7,13 @@ import os
 import sys
 import time
 
-from .feature import force_unicode
+import six
+
+from . import feature
+from . import types
+
+if six.PY3:
+    long = int
 
 
 def add_options(parser):
@@ -72,10 +78,13 @@ class LogBDDCucumberJSON(object):
         if report.passed or not step["failed"]:  # ignore setup/teardown
             result = {"status": "passed"}
         elif report.failed and step["failed"]:
-            result = {"status": "failed", "error_message": force_unicode(report.longrepr) if error_message else ""}
+            result = {
+                "status": "failed",
+                "error_message": feature.force_unicode(report.longrepr) if error_message else "",
+            }
         elif report.skipped:
             result = {"status": "skipped"}
-        result["duration"] = int(math.floor((10 ** 9) * step["duration"]))  # nanosec
+        result['duration'] = long(math.floor((10 ** 9) * step["duration"]))  # nanosec
         return result
 
     def _serialize_tags(self, item):
@@ -90,11 +99,17 @@ class LogBDDCucumberJSON(object):
                 }
             ]
         """
-        return [{"name": tag, "line": item["line_number"] - 1} for tag in item["tags"]]
+        return [
+            {
+                "name": tag,
+                "line": item["line_number"] - 1
+            }
+            for tag in item["tags"]
+        ]
 
     def _format_name(self, name, keys, values):
         for param, value in zip(keys, values):
-            name = name.replace("<{}>".format(param), value)
+            name = name.replace('<{}>'.format(param), value)
         return name
 
     def _format_step_name(self, report, step):
@@ -122,8 +137,8 @@ class LogBDDCucumberJSON(object):
 
         def stepmap(step):
             error_message = False
-            if step["failed"] and not scenario.setdefault("failed", False):
-                scenario["failed"] = True
+            if step['failed'] and not scenario.setdefault('failed', False):
+                scenario['failed'] = True
                 error_message = True
 
             if self.expand:
@@ -135,37 +150,41 @@ class LogBDDCucumberJSON(object):
                 step_name = step["name"]
 
             return {
-                "keyword": step["keyword"],
+                "keyword": step['keyword'],
                 "name": step_name,
-                "line": step["line_number"],
-                "match": {"location": ""},
+                "line": step['line_number'],
+                "match": {
+                    "location": "",
+                },
                 "result": self._get_result(step, report, error_message),
             }
 
+        feature_label = '{}'.format(feature.prefix_by_type(types.FEATURE)).split(":")[0]
+        scenario_label = '{}'.format(feature.prefix_by_type(types.SCENARIO)).split(":")[0]
+
+
         if scenario["feature"]["filename"] not in self.features:
             self.features[scenario["feature"]["filename"]] = {
-                "keyword": "Feature",
+                "keyword": feature_label,
                 "uri": scenario["feature"]["rel_filename"],
                 "name": scenario["feature"]["name"] or scenario["feature"]["rel_filename"],
                 "id": scenario["feature"]["rel_filename"].lower().replace(" ", "-"),
-                "line": scenario["feature"]["line_number"],
+                "line": scenario['feature']["line_number"],
                 "description": scenario["feature"]["description"],
                 "tags": self._serialize_tags(scenario["feature"]),
                 "elements": [],
             }
 
-        self.features[scenario["feature"]["filename"]]["elements"].append(
-            {
-                "keyword": "Scenario",
-                "id": report.item["name"],
-                "name": scenario["name"],
-                "line": scenario["line_number"],
-                "description": "",
-                "tags": self._serialize_tags(scenario),
-                "type": "scenario",
-                "steps": [stepmap(step) for step in scenario["steps"]],
-            }
-        )
+        self.features[scenario["feature"]["filename"]]["elements"].append({
+            "keyword": scenario_label,
+            "id": report.item["name"],
+            "name": scenario["name"],
+            "line": scenario["line_number"],
+            "description": "",
+            "tags": self._serialize_tags(scenario),
+            "type": "scenario",
+            "steps": [stepmap(step) for step in scenario["steps"]],
+        })
 
     def pytest_sessionstart(self):
         self.suite_start_time = time.time()
