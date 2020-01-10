@@ -7,7 +7,8 @@ import os
 import sys
 import time
 
-from .feature import force_unicode
+from . import feature
+from . import types
 
 
 def add_options(parser):
@@ -72,7 +73,7 @@ class LogBDDCucumberJSON(object):
         if report.passed or not step["failed"]:  # ignore setup/teardown
             result = {"status": "passed"}
         elif report.failed and step["failed"]:
-            result = {"status": "failed", "error_message": force_unicode(report.longrepr) if error_message else ""}
+            result = {"status": "failed", "error_message": feature.force_unicode(report.longrepr) if error_message else ""}
         elif report.skipped:
             result = {"status": "skipped"}
         result["duration"] = int(math.floor((10 ** 9) * step["duration"]))  # nanosec
@@ -142,9 +143,13 @@ class LogBDDCucumberJSON(object):
                 "result": self._get_result(step, report, error_message),
             }
 
+        feature_label = '{}'.format(feature.prefix_by_type(types.FEATURE)).split(":")[0]
+        scenario_label = '{}'.format(feature.prefix_by_type(types.SCENARIO)).split(":")[0]
+
+
         if scenario["feature"]["filename"] not in self.features:
             self.features[scenario["feature"]["filename"]] = {
-                "keyword": "Feature",
+                "keyword": feature_label,
                 "uri": scenario["feature"]["rel_filename"],
                 "name": scenario["feature"]["name"] or scenario["feature"]["rel_filename"],
                 "id": scenario["feature"]["rel_filename"].lower().replace(" ", "-"),
@@ -156,7 +161,7 @@ class LogBDDCucumberJSON(object):
 
         self.features[scenario["feature"]["filename"]]["elements"].append(
             {
-                "keyword": "Scenario",
+                "keyword": scenario_label,
                 "id": report.item["name"],
                 "name": scenario["name"],
                 "line": scenario["line_number"],

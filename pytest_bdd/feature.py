@@ -581,3 +581,11 @@ class Background(object):
         """Add step to the background."""
         step.background = self
         self.steps.append(step)
+
+def prefix_by_type(reqtype):
+
+    for prefix, _type in STEP_PREFIXES:
+        if _type==reqtype:
+            return prefix
+
+    return '<N/A type> {}'.format(reqtype)
