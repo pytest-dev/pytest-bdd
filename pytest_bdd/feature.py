@@ -36,10 +36,8 @@ import six
 from . import types
 from . import exceptions
 
-
 # Global features dictionary
 features = {}
-
 
 STEP_PREFIXES = [
     ("Feature: ", types.FEATURE),
@@ -96,7 +94,7 @@ def parse_line(line):
     """
     for prefix, _ in STEP_PREFIXES:
         if line.startswith(prefix):
-            return prefix.strip(), line[len(prefix) :].strip()
+            return prefix.strip(), line[len(prefix):].strip()
     return "", line
 
 
@@ -175,7 +173,6 @@ def get_features(paths, **kwargs):
 
 
 class Examples(object):
-
     """Example table."""
 
     def __init__(self):
@@ -250,7 +247,6 @@ class Examples(object):
 
 
 class Feature(object):
-
     """Feature."""
 
     def __init__(self, basedir, filename, encoding="utf-8", strict_gherkin=True):
@@ -308,29 +304,29 @@ class Feature(object):
 
                 if strict_gherkin:
                     if (
-                        self.background
-                        and not scenario
-                        and mode not in (types.SCENARIO, types.SCENARIO_OUTLINE, types.GIVEN, types.TAG)
+                            self.background
+                            and not scenario
+                            and mode not in (types.SCENARIO, types.SCENARIO_OUTLINE, types.GIVEN, types.TAG)
                     ):
                         raise exceptions.FeatureError(
                             "Background section can only contain Given steps", line_number, clean_line, filename
                         )
 
                     if mode == types.GIVEN and prev_mode not in (
-                        types.GIVEN,
-                        types.SCENARIO,
-                        types.SCENARIO_OUTLINE,
-                        types.BACKGROUND,
+                            types.GIVEN,
+                            types.SCENARIO,
+                            types.SCENARIO_OUTLINE,
+                            types.BACKGROUND,
                     ):
                         raise exceptions.FeatureError(
                             "Given steps must be the first within the Scenario", line_number, clean_line, filename
                         )
 
                     if mode == types.WHEN and prev_mode not in (
-                        types.SCENARIO,
-                        types.SCENARIO_OUTLINE,
-                        types.GIVEN,
-                        types.WHEN,
+                            types.SCENARIO,
+                            types.SCENARIO_OUTLINE,
+                            types.GIVEN,
+                            types.WHEN,
                     ):
                         raise exceptions.FeatureError(
                             "When steps must be the first or follow Given steps", line_number, clean_line, filename
@@ -433,7 +429,6 @@ class Feature(object):
 
 
 class Scenario(object):
-
     """Scenario."""
 
     def __init__(self, feature, name, line_number, example_converters=None, tags=None):
@@ -511,7 +506,6 @@ class Scenario(object):
 
 @six.python_2_unicode_compatible
 class Step(object):
-
     """Step."""
 
     def __init__(self, name, type, indent, line_number, keyword):
@@ -564,7 +558,6 @@ class Step(object):
 
 
 class Background(object):
-
     """Background."""
 
     def __init__(self, feature, line_number):
@@ -582,10 +575,10 @@ class Background(object):
         step.background = self
         self.steps.append(step)
 
-def prefix_by_type(reqtype):
 
+def prefix_by_type(requested_type):
     for prefix, _type in STEP_PREFIXES:
-        if _type==reqtype:
+        if requested_type == _type:
             return prefix
 
-    return '<N/A type> {}'.format(reqtype)
+    return '<N/A type> {}'.format(requested_type)
