@@ -7,7 +7,6 @@ import re
 from _pytest.terminal import TerminalReporter
 
 from . import feature
-
 from . import types
 
 
@@ -81,7 +80,6 @@ class GherkinTerminalReporter(TerminalReporter):
 
         feature_label = "{}".format(feature.prefix_by_type(types.FEATURE))
         scenario_label = "    {}".format(feature.prefix_by_type(types.SCENARIO))
-
         if self.verbosity <= 0:
             return TerminalReporter.pytest_runtest_logreport(self, rep)
         elif self.verbosity == 1:

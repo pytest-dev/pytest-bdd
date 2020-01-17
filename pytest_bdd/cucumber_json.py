@@ -148,7 +148,6 @@ class LogBDDCucumberJSON(object):
 
         feature_label = "{}".format(feature.prefix_by_type(types.FEATURE)).split(":")[0]
         scenario_label = "{}".format(feature.prefix_by_type(types.SCENARIO)).split(":")[0]
-
         if scenario["feature"]["filename"] not in self.features:
             self.features[scenario["feature"]["filename"]] = {
                 "keyword": feature_label,
