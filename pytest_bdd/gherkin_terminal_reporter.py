@@ -79,8 +79,8 @@ class GherkinTerminalReporter(TerminalReporter):
         feature_markup = {"blue": True}
         scenario_markup = word_markup
 
-        feature_label = '{}'.format(feature.prefix_by_type(types.FEATURE))
-        scenario_label = '    {}'.format(feature.prefix_by_type(types.SCENARIO))
+        feature_label = "{}".format(feature.prefix_by_type(types.FEATURE))
+        scenario_label = "    {}".format(feature.prefix_by_type(types.SCENARIO))
 
         if self.verbosity <= 0:
             return TerminalReporter.pytest_runtest_logreport(self, rep)

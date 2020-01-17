@@ -73,7 +73,10 @@ class LogBDDCucumberJSON(object):
         if report.passed or not step["failed"]:  # ignore setup/teardown
             result = {"status": "passed"}
         elif report.failed and step["failed"]:
-            result = {"status": "failed", "error_message": feature.force_unicode(report.longrepr) if error_message else ""}
+            result = {
+                "status": "failed",
+                "error_message": feature.force_unicode(report.longrepr) if error_message else "",
+            }
         elif report.skipped:
             result = {"status": "skipped"}
         result["duration"] = int(math.floor((10 ** 9) * step["duration"]))  # nanosec
@@ -143,9 +146,8 @@ class LogBDDCucumberJSON(object):
                 "result": self._get_result(step, report, error_message),
             }
 
-        feature_label = '{}'.format(feature.prefix_by_type(types.FEATURE)).split(":")[0]
-        scenario_label = '{}'.format(feature.prefix_by_type(types.SCENARIO)).split(":")[0]
-
+        feature_label = "{}".format(feature.prefix_by_type(types.FEATURE)).split(":")[0]
+        scenario_label = "{}".format(feature.prefix_by_type(types.SCENARIO)).split(":")[0]
 
         if scenario["feature"]["filename"] not in self.features:
             self.features[scenario["feature"]["filename"]] = {
