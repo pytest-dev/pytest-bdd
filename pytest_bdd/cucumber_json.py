@@ -7,6 +7,7 @@ import os
 import sys
 import time
 
+from .feature import force_unicode
 from . import feature
 from . import types
 
@@ -73,10 +74,7 @@ class LogBDDCucumberJSON(object):
         if report.passed or not step["failed"]:  # ignore setup/teardown
             result = {"status": "passed"}
         elif report.failed and step["failed"]:
-            result = {
-                "status": "failed",
-                "error_message": feature.force_unicode(report.longrepr) if error_message else "",
-            }
+            result = {"status": "failed", "error_message": force_unicode(report.longrepr) if error_message else ""}
         elif report.skipped:
             result = {"status": "skipped"}
         result["duration"] = int(math.floor((10 ** 9) * step["duration"]))  # nanosec

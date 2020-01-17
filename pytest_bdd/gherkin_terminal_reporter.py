@@ -119,7 +119,7 @@ class GherkinTerminalReporter(TerminalReporter):
 
     def _format_step_name(self, step_name, **example_kwargs):
         while True:
-            param_match = re.search(feature.STEP_PARAM_RE, step_name)
+            param_match = re.search(STEP_PARAM_RE, step_name)
             if not param_match:
                 break
             param_token = param_match.group(0)
