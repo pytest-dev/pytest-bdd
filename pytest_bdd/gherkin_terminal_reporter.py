@@ -6,6 +6,7 @@ import re
 
 from _pytest.terminal import TerminalReporter
 
+from .feature import STEP_PARAM_RE
 from . import feature
 from . import types
 
