@@ -15,3 +15,4 @@ def test_when_function_is_called():
 @when("is called")
 def is_called():
     assert feature.prefix_by_type(types.FEATURE) == """Feature: """
+    assert feature.prefix_by_type("NA") == """<N/A type> NA"""
