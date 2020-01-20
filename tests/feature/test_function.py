@@ -2,9 +2,11 @@
 
 from pytest_bdd import scenario, when
 
-from . import feature
+from pytest_bdd import feature
 
-from . import types
+from pytest_bdd import types
+
+
 
 
 @scenario("function.feature", "With function prefix_by_type")
