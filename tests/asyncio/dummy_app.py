@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from multiprocessing.context import Process
 
 import aiohttp
+import pytest
 import requests
 from flask import Flask, jsonify
 from flask import request
@@ -112,3 +113,28 @@ class DummyApp:
                     "http://{}:{}/post-computation-value".format(self.host, self.port),
                     json={"value": self.stored_value + 1},
                 )
+
+
+@pytest.fixture
+def dummy_server_host():
+    return "localhost"
+
+
+@pytest.fixture
+def dummy_server_port():
+    return 10000
+
+
+@pytest.fixture
+def launch_dummy_server(dummy_server_host, dummy_server_port):
+    with setup_and_teardown_flask_app(create_server(), dummy_server_host, dummy_server_port):
+        yield
+
+
+@pytest.fixture
+async def launch_dummy_app(event_loop, launch_dummy_server, dummy_server_host, dummy_server_port):
+    app = DummyApp(dummy_server_host, dummy_server_port)
+    task = event_loop.create_task(app.run())
+    yield
+    task.cancel()
+    await asyncio.sleep(0)
