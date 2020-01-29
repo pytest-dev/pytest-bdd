@@ -121,19 +121,14 @@ def dummy_server_host():
 
 
 @pytest.fixture
-def dummy_server_port():
-    return 10000
-
-
-@pytest.fixture
-def launch_dummy_server(dummy_server_host, dummy_server_port):
-    with setup_and_teardown_flask_app(create_server(), dummy_server_host, dummy_server_port):
+def launch_dummy_server(dummy_server_host, unused_tcp_port):
+    with setup_and_teardown_flask_app(create_server(), dummy_server_host, unused_tcp_port):
         yield
 
 
 @pytest.fixture
-async def launch_dummy_app(event_loop, launch_dummy_server, dummy_server_host, dummy_server_port):
-    app = DummyApp(dummy_server_host, dummy_server_port)
+async def launch_dummy_app(event_loop, launch_dummy_server, dummy_server_host, unused_tcp_port):
+    app = DummyApp(dummy_server_host, unused_tcp_port)
     task = event_loop.create_task(app.run())
     yield
     task.cancel()
