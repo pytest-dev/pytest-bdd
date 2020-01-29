@@ -19,6 +19,7 @@ async def i_post_input_variable(value, dummy_server_host, unused_tcp_port):
         await session.put(endpoint, json={"value": value})
 
 
+# TODO: instead of waiting here, add loop to "then" step to request GET every 0.1s
 @when(parsers.parse("i wait {seconds:d} second(s)"))
 async def i_wait(seconds):
     await asyncio.sleep(seconds)
