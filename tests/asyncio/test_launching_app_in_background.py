@@ -21,9 +21,9 @@ async def i_post_input_variable(value, dummy_server_host, unused_tcp_port):
 
 
 @then(parsers.parse("output value should be equal to {expected_value:d}"))
-async def output_value_should_be_equal_to(expected_value, dummy_server_host, unused_tcp_port):
+async def output_value_should_be_equal_to(expected_value, dummy_server_host, unused_tcp_port, app_tick_rate):
     async with aiohttp.ClientSession() as session:
-        timeout = 1
+        timeout = app_tick_rate * 10
         end_time = datetime.now() + timedelta(seconds=timeout)
 
         while datetime.now() < end_time:
@@ -34,7 +34,7 @@ async def output_value_should_be_equal_to(expected_value, dummy_server_host, unu
             if output_value == expected_value:
                 break
 
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(app_tick_rate)
         else:
             raise AssertionError(
                 "Output value of {} isn't equal to expected value of {}.".format(output_value, expected_value)

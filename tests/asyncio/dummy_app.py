@@ -90,9 +90,10 @@ class DummyApp:
     This has to simulate real application that gets input from server, processes it and posts it.
     """
 
-    def __init__(self, host, port):
+    def __init__(self, host, port, tick_rate_s):
         self.host = host
         self.port = port
+        self.tick_rate_s = tick_rate_s
         self.stored_value = 0
 
     async def run(self):
@@ -101,14 +102,14 @@ class DummyApp:
     async def run_getter(self):
         async with aiohttp.ClientSession() as session:
             while True:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(self.tick_rate_s)
                 response = await session.get("http://{}:{}/pre-computation-value".format(self.host, self.port))
                 self.stored_value = int(await response.text())
 
     async def run_poster(self):
         async with aiohttp.ClientSession() as session:
             while True:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(self.tick_rate_s)
                 await session.put(
                     "http://{}:{}/post-computation-value".format(self.host, self.port),
                     json={"value": self.stored_value + 1},
@@ -127,8 +128,13 @@ def launch_dummy_server(dummy_server_host, unused_tcp_port):
 
 
 @pytest.fixture
-async def launch_dummy_app(event_loop, launch_dummy_server, dummy_server_host, unused_tcp_port):
-    app = DummyApp(dummy_server_host, unused_tcp_port)
+def app_tick_rate():
+    return 0.1
+
+
+@pytest.fixture
+async def launch_dummy_app(event_loop, launch_dummy_server, dummy_server_host, unused_tcp_port, app_tick_rate):
+    app = DummyApp(dummy_server_host, unused_tcp_port, app_tick_rate)
     task = event_loop.create_task(app.run())
     yield
     task.cancel()
