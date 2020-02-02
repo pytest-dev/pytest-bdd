@@ -102,18 +102,18 @@ class DummyApp:
     async def run_getter(self):
         async with aiohttp.ClientSession() as session:
             while True:
-                await asyncio.sleep(self.tick_rate_s)
                 response = await session.get("http://{}:{}/pre-computation-value".format(self.host, self.port))
                 self.stored_value = int(await response.text())
+                await asyncio.sleep(self.tick_rate_s)
 
     async def run_poster(self):
         async with aiohttp.ClientSession() as session:
             while True:
-                await asyncio.sleep(self.tick_rate_s)
                 await session.put(
                     "http://{}:{}/post-computation-value".format(self.host, self.port),
                     json={"value": self.stored_value + 1},
                 )
+                await asyncio.sleep(self.tick_rate_s)
 
 
 @pytest.fixture
