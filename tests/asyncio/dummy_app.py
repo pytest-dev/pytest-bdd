@@ -129,13 +129,13 @@ def launch_dummy_server(dummy_server_host, unused_tcp_port):
 
 
 @pytest.fixture
-def app_tick_rate():
-    return 0.1
+def app_tick_interval():
+    return 0.01
 
 
 @pytest.fixture
-async def launch_dummy_app(event_loop, launch_dummy_server, dummy_server_host, unused_tcp_port, app_tick_rate):
-    app = DummyApp(dummy_server_host, unused_tcp_port, app_tick_rate)
+async def launch_dummy_app(event_loop, launch_dummy_server, dummy_server_host, unused_tcp_port, app_tick_interval):
+    app = DummyApp(dummy_server_host, unused_tcp_port, app_tick_interval)
     task = event_loop.create_task(app.run())
     yield
     task.cancel()
