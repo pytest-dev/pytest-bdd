@@ -10,14 +10,12 @@ test_publish_article = scenario(
     scenario_name="Publishing the article",
 )
 """
-import asyncio
 import collections
 import inspect
 import os
 import re
 
 import pytest
-from _pytest.fixtures import FixtureLookupError
 
 try:
     from _pytest import fixtures as pytest_fixtures
@@ -28,8 +26,7 @@ from . import exceptions
 from .feature import Feature, force_unicode, get_features
 from .steps import get_caller_module, get_step_fixture_name, inject_fixture
 from .types import GIVEN
-from .utils import CONFIG_STACK, get_args
-
+from .utils import CONFIG_STACK, get_args, run_coroutines
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
@@ -116,12 +113,7 @@ def _execute_step_function(request, scenario, step, step_func):
 
         # Execute the step.
         result_or_coro = step_func(**kwargs)
-        if inspect.iscoroutine(result_or_coro):
-            try:
-                event_loop = request.getfixturevalue("event_loop")
-            except FixtureLookupError:
-                raise ValueError("Install pytest-asyncio plugin to run asynchronous steps.")
-            event_loop.run_until_complete(result_or_coro)
+        run_coroutines(result_or_coro, request=request)
 
         request.config.hook.pytest_bdd_after_step(**kw)
     except Exception as exception:
