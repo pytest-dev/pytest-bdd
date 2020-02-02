@@ -2,6 +2,7 @@ import asyncio
 import contextlib
 import time
 from contextlib import contextmanager
+from datetime import datetime, timedelta
 from multiprocessing.context import Process
 
 import aiohttp
@@ -35,11 +36,11 @@ def setup_and_teardown_flask_app(app: Flask, host: str, port: int):
 
     def wait_for_flask_app_to_be_accessible():
         timeout = 1
-        start_time = time.time()
+        end_time = datetime.now() + timedelta(seconds=timeout)
         response = requests.Response()
         response.status_code = HTTP_404_NOT_FOUND
 
-        while response.status_code != HTTP_200_OK and time.time() - start_time <= timeout:
+        while response.status_code != HTTP_200_OK and datetime.now() < end_time:
             with contextlib.suppress(requests.exceptions.ConnectionError):
                 response = requests.request("POST", f"http://{host}:{port}/health")
             time.sleep(0.01)
