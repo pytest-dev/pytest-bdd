@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timedelta
 
 import aiohttp
 
@@ -19,15 +20,22 @@ async def i_post_input_variable(value, dummy_server_host, unused_tcp_port):
         await session.put(endpoint, json={"value": value})
 
 
-# TODO: instead of waiting here, add loop to "then" step to request GET every 0.1s
-@when(parsers.parse("i wait {seconds:d} second(s)"))
-async def i_wait(seconds):
-    await asyncio.sleep(seconds)
-
-
-@then(parsers.parse("output value should be equal to {value:d}"))
-async def output_value_should_be_equal_to(value, dummy_server_host, unused_tcp_port):
+@then(parsers.parse("output value should be equal to {expected_value:d}"))
+async def output_value_should_be_equal_to(expected_value, dummy_server_host, unused_tcp_port):
     async with aiohttp.ClientSession() as session:
-        response = await session.get("http://{}:{}/post-computation-value".format(dummy_server_host, unused_tcp_port))
-        output_value = int(await response.text())
-        assert output_value == value
+        timeout = 1
+        end_time = datetime.now() + timedelta(seconds=timeout)
+
+        while datetime.now() < end_time:
+            url = "http://{}:{}/post-computation-value".format(dummy_server_host, unused_tcp_port)
+            response = await session.get(url)
+            output_value = int(await response.text())
+
+            if output_value == expected_value:
+                break
+
+            await asyncio.sleep(0.1)
+        else:
+            raise AssertionError(
+                "Output value of {} isn't equal to expected value of {}.".format(output_value, expected_value)
+            )
