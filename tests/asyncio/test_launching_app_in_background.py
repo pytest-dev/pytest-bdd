@@ -5,7 +5,7 @@ import aiohttp
 
 from pytest_bdd import given, when, then, scenarios, parsers
 
-scenarios("launching_app_in_background.feature")
+scenarios("test_launching_app_in_background.feature")
 
 
 @given("i have launched app")

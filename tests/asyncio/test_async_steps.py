@@ -8,12 +8,12 @@ def test_value():
     return {"value": 0}
 
 
-@scenario("async_steps.feature", "Async steps are actually executed")
+@scenario("test_async_steps.feature", "Async steps are actually executed")
 def test_async_steps_do_work(test_value):
     assert test_value["value"] == 3
 
 
-@scenario("async_steps.feature", "Async steps are executed along with regular steps")
+@scenario("test_async_steps.feature", "Async steps are executed along with regular steps")
 def test_async_steps_work_with_regular_ones(test_value):
     assert test_value["value"] == 6
 
