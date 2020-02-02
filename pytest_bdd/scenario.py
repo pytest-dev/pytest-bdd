@@ -101,7 +101,7 @@ def _execute_step_function(request, scenario, step, step_func):
     """
     kw = dict(request=request, feature=scenario.feature, scenario=scenario, step=step, step_func=step_func)
 
-    request.config.hook.pytest_bdd_before_step(**kw)
+    run_coroutines(*request.config.hook.pytest_bdd_before_step(**kw), request=request)
 
     kw["step_func_args"] = {}
     try:
@@ -109,15 +109,15 @@ def _execute_step_function(request, scenario, step, step_func):
         kwargs = dict((arg, request.getfixturevalue(arg)) for arg in get_args(step_func))
         kw["step_func_args"] = kwargs
 
-        request.config.hook.pytest_bdd_before_step_call(**kw)
+        run_coroutines(*request.config.hook.pytest_bdd_before_step_call(**kw), request=request)
 
         # Execute the step.
         result_or_coro = step_func(**kwargs)
         run_coroutines(result_or_coro, request=request)
 
-        request.config.hook.pytest_bdd_after_step(**kw)
+        run_coroutines(*request.config.hook.pytest_bdd_after_step(**kw), request=request)
     except Exception as exception:
-        request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
+        run_coroutines(*request.config.hook.pytest_bdd_step_error(exception=exception, **kw), request=request)
         raise
 
 
@@ -129,7 +129,10 @@ def _execute_scenario(feature, scenario, request, encoding):
     :param request: request.
     :param encoding: Encoding.
     """
-    request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
+    run_coroutines(
+        *request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario),
+        request=request
+    )
 
     try:
         givens = set()
@@ -138,9 +141,10 @@ def _execute_scenario(feature, scenario, request, encoding):
             try:
                 step_func = _find_step_function(request, step, scenario, encoding=encoding)
             except exceptions.StepDefinitionNotFoundError as exception:
-                request.config.hook.pytest_bdd_step_func_lookup_error(
+                results_or_coros = request.config.hook.pytest_bdd_step_func_lookup_error(
                     request=request, feature=feature, scenario=scenario, step=step, exception=exception
                 )
+                run_coroutines(*results_or_coros, request=request)
                 raise
 
             try:
@@ -154,7 +158,7 @@ def _execute_scenario(feature, scenario, request, encoding):
                         )
                     givens.add(step_func.fixture)
             except exceptions.ScenarioValidationError as exception:
-                request.config.hook.pytest_bdd_step_validation_error(
+                results_or_coros = request.config.hook.pytest_bdd_step_validation_error(
                     request=request,
                     feature=feature,
                     scenario=scenario,
@@ -163,11 +167,15 @@ def _execute_scenario(feature, scenario, request, encoding):
                     exception=exception,
                     step_func_args=dict((arg, request.getfixturevalue(arg)) for arg in get_args(step_func)),
                 )
+                run_coroutines(*results_or_coros, request=request)
                 raise
 
             _execute_step_function(request, scenario, step, step_func)
     finally:
-        request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
+        run_coroutines(
+            *request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario),
+            request=request
+        )
 
 
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
