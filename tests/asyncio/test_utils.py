@@ -20,7 +20,7 @@ async def async_fn():
         ((async_fn(), async_fn(), async_fn()), (42, 42, 42)),
         ((regular_fn(), async_fn()), (24, 42)),
     ],
-    ids=["single regular fn", "single async fn", "many regular fns", "many async fns", "mixes fns"],
+    ids=["single regular fn", "single async fn", "many regular fns", "many async fns", "mixed fns"],
 )
 def test_run_coroutines(request, functions_to_execute, expected_results):
     if isinstance(functions_to_execute, tuple):
