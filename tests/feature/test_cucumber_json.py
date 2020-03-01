@@ -6,7 +6,10 @@ import textwrap
 
 def runandparse(testdir, *args):
     """Run tests in testdir and parse json output."""
-    resultpath = testdir.tmpdir.join("cucumber.json")
+    if hasattr(testdir, "missing_subdirectory"):
+        resultpath = testdir.missing_subdirectory.join("cucumber.json")
+    else:
+        resultpath = testdir.tmpdir.join("cucumber.json")
     result = testdir.runpytest("--cucumberjson={0}".format(resultpath), "-s", *args)
     jsonobject = json.load(resultpath.open())
     return result, jsonobject
@@ -284,6 +287,62 @@ def test_step_trace_with_expand_option(testdir):
     """
         )
     )
+    result, jsonobject = runandparse(testdir, "--cucumber-json-expanded")
+    assert result.ret == 0
+
+    assert jsonobject[0]["elements"][0]["steps"][0]["name"] == "type str and value hello"
+    assert jsonobject[0]["elements"][1]["steps"][0]["name"] == "type int and value 42"
+    assert jsonobject[0]["elements"][2]["steps"][0]["name"] == "type float and value 1.0"
+
+def test_step_trace_with_missing_directory(testdir):
+    """Test step trace."""
+    testdir.makefile(
+        ".ini",
+        pytest=textwrap.dedent(
+            """
+    [pytest]
+    markers =
+        feature-tag
+        scenario-outline-passing-tag
+    """
+        ),
+    )
+    testdir.makefile(
+        ".feature",
+        test=textwrap.dedent(
+            """
+    @feature-tag
+    Feature: One scenario outline, expanded to multiple scenarios
+
+        @scenario-outline-passing-tag
+        Scenario: Passing outline
+            Given type <type> and value <value>
+
+            Examples: example1
+            | type    | value  |
+            | str     | hello  |
+            | int     | 42     |
+            | float   | 1.0    |
+    """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """
+        import pytest
+        from pytest_bdd import given, scenario
+
+        @given('type <type> and value <value>')
+        def type_type_and_value_value():
+            return 'pass'
+
+        @scenario('test.feature', 'Passing outline')
+        def test_passing_outline():
+            pass
+    """
+        )
+    )
+    testdir.missing_subdirectory = testdir.tmpdir.join("a")
     result, jsonobject = runandparse(testdir, "--cucumber-json-expanded")
     assert result.ret == 0
 
