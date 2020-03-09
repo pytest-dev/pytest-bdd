@@ -8,6 +8,7 @@ from multiprocessing.context import Process
 import aiohttp
 import pytest
 import requests
+from async_generator import yield_, async_generator
 from flask import Flask, jsonify
 from flask import request
 from flask_api.status import HTTP_404_NOT_FOUND, HTTP_200_OK
@@ -42,10 +43,10 @@ def setup_and_teardown_flask_app(app: Flask, host: str, port: int):
 
         while response.status_code != HTTP_200_OK and datetime.now() < end_time:
             with contextlib.suppress(requests.exceptions.ConnectionError):
-                response = requests.request("POST", f"http://{host}:{port}/health")
+                response = requests.request("POST", "http://{}:{}/health".format(host, port))
             time.sleep(0.01)
 
-        fail_message = f"Timeout expired: failed to start mock REST API in {timeout} seconds"
+        fail_message = "Timeout expired: failed to start mock REST API in {} seconds".format(timeout)
         assert response.status_code == HTTP_200_OK, fail_message
 
     app.route("/health", methods=["POST"])(lambda: "OK")
@@ -134,9 +135,10 @@ def app_tick_interval():
 
 
 @pytest.fixture
+@async_generator
 async def launch_dummy_app(event_loop, launch_dummy_server, dummy_server_host, unused_tcp_port, app_tick_interval):
     app = DummyApp(dummy_server_host, unused_tcp_port, app_tick_interval)
     task = event_loop.create_task(app.run())
-    yield
+    await yield_(None)
     task.cancel()
     await asyncio.sleep(0)
