@@ -34,21 +34,3 @@ def test_scenario_function_marked_with_async_passes(feature_file, testdir):
 
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)
-
-
-def test_scenario_function_not_marked_with_async_fails(feature_file, testdir):
-    testdir.makepyfile(
-        textwrap.dedent(
-            """
-            import pytest
-            from pytest_bdd import scenario
-
-            @scenario('test.feature', 'Launching scenario function')
-            async def test_launching_scenario_function():
-                pass
-            """
-        )
-    )
-
-    result = testdir.runpytest()
-    result.assert_outcomes(failed=1)
