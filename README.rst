@@ -1083,6 +1083,32 @@ test_publish_article.py:
         pass
 
 
+Using Asyncio
+-------------
+
+Async scenario functions have to be marked with `@pytest.mark.asyncio`.
+
+.. code-block:: python
+
+    @pytest.mark.asyncio
+    @scenario('test.feature', 'Launching scenario function')
+    async def test_launching_scenario_function():
+        pass
+
+    @given("i have async step")
+    async def async_given():
+        pass
+
+
+    @when("i do async step")
+    async def async_when():
+        pass
+
+
+    @then("i should have async step")
+    async def async_then():
+        pass
+
 Hooks
 -----
 
