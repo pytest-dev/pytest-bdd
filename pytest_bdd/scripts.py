@@ -47,12 +47,22 @@ def check_existense(file_name):
 
 def print_generated_code(args):
     """Print generated test code for the given filenames."""
-    features, scenarios, steps = parse_feature_files(args.files)
+    features, scenarios, steps = parse_feature_files(args.files, strict_gherkin=args.strict_gherkin)
     code = generate_code(features, scenarios, steps)
     if six.PY2:
         print(code.encode("utf-8"))
     else:
         print(code)
+
+
+def str2bool(val):
+    """Convert string to boolean."""
+    if "True" == val:
+        return True
+    elif "False" == val:
+        return False
+    else:
+        return val
 
 
 def main():
@@ -61,6 +71,14 @@ def main():
     subparsers = parser.add_subparsers(help="sub-command help", dest="command")
     subparsers.required = True
     parser_generate = subparsers.add_parser("generate", help="generate help")
+    parser_generate.add_argument(
+        "--strict-gherkin",
+        default=True,
+        choices=[True, False],
+        type=str2bool,
+        metavar="[True|False]",
+        help="To strict or relax the validation (given-when-then)",
+    )
     parser_generate.add_argument(
         "files",
         metavar="FEATURE_FILE",
