@@ -5,7 +5,9 @@ def test_background_no_strict_gherkin(testdir):
     """Test background no strict gherkin."""
     prepare_test_dir(testdir)
 
-    testdir.makefile('.feature', no_strict_gherkin_background="""
+    testdir.makefile(
+        ".feature",
+        no_strict_gherkin_background="""
     Feature: No strict Gherkin Background support
 
         Background:
@@ -15,9 +17,10 @@ def test_background_no_strict_gherkin(testdir):
 
         Scenario: Test background
 
-    """)
+    """,
+    )
 
-    result = testdir.runpytest('-k', 'test_background_ok')
+    result = testdir.runpytest("-k", "test_background_ok")
     result.assert_outcomes(passed=1)
 
 
@@ -25,7 +28,9 @@ def test_scenario_no_strict_gherkin(testdir):
     """Test scenario no strict gherkin."""
     prepare_test_dir(testdir)
 
-    testdir.makefile('.feature', no_strict_gherkin_scenario="""
+    testdir.makefile(
+        ".feature",
+        no_strict_gherkin_scenario="""
     Feature: No strict Gherkin Scenario support
 
         Scenario: Test scenario
@@ -33,21 +38,24 @@ def test_scenario_no_strict_gherkin(testdir):
             And foo is not boolean
             And foo has not a value "baz"
 
-    """)
+    """,
+    )
 
-    result = testdir.runpytest('-k', 'test_scenario_ok')
+    result = testdir.runpytest("-k", "test_scenario_ok")
     result.assert_outcomes(passed=1)
 
 
 def prepare_test_dir(testdir):
     """Test scenario no strict gherkin."""
-    testdir.makeini("""
+    testdir.makeini(
+        """
             [pytest]
             bdd_strict_gherkin=false
         """
-                    )
+    )
 
-    testdir.makepyfile(test_gherkin="""
+    testdir.makepyfile(
+        test_gherkin="""
         import pytest
 
         from pytest_bdd import (
@@ -93,4 +101,5 @@ def prepare_test_dir(testdir):
         @when('foo has not a value "baz"')
         def has_not_baz(foo):
             assert "baz" not in foo
-    """)
+    """
+    )

@@ -6,10 +6,7 @@ import os.path
 from mako.lookup import TemplateLookup
 import py
 
-from .scenario import (
-    find_argumented_step_fixture_name,
-    make_python_name,
-)
+from .scenario import find_argumented_step_fixture_name, make_python_docstring, make_python_name, make_string_literal
 from .steps import get_step_fixture_name
 from .feature import get_features
 from .types import STEP_TYPES
@@ -50,12 +47,19 @@ def generate_code(features, scenarios, steps):
     grouped_steps = group_steps(steps)
     template = template_lookup.get_template("test.py.mak")
     return template.render(
-        features=features, scenarios=scenarios, steps=grouped_steps, make_python_name=make_python_name)
+        features=features,
+        scenarios=scenarios,
+        steps=grouped_steps,
+        make_python_name=make_python_name,
+        make_python_docstring=make_python_docstring,
+        make_string_literal=make_string_literal,
+    )
 
 
 def show_missing_code(config):
     """Wrap pytest session to show missing code."""
     from _pytest.main import wrap_session
+
     return wrap_session(config, _show_missing_code_main)
 
 
@@ -99,8 +103,7 @@ def print_missing_code(scenarios, steps):
     tw.line()
 
     features = sorted(
-        set(scenario.feature for scenario in scenarios),
-        key=lambda feature: feature.name or feature.filename
+        set(scenario.feature for scenario in scenarios), key=lambda feature: feature.name or feature.filename
     )
     code = generate_code(features, scenarios, steps)
     tw.write(code)
@@ -134,11 +137,10 @@ def parse_feature_files(paths, **kwargs):
     features = get_features(paths, **kwargs)
     scenarios = sorted(
         itertools.chain.from_iterable(feature.scenarios.values() for feature in features),
-        key=lambda scenario: (
-            scenario.feature.name or scenario.feature.filename, scenario.name))
+        key=lambda scenario: (scenario.feature.name or scenario.feature.filename, scenario.name),
+    )
     steps = sorted(
-        set(itertools.chain.from_iterable(scenario.steps for scenario in scenarios)),
-        key=lambda step: step.name,
+        set(itertools.chain.from_iterable(scenario.steps for scenario in scenarios)), key=lambda step: step.name
     )
     return features, scenarios, steps
 
@@ -148,9 +150,9 @@ def group_steps(steps):
     steps = sorted(steps, key=lambda step: step.type)
     seen_steps = set()
     grouped_steps = []
-    for step in (itertools.chain.from_iterable(
-            sorted(group, key=lambda step: step.name)
-            for _, group in itertools.groupby(steps, lambda step: step.type))):
+    for step in itertools.chain.from_iterable(
+        sorted(group, key=lambda step: step.name) for _, group in itertools.groupby(steps, lambda step: step.type)
+    ):
         if step.name not in seen_steps:
             grouped_steps.append(step)
             seen_steps.add(step.name)

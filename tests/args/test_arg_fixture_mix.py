@@ -4,7 +4,9 @@ import textwrap
 def test_arg_fixture_mix(testdir):
 
     subdir = testdir.mkpydir("arg_fixture_mix")
-    subdir.join("test_a.py").write(textwrap.dedent("""
+    subdir.join("test_a.py").write(
+        textwrap.dedent(
+            """
         import re
         import pytest
         from pytest_bdd import scenario, given, then, parsers
@@ -45,9 +47,13 @@ def test_arg_fixture_mix(testdir):
         @then('foo should be fine')
         def foo_should_be_fine(foo):
             assert foo == "fine"
-    """))
+    """
+        )
+    )
 
-    subdir.join("test_b.py").write(textwrap.dedent("""
+    subdir.join("test_b.py").write(
+        textwrap.dedent(
+            """
         import re
         import pytest
         from pytest_bdd import scenario, given, then
@@ -76,9 +82,12 @@ def test_arg_fixture_mix(testdir):
 
         def test_bar(foo):
             assert foo == 'fine'
-    """))
+    """
+        )
+    )
 
-    subdir.join("arg_and_fixture_mix.feature").write("""
+    subdir.join("arg_and_fixture_mix.feature").write(
+        """
         Scenario: Use the step argument with the same name as fixture of another test
         Given foo is "Hello"
         Then foo should be "Hello"
@@ -87,7 +96,8 @@ def test_arg_fixture_mix(testdir):
         Scenario: Everything is fine
             Given it is all fine
             Then foo should be fine
-    """)
+    """
+    )
 
     result = testdir.runpytest("-k arg_fixture_mix")
     assert result.ret == 0

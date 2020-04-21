@@ -12,39 +12,41 @@ from pytest_bdd.feature import features
 from pytest_bdd import exceptions
 
 
-@given('something')
+@given("something")
 def given_something():
     pass
 
 
-@when('something else')
+@when("something else")
 def when_something_else():
     pass
 
 
-@then('nevermind')
+@then("nevermind")
 def then_nevermind():
     pass
 
 
 @pytest.mark.parametrize(
-    ('feature', 'scenario_name'),
+    ("feature", "scenario_name"),
     [
-        ('when_in_background.feature', 'When in background'),
-        ('when_after_then.feature', 'When after then'),
-        ('then_first.feature', 'Then first'),
-        ('given_after_when.feature', 'Given after When'),
-        ('given_after_then.feature', 'Given after Then'),
-    ]
+        ("when_in_background.feature", "When in background"),
+        ("when_after_then.feature", "When after then"),
+        ("then_first.feature", "Then first"),
+        ("given_after_when.feature", "Given after When"),
+        ("given_after_then.feature", "Given after Then"),
+    ],
 )
-@pytest.mark.parametrize('strict_gherkin', [True, False])
-@pytest.mark.parametrize('multiple', [True, False])
+@pytest.mark.parametrize("strict_gherkin", [True, False])
+@pytest.mark.parametrize("multiple", [True, False])
 def test_wrong(request, feature, scenario_name, strict_gherkin, multiple):
     """Test wrong feature scenarios."""
+
     def declare_scenario():
         if multiple:
             scenarios(feature, strict_gherkin=strict_gherkin)
         else:
+
             @scenario(feature, scenario_name, strict_gherkin=strict_gherkin)
             def test_scenario():
                 pass
@@ -58,46 +60,41 @@ def test_wrong(request, feature, scenario_name, strict_gherkin, multiple):
 
     def clean_cache():
         features.clear()
+
     request.addfinalizer(clean_cache)
 
 
 @pytest.mark.parametrize(
-    'scenario_name',
-    [
-        'When in Given',
-        'When in Then',
-        'Then in Given',
-        'Given in When',
-        'Given in Then',
-        'Then in When',
-    ]
+    "scenario_name",
+    ["When in Given", "When in Then", "Then in Given", "Given in When", "Given in Then", "Then in When"],
 )
 def test_wrong_type_order(request, scenario_name):
     """Test wrong step type order."""
-    @scenario('wrong_type_order.feature', scenario_name)
+
+    @scenario("wrong_type_order.feature", scenario_name)
     def test_wrong_type_order(request):
         pass
 
     with pytest.raises(exceptions.StepDefinitionNotFoundError) as excinfo:
         test_wrong_type_order(request)
-    assert re.match(r'Step definition is not found: (.+)', excinfo.value.args[0])
+    assert re.match(r"Step definition is not found: (.+)", excinfo.value.args[0])
 
 
 def test_verbose_output():
     """Test verbose output of failed feature scenario."""
     with pytest.raises(exceptions.FeatureError) as excinfo:
-        scenario('when_after_then.feature', 'When after then')
+        scenario("when_after_then.feature", "When after then")
 
     msg, line_number, line, file = excinfo.value.args
 
     assert line_number == 5
-    assert line == 'When I do it again'
-    assert file == os.path.join(os.path.dirname(__file__), 'when_after_then.feature')
+    assert line == "When I do it again"
+    assert file == os.path.join(os.path.dirname(__file__), "when_after_then.feature")
     assert line in str(excinfo.value)
 
 
 def test_multiple_features_single_file():
     """Test validation error when multiple features are placed in a single file."""
     with pytest.raises(exceptions.FeatureError) as excinfo:
-        scenarios('wrong_multiple_features.feature')
-    assert excinfo.value.args[0] == 'Multiple features are not allowed in a single feature file'
+        scenarios("wrong_multiple_features.feature")
+    assert excinfo.value.args[0] == "Multiple features are not allowed in a single feature file"

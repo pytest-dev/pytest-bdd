@@ -76,8 +76,9 @@ class ScenarioReport(object):
         self.param_index = None
         parametrize_args = get_parametrize_markers_args(node)
         if parametrize_args and scenario.examples:
-            param_names = parametrize_args[0] if isinstance(parametrize_args[0], (tuple, list)) else [
-                parametrize_args[0]]
+            param_names = (
+                parametrize_args[0] if isinstance(parametrize_args[0], (tuple, list)) else [parametrize_args[0]]
+            )
             param_values = parametrize_args[1]
             node_param_values = [node.funcargs[param_name] for param_name in param_names]
             if node_param_values in param_values:
@@ -136,14 +137,16 @@ class ScenarioReport(object):
                     "rows": params,
                     "row_index": self.param_index,
                 }
-            ] if scenario.examples else [],
+            ]
+            if scenario.examples
+            else [],
             "example_kwargs": self.example_kwargs,
         }
 
     def fail(self):
         """Stop collecting information and finalize the report as failed."""
         self.current_step_report.finalize(failed=True)
-        remaining_steps = self.scenario.steps[len(self.step_reports):]
+        remaining_steps = self.scenario.steps[len(self.step_reports) :]
 
         # Fail the rest of the steps and make reports.
         for step in remaining_steps:

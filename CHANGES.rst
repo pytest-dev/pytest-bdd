@@ -4,6 +4,12 @@ Changelog
 Unreleased
 ----------
 
+- Drop support for pytest < 4.3.
+- Fix a Python 4.0 bug.
+- Fix ``pytest --generate-missing`` functionality being broken.
+- Fix problematic missing step definition from strings containing quotes.
+- Implement parsing escaped pipe characters in outline parameters #337.
+
 3.2.1
 ----------
 

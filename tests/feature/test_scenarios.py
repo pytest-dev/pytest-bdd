@@ -4,11 +4,14 @@ import textwrap
 
 def test_scenarios(testdir):
     """Test scenarios shortcut."""
-    testdir.makeini("""
+    testdir.makeini(
+        """
             [pytest]
             console_output_style=classic
-        """)
-    testdir.makeconftest("""
+        """
+    )
+    testdir.makeconftest(
+        """
         import pytest
         from pytest_bdd import given
 
@@ -16,13 +19,22 @@ def test_scenarios(testdir):
         def i_have_bar():
             print('bar!')
             return 'bar'
-    """)
-    features = testdir.mkdir('features')
-    features.join('test.feature').write_text(textwrap.dedent(u"""
+    """
+    )
+    features = testdir.mkdir("features")
+    features.join("test.feature").write_text(
+        textwrap.dedent(
+            u"""
     Scenario: Test scenario
         Given I have a bar
-    """), 'utf-8', ensure=True)
-    features.join('subfolder', 'test.feature').write_text(textwrap.dedent(u"""
+    """
+        ),
+        "utf-8",
+        ensure=True,
+    )
+    features.join("subfolder", "test.feature").write_text(
+        textwrap.dedent(
+            u"""
     Scenario: Test subfolder scenario
         Given I have a bar
 
@@ -34,8 +46,13 @@ def test_scenarios(testdir):
 
     Scenario: Test scenario
         Given I have a bar
-    """), 'utf-8', ensure=True)
-    testdir.makepyfile("""
+    """
+        ),
+        "utf-8",
+        ensure=True,
+    )
+    testdir.makepyfile(
+        """
         import pytest
         from pytest_bdd import scenarios, scenario
 
@@ -44,24 +61,27 @@ def test_scenarios(testdir):
             pass
 
         scenarios('features')
-    """)
-    result = testdir.runpytest('-v', '-s')
-    result.stdout.fnmatch_lines(['*collected 5 items'])
-    result.stdout.fnmatch_lines(['*test_test_subfolder_scenario *bar!', 'PASSED'])
-    result.stdout.fnmatch_lines(['*test_test_scenario *bar!', 'PASSED'])
-    result.stdout.fnmatch_lines(['*test_test_failing_subfolder_scenario *FAILED'])
-    result.stdout.fnmatch_lines(['*test_already_bound *bar!', 'PASSED'])
-    result.stdout.fnmatch_lines(['*test_test_scenario_1 *bar!', 'PASSED'])
+    """
+    )
+    result = testdir.runpytest("-v", "-s")
+    result.stdout.fnmatch_lines(["*collected 5 items"])
+    result.stdout.fnmatch_lines(["*test_test_subfolder_scenario *bar!", "PASSED"])
+    result.stdout.fnmatch_lines(["*test_test_scenario *bar!", "PASSED"])
+    result.stdout.fnmatch_lines(["*test_test_failing_subfolder_scenario *FAILED"])
+    result.stdout.fnmatch_lines(["*test_already_bound *bar!", "PASSED"])
+    result.stdout.fnmatch_lines(["*test_test_scenario_1 *bar!", "PASSED"])
 
 
 def test_scenarios_none_found(testdir):
     """Test scenarios shortcut when no scenarios found."""
-    testpath = testdir.makepyfile("""
+    testpath = testdir.makepyfile(
+        """
         import pytest
         from pytest_bdd import scenarios
 
         scenarios('.')
-    """)
+    """
+    )
     reprec = testdir.inline_run(testpath)
     reprec.assertoutcome(failed=1)
-    assert 'NoScenariosFound' in str(reprec.getreports()[1].longrepr)
+    assert "NoScenariosFound" in str(reprec.getreports()[1].longrepr)
