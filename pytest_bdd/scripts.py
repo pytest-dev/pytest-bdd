@@ -55,16 +55,6 @@ def print_generated_code(args):
         print(code)
 
 
-def str2bool(val):
-    """Convert string to boolean."""
-    if "True" == val:
-        return True
-    elif "False" == val:
-        return False
-    else:
-        return val
-
-
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(prog="pytest-bdd")
