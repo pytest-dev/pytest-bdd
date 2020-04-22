@@ -1175,16 +1175,6 @@ It will print the generated code to the standard output so you can easily redire
     pytest-bdd generate features/some.feature > tests/functional/test_some.py
 
 
-If your scenarios are not written in `proper` Gherkin language, e.g. they are more like textual scripts, then
-you might find it hard to use `pytest-bdd generate` as by default it validates the order of step types (given-when-then).
-To relax that validation, just pass ``--strict-gherkin=False`` to the ``scenario`` steps generator:
-
-
-::
-
-    pytest-bdd generate --strict-gherkin=False <feature file name> .. <feature file nameN>
-
-
 Advanced code generation
 ------------------------
 
