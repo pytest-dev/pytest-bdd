@@ -1,14 +1,15 @@
 Changelog
 =========
 
-Unreleased
-----------
+3.3.0
+-----
 
 - Drop support for pytest < 4.3.
 - Fix a Python 4.0 bug.
 - Fix ``pytest --generate-missing`` functionality being broken.
 - Fix problematic missing step definition from strings containing quotes.
-- Implement parsing escaped pipe characters in outline parameters #337.
+- Implement parsing escaped pipe characters in outline parameters (Mark90) #337.
+- Disable the strict Gherkin validation in the steps generation (v-buriak) #356.
 
 3.2.1
 ----------
