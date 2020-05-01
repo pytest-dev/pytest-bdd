@@ -350,7 +350,9 @@ class Feature(object):
                         self.line_number = line_number
                         self.tags = get_tags(prev_line)
                     elif prev_mode == types.FEATURE:
-                        description.append(clean_line)
+                        # Do not include comments in descriptions
+                        if not stripped_line.startswith("#"):
+                            description.append(line)
                     else:
                         raise exceptions.FeatureError(
                             "Multiple features are not allowed in a single feature file",
@@ -368,7 +370,10 @@ class Feature(object):
                     # and the scenario's first step line
                     # are considered part of the scenario description.
                     if scenario and not keyword:
-                        scenario.add_description_line(parsed_line)
+                        # Do not include comments in descriptions
+                        if stripped_line.startswith("#"):
+                            continue
+                        scenario.add_description_line(line)
                         continue
 
                     tags = get_tags(prev_line)
@@ -416,7 +421,7 @@ class Feature(object):
                     target.add_step(step)
                 prev_line = clean_line
 
-        self.description = u"\n".join(description).strip()
+        self.description = u"\n".join(description)
 
     @classmethod
     def get_feature(cls, base_path, filename, encoding="utf-8", strict_gherkin=True):
@@ -499,7 +504,7 @@ class Scenario(object):
 
         :return: The scenario description
         """
-        return u"\n".join(self._description_lines).strip()
+        return u"\n".join(self._description_lines)
 
     @property
     def params(self):
