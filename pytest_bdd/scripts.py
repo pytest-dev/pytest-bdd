@@ -47,7 +47,7 @@ def check_existense(file_name):
 
 def print_generated_code(args):
     """Print generated test code for the given filenames."""
-    features, scenarios, steps = parse_feature_files(args.files)
+    features, scenarios, steps = parse_feature_files(args.files, strict_gherkin=False)
     code = generate_code(features, scenarios, steps)
     if six.PY2:
         print(code.encode("utf-8"))
