@@ -25,17 +25,24 @@ def nothing():
 with open("./tests/feature/description.feature") as f:
     FEATURE_FILE_CONTENTS = f.read()
 
-EXPECTED_FEATURE_DESCRIPTION = """In order to achieve something
-I want something
-Because it will be cool
+EXPECTED_FEATURE_DESCRIPTION = (
+    "\n"
+    "    In order to achieve something\n"
+    "    I want something\n"
+    "    Because it will be cool\n"
+    "\n"
+    "\n"
+    "    Some description goes here.\n"
+)
 
 
-Some description goes here."""
-
-EXPECTED_SCENARIO_DESCRIPTION = """Also, the scenario can have a description.
-
-It goes here between the scenario name
-and the first step."""
+EXPECTED_SCENARIO_DESCRIPTION = (
+    "\n"
+    "        Also, the scenario can have a description.\n"
+    "\n"
+    "        It goes here between the scenario name\n"
+    "        and the first step."
+)
 
 
 def test_description(request):
