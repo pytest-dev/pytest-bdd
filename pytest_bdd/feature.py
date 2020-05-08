@@ -61,6 +61,8 @@ STEP_PARAM_RE = re.compile(r"\<(.+?)\>")
 COMMENT_RE = re.compile(r"(^|(?<=\s))#")
 SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
 
+TYPES_WITH_DESCRIPTIONS = [types.FEATURE, types.SCENARIO, types.SCENARIO_OUTLINE]
+
 
 def get_step_type(line):
     """Detect step type by the beginning of the line.
@@ -293,7 +295,8 @@ class Feature(object):
                     multiline_step = False
                 stripped_line = line.strip()
                 clean_line = strip_comments(line)
-                if not clean_line and (not prev_mode or prev_mode not in types.FEATURE):
+                if not clean_line and (not prev_mode or prev_mode not in TYPES_WITH_DESCRIPTIONS):
+                    # Blank lines are included in feature and scenario descriptions
                     continue
                 mode = get_step_type(clean_line) or mode
 
@@ -347,7 +350,9 @@ class Feature(object):
                         self.line_number = line_number
                         self.tags = get_tags(prev_line)
                     elif prev_mode == types.FEATURE:
-                        description.append(clean_line)
+                        # Do not include comments in descriptions
+                        if not stripped_line.startswith("#"):
+                            description.append(line)
                     else:
                         raise exceptions.FeatureError(
                             "Multiple features are not allowed in a single feature file",
@@ -361,6 +366,16 @@ class Feature(object):
                 # Remove Feature, Given, When, Then, And
                 keyword, parsed_line = parse_line(clean_line)
                 if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
+                    # Lines between the scenario declaration
+                    # and the scenario's first step line
+                    # are considered part of the scenario description.
+                    if scenario and not keyword:
+                        # Do not include comments in descriptions
+                        if stripped_line.startswith("#"):
+                            continue
+                        scenario.add_description_line(line)
+                        continue
+
                     tags = get_tags(prev_line)
                     self.scenarios[parsed_line] = scenario = Scenario(self, parsed_line, line_number, tags=tags)
                 elif mode == types.BACKGROUND:
@@ -406,7 +421,7 @@ class Feature(object):
                     target.add_step(step)
                 prev_line = clean_line
 
-        self.description = u"\n".join(description).strip()
+        self.description = u"\n".join(description)
 
     @classmethod
     def get_feature(cls, base_path, filename, encoding="utf-8", strict_gherkin=True):
@@ -454,6 +469,7 @@ class Scenario(object):
         self.tags = tags or set()
         self.failed = False
         self.test_function = None
+        self._description_lines = []
 
     def add_step(self, step):
         """Add step to the scenario.
@@ -474,6 +490,21 @@ class Scenario(object):
             result.extend(self.feature.background.steps)
         result.extend(self._steps)
         return result
+
+    def add_description_line(self, description_line):
+        """Add a description line to the scenario.
+
+        :param str description_line:
+        """
+        self._description_lines.append(description_line)
+
+    @property
+    def description(self):
+        """Get the scenario's description.
+
+        :return: The scenario description
+        """
+        return u"\n".join(self._description_lines)
 
     @property
     def params(self):
