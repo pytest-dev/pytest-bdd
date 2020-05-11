@@ -126,7 +126,7 @@ def _find_step_fixturedef(fixturemanager, item, name, type_, encoding="utf-8"):
         name = find_argumented_step_fixture_name(name, type_, fixturemanager)
         if name:
             # strip off the extra stuff before passing it back in
-            name = name.replace('{}{}_'.format(prefix, encoding),'')
+            name = name.replace("{}{}_".format(prefix, encoding), "")
             return _find_step_fixturedef(fixturemanager, item, name, encoding)
     else:
         return fixturedefs
