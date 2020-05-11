@@ -49,6 +49,9 @@ from .parsers import get_parser
 from .utils import get_args
 
 
+prefix = "pytestbdd_"
+
+
 def get_step_fixture_name(name, type_, encoding=None):
     """Get step fixture name.
 
@@ -58,8 +61,8 @@ def get_step_fixture_name(name, type_, encoding=None):
     :return: step fixture name
     :rtype: string
     """
-    return "pytestbdd_{type}_{name}".format(
-        type=type_, name=force_encode(name, **(dict(encoding=encoding) if encoding else {}))
+    return "{prefix}{type}_{name}".format(
+        prefix=prefix, type=type_, name=force_encode(name, **(dict(encoding=encoding) if encoding else {}))
     )
 
 

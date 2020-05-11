@@ -7,7 +7,7 @@ from mako.lookup import TemplateLookup
 import py
 
 from .scenario import find_argumented_step_fixture_name, make_python_docstring, make_python_name, make_string_literal
-from .steps import get_step_fixture_name
+from .steps import prefix, get_step_fixture_name
 from .feature import get_features
 from .types import STEP_TYPES
 
@@ -117,10 +117,16 @@ def _find_step_fixturedef(fixturemanager, item, name, type_, encoding="utf-8"):
 
     :return: Step function.
     """
-    fixturedefs = fixturemanager.getfixturedefs(get_step_fixture_name(name, type_, encoding), item.nodeid)
+    if name.startswith(prefix):
+        step_fixture_name = name
+    else:
+        step_fixture_name = get_step_fixture_name(name, type_, encoding)
+    fixturedefs = fixturemanager.getfixturedefs(step_fixture_name, item.nodeid)
     if not fixturedefs:
         name = find_argumented_step_fixture_name(name, type_, fixturemanager)
         if name:
+            # strip off the extra stuff before passing it back in
+            name = name.replace('{}{}_'.format(prefix, encoding),'')
             return _find_step_fixturedef(fixturemanager, item, name, encoding)
     else:
         return fixturedefs
