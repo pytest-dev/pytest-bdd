@@ -23,7 +23,7 @@ def test_generate_missing(testdir):
             """
         import functools
 
-        from pytest_bdd import scenario, given
+        from pytest_bdd import scenario, given, parsers
 
         scenario = functools.partial(scenario, "generation.feature")
 
@@ -31,12 +31,20 @@ def test_generate_missing(testdir):
         def i_have_a_bar():
             return "bar"
 
+        @given(parsers.parse("I have {bars:d} bars"))
+        def i_have_number_bars(bars):
+            return bars
+
         @scenario("Scenario tests which are already bound to the tests stay as is")
         def test_foo():
             pass
 
         @scenario("Code is generated for scenario steps which are not yet defined(implemented)")
         def test_missing_steps():
+            pass
+
+        @scenario("Scenario tests which are already bound to the tests stay as is, with parser")
+        def test_parsable_given():
             pass
     """
         )
@@ -58,6 +66,8 @@ def test_generate_missing(testdir):
     result.stdout.fnmatch_lines(
         ['Step Given "I have a foobar" is not defined in the background of the feature "Missing code generation" *']
     )
+
+    assert 'Step Given "I have 20 bars" is not defined' not in result.stdout.str()
 
     result.stdout.fnmatch_lines(["Please place the code above to the test file(s):"])
 
