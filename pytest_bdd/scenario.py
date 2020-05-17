@@ -112,7 +112,7 @@ def _execute_step_function(request, scenario, step, step_func):
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
         # Execute the step.
-        step_func(**kwargs)
+        request.config.hook.pytest_bdd_call_step(**kw)
         request.config.hook.pytest_bdd_after_step(**kw)
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
