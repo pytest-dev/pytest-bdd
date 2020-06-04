@@ -1,1 +1,6 @@
 mock
+requests
+flask_api
+aiohttp
+pytest-asyncio
+async_generator

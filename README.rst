@@ -1083,6 +1083,32 @@ test_publish_article.py:
         pass
 
 
+Using Asyncio
+-------------
+
+Async scenario functions have to be marked with `@pytest.mark.asyncio`.
+
+.. code-block:: python
+
+    @pytest.mark.asyncio
+    @scenario('test.feature', 'Launching scenario function')
+    async def test_launching_scenario_function():
+        pass
+
+    @given("i have async step")
+    async def async_given():
+        pass
+
+
+    @when("i do async step")
+    async def async_when():
+        pass
+
+
+    @then("i should have async step")
+    async def async_then():
+        pass
+
 Hooks
 -----
 
@@ -1111,6 +1137,16 @@ which might be helpful building useful reporting, visualization, etc on top of i
 
 * pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception) - Called when step lookup failed
 
+
+Async hooks
+-----------
+
+If you want any of above hooks be asynchronous just define it as `async def` instead of `def` like this:
+
+.. code-block:: python
+
+    async def pytest_bdd_before_scenario(request, feature, scenario):
+        pass
 
 Browser testing
 ---------------
