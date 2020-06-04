@@ -163,6 +163,8 @@ def _execute_scenario(feature, scenario, request, encoding):
                 )
                 raise
 
+            if step.datatable:
+                inject_fixture(request, "datatable", [step.datatable.params, step.datatable.entries])
             _execute_step_function(request, scenario, step, step_func)
     finally:
         request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
