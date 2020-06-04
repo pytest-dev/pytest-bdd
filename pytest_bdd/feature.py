@@ -550,7 +550,7 @@ class Step(object):
         # Remove the multiline quotes, if present.
         multilines_content = re.sub(
             pattern=r'^"""\n(?P<content>.*)\n"""$',
-            repl=r'\g<content>',
+            repl=r"\g<content>",
             string=multilines_content,
             flags=re.DOTALL,  # Needed to make the "." match also new liness
         )
