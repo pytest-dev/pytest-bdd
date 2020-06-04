@@ -1,6 +1,12 @@
 Changelog
 =========
 
+3.4.0
+-----
+
+- Parse multiline steps according to the gherkin specification #365.
+
+
 3.3.0
 -----
 
