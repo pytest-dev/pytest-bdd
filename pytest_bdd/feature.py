@@ -552,7 +552,7 @@ class Step(object):
             pattern=r'^"""\n(?P<content>.*)\n"""$',
             repl=r"\g<content>",
             string=multilines_content,
-            flags=re.DOTALL,  # Needed to make the "." match also new liness
+            flags=re.DOTALL,  # Needed to make the "." match also new lines
         )
 
         lines = [self._name] + [multilines_content]
