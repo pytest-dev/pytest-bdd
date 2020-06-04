@@ -11,66 +11,65 @@ from pytest_bdd import exceptions, given, parsers, scenario, then
     [
         (
             textwrap.dedent(
-                """
-        Scenario: Multiline step using sub indentation
-            Given I have a step with:
-                Some
-
-                Extra
-                Lines
-            Then the text should be parsed with correct indentation
-        """
+                '''\
+Feature: Multiline
+    Scenario: Multiline step using sub indentation
+        Given I have a step with:
+            """
+            Some
+    
+            Extra
+            Lines
+            """
+        Then the text should be parsed with correct indentation
+'''
             ),
-            textwrap.dedent(
-                """
-        Some
-
-        Extra
-        Lines
-        """
-            )[1:-1],
+            "Some\n\nExtra\nLines",
         ),
         (
             textwrap.dedent(
-                """
-        Scenario: Multiline step using sub indentation
-            Given I have a step with:
-                Some
-
-              Extra
-             Lines
-
-            Then the text should be parsed with correct indentation
-        """
+                """\
+Feature: Multiline
+    Scenario: Multiline step using sub indentation
+        Given I have a step with:
+            Some
+    
+            Extra
+            Lines
+        Then the text should be parsed with correct indentation
+"""
             ),
-            textwrap.dedent(
-                """
-           Some
-
-         Extra
-        Lines
-        """
-            )[1:-1],
+            "Some\n\nExtra\nLines",
         ),
         (
             textwrap.dedent(
-                """
-        Feature:
-        Scenario: Multiline step using sub indentation
-            Given I have a step with:
-                Some
-                Extra
-                Lines
+                """\
+Feature: Multiline
+    Scenario: Multiline step using sub indentation
+        Given I have a step with:
+            Some
 
-        """
+          Extra
+         Lines
+
+        Then the text should be parsed with correct indentation
+"""
             ),
+            "   Some\n\n Extra\nLines",
+        ),
+        (
             textwrap.dedent(
-                """
-        Some
-        Extra
-        Lines
-        """
-            )[1:-1],
+                """\
+Feature: Multiline
+    Scenario: Multiline step using sub indentation
+        Given I have a step with:
+            Some
+            Extra
+            Lines
+
+"""
+            ),
+            "Some\nExtra\nLines",
         ),
     ],
 )
