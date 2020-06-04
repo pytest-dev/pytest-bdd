@@ -545,7 +545,17 @@ class Step(object):
     @property
     def name(self):
         """Get step name."""
-        lines = [self._name] + ([textwrap.dedent("\n".join(self.lines))] if self.lines else [])
+        multilines_content = textwrap.dedent("\n".join(self.lines)) if self.lines else ""
+
+        # Remove the multiline quotes, if present.
+        multilines_content = re.sub(
+            pattern=r'^"""\n(?P<content>.*)\n"""$',
+            repl=r'\g<content>',
+            string=multilines_content,
+            flags=re.DOTALL,  # Needed to make the "." match also new liness
+        )
+
+        lines = [self._name] + [multilines_content]
         return "\n".join(lines).strip()
 
     @name.setter
