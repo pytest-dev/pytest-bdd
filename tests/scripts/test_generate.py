@@ -1,5 +1,6 @@
 # coding=utf-8
 """Test code generation command."""
+
 import os
 import sys
 import textwrap
@@ -78,9 +79,9 @@ def test_generate_with_quotes(testdir):
                 And I have a fixture with "double" quotes
                 And I have a fixture with single-quote \'\'\'triple\'\'\' quotes
                 And I have a fixture with double-quote """triple""" quotes
-        
+
                 When I generate the code
-        
+
                 Then The generated string should be written
         '''
         ),
