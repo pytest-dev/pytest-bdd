@@ -4,7 +4,6 @@ import pytest
 
 
 class equals_any(object):
-
     """Helper object comparison to which is always 'equal'."""
 
     def __init__(self, type=None):
@@ -15,9 +14,6 @@ class equals_any(object):
 
     def __cmp__(self, other):
         return 0 if (isinstance(other, self.type) if self.type else False) else -1
-
-
-string = type(u"")
 
 
 def test_step_trace(testdir):

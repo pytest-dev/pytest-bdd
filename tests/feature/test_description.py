@@ -10,14 +10,6 @@ def bar():
     return "bar"
 
 
-DESCRIPTION = """In order to achieve something
-I want something
-Because it will be cool
-
-
-Some description goes here."""
-
-
 def test_description(request, testdir):
     """Test description for the feature."""
     feature = testdir.makefile(
@@ -44,4 +36,13 @@ def test_description(request, testdir):
         pass
 
     test_description(request)
-    assert test_description.__scenario__.feature.description == DESCRIPTION
+
+    assert test_description.__scenario__.feature.description == textwrap.dedent(
+        """\
+        In order to achieve something
+        I want something
+        Because it will be cool
+
+
+        Some description goes here."""
+    )

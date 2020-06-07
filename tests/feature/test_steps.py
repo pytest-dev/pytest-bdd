@@ -1,84 +1,238 @@
+import textwrap
 import pytest
 
-from pytest_bdd import scenario, given, when, then
+from pytest_bdd import scenario
 from pytest_bdd import exceptions
 
 
-@scenario("steps.feature", "Executed step by step")
-def test_steps():
-    pass
+def test_steps(testdir):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps are executed one by one
+                Steps are executed one by one. Given and When sections
+                are not mandatory in some cases.
+
+                Scenario: Executed step by step
+                    Given I have a foo fixture with value "foo"
+                    And there is a list
+                    When I append 1 to the list
+                    And I append 2 to the list
+                    And I append 3 to the list
+                    Then foo should have value "foo"
+                    But the list should be [1, 2, 3]
+            """
+        ),
+    )
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, when, then, scenario
+
+        @scenario("steps.feature", "Executed step by step")
+        def test_steps():
+            pass
+
+        @given('I have a foo fixture with value "foo"')
+        def foo():
+            return "foo"
 
 
-@given('I have a foo fixture with value "foo"')
-def foo():
-    return "foo"
+        @given("there is a list")
+        def results():
+            return []
 
 
-@given("there is a list")
-def results():
-    return []
+        @when("I append 1 to the list")
+        def append_1(results):
+            results.append(1)
 
 
-@when("I append 1 to the list")
-def append_1(results):
-    results.append(1)
+        @when("I append 2 to the list")
+        def append_2(results):
+            results.append(2)
 
 
-@when("I append 2 to the list")
-def append_2(results):
-    results.append(2)
+        @when("I append 3 to the list")
+        def append_3(results):
+            results.append(3)
 
 
-@when("I append 3 to the list")
-def append_3(results):
-    results.append(3)
+        @then('foo should have value "foo"')
+        def foo_is_foo(foo):
+            assert foo == "foo"
 
 
-@then('foo should have value "foo"')
-def foo_is_foo(foo):
-    assert foo == "foo"
+        @then("the list should be [1, 2, 3]")
+        def check_results(results):
+            assert results == [1, 2, 3]
+
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert result.ret == 0
 
 
-@then("the list should be [1, 2, 3]")
-def check_results(results):
-    assert results == [1, 2, 3]
+def test_when_first(testdir):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps are executed one by one
+                Steps are executed one by one. Given and When sections
+                are not mandatory in some cases.
+
+                Scenario: When step can be the first
+                    When I do nothing
+                    Then I make no mistakes
+            """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import when, then, scenario
+
+        @scenario("steps.feature", "When step can be the first")
+        def test_steps():
+            pass
+
+        @when("I do nothing")
+        def do_nothing():
+            pass
 
 
-@scenario("steps.feature", "When step can be the first")
-def test_when_first():
-    pass
+        @then("I make no mistakes")
+        def no_errors():
+            assert True
+
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert result.ret == 0
 
 
-@when("I do nothing")
-def do_nothing():
-    pass
+def test_then_after_given(testdir):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps are executed one by one
+                Steps are executed one by one. Given and When sections
+                are not mandatory in some cases.
+
+                Scenario: Then step can follow Given step
+                    Given I have a foo fixture with value "foo"
+                    Then foo should have value "foo"
+
+            """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, then, scenario
+
+        @scenario("steps.feature", "Then step can follow Given step")
+        def test_steps():
+            pass
+
+        @given('I have a foo fixture with value "foo"')
+        def foo():
+            return "foo"
+
+        @then('foo should have value "foo"')
+        def foo_is_foo(foo):
+            assert foo == "foo"
+
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert result.ret == 0
 
 
-@then("I make no mistakes")
-def no_errors():
-    assert True
+def test_conftest(testdir):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps are executed one by one
+                Steps are executed one by one. Given and When sections
+                are not mandatory in some cases.
+
+                Scenario: All steps are declared in the conftest
+                    Given I have a bar
+                    Then bar should have value "bar"
+
+            """
+        ),
+    )
+    testdir.makeconftest(textwrap.dedent(
+        """\
+        from pytest_bdd import given, then
 
 
-@scenario("steps.feature", "Then step can follow Given step")
-def test_then_after_given():
-    pass
+        @given("I have a bar")
+        def bar():
+            return "bar"
 
 
-@given("xyz")
-def xyz():
-    """Used in the test_same_step_name."""
-    return
+        @then('bar should have value "bar"')
+        def bar_is_bar(bar):
+            assert bar == "bar"
+
+        """
+    ))
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario
+
+        @scenario("steps.feature", "All steps are declared in the conftest")
+        def test_steps():
+            pass
+
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert result.ret == 0
 
 
-@scenario("steps.feature", "All steps are declared in the conftest")
-def test_conftest():
-    pass
-
-
-def test_multiple_given(request):
+def test_multiple_given(request, testdir):
     """Using the same given fixture raises an error."""
+    feature = testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps are executed one by one
+                Steps are executed one by one. Given and When sections
+                are not mandatory in some cases.
 
-    @scenario("steps.feature", "Using the same given fixture raises an error")
+                Scenario: Using the same given fixture raises an error
+                    Given I have a bar
+                    And I have a bar
+
+            """
+        ),
+    )
+    testdir.makeconftest(textwrap.dedent(
+        """\
+        from pytest_bdd import given
+
+        @given("I have a bar")
+        def bar():
+            return "bar"
+
+        """
+    ))
+
+    @scenario(feature.strpath, "Using the same given fixture raises an error")
     def test():
         pass
 

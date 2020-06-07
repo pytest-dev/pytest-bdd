@@ -4,7 +4,7 @@ import re
 import pytest
 
 from pytest_bdd import scenario, given, when, then
-from tests.utils import get_test_filepath, prepare_feature_and_py_files
+from tests.utils import prepare_feature_and_py_files
 
 
 @scenario("gherkin_terminal_reporter.feature", "Should default output be the same as regular terminal reporter")

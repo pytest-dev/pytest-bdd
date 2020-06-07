@@ -3,7 +3,7 @@
 import textwrap
 
 
-FEATURE = """
+FEATURE = """\
 Feature: Background support
 
     Background:
@@ -24,7 +24,7 @@ Feature: Background support
         And foo should not have value "bar"
 """
 
-STEPS = """
+STEPS = """\
 import re
 import pytest
 from pytest_bdd import given, then, parsers
@@ -82,7 +82,7 @@ def test_background_basic(testdir):
 
     testdir.makepyfile(
         textwrap.dedent(
-            """
+            """\
         from pytest_bdd import scenario
 
         @scenario("background.feature", "Basic usage")
@@ -105,7 +105,7 @@ def test_background_check_order(testdir):
 
     testdir.makepyfile(
         textwrap.dedent(
-            """
+            """\
         from pytest_bdd import scenario
 
         @scenario("background.feature", "Background steps are executed first")
