@@ -23,7 +23,7 @@ def test_given_alias_not_evaluated_twice(testdir):
 
     testdir.makepyfile(
         textwrap.dedent(
-            '''
+            """
         import pytest
         from pytest_bdd import given, when, then, scenario
 
@@ -51,9 +51,9 @@ def test_given_alias_not_evaluated_twice(testdir):
 
         @then("my list should be [1, 2, 2]")
         def check_results(results):
-            """Fixtures are not evaluated multiple times, so the list will be [1, 2, 2]"""
+            \"\"\"Fixtures are not evaluated multiple times, so the list will be [1, 2, 2]\"\"\"
             assert results == [1, 2, 2]
-        '''
+        """
         )
     )
     result = testdir.runpytest()

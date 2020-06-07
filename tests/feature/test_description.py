@@ -1,22 +1,47 @@
 """Test descriptions."""
-from pytest_bdd import scenario
+
+import textwrap
+
+from pytest_bdd import given, scenario
 
 
-def test_description(request):
-    """Test description for the feature."""
+@given("I have a bar")
+def bar():
+    return "bar"
 
-    @scenario("description.feature", "Description")
-    def test():
-        pass
 
-    assert (
-        test.__scenario__.feature.description
-        == """In order to achieve something
+DESCRIPTION = """In order to achieve something
 I want something
 Because it will be cool
 
 
 Some description goes here."""
+
+
+def test_description(request, testdir):
+    """Test description for the feature."""
+    feature = testdir.makefile(
+        ".feature",
+        description=textwrap.dedent(
+            """
+        Feature: Description
+
+            In order to achieve something
+            I want something
+            Because it will be cool
+
+
+            Some description goes here.
+
+            Scenario: Description
+                Given I have a bar
+        """
+        ),
     )
 
-    test(request)
+    @scenario(feature.strpath, "Description")
+    def test_description(request):
+        pass
+
+    test_description(request)
+    assert test_description.__scenario__.feature.description == DESCRIPTION
