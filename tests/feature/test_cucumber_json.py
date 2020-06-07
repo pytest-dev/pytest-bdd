@@ -12,8 +12,7 @@ def runandparse(testdir, *args):
     return result, jsonobject
 
 
-class equals_any(object):
-
+class OfType(object):
     """Helper object comparison to which is always 'equal'."""
 
     def __init__(self, type=None):
@@ -127,14 +126,14 @@ def test_step_trace(testdir):
                             "line": 6,
                             "match": {"location": ""},
                             "name": "a passing step",
-                            "result": {"status": "passed", "duration": equals_any(int)},
+                            "result": {"status": "passed", "duration": OfType(int)},
                         },
                         {
                             "keyword": "And",
                             "line": 7,
                             "match": {"location": ""},
                             "name": "some other passing step",
-                            "result": {"status": "passed", "duration": equals_any(int)},
+                            "result": {"status": "passed", "duration": OfType(int)},
                         },
                     ],
                     "tags": [{"name": "scenario-passing-tag", "line": 4}],
@@ -152,7 +151,7 @@ def test_step_trace(testdir):
                             "line": 11,
                             "match": {"location": ""},
                             "name": "a passing step",
-                            "result": {"status": "passed", "duration": equals_any(int)},
+                            "result": {"status": "passed", "duration": OfType(int)},
                         },
                         {
                             "keyword": "And",
@@ -160,9 +159,9 @@ def test_step_trace(testdir):
                             "match": {"location": ""},
                             "name": "a failing step",
                             "result": {
-                                "error_message": equals_any(string),
+                                "error_message": OfType(string),
                                 "status": "failed",
-                                "duration": equals_any(int),
+                                "duration": OfType(int),
                             },
                         },
                     ],
@@ -177,7 +176,7 @@ def test_step_trace(testdir):
                         {
                             "line": 16,
                             "match": {"location": ""},
-                            "result": {"status": "passed", "duration": equals_any(int)},
+                            "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
                             "name": "type <type> and value <value>",
                         }
@@ -195,7 +194,7 @@ def test_step_trace(testdir):
                         {
                             "line": 16,
                             "match": {"location": ""},
-                            "result": {"status": "passed", "duration": equals_any(int)},
+                            "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
                             "name": "type <type> and value <value>",
                         }
@@ -213,7 +212,7 @@ def test_step_trace(testdir):
                         {
                             "line": 16,
                             "match": {"location": ""},
-                            "result": {"status": "passed", "duration": equals_any(int)},
+                            "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
                             "name": "type <type> and value <value>",
                         }

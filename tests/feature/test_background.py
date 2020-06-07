@@ -3,7 +3,7 @@
 import textwrap
 
 
-FEATURE = '''
+FEATURE = """
 Feature: Background support
 
     Background:
@@ -22,9 +22,9 @@ Feature: Background support
 
         Then foo should have value "dummy"
         And foo should not have value "bar"
-'''
+"""
 
-STEPS = '''
+STEPS = """
 import re
 import pytest
 from pytest_bdd import given, then, parsers
@@ -71,7 +71,7 @@ def foo_has_dummy(foo):
 def foo_has_no_bar(foo):
     assert "bar" not in foo
 
-'''
+"""
 
 
 def test_background_basic(testdir):
@@ -82,14 +82,14 @@ def test_background_basic(testdir):
 
     testdir.makepyfile(
         textwrap.dedent(
-            '''
+            """
         from pytest_bdd import scenario
 
         @scenario("background.feature", "Basic usage")
         def test_alias():
             pass
 
-        '''
+        """
         )
     )
     result = testdir.runpytest()
@@ -105,14 +105,14 @@ def test_background_check_order(testdir):
 
     testdir.makepyfile(
         textwrap.dedent(
-            '''
+            """
         from pytest_bdd import scenario
 
         @scenario("background.feature", "Background steps are executed first")
         def test_alias():
             pass
 
-        '''
+        """
         )
     )
     result = testdir.runpytest()
