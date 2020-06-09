@@ -371,7 +371,7 @@ def test_verbose_output(testdir):
     feature = testdir.makefile(
         ".feature",
         wrong=textwrap.dedent(
-            """
+            """\
             Feature: When in background
 
                 Background:
