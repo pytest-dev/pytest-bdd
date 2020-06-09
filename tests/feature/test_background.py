@@ -86,7 +86,7 @@ def test_background_basic(testdir):
         from pytest_bdd import scenario
 
         @scenario("background.feature", "Basic usage")
-        def test_alias():
+        def test_background():
             pass
 
         """
@@ -109,7 +109,7 @@ def test_background_check_order(testdir):
         from pytest_bdd import scenario
 
         @scenario("background.feature", "Background steps are executed first")
-        def test_alias():
+        def test_background():
             pass
 
         """

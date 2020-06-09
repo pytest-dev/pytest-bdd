@@ -15,7 +15,7 @@ def test_description(request, testdir):
     feature = testdir.makefile(
         ".feature",
         description=textwrap.dedent(
-            """
+            """\
         Feature: Description
 
             In order to achieve something

@@ -88,8 +88,9 @@ def test_scenario_not_decorator(testdir):
     testdir.makefile(
         ".feature",
         foo="""
-        Scenario: Foo
-            Given I have a bar
+        Feature: Test function is not a decorator
+            Scenario: Foo
+                Given I have a bar
         """,
     )
     testdir.makepyfile(
