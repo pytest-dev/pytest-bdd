@@ -19,7 +19,7 @@ def test_generate(testdir, monkeypatch, capsys):
     feature = features.join("generate.feature")
     feature.write_text(
         textwrap.dedent(
-            """\
+            u"""\
             Feature: Code generation
 
                 Scenario: Given and when using the same fixture should not evaluate it twice
