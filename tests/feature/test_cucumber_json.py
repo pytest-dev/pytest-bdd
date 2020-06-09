@@ -124,6 +124,7 @@ def test_step_trace(testdir):
                     "steps": [
                         {
                             "keyword": "Given",
+                            "embeddings": [],
                             "line": 6,
                             "match": {"location": ""},
                             "name": "a passing step",
@@ -131,6 +132,7 @@ def test_step_trace(testdir):
                         },
                         {
                             "keyword": "And",
+                            "embeddings": [],
                             "line": 7,
                             "match": {"location": ""},
                             "name": "some other passing step",
@@ -149,6 +151,7 @@ def test_step_trace(testdir):
                     "steps": [
                         {
                             "keyword": "Given",
+                            "embeddings": [],
                             "line": 11,
                             "match": {"location": ""},
                             "name": "a passing step",
@@ -156,6 +159,7 @@ def test_step_trace(testdir):
                         },
                         {
                             "keyword": "And",
+                            "embeddings": [],
                             "line": 12,
                             "match": {"location": ""},
                             "name": "a failing step",
@@ -176,6 +180,7 @@ def test_step_trace(testdir):
                     "steps": [
                         {
                             "line": 16,
+                            "embeddings": [],
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": equals_any(int)},
                             "keyword": "Given",
@@ -194,6 +199,7 @@ def test_step_trace(testdir):
                     "steps": [
                         {
                             "line": 16,
+                            "embeddings": [],
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": equals_any(int)},
                             "keyword": "Given",
@@ -212,6 +218,7 @@ def test_step_trace(testdir):
                     "steps": [
                         {
                             "line": 16,
+                            "embeddings": [],
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": equals_any(int)},
                             "keyword": "Given",

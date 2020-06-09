@@ -138,6 +138,7 @@ class LogBDDCucumberJSON(object):
                 "keyword": step["keyword"],
                 "name": step_name,
                 "line": step["line_number"],
+                "embeddings": step["embeddings"],
                 "match": {"location": ""},
                 "result": self._get_result(step, report, error_message),
             }

@@ -122,6 +122,7 @@ def test_step_trace(testdir):
         "steps": [
             {
                 "duration": equals_any(float),
+                "embeddings": [],
                 "failed": False,
                 "keyword": "Given",
                 "line_number": 6,
@@ -130,6 +131,7 @@ def test_step_trace(testdir):
             },
             {
                 "duration": equals_any(float),
+                "embeddings": [],
                 "failed": False,
                 "keyword": "And",
                 "line_number": 7,
@@ -159,6 +161,7 @@ def test_step_trace(testdir):
         "steps": [
             {
                 "duration": equals_any(float),
+                "embeddings": [],
                 "failed": False,
                 "keyword": "Given",
                 "line_number": 11,
@@ -167,6 +170,7 @@ def test_step_trace(testdir):
             },
             {
                 "duration": equals_any(float),
+                "embeddings": [],
                 "failed": True,
                 "keyword": "And",
                 "line_number": 12,
@@ -195,6 +199,7 @@ def test_step_trace(testdir):
         "steps": [
             {
                 "duration": equals_any(float),
+                "embeddings": [],
                 "failed": False,
                 "keyword": "Given",
                 "line_number": 15,
@@ -203,6 +208,7 @@ def test_step_trace(testdir):
             },
             {
                 "duration": equals_any(float),
+                "embeddings": [],
                 "failed": False,
                 "keyword": "When",
                 "line_number": 16,
@@ -211,6 +217,7 @@ def test_step_trace(testdir):
             },
             {
                 "duration": equals_any(float),
+                "embeddings": [],
                 "failed": False,
                 "keyword": "Then",
                 "line_number": 17,
@@ -246,6 +253,7 @@ def test_step_trace(testdir):
         "steps": [
             {
                 "duration": equals_any(float),
+                "embeddings": [],
                 "failed": False,
                 "keyword": "Given",
                 "line_number": 15,
@@ -254,6 +262,7 @@ def test_step_trace(testdir):
             },
             {
                 "duration": equals_any(float),
+                "embeddings": [],
                 "failed": False,
                 "keyword": "When",
                 "line_number": 16,
@@ -262,6 +271,7 @@ def test_step_trace(testdir):
             },
             {
                 "duration": equals_any(float),
+                "embeddings": [],
                 "failed": False,
                 "keyword": "Then",
                 "line_number": 17,

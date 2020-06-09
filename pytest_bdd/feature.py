@@ -463,6 +463,14 @@ class Scenario(object):
         step.scenario = self
         self._steps.append(step)
 
+    def attach(self, data, media_type="text/plain"):
+        """Add attachment to step, such as text, images.
+
+        :param data: actual data of Attachment, can be plain text or base64 encoded
+        :param media_type: actual media type of Attachment, such as text/plain, image/png
+        """
+        self.steps[-1].attach(data, media_type)
+
     @property
     def steps(self):
         """Get scenario steps including background steps.
@@ -530,6 +538,7 @@ class Step(object):
         self.type = type
         self.line_number = line_number
         self.failed = False
+        self.embeddings = []
         self.start = 0
         self.stop = 0
         self.scenario = None
@@ -541,6 +550,15 @@ class Step(object):
         :param str line: Line of text - the continuation of the step name.
         """
         self.lines.append(line)
+
+    def attach(self, data, media_type="text/plain"):
+        """Add attachment to step, such as text, images.
+
+        :param data: actual data of Attachment, can be plain text or base64 encoded
+        :param media_type: actual media type of Attachment, such as text/plain, image/png
+        """
+        json_attachment = {"data": data, "media": {"type": media_type}}
+        self.embeddings.append(json_attachment)
 
     @property
     def name(self):
