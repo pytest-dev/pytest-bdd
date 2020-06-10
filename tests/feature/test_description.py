@@ -2,17 +2,10 @@
 
 import textwrap
 
-from pytest_bdd import given, scenario
 
-
-@given("I have a bar")
-def bar():
-    return "bar"
-
-
-def test_description(request, testdir):
+def test_description(testdir):
     """Test description for the feature."""
-    feature = testdir.makefile(
+    testdir.makefile(
         ".feature",
         description=textwrap.dedent(
             """\
@@ -31,18 +24,34 @@ def test_description(request, testdir):
         ),
     )
 
-    @scenario(feature.strpath, "Description")
-    def test_description(request):
-        pass
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        import textwrap
+        from pytest_bdd import given, scenario
 
-    test_description(request)
-
-    assert test_description.__scenario__.feature.description == textwrap.dedent(
-        """\
-        In order to achieve something
-        I want something
-        Because it will be cool
+        @scenario("description.feature", "Description")
+        def test_description():
+            pass
 
 
-        Some description goes here."""
+        @given("I have a bar")
+        def bar():
+            return "bar"
+
+        def test_scenario_description():
+            assert test_description.__scenario__.feature.description == textwrap.dedent(
+                \"\"\"\\
+                In order to achieve something
+                I want something
+                Because it will be cool
+
+
+                Some description goes here.\"\"\"
+            )
+        """
+        )
     )
+
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=2)

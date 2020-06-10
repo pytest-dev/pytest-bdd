@@ -58,4 +58,4 @@ def test_given_alias_not_evaluated_twice(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 0
+    result.assert_outcomes(passed=1)

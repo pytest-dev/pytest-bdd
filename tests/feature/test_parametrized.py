@@ -59,4 +59,4 @@ def test_parametrized(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 0
+    result.assert_outcomes(passed=3)

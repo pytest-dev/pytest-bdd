@@ -1,13 +1,7 @@
 # coding: utf-8
 """Tests for testing cases when we have unicode in feature file."""
 
-import sys
-import pytest
-import functools
 import textwrap
-from pytest_bdd import given, parsers, scenario, then
-
-scenario = functools.partial(scenario, "unicode.feature")
 
 
 def test_steps_in_feature_file_have_unicode(testdir):
@@ -64,7 +58,7 @@ def test_steps_in_feature_file_have_unicode(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 0
+    result.assert_outcomes(passed=1)
 
 
 def test_steps_in_py_file_have_unicode(testdir):
@@ -111,4 +105,4 @@ def test_steps_in_py_file_have_unicode(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 0
+    result.assert_outcomes(passed=1)

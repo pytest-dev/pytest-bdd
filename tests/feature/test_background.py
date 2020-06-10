@@ -93,7 +93,7 @@ def test_background_basic(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 0
+    result.assert_outcomes(passed=1)
 
 
 def test_background_check_order(testdir):
@@ -116,4 +116,4 @@ def test_background_check_order(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 0
+    result.assert_outcomes(passed=1)

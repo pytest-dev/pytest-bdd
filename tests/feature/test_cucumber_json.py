@@ -21,9 +21,6 @@ class OfType(object):
     def __eq__(self, other):
         return isinstance(other, self.type) if self.type else True
 
-    def __cmp__(self, other):
-        return 0 if (isinstance(other, self.type) if self.type else False) else -1
-
 
 string = type(u"")
 
@@ -284,7 +281,7 @@ def test_step_trace_with_expand_option(testdir):
         )
     )
     result, jsonobject = runandparse(testdir, "--cucumber-json-expanded")
-    assert result.ret == 0
+    result.assert_outcomes(passed=3)
 
     assert jsonobject[0]["elements"][0]["steps"][0]["name"] == "type str and value hello"
     assert jsonobject[0]["elements"][1]["steps"][0]["name"] == "type int and value 42"
