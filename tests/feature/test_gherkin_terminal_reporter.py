@@ -43,10 +43,7 @@ def test_default_output_should_be_the_same_as_regular_terminal_reporter(testdir)
     regular.assert_outcomes(passed=1, failed=0)
     gherkin.assert_outcomes(passed=1, failed=0)
 
-    assert all(
-        l1 == l2 for l1, l2 in
-        zip(regular.stdout.lines[:-1], gherkin.stdout.lines[:-1])
-    )
+    assert all(l1 == l2 for l1, l2 in zip(regular.stdout.lines[:-1], gherkin.stdout.lines[:-1]))
 
 
 def test_verbose_mode_should_display_feature_and_scenario_names_instead_of_test_names_in_a_single_line(testdir):
@@ -59,20 +56,20 @@ def test_verbose_mode_should_display_feature_and_scenario_names_instead_of_test_
 
 
 def test_verbose_mode_should_preserve_displaying_regular_tests_as_usual(testdir):
-    testdir.makepyfile(textwrap.dedent(
-        """\
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
         def test_1():
             pass
         """
-    ))
+        )
+    )
     regular = testdir.runpytest()
     gherkin = testdir.runpytest("--gherkin-terminal-reporter", "-v")
     regular.assert_outcomes(passed=1, failed=0)
     gherkin.assert_outcomes(passed=1, failed=0)
 
-    regular.stdout.fnmatch_lines(
-        "test_verbose_mode_should_preserve_displaying_regular_tests_as_usual.py . [100%]"
-    )
+    regular.stdout.fnmatch_lines("test_verbose_mode_should_preserve_displaying_regular_tests_as_usual.py . [100%]")
     gherkin.stdout.fnmatch_lines(
         "test_verbose_mode_should_preserve_displaying_regular_tests_as_usual.py::test_1 PASSED [100%]"
     )
@@ -94,13 +91,15 @@ def test_double_verbose_mode_should_display_full_scenario_description(testdir):
 @pytest.mark.parametrize("verbosity", ["", "-v", "-vv"])
 def test_error_message_for_missing_steps(testdir, verbosity):
     testdir.makefile(".feature", test=FEATURE)
-    testdir.makepyfile(textwrap.dedent(
-        """\
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
         from pytest_bdd import scenarios
 
         scenarios('.')
         """
-    ))
+        )
+    )
     result = testdir.runpytest("--gherkin-terminal-reporter", verbosity)
     result.assert_outcomes(passed=0, failed=1)
     result.stdout.fnmatch_lines(
@@ -112,8 +111,9 @@ def test_error_message_for_missing_steps(testdir, verbosity):
 @pytest.mark.parametrize("verbosity", ["", "-v", "-vv"])
 def test_error_message_should_be_displayed(testdir, verbosity):
     testdir.makefile(".feature", test=FEATURE)
-    testdir.makepyfile(textwrap.dedent(
-        """\
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
         from pytest_bdd import given, when, then, scenario
 
 
@@ -135,7 +135,8 @@ def test_error_message_should_be_displayed(testdir, verbosity):
         def test_scenario_1():
             pass
         """
-    ))
+        )
+    )
     result = testdir.runpytest("--gherkin-terminal-reporter", verbosity)
     result.assert_outcomes(passed=0, failed=1)
     result.stdout.fnmatch_lines("E       Exception: BIGBADABOOM")
@@ -144,8 +145,9 @@ def test_error_message_should_be_displayed(testdir, verbosity):
 
 def test_local_variables_should_be_displayed_when_showlocals_option_is_used(testdir):
     testdir.makefile(".feature", test=FEATURE)
-    testdir.makepyfile(textwrap.dedent(
-        """\
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
         from pytest_bdd import given, when, then, scenario
 
 
@@ -168,7 +170,8 @@ def test_local_variables_should_be_displayed_when_showlocals_option_is_used(test
         def test_scenario_1():
             pass
         """
-    ))
+        )
+    )
     result = testdir.runpytest("--gherkin-terminal-reporter", "--showlocals")
     result.assert_outcomes(passed=0, failed=1)
     result.stdout.fnmatch_lines("""request*=*<FixtureRequest for *""")
@@ -190,8 +193,10 @@ def test_step_parameters_should_be_replaced_by_their_values(testdir):
             Examples:
             | start | eat | left |
             |{start}|{eat}|{left}|
-        """.format(**example)
-        )
+        """.format(
+                **example
+            )
+        ),
     )
     testdir.makepyfile(
         test_gherkin=textwrap.dedent(

@@ -155,11 +155,7 @@ def test_step_trace(testdir):
                             "line": 12,
                             "match": {"location": ""},
                             "name": "a failing step",
-                            "result": {
-                                "error_message": OfType(string),
-                                "status": "failed",
-                                "duration": OfType(int),
-                            },
+                            "result": {"error_message": OfType(string), "status": "failed", "duration": OfType(int),},
                         },
                     ],
                     "tags": [{"name": "scenario-failing-tag", "line": 9}],

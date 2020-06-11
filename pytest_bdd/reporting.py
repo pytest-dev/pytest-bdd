@@ -144,7 +144,7 @@ class ScenarioReport(object):
     def fail(self):
         """Stop collecting information and finalize the report as failed."""
         self.current_step_report.finalize(failed=True)
-        remaining_steps = self.scenario.steps[len(self.step_reports):]
+        remaining_steps = self.scenario.steps[len(self.step_reports) :]
 
         # Fail the rest of the steps and make reports.
         for step in remaining_steps:

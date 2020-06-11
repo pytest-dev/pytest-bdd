@@ -25,6 +25,7 @@ def test_steps_in_feature_file_have_unicode(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             u"""\
+        # coding: utf-8
         import sys
         import pytest
         from pytest_bdd import parsers, given, then, scenario
@@ -78,6 +79,7 @@ def test_steps_in_py_file_have_unicode(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             u"""\
+        # coding: utf-8
         import pytest
         from pytest_bdd import given, then, scenario
 

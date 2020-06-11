@@ -40,9 +40,7 @@ def test_when_in_background(testdir):
     )
     result = testdir.runpytest()
     assert result.ret == 2
-    result.stdout.fnmatch_lines(
-        "*FeatureError: Background section can only contain Given steps.*"
-    )
+    result.stdout.fnmatch_lines("*FeatureError: Background section can only contain Given steps.*")
 
 
 def test_then_first(testdir):
@@ -72,9 +70,7 @@ def test_then_first(testdir):
     )
     result = testdir.runpytest()
     assert result.ret == 2
-    result.stdout.fnmatch_lines(
-        "*FeatureError: Then steps must follow Given or When steps.*"
-    )
+    result.stdout.fnmatch_lines("*FeatureError: Then steps must follow Given or When steps.*")
 
 
 def test_given_after_when(testdir):
@@ -105,9 +101,7 @@ def test_given_after_when(testdir):
     )
     result = testdir.runpytest()
     assert result.ret == 2
-    result.stdout.fnmatch_lines(
-        "*FeatureError: Given steps must be the first within the Scenario.*"
-    )
+    result.stdout.fnmatch_lines("*FeatureError: Given steps must be the first within the Scenario.*")
 
 
 def test_given_after_then(testdir):
@@ -139,9 +133,7 @@ def test_given_after_then(testdir):
     )
     result = testdir.runpytest()
     assert result.ret == 2
-    result.stdout.fnmatch_lines(
-        "*FeatureError: Given steps must be the first within the Scenario.*"
-    )
+    result.stdout.fnmatch_lines("*FeatureError: Given steps must be the first within the Scenario.*")
 
 
 def test_when_in_given(testdir):
@@ -176,7 +168,7 @@ def test_when_in_given(testdir):
     assert result.ret == 1
     result.stdout.fnmatch_lines(
         "*StepDefinitionNotFoundError: "
-        "Step definition is not found: Given \"something else\". Line 3 in scenario \"When in Given\"*"
+        'Step definition is not found: Given "something else". Line 3 in scenario "When in Given"*'
     )
 
 
@@ -213,7 +205,7 @@ def test_when_in_then(testdir):
     assert result.ret == 1
     result.stdout.fnmatch_lines(
         "*StepDefinitionNotFoundError: "
-        "Step definition is not found: Then \"something else\". Line 4 in scenario \"When in Then\"*"
+        'Step definition is not found: Then "something else". Line 4 in scenario "When in Then"*'
     )
 
 
@@ -248,7 +240,7 @@ def test_then_in_given(testdir):
     assert result.ret == 1
     result.stdout.fnmatch_lines(
         "*StepDefinitionNotFoundError: "
-        "Step definition is not found: Given \"nevermind\". Line 3 in scenario \"Then in Given\"*"
+        'Step definition is not found: Given "nevermind". Line 3 in scenario "Then in Given"*'
     )
 
 
@@ -284,7 +276,7 @@ def test_given_in_when(testdir):
     assert result.ret == 1
     result.stdout.fnmatch_lines(
         "*StepDefinitionNotFoundError: "
-        "Step definition is not found: When \"something\". Line 3 in scenario \"Given in When\"*"
+        'Step definition is not found: When "something". Line 3 in scenario "Given in When"*'
     )
 
 
@@ -327,7 +319,7 @@ def test_given_in_then(testdir):
     assert result.ret == 1
     result.stdout.fnmatch_lines(
         "*StepDefinitionNotFoundError: "
-        "Step definition is not found: Then \"something\". Line 4 in scenario \"Given in Then\"*"
+        'Step definition is not found: Then "something". Line 4 in scenario "Given in Then"*'
     )
 
 
@@ -362,7 +354,7 @@ def test_then_in_when(testdir):
     assert result.ret == 1
     result.stdout.fnmatch_lines(
         "*StepDefinitionNotFoundError: "
-        "Step definition is not found: When \"nevermind\". Line 3 in scenario \"Then in When\"*"
+        'Step definition is not found: When "nevermind". Line 3 in scenario "Then in When"*'
     )
 
 

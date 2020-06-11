@@ -172,8 +172,9 @@ def test_conftest(testdir):
             """
         ),
     )
-    testdir.makeconftest(textwrap.dedent(
-        """\
+    testdir.makeconftest(
+        textwrap.dedent(
+            """\
         from pytest_bdd import given, then
 
 
@@ -187,7 +188,8 @@ def test_conftest(testdir):
             assert bar == "bar"
 
         """
-    ))
+        )
+    )
     testdir.makepyfile(
         textwrap.dedent(
             """\
@@ -221,8 +223,9 @@ def test_multiple_given(request, testdir):
             """
         ),
     )
-    testdir.makeconftest(textwrap.dedent(
-        """\
+    testdir.makeconftest(
+        textwrap.dedent(
+            """\
         from pytest_bdd import given
 
         @given("I have a bar")
@@ -230,7 +233,8 @@ def test_multiple_given(request, testdir):
             return "bar"
 
         """
-    ))
+        )
+    )
 
     @scenario(feature.strpath, "Using the same given fixture raises an error")
     def test():
