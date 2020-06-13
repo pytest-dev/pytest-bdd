@@ -1,9 +1,6 @@
 import textwrap
 import pytest
 
-from pytest_bdd import scenario
-from pytest_bdd import exceptions
-
 
 def test_steps(testdir):
     testdir.makefile(
@@ -73,7 +70,7 @@ def test_steps(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 0
+    result.assert_outcomes(passed=1, failed=0)
 
 
 def test_when_first(testdir):
@@ -113,7 +110,7 @@ def test_when_first(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 0
+    result.assert_outcomes(passed=1, failed=0)
 
 
 def test_then_after_given(testdir):
@@ -153,7 +150,7 @@ def test_then_after_given(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 0
+    result.assert_outcomes(passed=1, failed=0)
 
 
 def test_conftest(testdir):
@@ -203,12 +200,12 @@ def test_conftest(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 0
+    result.assert_outcomes(passed=1, failed=0)
 
 
-def test_multiple_given(request, testdir):
+def test_multiple_given(testdir):
     """Using the same given fixture raises an error."""
-    feature = testdir.makefile(
+    testdir.makefile(
         ".feature",
         steps=textwrap.dedent(
             """\
@@ -223,25 +220,28 @@ def test_multiple_given(request, testdir):
             """
         ),
     )
-    testdir.makeconftest(
+    testdir.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd import given
+        from pytest_bdd import given, scenario
+
 
         @given("I have a bar")
         def bar():
             return "bar"
 
+
+        @scenario("steps.feature", "Using the same given fixture raises an error")
+        def test_given_twice():
+            pass
+
         """
         )
     )
-
-    @scenario(feature.strpath, "Using the same given fixture raises an error")
-    def test():
-        pass
-
-    with pytest.raises(exceptions.GivenAlreadyUsed):
-        test(request)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        '*GivenAlreadyUsed: Fixture "bar" that implements this *given step has been already used.*'
+    )
 
 
 def test_step_hooks(testdir):
@@ -312,7 +312,7 @@ def test_step_hooks(testdir):
     """
     )
     reprec = testdir.inline_run("-k test_when_fails")
-    assert reprec.ret == 1
+    reprec.assertoutcome(failed=1)
 
     calls = reprec.getcalls("pytest_bdd_before_scenario")
     assert calls[0].request
@@ -333,16 +333,16 @@ def test_step_hooks(testdir):
     assert calls[0].request
 
     reprec = testdir.inline_run("-k test_when_not_found")
-    assert reprec.ret == 1
+    reprec.assertoutcome(failed=1)
 
     calls = reprec.getcalls("pytest_bdd_step_func_lookup_error")
     assert calls[0].request
 
     reprec = testdir.inline_run("-k test_when_step_validation_error")
-    assert reprec.ret == 1
+    reprec.assertoutcome(failed=1)
 
     reprec = testdir.inline_run("-k test_when_dependency_fails", "-vv")
-    assert reprec.ret == 1
+    reprec.assertoutcome(failed=1)
 
     calls = reprec.getcalls("pytest_bdd_before_step")
     assert len(calls) == 2
@@ -413,21 +413,21 @@ def test_step_trace(testdir):
     """
     )
     result = testdir.runpytest("-k test_when_fails_inline", "-vv")
-    assert result.ret == 1
+    result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["*test_when_fails_inline*FAILED"])
     assert "INTERNALERROR" not in result.stdout.str()
 
     result = testdir.runpytest("-k test_when_fails_decorated", "-vv")
-    assert result.ret == 1
+    result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["*test_when_fails_decorated*FAILED"])
     assert "INTERNALERROR" not in result.stdout.str()
 
     result = testdir.runpytest("-k test_when_not_found", "-vv")
-    assert result.ret == 1
+    result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["*test_when_not_found*FAILED"])
     assert "INTERNALERROR" not in result.stdout.str()
 
     result = testdir.runpytest("-k test_when_step_validation_error", "-vv")
-    assert result.ret == 1
+    result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["*test_when_step_validation_error*FAILED"])
     assert "INTERNALERROR" not in result.stdout.str()

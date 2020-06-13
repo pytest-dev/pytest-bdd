@@ -24,7 +24,7 @@ Feature: Background support
         And foo should not have value "bar"
 """
 
-STEPS = """\
+STEPS = r"""\
 import re
 import pytest
 from pytest_bdd import given, then, parsers
@@ -34,9 +34,9 @@ def foo():
     return {}
 
 
-@given(parsers.re(r"a background step with multiple lines:\\n(?P<data>.+)", flags=re.DOTALL))
+@given(parsers.re(r"a background step with multiple lines:\n(?P<data>.+)", flags=re.DOTALL))
 def multi_line(foo, data):
-    assert data == "one\\ntwo"
+    assert data == "one\ntwo"
 
 
 @given('foo has a value "bar"')
