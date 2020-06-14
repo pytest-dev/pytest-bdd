@@ -3,8 +3,7 @@ import textwrap
 import pytest
 
 
-class equals_any(object):
-
+class OfType(object):
     """Helper object comparison to which is always 'equal'."""
 
     def __init__(self, type=None):
@@ -12,12 +11,6 @@ class equals_any(object):
 
     def __eq__(self, other):
         return isinstance(other, self.type) if self.type else True
-
-    def __cmp__(self, other):
-        return 0 if (isinstance(other, self.type) if self.type else False) else -1
-
-
-string = type(u"")
 
 
 def test_step_trace(testdir):
@@ -121,7 +114,7 @@ def test_step_trace(testdir):
         "name": u"Passing",
         "steps": [
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "Given",
                 "line_number": 6,
@@ -129,7 +122,7 @@ def test_step_trace(testdir):
                 "type": "given",
             },
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "And",
                 "line_number": 7,
@@ -158,7 +151,7 @@ def test_step_trace(testdir):
         "name": u"Failing",
         "steps": [
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "Given",
                 "line_number": 11,
@@ -166,7 +159,7 @@ def test_step_trace(testdir):
                 "type": "given",
             },
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": True,
                 "keyword": "And",
                 "line_number": 12,
@@ -194,7 +187,7 @@ def test_step_trace(testdir):
         "name": u"Outlined",
         "steps": [
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "Given",
                 "line_number": 15,
@@ -202,7 +195,7 @@ def test_step_trace(testdir):
                 "type": "given",
             },
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "When",
                 "line_number": 16,
@@ -210,7 +203,7 @@ def test_step_trace(testdir):
                 "type": "when",
             },
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "Then",
                 "line_number": 17,
@@ -245,7 +238,7 @@ def test_step_trace(testdir):
         "name": u"Outlined",
         "steps": [
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "Given",
                 "line_number": 15,
@@ -253,7 +246,7 @@ def test_step_trace(testdir):
                 "type": "given",
             },
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "When",
                 "line_number": 16,
@@ -261,7 +254,7 @@ def test_step_trace(testdir):
                 "type": "when",
             },
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "Then",
                 "line_number": 17,

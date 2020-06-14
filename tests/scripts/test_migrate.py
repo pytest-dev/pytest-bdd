@@ -1,4 +1,5 @@
 """Test code generation command."""
+
 import os
 import sys
 import textwrap

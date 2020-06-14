@@ -1,13 +1,33 @@
 """Function name same as step name."""
 
-from pytest_bdd import scenario, when
+import textwrap
 
 
-@scenario("same_function_name.feature", "When function name same as step name")
-def test_when_function_name_same_as_step_name():
-    pass
+def test_when_function_name_same_as_step_name(testdir):
+    testdir.makefile(
+        ".feature",
+        same_name=textwrap.dedent(
+            """\
+            Feature: Function name same as step name
+                Scenario: When function name same as step name
+                    When something
+            """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import when, scenario
 
+        @scenario("same_name.feature", "When function name same as step name")
+        def test_same_name():
+            pass
 
-@when("something")
-def something():
-    return "something"
+        @when("something")
+        def something():
+            return "something"
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1)

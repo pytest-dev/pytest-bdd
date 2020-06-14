@@ -12,8 +12,7 @@ def runandparse(testdir, *args):
     return result, jsonobject
 
 
-class equals_any(object):
-
+class OfType(object):
     """Helper object comparison to which is always 'equal'."""
 
     def __init__(self, type=None):
@@ -21,9 +20,6 @@ class equals_any(object):
 
     def __eq__(self, other):
         return isinstance(other, self.type) if self.type else True
-
-    def __cmp__(self, other):
-        return 0 if (isinstance(other, self.type) if self.type else False) else -1
 
 
 string = type(u"")
@@ -127,14 +123,14 @@ def test_step_trace(testdir):
                             "line": 6,
                             "match": {"location": ""},
                             "name": "a passing step",
-                            "result": {"status": "passed", "duration": equals_any(int)},
+                            "result": {"status": "passed", "duration": OfType(int)},
                         },
                         {
                             "keyword": "And",
                             "line": 7,
                             "match": {"location": ""},
                             "name": "some other passing step",
-                            "result": {"status": "passed", "duration": equals_any(int)},
+                            "result": {"status": "passed", "duration": OfType(int)},
                         },
                     ],
                     "tags": [{"name": "scenario-passing-tag", "line": 4}],
@@ -152,18 +148,14 @@ def test_step_trace(testdir):
                             "line": 11,
                             "match": {"location": ""},
                             "name": "a passing step",
-                            "result": {"status": "passed", "duration": equals_any(int)},
+                            "result": {"status": "passed", "duration": OfType(int)},
                         },
                         {
                             "keyword": "And",
                             "line": 12,
                             "match": {"location": ""},
                             "name": "a failing step",
-                            "result": {
-                                "error_message": equals_any(string),
-                                "status": "failed",
-                                "duration": equals_any(int),
-                            },
+                            "result": {"error_message": OfType(string), "status": "failed", "duration": OfType(int),},
                         },
                     ],
                     "tags": [{"name": "scenario-failing-tag", "line": 9}],
@@ -177,7 +169,7 @@ def test_step_trace(testdir):
                         {
                             "line": 16,
                             "match": {"location": ""},
-                            "result": {"status": "passed", "duration": equals_any(int)},
+                            "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
                             "name": "type <type> and value <value>",
                         }
@@ -195,7 +187,7 @@ def test_step_trace(testdir):
                         {
                             "line": 16,
                             "match": {"location": ""},
-                            "result": {"status": "passed", "duration": equals_any(int)},
+                            "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
                             "name": "type <type> and value <value>",
                         }
@@ -213,7 +205,7 @@ def test_step_trace(testdir):
                         {
                             "line": 16,
                             "match": {"location": ""},
-                            "result": {"status": "passed", "duration": equals_any(int)},
+                            "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
                             "name": "type <type> and value <value>",
                         }
@@ -285,7 +277,7 @@ def test_step_trace_with_expand_option(testdir):
         )
     )
     result, jsonobject = runandparse(testdir, "--cucumber-json-expanded")
-    assert result.ret == 0
+    result.assert_outcomes(passed=3)
 
     assert jsonobject[0]["elements"][0]["steps"][0]["name"] == "type str and value hello"
     assert jsonobject[0]["elements"][1]["steps"][0]["name"] == "type int and value 42"

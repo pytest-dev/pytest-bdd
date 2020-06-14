@@ -33,7 +33,7 @@ def test_hooks(testdir):
         textwrap.dedent(
             r"""
         Feature: The feature
-        Scenario: Some scenario
+            Scenario: Some scenario
     """
         )
     )

@@ -100,4 +100,4 @@ def test_arg_fixture_mix(testdir):
     )
 
     result = testdir.runpytest("-k arg_fixture_mix")
-    assert result.ret == 0
+    result.assert_outcomes(passed=4)

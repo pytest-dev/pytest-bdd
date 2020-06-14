@@ -1,4 +1,5 @@
 """Main command."""
+
 import os
 import sys
 

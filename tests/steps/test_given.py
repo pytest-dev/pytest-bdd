@@ -45,7 +45,7 @@ def injecting_given():
 
 
 @then('foo should be "injected foo"')
-def foo_is_foo(foo):
+def foo_is_injected_foo(foo):
     assert foo == "injected foo"
 
 

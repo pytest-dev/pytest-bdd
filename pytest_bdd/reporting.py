@@ -11,7 +11,6 @@ from .utils import get_parametrize_markers_args
 
 
 class StepReport(object):
-
     """Step excecution report."""
 
     failed = False
@@ -62,7 +61,6 @@ class StepReport(object):
 
 
 class ScenarioReport(object):
-
     """Scenario execution report."""
 
     def __init__(self, scenario, node):
