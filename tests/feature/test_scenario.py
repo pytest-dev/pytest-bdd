@@ -1,15 +1,11 @@
 """Test scenario decorator."""
+
 import textwrap
-import pytest
-
-import six
-
-from pytest_bdd import scenario, exceptions
 
 
 def test_scenario_not_found(testdir):
     """Test the situation when scenario is not found."""
-    feature = testdir.makefile(
+    testdir.makefile(
         ".feature",
         not_found=textwrap.dedent(
             """\
@@ -18,14 +14,24 @@ def test_scenario_not_found(testdir):
             """
         ),
     )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        import re
+        import pytest
+        from pytest_bdd import parsers, given, then, scenario
 
-    with pytest.raises(exceptions.ScenarioNotFound) as exc_info:
-        scenario(feature.strpath, "NOT FOUND")
-    assert six.text_type(exc_info.value).startswith(
-        'Scenario "NOT FOUND" in feature "Scenario is not found" in {feature_path}'.format(
-            feature_path=feature.strpath,
+        @scenario("not_found.feature", "NOT FOUND")
+        def test_not_found():
+            pass
+
+        """
         )
     )
+    result = testdir.runpytest()
+
+    result.assert_outcomes(error=1)
+    result.stdout.fnmatch_lines('*Scenario "NOT FOUND" in feature "Scenario is not found" in*')
 
 
 def test_scenario_comments(testdir):

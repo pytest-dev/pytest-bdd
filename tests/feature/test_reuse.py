@@ -59,4 +59,4 @@ def test_reuse_fixture(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 0
+    result.assert_outcomes(passed=1)

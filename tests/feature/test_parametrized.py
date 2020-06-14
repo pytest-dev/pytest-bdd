@@ -36,8 +36,7 @@ def test_parametrized(testdir):
         @pytest.mark.parametrize(["start", "eat", "left"], [(12, 5, 7)])
         @scenario("parametrized.feature", "Parametrized given, when, thens")
         def test_parametrized_with_other_fixtures(request, start, eat, left, foo_bar):
-            \"\"\"Test parametrized scenario, but also with other parametrized fixtures.\"\"\"
-
+            pass
 
         @given("there are <start> cucumbers")
         def start_cucumbers(start):

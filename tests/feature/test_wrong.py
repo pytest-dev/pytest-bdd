@@ -1,10 +1,6 @@
 """Test wrong feature syntax."""
 
 import textwrap
-import pytest
-
-from pytest_bdd import scenario, scenarios
-from pytest_bdd import exceptions
 
 
 def test_when_in_background(testdir):
@@ -39,7 +35,7 @@ def test_when_in_background(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 2
+    result.assert_outcomes(error=1)
     result.stdout.fnmatch_lines("*FeatureError: Background section can only contain Given steps.*")
 
 
@@ -69,7 +65,7 @@ def test_then_first(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 2
+    result.assert_outcomes(error=1)
     result.stdout.fnmatch_lines("*FeatureError: Then steps must follow Given or When steps.*")
 
 
@@ -100,7 +96,7 @@ def test_given_after_when(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 2
+    result.assert_outcomes(error=1)
     result.stdout.fnmatch_lines("*FeatureError: Given steps must be the first within the Scenario.*")
 
 
@@ -132,7 +128,7 @@ def test_given_after_then(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 2
+    result.assert_outcomes(error=1)
     result.stdout.fnmatch_lines("*FeatureError: Given steps must be the first within the Scenario.*")
 
 
@@ -165,7 +161,7 @@ def test_when_in_given(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 1
+    result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(
         "*StepDefinitionNotFoundError: "
         'Step definition is not found: Given "something else". Line 3 in scenario "When in Given"*'
@@ -202,7 +198,7 @@ def test_when_in_then(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 1
+    result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(
         "*StepDefinitionNotFoundError: "
         'Step definition is not found: Then "something else". Line 4 in scenario "When in Then"*'
@@ -237,7 +233,7 @@ def test_then_in_given(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 1
+    result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(
         "*StepDefinitionNotFoundError: "
         'Step definition is not found: Given "nevermind". Line 3 in scenario "Then in Given"*'
@@ -273,7 +269,7 @@ def test_given_in_when(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 1
+    result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(
         "*StepDefinitionNotFoundError: "
         'Step definition is not found: When "something". Line 3 in scenario "Given in When"*'
@@ -316,7 +312,7 @@ def test_given_in_then(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 1
+    result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(
         "*StepDefinitionNotFoundError: "
         'Step definition is not found: Then "something". Line 4 in scenario "Given in Then"*'
@@ -351,7 +347,7 @@ def test_then_in_when(testdir):
         )
     )
     result = testdir.runpytest()
-    assert result.ret == 1
+    result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(
         "*StepDefinitionNotFoundError: "
         'Step definition is not found: When "nevermind". Line 3 in scenario "Then in When"*'
@@ -360,7 +356,7 @@ def test_then_in_when(testdir):
 
 def test_verbose_output(testdir):
     """Test verbose output of failed feature scenario."""
-    feature = testdir.makefile(
+    testdir.makefile(
         ".feature",
         wrong=textwrap.dedent(
             """\
@@ -378,20 +374,29 @@ def test_verbose_output(testdir):
         ),
     )
 
-    with pytest.raises(exceptions.FeatureError) as excinfo:
-        scenario(feature.strpath, "When in background")
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        import pytest
+        from pytest_bdd import scenario
 
-    msg, line_number, line, file = excinfo.value.args
+        @scenario("wrong.feature", "When in background")
+        def test_wrong():
+            pass
 
-    assert line_number == 5
-    assert line == "When I do"
-    assert file == feature.strpath
-    assert line in str(excinfo.value)
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(error=1)
+    result.stdout.fnmatch_lines("*FeatureError: Background section can only contain Given steps.*")
+    result.stdout.fnmatch_lines("*Line number: 5.*")
+    result.stdout.fnmatch_lines("*Line: When I do.*")
 
 
 def test_multiple_features_single_file(testdir):
     """Test validation error when multiple features are placed in a single file."""
-    feature = testdir.makefile(
+    testdir.makefile(
         ".feature",
         wrong=textwrap.dedent(
             """\
@@ -421,7 +426,19 @@ def test_multiple_features_single_file(testdir):
         """
         ),
     )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        import pytest
+        from pytest_bdd import then, scenario
 
-    with pytest.raises(exceptions.FeatureError) as excinfo:
-        scenarios(feature.strpath)
-    assert excinfo.value.args[0] == "Multiple features are not allowed in a single feature file"
+        @scenario("wrong.feature", "Do something with A")
+        def test_wrong():
+            pass
+
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(error=1)
+    result.stdout.fnmatch_lines("*FeatureError: Multiple features are not allowed in a single feature file.*")

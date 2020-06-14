@@ -60,6 +60,9 @@ def test_generate_missing(testdir):
     )
 
     result = testdir.runpytest("--generate-missing", "--feature", "generation.feature")
+    result.assert_outcomes(passed=0, failed=0, error=0)
+    assert not result.stderr.str()
+    assert result.ret == 0
 
     result.stdout.fnmatch_lines(
         ['Scenario "Code is generated for scenarios which are not bound to any tests" is not bound to any test *']
@@ -77,6 +80,3 @@ def test_generate_missing(testdir):
     )
 
     result.stdout.fnmatch_lines(["Please place the code above to the test file(s):"])
-
-    assert not result.stderr.str()
-    assert result.ret == 0
