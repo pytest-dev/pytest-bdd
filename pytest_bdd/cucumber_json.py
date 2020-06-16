@@ -35,8 +35,8 @@ def add_options(parser):
 
 def configure(config):
     cucumber_json_path = config.option.cucumber_json_path
-    # prevent opening json log on slave nodes (xdist)
-    if cucumber_json_path and not hasattr(config, "slaveinput"):
+    # prevent opening json log on worker nodes (xdist)
+    if cucumber_json_path and not hasattr(config, "workerinput"):
         config._bddcucumberjson = LogBDDCucumberJSON(cucumber_json_path, expand=config.option.expand)
         config.pluginmanager.register(config._bddcucumberjson)
 
