@@ -42,8 +42,7 @@ def test_when_then(testdir):
 
 
 @pytest.mark.parametrize(
-    ("step", "keyword"),
-    [("given", "Given"), ("when", "When"), ("then", "Then")],
+    ("step", "keyword"), [("given", "Given"), ("when", "When"), ("then", "Then")],
 )
 def test_preserve_decorator(testdir, step, keyword):
     """Check that we preserve original function attributes after decorating it."""
@@ -62,7 +61,9 @@ def test_preserve_decorator(testdir, step, keyword):
                 assert globals()[get_step_fixture_name("{keyword}", {step}.__name__)].__doc__ == "Doc string."
 
 
-        '''.format(step=step, keyword=keyword)
+        '''.format(
+                step=step, keyword=keyword
+            )
         )
     )
     result = testdir.runpytest()
