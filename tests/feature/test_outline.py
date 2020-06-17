@@ -177,7 +177,7 @@ def test_outline_with_escaped_pipes(testdir):
         textwrap.dedent(
             r"""
     Feature: Outline With Special characters
-    
+
         Scenario Outline: Outline with escaped pipe character
             Given We have strings <string1> and <string2>
             Then <string2> should be the base64 encoding of <string1>
