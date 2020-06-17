@@ -1,6 +1,10 @@
 Changelog
 =========
 
+
+- Fixes pytest-xdist 2.0 compatibility (olegpidsadnyi) #369.
+
+
 3.4.0
 -----
 
