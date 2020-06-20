@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Callable, Iterator, cast
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
 from _pytest.nodes import iterparentnodeids
+from _pytest.outcomes import Skipped
 
 from . import exceptions
 from .feature import get_feature, get_features
@@ -159,6 +160,9 @@ def _execute_step_function(
         return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
+        raise
+    except Skipped as exception:
+        request.config.hook.pytest_bdd_step_skip(exception=exception, **kw)
         raise
 
     if context.target_fixture is not None:
