@@ -1,5 +1,4 @@
 """Scenario Outline tests."""
-from __future__ import unicode_literals
 import textwrap
 
 
