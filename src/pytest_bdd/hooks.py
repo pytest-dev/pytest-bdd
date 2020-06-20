@@ -25,6 +25,10 @@ def pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func
     """Called after step function is successfully executed."""
 
 
+def pytest_bdd_step_skip(request, feature, scenario, step, step_func, step_func_args, exception):
+    """Called when step function is skipped."""
+
+
 def pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception):
     """Called when step function failed to execute."""
 
