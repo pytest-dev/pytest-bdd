@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 class StepReport:
     """Step execution report."""
 
+    skipped = False
     failed = False
     stopped = None
 
@@ -44,16 +45,20 @@ class StepReport:
             "type": self.step.type,
             "keyword": self.step.keyword,
             "line_number": self.step.line_number,
+            "skipped": self.skipped,
             "failed": self.failed,
             "duration": self.duration,
         }
 
-    def finalize(self, failed: bool) -> None:
+
+    def finalize(self, failed: bool, skipped=False) -> None:
         """Stop collecting information and finalize the report.
 
         :param bool failed: Whether the step execution is failed.
+        :param bool skipped: Indicates if the step execution is skipped.
         """
         self.stopped = time.perf_counter()
+        self.skipped = skipped
         self.failed = failed
 
     @property
