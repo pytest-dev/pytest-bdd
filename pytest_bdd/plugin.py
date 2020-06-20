@@ -103,6 +103,8 @@ def pytest_collection_modifyitems(session, config, items):
             declaration_order = getattr(item.function, "__pytest_bdd_counter__", 0)
         else:
             declaration_order = 0
-        return (item.reportinfo()[:2], declaration_order)
+        func, linenum = item.reportinfo()[:2]
+        info = (func, linenum) if linenum is not None else (func, -1)
+        return (info, declaration_order)
 
     items.sort(key=item_key)
