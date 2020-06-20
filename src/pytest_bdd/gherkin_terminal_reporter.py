@@ -93,7 +93,10 @@ class GherkinTerminalReporter(TerminalReporter):
                 self._tw.write(report.scenario["name"], **scenario_markup)
                 self._tw.write("\n")
                 for step in report.scenario["steps"]:
-                    self._tw.write(f"        {step['keyword']} {step['name']}\n", **scenario_markup)
+                    step_markup = (
+                        {"red": True} if step["failed"] else ({"yellow": True} if step["skipped"] else {"green": True})
+                    )
+                    self._tw.write(f"        {step['keyword']} {step['name']}\n", **step_markup)
                 self._tw.write("    " + word, **word_markup)
                 self._tw.write("\n\n")
             else:
