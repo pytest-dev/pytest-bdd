@@ -51,13 +51,15 @@ publish_article.feature:
     Feature: Blog
         A site where you can publish your articles.
 
-    Scenario: Publishing the article
-        Given I'm an author user
-        And I have an article
-        When I go to the article page
-        And I press the publish button
-        Then I should not see the error message
-        And the article should be published  # Note: will query the database
+        Scenario: Publishing the article
+            Given I'm an author user
+            And I have an article
+
+            When I go to the article page
+            And I press the publish button
+
+            Then I should not see the error message
+            And the article should be published  # Note: will query the database
 
 Note that only one feature is allowed per feature file.
 
@@ -150,14 +152,15 @@ default author.
 
 .. code-block:: gherkin
 
-    Scenario: I'm the author
-        Given I'm an author
-        And I have an article
+    Feature: Resource owner
+        Scenario: I'm the author
+            Given I'm an author
+            And I have an article
 
 
-    Scenario: I'm the admin
-        Given I'm the admin
-        And there's an article
+        Scenario: I'm the admin
+            Given I'm the admin
+            And there's an article
 
 
 Given step scope
@@ -174,14 +177,15 @@ pass optional ``scope`` argument:
 
 .. code-block:: gherkin
 
-    Scenario: I'm the author
-        Given I'm an author
-        And there is an article
+    Feature: Fixture scope
+        Scenario: I'm the author
+            Given I'm an author
+            And there is an article
 
 
-    Scenario: I'm the admin
-        Given I'm the admin
-        And there is an article
+        Scenario: I'm the admin
+            Given I'm the admin
+            And there is an article
 
 
 In this example, the step function for the 'there is an article' given step will be executed once, even though there
@@ -257,13 +261,14 @@ Example:
 
 .. code-block:: gherkin
 
-    Scenario: Arguments for given, when, thens
-        Given there are 5 cucumbers
+    Feature: Step arguments
+        Scenario: Arguments for given, when, thens
+            Given there are 5 cucumbers
 
-        When I eat 3 cucumbers
-        And I eat 2 cucumbers
+            When I eat 3 cucumbers
+            And I eat 2 cucumbers
 
-        Then I should have 0 cucumbers
+            Then I should have 0 cucumbers
 
 
 The code will look like:
@@ -367,9 +372,10 @@ it will stay untouched. To allow this, special parameter `target_fixture` exists
 
 .. code-block:: gherkin
 
-    Scenario: Test given fixture injection
-        Given I have injecting given
-        Then foo should be "injected foo"
+    Feature: Target fixture
+        Scenario: Test given fixture injection
+            Given I have injecting given
+            Then foo should be "injected foo"
 
 In this example existing fixture `foo` will be overridden by given step `I have injecting given` only for scenario it's
 used in.
@@ -384,12 +390,13 @@ But in much cleaner and powerful way:
 
 .. code-block:: gherkin
 
-    Scenario: Multiline step using sub indentation
-        Given I have a step with:
-            Some
-            Extra
-            Lines
-        Then the text should be parsed with correct indentation
+    Feature: Multiline steps
+        Scenario: Multiline step using sub indentation
+            Given I have a step with:
+                Some
+                Extra
+                Lines
+            Then the text should be parsed with correct indentation
 
 Step is considered as multiline one, if the **next** line(s) after it's first line, is indented relatively
 to the first line. The step name is then simply extended by adding further lines with newlines.
@@ -489,29 +496,31 @@ Example:
 
 .. code-block:: gherkin
 
-    Scenario Outline: Outlined given, when, thens
-        Given there are <start> cucumbers
-        When I eat <eat> cucumbers
-        Then I should have <left> cucumbers
+    Feature: Scenario outlines
+        Scenario Outline: Outlined given, when, thens
+            Given there are <start> cucumbers
+            When I eat <eat> cucumbers
+            Then I should have <left> cucumbers
 
-        Examples:
-        | start | eat | left |
-        |  12   |  5  |  7   |
+            Examples:
+            | start | eat | left |
+            |  12   |  5  |  7   |
 
 pytest-bdd feature file format also supports example tables in different way:
 
 
 .. code-block:: gherkin
 
-    Scenario Outline: Outlined given, when, thens
-        Given there are <start> cucumbers
-        When I eat <eat> cucumbers
-        Then I should have <left> cucumbers
+    Feature: Scenario outlines
+        Scenario Outline: Outlined given, when, thens
+            Given there are <start> cucumbers
+            When I eat <eat> cucumbers
+            Then I should have <left> cucumbers
 
-        Examples: Vertical
-        | start | 12 | 2 |
-        | eat   | 5  | 1 |
-        | left  | 7  | 1 |
+            Examples: Vertical
+            | start | 12 | 2 |
+            | eat   | 5  | 1 |
+            | left  | 7  | 1 |
 
 This form allows to have tables with lots of columns keeping the maximum text width predictable without significant
 readability change.
@@ -782,8 +791,10 @@ This also declares a PyTest fixture "article" and any other step can depend on i
 
 .. code-block:: gherkin
 
-    Given I have a beautiful article
-    When I publish this article
+    Feature: Power of pytest
+        Scenario: Symbolic name across steps
+            Given I have a beautiful article
+            When I publish this article
 
 When step is referring the article to publish it.
 
@@ -831,9 +842,11 @@ no sense. It won't be executed second time.
 
 .. code-block:: gherkin
 
-    Given I have a beautiful article
-    And some other thing
-    And I have a beautiful article  # Won't be executed, exception is raised
+    Feature: Power of pytest
+        Scenario: Given is a fixture and evaluated only once
+            Given I have a beautiful article
+            And some other thing
+            And I have a beautiful article  # Won't be executed, exception is raised
 
 
 pytest-bdd will raise an exception even in the case of the steps that use regular expression
@@ -842,8 +855,10 @@ patterns to get arguments.
 
 .. code-block:: gherkin
 
-    Given I have 1 cucumbers
-    And I have 2 cucumbers  # Exception is raised
+    Feature: Power of pytest
+        Scenario: Given is a fixture and evaluated only once
+            Given I have 1 cucumbers
+            And I have 2 cucumbers  # Exception is raised
 
 Will raise an exception if the step is using the regular expression pattern.
 
