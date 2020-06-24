@@ -10,13 +10,14 @@ provided in the pytest parametrization table.
 
 Syntax example:
 
-    Scenario: Publishing the article
-        Given I'm an author user
-        And I have an article
-        When I go to the article page
-        And I press the publish button
-        Then I should not see the error message
-        And the article should be published  # Note: will query the database
+    Feature: Articles
+        Scenario: Publishing the article
+            Given I'm an author user
+            And I have an article
+            When I go to the article page
+            And I press the publish button
+            Then I should not see the error message
+            And the article should be published  # Note: will query the database
 
 :note: The "#" symbol is used for comments.
 :note: There're no multiline steps, the description of the step must fit in

@@ -1,9 +1,5 @@
 """Given tests."""
-import pytest
 import textwrap
-
-from pytest_bdd import given, then, scenario
-from pytest_bdd.steps import StepError
 
 
 def test_root_alias(testdir):
