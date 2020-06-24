@@ -119,6 +119,7 @@ def test_step_trace(pytester):
                 "keyword": "Given",
                 "line_number": 6,
                 "name": "a passing step",
+                "skipped": False,
                 "type": "given",
             },
             {
@@ -127,6 +128,7 @@ def test_step_trace(pytester):
                 "keyword": "And",
                 "line_number": 7,
                 "name": "some other passing step",
+                "skipped": False,
                 "type": "given",
             },
         ],
@@ -154,6 +156,7 @@ def test_step_trace(pytester):
                 "keyword": "Given",
                 "line_number": 11,
                 "name": "a passing step",
+                "skipped": False,
                 "type": "given",
             },
             {
@@ -162,6 +165,7 @@ def test_step_trace(pytester):
                 "keyword": "And",
                 "line_number": 12,
                 "name": "a failing step",
+                "skipped": False,
                 "type": "given",
             },
         ],
@@ -188,6 +192,7 @@ def test_step_trace(pytester):
                 "keyword": "Given",
                 "line_number": 15,
                 "name": "there are 12 cucumbers",
+                "skipped": False,
                 "type": "given",
             },
             {
@@ -196,6 +201,7 @@ def test_step_trace(pytester):
                 "keyword": "When",
                 "line_number": 16,
                 "name": "I eat 5 cucumbers",
+                "skipped": False,
                 "type": "when",
             },
             {
@@ -204,6 +210,7 @@ def test_step_trace(pytester):
                 "keyword": "Then",
                 "line_number": 17,
                 "name": "I should have 7 cucumbers",
+                "skipped": False,
                 "type": "then",
             },
         ],
@@ -230,6 +237,7 @@ def test_step_trace(pytester):
                 "keyword": "Given",
                 "line_number": 15,
                 "name": "there are 5 cucumbers",
+                "skipped": False,
                 "type": "given",
             },
             {
@@ -238,6 +246,7 @@ def test_step_trace(pytester):
                 "keyword": "When",
                 "line_number": 16,
                 "name": "I eat 4 cucumbers",
+                "skipped": False,
                 "type": "when",
             },
             {
@@ -246,6 +255,7 @@ def test_step_trace(pytester):
                 "keyword": "Then",
                 "line_number": 17,
                 "name": "I should have 1 cucumbers",
+                "skipped": False,
                 "type": "then",
             },
         ],
