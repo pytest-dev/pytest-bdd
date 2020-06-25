@@ -163,37 +163,6 @@ default author.
             And there's an article
 
 
-Given step scope
-----------------
-
-If you need your given step to be executed less than once per scenario (for example: once for module, session), you can
-pass optional ``scope`` argument:
-
-.. code-block:: python
-
-    @given('there is an article', scope='session')
-    def article(author):
-        return create_test_article(author=author)
-
-.. code-block:: gherkin
-
-    Feature: Fixture scope
-        Scenario: I'm the author
-            Given I'm an author
-            And there is an article
-
-
-        Scenario: I'm the admin
-            Given I'm the admin
-            And there is an article
-
-
-In this example, the step function for the 'there is an article' given step will be executed once, even though there
-are 2 scenarios using it.
-Note that for other step types, it makes no sense to have scope larger than 'function' (the default) as they represent
-an action (when step), and assertion (then step).
-
-
 Step arguments
 --------------
 
@@ -1120,9 +1089,6 @@ which might be helpful building useful reporting, visualization, etc on top of i
 
 * pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception) - Called when step
   function failed to execute
-
-* pytest_bdd_step_validation_error(request, feature, scenario, step, step_func, step_func_args, exception) - Called
-  when step failed to validate
 
 * pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception) - Called when step lookup failed
 

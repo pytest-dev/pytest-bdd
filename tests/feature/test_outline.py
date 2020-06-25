@@ -6,7 +6,7 @@ STEPS = """\
 from pytest_bdd import given, when, then
 
 
-@given("there are <start> cucumbers")
+@given("there are <start> cucumbers", target_fixture="start_cucumbers")
 def start_cucumbers(start):
     assert isinstance(start, int)
     return dict(start=start)
@@ -344,7 +344,7 @@ def test_outlined_feature(testdir):
                 [["oranges"], ["apples"]],
             )
 
-        @given("there are <start> <fruits>")
+        @given("there are <start> <fruits>", target_fixture="start_fruits")
         def start_fruits(start, fruits):
             assert isinstance(start, int)
             return {fruits: dict(start=start)}

@@ -10,18 +10,30 @@ def test_parent(testdir):
 
     Both fixtures come from the parent conftest.
     """
+    testdir.makefile(
+        ".feature",
+        parent=textwrap.dedent(
+            """\
+            Feature: Parent
+                Scenario: Parenting is easy
+                    Given I have a parent fixture
+                    And I have an overridable fixture
+            """
+        ),
+    )
+
     testdir.makeconftest(
         textwrap.dedent(
             """\
         from pytest_bdd import given
 
 
-        @given("I have parent fixture")
+        @given("I have a parent fixture", target_fixture="parent")
         def parent():
             return "parent"
 
 
-        @given("I have overridable parent fixture")
+        @given("I have an overridable fixture", target_fixture="overridable")
         def overridable():
             return "parent"
 
@@ -32,9 +44,12 @@ def test_parent(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        def test_parent(parent, overridable):
-            assert parent == "parent"
-            assert overridable == "parent"
+        from pytest_bdd import scenario
+
+        @scenario("parent.feature", "Parenting is easy")
+        def test_parent(request):
+            assert request.getfixturevalue("parent") == "parent"
+            assert request.getfixturevalue("overridable") == "parent"
 
         """
         )
@@ -88,12 +103,12 @@ def test_child(testdir):
         from pytest_bdd import given
 
 
-        @given("I have parent fixture")
+        @given("I have a parent fixture", target_fixture="parent")
         def parent():
             return "parent"
 
 
-        @given("I have overridable parent fixture")
+        @given("I have an overridable fixture", target_fixture="overridable")
         def overridable():
             return "parent"
 
@@ -108,7 +123,7 @@ def test_child(testdir):
             """\
             from pytest_bdd import given
 
-            @given("I have overridable parent fixture")
+            @given("I have an overridable fixture", target_fixture="overridable")
             def overridable():
                 return "child"
 
@@ -116,12 +131,27 @@ def test_child(testdir):
         )
     )
 
+    subdir.join("child.feature").write(
+        textwrap.dedent(
+            """\
+            Feature: Child
+                Scenario: Happy childhood
+                    Given I have a parent fixture
+                    And I have an overridable fixture
+            """
+        ),
+    )
+
     subdir.join("test_library.py").write(
         textwrap.dedent(
             """\
-            def test_override(parent, overridable):
-                assert parent == "parent"
-                assert overridable == "child"
+            from pytest_bdd import scenario
+
+
+            @scenario("child.feature", "Happy childhood")
+            def test_override(request):
+                assert request.getfixturevalue("parent") == "parent"
+                assert request.getfixturevalue("overridable") == "child"
 
         """
         )
@@ -138,12 +168,12 @@ def test_local(testdir):
         from pytest_bdd import given
 
 
-        @given("I have parent fixture")
+        @given("I have a parent fixture", target_fixture="parent")
         def parent():
             return "parent"
 
 
-        @given("I have overridable parent fixture")
+        @given("I have an overridable fixture", target_fixture="overridable")
         def overridable():
             return "parent"
 
@@ -153,36 +183,50 @@ def test_local(testdir):
 
     subdir = testdir.mkpydir("subdir")
 
+    subdir.join("local.feature").write(
+        textwrap.dedent(
+            """\
+            Feature: Local
+                Scenario: Local override
+                    Given I have a parent fixture
+                    And I have an overridable fixture
+            """
+        ),
+    )
+
     subdir.join("test_library.py").write(
         textwrap.dedent(
             """\
-            from pytest_bdd import given
+            from pytest_bdd import given, scenario
             from pytest_bdd.steps import get_step_fixture_name, GIVEN
 
 
-            @given("I have locally overriden fixture")
+            @given("I have an overridable fixture", target_fixture="overridable")
             def overridable():
                 return "local"
 
 
-            @given("I have locally overriden parent fixture")
+            @given("I have a parent fixture", target_fixture="parent")
             def parent():
                 return "local"
 
 
-            def test_local(request, parent, overridable):
-                assert parent == "local"
-                assert overridable == "local"
+            @scenario("local.feature", "Local override")
+            def test_local(request):
+                assert request.getfixturevalue("parent") == "local"
+                assert request.getfixturevalue("overridable") == "local"
+
 
                 fixture = request.getfixturevalue(
-                    get_step_fixture_name("I have locally overriden fixture", GIVEN)
+                    get_step_fixture_name("I have a parent fixture", GIVEN)
                 )
-                assert fixture(request) == "local"
+                assert fixture() == "local"
+
 
                 fixture = request.getfixturevalue(
-                    get_step_fixture_name("I have locally overriden parent fixture", GIVEN)
+                    get_step_fixture_name("I have an overridable fixture", GIVEN)
                 )
-                assert fixture(request) == "local"
+                assert fixture() == "local"
 
         """
         )

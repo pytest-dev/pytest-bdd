@@ -44,7 +44,7 @@ def test_steps_in_feature_file_have_unicode(testdir):
             string["content"] = content
 
 
-        given(u"I have an alias with a unicode type for foo", fixture="foo")
+        given(u"I have an alias with a unicode type for foo", target_fixture="foo")
 
 
         @then(parsers.parse("I should see that the string equals to content '{content}'"))

@@ -3,6 +3,9 @@ Changelog
 
 
 - Fixes pytest-xdist 2.0 compatibility (olegpidsadnyi) #369.
+- Given step is no longer a fixture. The scope parameter is also removed.
+- Fixture parameter is removed from the given step declaration.
+- ``pytest_bdd_step_validation_error`` hook is removed.
 
 
 3.4.0

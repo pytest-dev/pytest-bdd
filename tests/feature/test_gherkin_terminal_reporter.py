@@ -206,7 +206,7 @@ def test_step_parameters_should_be_replaced_by_their_values(testdir):
             """\
             from pytest_bdd import given, when, scenario, then
 
-            @given('there are <start> cucumbers')
+            @given('there are <start> cucumbers', target_fixture="start_cucumbers")
             def start_cucumbers(start):
                 return start
 
