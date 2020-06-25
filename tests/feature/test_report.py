@@ -25,6 +25,7 @@ def test_step_trace(pytester):
         feature-tag
         scenario-passing-tag
         scenario-failing-tag
+        scenario-skipping-tag
     """
         ),
     )
@@ -33,7 +34,7 @@ def test_step_trace(pytester):
         test=textwrap.dedent(
             """
     @feature-tag
-    Feature: One passing scenario, one failing scenario
+    Feature: One passing scenario, one failing scenario, one skipping scenario
 
         @scenario-passing-tag
         Scenario: Passing
@@ -44,6 +45,12 @@ def test_step_trace(pytester):
         Scenario: Failing
             Given a passing step
             And a failing step
+
+        @scenario-skipping-tag
+        Scenario: Skipping
+            Given a passing step
+            And a skipping step
+            And a passing step
 
         Scenario Outline: Outlined
             Given there are <start> cucumbers
@@ -76,6 +83,10 @@ def test_step_trace(pytester):
         def _():
             raise Exception('Error')
 
+        @given('a skipping step')
+        def _():
+            pytest.skip()
+
         @given(parsers.parse('there are {start:d} cucumbers'), target_fixture="cucumbers")
         def _(start):
             assert isinstance(start, int)
@@ -106,7 +117,7 @@ def test_step_trace(pytester):
             "description": "",
             "filename": str(feature),
             "line_number": 2,
-            "name": "One passing scenario, one failing scenario",
+            "name": "One passing scenario, one failing scenario, one skipping scenario",
             "rel_filename": str(relpath),
             "tags": ["feature-tag"],
         },
@@ -143,7 +154,7 @@ def test_step_trace(pytester):
             "description": "",
             "filename": str(feature),
             "line_number": 2,
-            "name": "One passing scenario, one failing scenario",
+            "name": "One passing scenario, one failing scenario, one skipping scenario",
             "rel_filename": str(relpath),
             "tags": ["feature-tag"],
         },
@@ -173,24 +184,69 @@ def test_step_trace(pytester):
     }
     assert report == expected
 
+    report = result.matchreport("test_skipping", when="call").scenario
+    expected = {
+        "feature": {
+            "description": "",
+            "filename": str(feature),
+            "line_number": 2,
+            "name": "One passing scenario, one failing scenario, one skipping scenario",
+            "rel_filename": str(relpath),
+            "tags": ["feature-tag"],
+        },
+        "line_number": 15,
+        "name": "Skipping",
+        "steps": [
+            {
+                "duration": OfType(float),
+                "failed": False,
+                "keyword": "Given",
+                "line_number": 16,
+                "name": "a passing step",
+                "skipped": False,
+                "type": "given",
+            },
+            {
+                "duration": OfType(float),
+                "failed": False,
+                "keyword": "And",
+                "line_number": 17,
+                "name": "a skipping step",
+                "skipped": True,
+                "type": "given",
+            },
+            {
+                "duration": OfType(float),
+                "failed": False,
+                "keyword": "And",
+                "line_number": 18,
+                "name": "a passing step",
+                "skipped": True,
+                "type": "given",
+            },
+        ],
+        "tags": ["scenario-skipping-tag"],
+    }
+    assert report == expected
+
     report = result.matchreport("test_outlined[12-5-7]", when="call").scenario
     expected = {
         "feature": {
             "description": "",
             "filename": str(feature),
             "line_number": 2,
-            "name": "One passing scenario, one failing scenario",
+            "name": "One passing scenario, one failing scenario, one skipping scenario",
             "rel_filename": str(relpath),
             "tags": ["feature-tag"],
         },
-        "line_number": 14,
+        "line_number": 20,
         "name": "Outlined",
         "steps": [
             {
                 "duration": OfType(float),
                 "failed": False,
                 "keyword": "Given",
-                "line_number": 15,
+                "line_number": 21,
                 "name": "there are 12 cucumbers",
                 "skipped": False,
                 "type": "given",
@@ -199,7 +255,7 @@ def test_step_trace(pytester):
                 "duration": OfType(float),
                 "failed": False,
                 "keyword": "When",
-                "line_number": 16,
+                "line_number": 22,
                 "name": "I eat 5 cucumbers",
                 "skipped": False,
                 "type": "when",
@@ -208,7 +264,7 @@ def test_step_trace(pytester):
                 "duration": OfType(float),
                 "failed": False,
                 "keyword": "Then",
-                "line_number": 17,
+                "line_number": 23,
                 "name": "I should have 7 cucumbers",
                 "skipped": False,
                 "type": "then",
@@ -224,18 +280,18 @@ def test_step_trace(pytester):
             "description": "",
             "filename": str(feature),
             "line_number": 2,
-            "name": "One passing scenario, one failing scenario",
+            "name": "One passing scenario, one failing scenario, one skipping scenario",
             "rel_filename": str(relpath),
             "tags": ["feature-tag"],
         },
-        "line_number": 14,
+        "line_number": 20,
         "name": "Outlined",
         "steps": [
             {
                 "duration": OfType(float),
                 "failed": False,
                 "keyword": "Given",
-                "line_number": 15,
+                "line_number": 21,
                 "name": "there are 5 cucumbers",
                 "skipped": False,
                 "type": "given",
@@ -244,7 +300,7 @@ def test_step_trace(pytester):
                 "duration": OfType(float),
                 "failed": False,
                 "keyword": "When",
-                "line_number": 16,
+                "line_number": 22,
                 "name": "I eat 4 cucumbers",
                 "skipped": False,
                 "type": "when",
@@ -253,7 +309,7 @@ def test_step_trace(pytester):
                 "duration": OfType(float),
                 "failed": False,
                 "keyword": "Then",
-                "line_number": 17,
+                "line_number": 23,
                 "name": "I should have 1 cucumbers",
                 "skipped": False,
                 "type": "then",
