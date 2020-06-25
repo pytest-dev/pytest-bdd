@@ -26,10 +26,6 @@ class FeatureExamplesNotValidError(ScenarioValidationError):
     """Feature example table is not valid."""
 
 
-class StepTypeError(ScenarioValidationError):
-    """Step definition is not of the type expected in the scenario."""
-
-
 class StepDefinitionNotFoundError(Exception):
     """Step definition not found."""
 

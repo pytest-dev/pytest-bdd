@@ -47,13 +47,6 @@ def test_scenario_no_strict_gherkin(testdir):
 
 def prepare_test_dir(testdir):
     """Test scenario no strict gherkin."""
-    testdir.makeini(
-        """
-            [pytest]
-            bdd_strict_gherkin=false
-        """
-    )
-
     testdir.makepyfile(
         test_gherkin="""
         import pytest

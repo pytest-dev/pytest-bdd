@@ -198,13 +198,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, enco
 
 
 def scenario(
-    feature_name,
-    scenario_name,
-    encoding="utf-8",
-    example_converters=None,
-    caller_module=None,
-    features_base_dir=None,
-    strict_gherkin=None,
+    feature_name, scenario_name, encoding="utf-8", example_converters=None, caller_module=None, features_base_dir=None,
 ):
     """Scenario decorator.
 
@@ -221,9 +215,7 @@ def scenario(
     # Get the feature
     if features_base_dir is None:
         features_base_dir = get_features_base_dir(caller_module)
-    if strict_gherkin is None:
-        strict_gherkin = get_strict_gherkin()
-    feature = Feature.get_feature(features_base_dir, feature_name, encoding=encoding, strict_gherkin=strict_gherkin)
+    feature = Feature.get_feature(features_base_dir, feature_name, encoding=encoding)
 
     # Get the scenario
     try:
@@ -258,11 +250,6 @@ def get_from_ini(key, default):
     config = CONFIG_STACK[-1]
     value = config.getini(key)
     return value if value != "" else default
-
-
-def get_strict_gherkin():
-    config = CONFIG_STACK[-1]
-    return config.getini("bdd_strict_gherkin")
 
 
 def make_python_name(string):
@@ -308,10 +295,6 @@ def scenarios(*feature_paths, **kwargs):
     if features_base_dir is None:
         features_base_dir = get_features_base_dir(module)
 
-    strict_gherkin = kwargs.get("strict_gherkin")
-    if strict_gherkin is None:
-        strict_gherkin = get_strict_gherkin()
-
     abs_feature_paths = []
     for path in feature_paths:
         if not os.path.isabs(path):
@@ -325,7 +308,7 @@ def scenarios(*feature_paths, **kwargs):
         if hasattr(attr, "__scenario__")
     )
 
-    for feature in get_features(abs_feature_paths, strict_gherkin=strict_gherkin):
+    for feature in get_features(abs_feature_paths):
         for scenario_name, scenario_object in feature.scenarios.items():
             # skip already bound scenarios
             if (scenario_object.feature.filename, scenario_name) not in module_scenarios:
