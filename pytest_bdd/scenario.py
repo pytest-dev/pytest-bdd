@@ -322,8 +322,11 @@ def scenarios(*feature_paths, **kwargs):
 
     :param *feature_paths: feature file paths to use for scenarios
     """
-    frame = inspect.stack()[1]
-    module = inspect.getmodule(frame[0])
+    if "module" in kwargs:
+        module = kwargs.pop("module")
+    else:
+        frame = inspect.stack()[1]
+        module = inspect.getmodule(frame[0])
 
     features_base_dir = kwargs.get("features_base_dir")
     if features_base_dir is None:

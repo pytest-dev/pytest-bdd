@@ -7,6 +7,7 @@ from . import cucumber_json
 from . import generation
 from . import reporting
 from . import gherkin_terminal_reporter
+from .bdd_module import PytestBDDModule
 from .utils import CONFIG_STACK
 
 
@@ -36,6 +37,7 @@ def pytest_addoption(parser):
 def add_bdd_ini(parser):
     parser.addini("bdd_features_base_dir", "Base features directory.")
     parser.addini("bdd_strict_gherkin", "Parse features to be strict gherkin.", type="bool", default=True)
+    parser.addini("bdd_auto_collect", "To automatically collect feature files.", type="bool", default=False)
 
 
 @pytest.mark.trylast
@@ -108,3 +110,11 @@ def pytest_collection_modifyitems(session, config, items):
         return (info, declaration_order)
 
     items.sort(key=item_key)
+
+
+def pytest_collect_file(path, parent):
+    """
+    Automatically collect *.feature files and create test modules for them.
+    """
+    if CONFIG_STACK[-1].getini("bdd_auto_collect") and path.ext == ".feature":
+        return PytestBDDModule(path, parent)
