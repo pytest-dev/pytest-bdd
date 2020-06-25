@@ -50,7 +50,7 @@ setup(
         "pytest11": ["pytest-bdd = pytest_bdd.plugin"],
         "console_scripts": ["pytest-bdd = pytest_bdd.scripts:main"],
     },
-    tests_require=["tox"],
+    tests_require=["tox", "flask", "requests", "flask_api", "aiohttp", "pytest-asyncio", "async_generator"],
     packages=["pytest_bdd"],
     include_package_data=True,
 )

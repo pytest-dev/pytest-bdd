@@ -26,8 +26,7 @@ from . import exceptions
 from .feature import Feature, force_unicode, get_features
 from .steps import get_caller_module, get_step_fixture_name, inject_fixture
 from .types import GIVEN
-from .utils import CONFIG_STACK, get_args
-
+from .utils import CONFIG_STACK, get_args, run_coroutines
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
@@ -111,8 +110,11 @@ def _execute_step_function(request, scenario, step, step_func):
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
+
         # Execute the step.
-        step_func(**kwargs)
+        result_or_coro = step_func(**kwargs)
+        run_coroutines(result_or_coro, request=request)
+
         request.config.hook.pytest_bdd_after_step(**kw)
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
