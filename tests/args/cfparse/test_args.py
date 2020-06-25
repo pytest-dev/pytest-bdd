@@ -3,7 +3,8 @@
 import textwrap
 
 
-def test_every_steps_takes_param_with_the_same_name(testdir):
+def test_every_step_takes_param_with_the_same_name(testdir):
+    """Test every step takes param with the same name."""
     testdir.makefile(
         ".feature",
         arguments=textwrap.dedent(
@@ -57,6 +58,7 @@ def test_every_steps_takes_param_with_the_same_name(testdir):
 
 
 def test_argument_in_when(testdir):
+    """Test step arguments in when steps."""
     testdir.makefile(
         ".feature",
         arguments=textwrap.dedent(

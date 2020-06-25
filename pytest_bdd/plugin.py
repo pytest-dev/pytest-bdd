@@ -104,7 +104,6 @@ def pytest_collection_modifyitems(session, config, items):
         else:
             declaration_order = 0
         func, linenum = item.reportinfo()[:2]
-        info = (func, linenum) if linenum is not None else (func, -1)
-        return (info, declaration_order)
+        return (func, linenum if linenum is not None else -1, declaration_order)
 
     items.sort(key=item_key)

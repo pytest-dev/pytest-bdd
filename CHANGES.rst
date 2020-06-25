@@ -6,6 +6,7 @@ Changelog
 - Given step is no longer a fixture. The scope parameter is also removed.
 - Fixture parameter is removed from the given step declaration.
 - ``pytest_bdd_step_validation_error`` hook is removed.
+- Fixes an error with pytest-pylint plugin (toracle) #374.
 
 
 3.4.0
