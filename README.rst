@@ -7,8 +7,8 @@ BDD library for the py.test runner
   :target: https://codecov.io/gh/pytest-dev/pytest-bdd
 .. image:: https://travis-ci.org/pytest-dev/pytest-bdd.svg?branch=master
     :target: https://travis-ci.org/pytest-dev/pytest-bdd
-.. image:: https://readthedocs.org/projects/pytest-bdd/badge/?version=latest
-    :target: https://readthedocs.org/projects/pytest-bdd/?badge=latest
+.. image:: https://readthedocs.org/projects/pytest-bdd/badge/?version=stable
+    :target: https://readthedocs.org/projects/pytest-bdd/
     :alt: Documentation Status
 
 pytest-bdd implements a subset of the Gherkin language to enable automating project
@@ -1167,6 +1167,8 @@ As as side effect, the tool will validate the files for format errors, also some
 ordering of the types of the steps.
 
 
+.. _Migration from 3.x.x:
+
 Migration of your tests from versions 3.x.x
 -------------------------------------------
 
@@ -1190,6 +1192,12 @@ Just normal step declaration with the dependency injection should be used.
     @given("there's an article")
     def there_is_an_article(article):
         pass
+
+
+Strict gherkin option is removed, so the strict_gherkin parameter can be removed from the scenario decorators
+as well as bdd_strict_gherkin from the ini files.
+
+Step validation handlers for the hook pytest_bdd_step_validation_error should be removed.
 
 
 License

@@ -1,6 +1,7 @@
 Changelog
 =========
 
+This relase introduces breaking changes, please refer to the :ref:`Migration from 3.x.x`.
 
 - Strict Gherkin option is removed. (olegpidsadnyi)
 - Given step is no longer a fixture. The scope parameter is also removed. (olegpidsadnyi)
