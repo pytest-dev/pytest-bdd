@@ -1194,10 +1194,10 @@ Just normal step declaration with the dependency injection should be used.
         pass
 
 
-Strict gherkin option is removed, so the strict_gherkin parameter can be removed from the scenario decorators
-as well as bdd_strict_gherkin from the ini files.
+Strict gherkin option is removed, so the ``strict_gherkin`` parameter can be removed from the scenario decorators
+as well as ``bdd_strict_gherkin`` from the ini files.
 
-Step validation handlers for the hook pytest_bdd_step_validation_error should be removed.
+Step validation handlers for the hook ``pytest_bdd_step_validation_error`` should be removed.
 
 
 License
