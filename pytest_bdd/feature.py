@@ -251,17 +251,14 @@ class Examples(object):
 
 
 class Feature(object):
-
     """Feature."""
 
-    def __init__(self, basedir, filename, encoding="utf-8", strict_gherkin=True):
+    def __init__(self, basedir, filename, encoding="utf-8"):
         """Parse the feature file.
 
         :param str basedir: Feature files base directory.
         :param str filename: Relative path to the feature file.
         :param str encoding: Feature file encoding (utf-8 by default).
-        :param bool strict_gherkin: Flag whether it's a strictly gherkin scenario or not (e.g. it will validate correct
-            gherkin language (given-when-then))
         """
         self.scenarios = OrderedDict()
         self.rel_filename = op.join(op.basename(basedir), filename)
@@ -298,49 +295,12 @@ class Feature(object):
                     continue
                 mode = get_step_type(clean_line) or mode
 
-                allowed_prev_mode = (types.BACKGROUND, types.GIVEN)
-                if not strict_gherkin:
-                    allowed_prev_mode += (types.WHEN,)
+                allowed_prev_mode = (types.BACKGROUND, types.GIVEN, types.WHEN)
 
                 if not scenario and prev_mode not in allowed_prev_mode and mode in types.STEP_TYPES:
                     raise exceptions.FeatureError(
                         "Step definition outside of a Scenario or a Background", line_number, clean_line, filename
                     )
-
-                if strict_gherkin:
-                    if (
-                        self.background
-                        and not scenario
-                        and mode not in (types.SCENARIO, types.SCENARIO_OUTLINE, types.GIVEN, types.TAG)
-                    ):
-                        raise exceptions.FeatureError(
-                            "Background section can only contain Given steps", line_number, clean_line, filename
-                        )
-
-                    if mode == types.GIVEN and prev_mode not in (
-                        types.GIVEN,
-                        types.SCENARIO,
-                        types.SCENARIO_OUTLINE,
-                        types.BACKGROUND,
-                    ):
-                        raise exceptions.FeatureError(
-                            "Given steps must be the first within the Scenario", line_number, clean_line, filename
-                        )
-
-                    if mode == types.WHEN and prev_mode not in (
-                        types.SCENARIO,
-                        types.SCENARIO_OUTLINE,
-                        types.GIVEN,
-                        types.WHEN,
-                    ):
-                        raise exceptions.FeatureError(
-                            "When steps must be the first or follow Given steps", line_number, clean_line, filename
-                        )
-
-                    if not self.background and mode == types.THEN and prev_mode not in types.STEP_TYPES:
-                        raise exceptions.FeatureError(
-                            "Then steps must follow Given or When steps", line_number, clean_line, filename
-                        )
 
                 if mode == types.FEATURE:
                     if prev_mode is None or prev_mode == types.TAG:
@@ -400,7 +360,7 @@ class Feature(object):
                     step = Step(
                         name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword
                     )
-                    if self.background and (mode == types.GIVEN or not strict_gherkin) and not scenario:
+                    if self.background and not scenario:
                         target = self.background
                     else:
                         target = scenario
@@ -410,14 +370,12 @@ class Feature(object):
         self.description = u"\n".join(description).strip()
 
     @classmethod
-    def get_feature(cls, base_path, filename, encoding="utf-8", strict_gherkin=True):
+    def get_feature(cls, base_path, filename, encoding="utf-8"):
         """Get a feature by the filename.
 
         :param str base_path: Base feature directory.
         :param str filename: Filename of the feature file.
         :param str encoding: Feature file encoding.
-        :param bool strict_gherkin: Flag whether it's a strictly gherkin scenario or not (e.g. it will validate correct
-            gherkin language (given-when-then))
 
         :return: `Feature` instance from the parsed feature cache.
 
@@ -428,7 +386,7 @@ class Feature(object):
         full_name = op.abspath(op.join(base_path, filename))
         feature = features.get(full_name)
         if not feature:
-            feature = Feature(base_path, filename, encoding=encoding, strict_gherkin=strict_gherkin)
+            feature = Feature(base_path, filename, encoding=encoding)
             features[full_name] = feature
         return feature
 

@@ -3,21 +3,21 @@
 import textwrap
 
 
-def test_given_alias_not_evaluated_twice(testdir):
+def test_step_alias(testdir):
     testdir.makefile(
         ".feature",
         alias=textwrap.dedent(
             """\
-            Feature: Given step alias
-                Scenario: Multiple given alias is not evaluated multiple times
+            Feature: Step aliases
+                Scenario: Multiple step aliases
                     Given I have an empty list
-
+                    And I have foo (which is 1) in my list
                     # Alias of the "I have foo (which is 1) in my list"
                     And I have bar (alias of foo) in my list
 
                     When I do crash (which is 2)
                     And I do boom (alias of crash)
-                    Then my list should be [1, 2, 2]
+                    Then my list should be [1, 1, 2, 2]
             """
         ),
     )
@@ -28,12 +28,12 @@ def test_given_alias_not_evaluated_twice(testdir):
         import pytest
         from pytest_bdd import given, when, then, scenario
 
-        @scenario("alias.feature", "Multiple given alias is not evaluated multiple times")
+        @scenario("alias.feature", "Multiple step aliases")
         def test_alias():
             pass
 
 
-        @given("I have an empty list")
+        @given("I have an empty list", target_fixture="results")
         def results():
             return []
 
@@ -50,10 +50,9 @@ def test_given_alias_not_evaluated_twice(testdir):
             results.append(2)
 
 
-        @then("my list should be [1, 2, 2]")
+        @then("my list should be [1, 1, 2, 2]")
         def check_results(results):
-            \"\"\"Fixtures are not evaluated multiple times, so the list will be [1, 2, 2]\"\"\"
-            assert results == [1, 2, 2]
+            assert results == [1, 1, 2, 2]
         """
         )
     )

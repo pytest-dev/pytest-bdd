@@ -75,7 +75,7 @@ def test_step_trace(testdir):
         def a_failing_step():
             raise Exception('Error')
 
-        @given('there are <start> cucumbers')
+        @given('there are <start> cucumbers', target_fixture="start_cucumbers")
         def start_cucumbers(start):
             assert isinstance(start, int)
             return dict(start=start)

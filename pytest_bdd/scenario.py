@@ -25,7 +25,6 @@ except ImportError:
 from . import exceptions
 from .feature import Feature, force_unicode, get_features
 from .steps import get_caller_module, get_step_fixture_name, inject_fixture
-from .types import GIVEN
 from .utils import CONFIG_STACK, get_args
 
 
@@ -111,8 +110,12 @@ def _execute_step_function(request, scenario, step, step_func):
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
+        target_fixture = getattr(step_func, "target_fixture", None)
         # Execute the step.
-        step_func(**kwargs)
+        return_value = step_func(**kwargs)
+        if target_fixture:
+            inject_fixture(request, target_fixture, return_value)
+
         request.config.hook.pytest_bdd_after_step(**kw)
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
@@ -130,7 +133,6 @@ def _execute_scenario(feature, scenario, request, encoding):
     request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
 
     try:
-        givens = set()
         # Execute scenario steps
         for step in scenario.steps:
             try:
@@ -140,29 +142,6 @@ def _execute_scenario(feature, scenario, request, encoding):
                     request=request, feature=feature, scenario=scenario, step=step, exception=exception
                 )
                 raise
-
-            try:
-                # Check if the fixture that implements given step has not been yet used by another given step
-                if step.type == GIVEN:
-                    if step_func.fixture in givens:
-                        raise exceptions.GivenAlreadyUsed(
-                            u'Fixture "{0}" that implements this "{1}" given step has been already used.'.format(
-                                step_func.fixture, step.name
-                            )
-                        )
-                    givens.add(step_func.fixture)
-            except exceptions.ScenarioValidationError as exception:
-                request.config.hook.pytest_bdd_step_validation_error(
-                    request=request,
-                    feature=feature,
-                    scenario=scenario,
-                    step=step,
-                    step_func=step_func,
-                    exception=exception,
-                    step_func_args=dict((arg, request.getfixturevalue(arg)) for arg in get_args(step_func)),
-                )
-                raise
-
             _execute_step_function(request, scenario, step, step_func)
     finally:
         request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
@@ -219,13 +198,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, enco
 
 
 def scenario(
-    feature_name,
-    scenario_name,
-    encoding="utf-8",
-    example_converters=None,
-    caller_module=None,
-    features_base_dir=None,
-    strict_gherkin=None,
+    feature_name, scenario_name, encoding="utf-8", example_converters=None, caller_module=None, features_base_dir=None,
 ):
     """Scenario decorator.
 
@@ -242,9 +215,7 @@ def scenario(
     # Get the feature
     if features_base_dir is None:
         features_base_dir = get_features_base_dir(caller_module)
-    if strict_gherkin is None:
-        strict_gherkin = get_strict_gherkin()
-    feature = Feature.get_feature(features_base_dir, feature_name, encoding=encoding, strict_gherkin=strict_gherkin)
+    feature = Feature.get_feature(features_base_dir, feature_name, encoding=encoding)
 
     # Get the scenario
     try:
@@ -279,11 +250,6 @@ def get_from_ini(key, default):
     config = CONFIG_STACK[-1]
     value = config.getini(key)
     return value if value != "" else default
-
-
-def get_strict_gherkin():
-    config = CONFIG_STACK[-1]
-    return config.getini("bdd_strict_gherkin")
 
 
 def make_python_name(string):
@@ -329,10 +295,6 @@ def scenarios(*feature_paths, **kwargs):
     if features_base_dir is None:
         features_base_dir = get_features_base_dir(module)
 
-    strict_gherkin = kwargs.get("strict_gherkin")
-    if strict_gherkin is None:
-        strict_gherkin = get_strict_gherkin()
-
     abs_feature_paths = []
     for path in feature_paths:
         if not os.path.isabs(path):
@@ -346,7 +308,7 @@ def scenarios(*feature_paths, **kwargs):
         if hasattr(attr, "__scenario__")
     )
 
-    for feature in get_features(abs_feature_paths, strict_gherkin=strict_gherkin):
+    for feature in get_features(abs_feature_paths):
         for scenario_name, scenario_object in feature.scenarios.items():
             # skip already bound scenarios
             if (scenario_object.feature.filename, scenario_name) not in module_scenarios:

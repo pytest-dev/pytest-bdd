@@ -32,12 +32,12 @@ def test_steps(testdir):
         def test_steps():
             pass
 
-        @given('I have a foo fixture with value "foo"')
+        @given('I have a foo fixture with value "foo"', target_fixture="foo")
         def foo():
             return "foo"
 
 
-        @given("there is a list")
+        @given("there is a list", target_fixture="results")
         def results():
             return []
 
@@ -138,7 +138,7 @@ def test_then_after_given(testdir):
         def test_steps():
             pass
 
-        @given('I have a foo fixture with value "foo"')
+        @given('I have a foo fixture with value "foo"', target_fixture="foo")
         def foo():
             return "foo"
 
@@ -175,7 +175,7 @@ def test_conftest(testdir):
         from pytest_bdd import given, then
 
 
-        @given("I have a bar")
+        @given("I have a bar", target_fixture="bar")
         def bar():
             return "bar"
 
@@ -210,12 +210,10 @@ def test_multiple_given(testdir):
         steps=textwrap.dedent(
             """\
             Feature: Steps are executed one by one
-                Steps are executed one by one. Given and When sections
-                are not mandatory in some cases.
-
-                Scenario: Using the same given fixture raises an error
-                    Given I have a bar
-                    And I have a bar
+                Scenario: Using the same given twice
+                    Given foo is "foo"
+                    And foo is "bar"
+                    Then foo should be "bar"
 
             """
         ),
@@ -223,15 +221,20 @@ def test_multiple_given(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd import given, scenario
+        from pytest_bdd import parsers, given, then, scenario
 
 
-        @given("I have a bar")
-        def bar():
-            return "bar"
+        @given(parsers.parse("foo is {value}"), target_fixture="foo")
+        def foo(value):
+            return value
 
 
-        @scenario("steps.feature", "Using the same given fixture raises an error")
+        @then(parsers.parse("foo should be {value}"))
+        def foo_should_be(foo, value):
+            assert foo == value
+
+
+        @scenario("steps.feature", "Using the same given twice")
         def test_given_twice():
             pass
 
@@ -239,9 +242,7 @@ def test_multiple_given(testdir):
         )
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines(
-        '*GivenAlreadyUsed: Fixture "bar" that implements this *given step has been already used.*'
-    )
+    result.assert_outcomes(passed=1, failed=0)
 
 
 def test_step_hooks(testdir):

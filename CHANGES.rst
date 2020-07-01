@@ -1,8 +1,14 @@
 Changelog
 =========
 
+This relase introduces breaking changes, please refer to the :ref:`Migration from 3.x.x`.
 
-- Fixes pytest-xdist 2.0 compatibility (olegpidsadnyi) #369.
+- Strict Gherkin option is removed. (olegpidsadnyi)
+- Given step is no longer a fixture. The scope parameter is also removed. (olegpidsadnyi)
+- Fixture parameter is removed from the given step declaration. (olegpidsadnyi)
+- ``pytest_bdd_step_validation_error`` hook is removed. (olegpidsadnyi)
+- Fix an error with pytest-pylint plugin #374. (toracle)
+- Fix pytest-xdist 2.0 compatibility #369. (olegpidsadnyi)
 
 
 3.4.0

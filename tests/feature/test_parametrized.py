@@ -38,7 +38,7 @@ def test_parametrized(testdir):
         def test_parametrized_with_other_fixtures(request, start, eat, left, foo_bar):
             pass
 
-        @given("there are <start> cucumbers")
+        @given("there are <start> cucumbers", target_fixture="start_cucumbers")
         def start_cucumbers(start):
             return dict(start=start)
 
