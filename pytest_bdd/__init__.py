@@ -2,7 +2,8 @@
 
 from pytest_bdd.steps import given, when, then
 from pytest_bdd.scenario import scenario, scenarios
+from pytest_bdd.exceptions import FeatureWarning
 
 __version__ = "3.4.0"
 
-__all__ = [given.__name__, when.__name__, then.__name__, scenario.__name__, scenarios.__name__]
+__all__ = [given.__name__, when.__name__, then.__name__, scenario.__name__, scenarios.__name__, FeatureWarning.__name__]

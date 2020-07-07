@@ -298,9 +298,19 @@ class Feature(object):
                 allowed_prev_mode = (types.BACKGROUND, types.GIVEN, types.WHEN)
 
                 if not scenario and prev_mode not in allowed_prev_mode and mode in types.STEP_TYPES:
-                    raise exceptions.FeatureError(
-                        "Step definition outside of a Scenario or a Background", line_number, clean_line, filename
-                    )
+                    if prev_mode == types.FEATURE:
+                        import warnings
+                        warnings.warn(
+                            "Step definition outside of a Scenario or a Background ({filename}:{line_number} {clean_line})".format(
+                                line_number=line_number, clean_line=clean_line, filename=prev_mode
+                            ),
+                            exceptions.FeatureWarning
+                        )
+                        mode = prev_mode
+                    else:
+                        raise exceptions.FeatureError(
+                            "Step definition outside of a Scenario or a Background", line_number, clean_line, filename
+                        )
 
                 if mode == types.FEATURE:
                     if prev_mode is None or prev_mode == types.TAG:
