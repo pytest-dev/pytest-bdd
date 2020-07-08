@@ -48,5 +48,6 @@ class FeatureError(Exception):
         """String representation."""
         return self.message.format(*self.args)
 
+
 class FeatureWarning(UserWarning):
     """Feature parse warning."""
