@@ -7,6 +7,8 @@ import re
 from _pytest.terminal import TerminalReporter
 
 from .feature import STEP_PARAM_RE
+from . import feature
+from . import types
 
 
 def add_options(parser):
@@ -77,15 +79,17 @@ class GherkinTerminalReporter(TerminalReporter):
         feature_markup = {"blue": True}
         scenario_markup = word_markup
 
+        feature_label = "{}".format(feature.prefix_by_type(types.FEATURE))
+        scenario_label = "    {}".format(feature.prefix_by_type(types.SCENARIO))
         if self.verbosity <= 0:
             return TerminalReporter.pytest_runtest_logreport(self, rep)
         elif self.verbosity == 1:
             if hasattr(report, "scenario"):
                 self.ensure_newline()
-                self._tw.write("Feature: ", **feature_markup)
+                self._tw.write(feature_label, **feature_markup)
                 self._tw.write(report.scenario["feature"]["name"], **feature_markup)
                 self._tw.write("\n")
-                self._tw.write("    Scenario: ", **scenario_markup)
+                self._tw.write(scenario_label, **scenario_markup)
                 self._tw.write(report.scenario["name"], **scenario_markup)
                 self._tw.write(" ")
                 self._tw.write(word, **word_markup)
@@ -95,10 +99,10 @@ class GherkinTerminalReporter(TerminalReporter):
         elif self.verbosity > 1:
             if hasattr(report, "scenario"):
                 self.ensure_newline()
-                self._tw.write("Feature: ", **feature_markup)
+                self._tw.write(feature_label, **feature_markup)
                 self._tw.write(report.scenario["feature"]["name"], **feature_markup)
                 self._tw.write("\n")
-                self._tw.write("    Scenario: ", **scenario_markup)
+                self._tw.write(scenario_label, **scenario_markup)
                 self._tw.write(report.scenario["name"], **scenario_markup)
                 self._tw.write("\n")
                 for step in report.scenario["steps"]:
