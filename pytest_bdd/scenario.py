@@ -14,6 +14,7 @@ import collections
 import inspect
 import os
 import re
+import sys
 
 import pytest
 
@@ -283,13 +284,39 @@ def get_python_name_generator(name):
         suffix = "_{0}".format(index)
 
 
+def find_module(frame):
+    """Get the module object for the given frame."""
+    module = inspect.getmodule(frame[0])
+    if module is not None:
+        return module
+
+    # Probably using pytest's importlib mode, let's try to get the module
+    # from the filename.
+    # The imports will only work on Python 3 (hence why they are here rather
+    # than at module level). However, we should only ever get here on Python 3,
+    # because pytest's --import-module=importlib is in a Python 3 only release
+    # of pytest.
+    import pathlib
+    import importlib.util
+
+    path = pathlib.Path(frame.filename)
+    module_name = path.stem
+    for meta_importer in sys.meta_path:
+        spec = meta_importer.find_spec(module_name, [str(path.parent)])
+        if spec is not None:
+            break
+    assert spec is not None
+
+    return importlib.util.module_from_spec(spec)
+
+
 def scenarios(*feature_paths, **kwargs):
     """Parse features from the paths and put all found scenarios in the caller module.
 
     :param *feature_paths: feature file paths to use for scenarios
     """
     frame = inspect.stack()[1]
-    module = inspect.getmodule(frame[0])
+    module = find_module(frame)
 
     features_base_dir = kwargs.get("features_base_dir")
     if features_base_dir is None:
