@@ -52,7 +52,12 @@ def test_item_collection_does_not_break_on_non_function_items(testdir):
 
     @pytest.mark.tryfirst
     def pytest_collection_modifyitems(session, config, items):
-        items[:] = [CustomItem(name=item.name, parent=item.parent) for item in items]
+        try:
+            item_creator = CustomItem.from_parent  # Only available in pytest >= 5.4.0
+        except AttributeError:
+            item_creator = CustomItem
+
+        items[:] = [item_creator(name=item.name, parent=item.parent) for item in items]
 
     class CustomItem(pytest.Item):
         def runtest(self):
