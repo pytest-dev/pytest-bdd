@@ -111,3 +111,31 @@ def test_scenario_not_decorator(testdir):
 
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines("*ScenarioIsDecoratorOnly: scenario function can only be used as a decorator*")
+
+
+def test_importlib(testdir):
+    """Test scenario function with importlib import mode."""
+    testdir.makefile(
+        ".feature",
+        simple="""
+        Feature: Simple feature
+            Scenario: Simple scenario
+                Given I have a bar
+        """,
+    )
+    testdir.makepyfile(
+        """
+        from pytest_bdd import scenario, given
+
+        @scenario("simple.feature", "Simple scenario")
+        def test_simple():
+            pass
+
+        @given("I have a bar")
+        def bar():
+            return "bar"
+        """
+    )
+
+    result = testdir.runpytest_subprocess("--import-mode=importlib")
+    result.assert_outcomes(passed=1)

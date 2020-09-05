@@ -284,9 +284,9 @@ def get_python_name_generator(name):
         suffix = "_{0}".format(index)
 
 
-def find_module(frame):
+def find_module(frame_info):
     """Get the module object for the given frame."""
-    module = inspect.getmodule(frame[0])
+    module = inspect.getmodule(frame_info.frame)
     if module is not None:
         return module
 
@@ -299,7 +299,7 @@ def find_module(frame):
     import pathlib
     import importlib.util
 
-    path = pathlib.Path(frame.filename)
+    path = pathlib.Path(frame_info.filename)
     module_name = path.stem
     for meta_importer in sys.meta_path:
         spec = meta_importer.find_spec(module_name, [str(path.parent)])

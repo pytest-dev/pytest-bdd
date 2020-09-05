@@ -137,7 +137,9 @@ def _step_decorator(step_type, step_name, converters=None, target_fixture=None):
         step_func.target_fixture = lazy_step_func.target_fixture = target_fixture
 
         lazy_step_func = pytest.fixture()(lazy_step_func)
-        setattr(get_caller_module(), get_step_fixture_name(parsed_step_name, step_type), lazy_step_func)
+        caller_module = get_caller_module()
+        fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
+        setattr(caller_module, fixture_step_name, lazy_step_func)
         return func
 
     return decorator
@@ -146,7 +148,10 @@ def _step_decorator(step_type, step_name, converters=None, target_fixture=None):
 def get_caller_module(depth=2):
     """Return the module of the caller."""
     frame = sys._getframe(depth)
-    module = inspect.getmodule(frame)
+    frame_info = inspect.stack()[depth]
+    from pytest_bdd.scenario import find_module
+
+    module = find_module(frame_info)
     if module is None:
         return get_caller_module(depth=depth)
     return module
