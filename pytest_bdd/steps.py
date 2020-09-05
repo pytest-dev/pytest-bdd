@@ -137,9 +137,12 @@ def _step_decorator(step_type, step_name, converters=None, target_fixture=None):
         step_func.target_fixture = lazy_step_func.target_fixture = target_fixture
 
         lazy_step_func = pytest.fixture()(lazy_step_func)
-        caller_module = get_caller_module()
         fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
-        setattr(caller_module, fixture_step_name, lazy_step_func)
+
+        prev_frame = inspect.stack()[1]
+        prev_frame[0].f_locals[fixture_step_name] = lazy_step_func
+        # caller_module = get_caller_module()
+        # setattr(caller_module, fixture_step_name, lazy_step_func)
         return func
 
     return decorator

@@ -286,7 +286,7 @@ def get_python_name_generator(name):
 
 def find_module(frame_info):
     """Get the module object for the given frame."""
-    module = inspect.getmodule(frame_info.frame)
+    module = inspect.getmodule(frame_info[0])
     if module is not None:
         return module
 
