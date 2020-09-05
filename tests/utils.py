@@ -20,12 +20,7 @@ if PYTEST_6:
     ):
         """Compatibility function for result.assert_outcomes"""
         return result.assert_outcomes(
-            error=errors,  # Pytest < 6 uses the singular form
-            passed=passed,
-            skipped=skipped,
-            failed=failed,
-            xpassed=xpassed,
-            xfailed=xfailed,
+            errors=errors, passed=passed, skipped=skipped, failed=failed, xpassed=xpassed, xfailed=xfailed
         )
 
 
@@ -42,5 +37,10 @@ else:
     ):
         """Compatibility function for result.assert_outcomes"""
         return result.assert_outcomes(
-            errors=errors, passed=passed, skipped=skipped, failed=failed, xpassed=xpassed, xfailed=xfailed
+            error=errors,  # Pytest < 6 uses the singular form
+            passed=passed,
+            skipped=skipped,
+            failed=failed,
+            xpassed=xpassed,
+            xfailed=xfailed,
         )
