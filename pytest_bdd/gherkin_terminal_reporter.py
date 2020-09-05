@@ -51,11 +51,6 @@ class GherkinTerminalReporter(TerminalReporter):
     def __init__(self, config):
         TerminalReporter.__init__(self, config)
 
-    def pytest_runtest_logstart(self, nodeid, location):
-        # Prevent locationline from being printed since we already
-        # show the module_name & in verbose mode the test name.
-        pass
-
     def pytest_runtest_logreport(self, report):
         rep = report
         res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
