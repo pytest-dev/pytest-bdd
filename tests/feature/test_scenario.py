@@ -121,7 +121,7 @@ def test_scenario_not_decorator(testdir):
     not PYTEST_6,
     reason="--import-mode not supported on this pytest version",
 )
-@pytest.mark.parametrize('import_mode', [None, 'prepend', 'importlib', 'append'])
+@pytest.mark.parametrize("import_mode", [None, "prepend", "importlib", "append"])
 def test_import_mode(testdir, import_mode):
     """Test scenario function with importlib import mode."""
     testdir.makefile(
@@ -162,6 +162,6 @@ def test_import_mode(testdir, import_mode):
     if import_mode is None:
         params = []
     else:
-        params = ['--import-mode=' + import_mode]
+        params = ["--import-mode=" + import_mode]
     result = testdir.runpytest_subprocess(*params)
     result.assert_outcomes(passed=3)
