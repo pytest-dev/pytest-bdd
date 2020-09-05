@@ -2,6 +2,8 @@
 
 import textwrap
 
+import pytest
+
 
 def test_scenario_not_found(testdir):
     """Test the situation when scenario is not found."""
@@ -113,7 +115,8 @@ def test_scenario_not_decorator(testdir):
     result.stdout.fnmatch_lines("*ScenarioIsDecoratorOnly: scenario function can only be used as a decorator*")
 
 
-def test_importlib(testdir):
+@pytest.mark.parametrize('importmode', [None, 'prepend', 'importlib', 'append'])
+def test_import_mode(testdir, importmode):
     """Test scenario function with importlib import mode."""
     testdir.makefile(
         ".feature",
@@ -122,10 +125,20 @@ def test_importlib(testdir):
             Scenario: Simple scenario
                 Given I have a bar
         """,
+        many_scenarios="""
+           Feature: Many scenarios
+               Scenario: Scenario A
+                   Given I have a bar
+                   Then pass
+               Scenario: Scenario B
+                   Then pass
+           """,
     )
     testdir.makepyfile(
         """
-        from pytest_bdd import scenario, given
+        from pytest_bdd import scenario, scenarios, given, then
+
+        scenarios("many_scenarios.feature")
 
         @scenario("simple.feature", "Simple scenario")
         def test_simple():
@@ -134,8 +147,15 @@ def test_importlib(testdir):
         @given("I have a bar")
         def bar():
             return "bar"
+
+        @then("pass")
+        def bar():
+            pass
         """
     )
-
-    result = testdir.runpytest_subprocess("--import-mode=importlib")
-    result.assert_outcomes(passed=1)
+    if importmode is None:
+        params = []
+    else:
+        params = ['--import-mode=' + importmode]
+    result = testdir.runpytest_subprocess(*params)
+    result.assert_outcomes(passed=3)
