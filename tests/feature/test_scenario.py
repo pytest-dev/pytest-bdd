@@ -2,8 +2,7 @@
 
 import textwrap
 
-import pytest
-from packaging.version import Version
+from tests.utils import assert_outcomes, PYTEST_6
 
 
 def test_scenario_not_found(testdir):
@@ -33,7 +32,7 @@ def test_scenario_not_found(testdir):
     )
     result = testdir.runpytest()
 
-    result.assert_outcomes(error=1)
+    assert_outcomes(result, errors=1)
     result.stdout.fnmatch_lines('*Scenario "NOT FOUND" in feature "Scenario is not found" in*')
 
 
@@ -117,7 +116,7 @@ def test_scenario_not_decorator(testdir):
 
 
 @pytest.mark.skipif(
-    Version(pytest.__version__) < Version('6'),
+    not PYTEST_6,
     reason="--import-mode not supported on this pytest version",
 )
 @pytest.mark.parametrize('import_mode', [None, 'prepend', 'importlib', 'append'])

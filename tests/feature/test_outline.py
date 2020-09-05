@@ -1,6 +1,7 @@
 """Scenario Outline tests."""
 import textwrap
 
+from tests.utils import assert_outcomes
 
 STEPS = """\
 from pytest_bdd import given, when, then
@@ -111,7 +112,7 @@ def test_wrongly_outlined(testdir):
         )
     )
     result = testdir.runpytest()
-    result.assert_outcomes(error=1)
+    assert_outcomes(result, errors=1)
     result.stdout.fnmatch_lines(
         '*ScenarioExamplesNotValidError: Scenario "Outlined with wrong examples"*has not valid examples*',
     )
@@ -151,7 +152,7 @@ def test_wrong_vertical_examples_scenario(testdir):
         )
     )
     result = testdir.runpytest()
-    result.assert_outcomes(error=1)
+    assert_outcomes(result, errors=1)
     result.stdout.fnmatch_lines(
         "*Scenario has not valid examples. Example rows should contain unique parameters. "
         '"start" appeared more than once.*'
@@ -192,7 +193,7 @@ def test_wrong_vertical_examples_feature(testdir):
         )
     )
     result = testdir.runpytest()
-    result.assert_outcomes(error=1)
+    assert_outcomes(result, errors=1)
     result.stdout.fnmatch_lines(
         "*Feature has not valid examples. Example rows should contain unique parameters. "
         '"start" appeared more than once.*'
