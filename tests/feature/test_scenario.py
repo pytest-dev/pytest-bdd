@@ -3,6 +3,7 @@
 import textwrap
 
 import pytest
+from packaging.version import Version
 
 
 def test_scenario_not_found(testdir):
@@ -115,8 +116,12 @@ def test_scenario_not_decorator(testdir):
     result.stdout.fnmatch_lines("*ScenarioIsDecoratorOnly: scenario function can only be used as a decorator*")
 
 
-@pytest.mark.parametrize('importmode', [None, 'prepend', 'importlib', 'append'])
-def test_import_mode(testdir, importmode):
+@pytest.mark.skipif(
+    Version(pytest.__version__) < Version('6'),
+    reason="--import-mode not supported on this pytest version",
+)
+@pytest.mark.parametrize('import_mode', [None, 'prepend', 'importlib', 'append'])
+def test_import_mode(testdir, import_mode):
     """Test scenario function with importlib import mode."""
     testdir.makefile(
         ".feature",
@@ -153,9 +158,9 @@ def test_import_mode(testdir, importmode):
             pass
         """
     )
-    if importmode is None:
+    if import_mode is None:
         params = []
     else:
-        params = ['--import-mode=' + importmode]
+        params = ['--import-mode=' + import_mode]
     result = testdir.runpytest_subprocess(*params)
     result.assert_outcomes(passed=3)
