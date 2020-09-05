@@ -2,6 +2,8 @@
 
 import textwrap
 
+import pytest
+
 from tests.utils import assert_outcomes, PYTEST_6
 
 
