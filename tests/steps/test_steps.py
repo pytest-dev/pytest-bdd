@@ -42,7 +42,8 @@ def test_when_then(testdir):
 
 
 @pytest.mark.parametrize(
-    ("step", "keyword"), [("given", "Given"), ("when", "When"), ("then", "Then")],
+    ("step", "keyword"),
+    [("given", "Given"), ("when", "When"), ("then", "Then")],
 )
 def test_preserve_decorator(testdir, step, keyword):
     """Check that we preserve original function attributes after decorating it."""
