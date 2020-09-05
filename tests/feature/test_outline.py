@@ -116,7 +116,7 @@ def test_wrongly_outlined(testdir):
     result.stdout.fnmatch_lines(
         '*ScenarioExamplesNotValidError: Scenario "Outlined with wrong examples"*has not valid examples*',
     )
-    result.stdout.fnmatch_lines("*should match set of example values [[]'eat', 'left', 'start', 'unknown_param'[]].*",)
+    result.stdout.fnmatch_lines("*should match set of example values [[]'eat', 'left', 'start', 'unknown_param'[]].*")
 
 
 def test_wrong_vertical_examples_scenario(testdir):

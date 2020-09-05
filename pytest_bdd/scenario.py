@@ -198,7 +198,12 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, enco
 
 
 def scenario(
-    feature_name, scenario_name, encoding="utf-8", example_converters=None, caller_module=None, features_base_dir=None,
+    feature_name,
+    scenario_name,
+    encoding="utf-8",
+    example_converters=None,
+    caller_module=None,
+    features_base_dir=None,
 ):
     """Scenario decorator.
 
