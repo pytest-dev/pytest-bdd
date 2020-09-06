@@ -31,3 +31,14 @@ def get_parametrize_markers_args(node):
     This function uses that API if it is available otherwise it uses MarkInfo objects.
     """
     return tuple(arg for mark in node.iter_markers("parametrize") for arg in mark.args)
+
+
+def get_caller_module_locals(depth=2):
+    frame_info = inspect.stack()[depth]
+    frame = frame_info[0]  # frame_info.frame
+    return frame.f_locals
+
+
+def get_caller_module_path(depth=2):
+    frame_info = inspect.stack()[depth]
+    return frame_info[1]  # frame_info.filename

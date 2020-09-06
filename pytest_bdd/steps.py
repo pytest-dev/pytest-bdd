@@ -37,7 +37,6 @@ def given_beautiful_article(article):
 
 from __future__ import absolute_import
 import inspect
-import sys
 
 import pytest
 
@@ -146,18 +145,6 @@ def _step_decorator(step_type, step_name, converters=None, target_fixture=None):
         return func
 
     return decorator
-
-
-def get_caller_module(depth=2):
-    """Return the module of the caller."""
-    frame = sys._getframe(depth)
-    frame_info = inspect.stack()[depth]
-    from pytest_bdd.scenario import find_module
-
-    module = find_module(frame_info)
-    if module is None:
-        return get_caller_module(depth=depth)
-    return module
 
 
 def inject_fixture(request, arg, value):

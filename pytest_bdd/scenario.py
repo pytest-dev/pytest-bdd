@@ -25,9 +25,8 @@ except ImportError:
 
 from . import exceptions
 from .feature import Feature, force_unicode, get_features
-from .steps import get_caller_module, get_step_fixture_name, inject_fixture
-from .utils import CONFIG_STACK, get_args
-
+from .steps import get_step_fixture_name, inject_fixture
+from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
@@ -216,11 +215,11 @@ def scenario(
     """
 
     scenario_name = force_unicode(scenario_name, encoding)
-    caller_module = caller_module or get_caller_module()
+    caller_module_path = caller_module.__file__ if caller_module is not None else get_caller_module_path()
 
     # Get the feature
     if features_base_dir is None:
-        features_base_dir = get_features_base_dir(caller_module)
+        features_base_dir = get_features_base_dir(caller_module_path)
     feature = Feature.get_feature(features_base_dir, feature_name, encoding=encoding)
 
     # Get the scenario
@@ -243,8 +242,8 @@ def scenario(
     )
 
 
-def get_features_base_dir(caller_module):
-    default_base_dir = os.path.dirname(caller_module.__file__)
+def get_features_base_dir(caller_module_path):
+    default_base_dir = os.path.dirname(caller_module_path)
     return get_from_ini("bdd_features_base_dir", default_base_dir)
 
 
@@ -289,43 +288,17 @@ def get_python_name_generator(name):
         suffix = "_{0}".format(index)
 
 
-def find_module(frame_info):
-    """Get the module object for the given frame."""
-    module = inspect.getmodule(frame_info[0])
-    if module is not None:
-        return module
-
-    # Probably using pytest's importlib mode, let's try to get the module
-    # from the filename.
-    # The imports will only work on Python 3 (hence why they are here rather
-    # than at module level). However, we should only ever get here on Python 3,
-    # because pytest's --import-module=importlib is in a Python 3 only release
-    # of pytest.
-    import pathlib
-    import importlib.util
-
-    path = pathlib.Path(frame_info.filename)
-    module_name = path.stem
-    for meta_importer in sys.meta_path:
-        spec = meta_importer.find_spec(module_name, [str(path.parent)])
-        if spec is not None:
-            break
-    assert spec is not None
-
-    return importlib.util.module_from_spec(spec)
-
-
 def scenarios(*feature_paths, **kwargs):
     """Parse features from the paths and put all found scenarios in the caller module.
 
     :param *feature_paths: feature file paths to use for scenarios
     """
-    frame = inspect.stack()[1]
-    module = find_module(frame)
+    caller_locals = get_caller_module_locals()
+    caller_path = get_caller_module_path()
 
     features_base_dir = kwargs.get("features_base_dir")
     if features_base_dir is None:
-        features_base_dir = get_features_base_dir(module)
+        features_base_dir = get_features_base_dir(caller_path)
 
     abs_feature_paths = []
     for path in feature_paths:
@@ -336,7 +309,7 @@ def scenarios(*feature_paths, **kwargs):
 
     module_scenarios = frozenset(
         (attr.__scenario__.feature.filename, attr.__scenario__.name)
-        for name, attr in module.__dict__.items()
+        for name, attr in caller_locals.items()
         if hasattr(attr, "__scenario__")
     )
 
@@ -354,9 +327,9 @@ def scenarios(*feature_paths, **kwargs):
                     #     # found an unique test name
                     #     module.__dict__[test_name] = _scenario
                     #     break
-                    if test_name not in frame[0].f_locals:
+                    if test_name not in caller_locals:
                         # found an unique test name
-                        frame[0].f_locals[test_name] = _scenario
+                        caller_locals[test_name] = _scenario
                         break
             found = True
     if not found:
