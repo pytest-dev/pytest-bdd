@@ -2,6 +2,8 @@
 
 import inspect
 
+import six
+
 CONFIG_STACK = []
 
 
@@ -17,11 +19,11 @@ def get_args(func):
     :return: A list of argument names.
     :rtype: list
     """
-    if hasattr(inspect, "signature"):
-        params = inspect.signature(func).parameters.values()
-        return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
-    else:
+    if six.PY2:
         return inspect.getargspec(func).args
+
+    params = inspect.signature(func).parameters.values()
+    return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
 
 
 def get_parametrize_markers_args(node):
