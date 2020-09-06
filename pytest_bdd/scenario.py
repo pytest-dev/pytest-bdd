@@ -323,10 +323,6 @@ def scenarios(*feature_paths, **kwargs):
                     pass  # pragma: no cover
 
                 for test_name in get_python_name_generator(scenario_name):
-                    # if test_name not in module.__dict__:
-                    #     # found an unique test name
-                    #     module.__dict__[test_name] = _scenario
-                    #     break
                     if test_name not in caller_locals:
                         # found an unique test name
                         caller_locals[test_name] = _scenario
