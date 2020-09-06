@@ -2,12 +2,10 @@
 
 import textwrap
 
-import pytest
-
-from tests.utils import assert_outcomes, PYTEST_6
+from tests.utils import assert_outcomes
 
 
-def test_scenario_not_found(testdir):
+def test_scenario_not_found(testdir, *pytest_params):
     """Test the situation when scenario is not found."""
     testdir.makefile(
         ".feature",
@@ -32,7 +30,7 @@ def test_scenario_not_found(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = testdir.runpytest_subprocess(*pytest_params)
 
     assert_outcomes(result, errors=1)
     result.stdout.fnmatch_lines('*Scenario "NOT FOUND" in feature "Scenario is not found" in*')
@@ -92,8 +90,12 @@ def test_scenario_comments(testdir):
         )
     )
 
+    result = testdir.runpytest()
 
-def test_scenario_not_decorator(testdir):
+    result.assert_outcomes(passed=2)
+
+
+def test_scenario_not_decorator(testdir, pytest_params):
     """Test scenario function is used not as decorator."""
     testdir.makefile(
         ".feature",
@@ -111,19 +113,14 @@ def test_scenario_not_decorator(testdir):
         """
     )
 
-    result = testdir.runpytest()
+    result = testdir.runpytest_subprocess(*pytest_params)
 
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines("*ScenarioIsDecoratorOnly: scenario function can only be used as a decorator*")
 
 
-@pytest.mark.skipif(
-    not PYTEST_6,
-    reason="--import-mode not supported on this pytest version",
-)
-@pytest.mark.parametrize("import_mode", [None, "prepend", "importlib", "append"])
-def test_import_mode(testdir, import_mode):
-    """Test scenario function with importlib import mode."""
+def test_simple(testdir, pytest_params):
+    """Test scenario decorator with a standard usage."""
     testdir.makefile(
         ".feature",
         simple="""
@@ -131,20 +128,10 @@ def test_import_mode(testdir, import_mode):
             Scenario: Simple scenario
                 Given I have a bar
         """,
-        many_scenarios="""
-           Feature: Many scenarios
-               Scenario: Scenario A
-                   Given I have a bar
-                   Then pass
-               Scenario: Scenario B
-                   Then pass
-           """,
     )
     testdir.makepyfile(
         """
-        from pytest_bdd import scenario, scenarios, given, then
-
-        scenarios("many_scenarios.feature")
+        from pytest_bdd import scenario, given, then
 
         @scenario("simple.feature", "Simple scenario")
         def test_simple():
@@ -159,9 +146,5 @@ def test_import_mode(testdir, import_mode):
             pass
         """
     )
-    if import_mode is None:
-        params = []
-    else:
-        params = ["--import-mode=" + import_mode]
-    result = testdir.runpytest_subprocess(*params)
-    result.assert_outcomes(passed=3)
+    result = testdir.runpytest_subprocess(*pytest_params)
+    result.assert_outcomes(passed=1)
