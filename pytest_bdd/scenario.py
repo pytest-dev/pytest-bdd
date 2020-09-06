@@ -197,14 +197,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, enco
     return decorator
 
 
-def scenario(
-    feature_name,
-    scenario_name,
-    encoding="utf-8",
-    example_converters=None,
-    caller_module=None,
-    features_base_dir=None,
-):
+def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None, features_base_dir=None):
     """Scenario decorator.
 
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
@@ -215,7 +208,7 @@ def scenario(
     """
 
     scenario_name = force_unicode(scenario_name, encoding)
-    caller_module_path = caller_module.__file__ if caller_module is not None else get_caller_module_path()
+    caller_module_path = get_caller_module_path()
 
     # Get the feature
     if features_base_dir is None:
