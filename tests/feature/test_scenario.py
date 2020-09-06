@@ -2,6 +2,8 @@
 
 import textwrap
 
+from tests.utils import assert_outcomes
+
 
 def test_scenario_not_found(testdir):
     """Test the situation when scenario is not found."""
@@ -30,7 +32,7 @@ def test_scenario_not_found(testdir):
     )
     result = testdir.runpytest()
 
-    result.assert_outcomes(error=1)
+    assert_outcomes(result, errors=1)
     result.stdout.fnmatch_lines('*Scenario "NOT FOUND" in feature "Scenario is not found" in*')
 
 
