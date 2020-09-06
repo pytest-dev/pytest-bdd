@@ -5,7 +5,7 @@ import textwrap
 from tests.utils import assert_outcomes
 
 
-def test_scenario_not_found(testdir, *pytest_params):
+def test_scenario_not_found(testdir, pytest_params):
     """Test the situation when scenario is not found."""
     testdir.makefile(
         ".feature",
