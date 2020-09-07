@@ -53,12 +53,11 @@ def test_preserve_decorator(testdir, step, keyword):
             from pytest_bdd import {step}
             from pytest_bdd.steps import get_step_fixture_name
 
+            @{step}("{keyword}")
+            def func():
+                """Doc string."""
 
             def test_decorator():
-                @{step}("{keyword}")
-                def func():
-                    """Doc string."""
-
                 assert globals()[get_step_fixture_name("{keyword}", {step}.__name__)].__doc__ == "Doc string."
 
 

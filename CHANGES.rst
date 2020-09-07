@@ -1,14 +1,16 @@
 Changelog
 =========
 
-This relase introduces breaking changes, please refer to the :ref:`Migration from 3.x.x`.
+This release introduces breaking changes, please refer to the :ref:`Migration from 3.x.x`.
 
-- Strict Gherkin option is removed. (olegpidsadnyi)
+- Strict Gherkin option is removed (``@scenario()`` does not accept the ``strict_gherkin`` parameter). (olegpidsadnyi)
+- ``@scenario()`` does not accept the undocumented parameter ``caller_module`` anymore. (youtux)
 - Given step is no longer a fixture. The scope parameter is also removed. (olegpidsadnyi)
 - Fixture parameter is removed from the given step declaration. (olegpidsadnyi)
 - ``pytest_bdd_step_validation_error`` hook is removed. (olegpidsadnyi)
 - Fix an error with pytest-pylint plugin #374. (toracle)
 - Fix pytest-xdist 2.0 compatibility #369. (olegpidsadnyi)
+- Fix compatibility with pytest 6 ``--import-mode=importlib`` option. (youtux)
 
 
 3.4.0

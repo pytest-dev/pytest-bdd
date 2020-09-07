@@ -14,6 +14,7 @@ import collections
 import inspect
 import os
 import re
+import sys
 
 import pytest
 
@@ -24,9 +25,8 @@ except ImportError:
 
 from . import exceptions
 from .feature import Feature, force_unicode, get_features
-from .steps import get_caller_module, get_step_fixture_name, inject_fixture
-from .utils import CONFIG_STACK, get_args
-
+from .steps import get_step_fixture_name, inject_fixture
+from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
@@ -197,14 +197,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, enco
     return decorator
 
 
-def scenario(
-    feature_name,
-    scenario_name,
-    encoding="utf-8",
-    example_converters=None,
-    caller_module=None,
-    features_base_dir=None,
-):
+def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None, features_base_dir=None):
     """Scenario decorator.
 
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
@@ -215,11 +208,11 @@ def scenario(
     """
 
     scenario_name = force_unicode(scenario_name, encoding)
-    caller_module = caller_module or get_caller_module()
+    caller_module_path = get_caller_module_path()
 
     # Get the feature
     if features_base_dir is None:
-        features_base_dir = get_features_base_dir(caller_module)
+        features_base_dir = get_features_base_dir(caller_module_path)
     feature = Feature.get_feature(features_base_dir, feature_name, encoding=encoding)
 
     # Get the scenario
@@ -242,8 +235,8 @@ def scenario(
     )
 
 
-def get_features_base_dir(caller_module):
-    default_base_dir = os.path.dirname(caller_module.__file__)
+def get_features_base_dir(caller_module_path):
+    default_base_dir = os.path.dirname(caller_module_path)
     return get_from_ini("bdd_features_base_dir", default_base_dir)
 
 
@@ -293,12 +286,12 @@ def scenarios(*feature_paths, **kwargs):
 
     :param *feature_paths: feature file paths to use for scenarios
     """
-    frame = inspect.stack()[1]
-    module = inspect.getmodule(frame[0])
+    caller_locals = get_caller_module_locals()
+    caller_path = get_caller_module_path()
 
     features_base_dir = kwargs.get("features_base_dir")
     if features_base_dir is None:
-        features_base_dir = get_features_base_dir(module)
+        features_base_dir = get_features_base_dir(caller_path)
 
     abs_feature_paths = []
     for path in feature_paths:
@@ -309,7 +302,7 @@ def scenarios(*feature_paths, **kwargs):
 
     module_scenarios = frozenset(
         (attr.__scenario__.feature.filename, attr.__scenario__.name)
-        for name, attr in module.__dict__.items()
+        for name, attr in caller_locals.items()
         if hasattr(attr, "__scenario__")
     )
 
@@ -323,9 +316,9 @@ def scenarios(*feature_paths, **kwargs):
                     pass  # pragma: no cover
 
                 for test_name in get_python_name_generator(scenario_name):
-                    if test_name not in module.__dict__:
+                    if test_name not in caller_locals:
                         # found an unique test name
-                        module.__dict__[test_name] = _scenario
+                        caller_locals[test_name] = _scenario
                         break
             found = True
     if not found:

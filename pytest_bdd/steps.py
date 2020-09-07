@@ -37,7 +37,6 @@ def given_beautiful_article(article):
 
 from __future__ import absolute_import
 import inspect
-import sys
 
 import pytest
 
@@ -49,7 +48,7 @@ except ImportError:
 from .feature import force_encode
 from .types import GIVEN, WHEN, THEN
 from .parsers import get_parser
-from .utils import get_args
+from .utils import get_args, get_caller_module_locals
 
 
 def get_step_fixture_name(name, type_, encoding=None):
@@ -137,19 +136,13 @@ def _step_decorator(step_type, step_name, converters=None, target_fixture=None):
         step_func.target_fixture = lazy_step_func.target_fixture = target_fixture
 
         lazy_step_func = pytest.fixture()(lazy_step_func)
-        setattr(get_caller_module(), get_step_fixture_name(parsed_step_name, step_type), lazy_step_func)
+        fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
+
+        caller_locals = get_caller_module_locals()
+        caller_locals[fixture_step_name] = lazy_step_func
         return func
 
     return decorator
-
-
-def get_caller_module(depth=2):
-    """Return the module of the caller."""
-    frame = sys._getframe(depth)
-    module = inspect.getmodule(frame)
-    if module is None:
-        return get_caller_module(depth=depth)
-    return module
 
 
 def inject_fixture(request, arg, value):

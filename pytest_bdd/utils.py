@@ -2,6 +2,8 @@
 
 import inspect
 
+import six
+
 CONFIG_STACK = []
 
 
@@ -17,11 +19,11 @@ def get_args(func):
     :return: A list of argument names.
     :rtype: list
     """
-    if hasattr(inspect, "signature"):
-        params = inspect.signature(func).parameters.values()
-        return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
-    else:
+    if six.PY2:
         return inspect.getargspec(func).args
+
+    params = inspect.signature(func).parameters.values()
+    return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
 
 
 def get_parametrize_markers_args(node):
@@ -31,3 +33,14 @@ def get_parametrize_markers_args(node):
     This function uses that API if it is available otherwise it uses MarkInfo objects.
     """
     return tuple(arg for mark in node.iter_markers("parametrize") for arg in mark.args)
+
+
+def get_caller_module_locals(depth=2):
+    frame_info = inspect.stack()[depth]
+    frame = frame_info[0]  # frame_info.frame
+    return frame.f_locals
+
+
+def get_caller_module_path(depth=2):
+    frame_info = inspect.stack()[depth]
+    return frame_info[1]  # frame_info.filename
