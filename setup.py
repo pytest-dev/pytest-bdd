@@ -14,8 +14,6 @@ long_description = (
     codecs.open(os.path.join(dirname, "README.rst"), encoding="utf-8").read()
     + "\n"
     + codecs.open(os.path.join(dirname, "AUTHORS.rst"), encoding="utf-8").read()
-    + "\n"
-    + codecs.open(os.path.join(dirname, "CHANGES.rst"), encoding="utf-8").read()
 )
 
 with codecs.open(os.path.join(dirname, "pytest_bdd", "__init__.py"), encoding="utf-8") as fd:
@@ -25,6 +23,7 @@ setup(
     name="pytest-bdd",
     description="BDD for pytest",
     long_description=long_description,
+    long_description_content_type="text/x-rst",
     author="Oleg Pidsadnyi, Anatoly Bubenkov and others",
     license="MIT license",
     author_email="oleg.pidsadnyi@gmail.com",

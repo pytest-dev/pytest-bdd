@@ -1,6 +1,9 @@
 Changelog
 =========
 
+4.0.0
+-----
+
 This release introduces breaking changes, please refer to the :ref:`Migration from 3.x.x`.
 
 - Strict Gherkin option is removed (``@scenario()`` does not accept the ``strict_gherkin`` parameter). (olegpidsadnyi)
