@@ -1,30 +1,39 @@
 """Various utility functions."""
 
 from sys import _getframe
-from inspect import getargspec, getframeinfo, signature
+from inspect import getframeinfo
 
 import six
 
 CONFIG_STACK = []
 
+if six.PY2:
+    from inspect import getargspec as _getargspec
 
-def get_args(func):
-    """Get a list of argument names for a function.
+    def get_args(func):
+        """Get a list of argument names for a function.
 
-    This is a wrapper around inspect.getargspec/inspect.signature because
-    getargspec got deprecated in Python 3.5 and signature isn't available on
-    Python 2.
+        :param func: The function to inspect.
 
-    :param func: The function to inspect.
+        :return: A list of argument names.
+        :rtype: list
+        """
+        return _getargspec(func).args
 
-    :return: A list of argument names.
-    :rtype: list
-    """
-    if six.PY2:
-        return getargspec(func).args
 
-    params = signature(func).parameters.values()
-    return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
+else:
+    from inspect import signature as _signature
+
+    def get_args(func):
+        """Get a list of argument names for a function.
+
+        :param func: The function to inspect.
+
+        :return: A list of argument names.
+        :rtype: list
+        """
+        params = _signature(func).parameters.values()
+        return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
 
 
 def get_parametrize_markers_args(node):
