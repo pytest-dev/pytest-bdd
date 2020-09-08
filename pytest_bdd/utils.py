@@ -1,6 +1,7 @@
 """Various utility functions."""
 
-import inspect
+from sys import _getframe
+from inspect import getargspec, getframeinfo, signature
 
 import six
 
@@ -20,9 +21,9 @@ def get_args(func):
     :rtype: list
     """
     if six.PY2:
-        return inspect.getargspec(func).args
+        return getargspec(func).args
 
-    params = inspect.signature(func).parameters.values()
+    params = signature(func).parameters.values()
     return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
 
 
@@ -36,11 +37,19 @@ def get_parametrize_markers_args(node):
 
 
 def get_caller_module_locals(depth=2):
-    frame_info = inspect.stack()[depth]
-    frame = frame_info[0]  # frame_info.frame
-    return frame.f_locals
+    """Get the caller module locals dictionary.
+
+    We use sys._getframe instead of inspect.stack(0) because the latter is way slower, since it iterates over
+    all the frames in the stack.
+    """
+    return _getframe(depth).f_locals
 
 
 def get_caller_module_path(depth=2):
-    frame_info = inspect.stack()[depth]
-    return frame_info[1]  # frame_info.filename
+    """Get the caller module path.
+
+    We use sys._getframe instead of inspect.stack(0) because the latter is way slower, since it iterates over
+    all the frames in the stack.
+    """
+    frame = _getframe(depth)
+    return getframeinfo(frame, context=0).filename
