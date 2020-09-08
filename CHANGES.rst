@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+4.0.1
+-----
 - Fixed performance regression introduced in 4.0.0 where collection time of tests would take way longer than before. (youtux)
 
 
