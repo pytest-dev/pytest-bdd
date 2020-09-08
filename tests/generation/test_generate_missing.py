@@ -8,7 +8,11 @@ from tests.utils import assert_outcomes
 
 def test_python_name_generator():
     """Test python name generator function."""
-    itertools.islice(get_python_name_generator("Some name"), 2) == ["some_name", "some_name_2"]
+    assert list(itertools.islice(get_python_name_generator("Some name"), 3)) == [
+        "test_some_name",
+        "test_some_name_1",
+        "test_some_name_2",
+    ]
 
 
 def test_generate_missing(testdir):
