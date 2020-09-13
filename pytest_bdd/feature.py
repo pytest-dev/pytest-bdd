@@ -32,7 +32,6 @@ import glob2
 import six
 
 from . import exceptions
-from .parser import parse_feature
 
 # Global features dictionary
 features = {}
@@ -95,6 +94,8 @@ def get_feature(base_path, filename, encoding="utf-8"):
            stored in the global variable cache to improve the performance
            when multiple scenarios are referencing the same file.
     """
+    from .parser import parse_feature
+
     full_name = os.path.abspath(os.path.join(base_path, filename))
     feature = features.get(full_name)
     if not feature:
