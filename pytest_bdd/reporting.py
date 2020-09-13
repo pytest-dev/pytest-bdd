@@ -19,7 +19,7 @@ class StepReport(object):
     def __init__(self, step):
         """Step report constructor.
 
-        :param pytest_bdd.feature.Step step: Step.
+        :param pytest_bdd.parser.Step step: Step.
         """
         self.step = step
         self.started = time.time()
@@ -66,7 +66,7 @@ class ScenarioReport(object):
     def __init__(self, scenario, node):
         """Scenario report constructor.
 
-        :param pytest_bdd.feature.Scenario scenario: Scenario.
+        :param pytest_bdd.parser.Scenario scenario: Scenario.
         :param node: pytest test node object
         """
         self.scenario = scenario
