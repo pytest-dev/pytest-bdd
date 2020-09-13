@@ -14,6 +14,9 @@ def test_description(testdir):
             In order to achieve something
             I want something
             Because it will be cool
+            Given it is valid description
+            When it starts working
+            Then I will be happy
 
 
             Some description goes here.
@@ -45,6 +48,9 @@ def test_description(testdir):
                 In order to achieve something
                 I want something
                 Because it will be cool
+                Given it is valid description
+                When it starts working
+                Then I will be happy
 
 
                 Some description goes here.\"\"\"
@@ -53,5 +59,5 @@ def test_description(testdir):
         )
     )
 
-    result = testdir.runpytest()
+    result = testdir.runpytest("-W ignore::pytest_bdd.FeatureWarning")
     result.assert_outcomes(passed=2)
