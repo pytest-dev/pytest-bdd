@@ -253,20 +253,61 @@ class Examples(object):
 class Feature(object):
     """Feature."""
 
-    def __init__(self, basedir, filename, encoding="utf-8"):
+    def __init__(self, scenarios, filename, rel_filename, name, tags, examples, background, line_number, description):
+        self.scenarios = scenarios
+        self.rel_filename = rel_filename
+        self.filename = filename
+        self.name = name
+        self.tags = tags
+        self.examples = examples
+        self.name = name
+        self.line_number = line_number
+        self.tags = tags
+        self.scenarios = scenarios
+        self.description = description
+        self.background = background
+
+    @classmethod
+    def get_feature(cls, base_path, filename, encoding="utf-8"):
+        """Get a feature by the filename.
+
+        :param str base_path: Base feature directory.
+        :param str filename: Filename of the feature file.
+        :param str encoding: Feature file encoding.
+
+        :return: `Feature` instance from the parsed feature cache.
+
+        :note: The features are parsed on the execution of the test and
+               stored in the global variable cache to improve the performance
+               when multiple scenarios are referencing the same file.
+        """
+        full_name = op.abspath(op.join(base_path, filename))
+        feature = features.get(full_name)
+        if not feature:
+            feature = Feature(base_path, filename, encoding=encoding)
+            features[full_name] = feature
+        return feature
+
+    @classmethod
+    def _get_feature(cls, basedir, filename, encoding="utf-8"):
         """Parse the feature file.
 
         :param str basedir: Feature files base directory.
         :param str filename: Relative path to the feature file.
         :param str encoding: Feature file encoding (utf-8 by default).
         """
-        self.scenarios = OrderedDict()
-        self.rel_filename = op.join(op.basename(basedir), filename)
-        self.filename = filename = op.abspath(op.join(basedir, filename))
-        self.line_number = 1
-        self.name = None
-        self.tags = set()
-        self.examples = Examples()
+        filename = op.abspath(op.join(basedir, filename))
+        self = cls(
+            scenarios=OrderedDict(),
+            filename=filename,
+            rel_filename=op.join(op.basename(basedir), filename),
+            line_number=1,
+            name=None,
+            tags=set(),
+            examples=Examples(),
+            background=None,
+            description="",
+        )
         scenario = None
         mode = None
         prev_mode = None
@@ -274,7 +315,6 @@ class Feature(object):
         step = None
         multiline_step = False
         prev_line = None
-        self.background = None
 
         with codecs.open(filename, encoding=encoding) as f:
             content = force_unicode(f.read(), encoding)
@@ -368,27 +408,6 @@ class Feature(object):
                 prev_line = clean_line
 
         self.description = u"\n".join(description).strip()
-
-    @classmethod
-    def get_feature(cls, base_path, filename, encoding="utf-8"):
-        """Get a feature by the filename.
-
-        :param str base_path: Base feature directory.
-        :param str filename: Filename of the feature file.
-        :param str encoding: Feature file encoding.
-
-        :return: `Feature` instance from the parsed feature cache.
-
-        :note: The features are parsed on the execution of the test and
-               stored in the global variable cache to improve the performance
-               when multiple scenarios are referencing the same file.
-        """
-        full_name = op.abspath(op.join(base_path, filename))
-        feature = features.get(full_name)
-        if not feature:
-            feature = Feature(base_path, filename, encoding=encoding)
-            features[full_name] = feature
-        return feature
 
 
 class Scenario(object):

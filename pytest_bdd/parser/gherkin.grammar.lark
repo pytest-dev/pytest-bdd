@@ -1,0 +1,43 @@
+?start: gherkin_document
+
+gherkin_document: feature?
+
+//Feature! := FeatureHeader Background? ScenarioDefinition* Rule*
+//FeatureHeader! := #Language? Tags? #FeatureLine DescriptionHelper
+
+feature: _NL* feature_header? feature_line scenarios
+
+scenarios: [_INDENT scenario* _DEDENT]
+
+feature_header: tag_line?
+feature_line: "Feature: " string _NL
+
+scenario: scenario_line [_INDENT step* _DEDENT]
+scenario_line: "Scenario: " string _NL
+
+step: step_line _NL [_INDENT step_arg? _DEDENT]
+
+step_type: "Given " -> given
+         | "When " -> when
+         | "Then " -> then
+
+step_line: step_type string
+step_arg: LONG_STRING _NL
+
+tag: "@" CNAME
+tag_line: tag (tag)* _NL
+
+string: /[^\n]+/
+
+LONG_STRING: /[ubf]?r?(""".*?(?<!\\)(\\\\)*?"""|'''.*?(?<!\\)(\\\\)*?''')/is
+
+// %import common.ESCAPED_STRING -> string
+%import common.WS_INLINE
+%import common.LETTER
+%import common.NUMBER
+%import common.CNAME
+
+%declare _INDENT _DEDENT
+%ignore WS_INLINE
+
+_NL: /(\r?\n[\t ]*)+/
