@@ -82,7 +82,7 @@ def parse_feature(basedir, filename, encoding="utf-8"):
     """
     abs_filename = os.path.abspath(os.path.join(basedir, filename))
     rel_filename = os.path.join(os.path.basename(basedir), filename)
-    self = Feature(
+    feature = Feature(
         scenarios=OrderedDict(),
         filename=abs_filename,
         rel_filename=rel_filename,
@@ -130,9 +130,9 @@ def parse_feature(basedir, filename, encoding="utf-8"):
 
         if mode == types.FEATURE:
             if prev_mode is None or prev_mode == types.TAG:
-                _, self.name = parse_line(clean_line)
-                self.line_number = line_number
-                self.tags = get_tags(prev_line)
+                _, feature.name = parse_line(clean_line)
+                feature.line_number = line_number
+                feature.tags = get_tags(prev_line)
             elif prev_mode == types.FEATURE:
                 description.append(clean_line)
             else:
@@ -149,24 +149,24 @@ def parse_feature(basedir, filename, encoding="utf-8"):
         keyword, parsed_line = parse_line(clean_line)
         if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
             tags = get_tags(prev_line)
-            self.scenarios[parsed_line] = scenario = Scenario(self, parsed_line, line_number, tags=tags)
+            feature.scenarios[parsed_line] = scenario = Scenario(feature, parsed_line, line_number, tags=tags)
         elif mode == types.BACKGROUND:
-            self.background = Background(feature=self, line_number=line_number)
+            feature.background = Background(feature=feature, line_number=line_number)
         elif mode == types.EXAMPLES:
             mode = types.EXAMPLES_HEADERS
-            (scenario or self).examples.line_number = line_number
+            (scenario or feature).examples.line_number = line_number
         elif mode == types.EXAMPLES_VERTICAL:
             mode = types.EXAMPLE_LINE_VERTICAL
-            (scenario or self).examples.line_number = line_number
+            (scenario or feature).examples.line_number = line_number
         elif mode == types.EXAMPLES_HEADERS:
-            (scenario or self).examples.set_param_names([l for l in split_line(parsed_line) if l])
+            (scenario or feature).examples.set_param_names([l for l in split_line(parsed_line) if l])
             mode = types.EXAMPLE_LINE
         elif mode == types.EXAMPLE_LINE:
-            (scenario or self).examples.add_example([l for l in split_line(stripped_line)])
+            (scenario or feature).examples.add_example([l for l in split_line(stripped_line)])
         elif mode == types.EXAMPLE_LINE_VERTICAL:
             param_line_parts = [l for l in split_line(stripped_line)]
             try:
-                (scenario or self).examples.add_example_row(param_line_parts[0], param_line_parts[1:])
+                (scenario or feature).examples.add_example_row(param_line_parts[0], param_line_parts[1:])
             except exceptions.ExamplesNotValidError as exc:
                 if scenario:
                     raise exceptions.FeatureError(
@@ -184,12 +184,12 @@ def parse_feature(basedir, filename, encoding="utf-8"):
                     )
         elif mode and mode not in (types.FEATURE, types.TAG):
             step = Step(name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword)
-            if self.background and not scenario:
-                target = self.background
+            if feature.background and not scenario:
+                target = feature.background
             else:
                 target = scenario
             target.add_step(step)
         prev_line = clean_line
 
-    self.description = u"\n".join(description).strip()
-    return self
+    feature.description = u"\n".join(description).strip()
+    return feature
