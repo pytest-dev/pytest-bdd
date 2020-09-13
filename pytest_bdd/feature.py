@@ -23,8 +23,7 @@ Syntax example:
 :note: There're no multiline steps, the description of the step must fit in
 one line.
 """
-
-from os import path as op
+import os.path
 import re
 import sys
 import textwrap
@@ -33,7 +32,7 @@ import glob2
 import six
 
 from . import exceptions
-
+from .parser import parse_feature
 
 # Global features dictionary
 features = {}
@@ -83,6 +82,27 @@ def get_tags(line):
     return set((tag.lstrip("@") for tag in line.strip().split(" @") if len(tag) > 1))
 
 
+def get_feature(base_path, filename, encoding="utf-8"):
+    """Get a feature by the filename.
+
+    :param str base_path: Base feature directory.
+    :param str filename: Filename of the feature file.
+    :param str encoding: Feature file encoding.
+
+    :return: `Feature` instance from the parsed feature cache.
+
+    :note: The features are parsed on the execution of the test and
+           stored in the global variable cache to improve the performance
+           when multiple scenarios are referencing the same file.
+    """
+    full_name = os.path.abspath(os.path.join(base_path, filename))
+    feature = features.get(full_name)
+    if not feature:
+        feature = parse_feature(base_path, filename, encoding=encoding)
+        features[full_name] = feature
+    return feature
+
+
 def get_features(paths, **kwargs):
     """Get features for given paths.
 
@@ -95,11 +115,11 @@ def get_features(paths, **kwargs):
     for path in paths:
         if path not in seen_names:
             seen_names.add(path)
-            if op.isdir(path):
-                features.extend(get_features(glob2.iglob(op.join(path, "**", "*.feature")), **kwargs))
+            if os.path.isdir(path):
+                features.extend(get_features(glob2.iglob(os.path.join(path, "**", "*.feature")), **kwargs))
             else:
-                base, name = op.split(path)
-                feature = Feature.get_feature(base, name, **kwargs)
+                base, name = os.path.split(path)
+                feature = get_feature(base, name, **kwargs)
                 features.append(feature)
     features.sort(key=lambda feature: feature.name or feature.filename)
     return features
@@ -196,30 +216,6 @@ class Feature(object):
         self.scenarios = scenarios
         self.description = description
         self.background = background
-
-    # TODO: use parse_file instead
-    @classmethod
-    def get_feature(cls, base_path, filename, encoding="utf-8"):
-        """Get a feature by the filename.
-
-        :param str base_path: Base feature directory.
-        :param str filename: Filename of the feature file.
-        :param str encoding: Feature file encoding.
-
-        :return: `Feature` instance from the parsed feature cache.
-
-        :note: The features are parsed on the execution of the test and
-               stored in the global variable cache to improve the performance
-               when multiple scenarios are referencing the same file.
-        """
-        from .parser import parse_feature
-
-        full_name = op.abspath(op.join(base_path, filename))
-        feature = features.get(full_name)
-        if not feature:
-            feature = parse_feature(base_path, filename, encoding=encoding)
-            features[full_name] = feature
-        return feature
 
 
 class Scenario(object):

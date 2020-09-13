@@ -3,8 +3,8 @@ import os.path
 import re
 from collections import OrderedDict
 
-from pytest_bdd import types, exceptions
-from pytest_bdd.feature import Feature, Examples, get_tags, Scenario, Background, Step
+from . import types, exceptions
+from .feature import Feature, Examples, get_tags, Scenario, Background, Step
 
 SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
 COMMENT_RE = re.compile(r"(^|(?<=\s))#")
