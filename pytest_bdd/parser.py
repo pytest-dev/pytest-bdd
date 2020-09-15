@@ -294,7 +294,7 @@ class Step(object):
 
     """Step."""
 
-    def __init__(self, name, type, indent, line_number, keyword):
+    def __init__(self, name, type, indent, line_number, keyword, docstring=None, datatable=None):
         """Step constructor.
 
         :param str name: step name.
@@ -314,6 +314,8 @@ class Step(object):
         self.stop = 0
         self.scenario = None
         self.background = None
+        self.docstring = docstring
+        self.datatable = datatable
 
     def add_line(self, line):
         """Add line to the multiple step.

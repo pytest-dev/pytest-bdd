@@ -129,3 +129,33 @@ def test_step(src, expected_steps):
         # TODO: assert step.stop
         # TODO: assert step.scenario
         # TODO: assert step.background
+
+
+def test_step_docstring_and_datatable():
+    feature = parse(
+        '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+            """
+            content of the docstring
+            """
+            |A|multiline|
+            |data|table|
+        When I look at the docstring
+'''
+    )
+    [scenario] = feature.scenarios.values()
+    given, when = scenario.steps
+    assert given.type == GIVEN
+    assert given.name == "I have a step with docstring"
+    assert given.docstring == "content of the docstring"
+    # fmt: off
+    assert given.datatable == [
+        ['A', 'multiline'],
+        ['data', 'table'],
+    ]
+    # fmt: on
+
+    assert when.type == WHEN
+    assert when.name == "I look at the docstring"

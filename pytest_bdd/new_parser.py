@@ -1,5 +1,6 @@
 import io
 import os.path
+import textwrap
 from collections import OrderedDict
 
 import lark
@@ -21,7 +22,15 @@ class TreeIndenter(lark.indenter.Indenter):
 
 with io.open(os.path.join(os.path.dirname(__file__), "parser_data/gherkin.grammar.lark")) as f:
     grammar = f.read()
-parser = lark.Lark(grammar, start="start", parser="lalr", postlex=TreeIndenter())
+parser = lark.Lark(grammar, start="start", parser="lalr", postlex=TreeIndenter(), maybe_placeholders=True, debug=True)
+
+
+def extract_text_from_step_docstring(docstring):
+    content = docstring[4:-3]
+    dedented = textwrap.dedent(content)
+    assert dedented[-1] == "\n"
+    dedented_without_newline = dedented[:-1]
+    return dedented_without_newline
 
 
 class TreeToGherkin(lark.Transformer):
@@ -30,6 +39,7 @@ class TreeToGherkin(lark.Transformer):
         return feature
 
     def string(self, value):
+        # TODO: Unescape characters?
         [s] = value
         return s
 
@@ -42,11 +52,45 @@ class TreeToGherkin(lark.Transformer):
     def then(self, _):
         return pytest_bdd_types.THEN
 
+    def step_docstring(self, value):
+        # TODO: Unescape escaped characters?
+        [text] = value
+        content = text[4:-3]
+        dedented = textwrap.dedent(content)
+        assert dedented[-1] == "\n"
+        dedented_without_newline = dedented[:-1]
+        return dedented_without_newline
+
+    def step_arg(self, value):
+        docstring, step_datatable = value
+        return docstring, step_datatable
+
+    def data_table_row(self, cols):
+        # TODO: Unescape escaped PIPE char (|)
+        return [col[:-1] for col in cols]
+
+    def data_table(self, value):
+        return value
+
     def step(self, value):
-        step_line, *step_docstring = value
+        step_line, step_arg = value
+        if step_arg is not None:
+            docstring, datatable = step_arg
+        else:
+            docstring = datatable = None
+
         step_type, step_name = step_line.children
+
         line = step_name.line
-        return Step(name=six.text_type(step_name), type=step_type, indent=0, keyword=step_name + " ", line_number=line)
+        return Step(
+            name=six.text_type(step_name),
+            type=step_type,
+            indent=0,
+            keyword=step_name + " ",
+            line_number=line,
+            docstring=docstring,
+            datatable=datatable,
+        )
 
     def scenario(self, value):
         scenario_line, *steps = value

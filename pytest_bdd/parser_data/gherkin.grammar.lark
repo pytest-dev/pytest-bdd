@@ -15,21 +15,25 @@ feature_line: "Feature: " string _NL
 scenario: scenario_line [_INDENT step* _DEDENT]
 scenario_line: "Scenario: " string _NL
 
-step: step_line _NL [_INDENT step_arg? _DEDENT]
+step: step_line [_INDENT step_arg _DEDENT]
 
 step_type: "Given " -> given
          | "When " -> when
          | "Then " -> then
 
-step_line: step_type string
-step_arg: LONG_STRING _NL
+step_line: step_type string _NL
+step_arg: [step_docstring _NL] [data_table]
+
+data_table: data_table_row (_NL data_table_row)+ _NL
+data_table_row: "|" (/.*?(?<!\\)(\\\\)*?\|/)+
 
 tag: "@" CNAME
 tag_line: tag (tag)* _NL
 
 string: /[^\n]+/
 
-LONG_STRING: /[ubf]?r?(""".*?(?<!\\)(\\\\)*?"""|'''.*?(?<!\\)(\\\\)*?''')/is
+step_docstring: /"""\n.*?(?<!\\)(\\\\)*?\n\s*"""/is
+              | /'''\n.*?(?<!\\)(\\\\)*?\n\s*'''/is
 
 // %import common.ESCAPED_STRING -> string
 %import common.WS_INLINE
