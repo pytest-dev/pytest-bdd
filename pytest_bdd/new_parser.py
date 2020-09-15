@@ -7,7 +7,7 @@ import lark
 import lark.indenter
 import six
 
-from pytest_bdd.feature import Step, Scenario, Feature
+from pytest_bdd.parser import Step, Scenario, Feature
 from pytest_bdd import types as pytest_bdd_types
 
 
@@ -20,7 +20,7 @@ class TreeIndenter(lark.indenter.Indenter):
     tab_len = 8
 
 
-with io.open(os.path.join(os.path.dirname(__file__), "gherkin.grammar.lark")) as f:
+with io.open(os.path.join(os.path.dirname(__file__), "parser_data/gherkin.grammar.lark")) as f:
     grammar = f.read()
 parser = lark.Lark(grammar, start="start", parser="lalr", postlex=TreeIndenter())
 
