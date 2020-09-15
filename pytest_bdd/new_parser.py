@@ -6,7 +6,7 @@ import lark
 import lark.indenter
 import six
 
-from pytest_bdd.parser import Step, Scenario, Feature
+from pytest_bdd.parser import Step, Scenario, Feature, Examples
 from pytest_bdd import types as pytest_bdd_types
 
 
@@ -83,7 +83,7 @@ class TreeToGherkin(lark.Transformer):
             rel_filename=None,
             name=six.text_type(feature_name),
             tags=tags,
-            examples=None,
+            examples=Examples(),
             background=None,
             line_number=feature_name.line,
             description=None,
@@ -97,7 +97,27 @@ class TreeToGherkin(lark.Transformer):
 
 
 def parse(content):
+    # type: (six.text_type) -> Feature
     tree = parser.parse(content)
     # print(tree.pretty())
     gherkin = TreeToGherkin().transform(tree)
     return gherkin
+
+
+def parse_feature(basedir, filename, encoding="utf-8"):
+    """Parse the feature file.
+
+    :param str basedir: Feature files base directory.
+    :param str filename: Relative path to the feature file.
+    :param str encoding: Feature file encoding (utf-8 by default).
+    """
+    abs_filename = os.path.abspath(os.path.join(basedir, filename))
+    rel_filename = os.path.join(os.path.basename(basedir), filename)
+
+    with io.open(abs_filename, "rt", encoding=encoding) as f:
+        content = f.read()
+
+    parsed = parse(content)
+    parsed.filename = abs_filename
+    parsed.rel_filename = rel_filename
+    return parsed

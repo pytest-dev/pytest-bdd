@@ -4,13 +4,16 @@ import textwrap
 from tests.utils import assert_outcomes
 
 
-def test_scenarios(testdir, pytest_params):
+def test_scenarios(testdir, pytest_params, bdd_parser):
     """Test scenarios shortcut (used together with @scenario for individual test override)."""
     testdir.makeini(
         """
             [pytest]
             console_output_style=classic
-        """
+            bdd_parser={bdd_parser}
+        """.format(
+            bdd_parser=bdd_parser
+        )
     )
     testdir.makeconftest(
         """
@@ -27,8 +30,9 @@ def test_scenarios(testdir, pytest_params):
     features.join("test.feature").write_text(
         textwrap.dedent(
             u"""
-    Scenario: Test scenario
-        Given I have a bar
+    Feature: A feature
+        Scenario: Test scenario
+            Given I have a bar
     """
         ),
         "utf-8",
@@ -37,17 +41,18 @@ def test_scenarios(testdir, pytest_params):
     features.join("subfolder", "test.feature").write_text(
         textwrap.dedent(
             u"""
-    Scenario: Test subfolder scenario
-        Given I have a bar
+    Feature: A feature in a subfolder
+        Scenario: Test subfolder scenario
+            Given I have a bar
 
-    Scenario: Test failing subfolder scenario
-        Given I have a failing bar
+        Scenario: Test failing subfolder scenario
+            Given I have a failing bar
 
-    Scenario: Test already bound scenario
-        Given I have a bar
+        Scenario: Test already bound scenario
+            Given I have a bar
 
-    Scenario: Test scenario
-        Given I have a bar
+        Scenario: Test scenario
+            Given I have a bar
     """
         ),
         "utf-8",

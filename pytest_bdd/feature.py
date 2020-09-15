@@ -82,7 +82,15 @@ def get_feature(base_path, filename, encoding="utf-8"):
     full_name = os.path.abspath(os.path.join(base_path, filename))
     feature = features.get(full_name)
     if not feature:
-        feature = parse_feature(base_path, filename, encoding=encoding)
+        from pytest_bdd.scenario import get_from_ini
+
+        parser = get_from_ini("bdd_parser", "legacy")
+        if parser == "legacy":
+            feature = parse_feature(base_path, filename, encoding=encoding)
+        elif parser == "2020":
+            from . import new_parser
+
+            feature = new_parser.parse_feature(base_path, filename)
         features[full_name] = feature
     return feature
 
