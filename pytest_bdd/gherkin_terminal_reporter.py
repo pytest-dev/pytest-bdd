@@ -6,7 +6,7 @@ import re
 
 from _pytest.terminal import TerminalReporter
 
-from .feature import STEP_PARAM_RE
+from .parser import STEP_PARAM_RE
 
 
 def add_options(parser):
