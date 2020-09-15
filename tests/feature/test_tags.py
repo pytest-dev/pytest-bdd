@@ -3,7 +3,7 @@ import textwrap
 
 import pytest
 
-from pytest_bdd import feature
+from pytest_bdd.parser import get_tags
 
 
 def test_tags_selector(testdir):
@@ -251,4 +251,4 @@ def test_at_in_scenario(testdir):
     ],
 )
 def test_get_tags(line, expected):
-    assert feature.get_tags(line) == expected
+    assert get_tags(line) == expected

@@ -11,10 +11,8 @@ test_publish_article = scenario(
 )
 """
 import collections
-import inspect
 import os
 import re
-import sys
 
 import pytest
 
@@ -24,7 +22,7 @@ except ImportError:
     from _pytest import python as pytest_fixtures
 
 from . import exceptions
-from .feature import Feature, force_unicode, get_features
+from .feature import force_unicode, get_feature, get_features
 from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
@@ -213,7 +211,7 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     # Get the feature
     if features_base_dir is None:
         features_base_dir = get_features_base_dir(caller_module_path)
-    feature = Feature.get_feature(features_base_dir, feature_name, encoding=encoding)
+    feature = get_feature(features_base_dir, feature_name, encoding=encoding)
 
     # Get the scenario
     try:
