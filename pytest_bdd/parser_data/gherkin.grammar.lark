@@ -9,7 +9,7 @@ feature: _NL* feature_header? feature_line scenarios
 
 scenarios: [_INDENT scenario* _DEDENT]
 
-feature_header: tag_line?
+feature_header: tag_line*
 feature_line: "Feature: " string _NL
 
 scenario: scenario_line [_INDENT step* _DEDENT]

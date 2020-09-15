@@ -1,5 +1,4 @@
 import io
-import logging
 import os.path
 from collections import OrderedDict
 
@@ -25,25 +24,10 @@ with io.open(os.path.join(os.path.dirname(__file__), "parser_data/gherkin.gramma
 parser = lark.Lark(grammar, start="start", parser="lalr", postlex=TreeIndenter())
 
 
-test_src = '''\
-@atag @asecondtag
-Feature: a feature
-    Scenario: scenario 1
-        Given I have a bar
-            """
-
-            docstring
-            dsad
-            """
-        When I want a bar
-        Then I get a bar
-    Scenario: scenario 2
-'''
-
-
 class TreeToGherkin(lark.Transformer):
     def gherkin_document(self, value):
-        return value
+        [feature] = value
+        return feature
 
     def string(self, value):
         [s] = value
@@ -76,16 +60,29 @@ class TreeToGherkin(lark.Transformer):
             "steps": steps,
         }
 
+    def tag(self, value):
+        [tag] = value
+        return tag
+
     def feature(self, value):
-        feature_header, feature_line, raw_scenarios = value
+        try:
+            feature_header = next(el for el in value if el.data == "feature_header")
+            tag_lines = [el for el in feature_header.children if el.data == "tag_line"]
+            tags = [el for tag_line in tag_lines for el in tag_line.children]
+        except StopIteration:
+            tags = []
+
+        feature_line = next((el for el in value if el.data == "feature_line"))
+        raw_scenarios = next((el for el in value if el.data == "scenarios"))
+
         [feature_name] = feature_line.children
 
         feature = Feature(
             scenarios=OrderedDict(),
             filename=None,
             rel_filename=None,
-            name=six.text_type(feature_line),
-            tags=None,
+            name=six.text_type(feature_name),
+            tags=tags,
             examples=None,
             background=None,
             line_number=feature_name.line,
@@ -99,12 +96,8 @@ class TreeToGherkin(lark.Transformer):
         return feature
 
 
-def test():
-    tree = parser.parse(test_src)
+def parse(content):
+    tree = parser.parse(content)
     # print(tree.pretty())
     gherkin = TreeToGherkin().transform(tree)
-    print(gherkin)
-
-
-if __name__ == "__main__":
-    test()
+    return gherkin

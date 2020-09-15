@@ -207,10 +207,7 @@ class Feature(object):
         self.name = name
         self.tags = tags
         self.examples = examples
-        self.name = name
         self.line_number = line_number
-        self.tags = tags
-        self.scenarios = scenarios
         self.description = description
         self.background = background
 
