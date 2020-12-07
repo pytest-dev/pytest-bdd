@@ -1,6 +1,11 @@
 Changelog
 =========
 
+4.0.2
+-----
+- Fix a bug that prevents using comments in the ``Examples:`` section. (youtux)
+
+
 4.0.1
 -----
 - Fixed performance regression introduced in 4.0.0 where collection time of tests would take way longer than before. (youtux)

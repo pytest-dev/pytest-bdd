@@ -150,7 +150,7 @@ def split_line(line):
 
     :return: List of strings.
     """
-    return [cell.replace("\\|", "|").strip() for cell in SPLIT_LINE_RE.split(line[1:-1])]
+    return [cell.replace("\\|", "|").strip() for cell in SPLIT_LINE_RE.split(line)[1:-1]]
 
 
 def get_features(paths, **kwargs):
