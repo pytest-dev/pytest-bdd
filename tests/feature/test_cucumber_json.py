@@ -2,11 +2,22 @@
 import json
 import os.path
 import textwrap
+import pytest
+
+
+@pytest.fixture(params=[None, "a"])
+def testdir(request, testdir):
+    if request.param:
+        testdir.missing_subdirectory = testdir.tmpdir.join(request.param)
+    return testdir
 
 
 def runandparse(testdir, *args):
     """Run tests in testdir and parse json output."""
-    resultpath = testdir.tmpdir.join("cucumber.json")
+    if hasattr(testdir, "missing_subdirectory"):
+        resultpath = testdir.missing_subdirectory.join("cucumber.json")
+    else:
+        resultpath = testdir.tmpdir.join("cucumber.json")
     result = testdir.runpytest("--cucumberjson={0}".format(resultpath), "-s", *args)
     jsonobject = json.load(resultpath.open())
     return result, jsonobject
@@ -216,7 +227,7 @@ def test_step_trace(testdir):
                     "name": "Passing outline",
                 },
             ],
-            "id": os.path.join("test_step_trace0", "test.feature"),
+            "id": os.path.join(testdir.tmpdir.basename, "test.feature"),
             "keyword": "Feature",
             "line": 2,
             "name": "One passing scenario, one failing scenario",

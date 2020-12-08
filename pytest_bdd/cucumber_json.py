@@ -171,6 +171,8 @@ class LogBDDCucumberJSON(object):
         self.suite_start_time = time.time()
 
     def pytest_sessionfinish(self):
+        if not os.path.exists(os.path.dirname(self.logfile)):
+            os.makedirs(os.path.dirname(self.logfile))
         if sys.version_info[0] < 3:
             logfile_open = codecs.open
         else:
