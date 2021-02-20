@@ -41,6 +41,44 @@ def test_when_then(testdir):
     result.assert_outcomes(passed=1)
 
 
+def test_when_step_with_target_fixture(testdir):
+    """Test when and then steps are callable functions.
+
+    This test checks that when and then are not evaluated
+    during fixture collection that might break the scenario.
+    """
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        import pytest
+        from pytest_bdd import given, when, then
+        from pytest_bdd.steps import get_step_fixture_name, WHEN, THEN
+
+        @when("I do stuff", target_fixture="result")
+        def do_stuff():
+            return {"hello": "world"}
+
+
+        @then("I check stuff")
+        def check_stuff(result):
+            assert isinstance(result, dict)
+            assert result.get("hello") == "world"
+
+
+        def test_when_step_with_target_fixture(request):
+            do_stuff_ = request.getfixturevalue(get_step_fixture_name("I do stuff", WHEN))
+            assert callable(do_stuff_)
+
+            check_stuff_ = request.getfixturevalue(get_step_fixture_name("I check stuff", THEN))
+            assert callable(check_stuff_)
+
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1)
+
+
 @pytest.mark.parametrize(
     ("step", "keyword"),
     [("given", "Given"), ("when", "When"), ("then", "Then")],
