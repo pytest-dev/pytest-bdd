@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for testing cases when we have unicode in feature file."""
 
 import textwrap
@@ -8,7 +7,7 @@ def test_steps_in_feature_file_have_unicode(testdir):
     testdir.makefile(
         ".feature",
         unicode=textwrap.dedent(
-            u"""\
+            """\
             Feature: Юнікодні символи
 
                 Scenario: Кроки в .feature файлі містять юнікод
@@ -24,8 +23,7 @@ def test_steps_in_feature_file_have_unicode(testdir):
 
     testdir.makepyfile(
         textwrap.dedent(
-            u"""\
-        # coding: utf-8
+            """\
         import sys
         import pytest
         from pytest_bdd import parsers, given, then, scenario
@@ -50,8 +48,6 @@ def test_steps_in_feature_file_have_unicode(testdir):
         @then(parsers.parse("I should see that the string equals to content '{content}'"))
         def assert_that_the_string_equals_to_content(content, string):
             assert string["content"] == content
-            if sys.version_info < (3, 0):
-                assert isinstance(content, unicode)
         """
         )
     )
@@ -63,7 +59,7 @@ def test_steps_in_py_file_have_unicode(testdir):
     testdir.makefile(
         ".feature",
         unicode=textwrap.dedent(
-            u"""\
+            """\
             Feature: Юнікодні символи
 
                 Scenario: Steps in .py file have unicode
@@ -75,8 +71,7 @@ def test_steps_in_py_file_have_unicode(testdir):
 
     testdir.makepyfile(
         textwrap.dedent(
-            u"""\
-        # coding: utf-8
+            """\
         import pytest
         from pytest_bdd import given, then, scenario
 

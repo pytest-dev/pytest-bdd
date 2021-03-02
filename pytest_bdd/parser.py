@@ -4,8 +4,6 @@ import re
 import textwrap
 from collections import OrderedDict
 
-import six
-
 from . import types, exceptions
 
 SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
@@ -193,7 +191,7 @@ def parse_feature(basedir, filename, encoding="utf-8"):
             target.add_step(step)
         prev_line = clean_line
 
-    feature.description = u"\n".join(description).strip()
+    feature.description = "\n".join(description).strip()
     return feature
 
 
@@ -292,7 +290,6 @@ class Scenario(object):
             )
 
 
-@six.python_2_unicode_compatible
 class Step(object):
 
     """Step."""
@@ -446,9 +443,6 @@ class Examples(object):
     def __bool__(self):
         """Bool comparison."""
         return bool(self.vertical_examples or self.examples)
-
-    if six.PY2:
-        __nonzero__ = __bool__
 
 
 def get_tags(line):

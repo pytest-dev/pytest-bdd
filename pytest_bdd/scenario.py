@@ -22,17 +22,12 @@ except ImportError:
     from _pytest import python as pytest_fixtures
 
 from . import exceptions
-from .feature import force_unicode, get_feature, get_features
+from .feature import get_feature, get_features
 from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
-
-
-# We have to keep track of the invocation of @scenario() so that we can reorder test item accordingly.
-# In python 3.6+ this is no longer necessary, as the order is automatically retained.
-_py2_scenario_creation_counter = 0
 
 
 def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None):
@@ -58,7 +53,7 @@ def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None)
                 return parser_name
 
 
-def _find_step_function(request, step, scenario, encoding):
+def _find_step_function(request, step, scenario):
     """Match the step defined by the regular expression pattern.
 
     :param request: PyTest request object.
@@ -71,7 +66,7 @@ def _find_step_function(request, step, scenario, encoding):
     name = step.name
     try:
         # Simple case where no parser is used for the step
-        return request.getfixturevalue(get_step_fixture_name(name, step.type, encoding))
+        return request.getfixturevalue(get_step_fixture_name(name, step.type))
     except pytest_fixtures.FixtureLookupError:
         try:
             # Could not find a fixture with the same name, let's see if there is a parser involved
@@ -81,10 +76,8 @@ def _find_step_function(request, step, scenario, encoding):
             raise
         except pytest_fixtures.FixtureLookupError:
             raise exceptions.StepDefinitionNotFoundError(
-                u"""Step definition is not found: {step}."""
-                """ Line {step.line_number} in scenario "{scenario.name}" in the feature "{feature.filename}""".format(
-                    step=step, scenario=scenario, feature=scenario.feature
-                )
+                f"Step definition is not found: {step}. "
+                f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
             )
 
 
@@ -120,7 +113,7 @@ def _execute_step_function(request, scenario, step, step_func):
         raise
 
 
-def _execute_scenario(feature, scenario, request, encoding):
+def _execute_scenario(feature, scenario, request):
     """Execute the scenario.
 
     :param feature: Feature.
@@ -134,7 +127,7 @@ def _execute_scenario(feature, scenario, request, encoding):
         # Execute scenario steps
         for step in scenario.steps:
             try:
-                step_func = _find_step_function(request, step, scenario, encoding=encoding)
+                step_func = _find_step_function(request, step, scenario)
             except exceptions.StepDefinitionNotFoundError as exception:
                 request.config.hook.pytest_bdd_step_func_lookup_error(
                     request=request, feature=feature, scenario=scenario, step=step, exception=exception
@@ -148,12 +141,7 @@ def _execute_scenario(feature, scenario, request, encoding):
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
-def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, encoding):
-    global _py2_scenario_creation_counter
-
-    counter = _py2_scenario_creation_counter
-    _py2_scenario_creation_counter += 1
-
+def _get_scenario_decorator(feature, feature_name, scenario, scenario_name):
     # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
     # when the decorator is misused.
     # Pytest inspect the signature to determine the required fixtures, and in that case it would look
@@ -174,7 +162,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, enco
 
         @pytest.mark.usefixtures(*function_args)
         def scenario_wrapper(request):
-            _execute_scenario(feature, scenario, request, encoding)
+            _execute_scenario(feature, scenario, request)
             return fn(*[request.getfixturevalue(arg) for arg in args])
 
         for param_set in scenario.get_params():
@@ -184,11 +172,8 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, enco
             config = CONFIG_STACK[-1]
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 
-        scenario_wrapper.__doc__ = u"{feature_name}: {scenario_name}".format(
-            feature_name=feature_name, scenario_name=scenario_name
-        )
+        scenario_wrapper.__doc__ = f"{feature_name}: {scenario_name}"
         scenario_wrapper.__scenario__ = scenario
-        scenario_wrapper.__pytest_bdd_counter__ = counter
         scenario.test_function = scenario_wrapper
         return scenario_wrapper
 
@@ -205,7 +190,7 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
         example parameter, and value is the converter function.
     """
 
-    scenario_name = force_unicode(scenario_name, encoding)
+    scenario_name = str(scenario_name)
     caller_module_path = get_caller_module_path()
 
     # Get the feature
@@ -217,10 +202,9 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     try:
         scenario = feature.scenarios[scenario_name]
     except KeyError:
+        feature_name = feature.name or "[Empty]"
         raise exceptions.ScenarioNotFound(
-            u'Scenario "{scenario_name}" in feature "{feature_name}" in {feature_filename} is not found.'.format(
-                scenario_name=scenario_name, feature_name=feature.name or "[Empty]", feature_filename=feature.filename
-            )
+            f'Scenario "{scenario_name}" in feature "{feature_name}" in {feature.filename} is not found.'
         )
 
     scenario.example_converters = example_converters
@@ -229,7 +213,7 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     scenario.validate()
 
     return _get_scenario_decorator(
-        feature=feature, feature_name=feature_name, scenario=scenario, scenario_name=scenario_name, encoding=encoding
+        feature=feature, feature_name=feature_name, scenario=scenario, scenario_name=scenario_name
     )
 
 
@@ -256,12 +240,12 @@ def make_python_name(string):
 
 def make_python_docstring(string):
     """Make a python docstring literal out of a given string."""
-    return u'"""{}."""'.format(string.replace(u'"""', u'\\"\\"\\"'))
+    return '"""{}."""'.format(string.replace('"""', '\\"\\"\\"'))
 
 
 def make_string_literal(string):
     """Make python string literal out of a given string."""
-    return u"'{}'".format(string.replace(u"'", u"\\'"))
+    return "'{}'".format(string.replace("'", "\\'"))
 
 
 def get_python_name_generator(name):

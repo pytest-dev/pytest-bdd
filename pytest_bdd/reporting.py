@@ -6,7 +6,6 @@ that enriches the pytest test reporting.
 
 import time
 
-from .feature import force_unicode
 from .utils import get_parametrize_markers_args
 
 
@@ -84,8 +83,7 @@ class ScenarioReport(object):
             elif tuple(node_param_values) in param_values:
                 self.param_index = param_values.index(tuple(node_param_values))
         self.example_kwargs = {
-            example_param: force_unicode(node.funcargs[example_param])
-            for example_param in scenario.get_example_params()
+            example_param: str(node.funcargs[example_param]) for example_param in scenario.get_example_params()
         }
 
     @property
