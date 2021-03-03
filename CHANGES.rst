@@ -4,6 +4,7 @@ Changelog
 Unreleased
 -----------
 - Drop compatibility for python 2 and officially support only python >= 3.6.
+- Allow pass decorators to ``scenarios()`` to wrap every generated test with them.
 
 4.0.2
 -----

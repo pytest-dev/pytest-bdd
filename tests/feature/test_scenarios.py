@@ -75,6 +75,54 @@ def test_scenarios(testdir, pytest_params):
     result.stdout.fnmatch_lines(["*test_test_scenario_1 *bar!", "PASSED"])
 
 
+def test_scenarios_decorators(testdir):
+    testdir.makeconftest(
+        """\
+        import pytest
+        from pytest_bdd import given
+
+        @pytest.fixture
+        def foo_fixture():
+            print('Foo was setup')
+            yield 'foo'
+            print('Foo was teardown')
+
+        @given('I have a bar')
+        def i_have_bar():
+            print('bar!')
+            return 'bar'
+    """
+    )
+    features = testdir.mkdir("features")
+    features.join("test.feature").write_text(
+        textwrap.dedent(
+            """\
+            Scenario: Test scenario with custom decorators
+                Given I have a bar
+            
+            Scenario: Another test scenario with custom decorators
+                Given I have a bar
+            """
+        ),
+        "utf-8",
+        ensure=True,
+    )
+
+    testdir.makepyfile(
+        """
+        import pytest
+        from pytest_bdd import scenarios
+
+        scenarios('features', decorators=(pytest.mark.usefixtures('foo_fixture'),))
+    """
+    )
+
+    result = testdir.runpytest_subprocess("-v", "-s")
+    assert_outcomes(result, passed=2, failed=0)
+    result.stdout.fnmatch_lines(["*collected 2 items"])
+    result.stdout.fnmatch_lines(["*Foo was setup", "*Foo was teardown", "*Foo was setup", "*Foo was teardown"])
+
+
 def test_scenarios_none_found(testdir, pytest_params):
     """Test scenarios shortcut when no scenarios found."""
     testpath = testdir.makepyfile(

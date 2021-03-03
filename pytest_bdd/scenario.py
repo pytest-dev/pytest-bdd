@@ -13,6 +13,7 @@ test_publish_article = scenario(
 import collections
 import os
 import re
+from itertools import chain
 
 import pytest
 
@@ -188,6 +189,8 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     :param str encoding: Feature file encoding.
     :param dict example_converters: optional `dict` of example converter function, where key is the name of the
         example parameter, and value is the converter function.
+    :param features_base_dir: override using current module's path as base path for finding feature files;
+        The path is interpreted as relative to the working directory when starting pytest
     """
 
     scenario_name = str(scenario_name)
@@ -263,10 +266,14 @@ def get_python_name_generator(name):
         suffix = "_{0}".format(index)
 
 
-def scenarios(*feature_paths, **kwargs):
+def scenarios(*feature_paths, decorators=(), **kwargs):
     """Parse features from the paths and put all found scenarios in the caller module.
 
     :param *feature_paths: feature file paths to use for scenarios
+    :param decorators: decorators which will be applied to every scenario; Useful for pytest.mark.usefixtures and
+                       indirect parametrization
+    :param features_base_dir: override using current module's path as base path for finding feature files;
+                              The path is interpreted as relative to the working directory when starting pytest
     """
     caller_locals = get_caller_module_locals()
     caller_path = get_caller_module_path()
@@ -293,9 +300,11 @@ def scenarios(*feature_paths, **kwargs):
             # skip already bound scenarios
             if (scenario_object.feature.filename, scenario_name) not in module_scenarios:
 
-                @scenario(feature.filename, scenario_name, **kwargs)
                 def _scenario():
                     pass  # pragma: no cover
+
+                for decorator in chain((scenario(feature.filename, scenario_name, **kwargs),), decorators):
+                    _scenario = decorator(_scenario)
 
                 for test_name in get_python_name_generator(scenario_name):
                     if test_name not in caller_locals:
