@@ -44,7 +44,7 @@ setup(
     + [("Programming Language :: Python :: %s" % x) for x in "3.6 3.7 3.8 3.9".split()],
     python_requires=">=3.6",
     install_requires=["glob2", "Mako", "parse", "parse_type", "py", "pytest>=4.3"],
-    # the following makes a plugin available to py.test
+    # the following makes a plugin available to pytest
     entry_points={
         "pytest11": ["pytest-bdd = pytest_bdd.plugin"],
         "console_scripts": ["pytest-bdd = pytest_bdd.scripts:main"],
