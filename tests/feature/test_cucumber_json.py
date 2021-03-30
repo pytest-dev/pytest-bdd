@@ -8,21 +8,19 @@ def runandparse(testdir, *args):
     """Run tests in testdir and parse json output."""
     resultpath = testdir.tmpdir.join("cucumber.json")
     result = testdir.runpytest("--cucumberjson={0}".format(resultpath), "-s", *args)
-    jsonobject = json.load(resultpath.open())
+    with resultpath.open() as f:
+        jsonobject = json.load(f)
     return result, jsonobject
 
 
 class OfType(object):
-    """Helper object comparison to which is always 'equal'."""
+    """Helper object to help compare object type to initialization type"""
 
     def __init__(self, type=None):
         self.type = type
 
     def __eq__(self, other):
         return isinstance(other, self.type) if self.type else True
-
-
-string = type(u"")
 
 
 def test_step_trace(testdir):
@@ -155,7 +153,7 @@ def test_step_trace(testdir):
                             "line": 12,
                             "match": {"location": ""},
                             "name": "a failing step",
-                            "result": {"error_message": OfType(string), "status": "failed", "duration": OfType(int)},
+                            "result": {"error_message": OfType(str), "status": "failed", "duration": OfType(int)},
                         },
                     ],
                     "tags": [{"name": "scenario-failing-tag", "line": 9}],

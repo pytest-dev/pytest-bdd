@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Pytest-BDD documentation build configuration file, created by
 # sphinx-quickstart on Sun Apr  7 21:07:56 2013.
@@ -15,7 +14,8 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-import sys, os
+import os
+import sys
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -43,8 +43,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"Pytest-BDD"
-copyright = u"2013, Oleg Pidsadnyi"
+project = "Pytest-BDD"
+copyright = "2013, Oleg Pidsadnyi"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -183,7 +183,7 @@ latex_elements = {
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
-latex_documents = [("index", "Pytest-BDD.tex", u"Pytest-BDD Documentation", u"Oleg Pidsadnyi", "manual")]
+latex_documents = [("index", "Pytest-BDD.tex", "Pytest-BDD Documentation", "Oleg Pidsadnyi", "manual")]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
@@ -210,7 +210,7 @@ latex_documents = [("index", "Pytest-BDD.tex", u"Pytest-BDD Documentation", u"Ol
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("index", "pytest-bdd", u"Pytest-BDD Documentation", [u"Oleg Pidsadnyi"], 1)]
+man_pages = [("index", "pytest-bdd", "Pytest-BDD Documentation", ["Oleg Pidsadnyi"], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -225,8 +225,8 @@ texinfo_documents = [
     (
         "index",
         "Pytest-BDD",
-        u"Pytest-BDD Documentation",
-        u"Oleg Pidsadnyi",
+        "Pytest-BDD Documentation",
+        "Oleg Pidsadnyi",
         "Pytest-BDD",
         "One line description of project.",
         "Miscellaneous",

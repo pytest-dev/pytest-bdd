@@ -24,45 +24,13 @@ Syntax example:
 one line.
 """
 import os.path
-import sys
 
 import glob2
 
 from .parser import parse_feature
 
-
 # Global features dictionary
 features = {}
-
-
-def force_unicode(obj, encoding="utf-8"):
-    """Get the unicode string out of given object (python 2 and python 3).
-
-    :param obj: An `object`, usually a string.
-
-    :return: unicode string.
-    """
-    if sys.version_info < (3, 0):
-        if isinstance(obj, str):
-            return obj.decode(encoding)
-        else:
-            return unicode(obj)
-    else:  # pragma: no cover
-        return str(obj)
-
-
-def force_encode(string, encoding="utf-8"):
-    """Force string encoding (Python compatibility function).
-
-    :param str string: A string value.
-    :param str encoding: Encoding.
-
-    :return: Encoded string.
-    """
-    if sys.version_info < (3, 0):
-        if isinstance(string, unicode):
-            string = string.encode(encoding)
-    return string
 
 
 def get_feature(base_path, filename, encoding="utf-8"):

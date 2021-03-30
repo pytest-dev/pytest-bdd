@@ -1,13 +1,9 @@
 """Cucumber json output formatter."""
 
-import codecs
 import json
 import math
 import os
-import sys
 import time
-
-from .feature import force_unicode
 
 
 def add_options(parser):
@@ -72,7 +68,7 @@ class LogBDDCucumberJSON(object):
         if report.passed or not step["failed"]:  # ignore setup/teardown
             result = {"status": "passed"}
         elif report.failed and step["failed"]:
-            result = {"status": "failed", "error_message": force_unicode(report.longrepr) if error_message else ""}
+            result = {"status": "failed", "error_message": str(report.longrepr) if error_message else ""}
         elif report.skipped:
             result = {"status": "skipped"}
         result["duration"] = int(math.floor((10 ** 9) * step["duration"]))  # nanosec
@@ -171,11 +167,7 @@ class LogBDDCucumberJSON(object):
         self.suite_start_time = time.time()
 
     def pytest_sessionfinish(self):
-        if sys.version_info[0] < 3:
-            logfile_open = codecs.open
-        else:
-            logfile_open = open
-        with logfile_open(self.logfile, "w", encoding="utf-8") as logfile:
+        with open(self.logfile, "w", encoding="utf-8") as logfile:
             logfile.write(json.dumps(list(self.features.values())))
 
     def pytest_terminal_summary(self, terminalreporter):

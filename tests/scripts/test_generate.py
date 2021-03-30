@@ -1,11 +1,8 @@
-# coding=utf-8
 """Test code generation command."""
 
 import os
 import sys
 import textwrap
-
-import six
 
 from pytest_bdd.scripts import main
 
@@ -19,7 +16,7 @@ def test_generate(testdir, monkeypatch, capsys):
     feature = features.join("generate.feature")
     feature.write_text(
         textwrap.dedent(
-            u"""\
+            """\
             Feature: Code generation
 
                 Scenario: Given and when using the same fixture should not evaluate it twice
@@ -39,8 +36,7 @@ def test_generate(testdir, monkeypatch, capsys):
     main()
     out, err = capsys.readouterr()
     assert out == textwrap.dedent(
-        '''
-    # coding=utf-8
+        '''\
     """Code generation feature tests."""
 
     from pytest_bdd import (
@@ -79,11 +75,7 @@ def test_generate(testdir, monkeypatch, capsys):
         """my list should be [1]."""
         raise NotImplementedError
 
-    '''[
-            1:
-        ].replace(
-            u"'", u"'"
-        )
+    '''
     )
 
 
@@ -111,7 +103,6 @@ def test_generate_with_quotes(testdir):
     result = testdir.run("pytest-bdd", "generate", "generate_with_quotes.feature")
     assert result.stdout.str() == textwrap.dedent(
         '''\
-    # coding=utf-8
     """Handling quotes in code generation feature tests."""
 
     from pytest_bdd import (
@@ -165,7 +156,7 @@ def test_generate_with_quotes(testdir):
     )
 
 
-def test_unicode_characters(testdir):
+def test_unicode_characters(testdir, monkeypatch):
     """Test generating code with unicode characters.
 
     Primary purpose is to ensure compatibility with Python2.
@@ -175,7 +166,6 @@ def test_unicode_characters(testdir):
         ".feature",
         unicode_characters=textwrap.dedent(
             """\
-        # coding=utf-8
         Feature: Generating unicode characters
 
             Scenario: Calculating the circumference of a circle
@@ -186,10 +176,12 @@ def test_unicode_characters(testdir):
         ),
     )
 
+    if sys.version_info < (3, 7):
+        monkeypatch.setenv("PYTHONIOENCODING", "utf-8")
+
     result = testdir.run("pytest-bdd", "generate", "unicode_characters.feature")
     expected_output = textwrap.dedent(
-        u'''\
-            # coding=utf-8
+        '''\
             """Generating unicode characters feature tests."""
 
             from pytest_bdd import (
@@ -218,11 +210,9 @@ def test_unicode_characters(testdir):
 
 
             @then('We calculate 2 * ℼ * 𝑟')
-            def {function_with_unicode_chars}():
+            def we_calculate_2__ℼ__𝑟():
                 """We calculate 2 * ℼ * 𝑟."""
                 raise NotImplementedError
-            '''.format(
-            function_with_unicode_chars=u"we_calculate_2__ℼ__𝑟" if not six.PY2 else u"we_calculate_2____"
-        )
+            '''
     )
     assert result.stdout.str() == expected_output

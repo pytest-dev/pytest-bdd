@@ -3,12 +3,10 @@
 from __future__ import absolute_import
 
 import re as base_re
+from functools import partial
 
 import parse as base_parse
-import six
 from parse_type import cfparse as base_cfparse
-
-from .exceptions import InvalidStepParserError
 
 
 class StepParser(object):
@@ -22,11 +20,11 @@ class StepParser(object):
 
         :return: `dict` of step arguments
         """
-        raise NotImplementedError()
+        raise NotImplementedError()  # pragma: no cover
 
     def is_matching(self, name):
         """Match given name with the step name."""
-        raise NotImplementedError()
+        raise NotImplementedError()  # pragma: no cover
 
 
 class re(StepParser):
@@ -84,6 +82,11 @@ class cfparse(parse):
 class string(StepParser):
     """Exact string step parser."""
 
+    def __init__(self, name):
+        """Stringify"""
+        name = str(name, **({"encoding": "utf-8"} if isinstance(name, bytes) else {}))
+        super().__init__(name)
+
     def parse_arguments(self, name):
         """No parameters are available for simple string step.
 
@@ -104,11 +107,11 @@ def get_parser(step_name):
     :return: step parser object
     :rtype: StepArgumentParser
     """
-    if isinstance(step_name, six.string_types):
-        if isinstance(step_name, six.binary_type):  # Python 2 compatibility
-            step_name = step_name.decode("utf-8")
-        return string(step_name)
-    elif not hasattr(step_name, "is_matching") or not hasattr(step_name, "parse_arguments"):
-        raise InvalidStepParserError(step_name)
-    else:
+
+    def does_support_parser_interface(obj):
+        return all(map(partial(hasattr, obj), ["is_matching", "parse_arguments"]))
+
+    if does_support_parser_interface(step_name):
         return step_name
+    else:
+        return string(step_name)

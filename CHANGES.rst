@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Unreleased
+-----------
+- Drop compatibility for python 2 and officially support only python >= 3.6.
+
 4.0.2
 -----
 - Fix a bug that prevents using comments in the ``Examples:`` section. (youtux)

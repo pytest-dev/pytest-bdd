@@ -36,7 +36,6 @@ def given_beautiful_article(article):
 """
 
 from __future__ import absolute_import
-import inspect
 
 import pytest
 
@@ -45,24 +44,20 @@ try:
 except ImportError:
     from _pytest import python as pytest_fixtures
 
-from .feature import force_encode
 from .types import GIVEN, WHEN, THEN
 from .parsers import get_parser
 from .utils import get_args, get_caller_module_locals
 
 
-def get_step_fixture_name(name, type_, encoding=None):
+def get_step_fixture_name(name, type_):
     """Get step fixture name.
 
-    :param name: unicode string
+    :param name: string
     :param type: step type
-    :param encoding: encoding
     :return: step fixture name
     :rtype: string
     """
-    return "pytestbdd_{type}_{name}".format(
-        type=type_, name=force_encode(name, **(dict(encoding=encoding) if encoding else {}))
-    )
+    return f"pytestbdd_{type_}_{name}"
 
 
 def given(name, converters=None, target_fixture=None):
@@ -118,7 +113,7 @@ def _step_decorator(step_type, step_name, converters=None, target_fixture=None):
         parser_instance = get_parser(step_name)
         parsed_step_name = parser_instance.name
 
-        step_func.__name__ = force_encode(parsed_step_name)
+        step_func.__name__ = str(parsed_step_name)
 
         def lazy_step_func():
             return step_func
