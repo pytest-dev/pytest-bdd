@@ -1,8 +1,9 @@
 """Various utility functions."""
-
+from collections import namedtuple
 from inspect import getframeinfo
 from inspect import signature as _signature
 from sys import _getframe
+from typing import Tuple
 
 CONFIG_STACK = []
 
@@ -19,8 +20,11 @@ def get_args(func):
     return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
 
 
-def get_parametrize_markers_args(node):
-    return tuple(arg for mark in node.iter_markers("parametrize") for arg in mark.args)
+Param = namedtuple("Param", ["names", "values"])
+
+
+def get_parametrize_markers(node) -> Tuple[Param]:
+    return tuple(Param(*mark.args) for mark in node.iter_markers("parametrize"))
 
 
 def get_caller_module_locals(depth=2):

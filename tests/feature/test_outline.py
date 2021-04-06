@@ -1,6 +1,8 @@
 """Scenario Outline tests."""
 import textwrap
 
+from pytest import mark
+
 from tests.utils import assert_outcomes
 
 STEPS = """\
@@ -54,7 +56,7 @@ def test_outlined(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd.utils import get_parametrize_markers_args
+        from pytest_bdd.utils import get_parametrize_markers, Param
         from pytest_bdd import scenario
 
         @scenario(
@@ -63,13 +65,13 @@ def test_outlined(testdir):
             example_converters=dict(start=int, eat=float, left=str)
         )
         def test_outline(request):
-            assert get_parametrize_markers_args(request.node) == (
+            assert get_parametrize_markers(request.node) == (Param(
                 ["start", "eat", "left"],
                 [
                     [12, 5.0, "7"],
                     [5, 4.0, "1"],
                 ],
-            )
+            ),)
 
         """
         )
@@ -227,7 +229,6 @@ def test_outlined_with_other_fixtures(testdir):
         textwrap.dedent(
             """\
         import pytest
-        from pytest_bdd.utils import get_parametrize_markers_args
         from pytest_bdd import scenario
 
 
@@ -251,19 +252,28 @@ def test_outlined_with_other_fixtures(testdir):
     result.assert_outcomes(passed=6)
 
 
-def test_vertical_example(testdir):
+@mark.parametrize(
+    "examples_header",
+    [
+        "Examples: Vertical",  # Deprecated
+        "Examples Transposed:",
+        "Examples: Vertical With name",  # Deprecated
+        "Examples Transposed: With name",
+    ],
+)
+def test_vertical_example(testdir, examples_header):
     """Test outlined scenario with vertical examples table."""
     testdir.makefile(
         ".feature",
         outline=textwrap.dedent(
-            """\
+            f"""\
             Feature: Outline
                 Scenario Outline: Outlined with vertical example table
                     Given there are <start> cucumbers
                     When I eat <eat> cucumbers
                     Then I should have <left> cucumbers
 
-                    Examples: Vertical
+                    {examples_header}
                     | start | 12 | 2 |
                     | eat   | 5  | 1 |
                     | left  | 7  | 1 |
@@ -277,7 +287,7 @@ def test_vertical_example(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd.utils import get_parametrize_markers_args
+        from pytest_bdd.utils import get_parametrize_markers, Param
         from pytest_bdd import scenario
 
         @scenario(
@@ -286,13 +296,13 @@ def test_vertical_example(testdir):
             example_converters=dict(start=int, eat=float, left=str)
         )
         def test_outline(request):
-            assert get_parametrize_markers_args(request.node) == (
+            assert get_parametrize_markers(request.node) == (Param(
                 ["start", "eat", "left"],
                 [
                     [12, 5.0, "7"],
                     [2, 1.0, "1"],
                 ],
-            )
+            ),)
 
         """
         )
@@ -329,7 +339,8 @@ def test_outlined_feature(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd.utils import get_parametrize_markers_args
+        from deepdiff import DeepDiff
+        from pytest_bdd.utils import get_parametrize_markers, Param
         from pytest_bdd import given, when, then, scenario
 
         @scenario(
@@ -338,11 +349,12 @@ def test_outlined_feature(testdir):
             example_converters=dict(start=int, eat=float, left=str)
         )
         def test_outline(request):
-            assert get_parametrize_markers_args(request.node) == (
-                ["start", "eat", "left"],
-                [[12, 5.0, "7"], [5, 4.0, "1"]],
-                ["fruits"],
-                [["oranges"], ["apples"]],
+            assert not DeepDiff(
+                get_parametrize_markers(request.node), 
+                (Param(["start", "eat", "left"], [[12, 5.0, "7"], [5, 4.0, "1"]]), 
+                 Param(["fruits"],[["oranges"], ["apples"]],)), 
+                ignore_order=True, 
+                report_repetition=True
             )
 
         @given("there are <start> <fruits>", target_fixture="start_fruits")
@@ -368,6 +380,7 @@ def test_outlined_feature(testdir):
         )
     )
     result = testdir.runpytest()
+
     result.assert_outcomes(passed=4)
 
 
@@ -402,8 +415,6 @@ def test_outline_with_escaped_pipes(testdir):
             import base64
 
             from pytest_bdd import scenario, given, when, then
-            from pytest_bdd.utils import get_parametrize_markers_args
-
 
             @scenario("outline.feature", "Outline with escaped pipe character")
             def test_outline_with_escaped_pipe_character(request):

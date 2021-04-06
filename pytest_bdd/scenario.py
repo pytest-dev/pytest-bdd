@@ -13,6 +13,7 @@ test_publish_article = scenario(
 import collections
 import os
 import re
+from functools import partial, reduce
 
 import pytest
 from _pytest.fixtures import FixtureLookupError
@@ -160,14 +161,32 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name):
             if arg not in function_args:
                 function_args.append(arg)
 
+        scenario_param_data = collections.defaultdict(list)
+        for params_tags, param_set in scenario.get_params():
+            param_names, param_values = param_set
+            scenario_param_data[tuple(param_names)].append((params_tags, param_values))
+
+        decorator_chain = []
+
+        for param_names in scenario_param_data.keys():
+            parametrize_values = []
+            for param_tags, param_values in scenario_param_data[param_names]:
+                marks = list(map(partial(getattr, pytest.mark), param_tags))
+                parametrize_values.extend(
+                    [pytest.param(*param_value, marks=marks) for param_value in param_values] if marks else param_values
+                )
+
+            decorator_chain.append(pytest.mark.parametrize(list(param_names), parametrize_values))
+
+        compose = lambda *func: reduce(lambda f, g: lambda x: f(g(x)), func, lambda x: x)
+        composed_decorator = compose(*decorator_chain)
+
+        @composed_decorator
         @pytest.mark.usefixtures(*function_args)
         def scenario_wrapper(request):
             _execute_scenario(feature, scenario, request)
             return fn(*[request.getfixturevalue(arg) for arg in args])
 
-        for param_set in scenario.get_params():
-            if param_set:
-                scenario_wrapper = pytest.mark.parametrize(*param_set)(scenario_wrapper)
         for tag in scenario.tags.union(feature.tags):
             config = CONFIG_STACK[-1]
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)

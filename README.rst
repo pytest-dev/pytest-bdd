@@ -496,13 +496,13 @@ pytest-bdd feature file format also supports example tables in different way:
             When I eat <eat> cucumbers
             Then I should have <left> cucumbers
 
-            Examples: Vertical
+            Examples Transposed:
             | start | 12 | 2 |
             | eat   | 5  | 1 |
             | left  | 7  | 1 |
 
 This form allows to have tables with lots of columns keeping the maximum text width predictable without significant
-readability change.
+readability change. "Examples: Vertical" examples header also could be used, but will be removed in future
 
 The code will look like:
 
@@ -601,6 +601,41 @@ This is allowed as long as parameter names do not clash:
             | carrots    |
             | tomatoes   |
 
+Feature and scenario outlines support tags and multiple example tables.
+Outline tags could be used for test suite selection but not for applying hook tag
+
+.. code-block:: gherkin
+
+    Feature: Outlined
+        Background:
+            Given I have cucumbers at <tableware>
+
+        @indoor
+        Examples: Indoor
+            |tableware|
+            |dish     |
+            |plate    |
+
+        @outdoor
+        Examples Transposed: Outdoor
+            |tableware|basket|lunchbox|
+
+        Scenario Outline: Outlined given, when, thens
+            Given there are <start> cucumbers
+            When I eat <eat> cucumbers
+            Then I should have <left> cucumbers
+
+            @breakfast
+            Examples: Vertical Breakfast
+            | start | 12 | 2 |
+            | eat   | 5  | 1 |
+            | left  | 7  | 1 |
+
+            @lunch
+            Examples: Lunch
+            |start|eat|left|
+            |3    |1  |2   |
+            |2    |2  |0   |
 
 Combine scenario outline and pytest parametrization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

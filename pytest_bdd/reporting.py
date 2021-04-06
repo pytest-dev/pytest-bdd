@@ -5,8 +5,11 @@ that enriches the pytest test reporting.
 """
 
 import time
+from itertools import chain
 
-from .utils import get_parametrize_markers_args
+from _pytest.mark import ParameterSet
+
+from .utils import get_parametrize_markers
 
 
 class StepReport:
@@ -70,21 +73,7 @@ class ScenarioReport:
         """
         self.scenario = scenario
         self.step_reports = []
-        self.param_index = None
-        parametrize_args = get_parametrize_markers_args(node)
-        if parametrize_args and scenario.examples:
-            param_names = (
-                parametrize_args[0] if isinstance(parametrize_args[0], (tuple, list)) else [parametrize_args[0]]
-            )
-            param_values = parametrize_args[1]
-            node_param_values = [node.funcargs[param_name] for param_name in param_names]
-            if node_param_values in param_values:
-                self.param_index = param_values.index(node_param_values)
-            elif tuple(node_param_values) in param_values:
-                self.param_index = param_values.index(tuple(node_param_values))
-        self.example_kwargs = {
-            example_param: str(node.funcargs[example_param]) for example_param in scenario.get_example_params()
-        }
+        self.node = node
 
     @property
     def current_step_report(self):
@@ -112,7 +101,6 @@ class ScenarioReport:
         scenario = self.scenario
         feature = scenario.feature
 
-        params = sum(scenario.get_params(builtin=True), []) if scenario.examples else None
         return {
             "steps": [step_report.serialize() for step_report in self.step_reports],
             "name": scenario.name,
@@ -126,17 +114,42 @@ class ScenarioReport:
                 "description": feature.description,
                 "tags": sorted(feature.tags),
             },
+            **self.serialize_examples(),
+        }
+
+    def get_param_index(self, param_names):
+        parametrize_args = get_parametrize_markers(self.node)
+
+        for parametrize_arg in parametrize_args:
+            arg_param_names = (
+                parametrize_arg.names if isinstance(parametrize_arg[0], (tuple, list)) else [parametrize_arg.names]
+            )
+            param_values = [list(v.values) if isinstance(v, ParameterSet) else v for v in parametrize_arg.values]
+            if param_names == arg_param_names:
+                node_param_values = [self.node.funcargs[param_name] for param_name in param_names]
+                if node_param_values in param_values:
+                    return param_values.index(node_param_values)
+                elif tuple(node_param_values) in param_values:
+                    return param_values.index(tuple(node_param_values))
+
+    def serialize_examples(self):
+        return {
             "examples": [
                 {
-                    "name": scenario.examples.name,
-                    "line_number": scenario.examples.line_number,
-                    "rows": params,
-                    "row_index": self.param_index,
+                    "name": example_table.name,
+                    "line_number": example_table.line_number,
+                    "rows": list(example_table.get_params(self.scenario.example_converters, builtin=True)),
+                    "row_index": self.get_param_index(example_table.example_params),
+                    "tags": list(example_table.tags),
                 }
-            ]
-            if scenario.examples
-            else [],
-            "example_kwargs": self.example_kwargs,
+                for example_table in chain(
+                    self.scenario.examples.example_tables, self.scenario.feature.examples.example_tables
+                )
+            ],
+            "example_kwargs": {
+                example_param: str(self.node.funcargs[example_param])
+                for example_param in self.scenario.get_example_params()
+            },
         }
 
     def fail(self):

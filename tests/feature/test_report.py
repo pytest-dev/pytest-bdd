@@ -1,7 +1,7 @@
 """Test scenario reporting."""
 import textwrap
 
-import pytest
+import execnet.gateway_base
 
 
 class OfType:
@@ -25,6 +25,7 @@ def test_step_trace(testdir):
         feature-tag
         scenario-passing-tag
         scenario-failing-tag
+        example-tag
     """
         ),
     )
@@ -50,7 +51,8 @@ def test_step_trace(testdir):
             When I eat <eat> cucumbers
             Then I should have <left> cucumbers
 
-            Examples:
+            @example-tag
+            Examples: Breakfast
             | start | eat | left |
             |  12   |  5  |  7   |
             |  5    |  4  |  1   |
@@ -215,10 +217,11 @@ def test_step_trace(testdir):
         "tags": [],
         "examples": [
             {
-                "line_number": 19,
-                "name": None,
+                "line_number": 20,
+                "name": "Breakfast",
                 "row_index": 0,
                 "rows": [["start", "eat", "left"], [[12, 5.0, "7"], [5, 4.0, "1"]]],
+                "tags": ["example-tag"],
             }
         ],
         "example_kwargs": {"eat": "5.0", "left": "7", "start": "12"},
@@ -266,10 +269,11 @@ def test_step_trace(testdir):
         "tags": [],
         "examples": [
             {
-                "line_number": 19,
-                "name": None,
+                "line_number": 20,
+                "name": "Breakfast",
                 "row_index": 1,
                 "rows": [["start", "eat", "left"], [[12, 5.0, "7"], [5, 4.0, "1"]]],
+                "tags": ["example-tag"],
             }
         ],
         "example_kwargs": {"eat": "4.0", "left": "1", "start": "5"},
@@ -279,10 +283,6 @@ def test_step_trace(testdir):
 
 def test_complex_types(testdir):
     """Test serialization of the complex types."""
-    try:
-        import execnet.gateway_base
-    except ImportError:
-        pytest.skip("Execnet not installed")
 
     testdir.makefile(
         ".feature",

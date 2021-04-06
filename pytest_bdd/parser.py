@@ -3,6 +3,11 @@ import os.path
 import re
 import textwrap
 from collections import OrderedDict
+from itertools import chain
+from operator import attrgetter
+from typing import List, Type
+
+from attr import attrs, attrib, Factory
 
 from . import types, exceptions
 
@@ -11,7 +16,8 @@ COMMENT_RE = re.compile(r"(^|(?<=\s))#")
 STEP_PREFIXES = [
     ("Feature: ", types.FEATURE),
     ("Scenario Outline: ", types.SCENARIO_OUTLINE),
-    ("Examples: Vertical", types.EXAMPLES_VERTICAL),
+    ("Examples: Vertical", types.EXAMPLES_VERTICAL_LEGACY),
+    ("Examples Transposed:", types.EXAMPLES_TRANSPOSED),
     ("Examples:", types.EXAMPLES),
     ("Scenario: ", types.SCENARIO),
     ("Background:", types.BACKGROUND),
@@ -142,8 +148,7 @@ def parse_feature(basedir, filename, encoding="utf-8"):
                     clean_line,
                     filename,
                 )
-
-        prev_mode = mode
+        prev_prev_mode, prev_mode = prev_mode, mode
 
         # Remove Feature, Given, When, Then, And
         keyword, parsed_line = parse_line(clean_line)
@@ -154,19 +159,35 @@ def parse_feature(basedir, filename, encoding="utf-8"):
             feature.background = Background(feature=feature, line_number=line_number)
         elif mode == types.EXAMPLES:
             mode = types.EXAMPLES_HEADERS
-            (scenario or feature).examples.line_number = line_number
-        elif mode == types.EXAMPLES_VERTICAL:
-            mode = types.EXAMPLE_LINE_VERTICAL
-            (scenario or feature).examples.line_number = line_number
+            _, example_table_name = parse_line(clean_line)
+            obj = scenario or feature
+            obj.examples.add_example_table(UsualExampleTable)
+            obj.examples.last_example_table.name = example_table_name or None
+            obj.examples.last_example_table.line_number = line_number
+            if prev_prev_mode == types.TAG:
+                obj.examples.last_example_table.tags = get_tags(prev_line)
+        elif (
+            mode == types.EXAMPLES_TRANSPOSED or mode == types.EXAMPLES_VERTICAL_LEGACY
+        ):  # Deprecated; Has to be removed in future versions
+            mode = types.EXAMPLE_LINE_TRANSPOSED
+            _, example_table_name = parse_line(clean_line)
+            obj = scenario or feature
+            obj.examples.add_example_table(TransposedExampleTable)
+            obj.examples.last_example_table.name = example_table_name or None
+            obj.examples.last_example_table.line_number = line_number
+            if prev_prev_mode == types.TAG:
+                obj.examples.last_example_table.tags = get_tags(prev_line)
         elif mode == types.EXAMPLES_HEADERS:
-            (scenario or feature).examples.set_param_names([l for l in split_line(parsed_line) if l])
+            (scenario or feature).examples.last_example_table.set_param_names([l for l in split_line(parsed_line) if l])
             mode = types.EXAMPLE_LINE
         elif mode == types.EXAMPLE_LINE:
-            (scenario or feature).examples.add_example([l for l in split_line(stripped_line)])
-        elif mode == types.EXAMPLE_LINE_VERTICAL:
+            example_table: UsualExampleTable = (scenario or feature).examples.last_example_table
+            example_table.add_example([l for l in split_line(stripped_line)])
+        elif mode == types.EXAMPLE_LINE_TRANSPOSED:
             param_line_parts = [l for l in split_line(stripped_line)]
             try:
-                (scenario or feature).examples.add_example_row(param_line_parts[0], param_line_parts[1:])
+                example_table: TransposedExampleTable = (scenario or feature).examples.last_example_table
+                example_table.add_example_row(param_line_parts[0], param_line_parts[1:])
             except exceptions.ExamplesNotValidError as exc:
                 if scenario:
                     raise exceptions.FeatureError(
@@ -267,12 +288,20 @@ class Scenario:
 
     def get_example_params(self):
         """Get example parameter names."""
-        return set(self.examples.example_params + self.feature.examples.example_params)
+        return set(
+            chain(
+                *map(
+                    attrgetter("example_params"),
+                    chain(self.examples.example_tables, self.feature.examples.example_tables),
+                ),
+            )
+        )
 
     def get_params(self, builtin=False):
         """Get converted example params."""
         for examples in [self.feature.examples, self.examples]:
-            yield examples.get_params(self.example_converters, builtin=builtin)
+            for example_table in examples.example_tables:
+                yield example_table.tags, example_table.get_params(self.example_converters, builtin=builtin)
 
     def validate(self):
         """Validate the scenario.
@@ -373,17 +402,28 @@ class Background:
         self.steps.append(step)
 
 
+@attrs
 class Examples:
+    example_tables: List["ExampleTable"] = attrib(default=Factory(list))
 
+    def add_example_table(self, builder: Type["ExampleTable"]):
+        self.example_tables.append(builder())
+
+    @property
+    def last_example_table(self) -> "ExampleTable":
+        return self.example_tables[-1]
+
+
+@attrs
+class ExampleTable(object):
     """Example table."""
 
-    def __init__(self):
-        """Initialize examples instance."""
-        self.example_params = []
-        self.examples = []
-        self.vertical_examples = []
-        self.line_number = None
-        self.name = None
+    example_params = attrib(default=Factory(list))
+    examples = attrib(default=Factory(list))
+
+    line_number = attrib(default=None)
+    name = attrib(default=None)
+    tags = attrib(default=Factory(list))
 
     def set_param_names(self, keys):
         """Set parameter names.
@@ -392,12 +432,28 @@ class Examples:
         """
         self.example_params = [str(key) for key in keys]
 
-    def add_example(self, values):
-        """Add example.
+    def get_params(self, converters, builtin=False):
+        """Get scenario pytest parametrization table.
 
-        :param values: `list` of `string` parameter values.
+        :param converters: `dict` of converter functions to convert parameter values
         """
-        self.examples.append(values)
+        params = []
+
+        for example in self.examples:
+            example = list(example)
+            for index, param in enumerate(self.example_params):
+                raw_value = example[index]
+                if converters and param in converters:
+                    value = converters[param](raw_value)
+                    if not builtin or value.__class__.__module__ in {"__builtin__", "builtins"}:
+                        example[index] = value
+            params.append(example)
+        return self.example_params, params
+
+
+@attrs
+class TransposedExampleTable(ExampleTable):
+    example_param_values = attrib(default=Factory(list))
 
     def add_example_row(self, param, values):
         """Add example row.
@@ -410,39 +466,24 @@ class Examples:
                 f"""Example rows should contain unique parameters. "{param}" appeared more than once"""
             )
         self.example_params.append(param)
-        self.vertical_examples.append(values)
+        self.example_param_values.append(values)
 
     def get_params(self, converters, builtin=False):
         """Get scenario pytest parametrization table.
 
         :param converters: `dict` of converter functions to convert parameter values
         """
-        param_count = len(self.example_params)
-        if self.vertical_examples and not self.examples:
-            for value_index in range(len(self.vertical_examples[0])):
-                example = []
-                for param_index in range(param_count):
-                    example.append(self.vertical_examples[param_index][value_index])
-                self.examples.append(example)
+        self.examples = list(zip(*self.example_param_values))
+        return super().get_params(converters, builtin=builtin)
 
-        if self.examples:
-            params = []
-            for example in self.examples:
-                example = list(example)
-                for index, param in enumerate(self.example_params):
-                    raw_value = example[index]
-                    if converters and param in converters:
-                        value = converters[param](raw_value)
-                        if not builtin or value.__class__.__module__ in {"__builtin__", "builtins"}:
-                            example[index] = value
-                params.append(example)
-            return [self.example_params, params]
-        else:
-            return []
 
-    def __bool__(self):
-        """Bool comparison."""
-        return bool(self.vertical_examples or self.examples)
+class UsualExampleTable(ExampleTable):
+    def add_example(self, values):
+        """Add example.
+
+        :param values: `list` of `string` parameter values.
+        """
+        self.examples.append(values)
 
 
 def get_tags(line):

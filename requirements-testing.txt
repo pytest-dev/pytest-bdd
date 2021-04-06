@@ -1,1 +1,3 @@
+execnet
+deepdiff
 packaging

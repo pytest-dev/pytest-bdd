@@ -6,6 +6,7 @@ Unreleased
 - Drop compatibility for python 2 and officially support only python >= 3.6.
 - Fix error when using `--cucumber-json-expanded` in combination with `example_converters` (marcbrossaissogeti).
 - Fix `--generate-missing` not correctly recognizing steps with parsers
+- Add partial support of tags for ``Examples:`` ; Fixes minor bugs with Examples
 
 4.0.2
 -----

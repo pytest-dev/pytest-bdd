@@ -45,12 +45,12 @@ def test_scenario_with_empty_example_values(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd.utils import get_parametrize_markers_args
+        from pytest_bdd.utils import get_parametrize_markers, Param
         from pytest_bdd import scenario
 
         @scenario("outline.feature", "Outlined with empty example values")
         def test_outline(request):
-            assert get_parametrize_markers_args(request.node) == ([u"start", u"eat", u"left"], [["#", "", ""]])
+            assert get_parametrize_markers(request.node) == (Param([u"start", u"eat", u"left"], [["#", "", ""]]),)
 
         """
         )
@@ -82,12 +82,12 @@ def test_scenario_with_empty_example_values_vertical(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd.utils import get_parametrize_markers_args
+        from pytest_bdd.utils import get_parametrize_markers, Param
         from pytest_bdd import scenario
 
         @scenario("outline.feature", "Outlined with empty example values vertical")
         def test_outline(request):
-            assert get_parametrize_markers_args(request.node) == ([u"start", u"eat", u"left"], [["#", "", ""]])
+            assert get_parametrize_markers(request.node) == (Param([u"start", u"eat", u"left"], [["#", "", ""]]),)
 
         """
         )
