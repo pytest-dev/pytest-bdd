@@ -25,6 +25,7 @@ def test_generate_missing(testdir):
 
                 Background:
                     Given I have a foobar
+                    And I have 3 baz
 
                 Scenario: Scenario tests which are already bound to the tests stay as is
                     Given I have a bar
@@ -45,13 +46,17 @@ def test_generate_missing(testdir):
             """\
         import functools
 
-        from pytest_bdd import scenario, given
+        from pytest_bdd import scenario, given, parsers
 
         scenario = functools.partial(scenario, "generation.feature")
 
         @given("I have a bar")
         def i_have_a_bar():
             return "bar"
+
+        @given(parsers.parse("I have {n:d} baz"))
+        def i_have_n_baz(n):
+            return "baz"
 
         @scenario("Scenario tests which are already bound to the tests stay as is")
         def test_foo():
@@ -80,6 +85,8 @@ def test_generate_missing(testdir):
         ]
     )
 
+    assert 'Step Given "I have 3 baz" is not defined' not in result.stdout.str()
+    
     result.stdout.fnmatch_lines(
         ['Step Given "I have a foobar" is not defined in the background of the feature "Missing code generation" *']
     )

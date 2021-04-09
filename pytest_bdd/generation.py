@@ -120,7 +120,7 @@ def _find_step_fixturedef(fixturemanager, item, name, type_):
     if not fixturedefs:
         name = find_argumented_step_fixture_name(name, type_, fixturemanager)
         if name:
-            return _find_step_fixturedef(fixturemanager, item, name, type_)
+            return fixturemanager._arg2fixturedefs.get(name, None)
     else:
         return fixturedefs
 
