@@ -102,7 +102,7 @@ def print_missing_code(scenarios, steps):
     tw.line()
 
     features = sorted(
-        set(scenario.feature for scenario in scenarios), key=lambda feature: feature.name or feature.filename
+        {scenario.feature for scenario in scenarios}, key=lambda feature: feature.name or feature.filename
     )
     code = generate_code(features, scenarios, steps)
     tw.write(code)

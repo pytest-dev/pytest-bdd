@@ -7,13 +7,13 @@ import textwrap
 def runandparse(testdir, *args):
     """Run tests in testdir and parse json output."""
     resultpath = testdir.tmpdir.join("cucumber.json")
-    result = testdir.runpytest("--cucumberjson={0}".format(resultpath), "-s", *args)
+    result = testdir.runpytest(f"--cucumberjson={resultpath}", "-s", *args)
     with resultpath.open() as f:
         jsonobject = json.load(f)
     return result, jsonobject
 
 
-class OfType(object):
+class OfType:
     """Helper object to help compare object type to initialization type"""
 
     def __init__(self, type=None):
