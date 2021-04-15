@@ -90,7 +90,7 @@ class LogBDDCucumberJSON(object):
 
     def _format_name(self, name, keys, values):
         for param, value in zip(keys, values):
-            name = name.replace("<{}>".format(param), value)
+            name = name.replace("<{}>".format(param), str(value))
         return name
 
     def _format_step_name(self, report, step):
