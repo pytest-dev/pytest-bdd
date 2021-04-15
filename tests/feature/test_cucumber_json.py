@@ -283,32 +283,18 @@ def test_step_trace_with_expand_option(testdir):
 
 
 def test_converters_dict_with_expand_option(testdir):
-    """Test step trace."""
-    testdir.makefile(
-        ".ini",
-        pytest=textwrap.dedent(
-            """
-    [pytest]
-    markers =
-        feature-tag
-        scenario-outline-passing-tag
-    """
-        ),
-    )
+    """Test that `--cucumber-json-expanded` works correctly when using `example_converters`."""
     testdir.makefile(
         ".feature",
         test=textwrap.dedent(
             """
-    @feature-tag
-    Feature: One scenario outline, expanded to multiple scenarios
-
-        @scenario-outline-passing-tag
+    Feature: Expanded option with example converters
         Scenario: Passing outline
-            Given intvalue <intvalue> and stringvalue <stringvalue> and floatvalue <floatvalue>
+            Given there is an intvalue <intvalue> and stringvalue <stringvalue> and floatvalue <floatvalue>
 
             Examples: example1
-            | intvalue| stringvalue | floatvalue |
-            | 1     | hello  | 1.0 |
+            | intvalue | stringvalue | floatvalue |
+            | 1        | hello       | 1.0        |
     """
         ),
     )
@@ -317,12 +303,16 @@ def test_converters_dict_with_expand_option(testdir):
             """
         import pytest
         from pytest_bdd import given, scenario
-
-        @given('intvalue <intvalue> and stringvalue <stringvalue> and floatvalue <floatvalue>')
+        
+        @given('there is an intvalue <intvalue> and stringvalue <stringvalue> and floatvalue <floatvalue>')
         def type_type_and_value_value():
-            return 'pass'
-
-        @scenario('test.feature', 'Passing outline', example_converters=dict(intvalue=int, stringvalue=str, floatvalue=float))
+            pass
+        
+        @scenario(
+            'test.feature',
+            'Passing outline',
+            example_converters={"intvalue":int, "stringvalue":str, "floatvalue":float},
+        )
         def test_passing_outline():
             pass
     """
@@ -331,4 +321,5 @@ def test_converters_dict_with_expand_option(testdir):
     result, jsonobject = runandparse(testdir, "--cucumber-json-expanded")
     assert result.ret == 0
 
-    assert jsonobject[0]["elements"][0]["steps"][0]["name"] == "intvalue 1 and stringvalue hello and floatvalue 1.0"
+    expanded_step_name = jsonobject[0]["elements"][0]["steps"][0]["name"]
+    assert expanded_step_name == "there is an intvalue 1 and stringvalue hello and floatvalue 1.0"
