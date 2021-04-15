@@ -54,8 +54,9 @@ def prepare_testdir(testdir, ini_base_dir):
     feature_file = testdir.mkdir("features").join("steps.feature")
     feature_file.write(
         """
-    Scenario: When scenario found
-        Given found
+        Feature: Feature path
+            Scenario: When scenario found
+                Given found
     """
     )
 

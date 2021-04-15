@@ -1,10 +1,10 @@
 """Test scenario reporting."""
 import textwrap
+
 import pytest
 
 
-class equals_any(object):
-
+class OfType(object):
     """Helper object comparison to which is always 'equal'."""
 
     def __init__(self, type=None):
@@ -12,12 +12,6 @@ class equals_any(object):
 
     def __eq__(self, other):
         return isinstance(other, self.type) if self.type else True
-
-    def __cmp__(self, other):
-        return 0 if (isinstance(other, self.type) if self.type else False) else -1
-
-
-string = type(u"")
 
 
 def test_step_trace(testdir):
@@ -82,7 +76,7 @@ def test_step_trace(testdir):
         def a_failing_step():
             raise Exception('Error')
 
-        @given('there are <start> cucumbers')
+        @given('there are <start> cucumbers', target_fixture="start_cucumbers")
         def start_cucumbers(start):
             assert isinstance(start, int)
             return dict(start=start)
@@ -110,34 +104,34 @@ def test_step_trace(testdir):
     report = result.matchreport("test_passing", when="call").scenario
     expected = {
         "feature": {
-            "description": u"",
+            "description": "",
             "filename": feature.strpath,
             "line_number": 2,
-            "name": u"One passing scenario, one failing scenario",
+            "name": "One passing scenario, one failing scenario",
             "rel_filename": relpath,
-            "tags": [u"feature-tag"],
+            "tags": ["feature-tag"],
         },
         "line_number": 5,
-        "name": u"Passing",
+        "name": "Passing",
         "steps": [
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "Given",
                 "line_number": 6,
-                "name": u"a passing step",
+                "name": "a passing step",
                 "type": "given",
             },
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "And",
                 "line_number": 7,
-                "name": u"some other passing step",
+                "name": "some other passing step",
                 "type": "given",
             },
         ],
-        "tags": [u"scenario-passing-tag"],
+        "tags": ["scenario-passing-tag"],
         "examples": [],
         "example_kwargs": {},
     }
@@ -147,34 +141,34 @@ def test_step_trace(testdir):
     report = result.matchreport("test_failing", when="call").scenario
     expected = {
         "feature": {
-            "description": u"",
+            "description": "",
             "filename": feature.strpath,
             "line_number": 2,
-            "name": u"One passing scenario, one failing scenario",
+            "name": "One passing scenario, one failing scenario",
             "rel_filename": relpath,
-            "tags": [u"feature-tag"],
+            "tags": ["feature-tag"],
         },
         "line_number": 10,
-        "name": u"Failing",
+        "name": "Failing",
         "steps": [
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "Given",
                 "line_number": 11,
-                "name": u"a passing step",
+                "name": "a passing step",
                 "type": "given",
             },
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": True,
                 "keyword": "And",
                 "line_number": 12,
-                "name": u"a failing step",
+                "name": "a failing step",
                 "type": "given",
             },
         ],
-        "tags": [u"scenario-failing-tag"],
+        "tags": ["scenario-failing-tag"],
         "examples": [],
         "example_kwargs": {},
     }
@@ -183,38 +177,38 @@ def test_step_trace(testdir):
     report = result.matchreport("test_outlined[12-5.0-7]", when="call").scenario
     expected = {
         "feature": {
-            "description": u"",
+            "description": "",
             "filename": feature.strpath,
             "line_number": 2,
-            "name": u"One passing scenario, one failing scenario",
+            "name": "One passing scenario, one failing scenario",
             "rel_filename": relpath,
-            "tags": [u"feature-tag"],
+            "tags": ["feature-tag"],
         },
         "line_number": 14,
-        "name": u"Outlined",
+        "name": "Outlined",
         "steps": [
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "Given",
                 "line_number": 15,
-                "name": u"there are <start> cucumbers",
+                "name": "there are <start> cucumbers",
                 "type": "given",
             },
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "When",
                 "line_number": 16,
-                "name": u"I eat <eat> cucumbers",
+                "name": "I eat <eat> cucumbers",
                 "type": "when",
             },
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "Then",
                 "line_number": 17,
-                "name": u"I should have <left> cucumbers",
+                "name": "I should have <left> cucumbers",
                 "type": "then",
             },
         ],
@@ -234,38 +228,38 @@ def test_step_trace(testdir):
     report = result.matchreport("test_outlined[5-4.0-1]", when="call").scenario
     expected = {
         "feature": {
-            "description": u"",
+            "description": "",
             "filename": feature.strpath,
             "line_number": 2,
-            "name": u"One passing scenario, one failing scenario",
+            "name": "One passing scenario, one failing scenario",
             "rel_filename": relpath,
-            "tags": [u"feature-tag"],
+            "tags": ["feature-tag"],
         },
         "line_number": 14,
-        "name": u"Outlined",
+        "name": "Outlined",
         "steps": [
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "Given",
                 "line_number": 15,
-                "name": u"there are <start> cucumbers",
+                "name": "there are <start> cucumbers",
                 "type": "given",
             },
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "When",
                 "line_number": 16,
-                "name": u"I eat <eat> cucumbers",
+                "name": "I eat <eat> cucumbers",
                 "type": "when",
             },
             {
-                "duration": equals_any(float),
+                "duration": OfType(float),
                 "failed": False,
                 "keyword": "Then",
                 "line_number": 17,
-                "name": u"I should have <left> cucumbers",
+                "name": "I should have <left> cucumbers",
                 "type": "then",
             },
         ],

@@ -3,14 +3,13 @@
 import itertools
 import os.path
 
-from mako.lookup import TemplateLookup
 import py
+from mako.lookup import TemplateLookup
 
+from .feature import get_features
 from .scenario import find_argumented_step_fixture_name, make_python_docstring, make_python_name, make_string_literal
 from .steps import get_step_fixture_name
-from .feature import get_features
 from .types import STEP_TYPES
-
 
 template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
 
@@ -109,7 +108,7 @@ def print_missing_code(scenarios, steps):
     tw.write(code)
 
 
-def _find_step_fixturedef(fixturemanager, item, name, type_, encoding="utf-8"):
+def _find_step_fixturedef(fixturemanager, item, name, type_):
     """Find step fixturedef.
 
     :param request: PyTest Item object.
@@ -117,16 +116,16 @@ def _find_step_fixturedef(fixturemanager, item, name, type_, encoding="utf-8"):
 
     :return: Step function.
     """
-    fixturedefs = fixturemanager.getfixturedefs(get_step_fixture_name(name, type_, encoding), item.nodeid)
+    fixturedefs = fixturemanager.getfixturedefs(get_step_fixture_name(name, type_), item.nodeid)
     if not fixturedefs:
         name = find_argumented_step_fixture_name(name, type_, fixturemanager)
         if name:
-            return _find_step_fixturedef(fixturemanager, item, name, encoding)
+            return _find_step_fixturedef(fixturemanager, item, name, type_)
     else:
         return fixturedefs
 
 
-def parse_feature_files(paths):
+def parse_feature_files(paths, **kwargs):
     """Parse feature files of given paths.
 
     :param paths: `list` of paths (file or dirs)
@@ -134,7 +133,7 @@ def parse_feature_files(paths):
     :return: `list` of `tuple` in form:
              (`list` of `Feature` objects, `list` of `Scenario` objects, `list` of `Step` objects).
     """
-    features = get_features(paths)
+    features = get_features(paths, **kwargs)
     scenarios = sorted(
         itertools.chain.from_iterable(feature.scenarios.values() for feature in features),
         key=lambda scenario: (scenario.feature.name or scenario.feature.filename, scenario.name),

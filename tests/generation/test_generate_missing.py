@@ -1,26 +1,48 @@
 """Code generation and assertion tests."""
 import itertools
-import os.path
 import textwrap
 
 from pytest_bdd.scenario import get_python_name_generator
+from tests.utils import assert_outcomes
 
 
 def test_python_name_generator():
     """Test python name generator function."""
-    itertools.islice(get_python_name_generator("Some name"), 2) == ["some_name", "some_name_2"]
+    assert list(itertools.islice(get_python_name_generator("Some name"), 3)) == [
+        "test_some_name",
+        "test_some_name_1",
+        "test_some_name_2",
+    ]
 
 
 def test_generate_missing(testdir):
     """Test generate missing command."""
-    dirname = "test_generate_missing"
-    tests = testdir.mkpydir(dirname)
-    with open(os.path.join(os.path.dirname(__file__), "generation.feature")) as fd:
-        tests.join("generation.feature").write(fd.read())
+    testdir.makefile(
+        ".feature",
+        generation=textwrap.dedent(
+            """\
+            Feature: Missing code generation
 
-    tests.join("test_foo.py").write(
-        textwrap.dedent(
+                Background:
+                    Given I have a foobar
+
+                Scenario: Scenario tests which are already bound to the tests stay as is
+                    Given I have a bar
+
+
+                Scenario: Code is generated for scenarios which are not bound to any tests
+                    Given I have a bar
+
+
+                Scenario: Code is generated for scenario steps which are not yet defined(implemented)
+                    Given I have a custom bar
             """
+        ),
+    )
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
         import functools
 
         from pytest_bdd import scenario, given
@@ -38,11 +60,14 @@ def test_generate_missing(testdir):
         @scenario("Code is generated for scenario steps which are not yet defined(implemented)")
         def test_missing_steps():
             pass
-    """
+        """
         )
     )
 
-    result = testdir.runpytest(dirname, "--generate-missing", "--feature", tests.join("generation.feature").strpath)
+    result = testdir.runpytest("--generate-missing", "--feature", "generation.feature")
+    assert_outcomes(result, passed=0, failed=0, errors=0)
+    assert not result.stderr.str()
+    assert result.ret == 0
 
     result.stdout.fnmatch_lines(
         ['Scenario "Code is generated for scenarios which are not bound to any tests" is not bound to any test *']
@@ -60,6 +85,3 @@ def test_generate_missing(testdir):
     )
 
     result.stdout.fnmatch_lines(["Please place the code above to the test file(s):"])
-
-    assert not result.stderr.str()
-    assert result.ret == 0

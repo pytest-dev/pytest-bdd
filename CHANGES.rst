@@ -2,13 +2,49 @@ Changelog
 =========
 
 Unreleased
-----------
+-----------
+- Drop compatibility for python 2 and officially support only python >= 3.6.
+
+4.0.2
+-----
+- Fix a bug that prevents using comments in the ``Examples:`` section. (youtux)
+
+
+4.0.1
+-----
+- Fixed performance regression introduced in 4.0.0 where collection time of tests would take way longer than before. (youtux)
+
+
+4.0.0
+-----
+
+This release introduces breaking changes, please refer to the :ref:`Migration from 3.x.x`.
+
+- Strict Gherkin option is removed (``@scenario()`` does not accept the ``strict_gherkin`` parameter). (olegpidsadnyi)
+- ``@scenario()`` does not accept the undocumented parameter ``caller_module`` anymore. (youtux)
+- Given step is no longer a fixture. The scope parameter is also removed. (olegpidsadnyi)
+- Fixture parameter is removed from the given step declaration. (olegpidsadnyi)
+- ``pytest_bdd_step_validation_error`` hook is removed. (olegpidsadnyi)
+- Fix an error with pytest-pylint plugin #374. (toracle)
+- Fix pytest-xdist 2.0 compatibility #369. (olegpidsadnyi)
+- Fix compatibility with pytest 6 ``--import-mode=importlib`` option. (youtux)
+
+
+3.4.0
+-----
+
+- Parse multiline steps according to the gherkin specification #365.
+
+
+3.3.0
+-----
 
 - Drop support for pytest < 4.3.
 - Fix a Python 4.0 bug.
 - Fix ``pytest --generate-missing`` functionality being broken.
 - Fix problematic missing step definition from strings containing quotes.
-- Implement parsing escaped pipe characters in outline parameters #337.
+- Implement parsing escaped pipe characters in outline parameters (Mark90) #337.
+- Disable the strict Gherkin validation in the steps generation (v-buriak) #356.
 
 3.2.1
 ----------

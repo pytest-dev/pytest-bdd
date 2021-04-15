@@ -1,5 +1,5 @@
-BDD library for the py.test runner
-==================================
+BDD library for the pytest runner
+=================================
 
 .. image:: http://img.shields.io/pypi/v/pytest-bdd.svg
    :target: https://pypi.python.org/pypi/pytest-bdd
@@ -7,8 +7,8 @@ BDD library for the py.test runner
   :target: https://codecov.io/gh/pytest-dev/pytest-bdd
 .. image:: https://travis-ci.org/pytest-dev/pytest-bdd.svg?branch=master
     :target: https://travis-ci.org/pytest-dev/pytest-bdd
-.. image:: https://readthedocs.org/projects/pytest-bdd/badge/?version=latest
-    :target: https://readthedocs.org/projects/pytest-bdd/?badge=latest
+.. image:: https://readthedocs.org/projects/pytest-bdd/badge/?version=stable
+    :target: https://readthedocs.org/projects/pytest-bdd/
     :alt: Documentation Status
 
 pytest-bdd implements a subset of the Gherkin language to enable automating project
@@ -51,13 +51,15 @@ publish_article.feature:
     Feature: Blog
         A site where you can publish your articles.
 
-    Scenario: Publishing the article
-        Given I'm an author user
-        And I have an article
-        When I go to the article page
-        And I press the publish button
-        Then I should not see the error message
-        And the article should be published  # Note: will query the database
+        Scenario: Publishing the article
+            Given I'm an author user
+            And I have an article
+
+            When I go to the article page
+            And I press the publish button
+
+            Then I should not see the error message
+            And the article should be published  # Note: will query the database
 
 Note that only one feature is allowed per feature file.
 
@@ -77,28 +79,28 @@ test_publish_article.py:
         auth['user'] = author.user
 
 
-    @given('I have an article')
+    @given("I have an article", target_fixture="article")
     def article(author):
         return create_test_article(author=author)
 
 
-    @when('I go to the article page')
+    @when("I go to the article page")
     def go_to_article(article, browser):
         browser.visit(urljoin(browser.url, '/manage/articles/{0}/'.format(article.id)))
 
 
-    @when('I press the publish button')
+    @when("I press the publish button")
     def publish_article(browser):
         browser.find_by_css('button[name=publish]').first.click()
 
 
-    @then('I should not see the error message')
+    @then("I should not see the error message")
     def no_error_message(browser):
         with pytest.raises(ElementDoesNotExist):
             browser.find_by_css('.message.error').first
 
 
-    @then('the article should be published')
+    @then("the article should be published")
     def article_is_published(article):
         article.refresh()  # Refresh the object in the SQLAlchemy session
         assert article.is_published
@@ -136,9 +138,9 @@ function with multiple step names simply decorate it multiple times:
 
 .. code-block:: python
 
-    @given('I have an article')
-    @given('there\'s an article')
-    def article(author):
+    @given("I have an article")
+    @given("there's an article")
+    def article(author, target_fixture="article"):
         return create_test_article(author=author)
 
 Note that the given step aliases are independent and will be executed
@@ -150,44 +152,15 @@ default author.
 
 .. code-block:: gherkin
 
-    Scenario: I'm the author
-        Given I'm an author
-        And I have an article
+    Feature: Resource owner
+        Scenario: I'm the author
+            Given I'm an author
+            And I have an article
 
 
-    Scenario: I'm the admin
-        Given I'm the admin
-        And there's an article
-
-
-Given step scope
-----------------
-
-If you need your given step to be executed less than once per scenario (for example: once for module, session), you can
-pass optional ``scope`` argument:
-
-.. code-block:: python
-
-    @given('there is an article', scope='session')
-    def article(author):
-        return create_test_article(author=author)
-
-.. code-block:: gherkin
-
-    Scenario: I'm the author
-        Given I'm an author
-        And there is an article
-
-
-    Scenario: I'm the admin
-        Given I'm the admin
-        And there is an article
-
-
-In this example, the step function for the 'there is an article' given step will be executed once, even though there
-are 2 scenarios using it.
-Note that for other step types, it makes no sense to have scope larger than 'function' (the default) as they represent
-an action (when step), and assertion (then step).
+        Scenario: I'm the admin
+            Given I'm the admin
+            And there's an article
 
 
 Step arguments
@@ -238,7 +211,11 @@ for `cfparse` parser
 
     from pytest_bdd import parsers
 
-    @given(parsers.cfparse('there are {start:Number} cucumbers', extra_types=dict(Number=int)))
+    @given(
+        parsers.cfparse("there are {start:Number} cucumbers",
+        extra_types=dict(Number=int)),
+        target_fixture="start_cucumbers",
+    )
     def start_cucumbers(start):
         return dict(start=start, eat=0)
 
@@ -248,7 +225,11 @@ for `re` parser
 
     from pytest_bdd import parsers
 
-    @given(parsers.re(r'there are (?P<start>\d+) cucumbers'), converters=dict(start=int))
+    @given(
+        parsers.re(r"there are (?P<start>\d+) cucumbers"),
+        converters=dict(start=int),
+        target_fixture="start_cucumbers",
+    )
     def start_cucumbers(start):
         return dict(start=start, eat=0)
 
@@ -257,13 +238,14 @@ Example:
 
 .. code-block:: gherkin
 
-    Scenario: Arguments for given, when, thens
-        Given there are 5 cucumbers
+    Feature: Step arguments
+        Scenario: Arguments for given, when, thens
+            Given there are 5 cucumbers
 
-        When I eat 3 cucumbers
-        And I eat 2 cucumbers
+            When I eat 3 cucumbers
+            And I eat 2 cucumbers
 
-        Then I should have 0 cucumbers
+            Then I should have 0 cucumbers
 
 
 The code will look like:
@@ -274,22 +256,22 @@ The code will look like:
     from pytest_bdd import scenario, given, when, then, parsers
 
 
-    @scenario('arguments.feature', 'Arguments for given, when, thens')
+    @scenario("arguments.feature", "Arguments for given, when, thens")
     def test_arguments():
         pass
 
 
-    @given(parsers.parse('there are {start:d} cucumbers'))
+    @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="start_cucumbers")
     def start_cucumbers(start):
         return dict(start=start, eat=0)
 
 
-    @when(parsers.parse('I eat {eat:d} cucumbers'))
+    @when(parsers.parse("I eat {eat:d} cucumbers"))
     def eat_cucumbers(start_cucumbers, eat):
-        start_cucumbers['eat'] += eat
+        start_cucumbers["eat"] += eat
 
 
-    @then(parsers.parse('I should have {left:d} cucumbers'))
+    @then(parsers.parse("I should have {left:d} cucumbers"))
     def should_have_left_cucumbers(start_cucumbers, start, left):
         assert start_cucumbers['start'] == start
         assert start - start_cucumbers['eat'] == left
@@ -302,17 +284,16 @@ You can implement your own step parser. It's interface is quite simple. The code
 .. code-block:: python
 
     import re
-
     from pytest_bdd import given, parsers
 
-    class MyParser(parsers.StepParser):
 
+    class MyParser(parsers.StepParser):
         """Custom parser."""
 
         def __init__(self, name, **kwargs):
             """Compile regex."""
             super(re, self).__init__(name)
-            self.regex = re.compile(re.sub('%(.+)%', '(?P<\1>.+)', self.name), **kwargs)
+            self.regex = re.compile(re.sub("%(.+)%", "(?P<\1>.+)", self.name), **kwargs)
 
         def parse_arguments(self, name):
             """Get step arguments.
@@ -325,9 +306,11 @@ You can implement your own step parser. It's interface is quite simple. The code
             """Match given name with the step name."""
             return bool(self.regex.match(name))
 
-    @given(parsers.parse('there are %start% cucumbers'))
+
+    @given(parsers.parse("there are %start% cucumbers"), target_fixture="start_cucumbers")
     def start_cucumbers(start):
         return dict(start=start, eat=0)
+
 
 Step arguments are fixtures as well!
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -367,9 +350,11 @@ it will stay untouched. To allow this, special parameter `target_fixture` exists
 
 .. code-block:: gherkin
 
-    Scenario: Test given fixture injection
-        Given I have injecting given
-        Then foo should be "injected foo"
+    Feature: Target fixture
+        Scenario: Test given fixture injection
+            Given I have injecting given
+            Then foo should be "injected foo"
+
 
 In this example existing fixture `foo` will be overridden by given step `I have injecting given` only for scenario it's
 used in.
@@ -384,12 +369,13 @@ But in much cleaner and powerful way:
 
 .. code-block:: gherkin
 
-    Scenario: Multiline step using sub indentation
-        Given I have a step with:
-            Some
-            Extra
-            Lines
-        Then the text should be parsed with correct indentation
+    Feature: Multiline steps
+        Scenario: Multiline step using sub indentation
+            Given I have a step with:
+                Some
+                Extra
+                Lines
+            Then the text should be parsed with correct indentation
 
 Step is considered as multiline one, if the **next** line(s) after it's first line, is indented relatively
 to the first line. The step name is then simply extended by adding further lines with newlines.
@@ -417,12 +403,12 @@ step arguments and capture lines after first line (or some subset of them) into 
         pass
 
 
-    @given(parsers.parse('I have a step with:\n{text}'))
+    @given(parsers.parse("I have a step with:\n{text}"), target_fixture="i_have_text")
     def i_have_text(text):
         return text
 
 
-    @then('the text should be parsed with correct indentation')
+    @then("the text should be parsed with correct indentation")
     def text_should_be_correct(i_have_text, text):
         assert i_have_text == text == 'Some\nExtra\nLines'
 
@@ -489,29 +475,31 @@ Example:
 
 .. code-block:: gherkin
 
-    Scenario Outline: Outlined given, when, thens
-        Given there are <start> cucumbers
-        When I eat <eat> cucumbers
-        Then I should have <left> cucumbers
+    Feature: Scenario outlines
+        Scenario Outline: Outlined given, when, thens
+            Given there are <start> cucumbers
+            When I eat <eat> cucumbers
+            Then I should have <left> cucumbers
 
-        Examples:
-        | start | eat | left |
-        |  12   |  5  |  7   |
+            Examples:
+            | start | eat | left |
+            |  12   |  5  |  7   |
 
 pytest-bdd feature file format also supports example tables in different way:
 
 
 .. code-block:: gherkin
 
-    Scenario Outline: Outlined given, when, thens
-        Given there are <start> cucumbers
-        When I eat <eat> cucumbers
-        Then I should have <left> cucumbers
+    Feature: Scenario outlines
+        Scenario Outline: Outlined given, when, thens
+            Given there are <start> cucumbers
+            When I eat <eat> cucumbers
+            Then I should have <left> cucumbers
 
-        Examples: Vertical
-        | start | 12 | 2 |
-        | eat   | 5  | 1 |
-        | left  | 7  | 1 |
+            Examples: Vertical
+            | start | 12 | 2 |
+            | eat   | 5  | 1 |
+            | left  | 7  | 1 |
 
 This form allows to have tables with lots of columns keeping the maximum text width predictable without significant
 readability change.
@@ -524,32 +512,32 @@ The code will look like:
 
 
     @scenario(
-        'outline.feature',
-        'Outlined given, when, thens',
+        "outline.feature",
+        "Outlined given, when, thens",
         example_converters=dict(start=int, eat=float, left=str)
     )
     def test_outlined():
         pass
 
 
-    @given('there are <start> cucumbers')
+    @given("there are <start> cucumbers", target_fixture="start_cucumbers")
     def start_cucumbers(start):
         assert isinstance(start, int)
         return dict(start=start)
 
 
-    @when('I eat <eat> cucumbers')
+    @when("I eat <eat> cucumbers")
     def eat_cucumbers(start_cucumbers, eat):
         assert isinstance(eat, float)
-        start_cucumbers['eat'] = eat
+        start_cucumbers["eat"] = eat
 
 
-    @then('I should have <left> cucumbers')
+    @then("I should have <left> cucumbers")
     def should_have_left_cucumbers(start_cucumbers, start, eat, left):
         assert isinstance(left, str)
         assert start - eat == int(left)
-        assert start_cucumbers['start'] == start
-        assert start_cucumbers['eat'] == eat
+        assert start_cucumbers["start"] == start
+        assert start_cucumbers["eat"] == eat
 
 Example code also shows possibility to pass example converters which may be useful if you need parameter types
 different than strings.
@@ -630,11 +618,12 @@ The code will look like:
 
     # Here we use pytest to parametrize the test with the parameters table
     @pytest.mark.parametrize(
-        ['start', 'eat', 'left'],
-        [(12, 5, 7)])
+        ["start", "eat", "left"],
+        [(12, 5, 7)],
+    )
     @scenario(
-        'parametrized.feature',
-        'Parametrized given, when, thens',
+        "parametrized.feature",
+        "Parametrized given, when, thens",
     )
     # Note that we should take the same arguments in the test function that we use
     # for the test parametrization either directly or indirectly (fixtures depend on them).
@@ -642,32 +631,32 @@ The code will look like:
         """We don't need to do anything here, everything will be managed by the scenario decorator."""
 
 
-    @given('there are <start> cucumbers')
+    @given("there are <start> cucumbers", target_fixture="start_cucumbers")
     def start_cucumbers(start):
         return dict(start=start)
 
 
-    @when('I eat <eat> cucumbers')
+    @when("I eat <eat> cucumbers")
     def eat_cucumbers(start_cucumbers, start, eat):
-        start_cucumbers['eat'] = eat
+        start_cucumbers["eat"] = eat
 
 
-    @then('I should have <left> cucumbers')
+    @then("I should have <left> cucumbers")
     def should_have_left_cucumbers(start_cucumbers, start, eat, left):
         assert start - eat == left
-        assert start_cucumbers['start'] == start
-        assert start_cucumbers['eat'] == eat
+        assert start_cucumbers["start"] == start
+        assert start_cucumbers["eat"] == eat
+
 
 With a parametrized.feature file:
 
 .. code-block:: gherkin
 
     Feature: parametrized
-
-    Scenario: Parametrized given, when, thens
-        Given there are <start> cucumbers
-        When I eat <eat> cucumbers
-        Then I should have <left> cucumbers
+        Scenario: Parametrized given, when, thens
+            Given there are <start> cucumbers
+            When I eat <eat> cucumbers
+            Then I should have <left> cucumbers
 
 
 The significant downside of this approach is inability to see the test table from the feature file.
@@ -741,7 +730,7 @@ scenario test, so we can use standard test selection:
 
 .. code-block:: bash
 
-    py.test -m "backend and login and successful"
+    pytest -m "backend and login and successful"
 
 The feature and scenario markers are not different from standard pytest markers, and the `@` symbol is stripped out
 automatically to allow test selector expressions. If you want to have bdd-related tags to be distinguishable from the
@@ -750,7 +739,7 @@ Note that if you use pytest `--strict` option, all bdd tags mentioned in the fea
 `markers` setting of the `pytest.ini` config. Also for tags please use names which are python-compartible variable
 names, eg starts with a non-number, underscore alphanumberic, etc. That way you can safely use tags for tests filtering.
 
-You can customize how hooks are converted to pytest marks by implementing the
+You can customize how tags are converted to pytest marks by implementing the
 ``pytest_bdd_apply_tag`` hook and returning ``True`` from it:
 
 .. code-block:: python
@@ -774,24 +763,27 @@ and makes the setup more declarative style.
 
 .. code-block:: python
 
-    @given('I have a beautiful article')
+    @given("I have a beautiful article", target_fixture="article")
     def article():
         return Article(is_beautiful=True)
 
-This also declares a PyTest fixture "article" and any other step can depend on it.
+The target PyTest fixture "article" gets the return value and any other step can depend on it.
 
 .. code-block:: gherkin
 
-    Given I have a beautiful article
-    When I publish this article
+    Feature: The power of PyTest
+        Scenario: Symbolic name across steps
+            Given I have a beautiful article
+            When I publish this article
 
 When step is referring the article to publish it.
 
 .. code-block:: python
 
-    @when('I publish this article')
+    @when("I publish this article")
     def publish_article(article):
         article.publish()
+
 
 Many other BDD toolkits operate a global context and put the side effects there.
 This makes it very difficult to implement the steps, because the dependencies
@@ -806,52 +798,37 @@ Still side effects can be applied in the imperative style by design of the BDD.
 
 .. code-block:: gherkin
 
-    Given I have a beautiful article
-    And my article is published
+    Feature: News website
+        Scenario: Publishing an article
+            Given I have a beautiful article
+            And my article is published
 
 Functional tests can reuse your fixture libraries created for the unit-tests and upgrade
 them by applying the side effects.
 
 .. code-block:: python
 
-    given('I have a beautiful article', fixture='article')
+    @pytest.fixture
+    def article():
+        return Article(is_beautiful=True)
 
-    @given('my article is published')
+
+    @given("I have a beautiful article")
+    def i_have_a_beautiful_article(article):
+        pass
+
+
+    @given("my article is published")
     def published_article(article):
         article.publish()
         return article
+
 
 This way side-effects were applied to our article and PyTest makes sure that all
 steps that require the "article" fixture will receive the same object. The value
 of the "published_article" and the "article" fixtures is the same object.
 
 Fixtures are evaluated only once within the PyTest scope and their values are cached.
-In case of Given steps and the step arguments mentioning the same given step makes
-no sense. It won't be executed second time.
-
-.. code-block:: gherkin
-
-    Given I have a beautiful article
-    And some other thing
-    And I have a beautiful article  # Won't be executed, exception is raised
-
-
-pytest-bdd will raise an exception even in the case of the steps that use regular expression
-patterns to get arguments.
-
-
-.. code-block:: gherkin
-
-    Given I have 1 cucumbers
-    And I have 2 cucumbers  # Exception is raised
-
-Will raise an exception if the step is using the regular expression pattern.
-
-.. code-block:: python
-
-    @given(re.compile('I have (?P<n>\d+) cucumbers'))
-    def cucumbers(n):
-        return create_cucumbers(n)
 
 
 Backgrounds
@@ -913,19 +890,12 @@ inherited (reused). For example, if we have pytest fixture:
 
 Then this fixture can be reused with other names using given():
 
-.. code-block:: python
-
-    given('I have beautiful article', fixture='article')
-
-This will be equivalent to:
-
 
 .. code-block:: python
 
     @given('I have beautiful article')
     def i_have_an_article(article):
        """I have an article."""
-       return article
 
 
 Reusing steps
@@ -949,20 +919,20 @@ conftest.py:
     from pytest_bdd import given, then
 
 
-    @given('I have a bar')
+    @given("I have a bar", target_fixture="bar")
     def bar():
-        return 'bar'
+        return "bar"
 
 
     @then('bar should have value "bar"')
     def bar_is_bar(bar):
-        assert bar == 'bar'
+        assert bar == "bar"
 
 test_common.py:
 
 .. code-block:: python
 
-    @scenario('common_steps.feature', 'All steps are declared in the conftest')
+    @scenario("common_steps.feature", "All steps are declared in the conftest")
     def test_conftest():
         pass
 
@@ -983,7 +953,7 @@ If you are on python 2, make sure you use unicode strings by prefixing them with
     @given(parsers.re(u"у мене є рядок який містить '{0}'".format(u'(?P<content>.+)')))
     def there_is_a_string_with_content(content, string):
         """Create string with unicode content."""
-        string['content'] = content
+        string["content"] = content
 
 
 Default steps
@@ -1018,17 +988,20 @@ tests/test_publish_article.py:
 
     from pytest_bdd import scenario
 
-    @scenario('foo.feature', 'Foo feature in features/foo.feature')
+
+    @scenario("foo.feature", "Foo feature in features/foo.feature")
     def test_foo():
         pass
 
+
     @scenario(
-        'foo.feature',
-        'Foo feature in tests/local-features/foo.feature',
-        features_base_dir='./local-features/',
+        "foo.feature",
+        "Foo feature in tests/local-features/foo.feature",
+        features_base_dir="./local-features/",
     )
     def test_foo_local():
         pass
+
 
 The `features_base_dir` parameter can also be passed to the `@scenario` decorator.
 
@@ -1048,39 +1021,21 @@ test_publish_article.py:
     import pytest_bdd
 
 
-    scenario = partial(pytest_bdd.scenario, '/path/to/publish_article.feature')
+    scenario = partial(pytest_bdd.scenario, "/path/to/publish_article.feature")
 
 
-    @scenario('Publishing the article')
+    @scenario("Publishing the article")
     def test_publish():
         pass
 
 
-    @scenario('Publishing the article as unprivileged user')
+    @scenario("Publishing the article as unprivileged user")
     def test_publish_unprivileged():
         pass
 
 
 You can learn more about `functools.partial <http://docs.python.org/2/library/functools.html#functools.partial>`_
 in the Python docs.
-
-
-Relax strict Gherkin language validation
-----------------------------------------
-
-If your scenarios are not written in `proper` Gherkin language, e.g. they are more like textual scripts, then
-you might find it hard to use `pytest-bdd` as by default it validates the order of step types (given-when-then).
-To relax that validation, just pass ``strict_gherkin=False`` to the ``scenario`` and ``scenarios`` decorators:
-
-test_publish_article.py:
-
-.. code-block:: python
-
-    from pytest_bdd import scenario
-
-    @scenario('publish_article.feature', 'Publishing the article in a weird way', strict_gherkin=False)
-    def test_publish():
-        pass
 
 
 Hooks
@@ -1106,9 +1061,6 @@ which might be helpful building useful reporting, visualization, etc on top of i
 * pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception) - Called when step
   function failed to execute
 
-* pytest_bdd_step_validation_error(request, feature, scenario, step, step_func, step_func_args, exception) - Called
-  when step failed to validate
-
 * pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception) - Called when step lookup failed
 
 
@@ -1132,27 +1084,27 @@ To have an output in json format:
 
 ::
 
-    py.test --cucumberjson=<path to json report>
+    pytest --cucumberjson=<path to json report>
 
 This will output an expanded (meaning scenario outlines will be expanded to several scenarios) cucumber format.
 To also fill in parameters in the step name, you have to explicitly tell pytest-bdd to use the expanded format:
 
 ::
 
-    py.test --cucumberjson=<path to json report> --cucumberjson-expanded
+    pytest --cucumberjson=<path to json report> --cucumberjson-expanded
 
 To enable gherkin-formatted output on terminal, use
 
 ::
 
-    py.test --gherkin-terminal-reporter
+    pytest --gherkin-terminal-reporter
 
 
 Terminal reporter supports expanded format as well
 
 ::
 
-    py.test --gherkin-terminal-reporter-expanded
+    pytest --gherkin-terminal-reporter-expanded
 
 
 
@@ -1184,7 +1136,7 @@ test execution. The code suggestion tool is called via passing additional pytest
 
 ::
 
-    py.test --generate-missing --feature features tests/functional
+    pytest --generate-missing --feature features tests/functional
 
 The output will be like:
 
@@ -1207,70 +1159,45 @@ The output will be like:
         """Code is generated for scenarios which are not bound to any tests."""
 
 
-    @given('I have a custom bar')
+    @given("I have a custom bar")
     def I_have_a_custom_bar():
         """I have a custom bar."""
 
 As as side effect, the tool will validate the files for format errors, also some of the logic bugs, for example the
 ordering of the types of the steps.
 
-Migration of your tests from versions 2.x.x
-------------------------------------------------
 
-In version 3.0.0, the fixtures ``pytestbdd_feature_base_dir`` and ``pytestbdd_strict_gherkin`` have been removed.
+.. _Migration from 3.x.x:
 
-If you used ``pytestbdd_feature_base_dir`` fixture to override the path discovery, you can instead configure it in ``pytest.ini``:
-
-.. code-block:: ini
-
-    [pytest]
-    bdd_features_base_dir = features/
-
-For more details, check the `Feature file paths`_ section.
-
-If you used ``pytestbdd_strict_gherkin`` fixture to relax the parser, you can instead specify ``strict_gherkin=False`` in the declaration of your scenarios, or change it globally in the pytest configuration file:
-
-.. code-block:: ini
-
-    [pytest]
-    bdd_strict_gherkin = false
-
-For more details, check the `Relax strict Gherkin language validation`_ section.
+Migration of your tests from versions 3.x.x
+-------------------------------------------
 
 
+Given steps are no longer fixtures. In case it is needed to make given step setup a fixture
+the target_fixture parameter should be used.
 
-Migration of your tests from versions 0.x.x-1.x.x
--------------------------------------------------
-
-In version 2.0.0, the backwards-incompartible change was introduced: scenario function can now only be used as a
-decorator. Reasons for that:
-
-* test code readability is much higher using normal python function syntax;
-* pytest-bdd internals are much cleaner and shorter when using single approach instead of supporting two;
-* after moving to parsing-on-import-time approach for feature files, it's not possible to detect whether it's a
-  decorator more or not, so to support it along with functional approach there needed to be special parameter
-  for that, which is also a backwards-incompartible change.
-
-To help users migrate to newer version, there's migration subcommand of the `pytest-bdd` console script:
-
-::
-
-    # run migration script
-    pytest-bdd migrate <your test folder>
-
-Under the hood the script does the replacement from this:
 
 .. code-block:: python
 
-    test_function = scenario('publish_article.feature', 'Publishing the article')
+    @given("there's an article", target_fixture="article")
+    def there_is_an_article():
+        return Article()
 
-to this:
+
+Given steps no longer have fixture parameter. In fact the step may depend on multiple fixtures.
+Just normal step declaration with the dependency injection should be used.
 
 .. code-block:: python
 
-    @scenario('publish_article.feature', 'Publishing the article')
-    def test_function():
+    @given("there's an article")
+    def there_is_an_article(article):
         pass
+
+
+Strict gherkin option is removed, so the ``strict_gherkin`` parameter can be removed from the scenario decorators
+as well as ``bdd_strict_gherkin`` from the ini files.
+
+Step validation handlers for the hook ``pytest_bdd_step_validation_error`` should be removed.
 
 
 License

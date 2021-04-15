@@ -7,15 +7,12 @@ import re
 
 from setuptools import setup
 
-
 dirname = os.path.dirname(__file__)
 
 long_description = (
     codecs.open(os.path.join(dirname, "README.rst"), encoding="utf-8").read()
     + "\n"
     + codecs.open(os.path.join(dirname, "AUTHORS.rst"), encoding="utf-8").read()
-    + "\n"
-    + codecs.open(os.path.join(dirname, "CHANGES.rst"), encoding="utf-8").read()
 )
 
 with codecs.open(os.path.join(dirname, "pytest_bdd", "__init__.py"), encoding="utf-8") as fd:
@@ -25,6 +22,7 @@ setup(
     name="pytest-bdd",
     description="BDD for pytest",
     long_description=long_description,
+    long_description_content_type="text/x-rst",
     author="Oleg Pidsadnyi, Anatoly Bubenkov and others",
     license="MIT license",
     author_email="oleg.pidsadnyi@gmail.com",
@@ -43,9 +41,10 @@ setup(
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3",
     ]
-    + [("Programming Language :: Python :: %s" % x) for x in "2.7 3.5 3.6 3.7 3.8".split()],
-    install_requires=["glob2", "Mako", "parse", "parse_type", "py", "pytest>=4.3", "six>=1.9.0"],
-    # the following makes a plugin available to py.test
+    + [("Programming Language :: Python :: %s" % x) for x in "3.6 3.7 3.8 3.9".split()],
+    python_requires=">=3.6",
+    install_requires=["glob2", "Mako", "parse", "parse_type", "py", "pytest>=4.3"],
+    # the following makes a plugin available to pytest
     entry_points={
         "pytest11": ["pytest-bdd = pytest_bdd.plugin"],
         "console_scripts": ["pytest-bdd = pytest_bdd.scripts:main"],

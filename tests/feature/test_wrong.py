@@ -1,100 +1,55 @@
 """Test wrong feature syntax."""
-import os.path
-import re
-import sys
 
-import mock
+import textwrap
 
-import pytest
-
-from pytest_bdd import scenario, scenarios, given, when, then
-from pytest_bdd.feature import features
-from pytest_bdd import exceptions
+from tests.utils import assert_outcomes
 
 
-@given("something")
-def given_something():
-    pass
-
-
-@when("something else")
-def when_something_else():
-    pass
-
-
-@then("nevermind")
-def then_nevermind():
-    pass
-
-
-@pytest.mark.parametrize(
-    ("feature", "scenario_name"),
-    [
-        ("when_in_background.feature", "When in background"),
-        ("when_after_then.feature", "When after then"),
-        ("then_first.feature", "Then first"),
-        ("given_after_when.feature", "Given after When"),
-        ("given_after_then.feature", "Given after Then"),
-    ],
-)
-@pytest.mark.parametrize("strict_gherkin", [True, False])
-@pytest.mark.parametrize("multiple", [True, False])
-def test_wrong(request, feature, scenario_name, strict_gherkin, multiple):
-    """Test wrong feature scenarios."""
-
-    def declare_scenario():
-        if multiple:
-            scenarios(feature, strict_gherkin=strict_gherkin)
-        else:
-
-            @scenario(feature, scenario_name, strict_gherkin=strict_gherkin)
-            def test_scenario():
-                pass
-
-    if strict_gherkin:
-        with pytest.raises(exceptions.FeatureError):
-            declare_scenario()
-        # TODO: assert the exception args from parameters
-    else:
-        declare_scenario()
-
-    def clean_cache():
-        features.clear()
-
-    request.addfinalizer(clean_cache)
-
-
-@pytest.mark.parametrize(
-    "scenario_name",
-    ["When in Given", "When in Then", "Then in Given", "Given in When", "Given in Then", "Then in When"],
-)
-def test_wrong_type_order(request, scenario_name):
-    """Test wrong step type order."""
-
-    @scenario("wrong_type_order.feature", scenario_name)
-    def test_wrong_type_order(request):
-        pass
-
-    with pytest.raises(exceptions.StepDefinitionNotFoundError) as excinfo:
-        test_wrong_type_order(request)
-    assert re.match(r"Step definition is not found: (.+)", excinfo.value.args[0])
-
-
-def test_verbose_output():
-    """Test verbose output of failed feature scenario."""
-    with pytest.raises(exceptions.FeatureError) as excinfo:
-        scenario("when_after_then.feature", "When after then")
-
-    msg, line_number, line, file = excinfo.value.args
-
-    assert line_number == 5
-    assert line == "When I do it again"
-    assert file == os.path.join(os.path.dirname(__file__), "when_after_then.feature")
-    assert line in str(excinfo.value)
-
-
-def test_multiple_features_single_file():
+def test_multiple_features_single_file(testdir):
     """Test validation error when multiple features are placed in a single file."""
-    with pytest.raises(exceptions.FeatureError) as excinfo:
-        scenarios("wrong_multiple_features.feature")
-    assert excinfo.value.args[0] == "Multiple features are not allowed in a single feature file"
+    testdir.makefile(
+        ".feature",
+        wrong=textwrap.dedent(
+            """\
+            Feature: Feature One
+
+              Background:
+                Given I have A
+                And I have B
+
+              Scenario: Do something with A
+                When I do something with A
+                Then something about B
+
+            Feature: Feature Two
+
+              Background:
+                Given I have A
+
+              Scenario: Something that just needs A
+                When I do something else with A
+                Then something else about B
+
+              Scenario: Something that needs B again
+                Given I have B
+                When I do something else with B
+                Then something else about A and B
+        """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        import pytest
+        from pytest_bdd import then, scenario
+
+        @scenario("wrong.feature", "Do something with A")
+        def test_wrong():
+            pass
+
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert_outcomes(result, errors=1)
+    result.stdout.fnmatch_lines("*FeatureError: Multiple features are not allowed in a single feature file.*")

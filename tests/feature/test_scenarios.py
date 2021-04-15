@@ -1,9 +1,11 @@
 """Test scenarios shortcut."""
 import textwrap
 
+from tests.utils import assert_outcomes
 
-def test_scenarios(testdir):
-    """Test scenarios shortcut."""
+
+def test_scenarios(testdir, pytest_params):
+    """Test scenarios shortcut (used together with @scenario for individual test override)."""
     testdir.makeini(
         """
             [pytest]
@@ -24,7 +26,7 @@ def test_scenarios(testdir):
     features = testdir.mkdir("features")
     features.join("test.feature").write_text(
         textwrap.dedent(
-            u"""
+            """
     Scenario: Test scenario
         Given I have a bar
     """
@@ -34,7 +36,7 @@ def test_scenarios(testdir):
     )
     features.join("subfolder", "test.feature").write_text(
         textwrap.dedent(
-            u"""
+            """
     Scenario: Test subfolder scenario
         Given I have a bar
 
@@ -63,7 +65,8 @@ def test_scenarios(testdir):
         scenarios('features')
     """
     )
-    result = testdir.runpytest("-v", "-s")
+    result = testdir.runpytest_subprocess("-v", "-s", *pytest_params)
+    assert_outcomes(result, passed=4, failed=1)
     result.stdout.fnmatch_lines(["*collected 5 items"])
     result.stdout.fnmatch_lines(["*test_test_subfolder_scenario *bar!", "PASSED"])
     result.stdout.fnmatch_lines(["*test_test_scenario *bar!", "PASSED"])
@@ -72,7 +75,7 @@ def test_scenarios(testdir):
     result.stdout.fnmatch_lines(["*test_test_scenario_1 *bar!", "PASSED"])
 
 
-def test_scenarios_none_found(testdir):
+def test_scenarios_none_found(testdir, pytest_params):
     """Test scenarios shortcut when no scenarios found."""
     testpath = testdir.makepyfile(
         """
@@ -82,6 +85,6 @@ def test_scenarios_none_found(testdir):
         scenarios('.')
     """
     )
-    reprec = testdir.inline_run(testpath)
-    reprec.assertoutcome(failed=1)
-    assert "NoScenariosFound" in str(reprec.getreports()[1].longrepr)
+    result = testdir.runpytest_subprocess(testpath, *pytest_params)
+    assert_outcomes(result, errors=1)
+    result.stdout.fnmatch_lines(["*NoScenariosFound*"])

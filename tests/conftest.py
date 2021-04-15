@@ -1,15 +1,23 @@
-"""Configuration for pytest runner."""
+from __future__ import absolute_import, unicode_literals
+import pytest
 
-from pytest_bdd import given, when
+from tests.utils import PYTEST_6
 
 pytest_plugins = "pytester"
 
 
-@given("I have a root fixture")
-def root():
-    return "root"
-
-
-@when("I use a when step from the parent conftest")
-def global_when():
-    pass
+def pytest_generate_tests(metafunc):
+    if "pytest_params" in metafunc.fixturenames:
+        if PYTEST_6:
+            parametrizations = [
+                pytest.param([], id="no-import-mode"),
+                pytest.param(["--import-mode=prepend"], id="--import-mode=prepend"),
+                pytest.param(["--import-mode=append"], id="--import-mode=append"),
+                pytest.param(["--import-mode=importlib"], id="--import-mode=importlib"),
+            ]
+        else:
+            parametrizations = [[]]
+        metafunc.parametrize(
+            "pytest_params",
+            parametrizations,
+        )

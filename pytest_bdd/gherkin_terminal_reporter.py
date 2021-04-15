@@ -1,12 +1,8 @@
-# -*- encoding: utf-8 -*-
-
-from __future__ import unicode_literals
-
 import re
 
 from _pytest.terminal import TerminalReporter
 
-from .feature import STEP_PARAM_RE
+from .parser import STEP_PARAM_RE
 
 
 def add_options(parser):
@@ -50,11 +46,6 @@ def configure(config):
 class GherkinTerminalReporter(TerminalReporter):
     def __init__(self, config):
         TerminalReporter.__init__(self, config)
-
-    def pytest_runtest_logstart(self, nodeid, location):
-        # Prevent locationline from being printed since we already
-        # show the module_name & in verbose mode the test name.
-        pass
 
     def pytest_runtest_logreport(self, report):
         rep = report
