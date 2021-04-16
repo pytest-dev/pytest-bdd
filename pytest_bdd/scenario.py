@@ -97,7 +97,7 @@ def _execute_step_function(request, scenario, step, step_func):
     kw["step_func_args"] = {}
     try:
         # Get the step argument values.
-        kwargs = dict((arg, request.getfixturevalue(arg)) for arg in get_args(step_func))
+        kwargs = {arg: request.getfixturevalue(arg) for arg in get_args(step_func)}
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
@@ -255,12 +255,12 @@ def get_python_name_generator(name):
     index = 0
 
     def get_name():
-        return "test_{0}{1}".format(python_name, suffix)
+        return f"test_{python_name}{suffix}"
 
     while True:
         yield get_name()
         index += 1
-        suffix = "_{0}".format(index)
+        suffix = f"_{index}"
 
 
 def scenarios(*feature_paths, **kwargs):

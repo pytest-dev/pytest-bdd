@@ -30,17 +30,17 @@ def migrate_tests_in_file(file_path):
                 new_content = new_content.rstrip("\n") + "\n"
                 fd.seek(0)
                 fd.write(new_content)
-                print("migrated: {0}".format(file_path))
+                print(f"migrated: {file_path}")
             else:
-                print("skipped: {0}".format(file_path))
-    except IOError:
+                print(f"skipped: {file_path}")
+    except OSError:
         pass
 
 
 def check_existense(file_name):
     """Check file or directory name for existence."""
     if not os.path.exists(file_name):
-        raise argparse.ArgumentTypeError("{0} is an invalid file or directory name".format(file_name))
+        raise argparse.ArgumentTypeError(f"{file_name} is an invalid file or directory name")
     return file_name
 
 

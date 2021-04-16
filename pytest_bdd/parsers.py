@@ -1,6 +1,5 @@
 """Step parsers."""
 
-from __future__ import absolute_import
 
 import re as base_re
 from functools import partial
@@ -9,7 +8,7 @@ import parse as base_parse
 from parse_type import cfparse as base_cfparse
 
 
-class StepParser(object):
+class StepParser:
     """Parser of the individual step."""
 
     def __init__(self, name):
@@ -32,7 +31,7 @@ class re(StepParser):
 
     def __init__(self, name, *args, **kwargs):
         """Compile regex."""
-        super(re, self).__init__(name)
+        super().__init__(name)
         self.regex = base_re.compile(self.name, *args, **kwargs)
 
     def parse_arguments(self, name):
@@ -52,7 +51,7 @@ class parse(StepParser):
 
     def __init__(self, name, *args, **kwargs):
         """Compile parse expression."""
-        super(parse, self).__init__(name)
+        super().__init__(name)
         self.parser = base_parse.compile(self.name, *args, **kwargs)
 
     def parse_arguments(self, name):
