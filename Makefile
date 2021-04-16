@@ -6,7 +6,7 @@ PATH := .env/bin:$(PATH)
 
 # install all needed for development
 develop: .env
-	.env/bin/pip install -e . -r requirements-testing.txt tox python-coveralls
+	.env/bin/pip install -e . -r requirements-testing.txt tox
 
 coverage: develop
 	coverage run --source=pytest_bdd .env/bin/pytest tests
@@ -15,9 +15,6 @@ coverage: develop
 test: develop
 	tox
 
-coveralls: coverage
-	coveralls
-
-# clean the development envrironment
+# clean the development environment
 clean:
 	-rm -rf .env
