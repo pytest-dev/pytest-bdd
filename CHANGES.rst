@@ -2,7 +2,7 @@ Changelog
 =========
 
 Unreleased
------------
+----------
 - Drop compatibility for python 2 and officially support only python >= 3.6.
 - Fix error when using `--cucumber-json-expanded` in combination with `example_converters` (marcbrossaissogeti).
 
