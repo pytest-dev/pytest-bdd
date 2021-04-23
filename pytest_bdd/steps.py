@@ -83,6 +83,22 @@ def when(name, converters=None):
     return _step_decorator(WHEN, name, converters=converters)
 
 
+def when_with_target_fixture(name, converters=None, target_fixture=None):
+    """Alternative When step decorator.
+
+    When asserting the return value of a function it must be passed from
+    the `when` clause, to the `then` clause.
+    The cleanest way is to use `target_fixture`.
+
+    :param name: Step name or a parser object.
+    :param converters: Optional `dict` of the argument or parameter converters in form
+                       {<param_name>: <converter function>}.
+
+    :return: Decorator function for the step.
+    """
+    return _step_decorator(WHEN, name, converters=converters, target_fixture=target_fixture)
+
+
 def then(name, converters=None):
     """Then step decorator.
 
