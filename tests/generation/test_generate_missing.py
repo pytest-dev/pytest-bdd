@@ -86,7 +86,7 @@ def test_generate_missing(testdir):
     )
 
     assert 'Step Given "I have 3 baz" is not defined' not in result.stdout.str()
-    
+
     result.stdout.fnmatch_lines(
         ['Step Given "I have a foobar" is not defined in the background of the feature "Missing code generation" *']
     )
