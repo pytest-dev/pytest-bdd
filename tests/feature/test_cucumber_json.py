@@ -303,11 +303,11 @@ def test_converters_dict_with_expand_option(testdir):
             """
         import pytest
         from pytest_bdd import given, scenario
-        
+
         @given('there is an intvalue <intvalue> and stringvalue <stringvalue> and floatvalue <floatvalue>')
         def type_type_and_value_value():
             pass
-        
+
         @scenario(
             'test.feature',
             'Passing outline',
