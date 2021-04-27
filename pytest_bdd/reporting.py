@@ -9,7 +9,7 @@ import time
 from .utils import get_parametrize_markers_args
 
 
-class StepReport(object):
+class StepReport:
     """Step excecution report."""
 
     failed = False
@@ -59,7 +59,7 @@ class StepReport(object):
         return self.stopped - self.started
 
 
-class ScenarioReport(object):
+class ScenarioReport:
     """Scenario execution report."""
 
     def __init__(self, scenario, node):

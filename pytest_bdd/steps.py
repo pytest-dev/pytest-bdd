@@ -35,8 +35,6 @@ def given_beautiful_article(article):
 
 """
 
-from __future__ import absolute_import
-
 import pytest
 
 try:

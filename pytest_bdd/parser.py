@@ -101,7 +101,7 @@ def parse_feature(basedir, filename, encoding="utf-8"):
     multiline_step = False
     prev_line = None
 
-    with io.open(abs_filename, "rt", encoding=encoding) as f:
+    with open(abs_filename, encoding=encoding) as f:
         content = f.read()
 
     for line_number, line in enumerate(content.splitlines(), start=1):
@@ -170,14 +170,14 @@ def parse_feature(basedir, filename, encoding="utf-8"):
             except exceptions.ExamplesNotValidError as exc:
                 if scenario:
                     raise exceptions.FeatureError(
-                        """Scenario has not valid examples. {0}""".format(exc.args[0]),
+                        f"Scenario has not valid examples. {exc.args[0]}",
                         line_number,
                         clean_line,
                         filename,
                     )
                 else:
                     raise exceptions.FeatureError(
-                        """Feature has not valid examples. {0}""".format(exc.args[0]),
+                        f"Feature has not valid examples. {exc.args[0]}",
                         line_number,
                         clean_line,
                         filename,
@@ -195,7 +195,7 @@ def parse_feature(basedir, filename, encoding="utf-8"):
     return feature
 
 
-class Feature(object):
+class Feature:
     """Feature."""
 
     def __init__(self, scenarios, filename, rel_filename, name, tags, examples, background, line_number, description):
@@ -213,7 +213,7 @@ class Feature(object):
         self.background = background
 
 
-class Scenario(object):
+class Scenario:
 
     """Scenario."""
 
@@ -283,14 +283,14 @@ class Scenario(object):
         example_params = self.get_example_params()
         if params and example_params and params != example_params:
             raise exceptions.ScenarioExamplesNotValidError(
-                """Scenario "{0}" in the feature "{1}" has not valid examples. """
-                """Set of step parameters {2} should match set of example values {3}.""".format(
+                """Scenario "{}" in the feature "{}" has not valid examples. """
+                """Set of step parameters {} should match set of example values {}.""".format(
                     self.name, self.feature.filename, sorted(params), sorted(example_params)
                 )
             )
 
 
-class Step(object):
+class Step:
 
     """Step."""
 
@@ -345,7 +345,7 @@ class Step(object):
 
     def __str__(self):
         """Full step name including the type."""
-        return '{type} "{name}"'.format(type=self.type.capitalize(), name=self.name)
+        return f'{self.type.capitalize()} "{self.name}"'
 
     @property
     def params(self):
@@ -353,7 +353,7 @@ class Step(object):
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
 
-class Background(object):
+class Background:
 
     """Background."""
 
@@ -373,7 +373,7 @@ class Background(object):
         self.steps.append(step)
 
 
-class Examples(object):
+class Examples:
 
     """Example table."""
 
@@ -407,7 +407,7 @@ class Examples(object):
         """
         if param in self.example_params:
             raise exceptions.ExamplesNotValidError(
-                """Example rows should contain unique parameters. "{0}" appeared more than once""".format(param)
+                f"""Example rows should contain unique parameters. "{param}" appeared more than once"""
             )
         self.example_params.append(param)
         self.vertical_examples.append(values)
@@ -454,7 +454,7 @@ def get_tags(line):
     """
     if not line or not line.strip().startswith("@"):
         return set()
-    return set((tag.lstrip("@") for tag in line.strip().split(" @") if len(tag) > 1))
+    return {tag.lstrip("@") for tag in line.strip().split(" @") if len(tag) > 1}
 
 
 STEP_PARAM_RE = re.compile(r"\<(.+?)\>")
