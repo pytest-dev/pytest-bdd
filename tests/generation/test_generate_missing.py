@@ -25,7 +25,6 @@ def test_generate_missing(testdir):
 
                 Background:
                     Given I have a foobar
-                    And I have 3 baz
 
                 Scenario: Scenario tests which are already bound to the tests stay as is
                     Given I have a bar
@@ -46,17 +45,13 @@ def test_generate_missing(testdir):
             """\
         import functools
 
-        from pytest_bdd import scenario, given, parsers
+        from pytest_bdd import scenario, given
 
         scenario = functools.partial(scenario, "generation.feature")
 
         @given("I have a bar")
         def i_have_a_bar():
             return "bar"
-
-        @given(parsers.parse("I have {n:d} baz"))
-        def i_have_n_baz(n):
-            return "baz"
 
         @scenario("Scenario tests which are already bound to the tests stay as is")
         def test_foo():
@@ -85,10 +80,66 @@ def test_generate_missing(testdir):
         ]
     )
 
-    assert 'Step Given "I have 3 baz" is not defined' not in result.stdout.str()
-
     result.stdout.fnmatch_lines(
         ['Step Given "I have a foobar" is not defined in the background of the feature "Missing code generation" *']
     )
 
     result.stdout.fnmatch_lines(["Please place the code above to the test file(s):"])
+
+
+def test_generate_missing_with_step_parsers(testdir):
+    """Test that step parsers are correctly discovered and won't be part of the missing steps."""
+    testdir.makefile(
+        ".feature",
+        generation=textwrap.dedent(
+            """\
+            Feature: Missing code generation with step parsers
+
+                Scenario: Step parsers are correctly discovered
+                    Given I use the string parser without parameter
+                    And I use parsers.parse with parameter 1
+                    And I use parsers.re with parameter 2
+                    And I use parsers.cfparse with parameter 3
+            """
+        ),
+    )
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        import functools
+
+        from pytest_bdd import scenarios, given, parsers
+
+        scenarios("generation.feature")
+
+        @given("I use the string parser without parameter")
+        def i_have_a_bar():
+            return None
+
+        @given(parsers.parse("I use parsers.parse with parameter {param}"))
+        def i_have_n_baz(param):
+            return param
+
+        @given(parsers.re(r"^I use parsers.re with parameter (?P<param>.*?)$"))
+        def i_have_n_baz(param):
+            return param
+
+        @given(parsers.cfparse("I use parsers.cfparse with parameter {param:d}"))
+        def i_have_n_baz(param):
+            return param
+        """
+        )
+    )
+
+    result = testdir.runpytest("--generate-missing", "--feature", "generation.feature")
+    assert_outcomes(result, passed=0, failed=0, errors=0)
+    assert not result.stderr.str()
+    assert result.ret == 0
+
+    output = result.stdout.str()
+
+    assert "I use the string parser" not in output
+    assert "I use parsers.parse" not in output
+    assert "I use parsers.re" not in output
+    assert "I use parsers.cfparse" not in output
