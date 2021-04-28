@@ -41,7 +41,7 @@ from _pytest.fixtures import FixtureDef
 
 from .types import GIVEN, WHEN, THEN
 from .parsers import get_parser
-from .utils import get_args, get_caller_module_locals
+from .utils import get_caller_module_locals
 
 
 def get_step_fixture_name(name, type_):
@@ -150,9 +150,6 @@ def inject_fixture(request, arg, value):
         "scope": "function",
         "params": None,
     }
-
-    if "yieldctx" in get_args(FixtureDef.__init__):
-        fd_kwargs["yieldctx"] = False
 
     fd = FixtureDef(**fd_kwargs)
     fd.cached_result = (value, 0, None)
