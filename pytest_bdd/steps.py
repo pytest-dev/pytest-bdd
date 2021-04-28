@@ -142,16 +142,15 @@ def inject_fixture(request, arg, value):
     :param arg: argument name
     :param value: argument value
     """
-    fd_kwargs = {
-        "fixturemanager": request._fixturemanager,
-        "baseid": None,
-        "argname": arg,
-        "func": lambda: value,
-        "scope": "function",
-        "params": None,
-    }
 
-    fd = FixtureDef(**fd_kwargs)
+    fd = FixtureDef(
+        fixturemanager=request._fixturemanager,
+        baseid=None,
+        argname=arg,
+        func=lambda: value,
+        scope="function",
+        params=None,
+    )
     fd.cached_result = (value, 0, None)
 
     old_fd = request._fixture_defs.get(arg)
