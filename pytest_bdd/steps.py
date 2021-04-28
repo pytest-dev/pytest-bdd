@@ -37,10 +37,7 @@ def given_beautiful_article(article):
 
 import pytest
 
-try:
-    from _pytest import fixtures as pytest_fixtures
-except ImportError:
-    from _pytest import python as pytest_fixtures
+from _pytest.fixtures import FixtureDef
 
 from .types import GIVEN, WHEN, THEN
 from .parsers import get_parser
@@ -154,10 +151,10 @@ def inject_fixture(request, arg, value):
         "params": None,
     }
 
-    if "yieldctx" in get_args(pytest_fixtures.FixtureDef.__init__):
+    if "yieldctx" in get_args(FixtureDef.__init__):
         fd_kwargs["yieldctx"] = False
 
-    fd = pytest_fixtures.FixtureDef(**fd_kwargs)
+    fd = FixtureDef(**fd_kwargs)
     fd.cached_result = (value, 0, None)
 
     old_fd = request._fixture_defs.get(arg)
