@@ -36,21 +36,25 @@ def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None)
     for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
         for fixturedef in fixturedefs:
             parser = getattr(fixturedef.func, "parser", None)
-            match = parser.is_matching(name) if parser else None
-            if match:
-                converters = getattr(fixturedef.func, "converters", {})
-                for arg, value in parser.parse_arguments(name).items():
-                    if arg in converters:
-                        value = converters[arg](value)
-                    if request:
-                        inject_fixture(request, arg, value)
-                parser_name = get_step_fixture_name(parser.name, type_)
+            if parser is None:
+                continue
+            match = parser.is_matching(name)
+            if not match:
+                continue
+
+            converters = getattr(fixturedef.func, "converters", {})
+            for arg, value in parser.parse_arguments(name).items():
+                if arg in converters:
+                    value = converters[arg](value)
                 if request:
-                    try:
-                        request.getfixturevalue(parser_name)
-                    except pytest_fixtures.FixtureLookupError:
-                        continue
-                return parser_name
+                    inject_fixture(request, arg, value)
+            parser_name = get_step_fixture_name(parser.name, type_)
+            if request:
+                try:
+                    request.getfixturevalue(parser_name)
+                except pytest_fixtures.FixtureLookupError:
+                    continue
+            return parser_name
 
 
 def _find_step_function(request, step, scenario):
