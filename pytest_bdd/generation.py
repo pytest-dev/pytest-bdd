@@ -116,13 +116,15 @@ def _find_step_fixturedef(fixturemanager, item, name, type_):
 
     :return: Step function.
     """
-    fixturedefs = fixturemanager.getfixturedefs(get_step_fixture_name(name, type_), item.nodeid)
-    if not fixturedefs:
-        name = find_argumented_step_fixture_name(name, type_, fixturemanager)
-        if name:
-            return fixturemanager._arg2fixturedefs.get(name, None)
-    else:
+    step_fixture_name = get_step_fixture_name(name, type_)
+    fixturedefs = fixturemanager.getfixturedefs(step_fixture_name, item.nodeid)
+    if fixturedefs is not None:
         return fixturedefs
+
+    argumented_step_name = find_argumented_step_fixture_name(name, type_, fixturemanager)
+    if argumented_step_name is not None:
+        return fixturemanager.getfixturedefs(argumented_step_name, item.nodeid)
+    return None
 
 
 def parse_feature_files(paths, **kwargs):
