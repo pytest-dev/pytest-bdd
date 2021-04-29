@@ -37,14 +37,11 @@ def given_beautiful_article(article):
 
 import pytest
 
-try:
-    from _pytest import fixtures as pytest_fixtures
-except ImportError:
-    from _pytest import python as pytest_fixtures
+from _pytest.fixtures import FixtureDef
 
 from .types import GIVEN, WHEN, THEN
 from .parsers import get_parser
-from .utils import get_args, get_caller_module_locals
+from .utils import get_caller_module_locals
 
 
 def get_step_fixture_name(name, type_):
@@ -145,19 +142,15 @@ def inject_fixture(request, arg, value):
     :param arg: argument name
     :param value: argument value
     """
-    fd_kwargs = {
-        "fixturemanager": request._fixturemanager,
-        "baseid": None,
-        "argname": arg,
-        "func": lambda: value,
-        "scope": "function",
-        "params": None,
-    }
 
-    if "yieldctx" in get_args(pytest_fixtures.FixtureDef.__init__):
-        fd_kwargs["yieldctx"] = False
-
-    fd = pytest_fixtures.FixtureDef(**fd_kwargs)
+    fd = FixtureDef(
+        fixturemanager=request._fixturemanager,
+        baseid=None,
+        argname=arg,
+        func=lambda: value,
+        scope="function",
+        params=None,
+    )
     fd.cached_result = (value, 0, None)
 
     old_fd = request._fixture_defs.get(arg)

@@ -15,11 +15,7 @@ import os
 import re
 
 import pytest
-
-try:
-    from _pytest import fixtures as pytest_fixtures
-except ImportError:
-    from _pytest import python as pytest_fixtures
+from _pytest.fixtures import FixtureLookupError
 
 from . import exceptions
 from .feature import get_feature, get_features
@@ -36,21 +32,25 @@ def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None)
     for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
         for fixturedef in fixturedefs:
             parser = getattr(fixturedef.func, "parser", None)
-            match = parser.is_matching(name) if parser else None
-            if match:
-                converters = getattr(fixturedef.func, "converters", {})
-                for arg, value in parser.parse_arguments(name).items():
-                    if arg in converters:
-                        value = converters[arg](value)
-                    if request:
-                        inject_fixture(request, arg, value)
-                parser_name = get_step_fixture_name(parser.name, type_)
+            if parser is None:
+                continue
+            match = parser.is_matching(name)
+            if not match:
+                continue
+
+            converters = getattr(fixturedef.func, "converters", {})
+            for arg, value in parser.parse_arguments(name).items():
+                if arg in converters:
+                    value = converters[arg](value)
                 if request:
-                    try:
-                        request.getfixturevalue(parser_name)
-                    except pytest_fixtures.FixtureLookupError:
-                        continue
-                return parser_name
+                    inject_fixture(request, arg, value)
+            parser_name = get_step_fixture_name(parser.name, type_)
+            if request:
+                try:
+                    request.getfixturevalue(parser_name)
+                except FixtureLookupError:
+                    continue
+            return parser_name
 
 
 def _find_step_function(request, step, scenario):
@@ -67,14 +67,14 @@ def _find_step_function(request, step, scenario):
     try:
         # Simple case where no parser is used for the step
         return request.getfixturevalue(get_step_fixture_name(name, step.type))
-    except pytest_fixtures.FixtureLookupError:
+    except FixtureLookupError:
         try:
             # Could not find a fixture with the same name, let's see if there is a parser involved
             name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager, request)
             if name:
                 return request.getfixturevalue(name)
             raise
-        except pytest_fixtures.FixtureLookupError:
+        except FixtureLookupError:
             raise exceptions.StepDefinitionNotFoundError(
                 f"Step definition is not found: {step}. "
                 f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
