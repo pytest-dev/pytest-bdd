@@ -4,7 +4,7 @@ import textwrap
 import pytest
 
 
-class OfType(object):
+class OfType:
     """Helper object comparison to which is always 'equal'."""
 
     def __init__(self, type=None):

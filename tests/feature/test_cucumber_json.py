@@ -7,13 +7,13 @@ import textwrap
 def runandparse(testdir, *args):
     """Run tests in testdir and parse json output."""
     resultpath = testdir.tmpdir.join("cucumber.json")
-    result = testdir.runpytest("--cucumberjson={0}".format(resultpath), "-s", *args)
+    result = testdir.runpytest(f"--cucumberjson={resultpath}", "-s", *args)
     with resultpath.open() as f:
         jsonobject = json.load(f)
     return result, jsonobject
 
 
-class OfType(object):
+class OfType:
     """Helper object to help compare object type to initialization type"""
 
     def __init__(self, type=None):
@@ -280,3 +280,46 @@ def test_step_trace_with_expand_option(testdir):
     assert jsonobject[0]["elements"][0]["steps"][0]["name"] == "type str and value hello"
     assert jsonobject[0]["elements"][1]["steps"][0]["name"] == "type int and value 42"
     assert jsonobject[0]["elements"][2]["steps"][0]["name"] == "type float and value 1.0"
+
+
+def test_converters_dict_with_expand_option(testdir):
+    """Test that `--cucumber-json-expanded` works correctly when using `example_converters`."""
+    testdir.makefile(
+        ".feature",
+        test=textwrap.dedent(
+            """
+    Feature: Expanded option with example converters
+        Scenario: Passing outline
+            Given there is an intvalue <intvalue> and stringvalue <stringvalue> and floatvalue <floatvalue>
+
+            Examples: example1
+            | intvalue | stringvalue | floatvalue |
+            | 1        | hello       | 1.0        |
+    """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """
+        import pytest
+        from pytest_bdd import given, scenario
+
+        @given('there is an intvalue <intvalue> and stringvalue <stringvalue> and floatvalue <floatvalue>')
+        def type_type_and_value_value():
+            pass
+
+        @scenario(
+            'test.feature',
+            'Passing outline',
+            example_converters={"intvalue":int, "stringvalue":str, "floatvalue":float},
+        )
+        def test_passing_outline():
+            pass
+    """
+        )
+    )
+    result, jsonobject = runandparse(testdir, "--cucumber-json-expanded")
+    assert result.ret == 0
+
+    expanded_step_name = jsonobject[0]["elements"][0]["steps"][0]["name"]
+    assert expanded_step_name == "there is an intvalue 1 and stringvalue hello and floatvalue 1.0"
