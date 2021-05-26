@@ -219,6 +219,19 @@ for `cfparse` parser
     def start_cucumbers(start):
         return dict(start=start, eat=0)
 
+or the same:
+.. code-block:: python
+
+    from parse_type.cfparse import Parser as cfparse
+
+    @given(
+        cfparse("there are {start:Number} cucumbers",
+        extra_types=dict(Number=int)),
+        target_fixture="start_cucumbers",
+    )
+    def start_cucumbers(start):
+        return dict(start=start, eat=0)
+
 for `re` parser
 
 .. code-block:: python
@@ -233,6 +246,18 @@ for `re` parser
     def start_cucumbers(start):
         return dict(start=start, eat=0)
 
+or the same:
+
+.. code-block:: python
+    from re import compile as parse_re
+
+    @given(
+        parse_re(r"there are (?P<start>\d+) cucumbers"),
+        converters=dict(start=int),
+        target_fixture="start_cucumbers",
+    )
+    def start_cucumbers(start):
+        return dict(start=start, eat=0)
 
 Example:
 
@@ -253,7 +278,8 @@ The code will look like:
 .. code-block:: python
 
     import re
-    from pytest_bdd import scenario, given, when, then, parsers
+    from parse import Parser as parse
+    from pytest_bdd import scenario, given, when, then
 
 
     @scenario("arguments.feature", "Arguments for given, when, thens")
@@ -261,17 +287,17 @@ The code will look like:
         pass
 
 
-    @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="start_cucumbers")
+    @given(parse("there are {start:d} cucumbers"), target_fixture="start_cucumbers")
     def start_cucumbers(start):
         return dict(start=start, eat=0)
 
 
-    @when(parsers.parse("I eat {eat:d} cucumbers"))
+    @when(parse("I eat {eat:d} cucumbers"))
     def eat_cucumbers(start_cucumbers, eat):
         start_cucumbers["eat"] += eat
 
 
-    @then(parsers.parse("I should have {left:d} cucumbers"))
+    @then(parse("I should have {left:d} cucumbers"))
     def should_have_left_cucumbers(start_cucumbers, start, left):
         assert start_cucumbers['start'] == start
         assert start - start_cucumbers['eat'] == left

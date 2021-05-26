@@ -1,9 +1,17 @@
 """Step arguments tests."""
 
 import textwrap
+from pytest import mark
 
 
-def test_every_steps_takes_param_with_the_same_name(testdir):
+@mark.parametrize(
+    "parser_import_string",
+    [
+        "from pytest_bdd.parsers import parse",
+        "from parse import Parser as parse",
+    ],
+)
+def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_string):
     testdir.makefile(
         ".feature",
         arguments=textwrap.dedent(
@@ -24,8 +32,10 @@ def test_every_steps_takes_param_with_the_same_name(testdir):
         textwrap.dedent(
             """\
         import pytest
-        from pytest_bdd import parsers, given, when, then, scenario
-
+        from pytest_bdd import given, when, then, scenario
+        """
+            f"{parser_import_string}"
+            """
         @scenario("arguments.feature", "Every step takes a parameter with the same name")
         def test_arguments():
             pass
@@ -35,17 +45,17 @@ def test_every_steps_takes_param_with_the_same_name(testdir):
             return [1, 2, 1, 0, 999999]
 
 
-        @given(parsers.parse("I have {euro:d} Euro"))
+        @given(parse("I have {euro:d} Euro"))
         def i_have(euro, values):
             assert euro == values.pop(0)
 
 
-        @when(parsers.parse("I pay {euro:d} Euro"))
+        @when(parse("I pay {euro:d} Euro"))
         def i_pay(euro, values, request):
             assert euro == values.pop(0)
 
 
-        @then(parsers.parse("I should have {euro:d} Euro"))
+        @then(parse("I should have {euro:d} Euro"))
         def i_should_have(euro, values):
             assert euro == values.pop(0)
 
@@ -56,7 +66,14 @@ def test_every_steps_takes_param_with_the_same_name(testdir):
     result.assert_outcomes(passed=1)
 
 
-def test_argument_in_when_step_1(testdir):
+@mark.parametrize(
+    "parser_import_string",
+    [
+        "from pytest_bdd.parsers import parse",
+        "from parse import Parser as parse",
+    ],
+)
+def test_argument_in_when_step_1(testdir, parser_import_string):
     testdir.makefile(
         ".feature",
         arguments=textwrap.dedent(
@@ -74,7 +91,10 @@ def test_argument_in_when_step_1(testdir):
         textwrap.dedent(
             """\
         import pytest
-        from pytest_bdd import parsers, given, when, then, scenario
+        from pytest_bdd import given, when, then, scenario
+        """
+            f"{parser_import_string}"
+            """
 
         @pytest.fixture
         def arguments():
@@ -86,17 +106,17 @@ def test_argument_in_when_step_1(testdir):
             pass
 
 
-        @given(parsers.parse("I have an argument {arg:Number}", extra_types=dict(Number=int)))
+        @given(parse("I have an argument {arg:Number}", extra_types=dict(Number=int)))
         def argument(arguments, arg):
             arguments["arg"] = arg
 
 
-        @when(parsers.parse("I get argument {arg:d}"))
+        @when(parse("I get argument {arg:d}"))
         def get_argument(arguments, arg):
             arguments["arg"] = arg
 
 
-        @then(parsers.parse("My argument should be {arg:d}"))
+        @then(parse("My argument should be {arg:d}"))
         def assert_that_my_argument_is_arg(arguments, arg):
             assert arguments["arg"] == arg
 
