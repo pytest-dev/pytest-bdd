@@ -1,9 +1,15 @@
 """Test scenarios shortcut."""
+import sys
 import textwrap
+
+import pytest
 
 from tests.utils import assert_outcomes
 
 
+@pytest.mark.xfail(
+    sys.version_info >= (3, 10), reason="trio does not support py3.10 https://github.com/python-trio/trio/pull/1921"
+)
 def test_scenarios(testdir, pytest_params):
     """Test scenarios shortcut (used together with @scenario for individual test override)."""
     testdir.makeini(
