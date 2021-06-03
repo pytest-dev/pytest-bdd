@@ -1,5 +1,10 @@
 [run]
 branch = true
-include =
-    pytest_bdd/*
-    tests/*
+source_pkgs = pytest_bdd
+source = tests
+
+[paths]
+source =
+    .
+    .tox/*/lib/*/site-packages/
+    .tox\\*\\Lib\\site-packages\\
