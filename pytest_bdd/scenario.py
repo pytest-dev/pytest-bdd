@@ -19,6 +19,7 @@ from _pytest.fixtures import FixtureLookupError
 
 from . import exceptions
 from .feature import get_feature, get_features
+from .model import Feature, Scenario
 from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
@@ -141,7 +142,7 @@ def _execute_scenario(feature, scenario, request):
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
-def _get_scenario_decorator(feature, feature_name, scenario, scenario_name):
+def _get_scenario_decorator(feature: Feature, feature_name, scenario: Scenario, scenario_name):
     # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
     # when the decorator is misused.
     # Pytest inspect the signature to determine the required fixtures, and in that case it would look
@@ -165,10 +166,9 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name):
             _execute_scenario(feature, scenario, request)
             return fn(*[request.getfixturevalue(arg) for arg in args])
 
-        for param_set in scenario.get_params():
-            if param_set:
-                scenario_wrapper = pytest.mark.parametrize(*param_set)(scenario_wrapper)
-        for tag in scenario.tags.union(feature.tags):
+        for param_set in scenario.get_examples_with_applied_converters():
+            scenario_wrapper = pytest.mark.parametrize(*param_set)(scenario_wrapper)
+        for tag in scenario.aggregated_tags:
             config = CONFIG_STACK[-1]
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 

@@ -24,10 +24,16 @@ Syntax example:
 one line.
 """
 import os.path
+from typing import TYPE_CHECKING
 
 import glob2
 
 from .parser import parse_feature
+
+if TYPE_CHECKING:
+    from typing import List
+    from pytest_bdd.model import Feature
+
 
 # Global features dictionary
 features = {}
@@ -41,7 +47,7 @@ def get_feature(base_path, filename, encoding="utf-8"):
     :param str encoding: Feature file encoding.
 
     :return: `Feature` instance from the parsed feature cache.
-
+    :rtype: Feature
     :note: The features are parsed on the execution of the test and
            stored in the global variable cache to improve the performance
            when multiple scenarios are referencing the same file.
@@ -61,6 +67,7 @@ def get_features(paths, **kwargs):
     :param list paths: `list` of paths (file or dirs)
 
     :return: `list` of `Feature` objects.
+    :rtype: List[Feature]
     """
     seen_names = set()
     features = []

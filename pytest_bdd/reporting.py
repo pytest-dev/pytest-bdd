@@ -18,7 +18,7 @@ class StepReport:
     def __init__(self, step):
         """Step report constructor.
 
-        :param pytest_bdd.parser.Step step: Step.
+        :param pytest_bdd.model.Step step: Step.
         """
         self.step = step
         self.started = time.time()
@@ -65,25 +65,32 @@ class ScenarioReport:
     def __init__(self, scenario, node):
         """Scenario report constructor.
 
-        :param pytest_bdd.parser.Scenario scenario: Scenario.
+        :param pytest_bdd.model.Scenario scenario: Scenario.
         :param node: pytest test node object
         """
         self.scenario = scenario
+        self.node = node
         self.step_reports = []
-        self.param_index = None
-        parametrize_args = get_parametrize_markers_args(node)
-        if parametrize_args and scenario.examples:
+
+    @property
+    def param_index(self):
+        parametrize_args = get_parametrize_markers_args(self.node)
+        if parametrize_args and self.scenario.examples:
             param_names = (
                 parametrize_args[0] if isinstance(parametrize_args[0], (tuple, list)) else [parametrize_args[0]]
             )
             param_values = parametrize_args[1]
-            node_param_values = [node.funcargs[param_name] for param_name in param_names]
+            node_param_values = [self.node.funcargs[param_name] for param_name in param_names]
             if node_param_values in param_values:
-                self.param_index = param_values.index(node_param_values)
+                return param_values.index(node_param_values)
             elif tuple(node_param_values) in param_values:
-                self.param_index = param_values.index(tuple(node_param_values))
-        self.example_kwargs = {
-            example_param: str(node.funcargs[example_param]) for example_param in scenario.get_example_params()
+                return param_values.index(tuple(node_param_values))
+
+    @property
+    def example_kwargs(self):
+        return {
+            example_param: str(self.node.funcargs[example_param])
+            for example_param in self.scenario.get_example_params()
         }
 
     @property
@@ -112,7 +119,7 @@ class ScenarioReport:
         scenario = self.scenario
         feature = scenario.feature
 
-        params = sum(scenario.get_params(builtin=True), []) if scenario.examples else None
+        params = sum(scenario.get_examples_with_applied_converters(builtin=True), [])
         return {
             "steps": [step_report.serialize() for step_report in self.step_reports],
             "name": scenario.name,
