@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "wheel", "unasync~=0.5.0"]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]

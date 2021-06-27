@@ -64,14 +64,14 @@ def test_scenarios(testdir, pytest_params):
     testdir.makepyfile(
         """
         import pytest
-        from pytest_bdd import async_scenarios, async_scenario
+        from pytest_bdd import scenarios, scenario
 
         @pytest.mark.anyio
-        @async_scenario('features/subfolder/test.feature', 'Test already bound scenario')
+        @scenario('features/subfolder/test.feature', 'Test already bound scenario', sync=False)
         async def test_already_bound():
             pass
 
-        async_scenarios('features')
+        scenarios('features', sync=False)
     """
     )
     result = testdir.runpytest_subprocess("-v", "-s", *pytest_params)
@@ -94,9 +94,9 @@ def test_scenarios_none_found(testdir, pytest_params):
     testpath = testdir.makepyfile(
         """
         import pytest
-        from pytest_bdd import async_scenarios
+        from pytest_bdd import scenarios
 
-        async_scenarios('.')
+        scenarios('.', sync=False)
     """
     )
     result = testdir.runpytest_subprocess(testpath, *pytest_params)
