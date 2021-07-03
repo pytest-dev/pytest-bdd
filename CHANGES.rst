@@ -3,6 +3,10 @@ Changelog
 
 Unreleased
 -----------
+
+4.1.0
+-----------
+- `when` and `then` steps now can provide a `target_fixture`, just like `given` does. Discussion at https://github.com/pytest-dev/pytest-bdd/issues/402.
 - Drop compatibility for python 2 and officially support only python >= 3.6.
 - Fix error when using `--cucumber-json-expanded` in combination with `example_converters` (marcbrossaissogeti).
 - Fix `--generate-missing` not correctly recognizing steps with parsers
