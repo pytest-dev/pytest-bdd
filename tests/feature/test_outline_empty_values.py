@@ -1,7 +1,6 @@
 """Scenario Outline with empty example values tests."""
 import textwrap
 
-
 STEPS = """\
 from pytest_bdd import given, when, then
 

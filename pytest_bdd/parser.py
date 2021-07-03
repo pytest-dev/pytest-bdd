@@ -1,10 +1,9 @@
-import io
 import os.path
 import re
 import textwrap
 from collections import OrderedDict
 
-from . import types, exceptions
+from . import exceptions, types
 
 SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
 COMMENT_RE = re.compile(r"(^|(?<=\s))#")

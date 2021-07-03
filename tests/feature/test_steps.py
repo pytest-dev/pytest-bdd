@@ -1,5 +1,4 @@
 import textwrap
-import pytest
 
 
 def test_steps(testdir):

@@ -1,7 +1,8 @@
 """Test when and then steps are callables."""
 
-import pytest
 import textwrap
+
+import pytest
 
 
 def test_when_then(testdir):
