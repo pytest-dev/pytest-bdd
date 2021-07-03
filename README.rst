@@ -359,6 +359,43 @@ it will stay untouched. To allow this, special parameter `target_fixture` exists
 In this example existing fixture `foo` will be overridden by given step `I have injecting given` only for scenario it's
 used in.
 
+Sometimes it is also useful to let `when` and `then` steps to provide a fixture as well.
+A common use case is when we have to assert the outcome of an HTTP request:
+
+.. code-block:: python
+
+    # test_blog.py
+
+    from pytest_bdd import scenarios, given, when, then
+
+    scenarios("blog.feature")
+
+    @given("there is an article", target_fixture="article")
+    def there_is_an_article():
+        return Article()
+
+    @when("I request the deletion of the article", target_fixture="request_result")
+    def there_should_be_a_new_article(article, http_client):  # <-- Important bit here
+        return http_client.delete(f"/articles/{article.uid}")
+
+    @then("the request should be successful")
+    def article_is_published(request_result):
+        assert request_result.status_code = 200
+
+
+
+.. code-block:: gherkin
+
+    # blog.feature
+
+    Feature: Blog
+        Scenario: Deleting the article
+            Given there is an article
+
+            When I request the deletion of the article
+
+            Then the request should be successful
+
 
 Multiline steps
 ---------------
