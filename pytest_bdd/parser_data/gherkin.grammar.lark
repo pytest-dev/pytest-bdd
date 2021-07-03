@@ -31,9 +31,11 @@ tag: "@" CNAME
 tag_line: tag (tag)* _NL
 
 string: /[^\n]+/
+// TODO: Probably the following does not need the negative lookbehind part
+//step_docstring: /"""\n.*?(?<!\\)(\\\\)*?\n\s*"""/is
+//              | /'''\n.*?(?<!\\)(\\\\)*?\n\s*'''/is
 
-step_docstring: /"""\n.*?(?<!\\)(\\\\)*?\n\s*"""/is
-              | /'''\n.*?(?<!\\)(\\\\)*?\n\s*'''/is
+step_docstring: /"""\n.*?\n\s*"""/is
 
 // %import common.ESCAPED_STRING -> string
 %import common.WS_INLINE
