@@ -163,7 +163,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name):
         @pytest.mark.usefixtures(*function_args)
         def scenario_wrapper(request):
             _execute_scenario(feature, scenario, request)
-            return fn(*[request.getfixturevalue(arg) for arg in args])
+            return fn(*(request.getfixturevalue(arg) for arg in args))
 
         for param_set in scenario.get_params():
             if param_set:
