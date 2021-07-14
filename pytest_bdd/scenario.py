@@ -10,15 +10,16 @@ test_publish_article = scenario(
     scenario_name="Publishing the article",
 )
 """
-import collections
 import os
 import re
+from itertools import chain, product
 
 import pytest
 from _pytest.fixtures import FixtureLookupError
 
 from . import exceptions
 from .feature import get_feature, get_features
+from .parser import STEP_PARAM_RE, STEP_PARAM_TEMPLATE
 from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
@@ -26,31 +27,61 @@ PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
+def generate_partial_substituted_step_parameters(name: str, request):
+    """\
+    Returns step name with substituted parameters from fixtures, example tables, param marks starting
+    from most substituted to less, so giving chance to most specific parser
+    """
+    matches = re.finditer(STEP_PARAM_RE, name)
+    for match in matches:
+        param_name = match.group(1)
+        try:
+            sub_name = re.sub(
+                STEP_PARAM_TEMPLATE.format(param=re.escape(param_name)),
+                str(request.getfixturevalue(param_name)),
+                name,
+                count=1,
+            )
+        except FixtureLookupError:
+            continue
+        else:
+            yield from generate_partial_substituted_step_parameters(sub_name, request)
+    yield name
+
+
 def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None):
     """Find argumented step fixture name."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
-    for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
-        for fixturedef in fixturedefs:
-            parser = getattr(fixturedef.func, "parser", None)
-            if parser is None:
-                continue
-            match = parser.is_matching(name)
-            if not match:
-                continue
 
-            converters = getattr(fixturedef.func, "converters", {})
-            for arg, value in parser.parse_arguments(name).items():
+    fixturedefs = chain.from_iterable(fixturedefs for _, fixturedefs in list(fixturemanager._arg2fixturedefs.items()))
+    fixturedef_funcs = (fixturedef.func for fixturedef in fixturedefs)
+    parsers_fixturedef_function_mappings = (
+        (fixturedef_func.parser, fixturedef_func)
+        for fixturedef_func in fixturedef_funcs
+        if hasattr(fixturedef_func, "parser")
+    )
+
+    matched_steps_with_parsers = (
+        (step_name, parser, getattr(fixturedef_function, "converters", {}))
+        for step_name, (parser, fixturedef_function) in product(
+            generate_partial_substituted_step_parameters(name, request), parsers_fixturedef_function_mappings
+        )
+        if parser.is_matching(step_name)
+    )
+
+    for step_name, parser, converters in matched_steps_with_parsers:
+        if request:
+            for arg, value in parser.parse_arguments(step_name).items():
                 if arg in converters:
                     value = converters[arg](value)
-                if request:
-                    inject_fixture(request, arg, value)
-            parser_name = get_step_fixture_name(parser.name, type_)
-            if request:
                 try:
-                    request.getfixturevalue(parser_name)
+                    overridable_fixture_value = request.getfixturevalue(arg)
                 except FixtureLookupError:
-                    continue
-            return parser_name
+                    inject_fixture(request, arg, value)
+                else:
+                    if overridable_fixture_value != value:
+                        inject_fixture(request, arg, value)
+        return get_step_fixture_name(parser.name, type_)
 
 
 def _find_step_function(request, step, scenario):
@@ -136,9 +167,6 @@ def _execute_scenario(feature, scenario, request):
             _execute_step_function(request, scenario, step, step_func)
     finally:
         request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
-
-
-FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
 def _get_scenario_decorator(feature, feature_name, scenario, scenario_name):
