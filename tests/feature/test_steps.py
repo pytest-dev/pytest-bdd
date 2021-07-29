@@ -1,5 +1,4 @@
 import textwrap
-import pytest
 
 
 def test_steps(testdir):
@@ -71,6 +70,59 @@ def test_steps(testdir):
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
+
+
+def test_all_steps_can_provide_fixtures(testdir):
+    """Test that given/when/then can all provide fixtures."""
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Step fixture
+                Scenario: Given steps can provide fixture
+                    Given Foo is "bar"
+                    Then foo should be "bar"
+                Scenario: When steps can provide fixture
+                    When Foo is "baz"
+                    Then foo should be "baz"
+                Scenario: Then steps can provide fixture
+                    Then foo is "qux"
+                    And foo should be "qux"
+            """
+        ),
+    )
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, when, then, parsers, scenarios
+
+        scenarios("steps.feature")
+
+        @given(parsers.parse('Foo is "{value}"'), target_fixture="foo")
+        def given_foo_is_value(value):
+            return value
+
+
+        @when(parsers.parse('Foo is "{value}"'), target_fixture="foo")
+        def when_foo_is_value(value):
+            return value
+
+
+        @then(parsers.parse('Foo is "{value}"'), target_fixture="foo")
+        def then_foo_is_value(value):
+            return value
+
+
+        @then(parsers.parse('foo should be "{value}"'))
+        def foo_is_foo(foo, value):
+            assert foo == value
+
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=3, failed=0)
 
 
 def test_when_first(testdir):

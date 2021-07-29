@@ -180,14 +180,14 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, *, s
             @pytest.mark.usefixtures(*function_args)
             def scenario_wrapper(request):
                 await_(_execute_scenario, feature, scenario, request, sync)
-                return fn(*[request.getfixturevalue(arg) for arg in args])
+                return fn(*(request.getfixturevalue(arg) for arg in args))
 
         else:
 
             @pytest.mark.usefixtures(*function_args)
             async def scenario_wrapper(request):
                 await _execute_scenario(feature, scenario, request, sync)
-                return await fn(*[request.getfixturevalue(arg) for arg in args])
+                return await fn(*(request.getfixturevalue(arg) for arg in args))
 
         for param_set in scenario.get_params():
             if param_set:
