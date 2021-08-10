@@ -215,11 +215,21 @@ def collect_example_parametrizations(
     return [pytest.param(context, id="-".join(context.values())) for context in contexts]
 
 
-def scenario(feature_name: str, scenario_name: str, encoding: str = "utf-8", features_base_dir=None):
+def scenario(
+    feature_name: str,
+    scenario_name: str,
+    *,
+    allow_example_free_variables=False,
+    allow_step_free_variables=True,
+    encoding: str = "utf-8",
+    features_base_dir=None,
+):
     """Scenario decorator.
 
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
     :param str scenario_name: Scenario name.
+    :param allow_example_free_variables: Examples could contain free(unused) variables
+    :param allow_step_free_variables: Steps could contain free(unused) variables which could be taken from fixtures
     :param str encoding: Feature file encoding.
     """
 
@@ -234,6 +244,9 @@ def scenario(feature_name: str, scenario_name: str, encoding: str = "utf-8", fea
     # Get the scenario
     try:
         scenario = feature.scenarios[scenario_name]
+        scenario.allow_example_free_variables = allow_example_free_variables
+        scenario.allow_step_free_variables = allow_step_free_variables
+
     except KeyError:
         feature_name = feature.name or "[Empty]"
         raise exceptions.ScenarioNotFound(
@@ -294,10 +307,12 @@ def get_python_name_generator(name):
         suffix = f"_{index}"
 
 
-def scenarios(*feature_paths, **kwargs):
+def scenarios(*feature_paths, allow_example_free_variables=False, allow_step_free_variables=True, **kwargs):
     """Parse features from the paths and put all found scenarios in the caller module.
 
     :param *feature_paths: feature file paths to use for scenarios
+    :param allow_example_free_variables: Examples could contain free(unused) variables
+    :param allow_step_free_variables: Steps could contain free(unused) variables which could be taken from fixtures
     """
     caller_locals = get_caller_module_locals()
     caller_path = get_caller_module_path()
@@ -324,7 +339,13 @@ def scenarios(*feature_paths, **kwargs):
             # skip already bound scenarios
             if (scenario_object.feature.filename, scenario_name) not in module_scenarios:
 
-                @scenario(feature.filename, scenario_name, **kwargs)
+                @scenario(
+                    feature.filename,
+                    scenario_name,
+                    allow_example_free_variables=allow_example_free_variables,
+                    allow_step_free_variables=allow_step_free_variables,
+                    **kwargs,
+                )
                 def _scenario():
                     pass  # pragma: no cover
 

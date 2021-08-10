@@ -232,6 +232,9 @@ class ScenarioTemplate:
         self.line_number = line_number
         self.tags = tags or set()
 
+        self.allow_example_free_variables = None
+        self.allow_step_free_variables = None
+
     def add_step(self, step):
         """Add step to the scenario.
 
@@ -258,18 +261,57 @@ class ScenarioTemplate:
         ]
         return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
 
+    @property
+    def params(self):
+        return frozenset(sum((list(step.params) for step in self.steps), []))
+
+    def get_example_params(self):
+        return set(self.examples.example_params + self.feature.examples.example_params)
+
     def validate(self):
         """Validate the scenario.
 
         :raises ScenarioValidationError: when scenario is not valid
         """
-        params = frozenset(sum((list(step.params) for step in self.steps), []))
-        example_params = set(self.examples.example_params + self.feature.examples.example_params)
-        if params and example_params and params.issubset(example_params):
+        if self.params or self.get_example_params():
+            self._validate_example_free_variables()
+            self._validate_step_free_variables()
+
+    def _validate_example_free_variables(self):
+        params = self.params
+        example_params = self.get_example_params()
+        if self.allow_example_free_variables or example_params.issubset(params):
+            return
+        else:
             raise exceptions.ScenarioExamplesNotValidError(
-                """Scenario "{}" in the feature "{}" does not have valid examples. """
-                """Set of step parameters {} should be a subset of example values {}.""".format(
-                    self.name, self.feature.filename, sorted(params), sorted(example_params)
+                (
+                    """Scenario "{}" in the feature "{}" does not have valid examples. """
+                    """Set of example parameters {} should be a subset of step """
+                    """parameters {} if examples free variables are not allowed"""
+                ).format(
+                    self.name,
+                    self.feature.filename,
+                    sorted(example_params),
+                    sorted(params),
+                )
+            )
+
+    def _validate_step_free_variables(self):
+        params = self.params
+        example_params = self.get_example_params()
+        if self.allow_step_free_variables or params.issubset(example_params):
+            return
+        else:
+            raise exceptions.ScenarioExamplesNotValidError(
+                (
+                    """Scenario "{}" in the feature "{}" does not have valid examples. """
+                    """Set of step parameters {} should be a subset of example """
+                    """parameters {} if steps free variables are not allowed"""
+                ).format(
+                    self.name,
+                    self.feature.filename,
+                    sorted(params),
+                    sorted(example_params),
                 )
             )
 

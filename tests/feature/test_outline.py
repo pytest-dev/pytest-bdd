@@ -81,6 +81,54 @@ def test_outlined(testdir):
     # fmt: on
 
 
+def test_disallow_free_example_params(testdir):
+    """Test parametrized scenario when the test function lacks parameters."""
+
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Scenario Outline: Outlined with wrong examples
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers
+
+                    Examples:
+                    | start | eat | left | unknown_param |
+                    |  12   |  5  |  7   | value         |
+
+            """
+        ),
+    )
+    testdir.makeconftest(textwrap.dedent(STEPS))
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario
+
+        @scenario(
+            "outline.feature", 
+            "Outlined with wrong examples",
+            allow_example_free_variables=False
+        )
+        def test_outline(request):
+            pass
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert_outcomes(result, errors=1)
+    result.stdout.fnmatch_lines(
+        '*ScenarioExamplesNotValidError: Scenario "Outlined with wrong examples"*does not have valid examples*'
+    )
+    result.stdout.fnmatch_lines(
+        "*Set of example parameters [[]'eat', 'left', 'start', 'unknown_param'[]] should be "
+        "a subset of step parameters [[]'eat', 'left', 'start'[]]*"
+    )
+
+
 def test_outline_has_subset_of_parameters(testdir):
     """Test parametrized scenario when the test function has a subset of the parameters of the examples."""
 
@@ -108,8 +156,11 @@ def test_outline_has_subset_of_parameters(testdir):
             """\
         from pytest_bdd import scenario
 
-        @scenario("outline.feature", "Outlined with subset of examples",
-            example_converters=dict(start=int, eat=float, left=str))
+        @scenario(
+            "outline.feature", 
+            "Outlined with subset of examples", 
+            allow_example_free_variables=True
+        )
         def test_outline(request):
             pass
         """
@@ -120,7 +171,8 @@ def test_outline_has_subset_of_parameters(testdir):
 
 
 def test_wrongly_outlined_parameters_not_a_subset_of_examples(testdir):
-    """Test parametrized scenario when the test function has a parameter set which is not a subset of those in the examples table."""
+    """Test parametrized scenario when the test function has a parameter set
+    which is not a subset of those in the examples table."""
 
     testdir.makefile(
         ".feature",
@@ -145,8 +197,9 @@ def test_wrongly_outlined_parameters_not_a_subset_of_examples(testdir):
         textwrap.dedent(
             """\
         from pytest_bdd import scenario, then
+        import pytest_bdd.parsers as parsers
 
-        @scenario("outline.feature", "Outlined with wrong examples")
+        @scenario("outline.feature", "Outlined with wrong examples", allow_step_free_variables=False)
         def test_outline(request):
             pass
             
@@ -161,7 +214,7 @@ def test_wrongly_outlined_parameters_not_a_subset_of_examples(testdir):
     result.stdout.fnmatch_lines(
         '*ScenarioExamplesNotValidError: Scenario "Outlined with wrong examples"*does not have valid examples*',
     )
-    result.stdout.fnmatch_lines("*should be a subset of example values [[]'eat', 'left', 'start'[]].*")
+    result.stdout.fnmatch_lines("*should be a subset of example parameters [[]'eat', 'left', 'start'[]]*")
 
 
 def test_wrong_vertical_examples_scenario(testdir):

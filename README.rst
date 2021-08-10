@@ -696,6 +696,46 @@ With a parametrized.feature file:
 
 
 The significant downside of this approach is inability to see the test table from the feature file.
+It's possible to disallow steps free parameters substitution from fixtures (so test case will fail):
+
+.. code-block:: python
+    @pytest.mark.parametrize(
+        ["start", "eat", "left"],
+        [(12, 5, 7)],
+    )
+    @scenario(
+        "parametrized.feature",
+        "Parametrized given, when, thens",
+        allow_step_free_variables=False,
+    )
+    def test_parametrized(start, eat, left):
+        """We don't need to do anything here, everything will be managed by the scenario decorator."""
+
+Sometimes you want leave a column not used in steps for specific reason in examples section:
+
+.. code-block:: gherkin
+    Feature: Scenario outlines
+        Scenario Outline: Outlined given, when, thens
+            Given there are <start> cucumbers
+            When I eat <eat> cucumbers
+            Then I should have <left> cucumbers
+
+            Examples:
+            | start | eat | left | comment         |
+            |  12   |  5  |  7   | sweet cucumbers!|
+
+
+.. code-block:: python
+    from pytest_bdd import given, when, then, scenario
+
+
+    @scenario(
+        "outline.feature",
+        "Outlined given, when, thens",
+        allow_example_free_variables=True,
+    )
+    def test_outlined():
+        pass
 
 
 Organizing your scenarios
