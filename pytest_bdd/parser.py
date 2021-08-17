@@ -456,4 +456,5 @@ def get_tags(line):
     return {tag.lstrip("@") for tag in line.strip().split(" @") if len(tag) > 1}
 
 
-STEP_PARAM_RE = re.compile(r"\<(.+?)\>")
+STEP_PARAM_TEMPLATE = "<{param}>"
+STEP_PARAM_RE = re.compile(STEP_PARAM_TEMPLATE.format(param="((?<=<)[^<>]+(?=>))"))
