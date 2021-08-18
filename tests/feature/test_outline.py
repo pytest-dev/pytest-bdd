@@ -1,28 +1,25 @@
 """Scenario Outline tests."""
 import textwrap
 
-from pytest import mark
-
 from tests.utils import assert_outcomes
 
-FLOAT_NUMBER_PATTERN = r"[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?"
-STEPS_TEMPLATE = """\
+STEPS = """\
 from pytest_bdd import given, when, then
-from pytest_bdd.parsers import re
 
-{given_decorator_definition}
+
+@given("there are <start> cucumbers", target_fixture="start_cucumbers")
 def start_cucumbers(start):
     assert isinstance(start, int)
     return dict(start=start)
 
 
-{when_decorator_definition}
+@when("I eat <eat> cucumbers")
 def eat_cucumbers(start_cucumbers, eat):
     assert isinstance(eat, float)
     start_cucumbers["eat"] = eat
 
 
-{then_decorator_definition}
+@then("I should have <left> cucumbers")
 def should_have_left_cucumbers(start_cucumbers, start, eat, left):
     assert isinstance(left, str)
     assert start - eat == int(left)
@@ -32,31 +29,7 @@ def should_have_left_cucumbers(start_cucumbers, start, eat, left):
 """
 
 
-STRING_STEPS = STEPS_TEMPLATE.format(
-    given_decorator_definition='@given("there are <start> cucumbers", target_fixture="start_cucumbers")',
-    when_decorator_definition='@when("I eat <eat> cucumbers")',
-    then_decorator_definition='@then("I should have <left> cucumbers")',
-)
-
-PARSER_STEPS = STEPS_TEMPLATE.format(
-    given_decorator_definition=f'@given(re("there are (?P<start>{FLOAT_NUMBER_PATTERN}) cucumbers"), '
-    f'target_fixture="start_cucumbers")',
-    when_decorator_definition=f'@when(re("I eat (?P<eat>{FLOAT_NUMBER_PATTERN}) cucumbers"))',
-    then_decorator_definition=f'@then(re("I should have (?P<left>{FLOAT_NUMBER_PATTERN}) cucumbers"))',
-)
-
-PARSER_STEPS_CONVERTED = STEPS_TEMPLATE.format(
-    given_decorator_definition=f'@given(re("there are (?P<start>{FLOAT_NUMBER_PATTERN}) cucumbers"), '
-    f'target_fixture="start_cucumbers", converters=dict(start=int))',
-    when_decorator_definition=f'@when(re("I eat (?P<eat>{FLOAT_NUMBER_PATTERN}) cucumbers"), '
-    f"converters=dict(eat=float))",
-    then_decorator_definition=f'@then(re("I should have (?P<left>{FLOAT_NUMBER_PATTERN}) cucumbers"), '
-    f"converters=dict(left=str))",
-)
-
-
-@mark.parametrize("steps", [STRING_STEPS, PARSER_STEPS_CONVERTED])
-def test_outlined(testdir, steps):
+def test_outlined(testdir):
     testdir.makefile(
         ".feature",
         outline=textwrap.dedent(
@@ -76,7 +49,7 @@ def test_outlined(testdir, steps):
         ),
     )
 
-    testdir.makeconftest(textwrap.dedent(steps))
+    testdir.makeconftest(textwrap.dedent(STEPS))
 
     testdir.makepyfile(
         textwrap.dedent(
@@ -105,9 +78,8 @@ def test_outlined(testdir, steps):
     result.assert_outcomes(passed=2)
 
 
-@mark.parametrize("steps", [STRING_STEPS, PARSER_STEPS_CONVERTED])
-def test_outline_has_subset_of_parameters(testdir, steps):
-    """Test parametrized scenario when the test function has a subset of the parameters of the examples."""
+def test_wrongly_outlined(testdir):
+    """Test parametrized scenario when the test function lacks parameters."""
 
     testdir.makefile(
         ".feature",
@@ -126,7 +98,7 @@ def test_outline_has_subset_of_parameters(testdir, steps):
             """
         ),
     )
-    testdir.makeconftest(textwrap.dedent(steps))
+    testdir.makeconftest(textwrap.dedent(STEPS))
 
     testdir.makepyfile(
         textwrap.dedent(
@@ -147,8 +119,7 @@ def test_outline_has_subset_of_parameters(testdir, steps):
     result.stdout.fnmatch_lines("*should match set of example values [[]'eat', 'left', 'start', 'unknown_param'[]].*")
 
 
-@mark.parametrize("steps", [STRING_STEPS, PARSER_STEPS])
-def test_wrong_vertical_examples_scenario(testdir, steps):
+def test_wrong_vertical_examples_scenario(testdir):
     """Test parametrized scenario vertical example table has wrong format."""
     testdir.makefile(
         ".feature",
@@ -167,7 +138,7 @@ def test_wrong_vertical_examples_scenario(testdir, steps):
             """
         ),
     )
-    testdir.makeconftest(textwrap.dedent(steps))
+    testdir.makeconftest(textwrap.dedent(STEPS))
 
     testdir.makepyfile(
         textwrap.dedent(
@@ -188,8 +159,7 @@ def test_wrong_vertical_examples_scenario(testdir, steps):
     )
 
 
-@mark.parametrize("steps", [STRING_STEPS, PARSER_STEPS])
-def test_wrong_vertical_examples_feature(testdir, steps):
+def test_wrong_vertical_examples_feature(testdir):
     """Test parametrized feature vertical example table has wrong format."""
     testdir.makefile(
         ".feature",
@@ -209,7 +179,7 @@ def test_wrong_vertical_examples_feature(testdir, steps):
             """
         ),
     )
-    testdir.makeconftest(textwrap.dedent(steps))
+    testdir.makeconftest(textwrap.dedent(STEPS))
 
     testdir.makepyfile(
         textwrap.dedent(
@@ -230,8 +200,7 @@ def test_wrong_vertical_examples_feature(testdir, steps):
     )
 
 
-@mark.parametrize("steps", [STRING_STEPS, PARSER_STEPS_CONVERTED])
-def test_outlined_with_other_fixtures(testdir, steps):
+def test_outlined_with_other_fixtures(testdir):
     """Test outlined scenario also using other parametrized fixture."""
     testdir.makefile(
         ".feature",
@@ -252,7 +221,7 @@ def test_outlined_with_other_fixtures(testdir, steps):
         ),
     )
 
-    testdir.makeconftest(textwrap.dedent(steps))
+    testdir.makeconftest(textwrap.dedent(STEPS))
 
     testdir.makepyfile(
         textwrap.dedent(
@@ -282,8 +251,7 @@ def test_outlined_with_other_fixtures(testdir, steps):
     result.assert_outcomes(passed=6)
 
 
-@mark.parametrize("steps", [STRING_STEPS, PARSER_STEPS_CONVERTED])
-def test_vertical_example(testdir, steps):
+def test_vertical_example(testdir):
     """Test outlined scenario with vertical examples table."""
     testdir.makefile(
         ".feature",
@@ -304,7 +272,7 @@ def test_vertical_example(testdir, steps):
         ),
     )
 
-    testdir.makeconftest(textwrap.dedent(steps))
+    testdir.makeconftest(textwrap.dedent(STEPS))
 
     testdir.makepyfile(
         textwrap.dedent(
@@ -331,62 +299,6 @@ def test_vertical_example(testdir, steps):
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=2)
-
-
-def test_outlined_paramaters_parsed_indirectly(testdir):
-    testdir.makefile(
-        ".feature",
-        outline=textwrap.dedent(
-            """\
-                Feature: Outline
-
-                    Examples:
-                    | first | consume | remaining |
-                    |  12   |  5      |  7        |
-                    |  5    |  4      |  1        |
-
-                    Scenario Outline: Outlined modern given, when, thens
-                        Given there were <first> <foods>
-                        When I ate <consume> <foods>
-                        Then I should have had <remaining> <foods>
-
-                        Examples:
-                        | foods      |
-                        | ice-creams |
-                        | almonds    |
-            """
-        ),
-    )
-
-    testdir.makepyfile(
-        textwrap.dedent(
-            """\
-        from pytest_bdd import scenarios, given, when, then
-        from pytest_bdd.parsers import parse
-
-        @given(parse('there were {start:d} {fruits}'), target_fixture='context')
-        def started_fruits(start, fruits):
-            assert isinstance(start, int)
-            return {fruits: dict(start=start)}
-
-        @when(parse('I ate {eat:g} {fruits}'))
-        def ate_fruits(start, eat, fruits, context):
-            assert isinstance(eat, float)
-            context[fruits]['eat'] = eat        
-
-        @then(parse('I should have had {left} {fruits}'))
-        def should_have_had_left_fruits(start, eat, left, fruits, context):
-            assert isinstance(left, str)
-            assert start - eat == int(left)
-            assert context[fruits]['start'] == start
-            assert context[fruits]['eat'] == eat
-
-        scenarios('outline.feature')
-        """
-        )
-    )
-    result = testdir.runpytest()
-    result.assert_outcomes(passed=4)
 
 
 def test_outlined_feature(testdir):
