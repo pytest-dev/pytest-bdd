@@ -389,46 +389,6 @@ def test_outlined_paramaters_parsed_indirectly(testdir):
     result.assert_outcomes(passed=4)
 
 
-def test_unsubstitutable_indirect_parameters(testdir):
-    testdir.makefile(
-        ".feature",
-        unsubstitutable=textwrap.dedent(
-            """\
-                Feature:
-
-                    Scenario Outline: Unsubstitutable parameter
-                        Given there is <substitutable> parameter
-
-                        Examples:
-                        | substitutable |
-                        | no            |
-                        | <yes>         |
-            """
-        ),
-    )
-
-    testdir.makepyfile(
-        textwrap.dedent(
-            """\
-        from pytest_bdd import scenarios, given, when, then
-        from pytest_bdd.parsers import parse, re
-
-        @given(parse('there is <{is_substitutable}> parameter'))
-        def _(is_substitutable):
-            assert is_substitutable == "yes"
-        
-        @given(re('there is (?P<is_substitutable>[^<].*[^>]) parameter'))
-        def _(is_substitutable):
-            assert is_substitutable == "no"
-
-        scenarios('unsubstitutable.feature')
-        """
-        )
-    )
-    result = testdir.runpytest()
-    result.assert_outcomes(passed=2)
-
-
 def test_outlined_feature(testdir):
     testdir.makefile(
         ".feature",
