@@ -10,6 +10,7 @@ test_publish_article = scenario(
     scenario_name="Publishing the article",
 )
 """
+import contextlib
 import collections
 import os
 import re
@@ -81,7 +82,7 @@ def _find_step_function(request, step, scenario):
             )
 
 
-def _execute_step_function(request, scenario, step, step_func):
+async def _execute_step_function(request, scenario, step, step_func, sync):
     """Execute step function.
 
     :param request: PyTest request.
@@ -103,7 +104,10 @@ def _execute_step_function(request, scenario, step, step_func):
         request.config.hook.pytest_bdd_before_step_call(**kw)
         target_fixture = getattr(step_func, "target_fixture", None)
         # Execute the step.
-        return_value = step_func(**kwargs)
+        if sync:
+            return_value = step_func(**kwargs)
+        else:
+            return_value = await step_func(**kwargs)
         if target_fixture:
             inject_fixture(request, target_fixture, return_value)
 
@@ -113,7 +117,7 @@ def _execute_step_function(request, scenario, step, step_func):
         raise
 
 
-def _execute_scenario(feature, scenario, request):
+async def _execute_scenario(feature, scenario, request, sync):
     """Execute the scenario.
 
     :param feature: Feature.
@@ -133,7 +137,7 @@ def _execute_scenario(feature, scenario, request):
                     request=request, feature=feature, scenario=scenario, step=step, exception=exception
                 )
                 raise
-            _execute_step_function(request, scenario, step, step_func)
+            await _execute_step_function(request, scenario, step, step_func, sync)
     finally:
         request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
 
@@ -141,7 +145,18 @@ def _execute_scenario(feature, scenario, request):
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
-def _get_scenario_decorator(feature, feature_name, scenario, scenario_name):
+def await_(fn, *args):
+    v = fn(*args)
+    with contextlib.closing(v.__await__()) as gen:
+        try:
+            gen.send(None)
+        except StopIteration as e:
+            return e.value
+        else:
+            raise RuntimeError("coro did not stop")
+
+
+def _get_scenario_decorator(feature, feature_name, scenario, scenario_name, *, sync):
     # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
     # when the decorator is misused.
     # Pytest inspect the signature to determine the required fixtures, and in that case it would look
@@ -160,10 +175,19 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name):
             if arg not in function_args:
                 function_args.append(arg)
 
-        @pytest.mark.usefixtures(*function_args)
-        def scenario_wrapper(request):
-            _execute_scenario(feature, scenario, request)
-            return fn(*(request.getfixturevalue(arg) for arg in args))
+        if sync:
+
+            @pytest.mark.usefixtures(*function_args)
+            def scenario_wrapper(request):
+                await_(_execute_scenario, feature, scenario, request, sync)
+                return fn(*(request.getfixturevalue(arg) for arg in args))
+
+        else:
+
+            @pytest.mark.usefixtures(*function_args)
+            async def scenario_wrapper(request):
+                await _execute_scenario(feature, scenario, request, sync)
+                return await fn(*(request.getfixturevalue(arg) for arg in args))
 
         for param_set in scenario.get_params():
             if param_set:
@@ -180,7 +204,7 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name):
     return decorator
 
 
-def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None, features_base_dir=None):
+def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None, features_base_dir=None, sync=True):
     """Scenario decorator.
 
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
@@ -213,7 +237,7 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
     scenario.validate()
 
     return _get_scenario_decorator(
-        feature=feature, feature_name=feature_name, scenario=scenario, scenario_name=scenario_name
+        feature=feature, feature_name=feature_name, scenario=scenario, scenario_name=scenario_name, sync=sync
     )
 
 
@@ -263,7 +287,7 @@ def get_python_name_generator(name):
         suffix = f"_{index}"
 
 
-def scenarios(*feature_paths, **kwargs):
+def scenarios(*feature_paths, sync=True, **kwargs):
     """Parse features from the paths and put all found scenarios in the caller module.
 
     :param *feature_paths: feature file paths to use for scenarios
@@ -293,9 +317,18 @@ def scenarios(*feature_paths, **kwargs):
             # skip already bound scenarios
             if (scenario_object.feature.filename, scenario_name) not in module_scenarios:
 
-                @scenario(feature.filename, scenario_name, **kwargs)
-                def _scenario():
-                    pass  # pragma: no cover
+                decorator = scenario(feature.filename, scenario_name, sync=sync, **kwargs)
+                if sync:
+
+                    @decorator
+                    def _scenario():
+                        pass  # pragma: no cover
+
+                else:
+
+                    @decorator
+                    async def _scenario():
+                        pass  # pragma: no cover
 
                 for test_name in get_python_name_generator(scenario_name):
                     if test_name not in caller_locals:
