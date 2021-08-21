@@ -13,6 +13,7 @@ test_publish_article = scenario(
 import collections
 import os
 import re
+import typing
 
 import pytest
 from _pytest.fixtures import FixtureLookupError
@@ -21,6 +22,9 @@ from . import exceptions
 from .feature import get_feature, get_features
 from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
+
+if typing.TYPE_CHECKING:
+    from .parser import TemplatedScenario, Scenario, Feature
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
@@ -113,7 +117,7 @@ def _execute_step_function(request, scenario, step, step_func):
         raise
 
 
-def _execute_scenario(feature, scenario, request):
+def _execute_scenario(feature: "Feature", scenario: "Scenario", request):
     """Execute the scenario.
 
     :param feature: Feature.
@@ -141,7 +145,9 @@ def _execute_scenario(feature, scenario, request):
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
-def _get_scenario_decorator(feature, feature_name, scenario, scenario_name):
+def _get_scenario_decorator(
+    feature: "Feature", feature_name: str, templated_scenario: "TemplatedScenario", scenario_name: str
+):
     # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
     # when the decorator is misused.
     # Pytest inspect the signature to determine the required fixtures, and in that case it would look
@@ -155,32 +161,39 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name):
             )
         [fn] = args
         args = get_args(fn)
-        function_args = list(args)
-        for arg in scenario.get_example_params():
-            if arg not in function_args:
-                function_args.append(arg)
 
-        @pytest.mark.usefixtures(*function_args)
-        def scenario_wrapper(request):
+        contexts = []
+        for examples in templated_scenario.get_params():
+            if not examples:
+                continue
+            header, rows = examples
+            for row in rows:
+                assert len(header) == len(row)
+
+                context = dict(zip(header, row))
+                contexts.append(context)
+
+        @pytest.mark.parametrize("_pytest_bdd_example", contexts)
+        def scenario_wrapper(request, _pytest_bdd_example):
+            scenario = templated_scenario.render(_pytest_bdd_example)
             _execute_scenario(feature, scenario, request)
             return fn(*(request.getfixturevalue(arg) for arg in args))
 
-        for param_set in scenario.get_params():
-            if param_set:
-                scenario_wrapper = pytest.mark.parametrize(*param_set)(scenario_wrapper)
-        for tag in scenario.tags.union(feature.tags):
+        for tag in templated_scenario.tags.union(feature.tags):
             config = CONFIG_STACK[-1]
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 
         scenario_wrapper.__doc__ = f"{feature_name}: {scenario_name}"
-        scenario_wrapper.__scenario__ = scenario
-        scenario.test_function = scenario_wrapper
+        scenario_wrapper.__scenario__ = templated_scenario
+        scenario.test_function = scenario_wrapper  # TODO: Check usages and remove
         return scenario_wrapper
 
     return decorator
 
 
-def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None, features_base_dir=None):
+def scenario(
+    feature_name: str, scenario_name: str, encoding: str = "utf-8", example_converters=None, features_base_dir=None
+):
     """Scenario decorator.
 
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
@@ -207,13 +220,13 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
             f'Scenario "{scenario_name}" in feature "{feature_name}" in {feature.filename} is not found.'
         )
 
-    scenario.example_converters = example_converters
+    # scenario.example_converters = example_converters
 
     # Validate the scenario
     scenario.validate()
 
     return _get_scenario_decorator(
-        feature=feature, feature_name=feature_name, scenario=scenario, scenario_name=scenario_name
+        feature=feature, feature_name=feature_name, templated_scenario=scenario, scenario_name=scenario_name
     )
 
 

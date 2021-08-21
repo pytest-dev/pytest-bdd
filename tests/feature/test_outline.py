@@ -4,27 +4,28 @@ import textwrap
 from tests.utils import assert_outcomes
 
 STEPS = """\
-from pytest_bdd import given, when, then
+from pytest_bdd import parsers, given, when, then
 
 
-@given("there are <start> cucumbers", target_fixture="start_cucumbers")
+@given(parsers.parse("there are {start} cucumbers"), target_fixture="start_cucumbers")
 def start_cucumbers(start):
-    assert isinstance(start, int)
+    assert isinstance(start, str)
+    start = int(start)
     return dict(start=start)
 
 
-@when("I eat <eat> cucumbers")
+@when(parsers.parse("I eat {eat} cucumbers"))
 def eat_cucumbers(start_cucumbers, eat):
-    assert isinstance(eat, float)
+    assert isinstance(eat, str)
+    eat = int(eat)
     start_cucumbers["eat"] = eat
 
 
-@then("I should have <left> cucumbers")
-def should_have_left_cucumbers(start_cucumbers, start, eat, left):
+@then(parsers.parse("I should have {left} cucumbers"))
+def should_have_left_cucumbers(start_cucumbers, left):
     assert isinstance(left, str)
-    assert start - eat == int(left)
-    assert start_cucumbers["start"] == start
-    assert start_cucumbers["eat"] == eat
+    left = int(left)
+    assert left == start_cucumbers["start"] - start_cucumbers["eat"]
 
 """
 
@@ -44,6 +45,7 @@ def test_outlined(testdir):
                     | start | eat | left |
                     |  12   |  5  |  7   | # a comment
                     |  5    |  4  |  1   |
+                    |  5    |  4  |  43  | # Control case. This should fail.
 
             """
         ),
@@ -63,19 +65,13 @@ def test_outlined(testdir):
             example_converters=dict(start=int, eat=float, left=str)
         )
         def test_outline(request):
-            assert get_parametrize_markers_args(request.node) == (
-                ["start", "eat", "left"],
-                [
-                    [12, 5.0, "7"],
-                    [5, 4.0, "1"],
-                ],
-            )
+            pass
 
         """
         )
     )
     result = testdir.runpytest()
-    result.assert_outcomes(passed=2)
+    result.assert_outcomes(passed=2, failed=1)
 
 
 def test_wrongly_outlined(testdir):

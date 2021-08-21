@@ -24,16 +24,17 @@ Syntax example:
 one line.
 """
 import os.path
+import typing
 
 import glob2
 
-from .parser import parse_feature
+from .parser import parse_feature, Feature
 
 # Global features dictionary
 features = {}
 
 
-def get_feature(base_path, filename, encoding="utf-8"):
+def get_feature(base_path, filename, encoding="utf-8") -> Feature:
     """Get a feature by the filename.
 
     :param str base_path: Base feature directory.
@@ -55,7 +56,7 @@ def get_feature(base_path, filename, encoding="utf-8"):
     return feature
 
 
-def get_features(paths, **kwargs):
+def get_features(paths, **kwargs) -> typing.List[Feature]:
     """Get features for given paths.
 
     :param list paths: `list` of paths (file or dirs)

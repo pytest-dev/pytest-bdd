@@ -2,6 +2,7 @@ import io
 import os.path
 import re
 import textwrap
+import typing
 from collections import OrderedDict
 
 from . import types, exceptions
@@ -93,7 +94,7 @@ def parse_feature(basedir, filename, encoding="utf-8"):
         background=None,
         description="",
     )
-    scenario = None
+    scenario: typing.Optional[TemplatedScenario] = None
     mode = None
     prev_mode = None
     description = []
@@ -149,7 +150,9 @@ def parse_feature(basedir, filename, encoding="utf-8"):
         keyword, parsed_line = parse_line(clean_line)
         if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
             tags = get_tags(prev_line)
-            feature.scenarios[parsed_line] = scenario = Scenario(feature, parsed_line, line_number, tags=tags)
+            feature.scenarios[parsed_line] = scenario = TemplatedScenario(
+                feature=feature, name=parsed_line, line_number=line_number, tags=tags
+            )
         elif mode == types.BACKGROUND:
             feature.background = Background(feature=feature, line_number=line_number)
         elif mode == types.EXAMPLES:
@@ -199,25 +202,73 @@ class Feature:
     """Feature."""
 
     def __init__(self, scenarios, filename, rel_filename, name, tags, examples, background, line_number, description):
-        self.scenarios = scenarios
+        self.scenarios: typing.Mapping[str, TemplatedScenario] = scenarios
         self.rel_filename = rel_filename
         self.filename = filename
-        self.name = name
         self.tags = tags
         self.examples = examples
         self.name = name
         self.line_number = line_number
-        self.tags = tags
-        self.scenarios = scenarios
         self.description = description
         self.background = background
+
+
+class TemplatedScenario:
+    """A templated scenario.
+
+    Created when parsing the feature file, it will then be combined with the examples to create a Scenario."""
+
+    def __init__(self, feature: Feature, name: str, line_number: int, tags=None):
+        """
+
+        :param str name: Scenario name.
+        :param int line_number: Scenario line number.
+        :param dict example_converters: Example table parameter converters.
+        :param set tags: Set of tags.
+        """
+        self.feature = feature
+        self.name = name
+        self._steps: typing.List[Step] = []
+        self.examples = Examples()
+        self.line_number = line_number
+        self.tags = tags or set()
+
+    def add_step(self, step):
+        """Add step to the scenario.
+
+        :param pytest_bdd.parser.Step step: Step.
+        """
+        step.scenario = self
+        self._steps.append(step)
+
+    def get_params(self, builtin=False):
+        """Get converted example params."""
+        for examples in [self.feature.examples, self.examples]:
+            yield examples.get_params(None, builtin=builtin)
+
+    def render(self, context) -> "Scenario":
+        steps = [
+            Step(
+                name=templated_step.render(context),
+                type=templated_step.type,
+                indent=templated_step.indent,
+                line_number=templated_step.line_number,
+                keyword=templated_step.keyword,
+            )
+            for templated_step in self._steps
+        ]
+        return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
+
+    def validate(self):
+        # TODO: validate examples? or nothing?
+        pass
 
 
 class Scenario:
 
     """Scenario."""
 
-    def __init__(self, feature, name, line_number, example_converters=None, tags=None):
+    def __init__(self, feature: Feature, name: str, line_number: int, steps: "typing.List[Step]", tags=None):
         """Scenario constructor.
 
         :param pytest_bdd.parser.Feature feature: Feature.
@@ -228,42 +279,42 @@ class Scenario:
         """
         self.feature = feature
         self.name = name
-        self._steps = []
+        self.steps = steps
         self.examples = Examples()
         self.line_number = line_number
-        self.example_converters = example_converters
         self.tags = tags or set()
         self.failed = False
         self.test_function = None
 
-    def add_step(self, step):
-        """Add step to the scenario.
+    #
+    # def add_step(self, step):
+    #     """Add step to the scenario.
+    #
+    #     :param pytest_bdd.parser.Step step: Step.
+    #     """
+    #     step.scenario = self
+    #     self._steps.append(step)
 
-        :param pytest_bdd.parser.Step step: Step.
-        """
-        step.scenario = self
-        self._steps.append(step)
+    # @property
+    # def steps(self):
+    #     """Get scenario steps including background steps.
+    #
+    #     :return: List of steps.
+    #     """
+    #     result = []
+    #     if self.feature.background:
+    #         result.extend(self.feature.background.steps)
+    #     result.extend(self._steps)
+    #     return result
 
-    @property
-    def steps(self):
-        """Get scenario steps including background steps.
-
-        :return: List of steps.
-        """
-        result = []
-        if self.feature.background:
-            result.extend(self.feature.background.steps)
-        result.extend(self._steps)
-        return result
-
-    @property
-    def params(self):
-        """Get parameter names.
-
-        :return: Parameter names.
-        :rtype: frozenset
-        """
-        return frozenset(sum((list(step.params) for step in self.steps), []))
+    # @property
+    # def params(self):
+    #     """Get parameter names.
+    #
+    #     :return: Parameter names.
+    #     :rtype: frozenset
+    #     """
+    #     return frozenset(sum((list(step.params) for step in self.steps), []))
 
     def get_example_params(self):
         """Get example parameter names."""
@@ -351,6 +402,13 @@ class Step:
     def params(self):
         """Get step params."""
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
+
+    def render(self, context: typing.Mapping[str, typing.Any]):
+        def replacer(m: typing.Match):
+            varname = m.group(1)
+            return str(context[varname])
+
+        return STEP_PARAM_RE.sub(replacer, self.name)
 
 
 class Background:
