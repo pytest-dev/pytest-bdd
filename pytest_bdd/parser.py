@@ -246,6 +246,10 @@ class TemplatedScenario:
             yield examples.get_params(None, builtin=builtin)
 
     def render(self, context) -> "Scenario":
+        background = self.feature.background
+
+        templated_steps = (background.steps if background else []) + self._steps
+
         steps = [
             Step(
                 name=templated_step.render(context),
@@ -254,7 +258,7 @@ class TemplatedScenario:
                 line_number=templated_step.line_number,
                 keyword=templated_step.keyword,
             )
-            for templated_step in self._steps
+            for templated_step in templated_steps
         ]
         return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
 
