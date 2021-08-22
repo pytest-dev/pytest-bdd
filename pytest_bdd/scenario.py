@@ -191,16 +191,12 @@ def _get_scenario_decorator(
     return decorator
 
 
-def scenario(
-    feature_name: str, scenario_name: str, encoding: str = "utf-8", example_converters=None, features_base_dir=None
-):
+def scenario(feature_name: str, scenario_name: str, encoding: str = "utf-8", features_base_dir=None):
     """Scenario decorator.
 
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
     :param str scenario_name: Scenario name.
     :param str encoding: Feature file encoding.
-    :param dict example_converters: optional `dict` of example converter function, where key is the name of the
-        example parameter, and value is the converter function.
     """
 
     scenario_name = str(scenario_name)

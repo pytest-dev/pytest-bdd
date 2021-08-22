@@ -262,9 +262,9 @@ def test_step_trace_with_expand_option(testdir):
         textwrap.dedent(
             """
         import pytest
-        from pytest_bdd import given, scenario
+        from pytest_bdd import given, scenario, parsers
 
-        @given('type <type> and value <value>')
+        @given(parsers.parse('type {type} and value {value}'))
         def type_type_and_value_value():
             return 'pass'
 
@@ -282,6 +282,7 @@ def test_step_trace_with_expand_option(testdir):
     assert jsonobject[0]["elements"][2]["steps"][0]["name"] == "type float and value 1.0"
 
 
+# TODO: This test seems irrelevant now, remove it?
 def test_converters_dict_with_expand_option(testdir):
     """Test that `--cucumber-json-expanded` works correctly when using `example_converters`."""
     testdir.makefile(
@@ -302,16 +303,15 @@ def test_converters_dict_with_expand_option(testdir):
         textwrap.dedent(
             """
         import pytest
-        from pytest_bdd import given, scenario
+        from pytest_bdd import given, scenario, parsers
 
-        @given('there is an intvalue <intvalue> and stringvalue <stringvalue> and floatvalue <floatvalue>')
+        @given(parsers.parse('there is an intvalue {intvalue} and stringvalue {stringvalue} and floatvalue {floatvalue}'))
         def type_type_and_value_value():
             pass
 
         @scenario(
             'test.feature',
             'Passing outline',
-            example_converters={"intvalue":int, "stringvalue":str, "floatvalue":float},
         )
         def test_passing_outline():
             pass

@@ -62,7 +62,6 @@ def test_outlined(testdir):
         @scenario(
             "outline.feature",
             "Outlined given, when, thens",
-            example_converters=dict(start=int, eat=float, left=str)
         )
         def test_outline(request):
             pass

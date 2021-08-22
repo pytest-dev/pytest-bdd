@@ -223,7 +223,6 @@ class TemplatedScenario:
 
         :param str name: Scenario name.
         :param int line_number: Scenario line number.
-        :param dict example_converters: Example table parameter converters.
         :param set tags: Set of tags.
         """
         self.feature = feature
@@ -274,7 +273,6 @@ class Scenario:
         :param pytest_bdd.parser.Feature feature: Feature.
         :param str name: Scenario name.
         :param int line_number: Scenario line number.
-        :param dict example_converters: Example table parameter converters.
         :param set tags: Set of tags.
         """
         self.feature = feature
