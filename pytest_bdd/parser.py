@@ -241,8 +241,9 @@ class ScenarioTemplate:
 
     def get_params(self, builtin=False):
         """Get converted example params."""
+        # TODO: This is wrong, we should make the cartesian product between self.feature.examples and self.examples
         for examples in [self.feature.examples, self.examples]:
-            yield examples.get_params(None, builtin=builtin)
+            yield examples.get_params(builtin=builtin)
 
     @property
     def steps(self):
@@ -432,12 +433,8 @@ class Examples:
         self.example_params.append(param)
         self.vertical_examples.append(values)
 
-    # TODO: Remove `converters`
-    def get_params(self, converters, builtin=False):
-        """Get scenario pytest parametrization table.
-
-        :param converters: `dict` of converter functions to convert parameter values
-        """
+    def get_params(self, builtin=False):
+        """Get scenario pytest parametrization table."""
         param_count = len(self.example_params)
         if self.vertical_examples and not self.examples:
             for value_index in range(len(self.vertical_examples[0])):
@@ -447,19 +444,9 @@ class Examples:
                 self.examples.append(example)
 
         if self.examples:
-            params = []
-            for example in self.examples:
-                example = list(example)
-                for index, param in enumerate(self.example_params):
-                    raw_value = example[index]
-                    if converters and param in converters:
-                        value = converters[param](raw_value)
-                        if not builtin or value.__class__.__module__ in {"__builtin__", "builtins"}:
-                            example[index] = value
-                params.append(example)
-            return [self.example_params, params]
-        else:
-            return []
+            return [self.example_params, self.examples]
+
+        return []
 
     def __bool__(self):
         """Bool comparison."""
