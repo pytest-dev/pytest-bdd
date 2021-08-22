@@ -24,7 +24,7 @@ from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if typing.TYPE_CHECKING:
-    from .parser import TemplatedScenario, Scenario, Feature
+    from .parser import ScenarioTemplate, Scenario, Feature
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
@@ -146,7 +146,7 @@ FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
 def _get_scenario_decorator(
-    feature: "Feature", feature_name: str, templated_scenario: "TemplatedScenario", scenario_name: str
+    feature: "Feature", feature_name: str, templated_scenario: "ScenarioTemplate", scenario_name: str
 ):
     # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
     # when the decorator is misused.

@@ -93,7 +93,7 @@ def parse_feature(basedir, filename, encoding="utf-8"):
         background=None,
         description="",
     )
-    scenario: typing.Optional[TemplatedScenario] = None
+    scenario: typing.Optional[ScenarioTemplate] = None
     mode = None
     prev_mode = None
     description = []
@@ -149,7 +149,7 @@ def parse_feature(basedir, filename, encoding="utf-8"):
         keyword, parsed_line = parse_line(clean_line)
         if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
             tags = get_tags(prev_line)
-            feature.scenarios[parsed_line] = scenario = TemplatedScenario(
+            feature.scenarios[parsed_line] = scenario = ScenarioTemplate(
                 feature=feature, name=parsed_line, line_number=line_number, tags=tags
             )
         elif mode == types.BACKGROUND:
@@ -201,7 +201,7 @@ class Feature:
     """Feature."""
 
     def __init__(self, scenarios, filename, rel_filename, name, tags, examples, background, line_number, description):
-        self.scenarios: typing.Mapping[str, TemplatedScenario] = scenarios
+        self.scenarios: typing.Mapping[str, ScenarioTemplate] = scenarios
         self.rel_filename = rel_filename
         self.filename = filename
         self.tags = tags
@@ -212,8 +212,8 @@ class Feature:
         self.background = background
 
 
-class TemplatedScenario:
-    """A templated scenario.
+class ScenarioTemplate:
+    """A scenario template.
 
     Created when parsing the feature file, it will then be combined with the examples to create a Scenario."""
 
