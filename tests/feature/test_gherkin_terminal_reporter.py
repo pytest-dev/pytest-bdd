@@ -204,18 +204,18 @@ def test_step_parameters_should_be_replaced_by_their_values(testdir):
     testdir.makepyfile(
         test_gherkin=textwrap.dedent(
             """\
-            from pytest_bdd import given, when, scenario, then
+            from pytest_bdd import given, when, scenario, then, parsers
 
-            @given('there are <start> cucumbers', target_fixture="start_cucumbers")
+            @given(parsers.parse('there are {start} cucumbers'), target_fixture="start_cucumbers")
             def start_cucumbers(start):
                 return start
 
-            @when('I eat <eat> cucumbers')
+            @when(parsers.parse('I eat {eat} cucumbers'))
             def eat_cucumbers(start_cucumbers, eat):
                 pass
 
-            @then('I should have <left> cucumbers')
-            def should_have_left_cucumbers(start_cucumbers, start, eat, left):
+            @then(parsers.parse('I should have {left} cucumbers'))
+            def should_have_left_cucumbers(start_cucumbers, left):
                 pass
 
             @scenario('test.feature', 'Scenario example 2')
