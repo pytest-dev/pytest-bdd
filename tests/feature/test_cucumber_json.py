@@ -71,7 +71,7 @@ def test_step_trace(testdir):
         textwrap.dedent(
             """
         import pytest
-        from pytest_bdd import given, when, scenario
+        from pytest_bdd import given, when, scenario, parsers
 
         @given('a passing step')
         def a_passing_step():
@@ -85,7 +85,7 @@ def test_step_trace(testdir):
         def a_failing_step():
             raise Exception('Error')
 
-        @given('type <type> and value <value>')
+        @given(parsers.parse('type {type} and value {value}'))
         def type_type_and_value_value():
             return 'pass'
 
@@ -113,7 +113,7 @@ def test_step_trace(testdir):
             "elements": [
                 {
                     "description": "",
-                    "id": "test_passing",
+                    "id": "test_passing[]",
                     "keyword": "Scenario",
                     "line": 5,
                     "name": "Passing",
@@ -138,7 +138,7 @@ def test_step_trace(testdir):
                 },
                 {
                     "description": "",
-                    "id": "test_failing",
+                    "id": "test_failing[]",
                     "keyword": "Scenario",
                     "line": 10,
                     "name": "Failing",
@@ -171,7 +171,7 @@ def test_step_trace(testdir):
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
-                            "name": "type <type> and value <value>",
+                            "name": "type str and value hello",
                         }
                     ],
                     "line": 15,
@@ -189,7 +189,7 @@ def test_step_trace(testdir):
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
-                            "name": "type <type> and value <value>",
+                            "name": "type int and value 42",
                         }
                     ],
                     "line": 15,
@@ -207,7 +207,7 @@ def test_step_trace(testdir):
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
-                            "name": "type <type> and value <value>",
+                            "name": "type float and value 1.0",
                         }
                     ],
                     "line": 15,
@@ -228,6 +228,7 @@ def test_step_trace(testdir):
     assert jsonobject == expected
 
 
+# TODO: This test is irrelevant too, since the "expanded" option is the only option now
 def test_step_trace_with_expand_option(testdir):
     """Test step trace."""
     testdir.makefile(
