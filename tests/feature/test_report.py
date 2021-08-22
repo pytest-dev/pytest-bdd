@@ -95,7 +95,7 @@ def test_step_trace(testdir):
             assert start_cucumbers['start'] == start
             assert start_cucumbers['eat'] == eat
 
-        scenarios('test.feature', example_converters=dict(start=int, eat=float, left=str))
+        scenarios('test.feature')
     """
         )
     )
@@ -325,7 +325,7 @@ def test_complex_types(testdir):
 
 
         @pytest.mark.parametrize('alien', [Alien()])
-        @scenario('test.feature', 'Complex', example_converters=dict(point=Point.parse))
+        @scenario('test.feature', 'Complex')
         def test_complex(alien):
             pass
 

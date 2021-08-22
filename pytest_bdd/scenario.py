@@ -219,8 +219,6 @@ def scenario(feature_name: str, scenario_name: str, encoding: str = "utf-8", fea
             f'Scenario "{scenario_name}" in feature "{feature_name}" in {feature.filename} is not found.'
         )
 
-    # scenario.example_converters = example_converters
-
     # Validate the scenario
     scenario.validate()
 

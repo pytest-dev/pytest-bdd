@@ -321,7 +321,7 @@ class Scenario:
     def get_params(self, builtin=False):
         """Get converted example params."""
         for examples in [self.feature.examples, self.examples]:
-            yield examples.get_params(self.example_converters, builtin=builtin)
+            yield examples.get_params(None, builtin=builtin)
 
     def validate(self):
         """Validate the scenario.
@@ -468,6 +468,7 @@ class Examples:
         self.example_params.append(param)
         self.vertical_examples.append(values)
 
+    # TODO: Remove `converters`
     def get_params(self, converters, builtin=False):
         """Get scenario pytest parametrization table.
 

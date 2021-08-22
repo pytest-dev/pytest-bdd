@@ -234,7 +234,6 @@ def test_outlined_with_other_fixtures(testdir):
         @scenario(
             "outline.feature",
             "Outlined given, when, thens",
-            example_converters=dict(start=int, eat=float, left=str)
         )
         def test_outline(other_fixture):
             pass
@@ -278,7 +277,6 @@ def test_vertical_example(testdir):
         @scenario(
             "outline.feature",
             "Outlined with vertical example table",
-            example_converters=dict(start=int, eat=float, left=str)
         )
         def test_outline(request):
             assert get_parametrize_markers_args(request.node) == (
@@ -330,7 +328,6 @@ def test_outlined_feature(testdir):
         @scenario(
             "outline.feature",
             "Outlined given, when, thens",
-            example_converters=dict(start=int, eat=float, left=str)
         )
         def test_outline(request):
             assert get_parametrize_markers_args(request.node) == (

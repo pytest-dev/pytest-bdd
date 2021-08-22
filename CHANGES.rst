@@ -3,6 +3,7 @@ Changelog
 
 Unreleased
 -----------
+- Removed ``example_converters`` from ``scenario(...)`` signature
 
 4.1.0
 -----------
