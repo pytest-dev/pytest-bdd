@@ -180,7 +180,8 @@ def _get_scenario_decorator(
         def scenario_wrapper(request, _pytest_bdd_example):
             scenario = templated_scenario.render(_pytest_bdd_example)
             _execute_scenario(feature, scenario, request)
-            return fn(*(request.getfixturevalue(arg) for arg in args))
+            fixture_values = [request.getfixturevalue(arg) for arg in args]
+            return fn(*fixture_values)
 
         for tag in templated_scenario.tags.union(feature.tags):
             config = CONFIG_STACK[-1]

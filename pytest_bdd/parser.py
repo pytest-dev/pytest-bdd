@@ -245,6 +245,11 @@ class TemplatedScenario:
         for examples in [self.feature.examples, self.examples]:
             yield examples.get_params(None, builtin=builtin)
 
+    @property
+    def steps(self):
+        background = self.feature.background
+        return (background.steps if background else []) + self._steps
+
     def render(self, context) -> "Scenario":
         background = self.feature.background
 
@@ -263,8 +268,19 @@ class TemplatedScenario:
         return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
 
     def validate(self):
-        # TODO: validate examples? or nothing?
-        pass
+        """Validate the scenario.
+
+        :raises ScenarioValidationError: when scenario is not valid
+        """
+        params = frozenset(sum((list(step.params) for step in self.steps), []))
+        example_params = set(self.examples.example_params + self.feature.examples.example_params)
+        if params and example_params and params != example_params:
+            raise exceptions.ScenarioExamplesNotValidError(
+                """Scenario "{}" in the feature "{}" has not valid examples. """
+                """Set of step parameters {} should match set of example values {}.""".format(
+                    self.name, self.feature.filename, sorted(params), sorted(example_params)
+                )
+            )
 
 
 class Scenario:
@@ -282,65 +298,10 @@ class Scenario:
         self.feature = feature
         self.name = name
         self.steps = steps
-        self.examples = Examples()
         self.line_number = line_number
         self.tags = tags or set()
         self.failed = False
         self.test_function = None
-
-    #
-    # def add_step(self, step):
-    #     """Add step to the scenario.
-    #
-    #     :param pytest_bdd.parser.Step step: Step.
-    #     """
-    #     step.scenario = self
-    #     self._steps.append(step)
-
-    # @property
-    # def steps(self):
-    #     """Get scenario steps including background steps.
-    #
-    #     :return: List of steps.
-    #     """
-    #     result = []
-    #     if self.feature.background:
-    #         result.extend(self.feature.background.steps)
-    #     result.extend(self._steps)
-    #     return result
-
-    # @property
-    # def params(self):
-    #     """Get parameter names.
-    #
-    #     :return: Parameter names.
-    #     :rtype: frozenset
-    #     """
-    #     return frozenset(sum((list(step.params) for step in self.steps), []))
-
-    def get_example_params(self):
-        """Get example parameter names."""
-        return set(self.examples.example_params + self.feature.examples.example_params)
-
-    def get_params(self, builtin=False):
-        """Get converted example params."""
-        for examples in [self.feature.examples, self.examples]:
-            yield examples.get_params(None, builtin=builtin)
-
-    def validate(self):
-        """Validate the scenario.
-
-        :raises ScenarioValidationError: when scenario is not valid
-        """
-        params = self.params
-        example_params = self.get_example_params()
-        if params and example_params and params != example_params:
-            raise exceptions.ScenarioExamplesNotValidError(
-                """Scenario "{}" in the feature "{}" has not valid examples. """
-                """Set of step parameters {} should match set of example values {}.""".format(
-                    self.name, self.feature.filename, sorted(params), sorted(example_params)
-                )
-            )
 
 
 class Step:
