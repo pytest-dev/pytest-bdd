@@ -109,10 +109,6 @@ test_publish_article.py:
 Scenario decorator
 ------------------
 
-The scenario decorator can accept the following optional keyword arguments:
-
-* ``encoding`` - decode content of feature file in specific encoding. UTF-8 is default.
-
 Functions decorated with the `scenario` decorator behave like a normal test function,
 and they will be executed after all scenario steps.
 You can consider it as a normal pytest test function, e.g. order fixtures there,
@@ -1228,6 +1224,37 @@ and get the values from the example tables.
 
 Scenario `example_converters` are removed in favor of the converters provided on the step level.
 
+.. _Migration from 3.x.x:
+
+Migration of your tests from versions 3.x.x
+-------------------------------------------
+
+
+Given steps are no longer fixtures. In case it is needed to make given step setup a fixture
+the target_fixture parameter should be used.
+
+
+.. code-block:: python
+
+    @given("there's an article", target_fixture="article")
+    def there_is_an_article():
+        return Article()
+
+
+Given steps no longer have fixture parameter. In fact the step may depend on multiple fixtures.
+Just normal step declaration with the dependency injection should be used.
+
+.. code-block:: python
+
+    @given("there's an article")
+    def there_is_an_article(article):
+        pass
+
+
+Strict gherkin option is removed, so the ``strict_gherkin`` parameter can be removed from the scenario decorators
+as well as ``bdd_strict_gherkin`` from the ini files.
+
+Step validation handlers for the hook ``pytest_bdd_step_validation_error`` should be removed.
 
 License
 -------

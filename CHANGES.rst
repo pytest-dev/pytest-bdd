@@ -3,6 +3,9 @@ Changelog
 
 Unreleased
 -----------
+
+This release introduces breaking changes, please refer to the :ref:`Migration from 4.x.x`.
+
 - Removed ``example_converters`` from ``scenario(...)`` signature
 
 4.1.0
