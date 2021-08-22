@@ -171,7 +171,10 @@ def _get_scenario_decorator(
                 assert len(header) == len(row)
 
                 context = dict(zip(header, row))
-                contexts.append(context)
+                contexts.append(pytest.param(context, id="-".join(context.values())))
+
+        if not contexts:
+            contexts = [pytest.param({}, id="")]
 
         @pytest.mark.parametrize("_pytest_bdd_example", contexts)
         def scenario_wrapper(request, _pytest_bdd_example):

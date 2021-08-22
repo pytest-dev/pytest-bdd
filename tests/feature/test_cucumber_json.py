@@ -104,6 +104,8 @@ def test_step_trace(testdir):
         )
     )
     result, jsonobject = runandparse(testdir)
+    result.assert_outcomes(passed=4, failed=1)
+
     assert result.ret
     expected = [
         {
