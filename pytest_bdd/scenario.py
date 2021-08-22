@@ -176,7 +176,10 @@ def _get_scenario_decorator(
         if not contexts:
             contexts = [pytest.param({}, id="")]
 
-        @pytest.mark.parametrize("_pytest_bdd_example", contexts)
+        # We need to tell pytest that the original function requires its fixtures,
+        # otherwise indirect fixtures would not work.
+        @pytest.mark.usefixtures(*args)
+        @pytest.mark.parametrize("_pytest_bdd_example", contexts)  # Parametrize the scenario outlines
         def scenario_wrapper(request, _pytest_bdd_example):
             scenario = templated_scenario.render(_pytest_bdd_example)
             _execute_scenario(feature, scenario, request)
