@@ -3,7 +3,10 @@ Changelog
 
 Unreleased
 -----------
+- Examples are now always expanded in the scenarios.
 - Removed ``example_converters`` from ``scenario(...)`` signature
+- Removed ``--cucumberjson-expanded`` and ``--cucumber-json-expanded`` options. Now the JSON report is always expanded
+- Removed ``--gherkin-terminal-reporter-expanded`` option. Now the terminal report is always expanded
 
 4.1.0
 -----------

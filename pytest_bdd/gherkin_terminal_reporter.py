@@ -1,8 +1,4 @@
-import re
-
 from _pytest.terminal import TerminalReporter
-
-from .parser import STEP_PARAM_RE
 
 
 def add_options(parser):
@@ -13,13 +9,6 @@ def add_options(parser):
         dest="gherkin_terminal_reporter",
         default=False,
         help=("enable gherkin output"),
-    )
-    group._addoption(
-        "--gherkin-terminal-reporter-expanded",
-        action="store_true",
-        dest="expand",
-        default=False,
-        help="expand scenario outlines into scenarios and fill in the step names",
     )
 
 

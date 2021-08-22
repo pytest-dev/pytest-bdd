@@ -19,16 +19,6 @@ def add_options(parser):
         help="create cucumber json style report file at given path.",
     )
 
-    # TODO: Remove this
-    group._addoption(
-        "--cucumberjson-expanded",
-        "--cucumber-json-expanded",
-        action="store_true",
-        dest="expand",
-        default=False,
-        help="expand scenario outlines into scenarios and fill in the step names",
-    )
-
 
 def configure(config):
     cucumber_json_path = config.option.cucumber_json_path
