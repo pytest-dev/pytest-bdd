@@ -8,7 +8,7 @@ def add_options(parser):
         action="store_true",
         dest="gherkin_terminal_reporter",
         default=False,
-        help=("enable gherkin output"),
+        help="enable gherkin output",
     )
 
 
