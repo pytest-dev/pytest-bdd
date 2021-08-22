@@ -239,11 +239,11 @@ class ScenarioTemplate:
         step.scenario = self
         self._steps.append(step)
 
-    def get_params(self, builtin=False):
+    def get_params(self):
         """Get converted example params."""
         # TODO: This is wrong, we should make the cartesian product between self.feature.examples and self.examples
         for examples in [self.feature.examples, self.examples]:
-            yield examples.get_params(builtin=builtin)
+            yield examples.get_params()
 
     @property
     def steps(self):
@@ -433,7 +433,7 @@ class Examples:
         self.example_params.append(param)
         self.vertical_examples.append(values)
 
-    def get_params(self, builtin=False):
+    def get_params(self):
         """Get scenario pytest parametrization table."""
         param_count = len(self.example_params)
         if self.vertical_examples and not self.examples:
