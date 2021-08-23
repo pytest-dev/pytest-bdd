@@ -1208,7 +1208,8 @@ Migration of your tests from versions 4.x.x
 -------------------------------------------
 
 The templated steps should use step argument parsers in order to match the scenario outlines
-and get the values from the example tables.
+and get the values from the example tables. The values from the example tables are no longer
+passed as fixtures.
 
 .. code-block:: python
 
