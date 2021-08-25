@@ -109,11 +109,6 @@ test_publish_article.py:
 Scenario decorator
 ------------------
 
-The scenario decorator can accept the following optional keyword arguments:
-
-* ``encoding`` - decode content of feature file in specific encoding. UTF-8 is default.
-* ``example_converters`` - mapping to pass functions to convert example values provided in feature files.
-
 Functions decorated with the `scenario` decorator behave like a normal test function,
 and they will be executed after all scenario steps.
 You can consider it as a normal pytest test function, e.g. order fixtures there,
@@ -555,25 +550,24 @@ The code will look like:
     @scenario(
         "outline.feature",
         "Outlined given, when, thens",
-        example_converters=dict(start=int, eat=float, left=str)
     )
     def test_outlined():
         pass
 
 
-    @given("there are <start> cucumbers", target_fixture="start_cucumbers")
+    @given(parsers.parse("there are {start} cucumbers", target_fixture="start_cucumbers"))
     def start_cucumbers(start):
         assert isinstance(start, int)
         return dict(start=start)
 
 
-    @when("I eat <eat> cucumbers")
+    @when(parsers.parse("I eat {eat} cucumbers"))
     def eat_cucumbers(start_cucumbers, eat):
         assert isinstance(eat, float)
         start_cucumbers["eat"] = eat
 
 
-    @then("I should have <left> cucumbers")
+    @then(parsers.parse("I should have {left} cucumbers"))
     def should_have_left_cucumbers(start_cucumbers, start, eat, left):
         assert isinstance(left, str)
         assert start - eat == int(left)
@@ -672,17 +666,17 @@ The code will look like:
         """We don't need to do anything here, everything will be managed by the scenario decorator."""
 
 
-    @given("there are <start> cucumbers", target_fixture="start_cucumbers")
+    @given(parsers.parse("there are {start} cucumbers"), target_fixture="start_cucumbers")
     def start_cucumbers(start):
         return dict(start=start)
 
 
-    @when("I eat <eat> cucumbers")
+    @when(parsers.parse("I eat {eat} cucumbers"))
     def eat_cucumbers(start_cucumbers, start, eat):
         start_cucumbers["eat"] = eat
 
 
-    @then("I should have <left> cucumbers")
+    @then(parsers.parse("I should have {left} cucumbers"))
     def should_have_left_cucumbers(start_cucumbers, start, eat, left):
         assert start - eat == left
         assert start_cucumbers["start"] == start
@@ -1208,6 +1202,29 @@ As as side effect, the tool will validate the files for format errors, also some
 ordering of the types of the steps.
 
 
+.. _Migration from 4.x.x:
+
+Migration of your tests from versions 4.x.x
+-------------------------------------------
+
+The templated steps should use step argument parsers in order to match the scenario outlines
+and get the values from the example tables. The values from the example tables are no longer
+passed as fixtures.
+
+.. code-block:: python
+
+    # Instead of
+    # @given("there are <cucumbers> in the box")
+    # def given_cucumbers(cucumbers):
+    #     pass
+
+    @given(parsers.parse("there are {cucumbers} in the box"))
+    def given_cucumbers(cucumbers):
+        pass
+
+
+Scenario `example_converters` are removed in favor of the converters provided on the step level.
+
 .. _Migration from 3.x.x:
 
 Migration of your tests from versions 3.x.x
@@ -1239,7 +1256,6 @@ Strict gherkin option is removed, so the ``strict_gherkin`` parameter can be rem
 as well as ``bdd_strict_gherkin`` from the ini files.
 
 Step validation handlers for the hook ``pytest_bdd_step_validation_error`` should be removed.
-
 
 License
 -------

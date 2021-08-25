@@ -3,6 +3,8 @@ Changelog
 
 Unreleased
 -----------
+This release introduces breaking changes, please refer to the :ref:`Migration from 4.x.x`.
+
 - Examples are now always expanded in the scenarios.
 - Removed ``example_converters`` from ``scenario(...)`` signature
 - Removed ``--cucumberjson-expanded`` and ``--cucumber-json-expanded`` options. Now the JSON report is always expanded
