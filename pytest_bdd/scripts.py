@@ -8,7 +8,7 @@ import glob2
 
 from .generation import generate_code, parse_feature_files
 
-MIGRATE_REGEX = re.compile(r"\s?(\w+)\s\=\sscenario\((.+)\)", flags=re.MULTILINE)
+MIGRATE_REGEX = re.compile(r"\s?(\w+)\s=\sscenario\((.+)\)", flags=re.MULTILINE)
 
 
 def migrate_tests(args):

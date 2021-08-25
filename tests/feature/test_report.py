@@ -62,7 +62,7 @@ def test_step_trace(testdir):
         textwrap.dedent(
             """
         import pytest
-        from pytest_bdd import given, when, then, scenarios
+        from pytest_bdd import given, when, then, scenarios, parsers
 
         @given('a passing step')
         def a_passing_step():
@@ -76,24 +76,20 @@ def test_step_trace(testdir):
         def a_failing_step():
             raise Exception('Error')
 
-        @given('there are <start> cucumbers', target_fixture="start_cucumbers")
+        @given(parsers.parse('there are {start} cucumbers'), target_fixture="start_cucumbers")
         def start_cucumbers(start):
-            assert isinstance(start, int)
-            return dict(start=start)
+            return dict(start=int(start))
 
 
-        @when('I eat <eat> cucumbers')
+        @when(parsers.parse('I eat {eat} cucumbers'))
         def eat_cucumbers(start_cucumbers, eat):
-            assert isinstance(eat, float)
-            start_cucumbers['eat'] = eat
+            start_cucumbers['eat'] = float(eat)
 
 
-        @then('I should have <left> cucumbers')
-        def should_have_left_cucumbers(start_cucumbers, start, eat, left):
-            assert isinstance(left, str)
-            assert start - eat == int(left)
-            assert start_cucumbers['start'] == start
-            assert start_cucumbers['eat'] == eat
+        @then(parsers.parse('I should have {left} cucumbers'))
+        def should_have_left_cucumbers(start_cucumbers, left):
+            assert start_cucumbers['start'] - start_cucumbers['eat'] == int(left)
+
 
         scenarios('test.feature')
     """
@@ -101,7 +97,7 @@ def test_step_trace(testdir):
     )
     result = testdir.inline_run("-vvl")
     assert result.ret
-    report = result.matchreport("test_passing", when="call").scenario
+    report = result.matchreport("test_passing[]", when="call").scenario
     expected = {
         "feature": {
             "description": "",
@@ -132,13 +128,11 @@ def test_step_trace(testdir):
             },
         ],
         "tags": ["scenario-passing-tag"],
-        "examples": [],
-        "example_kwargs": {},
     }
 
     assert report == expected
 
-    report = result.matchreport("test_failing", when="call").scenario
+    report = result.matchreport("test_failing[]", when="call").scenario
     expected = {
         "feature": {
             "description": "",
@@ -169,12 +163,10 @@ def test_step_trace(testdir):
             },
         ],
         "tags": ["scenario-failing-tag"],
-        "examples": [],
-        "example_kwargs": {},
     }
     assert report == expected
 
-    report = result.matchreport("test_outlined[12-5.0-7]", when="call").scenario
+    report = result.matchreport("test_outlined[12-5-7]", when="call").scenario
     expected = {
         "feature": {
             "description": "",
@@ -213,19 +205,10 @@ def test_step_trace(testdir):
             },
         ],
         "tags": [],
-        "examples": [
-            {
-                "line_number": 19,
-                "name": None,
-                "row_index": 0,
-                "rows": [["start", "eat", "left"], [[12, 5.0, "7"], [5, 4.0, "1"]]],
-            }
-        ],
-        "example_kwargs": {"eat": "5.0", "left": "7", "start": "12"},
     }
     assert report == expected
 
-    report = result.matchreport("test_outlined[5-4.0-1]", when="call").scenario
+    report = result.matchreport("test_outlined[5-4-1]", when="call").scenario
     expected = {
         "feature": {
             "description": "",
@@ -264,15 +247,6 @@ def test_step_trace(testdir):
             },
         ],
         "tags": [],
-        "examples": [
-            {
-                "line_number": 19,
-                "name": None,
-                "row_index": 1,
-                "rows": [["start", "eat", "left"], [[12, 5.0, "7"], [5, 4.0, "1"]]],
-            }
-        ],
-        "example_kwargs": {"eat": "4.0", "left": "1", "start": "5"},
     }
     assert report == expected
 

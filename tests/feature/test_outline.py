@@ -258,9 +258,11 @@ def test_vertical_example(testdir):
                     Then I should have <left> cucumbers
 
                     Examples: Vertical
-                    | start | 12 | 2 |
-                    | eat   | 5  | 1 |
-                    | left  | 7  | 1 |
+                    | start | 12 | 2 | 2  |
+                    | eat   | 5  | 1 | 1  |
+                    | left  | 7  | 1 | 42 |
+
+                    # The last column is the control case, to verify that the scenario fails
 
             """
         ),
@@ -279,19 +281,13 @@ def test_vertical_example(testdir):
             "Outlined with vertical example table",
         )
         def test_outline(request):
-            assert get_parametrize_markers_args(request.node) == (
-                ["start", "eat", "left"],
-                [
-                    [12, 5.0, "7"],
-                    [2, 1.0, "1"],
-                ],
-            )
+            pass
 
         """
         )
     )
     result = testdir.runpytest()
-    result.assert_outcomes(passed=2)
+    result.assert_outcomes(passed=2, failed=1)
 
 
 def test_outlined_feature(testdir):
