@@ -24,7 +24,7 @@ from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if typing.TYPE_CHECKING:
-    from .parser import ScenarioTemplate, Scenario, Feature
+    from .parser import ScenarioTemplate, Scenario, Feature, Examples
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
@@ -163,18 +163,16 @@ def _get_scenario_decorator(
         args = get_args(fn)
 
         contexts = []
-        for examples in templated_scenario.get_params():
-            if not examples:
-                continue
-            header, rows = examples
-            for row in rows:
-                assert len(header) == len(row)
 
-                context = dict(zip(header, row))
+        feature_contexts = templated_scenario.feature.examples.as_contexts()
+        scenario_contexts = templated_scenario.examples.as_contexts()
+
+        for feature_context in feature_contexts:
+            for scenario_context in scenario_contexts:
+                context = {**feature_context, **scenario_context}
                 contexts.append(pytest.param(context, id="-".join(context.values())))
 
-        if not contexts:
-            contexts = [pytest.param({}, id="")]
+        assert contexts, "Programming error: contexts must be non empty, otherwise the test will be skipped"
 
         # We need to tell pytest that the original function requires its fixtures,
         # otherwise indirect fixtures would not work.

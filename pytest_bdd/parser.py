@@ -239,12 +239,6 @@ class ScenarioTemplate:
         step.scenario = self
         self._steps.append(step)
 
-    def get_params(self):
-        """Get converted example params."""
-        # TODO: This is wrong, we should make the cartesian product between self.feature.examples and self.examples
-        for examples in [self.feature.examples, self.examples]:
-            yield examples.get_params()
-
     @property
     def steps(self):
         background = self.feature.background
@@ -433,7 +427,8 @@ class Examples:
         self.example_params.append(param)
         self.vertical_examples.append(values)
 
-    def get_params(self):
+    # TODO: Remove this
+    def get_params(self) -> typing.Tuple[typing.List[str], typing.List[typing.List[str]]]:
         """Get scenario pytest parametrization table."""
         param_count = len(self.example_params)
         if self.vertical_examples and not self.examples:
@@ -444,9 +439,20 @@ class Examples:
                 self.examples.append(example)
 
         if self.examples:
-            return [self.example_params, self.examples]
+            return self.example_params, self.examples
 
-        return []
+        return [], []
+
+    def as_contexts(self: "Examples"):
+        header, rows = self.get_params()
+        if not rows:
+            # Need to yield one result, otherwise the cartesian product later will result in an empty one
+            # and pytest will skip the whole test
+            return {}
+        for row in rows:
+            assert len(header) == len(row)
+
+            yield dict(zip(header, row))
 
     def __bool__(self):
         """Bool comparison."""

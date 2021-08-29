@@ -318,45 +318,43 @@ def test_outlined_feature(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd.utils import get_parametrize_markers_args
-        from pytest_bdd import given, when, then, scenario
+        from pytest_bdd import given, when, then, scenario, parsers
 
         @scenario(
             "outline.feature",
             "Outlined given, when, thens",
         )
         def test_outline(request):
-            assert get_parametrize_markers_args(request.node) == (
-                ["start", "eat", "left"],
-                [[12, 5.0, "7"], [5, 4.0, "1"]],
-                ["fruits"],
-                [["oranges"], ["apples"]],
-            )
+            # This won't work anymore
+            # assert get_parametrize_markers_args(request.node) == (
+            #     ["start", "eat", "left"],
+            #     [[12, 5.0, "7"], [5, 4.0, "1"]],
+            #     ["fruits"],
+            #     [["oranges"], ["apples"]],
+            # )
+            pass
 
-        @given("there are <start> <fruits>", target_fixture="start_fruits")
+        @given(parsers.parse("there are {start} {fruits}"), target_fixture="start_fruits")
         def start_fruits(start, fruits):
-            assert isinstance(start, int)
-            return {fruits: dict(start=start)}
+            return {fruits: {"start": int(start)}}
 
 
-        @when("I eat <eat> <fruits>")
+        @when(parsers.parse("I eat {eat} {fruits}"))
         def eat_fruits(start_fruits, eat, fruits):
-            assert isinstance(eat, float)
-            start_fruits[fruits]["eat"] = eat
+            start_fruits[fruits]["eat"] = float(eat)
 
 
-        @then("I should have <left> <fruits>")
+        @then(parsers.parse("I should have {left} {fruits}"))
         def should_have_left_fruits(start_fruits, start, eat, left, fruits):
-            assert isinstance(left, str)
-            assert start - eat == int(left)
-            assert start_fruits[fruits]["start"] == start
-            assert start_fruits[fruits]["eat"] == eat
+            # TODO: it seems that the "start" fixture is injected, but it should not exists!
+            assert int(left) == start_fruits[fruits]["start"] - start_fruits[fruits]["eat"]
 
         """
         )
     )
-    result = testdir.runpytest()
+    result = testdir.runpytest("-s")
     result.assert_outcomes(passed=4)
+    # TODO: Find a way to assert that the tests were run with the expected parametrizations
 
 
 def test_outline_with_escaped_pipes(testdir):
