@@ -324,7 +324,8 @@ def test_outlined_feature(testdir):
             "outline.feature",
             "Outlined given, when, thens",
         )
-        def test_outline(request):
+        def test_outline(request, _pytest_bdd_example):
+            print("parametrization: ", _pytest_bdd_example)
             # This won't work anymore
             # assert get_parametrize_markers_args(request.node) == (
             #     ["start", "eat", "left"],

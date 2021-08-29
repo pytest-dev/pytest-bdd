@@ -164,8 +164,10 @@ def _get_scenario_decorator(
 
         contexts = []
 
-        feature_contexts = templated_scenario.feature.examples.as_contexts()
-        scenario_contexts = templated_scenario.examples.as_contexts()
+        # We need to evaluate these iterators and store them as lists, otherwise
+        # we won't be able to do the cartesian product later (the second iterator will be consumed)
+        feature_contexts = list(templated_scenario.feature.examples.as_contexts())
+        scenario_contexts = list(templated_scenario.examples.as_contexts())
 
         for feature_context in feature_contexts:
             for scenario_context in scenario_contexts:
