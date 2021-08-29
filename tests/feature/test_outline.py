@@ -388,7 +388,7 @@ def test_outline_with_escaped_pipes(testdir):
             """\
             import base64
 
-            from pytest_bdd import scenario, given, when, then
+            from pytest_bdd import scenario, given, when, then, parsers
             from pytest_bdd.utils import get_parametrize_markers_args
 
 
@@ -397,12 +397,12 @@ def test_outline_with_escaped_pipes(testdir):
                 pass
 
 
-            @given("We have strings <string1> and <string2>")
+            @given(parsers.parse("We have strings {string1} and {string2}"))
             def we_have_strings_string1_and_string2(string1, string2):
                 pass
 
 
-            @then("<string2> should be the base64 encoding of <string1>")
+            @then(parsers.parse("{string2} should be the base64 encoding of {string1}"))
             def string2_should_be_base64_encoding_of_string1(string2, string1):
                 assert string1.encode() == base64.b64decode(string2.encode())
 
