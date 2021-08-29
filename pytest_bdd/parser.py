@@ -448,7 +448,8 @@ class Examples:
         if not rows:
             # Need to yield one result, otherwise the cartesian product later will result in an empty one
             # and pytest will skip the whole test
-            return {}
+            yield {}
+            return
         for row in rows:
             assert len(header) == len(row)
 
