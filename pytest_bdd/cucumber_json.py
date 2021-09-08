@@ -123,7 +123,7 @@ class LogBDDCucumberJSON:
                 error_message = True
 
             if self.expand:
-                # XXX The format is already 'expanded' (scenario oultines -> scenarios),
+                # XXX The format is already 'expanded' (scenario outlines -> scenarios),
                 # but the step names were not filled in with parameters. To be backwards
                 # compatible, do not fill in the step names unless explicitly asked for.
                 step_name = self._format_step_name(report, step)

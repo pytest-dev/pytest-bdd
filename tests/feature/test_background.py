@@ -97,7 +97,7 @@ def test_background_basic(testdir):
 
 
 def test_background_check_order(testdir):
-    """Test feature background to ensure that backound steps are executed first."""
+    """Test feature background to ensure that background steps are executed first."""
 
     testdir.makefile(".feature", background=textwrap.dedent(FEATURE))
 

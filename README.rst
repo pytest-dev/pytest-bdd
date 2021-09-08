@@ -316,9 +316,9 @@ Step arguments are fixtures as well!
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Step arguments are injected into pytest `request` context as normal fixtures with the names equal to the names of the
-arguments. This opens a number of possibilies:
+arguments. This opens a number of possibilities:
 
-* you can access step's argument as a fixture in other step function just by mentioning it as an argument (just like any othe pytest fixture)
+* you can access step's argument as a fixture in other step function just by mentioning it as an argument (just like any other pytest fixture)
 * if the name of the step argument clashes with existing fixture, it will be overridden by step's argument value; this way you can set/override the value for some fixture deeply inside of the fixture tree in a ad-hoc way by just choosing the proper name for the step argument.
 
 
@@ -778,7 +778,7 @@ automatically to allow test selector expressions. If you want to have bdd-relate
 other test markers, use prefix like `bdd`.
 Note that if you use pytest `--strict` option, all bdd tags mentioned in the feature files should be also in the
 `markers` setting of the `pytest.ini` config. Also for tags please use names which are python-compartible variable
-names, eg starts with a non-number, underscore alphanumberic, etc. That way you can safely use tags for tests filtering.
+names, eg starts with a non-number, underscore alphanumeric, etc. That way you can safely use tags for tests filtering.
 
 You can customize how tags are converted to pytest marks by implementing the
 ``pytest_bdd_apply_tag`` hook and returning ``True`` from it:
