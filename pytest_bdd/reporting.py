@@ -6,8 +6,6 @@ that enriches the pytest test reporting.
 
 import time
 
-from .utils import get_parametrize_markers_args
-
 
 class StepReport:
     """Step excecution report."""
@@ -21,7 +19,7 @@ class StepReport:
         :param pytest_bdd.parser.Step step: Step.
         """
         self.step = step
-        self.started = time.time()
+        self.started = time.perf_counter()
 
     def serialize(self):
         """Serialize the step excecution report.
@@ -43,7 +41,7 @@ class StepReport:
 
         :param bool failed: Wheither the step excecution is failed.
         """
-        self.stopped = time.time()
+        self.stopped = time.perf_counter()
         self.failed = failed
 
     @property
