@@ -1,6 +1,6 @@
 """Reporting functionality.
 
-Collection of the scenario excecution statuses, timing and other information
+Collection of the scenario execution statuses, timing and other information
 that enriches the pytest test reporting.
 """
 
@@ -8,7 +8,7 @@ import time
 
 
 class StepReport:
-    """Step excecution report."""
+    """Step execution report."""
 
     failed = False
     stopped = None
@@ -22,9 +22,9 @@ class StepReport:
         self.started = time.perf_counter()
 
     def serialize(self):
-        """Serialize the step excecution report.
+        """Serialize the step execution report.
 
-        :return: Serialized step excecution report.
+        :return: Serialized step execution report.
         :rtype: dict
         """
         return {
@@ -39,16 +39,16 @@ class StepReport:
     def finalize(self, failed):
         """Stop collecting information and finalize the report.
 
-        :param bool failed: Wheither the step excecution is failed.
+        :param bool failed: Whether the step execution is failed.
         """
         self.stopped = time.perf_counter()
         self.failed = failed
 
     @property
     def duration(self):
-        """Step excecution duration.
+        """Step execution duration.
 
-        :return: Step excecution duration.
+        :return: Step execution duration.
         :rtype: float
         """
         if self.stopped is None:
@@ -87,7 +87,7 @@ class ScenarioReport:
         self.step_reports.append(step_report)
 
     def serialize(self):
-        """Serialize scenario excecution report in order to transfer reportin from nodes in the distributed mode.
+        """Serialize scenario execution report in order to transfer reporting from nodes in the distributed mode.
 
         :return: Serialized report.
         :rtype: dict
