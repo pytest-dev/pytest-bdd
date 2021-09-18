@@ -184,7 +184,7 @@ def test_step_trace(testdir):
                 "failed": False,
                 "keyword": "Given",
                 "line_number": 15,
-                "name": "there are <start> cucumbers",
+                "name": "there are 12 cucumbers",
                 "type": "given",
             },
             {
@@ -192,7 +192,7 @@ def test_step_trace(testdir):
                 "failed": False,
                 "keyword": "When",
                 "line_number": 16,
-                "name": "I eat <eat> cucumbers",
+                "name": "I eat 5 cucumbers",
                 "type": "when",
             },
             {
@@ -200,7 +200,7 @@ def test_step_trace(testdir):
                 "failed": False,
                 "keyword": "Then",
                 "line_number": 17,
-                "name": "I should have <left> cucumbers",
+                "name": "I should have 7 cucumbers",
                 "type": "then",
             },
         ],
@@ -226,7 +226,7 @@ def test_step_trace(testdir):
                 "failed": False,
                 "keyword": "Given",
                 "line_number": 15,
-                "name": "there are <start> cucumbers",
+                "name": "there are 5 cucumbers",
                 "type": "given",
             },
             {
@@ -234,7 +234,7 @@ def test_step_trace(testdir):
                 "failed": False,
                 "keyword": "When",
                 "line_number": 16,
-                "name": "I eat <eat> cucumbers",
+                "name": "I eat 4 cucumbers",
                 "type": "when",
             },
             {
@@ -242,7 +242,7 @@ def test_step_trace(testdir):
                 "failed": False,
                 "keyword": "Then",
                 "line_number": 17,
-                "name": "I should have <left> cucumbers",
+                "name": "I should have 1 cucumbers",
                 "type": "then",
             },
         ],
