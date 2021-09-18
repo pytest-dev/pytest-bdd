@@ -555,13 +555,13 @@ The code will look like:
         pass
 
 
-    @given(parsers.parse("there are {start} cucumbers", target_fixture="start_cucumbers"))
+    @given(parsers.parse("there are {start:d} cucumbers", target_fixture="start_cucumbers"))
     def start_cucumbers(start):
         assert isinstance(start, int)
         return dict(start=start)
 
 
-    @when(parsers.parse("I eat {eat} cucumbers"))
+    @when(parsers.parse("I eat {eat:g} cucumbers"))
     def eat_cucumbers(start_cucumbers, eat):
         assert isinstance(eat, float)
         start_cucumbers["eat"] = eat
@@ -666,17 +666,17 @@ The code will look like:
         """We don't need to do anything here, everything will be managed by the scenario decorator."""
 
 
-    @given(parsers.parse("there are {start} cucumbers"), target_fixture="start_cucumbers")
+    @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="start_cucumbers")
     def start_cucumbers(start):
         return dict(start=start)
 
 
-    @when(parsers.parse("I eat {eat} cucumbers"))
+    @when(parsers.parse("I eat {eat:d} cucumbers"))
     def eat_cucumbers(start_cucumbers, start, eat):
         start_cucumbers["eat"] = eat
 
 
-    @then(parsers.parse("I should have {left} cucumbers"))
+    @then(parsers.parse("I should have {left:d} cucumbers"))
     def should_have_left_cucumbers(start_cucumbers, start, eat, left):
         assert start - eat == left
         assert start_cucumbers["start"] == start
