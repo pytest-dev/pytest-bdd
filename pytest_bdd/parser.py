@@ -7,6 +7,7 @@ from collections import OrderedDict
 from . import types, exceptions
 
 SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
+STEP_PARAM_RE = re.compile(r"<(.+?)>")
 COMMENT_RE = re.compile(r"(^|(?<=\s))#")
 STEP_PREFIXES = [
     ("Feature: ", types.FEATURE),
@@ -461,6 +462,3 @@ def get_tags(line):
     if not line or not line.strip().startswith("@"):
         return set()
     return {tag.lstrip("@") for tag in line.strip().split(" @") if len(tag) > 1}
-
-
-STEP_PARAM_RE = re.compile(r"<(.+?)>")
