@@ -2,9 +2,8 @@
 import base64
 import pickle
 import re
-import warnings
 from inspect import getframeinfo
-from inspect import signature as _signature
+from inspect import signature
 from sys import _getframe
 import typing
 
@@ -22,16 +21,8 @@ def get_args(func):
     :return: A list of argument names.
     :rtype: list
     """
-    params = _signature(func).parameters.values()
+    params = signature(func).parameters.values()
     return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
-
-
-def get_parametrize_markers_args(node):
-    warnings.warn(
-        "get_parametrize_markers_args is deprecated. Use dump_obj and collect_dumped_objects instead.",
-        DeprecationWarning,
-    )
-    return tuple(arg for mark in node.iter_markers("parametrize") for arg in mark.args)
 
 
 def get_caller_module_locals(depth=2):
