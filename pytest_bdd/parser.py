@@ -445,11 +445,6 @@ class Examples:
 
     def as_contexts(self: "Examples"):
         header, rows = self.get_params()
-        if not rows:
-            # Need to yield one result, otherwise the cartesian product later will result in an empty one
-            # and pytest will skip the whole test
-            yield {}
-            return
         for row in rows:
             assert len(header) == len(row)
 

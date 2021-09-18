@@ -97,7 +97,7 @@ def test_step_trace(testdir):
     )
     result = testdir.inline_run("-vvl")
     assert result.ret
-    report = result.matchreport("test_passing[]", when="call").scenario
+    report = result.matchreport("test_passing", when="call").scenario
     expected = {
         "feature": {
             "description": "",
@@ -132,7 +132,7 @@ def test_step_trace(testdir):
 
     assert report == expected
 
-    report = result.matchreport("test_failing[]", when="call").scenario
+    report = result.matchreport("test_failing", when="call").scenario
     expected = {
         "feature": {
             "description": "",

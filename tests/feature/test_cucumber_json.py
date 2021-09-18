@@ -113,7 +113,7 @@ def test_step_trace(testdir):
             "elements": [
                 {
                     "description": "",
-                    "id": "test_passing[]",
+                    "id": "test_passing",
                     "keyword": "Scenario",
                     "line": 5,
                     "name": "Passing",
@@ -138,7 +138,7 @@ def test_step_trace(testdir):
                 },
                 {
                     "description": "",
-                    "id": "test_failing[]",
+                    "id": "test_failing",
                     "keyword": "Scenario",
                     "line": 10,
                     "name": "Failing",
