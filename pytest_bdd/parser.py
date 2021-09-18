@@ -427,9 +427,7 @@ class Examples:
         self.example_params.append(param)
         self.vertical_examples.append(values)
 
-    # TODO: Remove this
-    def get_params(self) -> typing.Tuple[typing.List[str], typing.List[typing.List[str]]]:
-        """Get scenario pytest parametrization table."""
+    def as_contexts(self) -> typing.Iterable[typing.Dict[str, typing.Any]]:
         param_count = len(self.example_params)
         if self.vertical_examples and not self.examples:
             for value_index in range(len(self.vertical_examples[0])):
@@ -438,13 +436,11 @@ class Examples:
                     example.append(self.vertical_examples[param_index][value_index])
                 self.examples.append(example)
 
-        if self.examples:
-            return self.example_params, self.examples
+        if not self.examples:
+            return
 
-        return [], []
+        header, rows = self.example_params, self.examples
 
-    def as_contexts(self: "Examples"):
-        header, rows = self.get_params()
         for row in rows:
             assert len(header) == len(row)
 
