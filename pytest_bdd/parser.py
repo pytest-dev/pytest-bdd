@@ -296,7 +296,6 @@ class Scenario:
         self.line_number = line_number
         self.tags = tags or set()
         self.failed = False
-        self.test_function = None
 
 
 class Step:

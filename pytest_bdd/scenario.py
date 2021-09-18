@@ -188,7 +188,6 @@ def _get_scenario_decorator(
 
         scenario_wrapper.__doc__ = f"{feature_name}: {scenario_name}"
         scenario_wrapper.__scenario__ = templated_scenario
-        scenario.test_function = scenario_wrapper  # TODO: Check usages and remove
         return scenario_wrapper
 
     return decorator
