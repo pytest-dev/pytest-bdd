@@ -43,7 +43,8 @@ def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None)
             if not match:
                 continue
 
-            # Todo: is `converters` still a thing anywhere? Remove it
+            # TODO: maybe `converters` should be part of the SterParser.__init__(),
+            #  and used by StepParser.parse_arguments() method
             converters = getattr(fixturedef.func, "converters", {})
             for arg, value in parser.parse_arguments(name).items():
                 if arg in converters:
