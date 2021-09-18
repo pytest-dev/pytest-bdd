@@ -7,10 +7,7 @@ def test_background_no_strict_gherkin(testdir):
         test_gherkin="""
         import pytest
 
-        from pytest_bdd import (
-            when,
-            scenario,
-        )
+        from pytest_bdd import when, scenario
 
         @scenario(
             "no_strict_gherkin_background.feature",
@@ -66,10 +63,7 @@ def test_scenario_no_strict_gherkin(testdir):
         test_gherkin="""
         import pytest
 
-        from pytest_bdd import (
-            when,
-            scenario,
-        )
+        from pytest_bdd import when, scenario
 
         @scenario(
             "no_strict_gherkin_scenario.feature",
