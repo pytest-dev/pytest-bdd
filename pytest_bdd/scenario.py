@@ -42,6 +42,7 @@ def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None)
             if not match:
                 continue
 
+            # Todo: is `converters` still a thing anywhere? Remove it
             converters = getattr(fixturedef.func, "converters", {})
             for arg, value in parser.parse_arguments(name).items():
                 if arg in converters:

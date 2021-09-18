@@ -1,16 +1,19 @@
 """Scenario Outline tests."""
 import textwrap
 
+from pytest_bdd.utils import collect_dumped_objects
 from tests.utils import assert_outcomes
 
 STEPS = """\
 from pytest_bdd import parsers, given, when, then
+from pytest_bdd.utils import dump_obj
 
 
 @given(parsers.parse("there are {start} cucumbers"), target_fixture="start_cucumbers")
 def start_cucumbers(start):
     assert isinstance(start, str)
     start = int(start)
+    dump_obj(start)
     return dict(start=start)
 
 
@@ -18,6 +21,7 @@ def start_cucumbers(start):
 def eat_cucumbers(start_cucumbers, eat):
     assert isinstance(eat, str)
     eat = int(eat)
+    dump_obj(eat)
     start_cucumbers["eat"] = eat
 
 
@@ -25,6 +29,7 @@ def eat_cucumbers(start_cucumbers, eat):
 def should_have_left_cucumbers(start_cucumbers, left):
     assert isinstance(left, str)
     left = int(left)
+    dump_obj(left)
     assert left == start_cucumbers["start"] - start_cucumbers["eat"]
 
 """
@@ -56,7 +61,6 @@ def test_outlined(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd.utils import get_parametrize_markers_args
         from pytest_bdd import scenario
 
         @scenario(
@@ -222,7 +226,6 @@ def test_outlined_with_other_fixtures(testdir):
         textwrap.dedent(
             """\
         import pytest
-        from pytest_bdd.utils import get_parametrize_markers_args
         from pytest_bdd import scenario
 
 
@@ -273,21 +276,27 @@ def test_vertical_example(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd.utils import get_parametrize_markers_args
         from pytest_bdd import scenario
 
         @scenario(
             "outline.feature",
             "Outlined with vertical example table",
         )
-        def test_outline(request):
+        def test_outline():
             pass
-
         """
         )
     )
-    result = testdir.runpytest()
+    result = testdir.runpytest("-s")
     result.assert_outcomes(passed=2, failed=1)
+    parametrizations = collect_dumped_objects(result)
+    # fmt: off
+    assert parametrizations == [
+        12, 5, 7,
+        2, 1, 1,
+        2, 1, 42,
+    ]
+    # fmt: on
 
 
 def test_outlined_feature(testdir):
@@ -319,43 +328,50 @@ def test_outlined_feature(testdir):
         textwrap.dedent(
             """\
         from pytest_bdd import given, when, then, scenario, parsers
+        from pytest_bdd.utils import dump_obj
 
         @scenario(
             "outline.feature",
             "Outlined given, when, thens",
         )
-        def test_outline(request, _pytest_bdd_example):
-            print("parametrization: ", _pytest_bdd_example)
-            # This won't work anymore
-            # assert get_parametrize_markers_args(request.node) == (
-            #     ["start", "eat", "left"],
-            #     [[12, 5.0, "7"], [5, 4.0, "1"]],
-            #     ["fruits"],
-            #     [["oranges"], ["apples"]],
-            # )
+        def test_outline():
             pass
 
         @given(parsers.parse("there are {start} {fruits}"), target_fixture="start_fruits")
         def start_fruits(start, fruits):
-            return {fruits: {"start": int(start)}}
+            start = int(start)
+            dump_obj(start, fruits)
+            return {fruits: {"start": start}}
 
 
         @when(parsers.parse("I eat {eat} {fruits}"))
         def eat_fruits(start_fruits, eat, fruits):
-            start_fruits[fruits]["eat"] = float(eat)
+            eat = float(eat)
+            dump_obj(eat, fruits)
+            start_fruits[fruits]["eat"] = eat
 
 
         @then(parsers.parse("I should have {left} {fruits}"))
         def should_have_left_fruits(start_fruits, start, eat, left, fruits):
             # TODO: it seems that the "start" fixture is injected, but it should not exists!
-            assert int(left) == start_fruits[fruits]["start"] - start_fruits[fruits]["eat"]
+            left = int(left)
+            dump_obj(left, fruits)
+            assert left == start_fruits[fruits]["start"] - start_fruits[fruits]["eat"]
 
         """
         )
     )
     result = testdir.runpytest("-s")
     result.assert_outcomes(passed=4)
-    # TODO: Find a way to assert that the tests were run with the expected parametrizations
+    parametrizations = collect_dumped_objects(result)
+    # fmt: off
+    assert parametrizations == [
+        12, "oranges", 5, "oranges", 7, "oranges",
+        12, "apples", 5, "apples", 7, "apples",
+        5, "oranges", 4, "oranges", 1, "oranges",
+        5, "apples", 4, "apples", 1, "apples",
+    ]
+    # fmt: on
 
 
 def test_outline_with_escaped_pipes(testdir):
@@ -367,18 +383,18 @@ def test_outline_with_escaped_pipes(testdir):
             Feature: Outline With Special characters
 
                 Scenario Outline: Outline with escaped pipe character
-                    Given We have strings <string1> and <string2>
-                    Then <string2> should be the base64 encoding of <string1>
+                    # Just print the string so that we can assert later what it was by reading the output
+                    Given I print the <string>
 
                     Examples:
-                    | string1      | string2          |
-                    | bork         | Ym9yaw==         |
-                    | \|bork       | fGJvcms=         |
-                    | bork \|      | Ym9yayB8         |
-                    | bork\|\|bork | Ym9ya3x8Ym9yaw== |
-                    | \|           | fA==             |
-                    | bork      \\ | Ym9yayAgICAgIFxc |
-                    | bork    \\\| | Ym9yayAgICBcXHw= |
+                    | string       |
+                    | bork         |
+                    | \|bork       |
+                    | bork \|      |
+                    | bork\|\|bork |
+                    | \|           |
+                    | bork      \\ |
+                    | bork    \\\| |
             """
         ),
     )
@@ -386,10 +402,8 @@ def test_outline_with_escaped_pipes(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-            import base64
-
-            from pytest_bdd import scenario, given, when, then, parsers
-            from pytest_bdd.utils import get_parametrize_markers_args
+            from pytest_bdd import scenario, given, parsers
+            from pytest_bdd.utils import dump_obj
 
 
             @scenario("outline.feature", "Outline with escaped pipe character")
@@ -397,17 +411,20 @@ def test_outline_with_escaped_pipes(testdir):
                 pass
 
 
-            @given(parsers.parse("We have strings {string1} and {string2}"))
-            def we_have_strings_string1_and_string2(string1, string2):
-                pass
-
-
-            @then(parsers.parse("{string2} should be the base64 encoding of {string1}"))
-            def string2_should_be_base64_encoding_of_string1(string2, string1):
-                assert string1.encode() == base64.b64decode(string2.encode())
-
+            @given(parsers.parse("I print the {string}"))
+            def i_print_the_string(string):
+                dump_obj(string)
             """
         )
     )
-    result = testdir.runpytest()
+    result = testdir.runpytest("-s")
     result.assert_outcomes(passed=7)
+    assert collect_dumped_objects(result) == [
+        r"bork",
+        r"|bork",
+        r"bork |",
+        r"bork||bork",
+        r"|",
+        r"bork      \\",
+        r"bork    \\|",
+    ]
