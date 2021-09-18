@@ -62,5 +62,6 @@ def collect_dumped_objects(result: "RunResult"):
     Note: You must run the result with output to stdout enabled.
     For example, using ``testdir.runpytest("-s")``.
     """
-    payloads = re.findall(rf"{_DUMP_START}(.*?){_DUMP_END}", str(result.stdout))
+    stdout = result.stdout.str()  # pytest < 6.2, otherwise we could just do str(result.stdout)
+    payloads = re.findall(rf"{_DUMP_START}(.*?){_DUMP_END}", stdout)
     return [pickle.loads(base64.b64decode(payload)) for payload in payloads]
