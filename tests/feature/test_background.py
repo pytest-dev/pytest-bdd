@@ -2,7 +2,6 @@
 
 import textwrap
 
-
 FEATURE = """\
 Feature: Background support
 

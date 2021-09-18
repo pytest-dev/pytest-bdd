@@ -1,6 +1,6 @@
 import textwrap
-import pytest
 
+import pytest
 
 FEATURE = """\
 Feature: Gherkin terminal output feature

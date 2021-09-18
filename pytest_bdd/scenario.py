@@ -24,8 +24,9 @@ from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if typing.TYPE_CHECKING:
-    from .parser import ScenarioTemplate, Scenario, Feature
     from _pytest.mark.structures import ParameterSet
+
+    from .parser import Feature, Scenario, ScenarioTemplate
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")

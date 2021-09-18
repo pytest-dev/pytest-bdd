@@ -28,7 +28,7 @@ import typing
 
 import glob2
 
-from .parser import parse_feature, Feature
+from .parser import Feature, parse_feature
 
 # Global features dictionary
 features = {}

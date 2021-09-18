@@ -36,11 +36,10 @@ def given_beautiful_article(article):
 """
 
 import pytest
-
 from _pytest.fixtures import FixtureDef
 
-from .types import GIVEN, WHEN, THEN
 from .parsers import get_parser
+from .types import GIVEN, THEN, WHEN
 from .utils import get_caller_module_locals
 
 

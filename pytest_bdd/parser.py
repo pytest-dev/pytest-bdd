@@ -4,7 +4,7 @@ import textwrap
 import typing
 from collections import OrderedDict
 
-from . import types, exceptions
+from . import exceptions, types
 
 SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
