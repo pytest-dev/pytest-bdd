@@ -251,12 +251,12 @@ def test_step_trace(testdir):
     assert report == expected
 
 
-def test_complex_types(testdir):
+def test_complex_types(testdir, pytestconfig):
     """Test serialization of the complex types."""
-    try:
-        import execnet.gateway_base
-    except ImportError:
+    if not pytestconfig.pluginmanager.has_plugin("xdist"):
         pytest.skip("Execnet not installed")
+
+    import execnet.gateway_base
 
     testdir.makefile(
         ".feature",
@@ -277,9 +277,9 @@ def test_complex_types(testdir):
         textwrap.dedent(
             """
         import pytest
-        from pytest_bdd import given, when, then, scenario
+        from pytest_bdd import given, when, then, scenario, parsers
 
-        class Point(object):
+        class Point:
 
             def __init__(self, x, y):
                 self.x = x
@@ -292,10 +292,9 @@ def test_complex_types(testdir):
         class Alien(object):
             pass
 
-        @given('there is a coordinate <point>')
-        def point(point):
-            assert isinstance(point, Point)
-            return point
+        @given(parsers.parse('there is a coordinate {point}'), target_fixture="point")
+        def given_there_is_a_point(point):
+            return Point.parse(point)
 
 
         @pytest.mark.parametrize('alien', [Alien()])
@@ -307,6 +306,7 @@ def test_complex_types(testdir):
         )
     )
     result = testdir.inline_run("-vvl")
-    report = result.matchreport("test_complex[point0-alien0]", when="call")
+    report = result.matchreport("test_complex[10,20-alien0]", when="call")
+    assert report.passed
     assert execnet.gateway_base.dumps(report.item)
     assert execnet.gateway_base.dumps(report.scenario)
