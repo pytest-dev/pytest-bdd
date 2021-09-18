@@ -2,10 +2,9 @@
 import base64
 import pickle
 import re
-from inspect import getframeinfo
-from inspect import signature
-from sys import _getframe
 import typing
+from inspect import getframeinfo, signature
+from sys import _getframe
 
 if typing.TYPE_CHECKING:
     from _pytest.pytester import RunResult
