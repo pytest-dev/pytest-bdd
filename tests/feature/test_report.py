@@ -297,9 +297,14 @@ def test_complex_types(testdir, pytestconfig):
         class Alien(object):
             pass
 
-        @given(parsers.parse('there is a coordinate {point}'), target_fixture="point")
+        @given(
+            parsers.parse('there is a coordinate {point}'),
+            target_fixture="point",
+            converters={"point": Point.parse},
+        )
         def given_there_is_a_point(point):
-            return Point.parse(point)
+            assert isinstance(point, Point)
+            return point
 
 
         @pytest.mark.parametrize('alien', [Alien()])
