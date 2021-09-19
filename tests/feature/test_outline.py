@@ -353,7 +353,6 @@ def test_outlined_feature(testdir):
 
         @then(parsers.parse("I should have {left} {fruits}"))
         def should_have_left_fruits(start_fruits, start, eat, left, fruits):
-            # TODO: it seems that the "start" fixture is injected, but it should not exists!
             left = int(left)
             dump_obj(left, fruits)
             assert left == start_fruits[fruits]["start"] - start_fruits[fruits]["eat"]
