@@ -9,28 +9,27 @@ from pytest_bdd import parsers, given, when, then
 from pytest_bdd.utils import dump_obj
 
 
-@given(parsers.parse("there are {start} cucumbers"), target_fixture="start_cucumbers")
+@given(parsers.parse("there are {start:d} cucumbers"), target_fixture="start_cucumbers")
 def start_cucumbers(start):
-    assert isinstance(start, str)
-    start = int(start)
+    assert isinstance(start, int)
     dump_obj(start)
-    return dict(start=start)
+    return {"start": start}
 
 
-@when(parsers.parse("I eat {eat} cucumbers"))
+@when(parsers.parse("I eat {eat:g} cucumbers"))
 def eat_cucumbers(start_cucumbers, eat):
-    assert isinstance(eat, str)
-    eat = int(eat)
+    assert isinstance(eat, float)
     dump_obj(eat)
     start_cucumbers["eat"] = eat
 
 
 @then(parsers.parse("I should have {left} cucumbers"))
-def should_have_left_cucumbers(start_cucumbers, left):
+def should_have_left_cucumbers(start_cucumbers, start, eat, left):
     assert isinstance(left, str)
-    left = int(left)
     dump_obj(left)
-    assert left == start_cucumbers["start"] - start_cucumbers["eat"]
+    assert start - eat == int(left)
+    assert start_cucumbers["start"] == start
+    assert start_cucumbers["eat"] == eat
 
 """
 
@@ -50,7 +49,6 @@ def test_outlined(testdir):
                     | start | eat | left |
                     |  12   |  5  |  7   | # a comment
                     |  5    |  4  |  1   |
-                    |  5    |  4  |  43  | # Control case. This should fail.
 
             """
         ),
@@ -74,7 +72,7 @@ def test_outlined(testdir):
         )
     )
     result = testdir.runpytest()
-    result.assert_outcomes(passed=2, failed=1)
+    result.assert_outcomes(passed=2)
 
 
 def test_wrongly_outlined(testdir):
@@ -261,11 +259,9 @@ def test_vertical_example(testdir):
                     Then I should have <left> cucumbers
 
                     Examples: Vertical
-                    | start | 12 | 2 | 2  |
-                    | eat   | 5  | 1 | 1  |
-                    | left  | 7  | 1 | 42 |
-
-                    # The last column is the control case, to verify that the scenario fails
+                    | start | 12 | 2 |
+                    | eat   | 5  | 1 |
+                    | left  | 7  | 1 |
 
             """
         ),
@@ -288,13 +284,12 @@ def test_vertical_example(testdir):
         )
     )
     result = testdir.runpytest("-s")
-    result.assert_outcomes(passed=2, failed=1)
+    result.assert_outcomes(passed=2)
     parametrizations = collect_dumped_objects(result)
     # fmt: off
     assert parametrizations == [
-        12, 5, 7,
-        2, 1, 1,
-        2, 1, 42,
+        12, 5.0, "7",
+        2, 1.0, "1",
     ]
     # fmt: on
 
@@ -337,25 +332,30 @@ def test_outlined_feature(testdir):
         def test_outline():
             pass
 
-        @given(parsers.parse("there are {start} {fruits}"), target_fixture="start_fruits")
+        @given(parsers.parse("there are {start:d} {fruits}"), target_fixture="start_fruits")
         def start_fruits(start, fruits):
-            start = int(start)
             dump_obj(start, fruits)
-            return {fruits: {"start": start}}
+
+            assert isinstance(start, int)
+            return {fruits: dict(start=start)}
 
 
-        @when(parsers.parse("I eat {eat} {fruits}"))
+        @when(parsers.parse("I eat {eat:g} {fruits}"))
         def eat_fruits(start_fruits, eat, fruits):
-            eat = float(eat)
             dump_obj(eat, fruits)
+
+            assert isinstance(eat, float)
             start_fruits[fruits]["eat"] = eat
 
 
         @then(parsers.parse("I should have {left} {fruits}"))
         def should_have_left_fruits(start_fruits, start, eat, left, fruits):
-            left = int(left)
             dump_obj(left, fruits)
-            assert left == start_fruits[fruits]["start"] - start_fruits[fruits]["eat"]
+
+            assert isinstance(left, str)
+            assert start - eat == int(left)
+            assert start_fruits[fruits]["start"] == start
+            assert start_fruits[fruits]["eat"] == eat
 
         """
         )
@@ -365,10 +365,10 @@ def test_outlined_feature(testdir):
     parametrizations = collect_dumped_objects(result)
     # fmt: off
     assert parametrizations == [
-        12, "oranges", 5, "oranges", 7, "oranges",
-        12, "apples", 5, "apples", 7, "apples",
-        5, "oranges", 4, "oranges", 1, "oranges",
-        5, "apples", 4, "apples", 1, "apples",
+        12, "oranges", 5.0, "oranges", "7", "oranges",
+        12, "apples", 5.0, "apples", "7", "apples",
+        5, "oranges", 4.0, "oranges", "1", "oranges",
+        5, "apples", 4.0, "apples", "1", "apples",
     ]
     # fmt: on
 
