@@ -76,19 +76,19 @@ def test_step_trace(testdir):
         def a_failing_step():
             raise Exception('Error')
 
-        @given(parsers.parse('there are {start} cucumbers'), target_fixture="start_cucumbers")
+        @given(parsers.parse('there are {start:d} cucumbers'), target_fixture="start_cucumbers")
         def start_cucumbers(start):
-            return dict(start=int(start))
+            return dict(start=start)
 
 
-        @when(parsers.parse('I eat {eat} cucumbers'))
+        @when(parsers.parse('I eat {eat:g} cucumbers'))
         def eat_cucumbers(start_cucumbers, eat):
-            start_cucumbers['eat'] = float(eat)
+            start_cucumbers['eat'] = eat
 
 
-        @then(parsers.parse('I should have {left} cucumbers'))
+        @then(parsers.parse('I should have {left:d} cucumbers'))
         def should_have_left_cucumbers(start_cucumbers, left):
-            assert start_cucumbers['start'] - start_cucumbers['eat'] == int(left)
+            assert start_cucumbers['start'] - start_cucumbers['eat'] == left
 
 
         scenarios('test.feature')
