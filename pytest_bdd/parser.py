@@ -245,11 +245,7 @@ class ScenarioTemplate:
         background = self.feature.background
         return (background.steps if background else []) + self._steps
 
-    def render(self, context) -> "Scenario":
-        background = self.feature.background
-
-        templated_steps = (background.steps if background else []) + self._steps
-
+    def render(self, context: typing.Mapping[str, typing.Any]) -> "Scenario":
         steps = [
             Step(
                 name=templated_step.render(context),
@@ -258,7 +254,7 @@ class ScenarioTemplate:
                 line_number=templated_step.line_number,
                 keyword=templated_step.keyword,
             )
-            for templated_step in templated_steps
+            for templated_step in self.steps
         ]
         return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
 
