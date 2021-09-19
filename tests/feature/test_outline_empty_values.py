@@ -60,10 +60,7 @@ def test_scenario_with_empty_example_values(testdir):
     )
     result = testdir.runpytest("-s")
     result.assert_outcomes(passed=1)
-    [start, eat, left] = collect_dumped_objects(result)
-    assert start == "#"
-    assert eat == ""
-    assert left == ""
+    assert collect_dumped_objects(result) == ["#", "", ""]
 
 
 def test_scenario_with_empty_example_values_vertical(testdir):
@@ -99,8 +96,5 @@ def test_scenario_with_empty_example_values_vertical(testdir):
         )
     )
     result = testdir.runpytest("-s")
-    [start, eat, left] = collect_dumped_objects(result)
-    assert start == "#"
-    assert eat == ""
-    assert left == ""
     result.assert_outcomes(passed=1)
+    assert collect_dumped_objects(result) == ["#", "", ""]
