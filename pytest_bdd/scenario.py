@@ -211,7 +211,7 @@ def collect_example_parametrizations(
         for scenario_context in scenario_contexts or [{}]
     ]
     if contexts == [{}]:
-        return
+        return None
     return [pytest.param(context, id="-".join(context.values())) for context in contexts]
 
 

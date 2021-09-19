@@ -31,7 +31,7 @@ import glob2
 from .parser import Feature, parse_feature
 
 # Global features dictionary
-features = {}
+features: typing.Dict[str, Feature] = {}
 
 
 def get_feature(base_path, filename, encoding="utf-8") -> Feature:

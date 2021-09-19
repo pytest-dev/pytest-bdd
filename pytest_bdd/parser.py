@@ -74,7 +74,7 @@ def get_step_type(line):
             return _type
 
 
-def parse_feature(basedir, filename, encoding="utf-8"):
+def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feature":
     """Parse the feature file.
 
     :param str basedir: Feature files base directory.
@@ -97,7 +97,7 @@ def parse_feature(basedir, filename, encoding="utf-8"):
     scenario: typing.Optional[ScenarioTemplate] = None
     mode = None
     prev_mode = None
-    description = []
+    description: typing.List[str] = []
     step = None
     multiline_step = False
     prev_line = None
@@ -202,7 +202,7 @@ class Feature:
     """Feature."""
 
     def __init__(self, scenarios, filename, rel_filename, name, tags, examples, background, line_number, description):
-        self.scenarios: typing.Mapping[str, ScenarioTemplate] = scenarios
+        self.scenarios: typing.Dict[str, ScenarioTemplate] = scenarios
         self.rel_filename = rel_filename
         self.filename = filename
         self.tags = tags
