@@ -71,8 +71,14 @@ def test_outlined(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = testdir.runpytest("-s")
     result.assert_outcomes(passed=2)
+    # fmt: off
+    assert collect_dumped_objects(result) == [
+        12, 5.0, "7",
+        5, 4.0, "1",
+    ]
+    # fmt: on
 
 
 def test_wrongly_outlined(testdir):
