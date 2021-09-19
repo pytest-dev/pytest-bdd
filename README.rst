@@ -111,8 +111,6 @@ Scenario decorator
 
 Functions decorated with the `scenario` decorator behave like a normal test function,
 and they will be executed after all scenario steps.
-You can consider it as a normal pytest test function, e.g. order fixtures there,
-call other functions and make assertions:
 
 
 .. code-block:: python
@@ -122,6 +120,9 @@ call other functions and make assertions:
     @scenario('publish_article.feature', 'Publishing the article')
     def test_publish(browser):
         assert article.title in browser.html
+
+
+.. NOTE:: It is however encouraged to try as much as possible to have your logic only inside the Given, When, Then steps.
 
 
 Step aliases
@@ -287,7 +288,7 @@ You can implement your own step parser. It's interface is quite simple. The code
 
         def __init__(self, name, **kwargs):
             """Compile regex."""
-            super(re, self).__init__(name)
+            super().__init__(name)
             self.regex = re.compile(re.sub("%(.+)%", "(?P<\1>.+)", self.name), **kwargs)
 
         def parse_arguments(self, name):
@@ -1207,23 +1208,43 @@ ordering of the types of the steps.
 Migration of your tests from versions 4.x.x
 -------------------------------------------
 
-The templated steps should use step argument parsers in order to match the scenario outlines
-and get the values from the example tables. The values from the example tables are no longer
-passed as fixtures.
+The templated steps (e.g. ``@given("there are <start> cucumbers")``) should use step argument parsers in order to match the scenario outlines and get the values from the example tables. The values from the example tables are no longer passed as fixtures per se, although if you define your step to use a parser, the parameters will be still provided as fixtures.
 
 .. code-block:: python
 
-    # Instead of
-    # @given("there are <cucumbers> in the box")
-    # def given_cucumbers(cucumbers):
-    #     pass
+    # Old step definition:
+    @given("there are <start> cucumbers")
+    def given_cucumbers(start):
+        pass
 
-    @given(parsers.parse("there are {cucumbers} in the box"))
-    def given_cucumbers(cucumbers):
+    # New step definition:
+    @given(parsers.parse("there are {start} cucumbers"))
+    def given_cucumbers(start):
         pass
 
 
-Scenario `example_converters` are removed in favor of the converters provided on the step level.
+Scenario `example_converters` are removed in favor of the converters provided on the step level:
+
+.. code-block:: python
+
+    # Old code:
+    @given("there are <start> cucumbers")
+    def given_cucumbers(start):
+        return {"start": start}
+
+    @scenario("outline.feature", "Outlined", example_converters={"start": float})
+    def test_outline():
+        pass
+
+    # New code:
+    @given(parsers.parse("there are {start} cucumbers"), converters={"start": float})
+    def given_cucumbers(start):
+        return {"start": start}
+
+    @scenario("outline.feature", "Outlined")
+    def test_outline():
+        pass
+
 
 .. _Migration from 3.x.x:
 
