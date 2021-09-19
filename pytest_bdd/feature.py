@@ -20,7 +20,7 @@ Syntax example:
             And the article should be published  # Note: will query the database
 
 :note: The "#" symbol is used for comments.
-:note: There're no multiline steps, the description of the step must fit in
+:note: There are no multiline steps, the description of the step must fit in
 one line.
 """
 import os.path
@@ -34,7 +34,7 @@ from .parser import Feature, parse_feature
 features: typing.Dict[str, Feature] = {}
 
 
-def get_feature(base_path, filename, encoding="utf-8") -> Feature:
+def get_feature(base_path: str, filename: str, encoding: str = "utf-8") -> Feature:
     """Get a feature by the filename.
 
     :param str base_path: Base feature directory.
@@ -56,7 +56,7 @@ def get_feature(base_path, filename, encoding="utf-8") -> Feature:
     return feature
 
 
-def get_features(paths, **kwargs) -> typing.List[Feature]:
+def get_features(paths: typing.List[str], **kwargs) -> typing.List[Feature]:
     """Get features for given paths.
 
     :param list paths: `list` of paths (file or dirs)
