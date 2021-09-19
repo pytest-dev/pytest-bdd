@@ -429,7 +429,7 @@ step arguments and capture lines after first line (or some subset of them) into 
 
     import re
 
-    from pytest_bdd import given, then, scenario
+    from pytest_bdd import given, then, scenario, parsers
 
 
     @scenario(
@@ -545,7 +545,7 @@ The code will look like:
 
 .. code-block:: python
 
-    from pytest_bdd import given, when, then, scenario
+    from pytest_bdd import given, when, then, scenario, parsers
 
 
     @scenario(
@@ -649,7 +649,7 @@ The code will look like:
 .. code-block:: python
 
     import pytest
-    from pytest_bdd import scenario, given, when, then
+    from pytest_bdd import scenario, given, when, then, parsers
 
 
     # Here we use pytest to parametrize the test with the parameters table
