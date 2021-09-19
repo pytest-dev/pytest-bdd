@@ -235,7 +235,7 @@ Example:
 .. code-block:: gherkin
 
     Feature: Step arguments
-        Scenario: Arguments for given, when, thens
+        Scenario: Arguments for given, when, then
             Given there are 5 cucumbers
 
             When I eat 3 cucumbers
@@ -252,7 +252,7 @@ The code will look like:
     from pytest_bdd import scenario, given, when, then, parsers
 
 
-    @scenario("arguments.feature", "Arguments for given, when, thens")
+    @scenario("arguments.feature", "Arguments for given, when, then")
     def test_arguments():
         pass
 
@@ -312,9 +312,9 @@ Step arguments are fixtures as well!
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Step arguments are injected into pytest `request` context as normal fixtures with the names equal to the names of the
-arguments. This opens a number of possibilies:
+arguments. This opens a number of possibilities:
 
-* you can access step's argument as a fixture in other step function just by mentioning it as an argument (just like any othe pytest fixture)
+* you can access step's argument as a fixture in other step function just by mentioning it as an argument (just like any other pytest fixture)
 * if the name of the step argument clashes with existing fixture, it will be overridden by step's argument value; this way you can set/override the value for some fixture deeply inside of the fixture tree in a ad-hoc way by just choosing the proper name for the step argument.
 
 
@@ -450,7 +450,7 @@ step arguments and capture lines after first line (or some subset of them) into 
         assert i_have_text == text == 'Some\nExtra\nLines'
 
 Note that `then` step definition (`text_should_be_correct`) in this example uses `text` fixture which is provided
-by a a `given` step (`i_have_text`) argument with the same name (`text`). This possibility is described in
+by a `given` step (`i_have_text`) argument with the same name (`text`). This possibility is described in
 the `Step arguments are fixtures as well!`_ section.
 
 
@@ -504,7 +504,7 @@ Scenario outlines
 -----------------
 
 Scenarios can be parametrized to cover few cases. In Gherkin the variable
-templates are written using corner braces as <somevalue>.
+templates are written using corner braces as ``<somevalue>``.
 `Gherkin scenario outlines <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#scenario-outlines>`_ are supported by pytest-bdd
 exactly as it's described in be behave_ docs.
 
@@ -513,7 +513,7 @@ Example:
 .. code-block:: gherkin
 
     Feature: Scenario outlines
-        Scenario Outline: Outlined given, when, thens
+        Scenario Outline: Outlined given, when, then
             Given there are <start> cucumbers
             When I eat <eat> cucumbers
             Then I should have <left> cucumbers
@@ -528,7 +528,7 @@ pytest-bdd feature file format also supports example tables in different way:
 .. code-block:: gherkin
 
     Feature: Scenario outlines
-        Scenario Outline: Outlined given, when, thens
+        Scenario Outline: Outlined given, when, then
             Given there are <start> cucumbers
             When I eat <eat> cucumbers
             Then I should have <left> cucumbers
@@ -550,7 +550,7 @@ The code will look like:
 
     @scenario(
         "outline.feature",
-        "Outlined given, when, thens",
+        "Outlined given, when, then",
     )
     def test_outlined():
         pass
@@ -659,7 +659,7 @@ The code will look like:
     )
     @scenario(
         "parametrized.feature",
-        "Parametrized given, when, thens",
+        "Parametrized given, when, then",
     )
     # Note that we should take the same arguments in the test function that we use
     # for the test parametrization either directly or indirectly (fixtures depend on them).
@@ -689,7 +689,7 @@ With a parametrized.feature file:
 .. code-block:: gherkin
 
     Feature: parametrized
-        Scenario: Parametrized given, when, thens
+        Scenario: Parametrized given, when, then
             Given there are <start> cucumbers
             When I eat <eat> cucumbers
             Then I should have <left> cucumbers
@@ -768,12 +768,12 @@ scenario test, so we can use standard test selection:
 
     pytest -m "backend and login and successful"
 
-The feature and scenario markers are not different from standard pytest markers, and the `@` symbol is stripped out
+The feature and scenario markers are not different from standard pytest markers, and the ``@`` symbol is stripped out
 automatically to allow test selector expressions. If you want to have bdd-related tags to be distinguishable from the
 other test markers, use prefix like `bdd`.
 Note that if you use pytest `--strict` option, all bdd tags mentioned in the feature files should be also in the
-`markers` setting of the `pytest.ini` config. Also for tags please use names which are python-compartible variable
-names, eg starts with a non-number, underscore alphanumberic, etc. That way you can safely use tags for tests filtering.
+`markers` setting of the `pytest.ini` config. Also for tags please use names which are python-compatible variable
+names, eg starts with a non-number, underscore alphanumeric, etc. That way you can safely use tags for tests filtering.
 
 You can customize how tags are converted to pytest marks by implementing the
 ``pytest_bdd_apply_tag`` hook and returning ``True`` from it:
@@ -786,7 +786,7 @@ You can customize how tags are converted to pytest marks by implementing the
            marker(function)
            return True
        else:
-           # Fall back to pytest-bdd's default behavior
+           # Fall back to the default behavior of pytest-bdd
            return None
 
 Test setup
@@ -973,7 +973,7 @@ test_common.py:
         pass
 
 There are no definitions of the steps in the test file. They were
-collected from the parent conftests.
+collected from the parent conftest.py.
 
 
 Using unicode in the feature files
@@ -1045,7 +1045,7 @@ The `features_base_dir` parameter can also be passed to the `@scenario` decorato
 Avoid retyping the feature file name
 ------------------------------------
 
-If you want to avoid retyping the feature file name when defining your scenarios in a test file, use functools.partial.
+If you want to avoid retyping the feature file name when defining your scenarios in a test file, use ``functools.partial``.
 This will make your life much easier when defining multiple scenarios in a test file. For example:
 
 test_publish_article.py:
@@ -1113,8 +1113,8 @@ Reporting
 
 It's important to have nice reporting out of your bdd tests. Cucumber introduced some kind of standard for
 `json format <https://www.relishapp.com/cucumber/cucumber/docs/json-output-formatter>`_
-which can be used for `this <https://wiki.jenkins-ci.org/display/JENKINS/Cucumber+Test+Result+Plugin>`_ jenkins
-plugin
+which can be used for, for example, by `this <https://plugins.jenkins.io/cucumber-testresult-plugin/>`_ Jenkins
+plugin.
 
 To have an output in json format:
 
@@ -1123,25 +1123,12 @@ To have an output in json format:
     pytest --cucumberjson=<path to json report>
 
 This will output an expanded (meaning scenario outlines will be expanded to several scenarios) cucumber format.
-To also fill in parameters in the step name, you have to explicitly tell pytest-bdd to use the expanded format:
-
-::
-
-    pytest --cucumberjson=<path to json report> --cucumberjson-expanded
 
 To enable gherkin-formatted output on terminal, use
 
 ::
 
     pytest --gherkin-terminal-reporter
-
-
-Terminal reporter supports expanded format as well
-
-::
-
-    pytest --gherkin-terminal-reporter-expanded
-
 
 
 Test code generation helpers
