@@ -53,12 +53,6 @@ def test_scenario_with_empty_example_values(testdir):
         import json
 
         @scenario("outline.feature", "Outlined with empty example values")
-        # TODO: It seems that we can't have:
-        # def test_outline(_pytest_bdd_example, start_cucumbers, eat_cucumbers, left_cucumbers):
-        # This can be quite a problem for old usages. Think about what to do.
-        # Maybe just mention this in the release notes too. And mention that the `target_fixtures` can be accessed
-        # by the scenario test function using ``request.getfixturevalue(...)``
-        # The scenario test function should be not used anyway.
         def test_outline():
             pass
         """
