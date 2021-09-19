@@ -1179,7 +1179,7 @@ ordering of the types of the steps.
 Migration of your tests from versions 4.x.x
 -------------------------------------------
 
-The templated steps (e.g. ``@given("there are <start> cucumbers")``) should use step argument parsers in order to match the scenario outlines and get the values from the example tables. The values from the example tables are no longer passed as fixtures per se, although if you define your step to use a parser, the parameters will be still provided as fixtures.
+Templated steps (e.g. ``@given("there are <start> cucumbers")``) should now the use step argument parsers in order to match the scenario outlines and get the values from the example tables. The values from the example tables are no longer passed as fixtures, although if you define your step to use a parser, the parameters will be still provided as fixtures.
 
 .. code-block:: python
 
@@ -1187,6 +1187,7 @@ The templated steps (e.g. ``@given("there are <start> cucumbers")``) should use 
     @given("there are <start> cucumbers")
     def given_cucumbers(start):
         pass
+
 
     # New step definition:
     @given(parsers.parse("there are {start} cucumbers"))
@@ -1206,6 +1207,7 @@ Scenario `example_converters` are removed in favor of the converters provided on
     @scenario("outline.feature", "Outlined", example_converters={"start": float})
     def test_outline():
         pass
+
 
     # New code:
     @given(parsers.parse("there are {start} cucumbers"), converters={"start": float})
