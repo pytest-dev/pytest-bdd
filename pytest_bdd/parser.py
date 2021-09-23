@@ -1,12 +1,13 @@
-import io
 import os.path
 import re
 import textwrap
+import typing
 from collections import OrderedDict
 
-from . import types, exceptions
+from . import exceptions, types
 
 SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
+STEP_PARAM_RE = re.compile(r"<(.+?)>")
 COMMENT_RE = re.compile(r"(^|(?<=\s))#")
 STEP_PREFIXES = [
     ("Feature: ", types.FEATURE),
@@ -73,7 +74,7 @@ def get_step_type(line):
             return _type
 
 
-def parse_feature(basedir, filename, encoding="utf-8"):
+def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feature":
     """Parse the feature file.
 
     :param str basedir: Feature files base directory.
@@ -93,10 +94,10 @@ def parse_feature(basedir, filename, encoding="utf-8"):
         background=None,
         description="",
     )
-    scenario = None
+    scenario: typing.Optional[ScenarioTemplate] = None
     mode = None
     prev_mode = None
-    description = []
+    description: typing.List[str] = []
     step = None
     multiline_step = False
     prev_line = None
@@ -149,7 +150,9 @@ def parse_feature(basedir, filename, encoding="utf-8"):
         keyword, parsed_line = parse_line(clean_line)
         if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
             tags = get_tags(prev_line)
-            feature.scenarios[parsed_line] = scenario = Scenario(feature, parsed_line, line_number, tags=tags)
+            feature.scenarios[parsed_line] = scenario = ScenarioTemplate(
+                feature=feature, name=parsed_line, line_number=line_number, tags=tags
+            )
         elif mode == types.BACKGROUND:
             feature.background = Background(feature=feature, line_number=line_number)
         elif mode == types.EXAMPLES:
@@ -199,42 +202,35 @@ class Feature:
     """Feature."""
 
     def __init__(self, scenarios, filename, rel_filename, name, tags, examples, background, line_number, description):
-        self.scenarios = scenarios
+        self.scenarios: typing.Dict[str, ScenarioTemplate] = scenarios
         self.rel_filename = rel_filename
         self.filename = filename
-        self.name = name
         self.tags = tags
         self.examples = examples
         self.name = name
         self.line_number = line_number
-        self.tags = tags
-        self.scenarios = scenarios
         self.description = description
         self.background = background
 
 
-class Scenario:
+class ScenarioTemplate:
+    """A scenario template.
 
-    """Scenario."""
+    Created when parsing the feature file, it will then be combined with the examples to create a Scenario."""
 
-    def __init__(self, feature, name, line_number, example_converters=None, tags=None):
-        """Scenario constructor.
+    def __init__(self, feature: Feature, name: str, line_number: int, tags=None):
+        """
 
-        :param pytest_bdd.parser.Feature feature: Feature.
         :param str name: Scenario name.
         :param int line_number: Scenario line number.
-        :param dict example_converters: Example table parameter converters.
         :param set tags: Set of tags.
         """
         self.feature = feature
         self.name = name
-        self._steps = []
+        self._steps: typing.List[Step] = []
         self.examples = Examples()
         self.line_number = line_number
-        self.example_converters = example_converters
         self.tags = tags or set()
-        self.failed = False
-        self.test_function = None
 
     def add_step(self, step):
         """Add step to the scenario.
@@ -246,41 +242,29 @@ class Scenario:
 
     @property
     def steps(self):
-        """Get scenario steps including background steps.
+        background = self.feature.background
+        return (background.steps if background else []) + self._steps
 
-        :return: List of steps.
-        """
-        result = []
-        if self.feature.background:
-            result.extend(self.feature.background.steps)
-        result.extend(self._steps)
-        return result
-
-    @property
-    def params(self):
-        """Get parameter names.
-
-        :return: Parameter names.
-        :rtype: frozenset
-        """
-        return frozenset(sum((list(step.params) for step in self.steps), []))
-
-    def get_example_params(self):
-        """Get example parameter names."""
-        return set(self.examples.example_params + self.feature.examples.example_params)
-
-    def get_params(self, builtin=False):
-        """Get converted example params."""
-        for examples in [self.feature.examples, self.examples]:
-            yield examples.get_params(self.example_converters, builtin=builtin)
+    def render(self, context: typing.Mapping[str, typing.Any]) -> "Scenario":
+        steps = [
+            Step(
+                name=templated_step.render(context),
+                type=templated_step.type,
+                indent=templated_step.indent,
+                line_number=templated_step.line_number,
+                keyword=templated_step.keyword,
+            )
+            for templated_step in self.steps
+        ]
+        return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
 
     def validate(self):
         """Validate the scenario.
 
         :raises ScenarioValidationError: when scenario is not valid
         """
-        params = self.params
-        example_params = self.get_example_params()
+        params = frozenset(sum((list(step.params) for step in self.steps), []))
+        example_params = set(self.examples.example_params + self.feature.examples.example_params)
         if params and example_params and params != example_params:
             raise exceptions.ScenarioExamplesNotValidError(
                 """Scenario "{}" in the feature "{}" has not valid examples. """
@@ -288,6 +272,26 @@ class Scenario:
                     self.name, self.feature.filename, sorted(params), sorted(example_params)
                 )
             )
+
+
+class Scenario:
+
+    """Scenario."""
+
+    def __init__(self, feature: Feature, name: str, line_number: int, steps: "typing.List[Step]", tags=None):
+        """Scenario constructor.
+
+        :param pytest_bdd.parser.Feature feature: Feature.
+        :param str name: Scenario name.
+        :param int line_number: Scenario line number.
+        :param set tags: Set of tags.
+        """
+        self.feature = feature
+        self.name = name
+        self.steps = steps
+        self.line_number = line_number
+        self.tags = tags or set()
+        self.failed = False
 
 
 class Step:
@@ -352,6 +356,13 @@ class Step:
         """Get step params."""
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
+    def render(self, context: typing.Mapping[str, typing.Any]):
+        def replacer(m: typing.Match):
+            varname = m.group(1)
+            return str(context[varname])
+
+        return STEP_PARAM_RE.sub(replacer, self.name)
+
 
 class Background:
 
@@ -412,11 +423,7 @@ class Examples:
         self.example_params.append(param)
         self.vertical_examples.append(values)
 
-    def get_params(self, converters, builtin=False):
-        """Get scenario pytest parametrization table.
-
-        :param converters: `dict` of converter functions to convert parameter values
-        """
+    def as_contexts(self) -> typing.Iterable[typing.Dict[str, typing.Any]]:
         param_count = len(self.example_params)
         if self.vertical_examples and not self.examples:
             for value_index in range(len(self.vertical_examples[0])):
@@ -425,20 +432,15 @@ class Examples:
                     example.append(self.vertical_examples[param_index][value_index])
                 self.examples.append(example)
 
-        if self.examples:
-            params = []
-            for example in self.examples:
-                example = list(example)
-                for index, param in enumerate(self.example_params):
-                    raw_value = example[index]
-                    if converters and param in converters:
-                        value = converters[param](raw_value)
-                        if not builtin or value.__class__.__module__ in {"__builtin__", "builtins"}:
-                            example[index] = value
-                params.append(example)
-            return [self.example_params, params]
-        else:
-            return []
+        if not self.examples:
+            return
+
+        header, rows = self.example_params, self.examples
+
+        for row in rows:
+            assert len(header) == len(row)
+
+            yield dict(zip(header, row))
 
     def __bool__(self):
         """Bool comparison."""
@@ -455,6 +457,3 @@ def get_tags(line):
     if not line or not line.strip().startswith("@"):
         return set()
     return {tag.lstrip("@") for tag in line.strip().split(" @") if len(tag) > 1}
-
-
-STEP_PARAM_RE = re.compile(r"\<(.+?)\>")
