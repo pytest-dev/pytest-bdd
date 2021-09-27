@@ -34,7 +34,7 @@ def configure(config):
 
 class GherkinTerminalReporter(TerminalReporter):
     def __init__(self, config):
-        TerminalReporter.__init__(self, config)
+        super().__init__(config)
 
     def pytest_runtest_logreport(self, report):
         rep = report
@@ -58,7 +58,7 @@ class GherkinTerminalReporter(TerminalReporter):
         scenario_markup = word_markup
 
         if self.verbosity <= 0:
-            return TerminalReporter.pytest_runtest_logreport(self, rep)
+            return super().pytest_runtest_logreport(rep)
         elif self.verbosity == 1:
             if hasattr(report, "scenario"):
                 self.ensure_newline()
@@ -71,7 +71,7 @@ class GherkinTerminalReporter(TerminalReporter):
                 self._tw.write(word, **word_markup)
                 self._tw.write("\n")
             else:
-                return TerminalReporter.pytest_runtest_logreport(self, rep)
+                return super().pytest_runtest_logreport(rep)
         elif self.verbosity > 1:
             if hasattr(report, "scenario"):
                 self.ensure_newline()
@@ -86,5 +86,5 @@ class GherkinTerminalReporter(TerminalReporter):
                 self._tw.write("    " + word, **word_markup)
                 self._tw.write("\n\n")
             else:
-                return TerminalReporter.pytest_runtest_logreport(self, rep)
+                return super().pytest_runtest_logreport(rep)
         self.stats.setdefault(cat, []).append(rep)
