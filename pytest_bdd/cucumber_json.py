@@ -4,15 +4,16 @@ import json
 import math
 import os
 import time
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
-from _pytest.config import Config
-from _pytest.config.argparsing import Parser
-from _pytest.reports import TestReport
-from _pytest.terminal import TerminalReporter
+if TYPE_CHECKING:
+    from _pytest.config import Config
+    from _pytest.config.argparsing import Parser
+    from _pytest.reports import TestReport
+    from _pytest.terminal import TerminalReporter
 
 
-def add_options(parser: Parser) -> None:
+def add_options(parser: "Parser") -> None:
     """Add pytest-bdd options."""
     group = parser.getgroup("bdd", "Cucumber JSON")
     group.addoption(
@@ -26,7 +27,7 @@ def add_options(parser: Parser) -> None:
     )
 
 
-def configure(config: Config) -> None:
+def configure(config: "Config") -> None:
     cucumber_json_path = config.option.cucumber_json_path
     # prevent opening json log on worker nodes (xdist)
     if cucumber_json_path and not hasattr(config, "workerinput"):
@@ -34,7 +35,7 @@ def configure(config: Config) -> None:
         config.pluginmanager.register(config._bddcucumberjson)
 
 
-def unconfigure(config: Config) -> None:
+def unconfigure(config: "Config") -> None:
     xml = getattr(config, "_bddcucumberjson", None)
     if xml is not None:
         del config._bddcucumberjson
@@ -50,10 +51,11 @@ class LogBDDCucumberJSON:
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.features = {}
 
+    # TODO: Unused method?
     def append(self, obj):
         self.features[-1].append(obj)
 
-    def _get_result(self, step: Dict[str, Any], report: TestReport, error_message: bool = False) -> Dict[str, Any]:
+    def _get_result(self, step: Dict[str, Any], report: "TestReport", error_message: bool = False) -> Dict[str, Any]:
         """Get scenario test run result.
 
         :param step: `Step` step we get result for
@@ -84,7 +86,7 @@ class LogBDDCucumberJSON:
         """
         return [{"name": tag, "line": item["line_number"] - 1} for tag in item["tags"]]
 
-    def pytest_runtest_logreport(self, report: TestReport) -> None:
+    def pytest_runtest_logreport(self, report: "TestReport") -> None:
         try:
             scenario = report.scenario
         except AttributeError:
@@ -143,5 +145,5 @@ class LogBDDCucumberJSON:
         with open(self.logfile, "w", encoding="utf-8") as logfile:
             logfile.write(json.dumps(list(self.features.values())))
 
-    def pytest_terminal_summary(self, terminalreporter: TerminalReporter) -> None:
-        terminalreporter.write_sep("-", "generated json file: %s" % (self.logfile))
+    def pytest_terminal_summary(self, terminalreporter: "TerminalReporter") -> None:
+        terminalreporter.write_sep("-", f"generated json file: {self.logfile}")
