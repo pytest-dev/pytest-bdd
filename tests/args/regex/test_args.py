@@ -2,10 +2,8 @@
 
 import textwrap
 
-from _pytest.pytester import Testdir
 
-
-def test_every_steps_takes_param_with_the_same_name(testdir: Testdir) -> None:
+def test_every_steps_takes_param_with_the_same_name(testdir):
     testdir.makefile(
         ".feature",
         arguments=textwrap.dedent(
@@ -57,7 +55,7 @@ def test_every_steps_takes_param_with_the_same_name(testdir: Testdir) -> None:
     result.assert_outcomes(passed=1)
 
 
-def test_argument_in_when(testdir: Testdir) -> None:
+def test_argument_in_when(testdir):
     testdir.makefile(
         ".feature",
         arguments=textwrap.dedent(

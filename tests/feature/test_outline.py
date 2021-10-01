@@ -1,8 +1,6 @@
 """Scenario Outline tests."""
 import textwrap
 
-from _pytest.pytester import Testdir
-
 from pytest_bdd.utils import collect_dumped_objects
 from tests.utils import assert_outcomes
 
@@ -36,7 +34,7 @@ def should_have_left_cucumbers(start_cucumbers, start, eat, left):
 """
 
 
-def test_outlined(testdir: Testdir) -> None:
+def test_outlined(testdir):
     testdir.makefile(
         ".feature",
         outline=textwrap.dedent(
@@ -83,7 +81,7 @@ def test_outlined(testdir: Testdir) -> None:
     # fmt: on
 
 
-def test_wrongly_outlined(testdir: Testdir) -> None:
+def test_wrongly_outlined(testdir):
     """Test parametrized scenario when the test function lacks parameters."""
 
     testdir.makefile(
@@ -124,7 +122,7 @@ def test_wrongly_outlined(testdir: Testdir) -> None:
     result.stdout.fnmatch_lines("*should match set of example values [[]'eat', 'left', 'start', 'unknown_param'[]].*")
 
 
-def test_wrong_vertical_examples_scenario(testdir: Testdir) -> None:
+def test_wrong_vertical_examples_scenario(testdir):
     """Test parametrized scenario vertical example table has wrong format."""
     testdir.makefile(
         ".feature",
@@ -164,7 +162,7 @@ def test_wrong_vertical_examples_scenario(testdir: Testdir) -> None:
     )
 
 
-def test_wrong_vertical_examples_feature(testdir: Testdir) -> None:
+def test_wrong_vertical_examples_feature(testdir):
     """Test parametrized feature vertical example table has wrong format."""
     testdir.makefile(
         ".feature",
@@ -205,7 +203,7 @@ def test_wrong_vertical_examples_feature(testdir: Testdir) -> None:
     )
 
 
-def test_outlined_with_other_fixtures(testdir: Testdir) -> None:
+def test_outlined_with_other_fixtures(testdir):
     """Test outlined scenario also using other parametrized fixture."""
     testdir.makefile(
         ".feature",
@@ -254,7 +252,7 @@ def test_outlined_with_other_fixtures(testdir: Testdir) -> None:
     result.assert_outcomes(passed=6)
 
 
-def test_vertical_example(testdir: Testdir) -> None:
+def test_vertical_example(testdir):
     """Test outlined scenario with vertical examples table."""
     testdir.makefile(
         ".feature",
@@ -302,7 +300,7 @@ def test_vertical_example(testdir: Testdir) -> None:
     # fmt: on
 
 
-def test_outlined_feature(testdir: Testdir) -> None:
+def test_outlined_feature(testdir):
     testdir.makefile(
         ".feature",
         outline=textwrap.dedent(
@@ -381,7 +379,7 @@ def test_outlined_feature(testdir: Testdir) -> None:
     # fmt: on
 
 
-def test_outline_with_escaped_pipes(testdir: Testdir) -> None:
+def test_outline_with_escaped_pipes(testdir):
     """Test parametrized feature example table with escaped pipe characters in input."""
     testdir.makefile(
         ".feature",

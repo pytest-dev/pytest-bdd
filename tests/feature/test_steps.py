@@ -1,9 +1,7 @@
 import textwrap
 
-from _pytest.pytester import Testdir
 
-
-def test_steps(testdir: Testdir) -> None:
+def test_steps(testdir):
     testdir.makefile(
         ".feature",
         steps=textwrap.dedent(
@@ -74,7 +72,7 @@ def test_steps(testdir: Testdir) -> None:
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_all_steps_can_provide_fixtures(testdir: Testdir) -> None:
+def test_all_steps_can_provide_fixtures(testdir):
     """Test that given/when/then can all provide fixtures."""
     testdir.makefile(
         ".feature",
@@ -127,7 +125,7 @@ def test_all_steps_can_provide_fixtures(testdir: Testdir) -> None:
     result.assert_outcomes(passed=3, failed=0)
 
 
-def test_when_first(testdir: Testdir) -> None:
+def test_when_first(testdir):
     testdir.makefile(
         ".feature",
         steps=textwrap.dedent(
@@ -167,7 +165,7 @@ def test_when_first(testdir: Testdir) -> None:
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_then_after_given(testdir: Testdir) -> None:
+def test_then_after_given(testdir):
     testdir.makefile(
         ".feature",
         steps=textwrap.dedent(
@@ -207,7 +205,7 @@ def test_then_after_given(testdir: Testdir) -> None:
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_conftest(testdir: Testdir) -> None:
+def test_conftest(testdir):
     testdir.makefile(
         ".feature",
         steps=textwrap.dedent(
@@ -257,7 +255,7 @@ def test_conftest(testdir: Testdir) -> None:
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_multiple_given(testdir: Testdir) -> None:
+def test_multiple_given(testdir):
     """Using the same given fixture raises an error."""
     testdir.makefile(
         ".feature",
@@ -299,7 +297,7 @@ def test_multiple_given(testdir: Testdir) -> None:
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_step_hooks(testdir: Testdir) -> None:
+def test_step_hooks(testdir):
     """When step fails."""
     testdir.makefile(
         ".feature",
@@ -409,7 +407,7 @@ def test_step_hooks(testdir: Testdir) -> None:
     assert calls[0].request
 
 
-def test_step_trace(testdir: Testdir) -> None:
+def test_step_trace(testdir):
     """Test step trace."""
     testdir.makeini(
         """

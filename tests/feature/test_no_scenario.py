@@ -2,10 +2,8 @@
 
 import textwrap
 
-from _pytest.pytester import Testdir
 
-
-def test_no_scenarios(testdir: Testdir) -> None:
+def test_no_scenarios(testdir):
     """Test no scenarios defined in the feature file."""
     features = testdir.mkdir("features")
     features.join("test.feature").write_text(

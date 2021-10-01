@@ -1,8 +1,10 @@
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import pytest
-from _pytest.pytester import RunResult
 from packaging.utils import Version
+
+if TYPE_CHECKING:
+    from _pytest.pytester import RunResult
 
 PYTEST_VERSION = Version(pytest.__version__)
 PYTEST_6 = PYTEST_VERSION >= Version("6")
@@ -11,7 +13,7 @@ PYTEST_6 = PYTEST_VERSION >= Version("6")
 if PYTEST_6:
 
     def assert_outcomes(
-        result: RunResult,
+        result: "RunResult",
         passed: int = 0,
         skipped: int = 0,
         failed: int = 0,
@@ -28,7 +30,7 @@ if PYTEST_6:
 else:
 
     def assert_outcomes(
-        result,
+        result: "RunResult",
         passed=0,
         skipped=0,
         failed=0,

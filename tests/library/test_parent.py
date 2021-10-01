@@ -4,11 +4,8 @@ Check the parent givens are collected and overriden in the local conftest.
 """
 import textwrap
 
-from _pytest.fixtures import FixtureRequest
-from _pytest.pytester import Testdir
 
-
-def test_parent(testdir: Testdir) -> None:
+def test_parent(testdir):
     """Test parent given is collected.
 
     Both fixtures come from the parent conftest.
@@ -61,7 +58,7 @@ def test_parent(testdir: Testdir) -> None:
     result.assert_outcomes(passed=1)
 
 
-def test_global_when_step(testdir: Testdir, request: FixtureRequest) -> None:
+def test_global_when_step(testdir, request):
     """Test when step defined in the parent conftest."""
 
     testdir.makeconftest(
@@ -98,7 +95,7 @@ def test_global_when_step(testdir: Testdir, request: FixtureRequest) -> None:
     result.assert_outcomes(passed=1)
 
 
-def test_child(testdir: Testdir) -> None:
+def test_child(testdir):
     """Test the child conftest overriding the fixture."""
     testdir.makeconftest(
         textwrap.dedent(
@@ -163,7 +160,7 @@ def test_child(testdir: Testdir) -> None:
     result.assert_outcomes(passed=1)
 
 
-def test_local(testdir: Testdir) -> None:
+def test_local(testdir):
     """Test locally overridden fixtures."""
     testdir.makeconftest(
         textwrap.dedent(

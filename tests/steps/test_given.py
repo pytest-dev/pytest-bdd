@@ -1,10 +1,8 @@
 """Given tests."""
 import textwrap
 
-from _pytest.pytester import Testdir
 
-
-def test_given_injection(testdir: Testdir) -> None:
+def test_given_injection(testdir):
     testdir.makefile(
         ".feature",
         given=textwrap.dedent(

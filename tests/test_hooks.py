@@ -1,9 +1,7 @@
 import textwrap
 
-from _pytest.pytester import Testdir
 
-
-def test_hooks(testdir: Testdir) -> None:
+def test_hooks(testdir):
     testdir.makeconftest("")
 
     subdir = testdir.mkpydir("subdir")
@@ -46,7 +44,7 @@ def test_hooks(testdir: Testdir) -> None:
     assert result.stdout.lines.count("pytest_generate_tests hook") == 1
 
 
-def test_item_collection_does_not_break_on_non_function_items(testdir: Testdir) -> None:
+def test_item_collection_does_not_break_on_non_function_items(testdir):
     """Regression test for https://github.com/pytest-dev/pytest-bdd/issues/317"""
     testdir.makeconftest(
         """

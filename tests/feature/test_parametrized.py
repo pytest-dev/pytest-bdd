@@ -1,11 +1,9 @@
 import textwrap
 
-from _pytest.pytester import Testdir
-
 from pytest_bdd.utils import collect_dumped_objects
 
 
-def test_parametrized(testdir: Testdir) -> None:
+def test_parametrized(testdir):
     """Test parametrized scenario."""
     testdir.makefile(
         ".feature",

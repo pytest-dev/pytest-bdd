@@ -5,8 +5,6 @@ import typing
 from collections import OrderedDict
 from typing import Any, List, Optional, Set, Tuple
 
-from pytest_bdd.parser import Examples, Feature, Step
-
 from . import exceptions, types
 
 SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
@@ -211,7 +209,7 @@ class Feature:
         rel_filename: str,
         name: Optional[Any],
         tags: Set,
-        examples: Examples,
+        examples: "Examples",
         background: Optional[Any],
         line_number: int,
         description: str,
@@ -232,7 +230,7 @@ class ScenarioTemplate:
 
     Created when parsing the feature file, it will then be combined with the examples to create a Scenario."""
 
-    def __init__(self, feature: Feature, name: str, line_number: int, tags=None):
+    def __init__(self, feature: "Feature", name: str, line_number: int, tags=None):
         """
 
         :param str name: Scenario name.
@@ -241,12 +239,12 @@ class ScenarioTemplate:
         """
         self.feature = feature
         self.name = name
-        self._steps: typing.List[Step] = []
+        self._steps: "typing.List[Step]" = []
         self.examples = Examples()
         self.line_number = line_number
         self.tags = tags or set()
 
-    def add_step(self, step: Step) -> None:
+    def add_step(self, step: "Step") -> None:
         """Add step to the scenario.
 
         :param pytest_bdd.parser.Step step: Step.
@@ -255,7 +253,7 @@ class ScenarioTemplate:
         self._steps.append(step)
 
     @property
-    def steps(self) -> List[Step]:
+    def steps(self) -> "List[Step]":
         background = self.feature.background
         return (background.steps if background else []) + self._steps
 
@@ -292,7 +290,7 @@ class Scenario:
 
     """Scenario."""
 
-    def __init__(self, feature: Feature, name: str, line_number: int, steps: "typing.List[Step]", tags=None):
+    def __init__(self, feature: "Feature", name: str, line_number: int, steps: "typing.List[Step]", tags=None):
         """Scenario constructor.
 
         :param pytest_bdd.parser.Feature feature: Feature.
@@ -382,7 +380,7 @@ class Background:
 
     """Background."""
 
-    def __init__(self, feature: Feature, line_number: int) -> None:
+    def __init__(self, feature: "Feature", line_number: int) -> None:
         """Background constructor.
 
         :param pytest_bdd.parser.Feature feature: Feature.
@@ -392,7 +390,7 @@ class Background:
         self.line_number = line_number
         self.steps = []
 
-    def add_step(self, step: Step) -> None:
+    def add_step(self, step: "Step") -> None:
         """Add step to the background."""
         step.background = self
         self.steps.append(step)

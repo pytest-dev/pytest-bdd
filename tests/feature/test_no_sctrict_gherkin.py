@@ -1,8 +1,7 @@
 """Test no strict gherkin for sections."""
-from _pytest.pytester import Testdir
 
 
-def test_background_no_strict_gherkin(testdir: Testdir) -> None:
+def test_background_no_strict_gherkin(testdir):
     """Test background no strict gherkin."""
     testdir.makepyfile(
         test_gherkin="""
@@ -58,7 +57,7 @@ def test_background_no_strict_gherkin(testdir: Testdir) -> None:
     result.assert_outcomes(passed=1)
 
 
-def test_scenario_no_strict_gherkin(testdir: Testdir) -> None:
+def test_scenario_no_strict_gherkin(testdir):
     """Test scenario no strict gherkin."""
     testdir.makepyfile(
         test_gherkin="""

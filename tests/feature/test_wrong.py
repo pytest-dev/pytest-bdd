@@ -2,12 +2,10 @@
 
 import textwrap
 
-from _pytest.pytester import Testdir
-
 from tests.utils import assert_outcomes
 
 
-def test_multiple_features_single_file(testdir: Testdir) -> None:
+def test_multiple_features_single_file(testdir):
     """Test validation error when multiple features are placed in a single file."""
     testdir.makefile(
         ".feature",

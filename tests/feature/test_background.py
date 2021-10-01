@@ -2,8 +2,6 @@
 
 import textwrap
 
-from _pytest.pytester import Testdir
-
 FEATURE = """\
 Feature: Background support
 
@@ -75,7 +73,7 @@ def foo_has_no_bar(foo):
 """
 
 
-def test_background_basic(testdir: Testdir) -> None:
+def test_background_basic(testdir):
     """Test feature background."""
     testdir.makefile(".feature", background=textwrap.dedent(FEATURE))
 
@@ -97,7 +95,7 @@ def test_background_basic(testdir: Testdir) -> None:
     result.assert_outcomes(passed=1)
 
 
-def test_background_check_order(testdir: Testdir) -> None:
+def test_background_check_order(testdir):
     """Test feature background to ensure that background steps are executed first."""
 
     testdir.makefile(".feature", background=textwrap.dedent(FEATURE))

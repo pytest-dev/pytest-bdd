@@ -3,12 +3,10 @@
 import textwrap
 from typing import List
 
-from _pytest.pytester import Testdir
-
 from tests.utils import assert_outcomes
 
 
-def test_scenario_not_found(testdir: Testdir, pytest_params: List[str]) -> None:
+def test_scenario_not_found(testdir, pytest_params: List[str]):
     """Test the situation when scenario is not found."""
     testdir.makefile(
         ".feature",
@@ -39,7 +37,7 @@ def test_scenario_not_found(testdir: Testdir, pytest_params: List[str]) -> None:
     result.stdout.fnmatch_lines('*Scenario "NOT FOUND" in feature "Scenario is not found" in*')
 
 
-def test_scenario_comments(testdir: Testdir) -> None:
+def test_scenario_comments(testdir):
     """Test comments inside scenario."""
     testdir.makefile(
         ".feature",
@@ -98,7 +96,7 @@ def test_scenario_comments(testdir: Testdir) -> None:
     result.assert_outcomes(passed=2)
 
 
-def test_scenario_not_decorator(testdir: Testdir, pytest_params: List[str]) -> None:
+def test_scenario_not_decorator(testdir, pytest_params: List[str]):
     """Test scenario function is used not as decorator."""
     testdir.makefile(
         ".feature",
@@ -122,7 +120,7 @@ def test_scenario_not_decorator(testdir: Testdir, pytest_params: List[str]) -> N
     result.stdout.fnmatch_lines("*ScenarioIsDecoratorOnly: scenario function can only be used as a decorator*")
 
 
-def test_simple(testdir: Testdir, pytest_params: List[str]) -> None:
+def test_simple(testdir, pytest_params: List[str]):
     """Test scenario decorator with a standard usage."""
     testdir.makefile(
         ".feature",

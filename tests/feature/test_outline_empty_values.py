@@ -1,8 +1,6 @@
 """Scenario Outline with empty example values tests."""
 import textwrap
 
-from _pytest.pytester import Testdir
-
 from pytest_bdd.utils import collect_dumped_objects
 
 STEPS = """\
@@ -28,7 +26,7 @@ def should_have_left_cucumbers(left):
 """
 
 
-def test_scenario_with_empty_example_values(testdir: Testdir) -> None:
+def test_scenario_with_empty_example_values(testdir):
     testdir.makefile(
         ".feature",
         outline=textwrap.dedent(
@@ -65,7 +63,7 @@ def test_scenario_with_empty_example_values(testdir: Testdir) -> None:
     assert collect_dumped_objects(result) == ["#", "", ""]
 
 
-def test_scenario_with_empty_example_values_vertical(testdir: Testdir) -> None:
+def test_scenario_with_empty_example_values_vertical(testdir):
     testdir.makefile(
         ".feature",
         outline=textwrap.dedent(

@@ -19,8 +19,6 @@ from typing import Any, Callable, Dict, Iterator, Optional, Union
 import pytest
 from _pytest.fixtures import FixtureLookupError, FixtureManager, FixtureRequest
 
-from pytest_bdd.parser import Scenario, Step
-
 from . import exceptions
 from .feature import get_feature, get_features
 from .steps import get_step_fixture_name, inject_fixture
@@ -29,7 +27,7 @@ from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_
 if typing.TYPE_CHECKING:
     from _pytest.mark.structures import ParameterSet
 
-    from .parser import Feature, Scenario, ScenarioTemplate
+    from .parser import Feature, Scenario, ScenarioTemplate, Step
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
@@ -66,7 +64,7 @@ def find_argumented_step_fixture_name(
             return parser_name
 
 
-def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario) -> Callable:
+def _find_step_function(request: FixtureRequest, step: "Step", scenario: "Scenario") -> Callable:
     """Match the step defined by the regular expression pattern.
 
     :param request: PyTest request object.
@@ -94,7 +92,7 @@ def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario)
             )
 
 
-def _execute_step_function(request: FixtureRequest, scenario: Scenario, step: Step, step_func: Callable) -> None:
+def _execute_step_function(request: FixtureRequest, scenario: "Scenario", step: "Step", step_func: Callable) -> None:
     """Execute step function.
 
     :param request: PyTest request.

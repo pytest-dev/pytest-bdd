@@ -2,10 +2,8 @@
 
 import textwrap
 
-from _pytest.pytester import Testdir
 
-
-def test_description(testdir: Testdir) -> None:
+def test_description(testdir):
     """Test description for the feature."""
     testdir.makefile(
         ".feature",

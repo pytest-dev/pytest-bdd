@@ -1,9 +1,11 @@
 """Test scenario reporting."""
 import textwrap
+from typing import TYPE_CHECKING
 
 import pytest
-from _pytest.config import Config
-from _pytest.pytester import Testdir
+
+if TYPE_CHECKING:
+    from _pytest.config import Config
 
 
 class OfType:
@@ -16,7 +18,7 @@ class OfType:
         return isinstance(other, self.type) if self.type else True
 
 
-def test_step_trace(testdir: Testdir) -> None:
+def test_step_trace(testdir):
     """Test step trace."""
     testdir.makefile(
         ".ini",
@@ -258,7 +260,7 @@ def test_step_trace(testdir: Testdir) -> None:
     assert report == expected
 
 
-def test_complex_types(testdir: Testdir, pytestconfig: Config) -> None:
+def test_complex_types(testdir, pytestconfig: "Config"):
     """Test serialization of the complex types."""
     if not pytestconfig.pluginmanager.has_plugin("xdist"):
         pytest.skip("Execnet not installed")

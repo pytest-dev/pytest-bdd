@@ -5,16 +5,15 @@ that enriches the pytest test reporting.
 """
 
 import time
-from typing import Any, Callable, Dict, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict
 
-from _pytest.fixtures import FixtureRequest
-from _pytest.python import Function
-from _pytest.reports import TestReport
-from _pytest.runner import CallInfo
-from conftest import CustomItem
+if TYPE_CHECKING:
+    from _pytest.fixtures import FixtureRequest
+    from _pytest.nodes import Item
+    from _pytest.reports import TestReport
+    from _pytest.runner import CallInfo
 
-from pytest_bdd.parser import Feature, Scenario, Step
-from pytest_bdd.reporting import StepReport
+    from .parser import Feature, Scenario, Step
 
 
 class StepReport:
@@ -23,7 +22,7 @@ class StepReport:
     failed = False
     stopped = None
 
-    def __init__(self, step: Step) -> None:
+    def __init__(self, step: "Step") -> None:
         """Step report constructor.
 
         :param pytest_bdd.parser.Step step: Step.
@@ -70,7 +69,8 @@ class StepReport:
 class ScenarioReport:
     """Scenario execution report."""
 
-    def __init__(self, scenario: Scenario, node: Function) -> None:
+    # TODO: Remove unused argument "node"
+    def __init__(self, scenario: "Scenario", node: Any) -> None:
         """Scenario report constructor.
 
         :param pytest_bdd.parser.Scenario scenario: Scenario.
@@ -80,7 +80,7 @@ class ScenarioReport:
         self.step_reports = []
 
     @property
-    def current_step_report(self) -> StepReport:
+    def current_step_report(self) -> "StepReport":
         """Get current step report.
 
         :return: Last or current step report.
@@ -88,7 +88,7 @@ class ScenarioReport:
         """
         return self.step_reports[-1]
 
-    def add_step_report(self, step_report: StepReport) -> None:
+    def add_step_report(self, step_report: "StepReport") -> None:
         """Add new step report.
 
         :param step_report: New current step report.
@@ -132,7 +132,7 @@ class ScenarioReport:
             self.add_step_report(report)
 
 
-def runtest_makereport(item: Union[Function, CustomItem], call: CallInfo, rep: TestReport) -> None:
+def runtest_makereport(item: "Item", call: "CallInfo", rep: "TestReport") -> None:
     """Store item in the report object."""
     try:
         scenario_report = item.__scenario_report__
@@ -143,17 +143,17 @@ def runtest_makereport(item: Union[Function, CustomItem], call: CallInfo, rep: T
         rep.item = {"name": item.name}
 
 
-def before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
+def before_scenario(request: "FixtureRequest", feature: "Feature", scenario: "Scenario") -> None:
     """Create scenario report for the item."""
     request.node.__scenario_report__ = ScenarioReport(scenario=scenario, node=request.node)
 
 
 def step_error(
-    request: FixtureRequest,
-    feature: Feature,
-    scenario: Scenario,
-    step: Step,
-    step_func: Callable,
+    request: "FixtureRequest",
+    feature: "Feature",
+    scenario: "Scenario",
+    step: "Step",
+    step_func: "Callable",
     step_func_args: Dict,
     exception: Exception,
 ) -> None:
@@ -161,18 +161,20 @@ def step_error(
     request.node.__scenario_report__.fail()
 
 
-def before_step(request: FixtureRequest, feature: Feature, scenario: Scenario, step: Step, step_func: Callable) -> None:
+def before_step(
+    request: "FixtureRequest", feature: "Feature", scenario: "Scenario", step: "Step", step_func: "Callable"
+) -> None:
     """Store step start time."""
     request.node.__scenario_report__.add_step_report(StepReport(step=step))
 
 
 def after_step(
-    request: FixtureRequest,
-    feature: Feature,
-    scenario: Scenario,
-    step: Step,
-    step_func: Callable,
-    step_func_args: Dict[str, Any],
+    request: "FixtureRequest",
+    feature: "Feature",
+    scenario: "Scenario",
+    step: "Step",
+    step_func: "Callable",
+    step_func_args: Dict,
 ) -> None:
     """Finalize the step report as successful."""
     request.node.__scenario_report__.current_step_report.finalize(failed=False)
