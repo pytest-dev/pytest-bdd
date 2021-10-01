@@ -89,7 +89,7 @@ def test_extra_examples_are_ignored(testdir):
         outline=textwrap.dedent(
             """\
             Feature: Outline
-                Scenario Outline: Outlined with subset of examples
+                Scenario Outline: Outlined with extra examples
                     Given there are <start> cucumbers
                     When I eat <eat> cucumbers
                     Then I should have <left> cucumbers
