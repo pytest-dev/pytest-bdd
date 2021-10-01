@@ -60,35 +60,37 @@ def given(name, converters=None, target_fixture=None):
     :param name: Step name or a parser object.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
-    :param target_fixture: Target fixture name to replace by steps definition function
+    :param target_fixture: Target fixture name to replace by steps definition function.
 
     :return: Decorator function for the step.
     """
     return _step_decorator(GIVEN, name, converters=converters, target_fixture=target_fixture)
 
 
-def when(name, converters=None):
+def when(name, converters=None, target_fixture=None):
     """When step decorator.
 
     :param name: Step name or a parser object.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
+    :param target_fixture: Target fixture name to replace by steps definition function.
 
     :return: Decorator function for the step.
     """
-    return _step_decorator(WHEN, name, converters=converters)
+    return _step_decorator(WHEN, name, converters=converters, target_fixture=target_fixture)
 
 
-def then(name, converters=None):
+def then(name, converters=None, target_fixture=None):
     """Then step decorator.
 
     :param name: Step name or a parser object.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
+    :param target_fixture: Target fixture name to replace by steps definition function.
 
     :return: Decorator function for the step.
     """
-    return _step_decorator(THEN, name, converters=converters)
+    return _step_decorator(THEN, name, converters=converters, target_fixture=target_fixture)
 
 
 def _step_decorator(step_type, step_name, converters=None, target_fixture=None):

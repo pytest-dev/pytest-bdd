@@ -1,16 +1,14 @@
 """Reporting functionality.
 
-Collection of the scenario excecution statuses, timing and other information
+Collection of the scenario execution statuses, timing and other information
 that enriches the pytest test reporting.
 """
 
 import time
 
-from .utils import get_parametrize_markers_args
-
 
 class StepReport:
-    """Step excecution report."""
+    """Step execution report."""
 
     failed = False
     stopped = None
@@ -21,12 +19,12 @@ class StepReport:
         :param pytest_bdd.parser.Step step: Step.
         """
         self.step = step
-        self.started = time.time()
+        self.started = time.perf_counter()
 
     def serialize(self):
-        """Serialize the step excecution report.
+        """Serialize the step execution report.
 
-        :return: Serialized step excecution report.
+        :return: Serialized step execution report.
         :rtype: dict
         """
         return {
@@ -41,16 +39,16 @@ class StepReport:
     def finalize(self, failed):
         """Stop collecting information and finalize the report.
 
-        :param bool failed: Wheither the step excecution is failed.
+        :param bool failed: Whether the step execution is failed.
         """
-        self.stopped = time.time()
+        self.stopped = time.perf_counter()
         self.failed = failed
 
     @property
     def duration(self):
-        """Step excecution duration.
+        """Step execution duration.
 
-        :return: Step excecution duration.
+        :return: Step execution duration.
         :rtype: float
         """
         if self.stopped is None:
@@ -70,21 +68,6 @@ class ScenarioReport:
         """
         self.scenario = scenario
         self.step_reports = []
-        self.param_index = None
-        parametrize_args = get_parametrize_markers_args(node)
-        if parametrize_args and scenario.examples:
-            param_names = (
-                parametrize_args[0] if isinstance(parametrize_args[0], (tuple, list)) else [parametrize_args[0]]
-            )
-            param_values = parametrize_args[1]
-            node_param_values = [node.funcargs[param_name] for param_name in param_names]
-            if node_param_values in param_values:
-                self.param_index = param_values.index(node_param_values)
-            elif tuple(node_param_values) in param_values:
-                self.param_index = param_values.index(tuple(node_param_values))
-        self.example_kwargs = {
-            example_param: str(node.funcargs[example_param]) for example_param in scenario.get_example_params()
-        }
 
     @property
     def current_step_report(self):
@@ -104,7 +87,7 @@ class ScenarioReport:
         self.step_reports.append(step_report)
 
     def serialize(self):
-        """Serialize scenario excecution report in order to transfer reportin from nodes in the distributed mode.
+        """Serialize scenario execution report in order to transfer reporting from nodes in the distributed mode.
 
         :return: Serialized report.
         :rtype: dict
@@ -112,7 +95,6 @@ class ScenarioReport:
         scenario = self.scenario
         feature = scenario.feature
 
-        params = sum(scenario.get_params(builtin=True), []) if scenario.examples else None
         return {
             "steps": [step_report.serialize() for step_report in self.step_reports],
             "name": scenario.name,
@@ -126,17 +108,6 @@ class ScenarioReport:
                 "description": feature.description,
                 "tags": sorted(feature.tags),
             },
-            "examples": [
-                {
-                    "name": scenario.examples.name,
-                    "line_number": scenario.examples.line_number,
-                    "rows": params,
-                    "row_index": self.param_index,
-                }
-            ]
-            if scenario.examples
-            else [],
-            "example_kwargs": self.example_kwargs,
         }
 
     def fail(self):

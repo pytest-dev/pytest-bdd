@@ -21,6 +21,20 @@ def trace():
     pytest.set_trace()
 
 
+@pytest.fixture
+def _pytest_bdd_example():
+    """The current scenario outline parametrization.
+
+    This is used internally by pytest_bdd.
+
+    If no outline is used, we just return an empty dict to render
+    the current template without any actual variable.
+    Otherwise pytest_bdd will add all the context variables in this fixture
+    from the example definitions in the feature file.
+    """
+    return {}
+
+
 def pytest_addoption(parser):
     """Add pytest-bdd options."""
     add_bdd_ini(parser)

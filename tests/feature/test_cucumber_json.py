@@ -71,7 +71,7 @@ def test_step_trace(testdir):
         textwrap.dedent(
             """
         import pytest
-        from pytest_bdd import given, when, scenario
+        from pytest_bdd import given, when, scenario, parsers
 
         @given('a passing step')
         def a_passing_step():
@@ -85,7 +85,7 @@ def test_step_trace(testdir):
         def a_failing_step():
             raise Exception('Error')
 
-        @given('type <type> and value <value>')
+        @given(parsers.parse('type {type} and value {value}'))
         def type_type_and_value_value():
             return 'pass'
 
@@ -104,6 +104,8 @@ def test_step_trace(testdir):
         )
     )
     result, jsonobject = runandparse(testdir)
+    result.assert_outcomes(passed=4, failed=1)
+
     assert result.ret
     expected = [
         {
@@ -169,7 +171,7 @@ def test_step_trace(testdir):
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
-                            "name": "type <type> and value <value>",
+                            "name": "type str and value hello",
                         }
                     ],
                     "line": 15,
@@ -187,7 +189,7 @@ def test_step_trace(testdir):
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
-                            "name": "type <type> and value <value>",
+                            "name": "type int and value 42",
                         }
                     ],
                     "line": 15,
@@ -205,7 +207,7 @@ def test_step_trace(testdir):
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
-                            "name": "type <type> and value <value>",
+                            "name": "type float and value 1.0",
                         }
                     ],
                     "line": 15,
@@ -224,102 +226,3 @@ def test_step_trace(testdir):
     ]
 
     assert jsonobject == expected
-
-
-def test_step_trace_with_expand_option(testdir):
-    """Test step trace."""
-    testdir.makefile(
-        ".ini",
-        pytest=textwrap.dedent(
-            """
-    [pytest]
-    markers =
-        feature-tag
-        scenario-outline-passing-tag
-    """
-        ),
-    )
-    testdir.makefile(
-        ".feature",
-        test=textwrap.dedent(
-            """
-    @feature-tag
-    Feature: One scenario outline, expanded to multiple scenarios
-
-        @scenario-outline-passing-tag
-        Scenario: Passing outline
-            Given type <type> and value <value>
-
-            Examples: example1
-            | type    | value  |
-            | str     | hello  |
-            | int     | 42     |
-            | float   | 1.0    |
-    """
-        ),
-    )
-    testdir.makepyfile(
-        textwrap.dedent(
-            """
-        import pytest
-        from pytest_bdd import given, scenario
-
-        @given('type <type> and value <value>')
-        def type_type_and_value_value():
-            return 'pass'
-
-        @scenario('test.feature', 'Passing outline')
-        def test_passing_outline():
-            pass
-    """
-        )
-    )
-    result, jsonobject = runandparse(testdir, "--cucumber-json-expanded")
-    result.assert_outcomes(passed=3)
-
-    assert jsonobject[0]["elements"][0]["steps"][0]["name"] == "type str and value hello"
-    assert jsonobject[0]["elements"][1]["steps"][0]["name"] == "type int and value 42"
-    assert jsonobject[0]["elements"][2]["steps"][0]["name"] == "type float and value 1.0"
-
-
-def test_converters_dict_with_expand_option(testdir):
-    """Test that `--cucumber-json-expanded` works correctly when using `example_converters`."""
-    testdir.makefile(
-        ".feature",
-        test=textwrap.dedent(
-            """
-    Feature: Expanded option with example converters
-        Scenario: Passing outline
-            Given there is an intvalue <intvalue> and stringvalue <stringvalue> and floatvalue <floatvalue>
-
-            Examples: example1
-            | intvalue | stringvalue | floatvalue |
-            | 1        | hello       | 1.0        |
-    """
-        ),
-    )
-    testdir.makepyfile(
-        textwrap.dedent(
-            """
-        import pytest
-        from pytest_bdd import given, scenario
-
-        @given('there is an intvalue <intvalue> and stringvalue <stringvalue> and floatvalue <floatvalue>')
-        def type_type_and_value_value():
-            pass
-
-        @scenario(
-            'test.feature',
-            'Passing outline',
-            example_converters={"intvalue":int, "stringvalue":str, "floatvalue":float},
-        )
-        def test_passing_outline():
-            pass
-    """
-        )
-    )
-    result, jsonobject = runandparse(testdir, "--cucumber-json-expanded")
-    assert result.ret == 0
-
-    expanded_step_name = jsonobject[0]["elements"][0]["steps"][0]["name"]
-    assert expanded_step_name == "there is an intvalue 1 and stringvalue hello and floatvalue 1.0"
