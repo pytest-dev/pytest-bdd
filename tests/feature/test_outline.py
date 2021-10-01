@@ -106,7 +106,7 @@ def test_extra_examples_are_ignored(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd import scenario
+        from pytest_bdd import scenarios
 
         scenarios("outline.feature")
         """
