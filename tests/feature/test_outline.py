@@ -149,7 +149,7 @@ def test_wrongly_outlined_parameters_not_a_subset_of_examples(testdir):
         @scenario("outline.feature", "Outlined with wrong examples")
         def test_outline(request):
             pass
-            
+
         @then(parsers.parse('I should have <left> cucumbers in my <right> bucket'))
         def stepdef(left, right):
             pass
