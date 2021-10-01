@@ -20,52 +20,21 @@ Syntax example:
             And the article should be published  # Note: will query the database
 
 :note: The "#" symbol is used for comments.
-:note: There're no multiline steps, the description of the step must fit in
+:note: There are no multiline steps, the description of the step must fit in
 one line.
 """
 import os.path
-import sys
+import typing
 
 import glob2
 
-from .parser import parse_feature
-
+from .parser import Feature, parse_feature
 
 # Global features dictionary
-features = {}
+features: typing.Dict[str, Feature] = {}
 
 
-def force_unicode(obj, encoding="utf-8"):
-    """Get the unicode string out of given object (python 2 and python 3).
-
-    :param obj: An `object`, usually a string.
-
-    :return: unicode string.
-    """
-    if sys.version_info < (3, 0):
-        if isinstance(obj, str):
-            return obj.decode(encoding)
-        else:
-            return unicode(obj)
-    else:  # pragma: no cover
-        return str(obj)
-
-
-def force_encode(string, encoding="utf-8"):
-    """Force string encoding (Python compatibility function).
-
-    :param str string: A string value.
-    :param str encoding: Encoding.
-
-    :return: Encoded string.
-    """
-    if sys.version_info < (3, 0):
-        if isinstance(string, unicode):
-            string = string.encode(encoding)
-    return string
-
-
-def get_feature(base_path, filename, encoding="utf-8"):
+def get_feature(base_path: str, filename: str, encoding: str = "utf-8") -> Feature:
     """Get a feature by the filename.
 
     :param str base_path: Base feature directory.
@@ -87,7 +56,7 @@ def get_feature(base_path, filename, encoding="utf-8"):
     return feature
 
 
-def get_features(paths, **kwargs):
+def get_features(paths: typing.List[str], **kwargs) -> typing.List[Feature]:
     """Get features for given paths.
 
     :param list paths: `list` of paths (file or dirs)

@@ -26,7 +26,7 @@ def test_scenarios(testdir, pytest_params):
     features = testdir.mkdir("features")
     features.join("test.feature").write_text(
         textwrap.dedent(
-            u"""
+            """
     Scenario: Test scenario
         Given I have a bar
     """
@@ -36,7 +36,7 @@ def test_scenarios(testdir, pytest_params):
     )
     features.join("subfolder", "test.feature").write_text(
         textwrap.dedent(
-            u"""
+            """
     Scenario: Test subfolder scenario
         Given I have a bar
 

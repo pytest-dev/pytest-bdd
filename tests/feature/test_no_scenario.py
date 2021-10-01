@@ -8,7 +8,7 @@ def test_no_scenarios(testdir):
     features = testdir.mkdir("features")
     features.join("test.feature").write_text(
         textwrap.dedent(
-            u"""
+            """
         Given foo
         When bar
         Then baz

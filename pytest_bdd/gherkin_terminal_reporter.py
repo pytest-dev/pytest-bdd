@@ -1,12 +1,4 @@
-# -*- encoding: utf-8 -*-
-
-from __future__ import unicode_literals
-
-import re
-
 from _pytest.terminal import TerminalReporter
-
-from .parser import STEP_PARAM_RE
 
 
 def add_options(parser):
@@ -16,14 +8,7 @@ def add_options(parser):
         action="store_true",
         dest="gherkin_terminal_reporter",
         default=False,
-        help=("enable gherkin output"),
-    )
-    group._addoption(
-        "--gherkin-terminal-reporter-expanded",
-        action="store_true",
-        dest="expand",
-        default=False,
-        help="expand scenario outlines into scenarios and fill in the step names",
+        help="enable gherkin output",
     )
 
 
@@ -49,7 +34,7 @@ def configure(config):
 
 class GherkinTerminalReporter(TerminalReporter):
     def __init__(self, config):
-        TerminalReporter.__init__(self, config)
+        super().__init__(config)
 
     def pytest_runtest_logreport(self, report):
         rep = report
@@ -73,7 +58,7 @@ class GherkinTerminalReporter(TerminalReporter):
         scenario_markup = word_markup
 
         if self.verbosity <= 0:
-            return TerminalReporter.pytest_runtest_logreport(self, rep)
+            return super().pytest_runtest_logreport(rep)
         elif self.verbosity == 1:
             if hasattr(report, "scenario"):
                 self.ensure_newline()
@@ -86,7 +71,7 @@ class GherkinTerminalReporter(TerminalReporter):
                 self._tw.write(word, **word_markup)
                 self._tw.write("\n")
             else:
-                return TerminalReporter.pytest_runtest_logreport(self, rep)
+                return super().pytest_runtest_logreport(rep)
         elif self.verbosity > 1:
             if hasattr(report, "scenario"):
                 self.ensure_newline()
@@ -97,24 +82,9 @@ class GherkinTerminalReporter(TerminalReporter):
                 self._tw.write(report.scenario["name"], **scenario_markup)
                 self._tw.write("\n")
                 for step in report.scenario["steps"]:
-                    if self.config.option.expand:
-                        step_name = self._format_step_name(step["name"], **report.scenario["example_kwargs"])
-                    else:
-                        step_name = step["name"]
-                    self._tw.write("        {} {}\n".format(step["keyword"], step_name), **scenario_markup)
+                    self._tw.write(f"        {step['keyword']} {step['name']}\n", **scenario_markup)
                 self._tw.write("    " + word, **word_markup)
                 self._tw.write("\n\n")
             else:
-                return TerminalReporter.pytest_runtest_logreport(self, rep)
+                return super().pytest_runtest_logreport(rep)
         self.stats.setdefault(cat, []).append(rep)
-
-    def _format_step_name(self, step_name, **example_kwargs):
-        while True:
-            param_match = re.search(STEP_PARAM_RE, step_name)
-            if not param_match:
-                break
-            param_token = param_match.group(0)
-            param_name = param_match.group(1)
-            param_value = example_kwargs[param_name]
-            step_name = step_name.replace(param_token, param_value)
-        return step_name

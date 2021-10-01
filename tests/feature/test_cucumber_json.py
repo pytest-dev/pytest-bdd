@@ -7,22 +7,20 @@ import textwrap
 def runandparse(testdir, *args):
     """Run tests in testdir and parse json output."""
     resultpath = testdir.tmpdir.join("cucumber.json")
-    result = testdir.runpytest("--cucumberjson={0}".format(resultpath), "-s", *args)
-    jsonobject = json.load(resultpath.open())
+    result = testdir.runpytest(f"--cucumberjson={resultpath}", "-s", *args)
+    with resultpath.open() as f:
+        jsonobject = json.load(f)
     return result, jsonobject
 
 
-class OfType(object):
-    """Helper object comparison to which is always 'equal'."""
+class OfType:
+    """Helper object to help compare object type to initialization type"""
 
     def __init__(self, type=None):
         self.type = type
 
     def __eq__(self, other):
         return isinstance(other, self.type) if self.type else True
-
-
-string = type(u"")
 
 
 def test_step_trace(testdir):
@@ -73,7 +71,7 @@ def test_step_trace(testdir):
         textwrap.dedent(
             """
         import pytest
-        from pytest_bdd import given, when, scenario
+        from pytest_bdd import given, when, scenario, parsers
 
         @given('a passing step')
         def a_passing_step():
@@ -87,7 +85,7 @@ def test_step_trace(testdir):
         def a_failing_step():
             raise Exception('Error')
 
-        @given('type <type> and value <value>')
+        @given(parsers.parse('type {type} and value {value}'))
         def type_type_and_value_value():
             return 'pass'
 
@@ -106,6 +104,8 @@ def test_step_trace(testdir):
         )
     )
     result, jsonobject = runandparse(testdir)
+    result.assert_outcomes(passed=4, failed=1)
+
     assert result.ret
     expected = [
         {
@@ -155,7 +155,7 @@ def test_step_trace(testdir):
                             "line": 12,
                             "match": {"location": ""},
                             "name": "a failing step",
-                            "result": {"error_message": OfType(string), "status": "failed", "duration": OfType(int)},
+                            "result": {"error_message": OfType(str), "status": "failed", "duration": OfType(int)},
                         },
                     ],
                     "tags": [{"name": "scenario-failing-tag", "line": 9}],
@@ -171,7 +171,7 @@ def test_step_trace(testdir):
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
-                            "name": "type <type> and value <value>",
+                            "name": "type str and value hello",
                         }
                     ],
                     "line": 15,
@@ -189,7 +189,7 @@ def test_step_trace(testdir):
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
-                            "name": "type <type> and value <value>",
+                            "name": "type int and value 42",
                         }
                     ],
                     "line": 15,
@@ -207,7 +207,7 @@ def test_step_trace(testdir):
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
-                            "name": "type <type> and value <value>",
+                            "name": "type float and value 1.0",
                         }
                     ],
                     "line": 15,
@@ -226,59 +226,3 @@ def test_step_trace(testdir):
     ]
 
     assert jsonobject == expected
-
-
-def test_step_trace_with_expand_option(testdir):
-    """Test step trace."""
-    testdir.makefile(
-        ".ini",
-        pytest=textwrap.dedent(
-            """
-    [pytest]
-    markers =
-        feature-tag
-        scenario-outline-passing-tag
-    """
-        ),
-    )
-    testdir.makefile(
-        ".feature",
-        test=textwrap.dedent(
-            """
-    @feature-tag
-    Feature: One scenario outline, expanded to multiple scenarios
-
-        @scenario-outline-passing-tag
-        Scenario: Passing outline
-            Given type <type> and value <value>
-
-            Examples: example1
-            | type    | value  |
-            | str     | hello  |
-            | int     | 42     |
-            | float   | 1.0    |
-    """
-        ),
-    )
-    testdir.makepyfile(
-        textwrap.dedent(
-            """
-        import pytest
-        from pytest_bdd import given, scenario
-
-        @given('type <type> and value <value>')
-        def type_type_and_value_value():
-            return 'pass'
-
-        @scenario('test.feature', 'Passing outline')
-        def test_passing_outline():
-            pass
-    """
-        )
-    )
-    result, jsonobject = runandparse(testdir, "--cucumber-json-expanded")
-    result.assert_outcomes(passed=3)
-
-    assert jsonobject[0]["elements"][0]["steps"][0]["name"] == "type str and value hello"
-    assert jsonobject[0]["elements"][1]["steps"][0]["name"] == "type int and value 42"
-    assert jsonobject[0]["elements"][2]["steps"][0]["name"] == "type float and value 1.0"

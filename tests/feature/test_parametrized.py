@@ -1,5 +1,7 @@
 import textwrap
 
+from pytest_bdd.utils import collect_dumped_objects
+
 
 def test_parametrized(testdir):
     """Test parametrized scenario."""
@@ -9,9 +11,9 @@ def test_parametrized(testdir):
             """\
             Feature: Parametrized scenario
                 Scenario: Parametrized given, when, thens
-                    Given there are <start> cucumbers
-                    When I eat <eat> cucumbers
-                    Then I should have <left> cucumbers
+                    Given there are {start} cucumbers
+                    When I eat {eat} cucumbers
+                    Then I should have {left} cucumbers
             """
         ),
     )
@@ -20,13 +22,9 @@ def test_parametrized(testdir):
         textwrap.dedent(
             """\
         import pytest
-        from pytest_bdd import given, when, then, scenario
+        from pytest_bdd import given, when, then, scenario, parsers
+        from pytest_bdd.utils import dump_obj
 
-
-        @pytest.mark.parametrize(["start", "eat", "left"], [(12, 5, 7)])
-        @scenario("parametrized.feature", "Parametrized given, when, thens")
-        def test_parametrized(request, start, eat, left):
-            pass
 
         @pytest.fixture(params=[1, 2])
         def foo_bar(request):
@@ -35,21 +33,31 @@ def test_parametrized(testdir):
 
         @pytest.mark.parametrize(["start", "eat", "left"], [(12, 5, 7)])
         @scenario("parametrized.feature", "Parametrized given, when, thens")
+        def test_parametrized(request, start, eat, left):
+            pass
+
+
+        @pytest.mark.parametrize(["start", "eat", "left"], [(2, 1, 1)])
+        @scenario("parametrized.feature", "Parametrized given, when, thens")
         def test_parametrized_with_other_fixtures(request, start, eat, left, foo_bar):
             pass
 
-        @given("there are <start> cucumbers", target_fixture="start_cucumbers")
+
+        @given(parsers.parse("there are {start} cucumbers"), target_fixture="start_cucumbers")
         def start_cucumbers(start):
+            dump_obj(start)
             return dict(start=start)
 
 
-        @when("I eat <eat> cucumbers")
+        @when(parsers.parse("I eat {eat} cucumbers"))
         def eat_cucumbers(start_cucumbers, start, eat):
+            dump_obj(eat)
             start_cucumbers["eat"] = eat
 
 
-        @then("I should have <left> cucumbers")
+        @then(parsers.parse("I should have {left} cucumbers"))
         def should_have_left_cucumbers(start_cucumbers, start, eat, left):
+            dump_obj(left)
             assert start - eat == left
             assert start_cucumbers["start"] == start
             assert start_cucumbers["eat"] == eat
@@ -57,5 +65,15 @@ def test_parametrized(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = testdir.runpytest("-s")
     result.assert_outcomes(passed=3)
+
+    parametrizations = collect_dumped_objects(result)
+    # fmt: off
+    assert parametrizations == [
+        12, 5, 7,
+        # The second test uses is duplicated because of the `foo_bar` indirect fixture
+        2, 1, 1,
+        2, 1, 1,
+    ]
+    # fmt: on

@@ -1,3 +1,12 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [tool.black]
 line-length = 120
-target-version = ['py27', 'py35', 'py36', 'py37', 'py38']
+target-version = ['py36', 'py37', 'py38']
+
+[tool.isort]
+profile = "black"
+line_length = 120
+multi_line_output = 3
