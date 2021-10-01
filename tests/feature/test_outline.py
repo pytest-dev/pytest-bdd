@@ -81,8 +81,8 @@ def test_outlined(testdir):
     # fmt: on
 
 
-def test_outline_has_subset_of_parameters(testdir):
-    """Test parametrized scenario when the test function has a subset of the parameters of the examples."""
+def test_extra_examples_are_ignored(testdir):
+    """Test that the Examples section can have more examples than the ones used by the scenario."""
 
     testdir.makefile(
         ".feature",
@@ -108,10 +108,7 @@ def test_outline_has_subset_of_parameters(testdir):
             """\
         from pytest_bdd import scenario
 
-        @scenario("outline.feature", "Outlined with subset of examples",
-            example_converters=dict(start=int, eat=float, left=str))
-        def test_outline(request):
-            pass
+        scenarios("outline.feature")
         """
         )
     )
