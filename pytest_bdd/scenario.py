@@ -13,6 +13,7 @@ test_publish_article = scenario(
 import collections
 import os
 import re
+import typing
 
 import pytest
 from _pytest.fixtures import FixtureLookupError
@@ -21,6 +22,11 @@ from . import exceptions
 from .feature import get_feature, get_features
 from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
+
+if typing.TYPE_CHECKING:
+    from _pytest.mark.structures import ParameterSet
+
+    from .parser import Feature, Scenario, ScenarioTemplate
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
@@ -38,6 +44,8 @@ def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None)
             if not match:
                 continue
 
+            # TODO: maybe `converters` should be part of the SterParser.__init__(),
+            #  and used by StepParser.parse_arguments() method
             converters = getattr(fixturedef.func, "converters", {})
             for arg, value in parser.parse_arguments(name).items():
                 if arg in converters:
@@ -113,7 +121,7 @@ def _execute_step_function(request, scenario, step, step_func):
         raise
 
 
-def _execute_scenario(feature, scenario, request):
+def _execute_scenario(feature: "Feature", scenario: "Scenario", request):
     """Execute the scenario.
 
     :param feature: Feature.
@@ -141,7 +149,9 @@ def _execute_scenario(feature, scenario, request):
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
-def _get_scenario_decorator(feature, feature_name, scenario, scenario_name):
+def _get_scenario_decorator(
+    feature: "Feature", feature_name: str, templated_scenario: "ScenarioTemplate", scenario_name: str
+):
     # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
     # when the decorator is misused.
     # Pytest inspect the signature to determine the required fixtures, and in that case it would look
@@ -155,39 +165,62 @@ def _get_scenario_decorator(feature, feature_name, scenario, scenario_name):
             )
         [fn] = args
         args = get_args(fn)
-        function_args = list(args)
-        for arg in scenario.get_example_params():
-            if arg not in function_args:
-                function_args.append(arg)
 
-        @pytest.mark.usefixtures(*function_args)
-        def scenario_wrapper(request):
+        # We need to tell pytest that the original function requires its fixtures,
+        # otherwise indirect fixtures would not work.
+        @pytest.mark.usefixtures(*args)
+        def scenario_wrapper(request, _pytest_bdd_example):
+            scenario = templated_scenario.render(_pytest_bdd_example)
             _execute_scenario(feature, scenario, request)
-            return fn(*(request.getfixturevalue(arg) for arg in args))
+            fixture_values = [request.getfixturevalue(arg) for arg in args]
+            return fn(*fixture_values)
 
-        for param_set in scenario.get_params():
-            if param_set:
-                scenario_wrapper = pytest.mark.parametrize(*param_set)(scenario_wrapper)
-        for tag in scenario.tags.union(feature.tags):
+        example_parametrizations = collect_example_parametrizations(templated_scenario)
+        if example_parametrizations is not None:
+            # Parametrize the scenario outlines
+            scenario_wrapper = pytest.mark.parametrize(
+                "_pytest_bdd_example",
+                example_parametrizations,
+            )(scenario_wrapper)
+
+        for tag in templated_scenario.tags.union(feature.tags):
             config = CONFIG_STACK[-1]
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 
         scenario_wrapper.__doc__ = f"{feature_name}: {scenario_name}"
-        scenario_wrapper.__scenario__ = scenario
-        scenario.test_function = scenario_wrapper
+        scenario_wrapper.__scenario__ = templated_scenario
         return scenario_wrapper
 
     return decorator
 
 
-def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=None, features_base_dir=None):
+def collect_example_parametrizations(
+    templated_scenario: "ScenarioTemplate",
+) -> "typing.Optional[typing.List[ParameterSet]]":
+    # We need to evaluate these iterators and store them as lists, otherwise
+    # we won't be able to do the cartesian product later (the second iterator will be consumed)
+    feature_contexts = list(templated_scenario.feature.examples.as_contexts())
+    scenario_contexts = list(templated_scenario.examples.as_contexts())
+
+    contexts = [
+        {**feature_context, **scenario_context}
+        # We must make sure that we always have at least one element in each list, otherwise
+        # the cartesian product will result in an empty list too, even if one of the 2 sets
+        # is non empty.
+        for feature_context in feature_contexts or [{}]
+        for scenario_context in scenario_contexts or [{}]
+    ]
+    if contexts == [{}]:
+        return None
+    return [pytest.param(context, id="-".join(context.values())) for context in contexts]
+
+
+def scenario(feature_name: str, scenario_name: str, encoding: str = "utf-8", features_base_dir=None):
     """Scenario decorator.
 
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
     :param str scenario_name: Scenario name.
     :param str encoding: Feature file encoding.
-    :param dict example_converters: optional `dict` of example converter function, where key is the name of the
-        example parameter, and value is the converter function.
     """
 
     scenario_name = str(scenario_name)
@@ -207,13 +240,11 @@ def scenario(feature_name, scenario_name, encoding="utf-8", example_converters=N
             f'Scenario "{scenario_name}" in feature "{feature_name}" in {feature.filename} is not found.'
         )
 
-    scenario.example_converters = example_converters
-
     # Validate the scenario
     scenario.validate()
 
     return _get_scenario_decorator(
-        feature=feature, feature_name=feature_name, scenario=scenario, scenario_name=scenario_name
+        feature=feature, feature_name=feature_name, templated_scenario=scenario, scenario_name=scenario_name
     )
 
 

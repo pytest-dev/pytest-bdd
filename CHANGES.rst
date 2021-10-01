@@ -3,6 +3,12 @@ Changelog
 
 Unreleased
 -----------
+This release introduces breaking changes, please refer to the :ref:`Migration from 4.x.x`.
+
+- Rewrite the logic to parse Examples for Scenario Outlines. Now the substitution of the examples is done during the parsing of Gherkin feature files. You won't need to define the steps twice like ``@given("there are <start> cucumbers")`` and ``@given(parsers.parse("there are {start} cucumbers"))``. The latter will be enough.
+- Removed ``example_converters`` from ``scenario(...)`` signature. You should now use just the ``converters`` parameter for ``given``, ``when``, ``then``.
+- Removed ``--cucumberjson-expanded`` and ``--cucumber-json-expanded`` options. Now the JSON report is always expanded.
+- Removed ``--gherkin-terminal-reporter-expanded`` option. Now the terminal report is always expanded.
 
 4.1.0
 -----------

@@ -62,7 +62,7 @@ def test_step_trace(testdir):
         textwrap.dedent(
             """
         import pytest
-        from pytest_bdd import given, when, then, scenarios
+        from pytest_bdd import given, when, then, scenarios, parsers
 
         @given('a passing step')
         def a_passing_step():
@@ -76,26 +76,27 @@ def test_step_trace(testdir):
         def a_failing_step():
             raise Exception('Error')
 
-        @given('there are <start> cucumbers', target_fixture="start_cucumbers")
+        @given(parsers.parse('there are {start:d} cucumbers'), target_fixture="start_cucumbers")
         def start_cucumbers(start):
             assert isinstance(start, int)
-            return dict(start=start)
+            return {"start": start}
 
 
-        @when('I eat <eat> cucumbers')
+        @when(parsers.parse('I eat {eat:g} cucumbers'))
         def eat_cucumbers(start_cucumbers, eat):
             assert isinstance(eat, float)
             start_cucumbers['eat'] = eat
 
 
-        @then('I should have <left> cucumbers')
+        @then(parsers.parse('I should have {left} cucumbers'))
         def should_have_left_cucumbers(start_cucumbers, start, eat, left):
             assert isinstance(left, str)
             assert start - eat == int(left)
             assert start_cucumbers['start'] == start
             assert start_cucumbers['eat'] == eat
 
-        scenarios('test.feature', example_converters=dict(start=int, eat=float, left=str))
+
+        scenarios('test.feature')
     """
         )
     )
@@ -132,8 +133,6 @@ def test_step_trace(testdir):
             },
         ],
         "tags": ["scenario-passing-tag"],
-        "examples": [],
-        "example_kwargs": {},
     }
 
     assert report == expected
@@ -169,12 +168,10 @@ def test_step_trace(testdir):
             },
         ],
         "tags": ["scenario-failing-tag"],
-        "examples": [],
-        "example_kwargs": {},
     }
     assert report == expected
 
-    report = result.matchreport("test_outlined[12-5.0-7]", when="call").scenario
+    report = result.matchreport("test_outlined[12-5-7]", when="call").scenario
     expected = {
         "feature": {
             "description": "",
@@ -192,7 +189,7 @@ def test_step_trace(testdir):
                 "failed": False,
                 "keyword": "Given",
                 "line_number": 15,
-                "name": "there are <start> cucumbers",
+                "name": "there are 12 cucumbers",
                 "type": "given",
             },
             {
@@ -200,7 +197,7 @@ def test_step_trace(testdir):
                 "failed": False,
                 "keyword": "When",
                 "line_number": 16,
-                "name": "I eat <eat> cucumbers",
+                "name": "I eat 5 cucumbers",
                 "type": "when",
             },
             {
@@ -208,24 +205,15 @@ def test_step_trace(testdir):
                 "failed": False,
                 "keyword": "Then",
                 "line_number": 17,
-                "name": "I should have <left> cucumbers",
+                "name": "I should have 7 cucumbers",
                 "type": "then",
             },
         ],
         "tags": [],
-        "examples": [
-            {
-                "line_number": 19,
-                "name": None,
-                "row_index": 0,
-                "rows": [["start", "eat", "left"], [[12, 5.0, "7"], [5, 4.0, "1"]]],
-            }
-        ],
-        "example_kwargs": {"eat": "5.0", "left": "7", "start": "12"},
     }
     assert report == expected
 
-    report = result.matchreport("test_outlined[5-4.0-1]", when="call").scenario
+    report = result.matchreport("test_outlined[5-4-1]", when="call").scenario
     expected = {
         "feature": {
             "description": "",
@@ -243,7 +231,7 @@ def test_step_trace(testdir):
                 "failed": False,
                 "keyword": "Given",
                 "line_number": 15,
-                "name": "there are <start> cucumbers",
+                "name": "there are 5 cucumbers",
                 "type": "given",
             },
             {
@@ -251,7 +239,7 @@ def test_step_trace(testdir):
                 "failed": False,
                 "keyword": "When",
                 "line_number": 16,
-                "name": "I eat <eat> cucumbers",
+                "name": "I eat 4 cucumbers",
                 "type": "when",
             },
             {
@@ -259,30 +247,21 @@ def test_step_trace(testdir):
                 "failed": False,
                 "keyword": "Then",
                 "line_number": 17,
-                "name": "I should have <left> cucumbers",
+                "name": "I should have 1 cucumbers",
                 "type": "then",
             },
         ],
         "tags": [],
-        "examples": [
-            {
-                "line_number": 19,
-                "name": None,
-                "row_index": 1,
-                "rows": [["start", "eat", "left"], [[12, 5.0, "7"], [5, 4.0, "1"]]],
-            }
-        ],
-        "example_kwargs": {"eat": "4.0", "left": "1", "start": "5"},
     }
     assert report == expected
 
 
-def test_complex_types(testdir):
+def test_complex_types(testdir, pytestconfig):
     """Test serialization of the complex types."""
-    try:
-        import execnet.gateway_base
-    except ImportError:
+    if not pytestconfig.pluginmanager.has_plugin("xdist"):
         pytest.skip("Execnet not installed")
+
+    import execnet.gateway_base
 
     testdir.makefile(
         ".feature",
@@ -303,9 +282,9 @@ def test_complex_types(testdir):
         textwrap.dedent(
             """
         import pytest
-        from pytest_bdd import given, when, then, scenario
+        from pytest_bdd import given, when, then, scenario, parsers
 
-        class Point(object):
+        class Point:
 
             def __init__(self, x, y):
                 self.x = x
@@ -318,14 +297,18 @@ def test_complex_types(testdir):
         class Alien(object):
             pass
 
-        @given('there is a coordinate <point>')
-        def point(point):
+        @given(
+            parsers.parse('there is a coordinate {point}'),
+            target_fixture="point",
+            converters={"point": Point.parse},
+        )
+        def given_there_is_a_point(point):
             assert isinstance(point, Point)
             return point
 
 
         @pytest.mark.parametrize('alien', [Alien()])
-        @scenario('test.feature', 'Complex', example_converters=dict(point=Point.parse))
+        @scenario('test.feature', 'Complex')
         def test_complex(alien):
             pass
 
@@ -333,6 +316,7 @@ def test_complex_types(testdir):
         )
     )
     result = testdir.inline_run("-vvl")
-    report = result.matchreport("test_complex[point0-alien0]", when="call")
+    report = result.matchreport("test_complex[10,20-alien0]", when="call")
+    assert report.passed
     assert execnet.gateway_base.dumps(report.item)
     assert execnet.gateway_base.dumps(report.scenario)
