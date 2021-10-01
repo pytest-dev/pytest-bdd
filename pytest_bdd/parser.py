@@ -328,7 +328,7 @@ class Step:
         self.failed = False
         self.start = 0
         self.stop = 0
-        self.scenario = None
+        self.scenario: "Optional[Scenario]" = None
         self.background = None
 
     def add_line(self, line: str) -> None:
