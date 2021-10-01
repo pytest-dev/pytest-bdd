@@ -119,8 +119,9 @@ def test_outline_has_subset_of_parameters(testdir):
     assert_outcomes(result, passed=1)
 
 
-def test_wrongly_outlined_parameters_not_a_subset_of_examples(testdir):
-    """Test parametrized scenario when the test function has a parameter set which is not a subset of those in the examples table."""
+def test_not_enough_examples(testdir):
+    """Test parametrized scenario when the test function has a parameter set which is not a subset of those in the
+    examples table."""
 
     testdir.makefile(
         ".feature",
@@ -130,11 +131,11 @@ def test_wrongly_outlined_parameters_not_a_subset_of_examples(testdir):
                 Scenario Outline: Outlined with wrong examples
                     Given there are <start> cucumbers
                     When I eat <eat> cucumbers
-                    Then I should have <left> cucumbers in my <right> bucket
+                    Then I should have <left> cucumbers
 
                     Examples:
-                    | start | eat | left |
-                    |  12   |  5  |  7   |
+                    | start | eat |
+                    |  12   |  5  |
 
             """
         ),
@@ -144,15 +145,9 @@ def test_wrongly_outlined_parameters_not_a_subset_of_examples(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd import scenario, then
+        from pytest_bdd import scenarios
 
-        @scenario("outline.feature", "Outlined with wrong examples")
-        def test_outline(request):
-            pass
-
-        @then(parsers.parse('I should have <left> cucumbers in my <right> bucket'))
-        def stepdef(left, right):
-            pass
+        scenarios("outline.feature")
         """
         )
     )
@@ -161,7 +156,10 @@ def test_wrongly_outlined_parameters_not_a_subset_of_examples(testdir):
     result.stdout.fnmatch_lines(
         '*ScenarioExamplesNotValidError: Scenario "Outlined with wrong examples"*does not have valid examples*',
     )
-    result.stdout.fnmatch_lines("*should be a subset of example values [[]'eat', 'left', 'start'[]].*")
+    expected_msg = (
+        "Set of step parameters ['eat', 'left', 'start'] " "should be a subset of example values ['eat', 'start']"
+    )
+    assert expected_msg in result.stdout.str()
 
 
 def test_wrong_vertical_examples_scenario(testdir):
