@@ -1,3 +1,5 @@
+from typing import Iterator
+
 import pytest
 
 from tests.utils import PYTEST_6
@@ -35,7 +37,7 @@ def pytest_collection_finish(session):
 
 
 @pytest.fixture(autouse=True)
-def collect_types_fixture():
+def collect_types_fixture() -> Iterator:
     from pyannotate_runtime import collect_types
 
     collect_types.start()

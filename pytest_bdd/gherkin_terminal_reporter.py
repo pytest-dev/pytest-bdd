@@ -1,7 +1,12 @@
+from typing import Any, Optional
+
+from _pytest.config import Config
+from _pytest.config.argparsing import Parser
+from _pytest.reports import TestReport
 from _pytest.terminal import TerminalReporter
 
 
-def add_options(parser):
+def add_options(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group._addoption(
         "--gherkin-terminal-reporter",
@@ -12,7 +17,7 @@ def add_options(parser):
     )
 
 
-def configure(config):
+def configure(config: Config) -> None:
     if config.option.gherkin_terminal_reporter:
         # Get the standard terminal reporter plugin and replace it with our
         current_reporter = config.pluginmanager.getplugin("terminalreporter")
@@ -33,10 +38,10 @@ def configure(config):
 
 
 class GherkinTerminalReporter(TerminalReporter):
-    def __init__(self, config):
+    def __init__(self, config: Config) -> None:
         super().__init__(config)
 
-    def pytest_runtest_logreport(self, report):
+    def pytest_runtest_logreport(self, report: TestReport) -> Optional[Any]:
         rep = report
         res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
         cat, letter, word = res

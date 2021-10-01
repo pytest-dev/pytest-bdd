@@ -3,9 +3,10 @@
 import textwrap
 
 import pytest
+from _pytest.pytester import Testdir
 
 
-def test_when_then(testdir):
+def test_when_then(testdir: Testdir) -> None:
     """Test when and then steps are callable functions.
 
     This test checks that when and then are not evaluated
@@ -46,7 +47,7 @@ def test_when_then(testdir):
     ("step", "keyword"),
     [("given", "Given"), ("when", "When"), ("then", "Then")],
 )
-def test_preserve_decorator(testdir, step, keyword):
+def test_preserve_decorator(testdir: Testdir, step: str, keyword: str) -> None:
     """Check that we preserve original function attributes after decorating it."""
     testdir.makepyfile(
         textwrap.dedent(

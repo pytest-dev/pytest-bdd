@@ -1,7 +1,9 @@
 import textwrap
 
+from _pytest.pytester import Testdir
 
-def test_steps(testdir):
+
+def test_steps(testdir: Testdir) -> None:
     testdir.makefile(
         ".feature",
         steps=textwrap.dedent(
@@ -72,7 +74,7 @@ def test_steps(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_all_steps_can_provide_fixtures(testdir):
+def test_all_steps_can_provide_fixtures(testdir: Testdir) -> None:
     """Test that given/when/then can all provide fixtures."""
     testdir.makefile(
         ".feature",
@@ -125,7 +127,7 @@ def test_all_steps_can_provide_fixtures(testdir):
     result.assert_outcomes(passed=3, failed=0)
 
 
-def test_when_first(testdir):
+def test_when_first(testdir: Testdir) -> None:
     testdir.makefile(
         ".feature",
         steps=textwrap.dedent(
@@ -165,7 +167,7 @@ def test_when_first(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_then_after_given(testdir):
+def test_then_after_given(testdir: Testdir) -> None:
     testdir.makefile(
         ".feature",
         steps=textwrap.dedent(
@@ -205,7 +207,7 @@ def test_then_after_given(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_conftest(testdir):
+def test_conftest(testdir: Testdir) -> None:
     testdir.makefile(
         ".feature",
         steps=textwrap.dedent(
@@ -255,7 +257,7 @@ def test_conftest(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_multiple_given(testdir):
+def test_multiple_given(testdir: Testdir) -> None:
     """Using the same given fixture raises an error."""
     testdir.makefile(
         ".feature",
@@ -297,7 +299,7 @@ def test_multiple_given(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_step_hooks(testdir):
+def test_step_hooks(testdir: Testdir) -> None:
     """When step fails."""
     testdir.makefile(
         ".feature",
@@ -407,7 +409,7 @@ def test_step_hooks(testdir):
     assert calls[0].request
 
 
-def test_step_trace(testdir):
+def test_step_trace(testdir: Testdir) -> None:
     """Test step trace."""
     testdir.makeini(
         """

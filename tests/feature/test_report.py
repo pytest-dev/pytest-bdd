@@ -2,19 +2,21 @@
 import textwrap
 
 import pytest
+from _pytest.config import Config
+from _pytest.pytester import Testdir
 
 
 class OfType:
     """Helper object comparison to which is always 'equal'."""
 
-    def __init__(self, type=None):
+    def __init__(self, type: type = None) -> None:
         self.type = type
 
-    def __eq__(self, other):
+    def __eq__(self, other: float) -> bool:
         return isinstance(other, self.type) if self.type else True
 
 
-def test_step_trace(testdir):
+def test_step_trace(testdir: Testdir) -> None:
     """Test step trace."""
     testdir.makefile(
         ".ini",
@@ -256,7 +258,7 @@ def test_step_trace(testdir):
     assert report == expected
 
 
-def test_complex_types(testdir, pytestconfig):
+def test_complex_types(testdir: Testdir, pytestconfig: Config) -> None:
     """Test serialization of the complex types."""
     if not pytestconfig.pluginmanager.has_plugin("xdist"):
         pytest.skip("Execnet not installed")

@@ -4,12 +4,16 @@ import os
 import sys
 import textwrap
 
+from _pytest.capture import CaptureFixture
+from _pytest.monkeypatch import MonkeyPatch
+from _pytest.pytester import Testdir
+
 from pytest_bdd.scripts import main
 
 PATH = os.path.dirname(__file__)
 
 
-def test_migrate(monkeypatch, capsys, testdir):
+def test_migrate(monkeypatch: MonkeyPatch, capsys: CaptureFixture, testdir: Testdir) -> None:
     """Test if the code is migrated by a given file mask."""
     tests = testdir.mkpydir("tests")
 

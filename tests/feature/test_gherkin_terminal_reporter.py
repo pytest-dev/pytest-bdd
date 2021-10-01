@@ -1,6 +1,8 @@
 import textwrap
+from typing import List
 
 import pytest
+from _pytest.pytester import Testdir
 
 FEATURE = """\
 Feature: Gherkin terminal output feature
@@ -35,7 +37,7 @@ def test_scenario_1():
 """
 
 
-def test_default_output_should_be_the_same_as_regular_terminal_reporter(testdir):
+def test_default_output_should_be_the_same_as_regular_terminal_reporter(testdir: Testdir) -> None:
     testdir.makefile(".feature", test=FEATURE)
     testdir.makepyfile(TEST)
     regular = testdir.runpytest()
@@ -43,13 +45,15 @@ def test_default_output_should_be_the_same_as_regular_terminal_reporter(testdir)
     regular.assert_outcomes(passed=1, failed=0)
     gherkin.assert_outcomes(passed=1, failed=0)
 
-    def parse_lines(lines):
+    def parse_lines(lines: List[str]) -> List[str]:
         return [line for line in lines if not line.startswith("===")]
 
     assert all(l1 == l2 for l1, l2 in zip(parse_lines(regular.stdout.lines), parse_lines(gherkin.stdout.lines)))
 
 
-def test_verbose_mode_should_display_feature_and_scenario_names_instead_of_test_names_in_a_single_line(testdir):
+def test_verbose_mode_should_display_feature_and_scenario_names_instead_of_test_names_in_a_single_line(
+    testdir: Testdir,
+) -> None:
     testdir.makefile(".feature", test=FEATURE)
     testdir.makepyfile(TEST)
     result = testdir.runpytest("--gherkin-terminal-reporter", "-v")
@@ -58,7 +62,7 @@ def test_verbose_mode_should_display_feature_and_scenario_names_instead_of_test_
     result.stdout.fnmatch_lines("*Scenario: Scenario example 1 PASSED")
 
 
-def test_verbose_mode_should_preserve_displaying_regular_tests_as_usual(testdir):
+def test_verbose_mode_should_preserve_displaying_regular_tests_as_usual(testdir: Testdir) -> None:
     testdir.makepyfile(
         textwrap.dedent(
             """\
@@ -78,7 +82,7 @@ def test_verbose_mode_should_preserve_displaying_regular_tests_as_usual(testdir)
     )
 
 
-def test_double_verbose_mode_should_display_full_scenario_description(testdir):
+def test_double_verbose_mode_should_display_full_scenario_description(testdir: Testdir) -> None:
     testdir.makefile(".feature", test=FEATURE)
     testdir.makepyfile(TEST)
     result = testdir.runpytest("--gherkin-terminal-reporter", "-vv")
@@ -92,7 +96,7 @@ def test_double_verbose_mode_should_display_full_scenario_description(testdir):
 
 
 @pytest.mark.parametrize("verbosity", ["", "-v", "-vv"])
-def test_error_message_for_missing_steps(testdir, verbosity):
+def test_error_message_for_missing_steps(testdir: Testdir, verbosity: str) -> None:
     testdir.makefile(".feature", test=FEATURE)
     testdir.makepyfile(
         textwrap.dedent(
@@ -112,7 +116,7 @@ def test_error_message_for_missing_steps(testdir, verbosity):
 
 
 @pytest.mark.parametrize("verbosity", ["", "-v", "-vv"])
-def test_error_message_should_be_displayed(testdir, verbosity):
+def test_error_message_should_be_displayed(testdir: Testdir, verbosity: str) -> None:
     testdir.makefile(".feature", test=FEATURE)
     testdir.makepyfile(
         textwrap.dedent(
@@ -146,7 +150,7 @@ def test_error_message_should_be_displayed(testdir, verbosity):
     result.stdout.fnmatch_lines("test_error_message_should_be_displayed.py:15: Exception")
 
 
-def test_local_variables_should_be_displayed_when_showlocals_option_is_used(testdir):
+def test_local_variables_should_be_displayed_when_showlocals_option_is_used(testdir: Testdir) -> None:
     testdir.makefile(".feature", test=FEATURE)
     testdir.makepyfile(
         textwrap.dedent(
@@ -181,7 +185,7 @@ def test_local_variables_should_be_displayed_when_showlocals_option_is_used(test
     result.stdout.fnmatch_lines("""local_var*=*MULTIPASS*""")
 
 
-def test_step_parameters_should_be_replaced_by_their_values(testdir):
+def test_step_parameters_should_be_replaced_by_their_values(testdir: Testdir) -> None:
     example = {"start": 10, "eat": 3, "left": 7}
     testdir.makefile(
         ".feature",

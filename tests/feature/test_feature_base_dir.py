@@ -1,11 +1,12 @@
 """Test feature base dir."""
 import pytest
+from _pytest.pytester import Testdir
 
 NOT_EXISTING_FEATURE_PATHS = [".", "/does/not/exist/"]
 
 
 @pytest.mark.parametrize("base_dir", NOT_EXISTING_FEATURE_PATHS)
-def test_feature_path_not_found(testdir, base_dir):
+def test_feature_path_not_found(testdir: Testdir, base_dir: str) -> None:
     """Test feature base dir."""
     prepare_testdir(testdir, base_dir)
 
@@ -13,7 +14,7 @@ def test_feature_path_not_found(testdir, base_dir):
     result.assert_outcomes(passed=2)
 
 
-def test_feature_path_ok(testdir):
+def test_feature_path_ok(testdir: Testdir) -> None:
     base_dir = "features"
     prepare_testdir(testdir, base_dir)
 
@@ -21,7 +22,7 @@ def test_feature_path_ok(testdir):
     result.assert_outcomes(passed=2)
 
 
-def test_feature_path_by_param_not_found(testdir):
+def test_feature_path_by_param_not_found(testdir: Testdir) -> None:
     """As param takes precedence even if ini config is correct it should fail
     if passed param is incorrect"""
     base_dir = "features"
@@ -32,7 +33,7 @@ def test_feature_path_by_param_not_found(testdir):
 
 
 @pytest.mark.parametrize("base_dir", NOT_EXISTING_FEATURE_PATHS)
-def test_feature_path_by_param_ok(testdir, base_dir):
+def test_feature_path_by_param_ok(testdir: Testdir, base_dir: str) -> None:
     """If ini config is incorrect but param path is fine it should be able
     to find features"""
     prepare_testdir(testdir, base_dir)
@@ -41,7 +42,7 @@ def test_feature_path_by_param_ok(testdir, base_dir):
     result.assert_outcomes(passed=2)
 
 
-def prepare_testdir(testdir, ini_base_dir):
+def prepare_testdir(testdir: Testdir, ini_base_dir: str) -> None:
     testdir.makeini(
         """
             [pytest]

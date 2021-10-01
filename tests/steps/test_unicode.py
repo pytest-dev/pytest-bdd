@@ -2,8 +2,10 @@
 
 import textwrap
 
+from _pytest.pytester import Testdir
 
-def test_steps_in_feature_file_have_unicode(testdir):
+
+def test_steps_in_feature_file_have_unicode(testdir: Testdir) -> None:
     testdir.makefile(
         ".feature",
         unicode=textwrap.dedent(
@@ -55,7 +57,7 @@ def test_steps_in_feature_file_have_unicode(testdir):
     result.assert_outcomes(passed=1)
 
 
-def test_steps_in_py_file_have_unicode(testdir):
+def test_steps_in_py_file_have_unicode(testdir: Testdir) -> None:
     testdir.makefile(
         ".feature",
         unicode=textwrap.dedent(

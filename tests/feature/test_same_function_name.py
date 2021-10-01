@@ -2,8 +2,10 @@
 
 import textwrap
 
+from _pytest.pytester import Testdir
 
-def test_when_function_name_same_as_step_name(testdir):
+
+def test_when_function_name_same_as_step_name(testdir: Testdir) -> None:
     testdir.makefile(
         ".feature",
         same_name=textwrap.dedent(

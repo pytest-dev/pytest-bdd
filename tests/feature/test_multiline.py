@@ -2,6 +2,7 @@
 import textwrap
 
 import pytest
+from _pytest.pytester import Testdir
 
 
 @pytest.mark.parametrize(
@@ -105,7 +106,7 @@ def test_multiline(testdir, feature_text, expected_text):
     result.assert_outcomes(passed=1)
 
 
-def test_multiline_wrong_indent(testdir):
+def test_multiline_wrong_indent(testdir: Testdir) -> None:
     """Multiline step using sub indentation wrong indent."""
 
     testdir.makefile(

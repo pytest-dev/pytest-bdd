@@ -3,6 +3,7 @@
 import argparse
 import os.path
 import re
+from argparse import Namespace
 
 import glob2
 
@@ -11,14 +12,14 @@ from .generation import generate_code, parse_feature_files
 MIGRATE_REGEX = re.compile(r"\s?(\w+)\s=\sscenario\((.+)\)", flags=re.MULTILINE)
 
 
-def migrate_tests(args):
+def migrate_tests(args: Namespace) -> None:
     """Migrate outdated tests to the most recent form."""
     path = args.path
     for file_path in glob2.iglob(os.path.join(os.path.abspath(path), "**", "*.py")):
         migrate_tests_in_file(file_path)
 
 
-def migrate_tests_in_file(file_path):
+def migrate_tests_in_file(file_path: str) -> None:
     """Migrate all bdd-based tests in the given test file."""
     try:
         with open(file_path, "r+") as fd:
@@ -37,21 +38,21 @@ def migrate_tests_in_file(file_path):
         pass
 
 
-def check_existense(file_name):
+def check_existense(file_name: str) -> str:
     """Check file or directory name for existence."""
     if not os.path.exists(file_name):
         raise argparse.ArgumentTypeError(f"{file_name} is an invalid file or directory name")
     return file_name
 
 
-def print_generated_code(args):
+def print_generated_code(args: Namespace) -> None:
     """Print generated test code for the given filenames."""
     features, scenarios, steps = parse_feature_files(args.files)
     code = generate_code(features, scenarios, steps)
     print(code)
 
 
-def main():
+def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser(prog="pytest-bdd")
     subparsers = parser.add_subparsers(help="sub-command help", dest="command")

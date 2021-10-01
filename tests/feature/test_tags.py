@@ -3,11 +3,12 @@ import textwrap
 
 import pkg_resources
 import pytest
+from _pytest.pytester import Testdir
 
 from pytest_bdd.parser import get_tags
 
 
-def test_tags_selector(testdir):
+def test_tags_selector(testdir: Testdir) -> None:
     """Test tests selection by tags."""
     testdir.makefile(
         ".ini",
@@ -68,7 +69,7 @@ def test_tags_selector(testdir):
     assert result["deselected"] == 2
 
 
-def test_tags_after_background_issue_160(testdir):
+def test_tags_after_background_issue_160(testdir: Testdir) -> None:
     """Make sure using a tag after background works."""
     testdir.makefile(
         ".ini",
@@ -116,7 +117,7 @@ def test_tags_after_background_issue_160(testdir):
     assert result["deselected"] == 1
 
 
-def test_apply_tag_hook(testdir):
+def test_apply_tag_hook(testdir: Testdir) -> None:
     testdir.makeconftest(
         """
         import pytest
@@ -162,7 +163,7 @@ def test_apply_tag_hook(testdir):
     result.stdout.fnmatch_lines(["*= 1 skipped, 1 xpassed * =*"])
 
 
-def test_tag_with_spaces(testdir):
+def test_tag_with_spaces(testdir: Testdir) -> None:
     testdir.makefile(
         ".ini",
         pytest=textwrap.dedent(
@@ -207,7 +208,7 @@ def test_tag_with_spaces(testdir):
     result.stdout.fnmatch_lines(["*= 1 passed * =*"])
 
 
-def test_at_in_scenario(testdir):
+def test_at_in_scenario(testdir: Testdir) -> None:
     testdir.makefile(
         ".feature",
         test="""

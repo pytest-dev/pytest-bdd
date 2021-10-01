@@ -1,10 +1,13 @@
 """Test scenarios shortcut."""
 import textwrap
+from typing import List
+
+from _pytest.pytester import Testdir
 
 from tests.utils import assert_outcomes
 
 
-def test_scenarios(testdir, pytest_params):
+def test_scenarios(testdir: Testdir, pytest_params: List[str]) -> None:
     """Test scenarios shortcut (used together with @scenario for individual test override)."""
     testdir.makeini(
         """
@@ -75,7 +78,7 @@ def test_scenarios(testdir, pytest_params):
     result.stdout.fnmatch_lines(["*test_test_scenario_1 *bar!", "PASSED"])
 
 
-def test_scenarios_none_found(testdir, pytest_params):
+def test_scenarios_none_found(testdir: Testdir, pytest_params: List[str]) -> None:
     """Test scenarios shortcut when no scenarios found."""
     testpath = testdir.makepyfile(
         """

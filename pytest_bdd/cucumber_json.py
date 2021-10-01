@@ -4,9 +4,15 @@ import json
 import math
 import os
 import time
+from typing import Any, Dict, List
+
+from _pytest.config import Config
+from _pytest.config.argparsing import Parser
+from _pytest.reports import TestReport
+from _pytest.terminal import TerminalReporter
 
 
-def add_options(parser):
+def add_options(parser: Parser) -> None:
     """Add pytest-bdd options."""
     group = parser.getgroup("bdd", "Cucumber JSON")
     group.addoption(
@@ -20,7 +26,7 @@ def add_options(parser):
     )
 
 
-def configure(config):
+def configure(config: Config) -> None:
     cucumber_json_path = config.option.cucumber_json_path
     # prevent opening json log on worker nodes (xdist)
     if cucumber_json_path and not hasattr(config, "workerinput"):
@@ -28,7 +34,7 @@ def configure(config):
         config.pluginmanager.register(config._bddcucumberjson)
 
 
-def unconfigure(config):
+def unconfigure(config: Config) -> None:
     xml = getattr(config, "_bddcucumberjson", None)
     if xml is not None:
         del config._bddcucumberjson
@@ -39,7 +45,7 @@ class LogBDDCucumberJSON:
 
     """Logging plugin for cucumber like json output."""
 
-    def __init__(self, logfile):
+    def __init__(self, logfile: str) -> None:
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.features = {}
@@ -47,7 +53,7 @@ class LogBDDCucumberJSON:
     def append(self, obj):
         self.features[-1].append(obj)
 
-    def _get_result(self, step, report, error_message=False):
+    def _get_result(self, step: Dict[str, Any], report: TestReport, error_message: bool = False) -> Dict[str, Any]:
         """Get scenario test run result.
 
         :param step: `Step` step we get result for
@@ -64,7 +70,7 @@ class LogBDDCucumberJSON:
         result["duration"] = int(math.floor((10 ** 9) * step["duration"]))  # nanosec
         return result
 
-    def _serialize_tags(self, item):
+    def _serialize_tags(self, item: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Serialize item's tags.
 
         :param item: json-serialized `Scenario` or `Feature`.
@@ -78,7 +84,7 @@ class LogBDDCucumberJSON:
         """
         return [{"name": tag, "line": item["line_number"] - 1} for tag in item["tags"]]
 
-    def pytest_runtest_logreport(self, report):
+    def pytest_runtest_logreport(self, report: TestReport) -> None:
         try:
             scenario = report.scenario
         except AttributeError:
@@ -89,7 +95,7 @@ class LogBDDCucumberJSON:
             # skip if there isn't a result or scenario has no steps
             return
 
-        def stepmap(step):
+        def stepmap(step: Dict[str, Any]) -> Dict[str, Any]:
             error_message = False
             if step["failed"] and not scenario.setdefault("failed", False):
                 scenario["failed"] = True
@@ -130,12 +136,12 @@ class LogBDDCucumberJSON:
             }
         )
 
-    def pytest_sessionstart(self):
+    def pytest_sessionstart(self) -> None:
         self.suite_start_time = time.time()
 
-    def pytest_sessionfinish(self):
+    def pytest_sessionfinish(self) -> None:
         with open(self.logfile, "w", encoding="utf-8") as logfile:
             logfile.write(json.dumps(list(self.features.values())))
 
-    def pytest_terminal_summary(self, terminalreporter):
+    def pytest_terminal_summary(self, terminalreporter: TerminalReporter) -> None:
         terminalreporter.write_sep("-", "generated json file: %s" % (self.logfile))

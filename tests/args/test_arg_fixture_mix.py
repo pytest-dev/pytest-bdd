@@ -1,7 +1,9 @@
 import textwrap
 
+from _pytest.pytester import Testdir
 
-def test_arg_fixture_mix(testdir):
+
+def test_arg_fixture_mix(testdir: Testdir) -> None:
 
     subdir = testdir.mkpydir("arg_fixture_mix")
     subdir.join("test_a.py").write(

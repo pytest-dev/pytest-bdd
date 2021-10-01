@@ -5,6 +5,7 @@ import re
 import typing
 from inspect import getframeinfo, signature
 from sys import _getframe
+from typing import Any, Callable, Dict, List
 
 if typing.TYPE_CHECKING:
     from _pytest.pytester import RunResult
@@ -12,7 +13,7 @@ if typing.TYPE_CHECKING:
 CONFIG_STACK = []
 
 
-def get_args(func):
+def get_args(func: Callable) -> List[str]:
     """Get a list of argument names for a function.
 
     :param func: The function to inspect.
@@ -24,7 +25,7 @@ def get_args(func):
     return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
 
 
-def get_caller_module_locals(depth=2):
+def get_caller_module_locals(depth: int = 2) -> Dict[str, Any]:
     """Get the caller module locals dictionary.
 
     We use sys._getframe instead of inspect.stack(0) because the latter is way slower, since it iterates over
@@ -33,7 +34,7 @@ def get_caller_module_locals(depth=2):
     return _getframe(depth).f_locals
 
 
-def get_caller_module_path(depth=2):
+def get_caller_module_path(depth: int = 2) -> str:
     """Get the caller module path.
 
     We use sys._getframe instead of inspect.stack(0) because the latter is way slower, since it iterates over
@@ -47,7 +48,7 @@ _DUMP_START = "_pytest_bdd_>>>"
 _DUMP_END = "<<<_pytest_bdd_"
 
 
-def dump_obj(*objects):
+def dump_obj(*objects: Any) -> None:
     """Dump objects to stdout so that they can be inspected by the test suite."""
     for obj in objects:
         dump = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)

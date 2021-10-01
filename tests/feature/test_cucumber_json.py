@@ -2,9 +2,12 @@
 import json
 import os.path
 import textwrap
+from typing import Any, Dict, List, Tuple, Union
+
+from _pytest.pytester import RunResult, Testdir
 
 
-def runandparse(testdir, *args):
+def runandparse(testdir: Testdir, *args: Any) -> Tuple[RunResult, List[Dict[str, Any]]]:
     """Run tests in testdir and parse json output."""
     resultpath = testdir.tmpdir.join("cucumber.json")
     result = testdir.runpytest(f"--cucumberjson={resultpath}", "-s", *args)
@@ -16,14 +19,14 @@ def runandparse(testdir, *args):
 class OfType:
     """Helper object to help compare object type to initialization type"""
 
-    def __init__(self, type=None):
+    def __init__(self, type: type = None) -> None:
         self.type = type
 
-    def __eq__(self, other):
+    def __eq__(self, other: Union[int, str]) -> bool:
         return isinstance(other, self.type) if self.type else True
 
 
-def test_step_trace(testdir):
+def test_step_trace(testdir: Testdir) -> None:
     """Test step trace."""
     testdir.makefile(
         ".ini",

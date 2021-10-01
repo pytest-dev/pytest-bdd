@@ -2,8 +2,10 @@
 
 import textwrap
 
+from _pytest.pytester import Testdir
 
-def test_step_alias(testdir):
+
+def test_step_alias(testdir: Testdir) -> None:
     testdir.makefile(
         ".feature",
         alias=textwrap.dedent(

@@ -3,12 +3,15 @@
 import os
 import sys
 
+from _pytest.capture import CaptureFixture
+from _pytest.monkeypatch import MonkeyPatch
+
 from pytest_bdd.scripts import main
 
 PATH = os.path.dirname(__file__)
 
 
-def test_main(monkeypatch, capsys):
+def test_main(monkeypatch: MonkeyPatch, capsys: CaptureFixture) -> None:
     """Test if main command shows help when called without the subcommand."""
     monkeypatch.setattr(sys, "argv", ["pytest-bdd"])
     monkeypatch.setattr(sys, "exit", lambda x: x)

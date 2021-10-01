@@ -2,11 +2,13 @@
 import itertools
 import textwrap
 
+from _pytest.pytester import Testdir
+
 from pytest_bdd.scenario import get_python_name_generator
 from tests.utils import assert_outcomes
 
 
-def test_python_name_generator():
+def test_python_name_generator() -> None:
     """Test python name generator function."""
     assert list(itertools.islice(get_python_name_generator("Some name"), 3)) == [
         "test_some_name",
@@ -15,7 +17,7 @@ def test_python_name_generator():
     ]
 
 
-def test_generate_missing(testdir):
+def test_generate_missing(testdir: Testdir) -> None:
     """Test generate missing command."""
     testdir.makefile(
         ".feature",
@@ -87,7 +89,7 @@ def test_generate_missing(testdir):
     result.stdout.fnmatch_lines(["Please place the code above to the test file(s):"])
 
 
-def test_generate_missing_with_step_parsers(testdir):
+def test_generate_missing_with_step_parsers(testdir: Testdir) -> None:
     """Test that step parsers are correctly discovered and won't be part of the missing steps."""
     testdir.makefile(
         ".feature",

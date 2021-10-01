@@ -35,15 +35,17 @@ def given_beautiful_article(article):
 
 """
 
+from typing import Any, Callable, Dict, Optional, Union
+
 import pytest
-from _pytest.fixtures import FixtureDef
+from _pytest.fixtures import FixtureDef, FixtureRequest
 
 from .parsers import get_parser
 from .types import GIVEN, THEN, WHEN
 from .utils import get_caller_module_locals
 
 
-def get_step_fixture_name(name, type_):
+def get_step_fixture_name(name: str, type_: str) -> str:
     """Get step fixture name.
 
     :param name: string
@@ -54,7 +56,11 @@ def get_step_fixture_name(name, type_):
     return f"pytestbdd_{type_}_{name}"
 
 
-def given(name, converters=None, target_fixture=None):
+def given(
+    name: Any,
+    converters: Union[Dict[str, Callable], Dict[str, type], None] = None,
+    target_fixture: Optional[str] = None,
+) -> Callable:
     """Given step decorator.
 
     :param name: Step name or a parser object.
@@ -67,7 +73,7 @@ def given(name, converters=None, target_fixture=None):
     return _step_decorator(GIVEN, name, converters=converters, target_fixture=target_fixture)
 
 
-def when(name, converters=None, target_fixture=None):
+def when(name: Any, converters: Optional[Dict[str, type]] = None, target_fixture: Optional[str] = None) -> Callable:
     """When step decorator.
 
     :param name: Step name or a parser object.
@@ -80,7 +86,7 @@ def when(name, converters=None, target_fixture=None):
     return _step_decorator(WHEN, name, converters=converters, target_fixture=target_fixture)
 
 
-def then(name, converters=None, target_fixture=None):
+def then(name: Any, converters: Optional[Dict[str, type]] = None, target_fixture: Optional[str] = None) -> Callable:
     """Then step decorator.
 
     :param name: Step name or a parser object.
@@ -93,7 +99,12 @@ def then(name, converters=None, target_fixture=None):
     return _step_decorator(THEN, name, converters=converters, target_fixture=target_fixture)
 
 
-def _step_decorator(step_type, step_name, converters=None, target_fixture=None):
+def _step_decorator(
+    step_type: str,
+    step_name: Any,
+    converters: Union[Dict[str, Callable], Dict[str, type], None] = None,
+    target_fixture: Optional[str] = None,
+) -> Callable:
     """Step decorator for the type and the name.
 
     :param str step_type: Step type (GIVEN, WHEN or THEN).
@@ -104,14 +115,14 @@ def _step_decorator(step_type, step_name, converters=None, target_fixture=None):
     :return: Decorator function for the step.
     """
 
-    def decorator(func):
+    def decorator(func: Callable) -> Callable:
         step_func = func
         parser_instance = get_parser(step_name)
         parsed_step_name = parser_instance.name
 
         step_func.__name__ = str(parsed_step_name)
 
-        def lazy_step_func():
+        def lazy_step_func() -> Callable:
             return step_func
 
         step_func.step_type = step_type
@@ -136,7 +147,7 @@ def _step_decorator(step_type, step_name, converters=None, target_fixture=None):
     return decorator
 
 
-def inject_fixture(request, arg, value):
+def inject_fixture(request: FixtureRequest, arg: str, value: Any) -> None:
     """Inject fixture into pytest fixture request.
 
     :param request: pytest fixture request
@@ -157,7 +168,7 @@ def inject_fixture(request, arg, value):
     old_fd = request._fixture_defs.get(arg)
     add_fixturename = arg not in request.fixturenames
 
-    def fin():
+    def fin() -> None:
         request._fixturemanager._arg2fixturedefs[arg].remove(fd)
         request._fixture_defs[arg] = old_fd
 
