@@ -10,3 +10,9 @@ target-version = ['py36', 'py37', 'py38']
 profile = "black"
 line_length = 120
 multi_line_output = 3
+
+[tool.mypy]
+python_version = "3.6"
+warn_return_any = true
+warn_unused_configs = true
+files = "pytest_bdd/**/*.py"
