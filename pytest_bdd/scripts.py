@@ -3,7 +3,6 @@
 import argparse
 import os.path
 import re
-from argparse import Namespace
 
 import glob2
 
@@ -12,7 +11,7 @@ from .generation import generate_code, parse_feature_files
 MIGRATE_REGEX = re.compile(r"\s?(\w+)\s=\sscenario\((.+)\)", flags=re.MULTILINE)
 
 
-def migrate_tests(args: Namespace) -> None:
+def migrate_tests(args: argparse.Namespace) -> None:
     """Migrate outdated tests to the most recent form."""
     path = args.path
     for file_path in glob2.iglob(os.path.join(os.path.abspath(path), "**", "*.py")):
@@ -45,7 +44,7 @@ def check_existense(file_name: str) -> str:
     return file_name
 
 
-def print_generated_code(args: Namespace) -> None:
+def print_generated_code(args: argparse.Namespace) -> None:
     """Print generated test code for the given filenames."""
     features, scenarios, steps = parse_feature_files(args.files)
     code = generate_code(features, scenarios, steps)
