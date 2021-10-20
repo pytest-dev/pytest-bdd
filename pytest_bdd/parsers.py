@@ -108,10 +108,9 @@ def get_parser(step_name: Any) -> Any:
     :rtype: StepArgumentParser
     """
 
-    def does_support_parser_interface(obj: Any) -> bool:
-        return all(map(partial(hasattr, obj), ["is_matching", "parse_arguments"]))
+    support_parser_interface = hasattr(step_name, "is_matching") and hasattr(step_name, "parse_arguments")
 
-    if does_support_parser_interface(step_name):
+    if support_parser_interface:
         return step_name
     else:
         return string(step_name)
