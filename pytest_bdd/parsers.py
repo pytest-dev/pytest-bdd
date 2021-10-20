@@ -84,7 +84,7 @@ class string(StepParser):
 
     def __init__(self, name: str) -> None:
         """Stringify"""
-        name = str(name, **({"encoding": "utf-8"} if isinstance(name, bytes) else {}))
+        name = str(name)
         super().__init__(name)
 
     def parse_arguments(self, name: str) -> Dict:
