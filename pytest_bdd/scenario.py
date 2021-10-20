@@ -62,9 +62,10 @@ def find_argumented_step_fixture_name(
                 except FixtureLookupError:
                     continue
             return parser_name
+    return None
 
 
-def _find_step_function(request: FixtureRequest, step: "Step", scenario: "Scenario") -> Callable:
+def _find_step_function(request: FixtureRequest, step: "Step", scenario: "Scenario") -> Any:
     """Match the step defined by the regular expression pattern.
 
     :param request: PyTest request object.
@@ -81,9 +82,9 @@ def _find_step_function(request: FixtureRequest, step: "Step", scenario: "Scenar
     except FixtureLookupError:
         try:
             # Could not find a fixture with the same name, let's see if there is a parser involved
-            name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager, request)
-            if name:
-                return request.getfixturevalue(name)
+            argumented_name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager, request)
+            if argumented_name:
+                return request.getfixturevalue(argumented_name)
             raise
         except FixtureLookupError:
             raise exceptions.StepDefinitionNotFoundError(
@@ -167,15 +168,15 @@ def _get_scenario_decorator(
                 "scenario function can only be used as a decorator. Refer to the documentation."
             )
         [fn] = args
-        args = get_args(fn)
+        func_args = get_args(fn)
 
         # We need to tell pytest that the original function requires its fixtures,
         # otherwise indirect fixtures would not work.
-        @pytest.mark.usefixtures(*args)
+        @pytest.mark.usefixtures(*func_args)
         def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: Dict[str, str]) -> Optional[Any]:
             scenario = templated_scenario.render(_pytest_bdd_example)
             _execute_scenario(feature, scenario, request)
-            fixture_values = [request.getfixturevalue(arg) for arg in args]
+            fixture_values = [request.getfixturevalue(arg) for arg in func_args]
             return fn(*fixture_values)
 
         example_parametrizations = collect_example_parametrizations(templated_scenario)

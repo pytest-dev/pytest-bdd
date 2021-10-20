@@ -49,7 +49,7 @@ class LogBDDCucumberJSON:
     def __init__(self, logfile: str) -> None:
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
-        self.features = {}
+        self.features: Dict[str, Dict] = {}
 
     # TODO: Unused method?
     def append(self, obj):
@@ -62,7 +62,7 @@ class LogBDDCucumberJSON:
         :param report: pytest `Report` object
         :return: `dict` in form {"status": "<passed|failed|skipped>", ["error_message": "<error_message>"]}
         """
-        result = {}
+        result: Dict[str, Any] = {}
         if report.passed or not step["failed"]:  # ignore setup/teardown
             result = {"status": "passed"}
         elif report.failed and step["failed"]:

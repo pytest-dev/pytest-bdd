@@ -3,7 +3,7 @@ import re
 import textwrap
 import typing
 from collections import OrderedDict
-from typing import Any, List, Optional, Set, Tuple
+from typing import Any, List, Optional, Set, Tuple, cast
 
 from . import exceptions, types
 
@@ -73,6 +73,7 @@ def get_step_type(line: str) -> Optional[str]:
     for prefix, _type in STEP_PREFIXES:
         if line.startswith(prefix):
             return _type
+    return None
 
 
 def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feature":
@@ -96,7 +97,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
         description="",
     )
     scenario: typing.Optional[ScenarioTemplate] = None
-    mode = None
+    mode: Optional[str] = None
     prev_mode = None
     description: typing.List[str] = []
     step = None
@@ -188,11 +189,11 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
                     )
         elif mode and mode not in (types.FEATURE, types.TAG):
             step = Step(name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword)
-            if feature.background and not scenario:
-                target = feature.background
+            if feature.background and scenario:
+                feature.background.add_step(step)
             else:
-                target = scenario
-            target.add_step(step)
+                scenario = cast(ScenarioTemplate, scenario)
+                scenario.add_step(step)
         prev_line = clean_line
 
     feature.description = "\n".join(description).strip()
@@ -207,22 +208,22 @@ class Feature:
         scenarios: OrderedDict,
         filename: str,
         rel_filename: str,
-        name: Optional[Any],
+        name: Optional[str],
         tags: Set,
         examples: "Examples",
-        background: Optional[Any],
+        background: "Optional[Background]",
         line_number: int,
         description: str,
     ) -> None:
         self.scenarios: typing.Dict[str, ScenarioTemplate] = scenarios
-        self.rel_filename = rel_filename
-        self.filename = filename
-        self.tags = tags
-        self.examples = examples
-        self.name = name
-        self.line_number = line_number
-        self.description = description
-        self.background = background
+        self.rel_filename: str = rel_filename
+        self.filename: str = filename
+        self.tags: Set = tags
+        self.examples: "Examples" = examples
+        self.name: Optional[str] = name
+        self.line_number: int = line_number
+        self.description: str = description
+        self.background: "Optional[Background]" = background
 
 
 class ScenarioTemplate:
@@ -319,17 +320,17 @@ class Step:
         :param int line_number: line number.
         :param str keyword: step keyword.
         """
-        self.name = name
-        self.keyword = keyword
-        self.lines = []
-        self.indent = indent
-        self.type = type
-        self.line_number = line_number
-        self.failed = False
-        self.start = 0
-        self.stop = 0
-        self.scenario: "Optional[Scenario]" = None
-        self.background = None
+        self.name: str = name
+        self.keyword: str = keyword
+        self.lines: List[str] = []
+        self.indent: int = indent
+        self.type: str = type
+        self.line_number: int = line_number
+        self.failed: bool = False
+        self.start: int = 0  # TODO: Unused
+        self.stop: int = 0  # TODO: Unused
+        self.scenario: "Optional[ScenarioTemplate]" = None
+        self.background: "Optional[Background]" = None
 
     def add_line(self, line: str) -> None:
         """Add line to the multiple step.
@@ -386,9 +387,9 @@ class Background:
         :param pytest_bdd.parser.Feature feature: Feature.
         :param int line_number: Line number.
         """
-        self.feature = feature
-        self.line_number = line_number
-        self.steps = []
+        self.feature: "Feature" = feature
+        self.line_number: int = line_number
+        self.steps: "typing.List[Step]" = []
 
     def add_step(self, step: "Step") -> None:
         """Add step to the background."""
@@ -402,10 +403,10 @@ class Examples:
 
     def __init__(self) -> None:
         """Initialize examples instance."""
-        self.example_params = []
-        self.examples = []
-        self.vertical_examples = []
-        self.line_number = None
+        self.example_params: List[str] = []
+        self.examples: List[List[str]] = []
+        self.vertical_examples: List[List[str]] = []
+        self.line_number: Optional[int] = None
         self.name = None
 
     def set_param_names(self, keys: List[str]) -> None:

@@ -48,7 +48,7 @@ class GherkinTerminalReporter(TerminalReporter):
 
         if not letter and not word:
             # probably passed setup/teardown
-            return
+            return None
 
         if isinstance(word, tuple):
             word, word_markup = word
@@ -93,3 +93,4 @@ class GherkinTerminalReporter(TerminalReporter):
             else:
                 return super().pytest_runtest_logreport(rep)
         self.stats.setdefault(cat, []).append(rep)
+        return None

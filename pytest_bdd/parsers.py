@@ -3,7 +3,7 @@
 
 import re as base_re
 from functools import partial
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 import parse as base_parse
 from parse_type import cfparse as base_cfparse
@@ -40,6 +40,7 @@ class re(StepParser):
 
         :return: `dict` of step arguments
         """
+        # TODO: This is a potential bug, as groupdict can return None (found with typing)
         return self.regex.match(name).groupdict()
 
     def is_matching(self, name: str) -> bool:
@@ -60,7 +61,7 @@ class parse(StepParser):
 
         :return: `dict` of step arguments
         """
-        return self.parser.parse(name).named
+        return cast(Dict[str, Any], self.parser.parse(name).named)
 
     def is_matching(self, name: str) -> bool:
         """Match given name with the step name."""

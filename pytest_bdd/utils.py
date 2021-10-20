@@ -8,9 +8,10 @@ from sys import _getframe
 from typing import Any, Callable, Dict, List
 
 if typing.TYPE_CHECKING:
+    from _pytest.config import Config
     from _pytest.pytester import RunResult
 
-CONFIG_STACK = []
+CONFIG_STACK: "List[Config]" = []
 
 
 def get_args(func: Callable) -> List[str]:

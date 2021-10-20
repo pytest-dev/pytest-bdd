@@ -18,5 +18,5 @@ warn_unused_configs = true
 files = "pytest_bdd/**/*.py"
 
 [[tool.mypy.overrides]]
-module = ["parse", "parse_type"]
+module = ["parse", "parse_type", "glob2"]
 ignore_missing_imports = true
