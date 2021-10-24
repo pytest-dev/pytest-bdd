@@ -4,6 +4,8 @@ import textwrap
 import typing
 from collections import OrderedDict
 
+from _pytest.fixtures import FixtureRequest
+
 from . import exceptions, types
 
 SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
@@ -245,10 +247,10 @@ class ScenarioTemplate:
         background = self.feature.background
         return (background.steps if background else []) + self._steps
 
-    def render(self, context: typing.Mapping[str, typing.Any]) -> "Scenario":
+    def render(self, context: typing.Mapping[str, typing.Any], request: FixtureRequest) -> "Scenario":
         steps = [
             Step(
-                name=templated_step.render(context),
+                name=templated_step.render(context, request),
                 type=templated_step.type,
                 indent=templated_step.indent,
                 line_number=templated_step.line_number,
@@ -356,10 +358,13 @@ class Step:
         """Get step params."""
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
-    def render(self, context: typing.Mapping[str, typing.Any]):
+    def render(self, context: typing.Mapping[str, typing.Any], request: FixtureRequest):
         def replacer(m: typing.Match):
             varname = m.group(1)
-            return str(context[varname])
+            try:
+                return str(context[varname])
+            except KeyError:
+                return str(request.getfixturevalue(varname))
 
         return STEP_PARAM_RE.sub(replacer, self.name)
 

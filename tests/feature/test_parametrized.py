@@ -11,9 +11,9 @@ def test_parametrized(testdir):
             """\
             Feature: Parametrized scenario
                 Scenario: Parametrized given, when, thens
-                    Given there are {start} cucumbers
-                    When I eat {eat} cucumbers
-                    Then I should have {left} cucumbers
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers
             """
         ),
     )
@@ -43,19 +43,19 @@ def test_parametrized(testdir):
             pass
 
 
-        @given(parsers.parse("there are {start} cucumbers"), target_fixture="start_cucumbers")
+        @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="start_cucumbers")
         def start_cucumbers(start):
             dump_obj(start)
             return dict(start=start)
 
 
-        @when(parsers.parse("I eat {eat} cucumbers"))
+        @when(parsers.parse("I eat {eat:d} cucumbers"))
         def eat_cucumbers(start_cucumbers, start, eat):
             dump_obj(eat)
             start_cucumbers["eat"] = eat
 
 
-        @then(parsers.parse("I should have {left} cucumbers"))
+        @then(parsers.parse("I should have {left:d} cucumbers"))
         def should_have_left_cucumbers(start_cucumbers, start, eat, left):
             dump_obj(left)
             assert start - eat == left
