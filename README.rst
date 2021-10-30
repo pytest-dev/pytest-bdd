@@ -44,7 +44,7 @@ Example
 An example test for a blog hosting software could look like this.
 Note that pytest-splinter_ is used to get the browser fixture.
 
-publish_article.feature:
+`publish_article.feature`:
 
 .. code-block:: gherkin
 
@@ -63,7 +63,7 @@ publish_article.feature:
 
 Note that only one feature is allowed per feature file.
 
-test_publish_article.py:
+`test_publish_article.py`:
 
 .. code-block:: python
 
