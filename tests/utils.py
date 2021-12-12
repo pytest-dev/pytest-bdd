@@ -21,7 +21,6 @@ if PYTEST_6:
             errors=errors, passed=passed, skipped=skipped, failed=failed, xpassed=xpassed, xfailed=xfailed
         )
 
-
 else:
 
     def assert_outcomes(
