@@ -11,12 +11,12 @@ def test_steps(testdir):
                 are not mandatory in some cases.
 
                 Scenario: Executed step by step
-                    Given I have a foo fixture with value "foo"
+                    Given I have a foo fixture with value "<h1>foo</h1>"
                     And there is a list
                     When I append 1 to the list
                     And I append 2 to the list
                     And I append 3 to the list
-                    Then foo should have value "foo"
+                    Then foo should have value "<h1>foo</h1>"
                     But the list should be [1, 2, 3]
             """
         ),
@@ -25,15 +25,15 @@ def test_steps(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd import given, when, then, scenario
+        from pytest_bdd import given, when, then, scenario, parsers
 
         @scenario("steps.feature", "Executed step by step")
         def test_steps():
             pass
 
-        @given('I have a foo fixture with value "foo"', target_fixture="foo")
-        def foo():
-            return "foo"
+        @given(parsers.parse('I have a foo fixture with value "{value}"'), target_fixture="foo")
+        def foo(value):
+            return value
 
 
         @given("there is a list", target_fixture="results")
@@ -56,9 +56,9 @@ def test_steps(testdir):
             results.append(3)
 
 
-        @then('foo should have value "foo"')
-        def foo_is_foo(foo):
-            assert foo == "foo"
+        @then(parsers.parse('foo should have value "{value}"'))
+        def foo_is_foo(foo, value):
+            assert foo == value
 
 
         @then("the list should be [1, 2, 3]")
