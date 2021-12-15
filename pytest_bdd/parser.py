@@ -357,7 +357,11 @@ class Step:
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
     def render(self, context: typing.Mapping[str, typing.Any]):
-        example_params = set(self.scenario.examples.example_params)
+        example_params = set()
+        if self.scenario:
+            example_params |= set(self.scenario.feature.examples.example_params)
+            if hasattr(self.scenario, "examples"):
+                example_params |= set(self.scenario.examples.example_params)
 
         def replacer(m: typing.Match):
             varname = m.group(1)
