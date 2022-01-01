@@ -638,66 +638,6 @@ This is allowed as long as parameter names do not clash:
             | tomatoes   |
 
 
-Combine scenario outline and pytest parametrization
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-It's also possible to parametrize the scenario on the python side.
-The reason for this is that it is sometimes not needed to mention example table for every scenario.
-
-The code will look like:
-
-.. code-block:: python
-
-    import pytest
-    from pytest_bdd import scenario, given, when, then, parsers
-
-
-    # Here we use pytest to parametrize the test with the parameters table
-    @pytest.mark.parametrize(
-        ["start", "eat", "left"],
-        [(12, 5, 7)],
-    )
-    @scenario(
-        "parametrized.feature",
-        "Parametrized given, when, then",
-    )
-    # Note that we should take the same arguments in the test function that we use
-    # for the test parametrization either directly or indirectly (fixtures depend on them).
-    def test_parametrized(start, eat, left):
-        """We don't need to do anything here, everything will be managed by the scenario decorator."""
-
-
-    @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="start_cucumbers")
-    def start_cucumbers(start):
-        return dict(start=start)
-
-
-    @when(parsers.parse("I eat {eat:d} cucumbers"))
-    def eat_cucumbers(start_cucumbers, start, eat):
-        start_cucumbers["eat"] = eat
-
-
-    @then(parsers.parse("I should have {left:d} cucumbers"))
-    def should_have_left_cucumbers(start_cucumbers, start, eat, left):
-        assert start - eat == left
-        assert start_cucumbers["start"] == start
-        assert start_cucumbers["eat"] == eat
-
-
-With a parametrized.feature file:
-
-.. code-block:: gherkin
-
-    Feature: parametrized
-        Scenario: Parametrized given, when, then
-            Given there are <start> cucumbers
-            When I eat <eat> cucumbers
-            Then I should have <left> cucumbers
-
-
-The significant downside of this approach is inability to see the test table from the feature file.
-
-
 Organizing your scenarios
 -------------------------
 
@@ -1179,6 +1119,8 @@ ordering of the types of the steps.
 Migration of your tests from versions 4.x.x
 -------------------------------------------
 
+Replace usage of <parameter> inside step definitions with parsed {parameter}
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Templated steps (e.g. ``@given("there are <start> cucumbers")``) should now the use step argument parsers in order to match the scenario outlines and get the values from the example tables. The values from the example tables are no longer passed as fixtures, although if you define your step to use a parser, the parameters will be still provided as fixtures.
 
 .. code-block:: python
@@ -1217,6 +1159,12 @@ Scenario `example_converters` are removed in favor of the converters provided on
     @scenario("outline.feature", "Outlined")
     def test_outline():
         pass
+
+
+Refuse combining scenario outline and pytest parametrization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The significant downside of combining scenario outline and pytest parametrization approach was inability to see the
+test table from the feature file.
 
 
 .. _Migration from 3.x.x:
