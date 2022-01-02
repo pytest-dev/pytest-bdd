@@ -109,7 +109,7 @@ def test_disallow_free_example_params(testdir):
         from pytest_bdd import scenario
 
         @scenario(
-            "outline.feature", 
+            "outline.feature",
             "Outlined with wrong examples",
             allow_example_free_variables=False
         )
@@ -207,8 +207,8 @@ def test_allow_free_example_params(testdir):
         from pytest_bdd import scenario
 
         @scenario(
-            "outline.feature", 
-            "Outlined with subset of examples", 
+            "outline.feature",
+            "Outlined with subset of examples",
             allow_example_free_variables=True
         )
         def test_outline(request):
@@ -296,7 +296,7 @@ def test_disallow_outlined_parameters_not_a_subset_of_examples(testdir):
         @scenario("outline.feature", "Outlined with wrong examples", allow_step_free_variables=False)
         def test_outline(request):
             pass
-            
+
         @then(parsers.parse('I should have {left} cucumbers in my <right> bucket'))
         def stepdef(left):
             pass
@@ -349,7 +349,7 @@ def test_disallow_outlined_parameters_not_a_subset_of_examples_by_ini(testdir):
         @scenario("outline.feature", "Outlined with wrong examples")
         def test_outline(request):
             pass
-            
+
         @then(parsers.parse('I should have {left} cucumbers in my <right> bucket'))
         def stepdef(left):
             pass
