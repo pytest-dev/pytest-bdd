@@ -699,6 +699,7 @@ The significant downside of this approach is inability to see the test table fro
 It's possible to disallow steps free parameters substitution from fixtures (so test case will fail):
 
 .. code-block:: python
+
     @pytest.mark.parametrize(
         ["start", "eat", "left"],
         [(12, 5, 7)],
@@ -714,6 +715,7 @@ It's possible to disallow steps free parameters substitution from fixtures (so t
 Sometimes you want leave a column not used in steps for specific reason in examples section:
 
 .. code-block:: gherkin
+
     Feature: Scenario outlines
         Scenario Outline: Outlined given, when, thens
             Given there are <start> cucumbers
@@ -726,6 +728,7 @@ Sometimes you want leave a column not used in steps for specific reason in examp
 
 
 .. code-block:: python
+
     from pytest_bdd import given, when, then, scenario
 
 
@@ -737,6 +740,41 @@ Sometimes you want leave a column not used in steps for specific reason in examp
     def test_outlined():
         pass
 
+Or leave some parameter as is without substitution:
+
+.. code-block:: gherkin
+
+    Feature: Outline
+        Scenario Outline: Outlined with wrong examples
+            Given there are <start> cucumbers
+            When I eat <eat> cucumbers
+            Then I should have <left> cucumbers in my <right> bucket
+
+            Examples:
+            | start | eat | left |
+            |  12   |  5  |  7   |
+
+.. code-block:: python
+
+    @scenario(
+        "outline.feature",
+        "Outlined with wrong examples",
+        allow_step_free_variables=False
+    )
+    def test_outline(request):
+        pass
+
+    @then(parsers.parse('I should have {left} cucumbers in my <right> bucket'))
+    def stepdef(left):
+        pass
+
+
+Also you could grant such possibility for whole session using pytest.ini (or any other same config)
+
+.. code-block:: ini
+
+    [pytest]
+    bdd_allow_step_free_variables=false
 
 Organizing your scenarios
 -------------------------

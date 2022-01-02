@@ -129,7 +129,57 @@ def test_disallow_free_example_params(testdir):
     )
 
 
-def test_outline_has_subset_of_parameters(testdir):
+def test_disallow_free_example_params_by_ini(testdir):
+    """Test parametrized scenario when the test function lacks parameters."""
+    testdir.makeini(
+        """
+            [pytest]
+            bdd_allow_example_free_variables=false
+        """
+    )
+
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Scenario Outline: Outlined with wrong examples
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers
+
+                    Examples:
+                    | start | eat | left | unknown_param |
+                    |  12   |  5  |  7   | value         |
+
+            """
+        ),
+    )
+    testdir.makeconftest(textwrap.dedent(STEPS))
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario
+
+        @scenario("outline.feature", "Outlined with wrong examples")
+        def test_outline(request):
+            pass
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert_outcomes(result, errors=1)
+    result.stdout.fnmatch_lines(
+        '*ScenarioExamplesNotValidError: Scenario "Outlined with wrong examples"*does not have valid examples*'
+    )
+    result.stdout.fnmatch_lines(
+        "*Set of example parameters [[]'eat', 'left', 'start', 'unknown_param'[]] should be "
+        "a subset of step parameters [[]'eat', 'left', 'start'[]]*"
+    )
+
+
+def test_allow_free_example_params(testdir):
     """Test parametrized scenario when the test function has a subset of the parameters of the examples."""
 
     testdir.makefile(
@@ -170,7 +220,51 @@ def test_outline_has_subset_of_parameters(testdir):
     assert_outcomes(result, passed=1)
 
 
-def test_wrongly_outlined_parameters_not_a_subset_of_examples(testdir):
+def test_allow_free_example_params_by_ini(testdir):
+    """Test parametrized scenario when the test function has a subset of the parameters of the examples."""
+
+    testdir.makeini(
+        """
+            [pytest]
+            bdd_allow_example_free_variables=true
+        """
+    )
+
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Scenario Outline: Outlined with subset of examples
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers
+
+                    Examples:
+                    | start | eat | left | notes             |
+                    |  12   |  5  |  7   | Should be ignored |
+
+            """
+        ),
+    )
+    testdir.makeconftest(textwrap.dedent(STEPS))
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario
+
+        @scenario("outline.feature", "Outlined with subset of examples")
+        def test_outline(request):
+            pass
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert_outcomes(result, passed=1)
+
+
+def test_disallow_outlined_parameters_not_a_subset_of_examples(testdir):
     """Test parametrized scenario when the test function has a parameter set
     which is not a subset of those in the examples table."""
 
@@ -203,8 +297,8 @@ def test_wrongly_outlined_parameters_not_a_subset_of_examples(testdir):
         def test_outline(request):
             pass
             
-        @then(parsers.parse('I should have <left> cucumbers in my <right> bucket'))
-        def stepdef(left, right):
+        @then(parsers.parse('I should have {left} cucumbers in my <right> bucket'))
+        def stepdef(left):
             pass
         """
         )
@@ -215,6 +309,152 @@ def test_wrongly_outlined_parameters_not_a_subset_of_examples(testdir):
         '*ScenarioExamplesNotValidError: Scenario "Outlined with wrong examples"*does not have valid examples*',
     )
     result.stdout.fnmatch_lines("*should be a subset of example parameters [[]'eat', 'left', 'start'[]]*")
+
+
+def test_disallow_outlined_parameters_not_a_subset_of_examples_by_ini(testdir):
+    """Test parametrized scenario when the test function has a parameter set
+    which is not a subset of those in the examples table."""
+    testdir.makeini(
+        """
+            [pytest]
+            bdd_allow_step_free_variables=false
+        """
+    )
+
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Scenario Outline: Outlined with wrong examples
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers in my <right> bucket
+
+                    Examples:
+                    | start | eat | left |
+                    |  12   |  5  |  7   |
+
+            """
+        ),
+    )
+    testdir.makeconftest(textwrap.dedent(STEPS))
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario, then
+        import pytest_bdd.parsers as parsers
+
+        @scenario("outline.feature", "Outlined with wrong examples")
+        def test_outline(request):
+            pass
+            
+        @then(parsers.parse('I should have {left} cucumbers in my <right> bucket'))
+        def stepdef(left):
+            pass
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert_outcomes(result, errors=1)
+    result.stdout.fnmatch_lines(
+        '*ScenarioExamplesNotValidError: Scenario "Outlined with wrong examples"*does not have valid examples*',
+    )
+    result.stdout.fnmatch_lines("*should be a subset of example parameters [[]'eat', 'left', 'start'[]]*")
+
+
+def test_allow_outlined_parameters_not_a_subset_of_examples(testdir):
+    """Test parametrized scenario when the test function has a parameter set
+    which is not a subset of those in the examples table."""
+
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Scenario Outline: Outlined with wrong examples
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers in my <right> bucket
+
+                    Examples:
+                    | start | eat | left |
+                    |  12   |  5  |  7   |
+
+            """
+        ),
+    )
+    testdir.makeconftest(textwrap.dedent(STEPS))
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario, then
+        import pytest_bdd.parsers as parsers
+
+        @scenario("outline.feature", "Outlined with wrong examples", allow_step_free_variables=True)
+        def test_outline(request):
+            pass
+
+        @then(parsers.parse('I should have {left} cucumbers in my <right> bucket'))
+        def stepdef(left):
+            pass
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert_outcomes(result, passed=1)
+
+
+def test_allow_outlined_parameters_not_a_subset_of_examples_by_ini(testdir):
+    """Test parametrized scenario when the test function has a parameter set
+    which is not a subset of those in the examples table."""
+
+    testdir.makeini(
+        """
+            [pytest]
+            bdd_allow_step_free_variables=true
+        """
+    )
+
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Scenario Outline: Outlined with wrong examples
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers in my <right> bucket
+
+                    Examples:
+                    | start | eat | left |
+                    |  12   |  5  |  7   |
+
+            """
+        ),
+    )
+    testdir.makeconftest(textwrap.dedent(STEPS))
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario, then
+        import pytest_bdd.parsers as parsers
+
+        @scenario("outline.feature", "Outlined with wrong examples")
+        def test_outline(request):
+            pass
+
+        @then(parsers.parse('I should have {left} cucumbers in my <right> bucket'))
+        def stepdef(left):
+            pass
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert_outcomes(result, passed=1)
 
 
 def test_wrong_vertical_examples_scenario(testdir):

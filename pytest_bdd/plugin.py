@@ -44,7 +44,19 @@ def pytest_addoption(parser):
 
 
 def add_bdd_ini(parser):
-    parser.addini("bdd_features_base_dir", "Base features directory.")
+    parser.addini(name="bdd_features_base_dir", help="Base features directory.")
+    parser.addini(
+        name="bdd_allow_step_free_variables",
+        help="Allow use <parameters> not defined in examples. They will be skipped during parametrization",
+        type="bool",
+        default=False,
+    )
+    parser.addini(
+        name="bdd_allow_example_free_variables",
+        help="Allow use <parameters> not defined in steps. They will be skipped during parametrization",
+        type="bool",
+        default=True,
+    )
 
 
 @pytest.mark.trylast

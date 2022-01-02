@@ -401,7 +401,11 @@ class Step:
     def render(self, context: typing.Mapping[str, typing.Any]):
         def replacer(m: typing.Match):
             varname = m.group(1)
-            return str(context[varname])
+            try:
+                return str(context[varname])
+            except KeyError:
+                # Unavailability of varname is handled by bdd_allow_step_free_variables ini option
+                return f"<{varname}>"
 
         return STEP_PARAM_RE.sub(replacer, self.name)
 

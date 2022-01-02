@@ -13,7 +13,9 @@ test_publish_article = scenario(
 import collections
 import os
 import re
+import sys
 import typing
+from pathlib import Path
 
 import pytest
 from _pytest.fixtures import FixtureLookupError
@@ -219,18 +221,19 @@ def scenario(
     feature_name: str,
     scenario_name: str,
     *,
-    allow_example_free_variables=False,
-    allow_step_free_variables=True,
+    allow_example_free_variables: typing.Optional[typing.Any] = None,
+    allow_step_free_variables: typing.Optional[typing.Any] = None,
     encoding: str = "utf-8",
-    features_base_dir=None,
+    features_base_dir: typing.Optional[typing.Union[str, Path]] = None,
 ):
     """Scenario decorator.
 
-    :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
-    :param str scenario_name: Scenario name.
+    :param feature_name: Feature file name. Absolute or relative to the configured feature base path.
+    :param scenario_name: Scenario name.
     :param allow_example_free_variables: Examples could contain free(unused) variables
     :param allow_step_free_variables: Steps could contain free(unused) variables which could be taken from fixtures
-    :param str encoding: Feature file encoding.
+    :param encoding: Feature file encoding.
+    :param features_base_dir: Base directory to build features path
     """
 
     scenario_name = str(scenario_name)
@@ -239,13 +242,21 @@ def scenario(
     # Get the feature
     if features_base_dir is None:
         features_base_dir = get_features_base_dir(caller_module_path)
-    feature = get_feature(features_base_dir, feature_name, encoding=encoding)
+    feature = get_feature(str(features_base_dir), feature_name, encoding=encoding)
 
     # Get the scenario
     try:
         scenario = feature.scenarios[scenario_name]
-        scenario.allow_example_free_variables = allow_example_free_variables
-        scenario.allow_step_free_variables = allow_step_free_variables
+        scenario.allow_example_free_variables = (
+            allow_example_free_variables
+            if allow_example_free_variables is not None
+            else get_from_ini("bdd_allow_example_free_variables")
+        )
+        scenario.allow_step_free_variables = (
+            allow_step_free_variables
+            if allow_step_free_variables is not None
+            else get_from_ini("bdd_allow_step_free_variables")
+        )
 
     except KeyError:
         feature_name = feature.name or "[Empty]"
@@ -266,7 +277,7 @@ def get_features_base_dir(caller_module_path):
     return get_from_ini("bdd_features_base_dir", default_base_dir)
 
 
-def get_from_ini(key, default):
+def get_from_ini(key, default=None):
     """Get value from ini config. Return default if value has not been set.
 
     Use if the default value is dynamic. Otherwise set default on addini call.
@@ -307,12 +318,16 @@ def get_python_name_generator(name):
         suffix = f"_{index}"
 
 
-def scenarios(*feature_paths, allow_example_free_variables=False, allow_step_free_variables=True, **kwargs):
+class ScenarioKwargs(typing.TypedDict if sys.version_info >= (3, 8) else object):
+    allow_example_free_variables: typing.Optional[typing.Any]
+    allow_step_free_variables: typing.Optional[typing.Any]
+    features_base_dir: typing.Optional[typing.Union[str, Path]]
+
+
+def scenarios(*feature_paths: typing.Union[str, Path], **kwargs: ScenarioKwargs):
     """Parse features from the paths and put all found scenarios in the caller module.
 
-    :param *feature_paths: feature file paths to use for scenarios
-    :param allow_example_free_variables: Examples could contain free(unused) variables
-    :param allow_step_free_variables: Steps could contain free(unused) variables which could be taken from fixtures
+    :param feature_paths: feature file paths to use for scenarios
     """
     caller_locals = get_caller_module_locals()
     caller_path = get_caller_module_path()
@@ -324,7 +339,7 @@ def scenarios(*feature_paths, allow_example_free_variables=False, allow_step_fre
     abs_feature_paths = []
     for path in feature_paths:
         if not os.path.isabs(path):
-            path = os.path.abspath(os.path.join(features_base_dir, path))
+            path = os.path.abspath(os.path.join(str(features_base_dir), path))
         abs_feature_paths.append(path)
     found = False
 
@@ -339,13 +354,7 @@ def scenarios(*feature_paths, allow_example_free_variables=False, allow_step_fre
             # skip already bound scenarios
             if (scenario_object.feature.filename, scenario_name) not in module_scenarios:
 
-                @scenario(
-                    feature.filename,
-                    scenario_name,
-                    allow_example_free_variables=allow_example_free_variables,
-                    allow_step_free_variables=allow_step_free_variables,
-                    **kwargs,
-                )
+                @scenario(feature.filename, scenario_name, **kwargs)
                 def _scenario():
                     pass  # pragma: no cover
 
