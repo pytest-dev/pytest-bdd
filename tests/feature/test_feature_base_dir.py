@@ -1,7 +1,10 @@
 """Test feature base dir."""
+import pkg_resources
 import pytest
 
 NOT_EXISTING_FEATURE_PATHS = [".", "/does/not/exist/"]
+
+assert_outcomes_extra = pkg_resources.get_distribution("pytest").parsed_version >= pkg_resources.parse_version("7.0.0")
 
 
 @pytest.mark.parametrize("base_dir", NOT_EXISTING_FEATURE_PATHS)
@@ -10,7 +13,10 @@ def test_feature_path_not_found(testdir, base_dir):
     prepare_testdir(testdir, base_dir)
 
     result = testdir.runpytest("-k", "test_not_found_by_ini")
-    result.assert_outcomes(passed=2)
+    if assert_outcomes_extra:
+        result.assert_outcomes(passed=2, deselected=8)
+    else:
+        result.assert_outcomes(passed=2)
 
 
 def test_feature_path_ok(testdir):
@@ -18,7 +24,10 @@ def test_feature_path_ok(testdir):
     prepare_testdir(testdir, base_dir)
 
     result = testdir.runpytest("-k", "test_ok_by_ini")
-    result.assert_outcomes(passed=2)
+    if assert_outcomes_extra:
+        result.assert_outcomes(passed=2, deselected=8)
+    else:
+        result.assert_outcomes(passed=2)
 
 
 def test_feature_path_by_param_not_found(testdir):
@@ -28,7 +37,10 @@ def test_feature_path_by_param_not_found(testdir):
     prepare_testdir(testdir, base_dir)
 
     result = testdir.runpytest("-k", "test_not_found_by_param")
-    result.assert_outcomes(passed=4)
+    if assert_outcomes_extra:
+        result.assert_outcomes(passed=4, deselected=6)
+    else:
+        result.assert_outcomes(passed=4)
 
 
 @pytest.mark.parametrize("base_dir", NOT_EXISTING_FEATURE_PATHS)
@@ -38,7 +50,10 @@ def test_feature_path_by_param_ok(testdir, base_dir):
     prepare_testdir(testdir, base_dir)
 
     result = testdir.runpytest("-k", "test_ok_by_param")
-    result.assert_outcomes(passed=2)
+    if assert_outcomes_extra:
+        result.assert_outcomes(passed=2, deselected=8)
+    else:
+        result.assert_outcomes(passed=2)
 
 
 def prepare_testdir(testdir, ini_base_dir):

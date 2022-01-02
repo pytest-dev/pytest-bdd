@@ -1,5 +1,9 @@
 import textwrap
 
+import pkg_resources
+
+assert_outcomes_extra = pkg_resources.get_distribution("pytest").parsed_version >= pkg_resources.parse_version("7.0.0")
+
 
 def test_steps(testdir):
     testdir.makefile(
@@ -466,22 +470,35 @@ def test_step_trace(testdir):
     """
     )
     result = testdir.runpytest("-k test_when_fails_inline", "-vv")
-    result.assert_outcomes(failed=1)
+    if assert_outcomes_extra:
+        result.assert_outcomes(failed=1, deselected=3)
+    else:
+        result.assert_outcomes(failed=1)
+
     result.stdout.fnmatch_lines(["*test_when_fails_inline*FAILED"])
     assert "INTERNALERROR" not in result.stdout.str()
 
     result = testdir.runpytest("-k test_when_fails_decorated", "-vv")
-    result.assert_outcomes(failed=1)
+    if assert_outcomes_extra:
+        result.assert_outcomes(failed=1, deselected=3)
+    else:
+        result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["*test_when_fails_decorated*FAILED"])
     assert "INTERNALERROR" not in result.stdout.str()
 
     result = testdir.runpytest("-k test_when_not_found", "-vv")
-    result.assert_outcomes(failed=1)
+    if assert_outcomes_extra:
+        result.assert_outcomes(failed=1, deselected=3)
+    else:
+        result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["*test_when_not_found*FAILED"])
     assert "INTERNALERROR" not in result.stdout.str()
 
     result = testdir.runpytest("-k test_when_step_validation_error", "-vv")
-    result.assert_outcomes(failed=1)
+    if assert_outcomes_extra:
+        result.assert_outcomes(failed=1, deselected=3)
+    else:
+        result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["*test_when_step_validation_error*FAILED"])
     assert "INTERNALERROR" not in result.stdout.str()
 
