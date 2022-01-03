@@ -32,10 +32,9 @@ PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
-def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None):
+def find_argumented_step_fixture_name_and_step_alias_function(name, type_, fixturemanager):
     """Find argumented step fixture name."""
-    # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
-    for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
+    for fixturename, fixturedefs in fixturemanager._arg2fixturedefs.items():
         for fixturedef in fixturedefs:
             parser = getattr(fixturedef.func, "parser", None)
             if parser is None:
@@ -44,24 +43,13 @@ def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None)
             if not match:
                 continue
 
-            # TODO: maybe `converters` should be part of the SterParser.__init__(),
-            #  and used by StepParser.parse_arguments() method
-            converters = getattr(fixturedef.func, "converters", {})
-            for arg, value in parser.parse_arguments(name).items():
-                if arg in converters:
-                    value = converters[arg](value)
-                if request:
-                    inject_fixture(request, arg, value)
             parser_name = get_step_fixture_name(parser.name, type_)
-            if request:
-                try:
-                    request.getfixturevalue(parser_name)
-                except FixtureLookupError:
-                    continue
-            return parser_name
+            step_alias_func = fixturedef.func
+            return parser_name, step_alias_func
+    return None, None
 
 
-def _find_step_function(request, step, scenario):
+def _find_step_and_step_alias_function(request, step, scenario):
     """Match the step defined by the regular expression pattern.
 
     :param request: PyTest request object.
@@ -71,22 +59,24 @@ def _find_step_function(request, step, scenario):
     :return: Function of the step.
     :rtype: function
     """
-    name = step.name
     try:
-        # Simple case where no parser is used for the step
-        return request.getfixturevalue(get_step_fixture_name(name, step.type))
+        name, fixture = find_argumented_step_fixture_name_and_step_alias_function(
+            step.name, step.type, request._fixturemanager
+        )
+        return request.getfixturevalue(name), fixture
     except FixtureLookupError:
-        try:
-            # Could not find a fixture with the same name, let's see if there is a parser involved
-            name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager, request)
-            if name:
-                return request.getfixturevalue(name)
-            raise
-        except FixtureLookupError:
-            raise exceptions.StepDefinitionNotFoundError(
-                f"Step definition is not found: {step}. "
-                f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
-            )
+        raise exceptions.StepDefinitionNotFoundError(
+            f"Step definition is not found: {step}. "
+            f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
+        )
+
+
+def _inject_step_fixtures(request, step, parser, converters):
+    # TODO: maybe `converters` should be part of the SterParser.__init__(),
+    #  and used by StepParser.parse_arguments() method
+    for arg, value in parser.parse_arguments(step.name).items():
+        converted_value = converters.get(arg, lambda _: _)(value)
+        inject_fixture(request, arg, converted_value)
 
 
 def _execute_step_function(request, scenario, step, step_func):
@@ -135,12 +125,13 @@ def _execute_scenario(feature: "Feature", scenario: "Scenario", request):
         # Execute scenario steps
         for step in scenario.steps:
             try:
-                step_func = _find_step_function(request, step, scenario)
+                step_func, step_alias_func = _find_step_and_step_alias_function(request, step, scenario)
             except exceptions.StepDefinitionNotFoundError as exception:
                 request.config.hook.pytest_bdd_step_func_lookup_error(
                     request=request, feature=feature, scenario=scenario, step=step, exception=exception
                 )
                 raise
+            _inject_step_fixtures(request, step, step_alias_func.parser, step_func.converters)
             _execute_step_function(request, scenario, step, step_func)
     finally:
         request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
