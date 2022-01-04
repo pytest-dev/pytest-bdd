@@ -36,9 +36,9 @@ class GherkinTerminalReporter(TerminalReporter):
     def __init__(self, config):
         super().__init__(config)
 
-    def _write_tags(self, tags: list, prefix: str = ''):
-        tags_string = ', '.join(tags)
-        return prefix + '(' + tags_string + ')'
+    def _write_tags(self, tags: list, prefix: str = ""):
+        tags_string = ", ".join(tags)
+        return prefix + "(" + tags_string + ")"
 
     def pytest_runtest_logreport(self, report):
         rep = report
@@ -85,7 +85,7 @@ class GherkinTerminalReporter(TerminalReporter):
                 self._tw.write("Feature: ", **feature_markup)
                 self._tw.write(report.scenario["feature"]["name"], **feature_markup)
                 self._tw.write("\n")
-                self._tw.write(self._write_tags(prefix='    ', tags=report.scenario["tags"]), **tag_markup)
+                self._tw.write(self._write_tags(prefix="    ", tags=report.scenario["tags"]), **tag_markup)
                 self._tw.write("\n")
                 self._tw.write("    Scenario: ", **scenario_markup)
                 self._tw.write(report.scenario["name"], **scenario_markup)
