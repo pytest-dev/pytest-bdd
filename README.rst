@@ -533,13 +533,13 @@ pytest-bdd feature file format also supports example tables in different way:
             When I eat <eat> cucumbers
             Then I should have <left> cucumbers
 
-            Examples: Vertical
+            Examples Rows:
             | start | 12 | 2 |
             | eat   | 5  | 1 |
             | left  | 7  | 1 |
 
 This form allows to have tables with lots of columns keeping the maximum text width predictable without significant
-readability change.
+readability change. "Examples: Vertical" legacy header also could be used, but will be removed in future
 
 The code will look like:
 

@@ -19,7 +19,8 @@ COMMENT_RE = re.compile(r"(^|(?<=\s))#")
 STEP_PREFIXES = [
     ("Feature: ", types.FEATURE),
     ("Scenario Outline: ", types.SCENARIO_OUTLINE),
-    ("Examples: Vertical", types.EXAMPLES_VERTICAL),
+    ("Examples: Vertical", types.EXAMPLES_VERTICAL_LEGACY),
+    ("Examples Rows:", types.EXAMPLES_ROWS),
     ("Examples:", types.EXAMPLES),
     ("Scenario: ", types.SCENARIO),
     ("Background:", types.BACKGROUND),
@@ -151,7 +152,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
                     filename,
                 )
 
-        prev_mode = mode
+        prev_prev_mode, prev_mode = prev_mode, mode
 
         # Remove Feature, Given, When, Then, And
         keyword, parsed_line = parse_line(clean_line)
@@ -169,8 +170,10 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
             obj.examples.add_example_table(ExampleTableColumns)
             obj.examples.last_example_table.name = example_table_name or None
             obj.examples.last_example_table.line_number = line_number
-        elif mode == types.EXAMPLES_VERTICAL:  # Deprecated; Has to be removed in future versions
-            mode = types.EXAMPLE_LINE_VERTICAL
+        elif (
+            mode == types.EXAMPLES_ROWS or mode == types.EXAMPLES_VERTICAL_LEGACY
+        ):  # Deprecated; Has to be removed in future versions
+            mode = types.EXAMPLE_LINE_ROW
             _, example_table_name = parse_line(clean_line)
             obj = scenario or feature
             obj.examples.add_example_table(ExampleTableRows)
@@ -182,7 +185,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
         elif mode == types.EXAMPLE_LINE:
             example_table: ExampleTableColumns = (scenario or feature).examples.last_example_table
             example_table.examples += [list(split_line(stripped_line))]
-        elif mode == types.EXAMPLE_LINE_VERTICAL:
+        elif mode == types.EXAMPLE_LINE_ROW:
             example_table: ExampleTableRows = (scenario or feature).examples.last_example_table
             try:
                 param, *examples = split_line(stripped_line)

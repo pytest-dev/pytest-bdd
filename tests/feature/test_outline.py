@@ -219,8 +219,10 @@ def test_outlined_with_other_fixtures(testdir):
 @pytest.mark.parametrize(
     "examples_header",
     (
-        pytest.param("Examples: Vertical", id="non_named"),
-        pytest.param("Examples: Vertical Named", id="named"),
+        pytest.param("Examples Rows:", id="modern_non_named"),
+        pytest.param("Examples Rows: Named", id="modern_named"),
+        pytest.param("Examples: Vertical", id="legacy_non_named"),
+        pytest.param("Examples: Vertical Named", id="legacy_named"),
     ),
 )
 def test_vertical_example(testdir, examples_header):

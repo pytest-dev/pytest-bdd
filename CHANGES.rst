@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Unreleased
+----------
+Introduced new syntax for row-oriented Examples: "Examples Rows"
+
 5.0.0
 -----
 This release introduces breaking changes, please refer to the :ref:`Migration from 4.x.x`.
