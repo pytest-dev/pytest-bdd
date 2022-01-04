@@ -36,6 +36,10 @@ class GherkinTerminalReporter(TerminalReporter):
     def __init__(self, config):
         super().__init__(config)
 
+    def _write_tags(self, tags: list, prefix: str = ''):
+        tags_string = ', '.join(tags)
+        return prefix + '(' + tags_string + ')'
+
     def pytest_runtest_logreport(self, report):
         rep = report
         res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
@@ -56,6 +60,7 @@ class GherkinTerminalReporter(TerminalReporter):
                 word_markup = {"yellow": True}
         feature_markup = {"blue": True}
         scenario_markup = word_markup
+        tag_markup = {"yellow": True}
 
         if self.verbosity <= 0:
             return super().pytest_runtest_logreport(rep)
@@ -75,8 +80,12 @@ class GherkinTerminalReporter(TerminalReporter):
         elif self.verbosity > 1:
             if hasattr(report, "scenario"):
                 self.ensure_newline()
+                self._tw.write(self._write_tags(report.scenario["feature"]["tags"]), **tag_markup)
+                self._tw.write("\n")
                 self._tw.write("Feature: ", **feature_markup)
                 self._tw.write(report.scenario["feature"]["name"], **feature_markup)
+                self._tw.write("\n")
+                self._tw.write(self._write_tags(prefix='    ', tags=report.scenario["tags"]), **tag_markup)
                 self._tw.write("\n")
                 self._tw.write("    Scenario: ", **scenario_markup)
                 self._tw.write(report.scenario["name"], **scenario_markup)
