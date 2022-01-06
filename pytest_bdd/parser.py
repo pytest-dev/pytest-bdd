@@ -7,7 +7,7 @@ from itertools import chain, product
 from typing import List, Type
 
 import pytest
-from attr import attrs, attrib, Factory
+from attr import Factory, attrib, attrs
 
 from . import exceptions, types
 

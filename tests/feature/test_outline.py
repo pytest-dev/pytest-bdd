@@ -368,7 +368,7 @@ def test_multi_outlined(testdir):
                     Examples:
                     | start | eat | left |
                     |  12   |  5  |  7   | # a comment
- 
+
                     Examples: Vertical
                     | start | 5 |
                     | eat   | 4 |
@@ -453,13 +453,13 @@ def test_multi_outlined_empty_examples(testdir):
                 Examples:
 
                 Examples: Vertical
-                
+
                 Examples:
                 |
 
                 Examples: Vertical
                 |
-                
+
                 Scenario Outline: Outlined given, when, thens
                     Given there are 12 apples
                     When I eat 5 apples
@@ -499,7 +499,7 @@ def test_multi_outlined_feature_with_parameter_union(testdir):
                 Examples:
                 | start | eat | left |
                 |  12   |  5  |  7   |
-                
+
                 Examples: Vertical
                 | start | 5 |
                 | eat   | 4 |
@@ -542,7 +542,7 @@ def test_multi_outlined_scenario_and_feature_with_parameter_union(testdir):
                 Examples:
                 | start | eat | left |
                 |  12   |  5  |  7   |
-                
+
                 Examples: Vertical
                 | start | 5 |
                 | eat   | 4 |
@@ -588,7 +588,7 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_one_parameter(test
                 | start | eat | left |
                 |  12   |  5  |  7   |
                 |   5   |  4  |  1   |
-                
+
 
                 Scenario Outline: Outlined given, when, thens
                     Given there are <start> <fruits>
@@ -628,7 +628,7 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter(te
                 | apples    |  12   |  9  |  3   |  # not joined by <eat> <left>
                 | oranges   |   5   |  4  |  1   |
                 | cucumbers |   8   |  3  |  5   |  # not joined by <eat> <left>
-                
+
 
                 Scenario Outline: Outlined given, when, thens
                     Given there are <start> <fruits>
@@ -684,13 +684,13 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter_un
                     | fruits    | eat | left |
                     | apples    |  5  |  7   |
                     | oranges   |  4  |  1   |
-                    | cucumbers |  5  |  7   | 
+                    | cucumbers |  5  |  7   |
 
                     Examples:
                     | fruits     |
                     | pineapples |
                     | peaches    |
-                     
+
             """
         ),
     )
@@ -711,7 +711,7 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter_un
     # fmt: on
 
 
-@pytest.mark.xfail(reason='https://github.com/pytest-dev/pytest-bdd/pull/439')
+@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/pull/439")
 def test_outlined_scenario_and_feature_with_insufficient_parameter_join(testdir):
     testdir.makefile(
         ".feature",
@@ -732,12 +732,12 @@ def test_outlined_scenario_and_feature_with_insufficient_parameter_join(testdir)
                     | eat | left |
                     |  5  |  7   |
                     |  4  |  1   |
-                    
+
                     Examples:
                     | fruits     | start |
                     | pineapples |   12  |
                     | peaches    |   10  |
-                     
+
             """
         ),
     )
@@ -747,7 +747,7 @@ def test_outlined_scenario_and_feature_with_insufficient_parameter_join(testdir)
     result.assert_outcomes(passed=0)
 
 
-@pytest.mark.xfail(reason='https://github.com/pytest-dev/pytest-bdd/pull/439')
+@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/pull/439")
 def test_outlined_scenario_and_feature_with_extra_parameter_join(testdir):
     testdir.makefile(
         ".feature",
@@ -777,7 +777,7 @@ def test_outlined_scenario_and_feature_with_extra_parameter_join(testdir):
     result.assert_outcomes(passed=0)
 
 
-@pytest.mark.xfail(reason='https://github.com/pytest-dev/pytest-bdd/pull/439')
+@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/pull/439")
 def test_outlined_scenario_and_feature_with_combine_extra_and_insufficient_parameter_join(testdir):
     testdir.makefile(
         ".feature",
