@@ -34,7 +34,7 @@ def given_beautiful_article(article):
     pass
 
 """
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 import pytest
 from _pytest.fixtures import FixtureDef
