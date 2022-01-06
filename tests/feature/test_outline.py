@@ -352,7 +352,6 @@ def test_wrong_vertical_examples_feature(testdir):
     )
 
 
-@pytest.mark.xfail
 def test_multi_outlined(testdir):
     testdir.makefile(
         ".feature",
@@ -442,7 +441,6 @@ def test_outlined_feature(testdir):
     # fmt: on
 
 
-@pytest.mark.xfail
 def test_multi_outlined_empty_examples(testdir):
     testdir.makefile(
         ".feature",
@@ -489,7 +487,6 @@ def test_multi_outlined_empty_examples(testdir):
     # fmt: on
 
 
-@pytest.mark.xfail
 def test_multi_outlined_feature_with_parameter_union(testdir):
     testdir.makefile(
         ".feature",
@@ -533,7 +530,6 @@ def test_multi_outlined_feature_with_parameter_union(testdir):
     # fmt: on
 
 
-@pytest.mark.xfail
 def test_multi_outlined_scenario_and_feature_with_parameter_union(testdir):
     testdir.makefile(
         ".feature",
@@ -579,7 +575,6 @@ def test_multi_outlined_scenario_and_feature_with_parameter_union(testdir):
     # fmt: on
 
 
-@pytest.mark.xfail
 def test_outlined_scenario_and_feature_with_parameter_join_by_one_parameter(testdir):
     testdir.makefile(
         ".feature",
@@ -618,7 +613,6 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_one_parameter(test
     # fmt: on
 
 
-@pytest.mark.xfail
 def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter(testdir):
     testdir.makefile(
         ".feature",
@@ -660,7 +654,6 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter(te
     # fmt: on
 
 
-@pytest.mark.xfail
 def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter_unbalanced(testdir):
     testdir.makefile(
         ".feature",

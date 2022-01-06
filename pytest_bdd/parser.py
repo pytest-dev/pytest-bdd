@@ -3,9 +3,16 @@ import re
 import textwrap
 import typing
 from collections import OrderedDict
+from itertools import chain, product
+from typing import List, Type
+
+import pytest
+from attr import attrs, attrib, Factory
 
 from . import exceptions, types
 
+if typing.TYPE_CHECKING:
+    from _pytest.mark import ParameterSet
 SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
 COMMENT_RE = re.compile(r"(^|(?<=\s))#")
@@ -157,34 +164,48 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
             feature.background = Background(feature=feature, line_number=line_number)
         elif mode == types.EXAMPLES:
             mode = types.EXAMPLES_HEADERS
-            (scenario or feature).examples.line_number = line_number
-        elif mode == types.EXAMPLES_VERTICAL:
+            _, example_table_name = parse_line(clean_line)
+            obj = scenario or feature
+            obj.examples.add_example_table(ExampleTableColumns)
+            obj.examples.last_example_table.name = example_table_name or None
+            obj.examples.last_example_table.line_number = line_number
+        elif mode == types.EXAMPLES_VERTICAL:  # Deprecated; Has to be removed in future versions
             mode = types.EXAMPLE_LINE_VERTICAL
-            (scenario or feature).examples.line_number = line_number
+            _, example_table_name = parse_line(clean_line)
+            obj = scenario or feature
+            obj.examples.add_example_table(ExampleTableRows)
+            obj.examples.last_example_table.name = example_table_name or None
+            obj.examples.last_example_table.line_number = line_number
         elif mode == types.EXAMPLES_HEADERS:
-            (scenario or feature).examples.set_param_names([l for l in split_line(parsed_line) if l])
+            (scenario or feature).examples.last_example_table.example_params = [l for l in split_line(parsed_line) if l]
             mode = types.EXAMPLE_LINE
         elif mode == types.EXAMPLE_LINE:
-            (scenario or feature).examples.add_example([l for l in split_line(stripped_line)])
+            example_table: ExampleTableColumns = (scenario or feature).examples.last_example_table
+            example_table.examples += [list(split_line(stripped_line))]
         elif mode == types.EXAMPLE_LINE_VERTICAL:
-            param_line_parts = [l for l in split_line(stripped_line)]
+            example_table: ExampleTableRows = (scenario or feature).examples.last_example_table
             try:
-                (scenario or feature).examples.add_example_row(param_line_parts[0], param_line_parts[1:])
-            except exceptions.ExamplesNotValidError as exc:
-                if scenario:
-                    raise exceptions.FeatureError(
-                        f"Scenario has not valid examples. {exc.args[0]}",
-                        line_number,
-                        clean_line,
-                        filename,
-                    )
-                else:
-                    raise exceptions.FeatureError(
-                        f"Feature has not valid examples. {exc.args[0]}",
-                        line_number,
-                        clean_line,
-                        filename,
-                    )
+                param, *examples = split_line(stripped_line)
+            except ValueError:
+                pass
+            else:
+                try:
+                    example_table.add_example_row(param, examples)
+                except exceptions.ExamplesNotValidError as exc:
+                    if scenario:
+                        raise exceptions.FeatureError(
+                            f"Scenario has not valid examples. {exc.args[0]}",
+                            line_number,
+                            clean_line,
+                            filename,
+                        )
+                    else:
+                        raise exceptions.FeatureError(
+                            f"Feature has not valid examples. {exc.args[0]}",
+                            line_number,
+                            clean_line,
+                            filename,
+                        )
         elif mode and mode not in (types.FEATURE, types.TAG):
             step = Step(name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword)
             if feature.background and not scenario:
@@ -258,13 +279,29 @@ class ScenarioTemplate:
         ]
         return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
 
+    @property
+    def example_parametrizations(self) -> "typing.Optional[typing.List[ParameterSet]]":
+        feature_scenario_examples_combinations = product(self.feature.examples, self.examples)
+
+        def examples():
+            for feature_examples, scenario_examples in feature_scenario_examples_combinations:
+                common_param_names = set(feature_examples.keys()).intersection(scenario_examples.keys())
+                if all(
+                    feature_examples[param_name] == scenario_examples[param_name] for param_name in common_param_names
+                ):
+                    result = {**feature_examples, **scenario_examples}
+                    if result != {}:
+                        yield result
+
+        return [pytest.param(example, id="-".join(example.values())) for example in examples()]
+
     def validate(self):
         """Validate the scenario.
 
         :raises ScenarioValidationError: when scenario is not valid
         """
         params = frozenset(sum((list(step.params) for step in self.steps), []))
-        example_params = set(self.examples.example_params + self.feature.examples.example_params)
+        example_params = set(self.examples.example_params).union(self.feature.examples.example_params)
         if params and example_params and params != example_params:
             raise exceptions.ScenarioExamplesNotValidError(
                 """Scenario "{}" in the feature "{}" has not valid examples. """
@@ -384,31 +421,55 @@ class Background:
         self.steps.append(step)
 
 
+@attrs
 class Examples:
+    example_tables: List["ExampleTable"] = attrib(default=Factory(list))
 
+    def add_example_table(self, builder: Type["ExampleTable"]):
+        self.example_tables.append(builder())
+
+    @property
+    def last_example_table(self) -> "ExampleTable":
+        return self.example_tables[-1]
+
+    def __iter__(self) -> typing.Iterable[typing.Dict[str, typing.Any]]:
+        if any(self.example_tables):
+            yield from chain.from_iterable(self.example_tables)
+        else:
+            # We must make sure that we always have at least one element, otherwise
+            # examples cartesian product will be empty
+            yield {}
+
+    @property
+    def example_params(self):
+        return set(chain.from_iterable(set(table.example_params) for table in self.example_tables))
+
+
+@attrs
+class ExampleTable:
     """Example table."""
 
-    def __init__(self):
-        """Initialize examples instance."""
-        self.example_params = []
-        self.examples = []
-        self.vertical_examples = []
-        self.line_number = None
-        self.name = None
+    examples: list
+    example_params = attrib(default=Factory(list))
 
-    def set_param_names(self, keys):
-        """Set parameter names.
+    line_number = attrib(default=None)
+    name = attrib(default=None)
+    tags = attrib(default=Factory(list))
 
-        :param names: `list` of `string` parameter names.
-        """
-        self.example_params = [str(key) for key in keys]
+    def __iter__(self) -> typing.Iterable[typing.Dict[str, typing.Any]]:
+        examples = self.examples
+        for example in examples:
+            assert len(self.example_params) == len(example)
+            yield dict(zip(self.example_params, example))
 
-    def add_example(self, values):
-        """Add example.
+    def __bool__(self):
+        """Bool comparison."""
+        return bool(self.examples)
 
-        :param values: `list` of `string` parameter values.
-        """
-        self.examples.append(values)
+
+@attrs
+class ExampleTableRows(ExampleTable):
+    example_param_values = attrib(default=Factory(list))
 
     def add_example_row(self, param, values):
         """Add example row.
@@ -421,30 +482,16 @@ class Examples:
                 f"""Example rows should contain unique parameters. "{param}" appeared more than once"""
             )
         self.example_params.append(param)
-        self.vertical_examples.append(values)
+        self.example_param_values.append(values)
 
-    def as_contexts(self) -> typing.Iterable[typing.Dict[str, typing.Any]]:
-        param_count = len(self.example_params)
-        if self.vertical_examples and not self.examples:
-            for value_index in range(len(self.vertical_examples[0])):
-                example = []
-                for param_index in range(param_count):
-                    example.append(self.vertical_examples[param_index][value_index])
-                self.examples.append(example)
+    @property
+    def examples(self):
+        return list(zip(*self.example_param_values))
 
-        if not self.examples:
-            return
 
-        header, rows = self.example_params, self.examples
-
-        for row in rows:
-            assert len(header) == len(row)
-
-            yield dict(zip(header, row))
-
-    def __bool__(self):
-        """Bool comparison."""
-        return bool(self.vertical_examples or self.examples)
+@attrs
+class ExampleTableColumns(ExampleTable):
+    examples = attrib(default=Factory(list))
 
 
 def get_tags(line):
