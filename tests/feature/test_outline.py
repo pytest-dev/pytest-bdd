@@ -860,7 +860,7 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter_un
                     | fruits    | eat | left |
                     | apples    |  5  |  7   |
                     | oranges   |  4  |  1   |
-                    | cucumbers |  5  |  7   | 
+                    | cucumbers |  5  |  7   |
 
                     Examples:
                     | fruits     |
