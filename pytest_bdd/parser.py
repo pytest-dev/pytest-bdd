@@ -183,17 +183,21 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
                 message = f"{node_message_prefix} has not valid examples. {exc.args[0]}"
                 raise exceptions.FeatureError(message, line_number, clean_line, filename) from exc
         elif mode == types.EXAMPLE_LINE_VERTICAL:
-            param, *examples = split_line(stripped_line)
             try:
-                build_example_table: ExampleTableRows
-                build_example_table.example_params += [param]
-                build_example_table.examples_transposed += [examples]
-                validate(build_example_table)
-            except exceptions.ExamplesNotValidError as exc:
-                message = "{node} has not valid examples. {original_message}".format(
-                    node="Scenario" if scenario else "Feature", original_message=exc.args[0]
-                )
-                raise exceptions.FeatureError(message, line_number, clean_line, filename) from exc
+                param, *examples = split_line(stripped_line)
+            except ValueError:
+                pass
+            else:
+                try:
+                    build_example_table: ExampleTableRows
+                    build_example_table.example_params += [param]
+                    build_example_table.examples_transposed += [examples]
+                    validate(build_example_table)
+                except exceptions.ExamplesNotValidError as exc:
+                    message = "{node} has not valid examples. {original_message}".format(
+                        node="Scenario" if scenario else "Feature", original_message=exc.args[0]
+                    )
+                    raise exceptions.FeatureError(message, line_number, clean_line, filename) from exc
         elif mode and mode not in (types.FEATURE, types.TAG):
             step = Step(name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword)
             if feature.background and not scenario:

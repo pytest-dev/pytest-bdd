@@ -539,7 +539,6 @@ def test_multi_outlined(testdir):
     # fmt: on
 
 
-@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/issues/480")
 def test_multi_outlined_empty_examples(testdir):
     testdir.makefile(
         ".feature",
