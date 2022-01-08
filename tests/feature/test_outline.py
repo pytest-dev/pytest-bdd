@@ -884,3 +884,118 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter_un
         5, 'oranges', 4.0, 'oranges', '1', 'oranges'
     ]
     # fmt: on
+
+
+@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/pull/439")
+def test_outlined_scenario_and_feature_with_insufficient_parameter_join(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Examples:
+                | fruits    |
+                | apples    |
+                | oranges   |
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are <start> <fruits>
+                    When I eat <eat> <fruits>
+                    Then I should have <left> <fruits>
+
+                    Examples:
+                    | eat | left |
+                    |  5  |  7   |
+                    |  4  |  1   |
+
+                    Examples:
+                    | fruits     | start |
+                    | pineapples |   12  |
+                    | peaches    |   10  |
+
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=0)
+
+
+@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/pull/439")
+def test_outlined_scenario_and_feature_with_extra_parameter_join(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Examples:
+                | fruits    | extra      |
+                | apples    | not used   |
+                | oranges   | not needed |
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are <start> <fruits>
+                    When I eat <eat> <fruits>
+                    Then I should have <left> <fruits>
+
+                    Examples:
+                    | start | eat | left |
+                    |   12  |  5  |  7   |
+                    |    5  |  4  |  1   |
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=0)
+
+
+@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/pull/439")
+def test_outlined_scenario_and_feature_with_combine_extra_and_insufficient_parameter_join(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Examples:
+                | fruits    | extra      |
+                | apples    | not used   |
+                | oranges   | not needed |
+
+                Examples:
+                | fruits    |
+                | cucumbers |
+                | peaches   |
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are <start> <fruits>
+                    When I eat <eat> <fruits>
+                    Then I should have <left> <fruits>
+
+                    Examples:
+                    | start | eat | left |
+                    |   12  |  5  |  7   |
+                    |    5  |  4  |  1   |
+
+                    Examples:
+                    | eat | left |
+                    |  8  |  6   |
+                    |  9  |  5   |
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=4)
+    parametrizations = collect_dumped_objects(result)
+    # fmt: off
+    assert parametrizations == [
+        12, "cucumbers", 5.0, "cucumbers", "7", "cucumbers",
+        12, "peaches", 5.0, "peaches", "7", "peaches",
+        5, "cucumbers", 4.0, "cucumbers", "1", "cucumbers",
+        5, "peaches", 4.0, "peaches", "1", "peaches",
+    ]
+    # fmt: on
