@@ -1,8 +1,6 @@
 """Test scenario reporting."""
 import textwrap
 
-import pytest
-
 
 class OfType:
     """Helper object comparison to which is always 'equal'."""
@@ -256,10 +254,8 @@ def test_step_trace(testdir):
     assert report == expected
 
 
-def test_complex_types(testdir, pytestconfig):
+def test_complex_types(testdir):
     """Test serialization of the complex types."""
-    if not pytestconfig.pluginmanager.has_plugin("xdist"):
-        pytest.skip("Execnet not installed")
 
     import execnet.gateway_base
 

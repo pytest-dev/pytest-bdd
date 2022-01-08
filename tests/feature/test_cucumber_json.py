@@ -3,6 +3,8 @@ import json
 import os.path
 import textwrap
 
+from deepdiff import DeepDiff
+
 
 def runandparse(testdir, *args):
     """Run tests in testdir and parse json output."""
@@ -225,4 +227,4 @@ def test_step_trace(testdir):
         }
     ]
 
-    assert jsonobject == expected
+    assert DeepDiff(jsonobject, expected, ignore_order=True, report_repetition=True)

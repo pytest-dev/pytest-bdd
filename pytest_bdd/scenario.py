@@ -24,8 +24,6 @@ from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if typing.TYPE_CHECKING:
-    from _pytest.mark.structures import ParameterSet
-
     from .parser import Feature, Scenario, ScenarioTemplate
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
@@ -175,8 +173,8 @@ def _get_scenario_decorator(
             fixture_values = [request.getfixturevalue(arg) for arg in args]
             return fn(*fixture_values)
 
-        example_parametrizations = collect_example_parametrizations(templated_scenario)
-        if example_parametrizations is not None:
+        example_parametrizations = templated_scenario.example_parametrizations
+        if example_parametrizations:
             # Parametrize the scenario outlines
             scenario_wrapper = pytest.mark.parametrize(
                 "_pytest_bdd_example",
@@ -192,27 +190,6 @@ def _get_scenario_decorator(
         return scenario_wrapper
 
     return decorator
-
-
-def collect_example_parametrizations(
-    templated_scenario: "ScenarioTemplate",
-) -> "typing.Optional[typing.List[ParameterSet]]":
-    # We need to evaluate these iterators and store them as lists, otherwise
-    # we won't be able to do the cartesian product later (the second iterator will be consumed)
-    feature_contexts = list(templated_scenario.feature.examples.as_contexts())
-    scenario_contexts = list(templated_scenario.examples.as_contexts())
-
-    contexts = [
-        {**feature_context, **scenario_context}
-        # We must make sure that we always have at least one element in each list, otherwise
-        # the cartesian product will result in an empty list too, even if one of the 2 sets
-        # is non empty.
-        for feature_context in feature_contexts or [{}]
-        for scenario_context in scenario_contexts or [{}]
-    ]
-    if contexts == [{}]:
-        return None
-    return [pytest.param(context, id="-".join(context.values())) for context in contexts]
 
 
 def scenario(feature_name: str, scenario_name: str, encoding: str = "utf-8", features_base_dir=None):

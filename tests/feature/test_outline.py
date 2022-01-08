@@ -489,7 +489,6 @@ def test_outline_with_escaped_pipes(testdir):
     ]
 
 
-@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/issues/479")
 def test_multi_outlined(testdir):
     testdir.makefile(
         ".feature",
@@ -540,7 +539,6 @@ def test_multi_outlined(testdir):
     # fmt: on
 
 
-@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/issues/479")
 def test_multi_outlined_feature_with_parameter_union(testdir):
     testdir.makefile(
         ".feature",
@@ -584,7 +582,6 @@ def test_multi_outlined_feature_with_parameter_union(testdir):
     # fmt: on
 
 
-@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/issues/479")
 def test_multi_outlined_scenario_and_feature_with_parameter_union(testdir):
     testdir.makefile(
         ".feature",
