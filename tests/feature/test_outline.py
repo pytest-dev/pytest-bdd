@@ -122,87 +122,6 @@ def test_wrongly_outlined(testdir):
     result.stdout.fnmatch_lines("*should match set of example values [[]'eat', 'left', 'start', 'unknown_param'[]].*")
 
 
-def test_wrong_vertical_examples_scenario(testdir):
-    """Test parametrized scenario vertical example table has wrong format."""
-    testdir.makefile(
-        ".feature",
-        outline=textwrap.dedent(
-            """\
-            Feature: Outline
-                Scenario Outline: Outlined with wrong vertical example table
-                    Given there are <start> cucumbers
-                    When I eat <eat> cucumbers
-                    Then I should have <left> cucumbers
-
-                    Examples: Vertical
-                    | start | 12 | 2 |
-                    | start | 10 | 1 |
-                    | left  | 7  | 1 |
-            """
-        ),
-    )
-    testdir.makeconftest(textwrap.dedent(STEPS))
-
-    testdir.makepyfile(
-        textwrap.dedent(
-            """\
-        from pytest_bdd import scenario
-
-        @scenario("outline.feature", "Outlined with wrong vertical example table")
-        def test_outline(request):
-            pass
-        """
-        )
-    )
-    result = testdir.runpytest()
-    assert_outcomes(result, errors=1)
-    result.stdout.fnmatch_lines(
-        "*Scenario has not valid examples. Example rows should contain unique parameters. "
-        '"start" appeared more than once.*'
-    )
-
-
-def test_wrong_vertical_examples_feature(testdir):
-    """Test parametrized feature vertical example table has wrong format."""
-    testdir.makefile(
-        ".feature",
-        outline=textwrap.dedent(
-            """\
-            Feature: Outlines
-
-                Examples: Vertical
-                | start | 12 | 2 |
-                | start | 10 | 1 |
-                | left  | 7  | 1 |
-
-                Scenario Outline: Outlined with wrong vertical example table
-                    Given there are <start> cucumbers
-                    When I eat <eat> cucumbers
-                    Then I should have <left> cucumbers
-            """
-        ),
-    )
-    testdir.makeconftest(textwrap.dedent(STEPS))
-
-    testdir.makepyfile(
-        textwrap.dedent(
-            """\
-        from pytest_bdd import scenario
-
-        @scenario("outline.feature", "Outlined with wrong vertical example table")
-        def test_outline(request):
-            pass
-        """
-        )
-    )
-    result = testdir.runpytest()
-    assert_outcomes(result, errors=1)
-    result.stdout.fnmatch_lines(
-        "*Feature has not valid examples. Example rows should contain unique parameters. "
-        '"start" appeared more than once.*'
-    )
-
-
 def test_outlined_with_other_fixtures(testdir):
     """Test outlined scenario also using other parametrized fixture."""
     testdir.makefile(
@@ -298,6 +217,87 @@ def test_vertical_example(testdir):
         2, 1.0, "1",
     ]
     # fmt: on
+
+
+def test_wrong_vertical_examples_scenario(testdir):
+    """Test parametrized scenario vertical example table has wrong format."""
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Scenario Outline: Outlined with wrong vertical example table
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers
+
+                    Examples: Vertical
+                    | start | 12 | 2 |
+                    | start | 10 | 1 |
+                    | left  | 7  | 1 |
+            """
+        ),
+    )
+    testdir.makeconftest(textwrap.dedent(STEPS))
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario
+
+        @scenario("outline.feature", "Outlined with wrong vertical example table")
+        def test_outline(request):
+            pass
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert_outcomes(result, errors=1)
+    result.stdout.fnmatch_lines(
+        "*Scenario has not valid examples. Example rows should contain unique parameters. "
+        '"start" appeared more than once.*'
+    )
+
+
+def test_wrong_vertical_examples_feature(testdir):
+    """Test parametrized feature vertical example table has wrong format."""
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outlines
+
+                Examples: Vertical
+                | start | 12 | 2 |
+                | start | 10 | 1 |
+                | left  | 7  | 1 |
+
+                Scenario Outline: Outlined with wrong vertical example table
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers
+            """
+        ),
+    )
+    testdir.makeconftest(textwrap.dedent(STEPS))
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario
+
+        @scenario("outline.feature", "Outlined with wrong vertical example table")
+        def test_outline(request):
+            pass
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert_outcomes(result, errors=1)
+    result.stdout.fnmatch_lines(
+        "*Feature has not valid examples. Example rows should contain unique parameters. "
+        '"start" appeared more than once.*'
+    )
 
 
 def test_outlined_feature(testdir):
