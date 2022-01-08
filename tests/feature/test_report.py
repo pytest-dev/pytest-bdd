@@ -1,7 +1,7 @@
 """Test scenario reporting."""
 import textwrap
 
-import pytest
+import execnet.gateway_base
 
 
 class OfType:
@@ -171,7 +171,9 @@ def test_step_trace(testdir):
     }
     assert report == expected
 
-    report = result.matchreport("test_outlined[12-5-7]", when="call").scenario
+    report = result.matchreport(
+        "test_outlined[[Scenario:Outlined:line_no:14]>[Examples:[Empty]:line_no:19]>[Row:0]:12-5-7]", when="call"
+    ).scenario
     expected = {
         "feature": {
             "description": "",
@@ -213,7 +215,9 @@ def test_step_trace(testdir):
     }
     assert report == expected
 
-    report = result.matchreport("test_outlined[5-4-1]", when="call").scenario
+    report = result.matchreport(
+        "test_outlined[[Scenario:Outlined:line_no:14]>[Examples:[Empty]:line_no:19]>[Row:1]:5-4-1]", when="call"
+    ).scenario
     expected = {
         "feature": {
             "description": "",
@@ -258,10 +262,6 @@ def test_step_trace(testdir):
 
 def test_complex_types(testdir, pytestconfig):
     """Test serialization of the complex types."""
-    if not pytestconfig.pluginmanager.has_plugin("xdist"):
-        pytest.skip("Execnet not installed")
-
-    import execnet.gateway_base
 
     testdir.makefile(
         ".feature",
@@ -316,7 +316,9 @@ def test_complex_types(testdir, pytestconfig):
         )
     )
     result = testdir.inline_run("-vvl")
-    report = result.matchreport("test_complex[10,20-alien0]", when="call")
+    report = result.matchreport(
+        "test_complex[[Scenario:Complex:line_no:3]>[Examples:[Empty]:line_no:6]>[Row:0]:10,20-alien0]", when="call"
+    )
     assert report.passed
     assert execnet.gateway_base.dumps(report.item)
     assert execnet.gateway_base.dumps(report.scenario)

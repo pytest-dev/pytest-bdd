@@ -6,6 +6,8 @@ import typing
 from inspect import getframeinfo, signature
 from sys import _getframe
 
+from attr import Factory, attrib, attrs
+
 if typing.TYPE_CHECKING:
     from _pytest.pytester import RunResult
 
@@ -64,3 +66,17 @@ def collect_dumped_objects(result: "RunResult"):
     stdout = result.stdout.str()  # pytest < 6.2, otherwise we could just do str(result.stdout)
     payloads = re.findall(rf"{_DUMP_START}(.*?){_DUMP_END}", stdout)
     return [pickle.loads(base64.b64decode(payload)) for payload in payloads]
+
+
+@attrs
+class SimpleMapping(typing.Mapping):
+    _dict = attrib(default=Factory(dict), kw_only=True)
+
+    def __getitem__(self, item):
+        return self._dict[item]
+
+    def __iter__(self):
+        return iter(self._dict)
+
+    def __len__(self):
+        return len(self._dict)
