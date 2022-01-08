@@ -167,6 +167,123 @@ def test_wrongly_outlined_extra_parameter(testdir):
     result.stdout.fnmatch_lines("*should match set of example values [[]'eat', 'left', 'start', 'unknown_param'[]].*")
 
 
+def test_wrongly_outlined_duplicated_parameter_scenario(testdir):
+    """Test parametrized scenario vertical example table has wrong format."""
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Scenario Outline: Outlined with wrong vertical example table
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers
+
+                    Examples:
+                    | start | start | left |
+                    |   12  |   10  |   7  |
+                    |    2  |    1  |   1  |
+            """
+        ),
+    )
+    testdir.makeconftest(textwrap.dedent(STEPS))
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario
+
+        @scenario("outline.feature", "Outlined with wrong vertical example table")
+        def test_outline(request):
+            pass
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert_outcomes(result, errors=1)
+    result.stdout.fnmatch_lines(
+        "*Scenario has not valid examples. Example rows should contain unique parameters. "
+        '"start" appeared more than once.*'
+    )
+
+
+def test_wrongly_outlined_missing_parameter_scenario(testdir):
+    """Test parametrized scenario vertical example table has wrong format."""
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Scenario Outline: Outlined with wrong vertical example table
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers
+
+                    Examples:
+                    | start | eat | left |
+                    |   12  | 10  |   7  |
+                    |    2  |  1  |
+            """
+        ),
+    )
+    testdir.makeconftest(textwrap.dedent(STEPS))
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario
+
+        @scenario("outline.feature", "Outlined with wrong vertical example table")
+        def test_outline(request):
+            pass
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert_outcomes(result, errors=1)
+    result.stdout.fnmatch_lines("*Scenario has not valid examples. All example rows must have same count of values.*")
+
+
+def test_wrongly_outlined_duplicated_parameter_feature(testdir):
+    """Test parametrized scenario vertical example table has wrong format."""
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Examples:
+                 | start | start | left |
+                 |   12  |   10  |   7  |
+                 |    2  |    1  |   1  |
+
+                Scenario Outline: Outlined with wrong vertical example table
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers
+            """
+        ),
+    )
+    testdir.makeconftest(textwrap.dedent(STEPS))
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario
+
+        @scenario("outline.feature", "Outlined with wrong vertical example table")
+        def test_outline(request):
+            pass
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert_outcomes(result, errors=1)
+    result.stdout.fnmatch_lines(
+        "*Feature has not valid examples. Example rows should contain unique parameters. "
+        '"start" appeared more than once.*'
+    )
+
+
 def test_outlined_with_other_fixtures(testdir):
     """Test outlined scenario also using other parametrized fixture."""
     testdir.makefile(
@@ -353,6 +470,45 @@ def test_wrongly_outlined_duplicated_parameter_vertical_scenario(testdir):
     )
 
 
+def test_wrongly_outlined_missing_parameter_vertical_scenario(testdir):
+    """Test parametrized scenario vertical example table has wrong format."""
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Scenario Outline: Outlined with wrong vertical example table
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers
+
+                    Examples: Vertical
+                    | start | 12 | 2 |
+                    | eat   | 10 | 1 |
+                    | left  | 7  |
+            """
+        ),
+    )
+    testdir.makeconftest(textwrap.dedent(STEPS))
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario
+
+        @scenario("outline.feature", "Outlined with wrong vertical example table")
+        def test_outline(request):
+            pass
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert_outcomes(result, errors=1)
+    result.stdout.fnmatch_lines(
+        "*Scenario has not valid examples. All example columns in Examples: Vertical must have same count of values.*"
+    )
+
+
 def test_wrongly_outlined_duplicated_parameter_vertical_feature(testdir):
     """Test parametrized feature vertical example table has wrong format."""
     testdir.makefile(
@@ -489,7 +645,6 @@ def test_outline_with_escaped_pipes(testdir):
     ]
 
 
-@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/issues/479")
 def test_multi_outlined(testdir):
     testdir.makefile(
         ".feature",
@@ -540,7 +695,52 @@ def test_multi_outlined(testdir):
     # fmt: on
 
 
-@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/issues/479")
+def test_multi_outlined_empty_examples(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+
+                Examples:
+
+                Examples: Vertical
+
+                Examples:
+                |
+
+                Examples: Vertical
+                |
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are 12 apples
+                    When I eat 5 apples
+                    Then I should have 7 apples
+
+                    Examples:
+
+                    Examples: Vertical
+
+                    Examples:
+                    |
+
+                    Examples: Vertical
+                    |
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=1)
+    parametrizations = collect_dumped_objects(result)
+    # fmt: off
+    assert parametrizations == [
+        12, "apples", 5.0, "apples", "7", "apples",
+    ]
+    # fmt: on
+
+
 def test_multi_outlined_feature_with_parameter_union(testdir):
     testdir.makefile(
         ".feature",
@@ -584,7 +784,6 @@ def test_multi_outlined_feature_with_parameter_union(testdir):
     # fmt: on
 
 
-@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/issues/479")
 def test_multi_outlined_scenario_and_feature_with_parameter_union(testdir):
     testdir.makefile(
         ".feature",

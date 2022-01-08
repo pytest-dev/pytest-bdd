@@ -176,7 +176,7 @@ def _get_scenario_decorator(
             return fn(*fixture_values)
 
         example_parametrizations = collect_example_parametrizations(templated_scenario)
-        if example_parametrizations is not None:
+        if example_parametrizations:
             # Parametrize the scenario outlines
             scenario_wrapper = pytest.mark.parametrize(
                 "_pytest_bdd_example",
@@ -197,22 +197,10 @@ def _get_scenario_decorator(
 def collect_example_parametrizations(
     templated_scenario: "ScenarioTemplate",
 ) -> "typing.Optional[typing.List[ParameterSet]]":
-    # We need to evaluate these iterators and store them as lists, otherwise
-    # we won't be able to do the cartesian product later (the second iterator will be consumed)
-    feature_contexts = list(templated_scenario.feature.examples.as_contexts())
-    scenario_contexts = list(templated_scenario.examples.as_contexts())
-
-    contexts = [
-        {**feature_context, **scenario_context}
-        # We must make sure that we always have at least one element in each list, otherwise
-        # the cartesian product will result in an empty list too, even if one of the 2 sets
-        # is non empty.
-        for feature_context in feature_contexts or [{}]
-        for scenario_context in scenario_contexts or [{}]
+    return [
+        pytest.param(united_example_row, id=united_example_row.breadcrumb + ":" + "-".join(united_example_row.values()))
+        for united_example_row in templated_scenario.united_example_rows
     ]
-    if contexts == [{}]:
-        return None
-    return [pytest.param(context, id="-".join(context.values())) for context in contexts]
 
 
 def scenario(feature_name: str, scenario_name: str, encoding: str = "utf-8", features_base_dir=None):

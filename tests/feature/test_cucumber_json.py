@@ -176,7 +176,12 @@ def test_step_trace(testdir):
                     ],
                     "line": 15,
                     "type": "scenario",
-                    "id": "test_passing_outline[str-hello]",
+                    "id": (
+                        "test_passing_outline"
+                        "[[Scenario:Passing outline:line_no:15]>"
+                        "[Examples:example1:line_no:18]>"
+                        "[Row:0]:str-hello]"
+                    ),
                     "name": "Passing outline",
                 },
                 {
@@ -194,7 +199,12 @@ def test_step_trace(testdir):
                     ],
                     "line": 15,
                     "type": "scenario",
-                    "id": "test_passing_outline[int-42]",
+                    "id": (
+                        "test_passing_outline"
+                        "[[Scenario:Passing outline:line_no:15]>"
+                        "[Examples:example1:line_no:18]>"
+                        "[Row:1]:int-42]"
+                    ),
                     "name": "Passing outline",
                 },
                 {
@@ -212,7 +222,12 @@ def test_step_trace(testdir):
                     ],
                     "line": 15,
                     "type": "scenario",
-                    "id": "test_passing_outline[float-1.0]",
+                    "id": (
+                        "test_passing_outline"
+                        "[[Scenario:Passing outline:line_no:15]>"
+                        "[Examples:example1:line_no:18]>"
+                        "[Row:2]:float-1.0]"
+                    ),
                     "name": "Passing outline",
                 },
             ],
