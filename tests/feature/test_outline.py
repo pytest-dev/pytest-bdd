@@ -753,7 +753,6 @@ def test_multi_outlined_scenario_and_feature_with_parameter_union(testdir):
     # fmt: on
 
 
-@pytest.mark.xfail
 def test_outlined_scenario_and_feature_with_parameter_join_by_one_parameter(testdir):
     testdir.makefile(
         ".feature",
@@ -792,7 +791,6 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_one_parameter(test
     # fmt: on
 
 
-@pytest.mark.xfail
 def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter(testdir):
     testdir.makefile(
         ".feature",
@@ -834,7 +832,6 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter(te
     # fmt: on
 
 
-@pytest.mark.xfail
 def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter_unbalanced(testdir):
     testdir.makefile(
         ".feature",
@@ -869,7 +866,6 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter_un
                     | fruits     |
                     | pineapples |
                     | peaches    |
-
             """
         ),
     )

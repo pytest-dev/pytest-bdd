@@ -283,9 +283,13 @@ class ScenarioTemplate:
 
         def examples():
             for feature_examples, scenario_examples in feature_scenario_examples_combinations:
-                result = {**feature_examples, **scenario_examples}
-                if result != {}:
-                    yield result
+                common_param_names = set(feature_examples.keys()).intersection(scenario_examples.keys())
+                if all(
+                    feature_examples[param_name] == scenario_examples[param_name] for param_name in common_param_names
+                ):
+                    result = {**feature_examples, **scenario_examples}
+                    if result != {}:
+                        yield result
 
         return [pytest.param(example, id="-".join(example.values())) for example in examples()]
 
