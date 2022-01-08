@@ -7,7 +7,7 @@ from itertools import chain, product, zip_longest
 from typing import List
 
 import pytest
-from attr import attrs, attrib, Factory, validate
+from attr import Factory, attrib, attrs, validate
 
 from . import exceptions, types
 
