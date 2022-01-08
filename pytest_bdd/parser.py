@@ -175,6 +175,12 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
         elif mode == types.EXAMPLES_HEADERS:
             mode = types.EXAMPLE_LINE
             build_example_table.example_params = [l for l in split_line(parsed_line) if l]
+            try:
+                validate(build_example_table)
+            except exceptions.ExamplesNotValidError as exc:
+                node_message_prefix = "Scenario" if scenario else "Feature"
+                message = f"{node_message_prefix} has not valid examples. {exc.args[0]}"
+                raise exceptions.FeatureError(message, line_number, clean_line, filename) from exc
         elif mode == types.EXAMPLE_LINE:
             try:
                 build_example_table.examples += [[*split_line(stripped_line)]]
@@ -481,6 +487,13 @@ class ExampleTableRows(ExampleTable):
 @attrs
 class ExampleTableColumns(ExampleTable):
     examples = attrib(default=Factory(list))
+
+    @examples.validator
+    def each_row_contains_same_count_of_values(self, attribute, value):
+        if value:
+            if not (all(len(value[0]) == len(item) for item in value) and (len(value[0]) != len(self.example_params))):
+                raise exceptions.ExamplesNotValidError(f"""All example rows must have same count of values""")
+        return True
 
 
 def get_tags(line):
