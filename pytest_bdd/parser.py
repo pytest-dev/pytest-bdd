@@ -449,9 +449,9 @@ class Examples(list):
 @attrs
 class ExampleRow(SimpleMapping):
     mapping = attrib()
-    index = attrib(kw_only=True)
-    kind = attrib(kw_only=True)
-    example_table: "ExampleTable" = attrib(kw_only=True)
+    index = attrib(kw_only=True, default=None)
+    kind = attrib(kw_only=True, default=None)
+    example_table: "ExampleTable" = attrib(kw_only=True, default=None)
 
     def __attrs_post_init__(self):
         self._dict = dict(self.mapping)
@@ -460,19 +460,50 @@ class ExampleRow(SimpleMapping):
     def breadcrumb(self):
         node = self.example_table.node
         example_table = self.example_table
-        return (
-            f"[{node.node_kind}:{node.name or '[Empty]'}:line_no:{node.line_number}]>"
-            f"[Examples:{example_table.name or '[Empty]'}:line_no:{example_table.line_number}]>"
-            f"[{self.kind}:{self.index}]"
-        )
+        if node and example_table:
+            return (
+                f"[{node.node_kind}:{node.name or '[Empty]'}:line_no:{node.line_number}]>"
+                f"[Examples:{example_table.name or '[Empty]'}:line_no:{example_table.line_number}]>"
+                f"[{self.kind}:{self.index}]"
+            )
+        else:
+            raise AttributeError
 
 
 @attrs
 class ExampleRowUnited(SimpleMapping):
     example_rows: typing.List[ExampleRow] = attrib()
+    join_keys = attrib(default=Factory(set), kw_only=True)
+
+    class BuildError(ValueError):
+        ...
 
     def __attrs_post_init__(self):
-        self._dict = reduce(lambda d1, d2: {**d1, **d2}, self.example_rows, {})
+        combined_row = {}
+        join_keys = set()
+        built = False
+        for example_row in self.example_rows:
+            combined_row, extra_join_keys = self._combine_two_rows(combined_row, example_row)
+            if combined_row is None:
+                break
+            join_keys |= extra_join_keys
+        else:
+            built = True
+            self._dict = combined_row
+            self.join_keys = join_keys
+        if not built:
+            raise self.BuildError
+
+    @staticmethod
+    def _combine_two_rows(row1, row2) -> typing.Tuple[typing.Optional["ExampleRow"], typing.Optional[typing.Set]]:
+        common_param_names = set(row1.keys()) & set(row2.keys())
+        if all(
+            row1[param_name] == row2[param_name] for param_name in
+            common_param_names
+        ):
+            return ExampleRow({**row1, **row2}), common_param_names
+        else:
+            return None, None
 
     @property
     def breadcrumb(self):
@@ -559,7 +590,11 @@ class ExampleTableCombination(typing.Collection):
 
     @property
     def united_example_rows(self) -> typing.Iterable[ExampleRowUnited]:
-        yield from map(ExampleRowUnited, product(*self))
+        for rows in product(*self):
+            try:
+                yield ExampleRowUnited(rows)
+            except ExampleRowUnited.BuildError:
+                pass
 
     def __len__(self):
         return len(self._list)
