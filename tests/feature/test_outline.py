@@ -539,6 +539,53 @@ def test_multi_outlined(testdir):
     # fmt: on
 
 
+@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/issues/480")
+def test_multi_outlined_empty_examples(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+
+                Examples:
+
+                Examples: Vertical
+
+                Examples:
+                |
+
+                Examples: Vertical
+                |
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are 12 apples
+                    When I eat 5 apples
+                    Then I should have 7 apples
+
+                    Examples:
+
+                    Examples: Vertical
+
+                    Examples:
+                    |
+
+                    Examples: Vertical
+                    |
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=1)
+    parametrizations = collect_dumped_objects(result)
+    # fmt: off
+    assert parametrizations == [
+        12, "apples", 5.0, "apples", "7", "apples",
+    ]
+    # fmt: on
+
+
 def test_multi_outlined_feature_with_parameter_union(testdir):
     testdir.makefile(
         ".feature",
