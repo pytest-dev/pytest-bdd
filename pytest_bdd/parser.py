@@ -228,9 +228,14 @@ class ScenarioTemplate:
         self.feature = feature
         self.name = name
         self._steps: typing.List[Step] = []
-        self.examples = Examples()
+        self.example_tables = [Examples()]
         self.line_number = line_number
         self.tags = tags or set()
+
+    @property
+    def examples(self):
+        """Current examples."""
+        return self.example_tables[-1]
 
     def add_step(self, step):
         """Add step to the scenario.
@@ -246,6 +251,7 @@ class ScenarioTemplate:
         return (background.steps if background else []) + self._steps
 
     def render(self, context: typing.Mapping[str, typing.Any]) -> "Scenario":
+        """Render a single scenario given a context (examples)."""
         steps = [
             Step(
                 name=templated_step.render(context),

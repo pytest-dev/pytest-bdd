@@ -200,19 +200,29 @@ def collect_example_parametrizations(
     # We need to evaluate these iterators and store them as lists, otherwise
     # we won't be able to do the cartesian product later (the second iterator will be consumed)
     feature_contexts = list(templated_scenario.feature.examples.as_contexts())
-    scenario_contexts = list(templated_scenario.examples.as_contexts())
-
-    contexts = [
-        {**feature_context, **scenario_context}
+    parametrizations = []
+    has_multiple_examples = len(templated_scenario.example_tables) > 1
+    for example_id, examples in enumerate(templated_scenario.example_tables):
+        scenario_contexts = list(examples.as_contexts())
         # We must make sure that we always have at least one element in each list, otherwise
         # the cartesian product will result in an empty list too, even if one of the 2 sets
         # is non empty.
-        for feature_context in feature_contexts or [{}]
-        for scenario_context in scenario_contexts or [{}]
-    ]
-    if contexts == [{}]:
-        return None
-    return [pytest.param(context, id="-".join(context.values())) for context in contexts]
+        for feature_context in feature_contexts or [{}]:
+            for scenario_context in scenario_contexts or [{}]:
+                context = {**feature_context, **scenario_context}
+                if context:
+                    test_id = "-".join(context.values())
+                    if has_multiple_examples:
+                        test_id = "-".join((str(example_id), test_id))
+                    parametrizations.append(
+                        pytest.param(
+                            context,
+                            id=test_id,
+                            # marks=...  # TODO: Example Tags
+                        ),
+                    )
+
+    return parametrizations or None
 
 
 def scenario(feature_name: str, scenario_name: str, encoding: str = "utf-8", features_base_dir=None):
