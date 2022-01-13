@@ -81,8 +81,44 @@ def test_outlined(testdir):
     # fmt: on
 
 
-def test_wrongly_outlined(testdir):
-    """Test parametrized scenario when the test function lacks parameters."""
+def test_extra_examples_are_ignored(testdir):
+    """Test that the Examples section can have more examples than the ones used by the scenario."""
+
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Scenario Outline: Outlined with extra examples
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers
+
+                    Examples:
+                    | start | eat | left | notes             |
+                    |  12   |  5  |  7   | Should be ignored |
+
+            """
+        ),
+    )
+    testdir.makeconftest(textwrap.dedent(STEPS))
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenarios
+
+        scenarios("outline.feature")
+        """
+        )
+    )
+    result = testdir.runpytest()
+    assert_outcomes(result, passed=1)
+
+
+def test_not_enough_examples(testdir):
+    """Test parametrized scenario when the test function has a parameter set which is not a subset of those in the
+    examples table."""
 
     testdir.makefile(
         ".feature",
@@ -95,8 +131,8 @@ def test_wrongly_outlined(testdir):
                     Then I should have <left> cucumbers
 
                     Examples:
-                    | start | eat | left | unknown_param |
-                    |  12   |  5  |  7   | value         |
+                    | start | eat |
+                    |  12   |  5  |
 
             """
         ),
@@ -106,20 +142,21 @@ def test_wrongly_outlined(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd import scenario
+        from pytest_bdd import scenarios
 
-        @scenario("outline.feature", "Outlined with wrong examples")
-        def test_outline(request):
-            pass
+        scenarios("outline.feature")
         """
         )
     )
     result = testdir.runpytest()
     assert_outcomes(result, errors=1)
     result.stdout.fnmatch_lines(
-        '*ScenarioExamplesNotValidError: Scenario "Outlined with wrong examples"*has not valid examples*',
+        '*ScenarioExamplesNotValidError: Scenario "Outlined with wrong examples"*does not have valid examples*',
     )
-    result.stdout.fnmatch_lines("*should match set of example values [[]'eat', 'left', 'start', 'unknown_param'[]].*")
+    expected_msg = (
+        "Set of step parameters ['eat', 'left', 'start'] " "should be a subset of example values ['eat', 'start']"
+    )
+    assert expected_msg in result.stdout.str()
 
 
 def test_wrong_vertical_examples_scenario(testdir):
