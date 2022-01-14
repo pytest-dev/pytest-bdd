@@ -170,7 +170,7 @@ def _get_scenario_decorator(
         # otherwise indirect fixtures would not work.
         @pytest.mark.usefixtures(*args)
         def scenario_wrapper(request, _pytest_bdd_example):
-            scenario = templated_scenario.render(_pytest_bdd_example)
+            scenario = templated_scenario.render(_pytest_bdd_example, request)
             _execute_scenario(feature, scenario, request)
             fixture_values = [request.getfixturevalue(arg) for arg in args]
             return fn(*fixture_values)
