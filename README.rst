@@ -637,6 +637,33 @@ This is allowed as long as parameter names do not clash:
             | carrots    |
             | tomatoes   |
 
+To not repeat steps as in example above you could want store your data in sequent Examples sections:
+
+
+.. code-block:: gherkin
+
+    Feature: Outline
+
+        Examples:
+        | start | eat | left |
+        |  12   |  5  |  7   |
+        |  5    |  4  |  1   |
+
+        Scenario Outline: Eat food
+            Given there are <start> <food>
+            When I eat <eat> <food>
+            Then I should have <left> <food>
+
+            Examples: Fruits
+            | food    |
+            | oranges |
+            | apples  |
+
+            Examples: Vegetables
+            | food       |
+            | carrots    |
+            | tomatoes   |
+
 
 Organizing your scenarios
 -------------------------
