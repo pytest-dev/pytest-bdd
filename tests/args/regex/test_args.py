@@ -1,9 +1,17 @@
 """Step arguments tests."""
 
 import textwrap
+from pytest import mark
 
 
-def test_every_steps_takes_param_with_the_same_name(testdir):
+@mark.parametrize(
+    "parser_import_string",
+    [
+        "from pytest_bdd.parsers import re as parse_re",
+        "from re import compile as parse_re",
+    ],
+)
+def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_string):
     testdir.makefile(
         ".feature",
         arguments=textwrap.dedent(
@@ -22,9 +30,12 @@ def test_every_steps_takes_param_with_the_same_name(testdir):
 
     testdir.makepyfile(
         textwrap.dedent(
-            r"""
+            """\
         import pytest
-        from pytest_bdd import parsers, given, when, then, scenario
+        from pytest_bdd import given, when, then, scenario
+        """
+            f"{parser_import_string}"
+            r"""
 
         @scenario("arguments.feature", "Every step takes a parameter with the same name")
         def test_arguments():
@@ -34,17 +45,17 @@ def test_every_steps_takes_param_with_the_same_name(testdir):
         def values():
             return [1, 2, 1, 0, 999999]
 
-        @given(parsers.re(r"I have (?P<euro>\d+) Euro"), converters=dict(euro=int))
+        @given(parse_re(r"I have (?P<euro>\d+) Euro"), converters=dict(euro=int))
         def i_have(euro, values):
             assert euro == values.pop(0)
 
 
-        @when(parsers.re(r"I pay (?P<euro>\d+) Euro"), converters=dict(euro=int))
+        @when(parse_re(r"I pay (?P<euro>\d+) Euro"), converters=dict(euro=int))
         def i_pay(euro, values, request):
             assert euro == values.pop(0)
 
 
-        @then(parsers.re(r"I should have (?P<euro>\d+) Euro"), converters=dict(euro=int))
+        @then(parse_re(r"I should have (?P<euro>\d+) Euro"), converters=dict(euro=int))
         def i_should_have(euro, values):
             assert euro == values.pop(0)
 
@@ -55,7 +66,14 @@ def test_every_steps_takes_param_with_the_same_name(testdir):
     result.assert_outcomes(passed=1)
 
 
-def test_argument_in_when(testdir):
+@mark.parametrize(
+    "parser_import_string",
+    [
+        "from pytest_bdd.parsers import re as parse_re",
+        "from re import compile as parse_re",
+    ],
+)
+def test_argument_in_when(testdir, parser_import_string):
     testdir.makefile(
         ".feature",
         arguments=textwrap.dedent(
@@ -71,10 +89,12 @@ def test_argument_in_when(testdir):
 
     testdir.makepyfile(
         textwrap.dedent(
-            r"""
+            """\
         import pytest
-        from pytest_bdd import parsers, given, when, then, scenario
-
+        from pytest_bdd import given, when, then, scenario
+        """
+            f"{parser_import_string}"
+            r"""
 
         @pytest.fixture
         def arguments():
@@ -85,17 +105,17 @@ def test_argument_in_when(testdir):
         def test_arguments():
             pass
 
-        @given(parsers.re(r"I have an argument (?P<arg>\d+)"))
+        @given(parse_re(r"I have an argument (?P<arg>\d+)"))
         def argument(arguments, arg):
             arguments["arg"] = arg
 
 
-        @when(parsers.re(r"I get argument (?P<arg>\d+)"))
+        @when(parse_re(r"I get argument (?P<arg>\d+)"))
         def get_argument(arguments, arg):
             arguments["arg"] = arg
 
 
-        @then(parsers.re(r"My argument should be (?P<arg>\d+)"))
+        @then(parse_re(r"My argument should be (?P<arg>\d+)"))
         def assert_that_my_argument_is_arg(arguments, arg):
             assert arguments["arg"] == arg
 

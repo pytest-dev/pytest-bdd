@@ -2,10 +2,13 @@
 
 
 import re as base_re
+import sys
 from functools import partial
 
 import parse as base_parse
 from parse_type import cfparse as base_cfparse
+
+_Re_Pattern = base_re.Pattern if sys.version_info >= (3, 7) else type(base_re.compile(""))
 
 
 class StepParser:
@@ -26,13 +29,8 @@ class StepParser:
         raise NotImplementedError()  # pragma: no cover
 
 
-class re(StepParser):
-    """Regex step parser."""
-
-    def __init__(self, name, *args, **kwargs):
-        """Compile regex."""
-        super().__init__(name)
-        self.regex = base_re.compile(self.name, *args, **kwargs)
+class _CommonRe(StepParser):
+    regex: _Re_Pattern
 
     def parse_arguments(self, name):
         """Get step arguments.
@@ -46,13 +44,24 @@ class re(StepParser):
         return bool(self.regex.match(name))
 
 
-class parse(StepParser):
-    """parse step parser."""
+class _re(_CommonRe):
+    def __init__(self, name):
+        """Compile regex."""
+        super().__init__(name.pattern)
+        self.regex = name
+
+
+class re(_CommonRe):
+    """Regex step parser."""
 
     def __init__(self, name, *args, **kwargs):
-        """Compile parse expression."""
+        """Compile regex."""
         super().__init__(name)
-        self.parser = base_parse.compile(self.name, *args, **kwargs)
+        self.regex = base_re.compile(self.name, *args, **kwargs)
+
+
+class _CommonParse(StepParser):
+    parser: base_parse.Parser
 
     def parse_arguments(self, name):
         """Get step arguments.
@@ -69,12 +78,27 @@ class parse(StepParser):
             return False
 
 
-class cfparse(parse):
+class _parse(_CommonParse):
+    def __init__(self, name: base_parse.Parser):
+        super().__init__(name._format)
+        self.parser = name
+
+
+class parse(_CommonParse):
+    """parse step parser."""
+
+    def __init__(self, name, *args, **kwargs):
+        """Compile parse expression."""
+        super().__init__(name)
+        self.parser = base_parse.compile(self.name, *args, **kwargs)
+
+
+class cfparse(_CommonParse):
     """cfparse step parser."""
 
     def __init__(self, name, *args, **kwargs):
         """Compile parse expression."""
-        super(parse, self).__init__(name)
+        super().__init__(name)
         self.parser = base_cfparse.Parser(self.name, *args, **kwargs)
 
 
@@ -112,5 +136,9 @@ def get_parser(step_name):
 
     if does_support_parser_interface(step_name):
         return step_name
+    elif isinstance(step_name, _Re_Pattern):
+        return _re(step_name)
+    elif isinstance(step_name, base_parse.Parser):
+        return _parse(step_name)
     else:
         return string(step_name)
