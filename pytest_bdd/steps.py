@@ -34,6 +34,7 @@ def given_beautiful_article(article):
     pass
 
 """
+from typing import Dict, Optional
 
 import pytest
 from _pytest.fixtures import FixtureDef
@@ -93,7 +94,7 @@ def then(name, converters=None, target_fixture=None):
     return _step_decorator(THEN, name, converters=converters, target_fixture=target_fixture)
 
 
-def _step_decorator(step_type, step_name, converters=None, target_fixture=None):
+def _step_decorator(step_type, step_name, converters: Optional[Dict] = None, target_fixture=None):
     """Step decorator for the type and the name.
 
     :param str step_type: Step type (GIVEN, WHEN or THEN).
@@ -104,34 +105,34 @@ def _step_decorator(step_type, step_name, converters=None, target_fixture=None):
     :return: Decorator function for the step.
     """
 
-    def decorator(func):
-        step_func = func
-        parser_instance = get_parser(step_name)
-        parsed_step_name = parser_instance.name
+    converters = converters or {}
+
+    def decorator(step_func):
+        parser = get_parser(step_name)
+        parsed_step_name = parser.name
 
         step_func.__name__ = str(parsed_step_name)
 
-        def lazy_step_func():
+        def step_alias_func():
             return step_func
 
-        step_func.step_type = step_type
-        lazy_step_func.step_type = step_type
+        step_func.step_type = step_alias_func.step_type = step_type
 
         # Preserve the docstring
-        lazy_step_func.__doc__ = func.__doc__
+        step_alias_func.__doc__ = step_func.__doc__
 
-        step_func.parser = lazy_step_func.parser = parser_instance
-        if converters:
-            step_func.converters = lazy_step_func.converters = converters
+        step_func.parser = step_alias_func.parser = parser
+        step_func.converters = step_alias_func.converters = converters
 
-        step_func.target_fixture = lazy_step_func.target_fixture = target_fixture
+        step_func.target_fixture = step_alias_func.target_fixture = target_fixture
 
-        lazy_step_func = pytest.fixture()(lazy_step_func)
+        step_alias_fixture = pytest.fixture(step_alias_func)
         fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
 
+        # Inject step alias fixture into module scope
         caller_locals = get_caller_module_locals()
-        caller_locals[fixture_step_name] = lazy_step_func
-        return func
+        caller_locals[fixture_step_name] = step_alias_fixture
+        return step_func
 
     return decorator
 
