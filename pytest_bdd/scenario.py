@@ -199,19 +199,10 @@ def collect_example_parametrizations(
 ) -> "typing.Optional[typing.List[ParameterSet]]":
     # We need to evaluate these iterators and store them as lists, otherwise
     # we won't be able to do the cartesian product later (the second iterator will be consumed)
-    feature_contexts = list(templated_scenario.feature.examples.as_contexts())
-    scenario_contexts = list(templated_scenario.examples.as_contexts())
-
-    contexts = [
-        {**feature_context, **scenario_context}
-        # We must make sure that we always have at least one element in each list, otherwise
-        # the cartesian product will result in an empty list too, even if one of the 2 sets
-        # is non empty.
-        for feature_context in feature_contexts or [{}]
-        for scenario_context in scenario_contexts or [{}]
-    ]
-    if contexts == [{}]:
+    contexts = list(templated_scenario.examples.as_contexts())
+    if not contexts:
         return None
+
     return [pytest.param(context, id="-".join(context.values())) for context in contexts]
 
 

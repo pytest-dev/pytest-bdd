@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Cleanup of the documentation and tests related to parametrization (elchupanebrej)
+- Removed feature level examples for gherkin compatibility (olegpidsadnyi)
+
+
+
 5.0.0
 -----
 This release introduces breaking changes, please refer to the :ref:`Migration from 4.x.x`.
