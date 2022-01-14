@@ -6,7 +6,10 @@ from collections import OrderedDict
 from functools import reduce
 from itertools import product, zip_longest
 from operator import or_
+from warnings import warn
 
+from _pytest.fixtures import FixtureLookupError, FixtureRequest
+from _pytest.warning_types import PytestCollectionWarning, PytestDeprecationWarning
 from attr import Factory, attrib, attrs, validate
 
 from . import exceptions, types
@@ -272,10 +275,10 @@ class ScenarioTemplate:
         background = self.feature.background
         return (background.steps if background else []) + self._steps
 
-    def render(self, context: typing.Mapping[str, typing.Any]) -> "Scenario":
+    def render(self, context: typing.Mapping[str, typing.Any], request: FixtureRequest) -> "Scenario":
         steps = [
             Step(
-                name=templated_step.render(context),
+                name=templated_step.render(context, request),
                 type=templated_step.type,
                 indent=templated_step.indent,
                 line_number=templated_step.line_number,
@@ -396,10 +399,22 @@ class Step:
         """Get step params."""
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
-    def render(self, context: typing.Mapping[str, typing.Any]):
+    def render(self, context: typing.Mapping[str, typing.Any], request: FixtureRequest):
         def replacer(m: typing.Match):
             varname = m.group(1)
-            return str(context[varname])
+            try:
+                return str(context[varname])
+            except KeyError:
+                try:
+                    warn(PytestDeprecationWarning("Render step using fixture"))
+                    return str(request.getfixturevalue(varname))
+                except FixtureLookupError:
+                    warn(
+                        PytestCollectionWarning(
+                            f'Name "{varname}" wasn\'t found between examples and fixtures, left as is'
+                        )
+                    )
+                    return f"<{varname}>"
 
         return STEP_PARAM_RE.sub(replacer, self.name)
 

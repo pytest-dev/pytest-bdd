@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Return support of test step render by pytest parametrization drooped in release 5.0.0
+
 5.0.0
 -----
 This release introduces breaking changes, please refer to the :ref:`Migration from 4.x.x`.
