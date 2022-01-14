@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Default parser is switched to cfparse. Step name is compiled to cfparse
+- Step functions could get compiled instances of parse, cfparse and re.compile directly
+
 5.0.0
 -----
 This release introduces breaking changes, please refer to the :ref:`Migration from 4.x.x`.

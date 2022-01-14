@@ -1,6 +1,7 @@
 """Step arguments tests."""
 
 import textwrap
+
 from pytest import mark
 
 
