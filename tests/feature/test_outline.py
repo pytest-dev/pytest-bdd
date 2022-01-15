@@ -9,27 +9,25 @@ from pytest_bdd import parsers, given, when, then
 from pytest_bdd.utils import dump_obj
 
 
-@given(parsers.parse("there are {start:d} cucumbers"), target_fixture="start_cucumbers")
-def start_cucumbers(start):
+@given(parsers.parse("there are {start:d} cucumbers"), target_fixture="cucumbers")
+def given_cucumbers(start):
     assert isinstance(start, int)
     dump_obj(start)
     return {"start": start}
 
 
 @when(parsers.parse("I eat {eat:g} cucumbers"))
-def eat_cucumbers(start_cucumbers, eat):
+def eat_cucumbers(cucumbers, eat):
     assert isinstance(eat, float)
     dump_obj(eat)
-    start_cucumbers["eat"] = eat
+    cucumbers["eat"] = eat
 
 
 @then(parsers.parse("I should have {left} cucumbers"))
-def should_have_left_cucumbers(start_cucumbers, start, eat, left):
+def should_have_left_cucumbers(cucumbers, left):
     assert isinstance(left, str)
     dump_obj(left)
-    assert start - eat == int(left)
-    assert start_cucumbers["start"] == start
-    assert start_cucumbers["eat"] == eat
+    assert cucumbers["start"] - cucumbers["eat"] == int(left)
 
 """
 
