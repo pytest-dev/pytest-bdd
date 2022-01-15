@@ -210,9 +210,9 @@ for `cfparse` parser
     @given(
         parsers.cfparse("there are {start:Number} cucumbers",
         extra_types=dict(Number=int)),
-        target_fixture="start_cucumbers",
+        target_fixture="cucumbers",
     )
-    def start_cucumbers(start):
+    def given_cucumbers(start):
         return dict(start=start, eat=0)
 
 for `re` parser
@@ -224,9 +224,9 @@ for `re` parser
     @given(
         parsers.re(r"there are (?P<start>\d+) cucumbers"),
         converters=dict(start=int),
-        target_fixture="start_cucumbers",
+        target_fixture="cucumbers",
     )
-    def start_cucumbers(start):
+    def given_cucumbers(start):
         return dict(start=start, eat=0)
 
 
@@ -257,20 +257,19 @@ The code will look like:
         pass
 
 
-    @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="start_cucumbers")
-    def start_cucumbers(start):
+    @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="cucumbers")
+    def given_cucumbers(start):
         return dict(start=start, eat=0)
 
 
     @when(parsers.parse("I eat {eat:d} cucumbers"))
-    def eat_cucumbers(start_cucumbers, eat):
+    def eat_cucumbers(cucumbers, eat):
         start_cucumbers["eat"] += eat
 
 
     @then(parsers.parse("I should have {left:d} cucumbers"))
-    def should_have_left_cucumbers(start_cucumbers, start, left):
-        assert start_cucumbers['start'] == start
-        assert start - start_cucumbers['eat'] == left
+    def should_have_left_cucumbers(cucumbers, left):
+        assert cucumbers['start'] - cucumbers['eat'] == left
 
 Example code also shows possibility to pass argument converters which may be useful if you need to postprocess step
 arguments after the parser.
@@ -303,19 +302,9 @@ You can implement your own step parser. It's interface is quite simple. The code
             return bool(self.regex.match(name))
 
 
-    @given(parsers.parse("there are %start% cucumbers"), target_fixture="start_cucumbers")
-    def start_cucumbers(start):
+    @given(parsers.parse("there are %start% cucumbers"), target_fixture="cucumbers")
+    def given_cucumbers(start):
         return dict(start=start, eat=0)
-
-
-Step arguments are fixtures as well!
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Step arguments are injected into pytest `request` context as normal fixtures with the names equal to the names of the
-arguments. This opens a number of possibilities:
-
-* you can access step's argument as a fixture in other step function just by mentioning it as an argument (just like any other pytest fixture)
-* if the name of the step argument clashes with existing fixture, it will be overridden by step's argument value; this way you can set/override the value for some fixture deeply inside of the fixture tree in a ad-hoc way by just choosing the proper name for the step argument.
 
 
 Override fixtures via given steps
