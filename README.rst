@@ -1023,6 +1023,12 @@ Vertical example tables are no longer supported since the official gherkin doesn
 The example tables should have horizontal orientation.
 
 
+Step arguments are no longer fixtures
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Step parsed arguments conflicted with the fixtures. Now they no longer define fixture.
+If the fixture has to be defined by the step the target_fixture param should be used.
+
+
 .. _Migration from 4.x.x:
 
 Migration of your tests from versions 4.x.x
