@@ -107,10 +107,7 @@ def _execute_step_function(request, scenario, step, step_func):
                     value = converters[arg](value)
                 kwargs[arg] = value
 
-        kwargs = {
-            arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg)
-            for arg in get_args(step_func)
-        }
+        kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in get_args(step_func)}
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
