@@ -12,7 +12,6 @@ COMMENT_RE = re.compile(r"(^|(?<=\s))#")
 STEP_PREFIXES = [
     ("Feature: ", types.FEATURE),
     ("Scenario Outline: ", types.SCENARIO_OUTLINE),
-    ("Examples: Vertical", types.EXAMPLES_VERTICAL),
     ("Examples:", types.EXAMPLES),
     ("Scenario: ", types.SCENARIO),
     ("Background:", types.BACKGROUND),
@@ -157,26 +156,11 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
         elif mode == types.EXAMPLES:
             mode = types.EXAMPLES_HEADERS
             scenario.examples.line_number = line_number
-        elif mode == types.EXAMPLES_VERTICAL:
-            mode = types.EXAMPLE_LINE_VERTICAL
-            scenario.examples.line_number = line_number
         elif mode == types.EXAMPLES_HEADERS:
             scenario.examples.set_param_names([l for l in split_line(parsed_line) if l])
             mode = types.EXAMPLE_LINE
         elif mode == types.EXAMPLE_LINE:
             scenario.examples.add_example([l for l in split_line(stripped_line)])
-        elif mode == types.EXAMPLE_LINE_VERTICAL:
-            param_line_parts = [l for l in split_line(stripped_line)]
-            try:
-                scenario.examples.add_example_row(param_line_parts[0], param_line_parts[1:])
-            except exceptions.ExamplesNotValidError as exc:
-                raise exceptions.FeatureError(
-                    f"Scenario has not valid examples. {exc.args[0]}",
-                    line_number,
-                    clean_line,
-                    filename,
-                )
-
         elif mode and mode not in (types.FEATURE, types.TAG):
             step = Step(name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword)
             if feature.background and not scenario:
@@ -383,7 +367,6 @@ class Examples:
         """Initialize examples instance."""
         self.example_params = []
         self.examples = []
-        self.vertical_examples = []
         self.line_number = None
         self.name = None
 
@@ -412,17 +395,8 @@ class Examples:
                 f"""Example rows should contain unique parameters. "{param}" appeared more than once"""
             )
         self.example_params.append(param)
-        self.vertical_examples.append(values)
 
     def as_contexts(self) -> typing.Iterable[typing.Dict[str, typing.Any]]:
-        param_count = len(self.example_params)
-        if self.vertical_examples and not self.examples:
-            for value_index in range(len(self.vertical_examples[0])):
-                example = []
-                for param_index in range(param_count):
-                    example.append(self.vertical_examples[param_index][value_index])
-                self.examples.append(example)
-
         if not self.examples:
             return
 
@@ -430,12 +404,11 @@ class Examples:
 
         for row in rows:
             assert len(header) == len(row)
-
             yield dict(zip(header, row))
 
     def __bool__(self):
         """Bool comparison."""
-        return bool(self.vertical_examples or self.examples)
+        return bool(self.examples)
 
 
 def get_tags(line):

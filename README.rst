@@ -522,63 +522,6 @@ Example:
             | start | eat | left |
             |  12   |  5  |  7   |
 
-pytest-bdd feature file format also supports example tables in different way:
-
-
-.. code-block:: gherkin
-
-    Feature: Scenario outlines
-        Scenario Outline: Outlined given, when, then
-            Given there are <start> cucumbers
-            When I eat <eat> cucumbers
-            Then I should have <left> cucumbers
-
-            Examples: Vertical
-            | start | 12 | 2 |
-            | eat   | 5  | 1 |
-            | left  | 7  | 1 |
-
-This form allows to have tables with lots of columns keeping the maximum text width predictable without significant
-readability change.
-
-The code will look like:
-
-.. code-block:: python
-
-    from pytest_bdd import given, when, then, scenario, parsers
-
-
-    @scenario(
-        "outline.feature",
-        "Outlined given, when, then",
-    )
-    def test_outlined():
-        pass
-
-
-    @given(parsers.parse("there are {start:d} cucumbers", target_fixture="start_cucumbers"))
-    def start_cucumbers(start):
-        assert isinstance(start, int)
-        return dict(start=start)
-
-
-    @when(parsers.parse("I eat {eat:g} cucumbers"))
-    def eat_cucumbers(start_cucumbers, eat):
-        assert isinstance(eat, float)
-        start_cucumbers["eat"] = eat
-
-
-    @then(parsers.parse("I should have {left} cucumbers"))
-    def should_have_left_cucumbers(start_cucumbers, start, eat, left):
-        assert isinstance(left, str)
-        assert start - eat == int(left)
-        assert start_cucumbers["start"] == start
-        assert start_cucumbers["eat"] == eat
-
-Example code also shows possibility to pass example converters which may be useful if you need parameter types
-different than strings.
-
-
 
 Organizing your scenarios
 -------------------------
@@ -1054,6 +997,30 @@ The output will be like:
 
 As as side effect, the tool will validate the files for format errors, also some of the logic bugs, for example the
 ordering of the types of the steps.
+
+
+.. _Migration from 5.x.x:
+
+Migration of your tests from versions 5.x.x
+-------------------------------------------
+
+The primary focus of the pytest-bdd is the compatibility with the latest gherkin developments
+e.g. multiple scenario outline example tables with tags support etc.
+
+In order to provide the best compatibility it is best to support the features described in the official
+gherkin reference. This means deprecation of some non-standard features that were implemented in pytest-bdd.
+
+
+Removal of the feature examples
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The example tables on the feature level are no longer supported. The tests should be parametrized with the example tables
+on the scenario level.
+
+
+Removal of the vertical examples
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Vertical example tables are no longer supported since the official gherkin doesn't support them.
+The example tables should have horizontal orientation.
 
 
 .. _Migration from 4.x.x:
