@@ -44,7 +44,7 @@ def parse_line(line):
     """
     for prefix, _ in STEP_PREFIXES:
         if line.startswith(prefix):
-            return prefix.strip(), line[len(prefix):].strip()
+            return prefix.strip(), line[len(prefix) :].strip()
     return "", line
 
 
