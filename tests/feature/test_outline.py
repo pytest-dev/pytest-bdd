@@ -161,10 +161,8 @@ def test_wrongly_outlined_extra_parameter(testdir):
     )
     result = testdir.runpytest()
     assert_outcomes(result, errors=1)
-    result.stdout.fnmatch_lines(
-        '*ScenarioExamplesNotValidError: Scenario "Outlined with wrong examples"*has not valid examples*',
-    )
-    result.stdout.fnmatch_lines("*should match set of example values [[]'eat', 'left', 'start', 'unknown_param'[]].*")
+    result.stdout.fnmatch_lines("*Example rows have params unused in steps*")
+    result.stdout.fnmatch_lines("*Scenario:Outlined with wrong examples:line_no:2*")
 
 
 def test_wrongly_outlined_duplicated_parameter_scenario(testdir):
@@ -424,10 +422,8 @@ def test_wrongly_outlined_extra_parameter_vertical(testdir):
     )
     result = testdir.runpytest()
     assert_outcomes(result, errors=1)
-    result.stdout.fnmatch_lines(
-        '*ScenarioExamplesNotValidError: Scenario "Outlined with wrong examples"*has not valid examples*',
-    )
-    result.stdout.fnmatch_lines("*should match set of example values [[]'eat', 'left', 'start', 'unknown_param'[]].*")
+    result.stdout.fnmatch_lines("*Example rows have params unused in steps*")
+    result.stdout.fnmatch_lines("*Scenario:Outlined with wrong examples:line_no:2*")
 
 
 def test_wrongly_outlined_duplicated_parameter_vertical_scenario(testdir):
@@ -917,7 +913,7 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter_un
                 Examples:
                 | start | eat | left |
                 |  14   |  6  |  8   |
-                |  15   |  5  |  10   |
+                |  15   |  5  |  10  |
 
                 Examples:
                 | fruits    | start | eat | left |
@@ -936,7 +932,7 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter_un
                     | fruits    | eat | left |
                     | apples    |  5  |  7   |
                     | oranges   |  4  |  1   |
-                    | cucumbers |  5  |  7   | 
+                    | cucumbers |  5  |  7   |
 
                     Examples:
                     | fruits     |
@@ -962,7 +958,6 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter_un
     # fmt: on
 
 
-@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/pull/439")
 def test_outlined_scenario_and_feature_with_insufficient_parameter_join(testdir):
     testdir.makefile(
         ".feature",
@@ -994,11 +989,14 @@ def test_outlined_scenario_and_feature_with_insufficient_parameter_join(testdir)
     )
 
     testdir.makepyfile(STEPS_OUTLINED)
-    result = testdir.runpytest("-s")
-    result.assert_outcomes(passed=0)
+    result = testdir.runpytest(
+        "-s",
+        "-W ignore::pytest_bdd.PytestBDDScenarioExamplesExtraParamsWarning",
+        "-W ignore::pytest_bdd.PytestBDDScenarioStepsExtraPramsWarning",
+    )
+    result.assert_outcomes(passed=0, failed=4)
 
 
-@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/pull/439")
 def test_outlined_scenario_and_feature_with_extra_parameter_join(testdir):
     testdir.makefile(
         ".feature",
@@ -1024,11 +1022,14 @@ def test_outlined_scenario_and_feature_with_extra_parameter_join(testdir):
     )
 
     testdir.makepyfile(STEPS_OUTLINED)
-    result = testdir.runpytest("-s")
-    result.assert_outcomes(passed=0)
+    result = testdir.runpytest(
+        "-s",
+        "-W ignore::pytest_bdd.PytestBDDScenarioExamplesExtraParamsWarning",
+        "-W ignore::pytest_bdd.PytestBDDScenarioStepsExtraPramsWarning",
+    )
+    result.assert_outcomes(passed=4)
 
 
-@pytest.mark.xfail(reason="https://github.com/pytest-dev/pytest-bdd/pull/439")
 def test_outlined_scenario_and_feature_with_combine_extra_and_insufficient_parameter_join(testdir):
     testdir.makefile(
         ".feature",
@@ -1064,14 +1065,9 @@ def test_outlined_scenario_and_feature_with_combine_extra_and_insufficient_param
     )
 
     testdir.makepyfile(STEPS_OUTLINED)
-    result = testdir.runpytest("-s")
-    result.assert_outcomes(passed=4)
-    parametrizations = collect_dumped_objects(result)
-    # fmt: off
-    assert parametrizations == [
-        12, "cucumbers", 5.0, "cucumbers", "7", "cucumbers",
-        12, "peaches", 5.0, "peaches", "7", "peaches",
-        5, "cucumbers", 4.0, "cucumbers", "1", "cucumbers",
-        5, "peaches", 4.0, "peaches", "1", "peaches",
-    ]
-    # fmt: on
+    result = testdir.runpytest(
+        "-s",
+        "-W ignore::pytest_bdd.PytestBDDScenarioExamplesExtraParamsWarning",
+        "-W ignore::pytest_bdd.PytestBDDScenarioStepsExtraPramsWarning",
+    )
+    result.assert_outcomes(passed=8, failed=8)

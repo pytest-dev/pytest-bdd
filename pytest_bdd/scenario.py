@@ -14,9 +14,12 @@ import collections
 import os
 import re
 import typing
+from itertools import tee
+from warnings import warn
 
 import pytest
 from _pytest.fixtures import FixtureLookupError
+from _pytest.warning_types import PytestDeprecationWarning
 
 from . import exceptions
 from .feature import get_feature, get_features
@@ -140,8 +143,21 @@ def _execute_scenario(feature: "Feature", scenario: "Scenario", request):
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
+class FixturesExamplesMapping(collections.defaultdict):
+    def __init__(self, *args, default_factory=None, **kwargs):
+        super().__init__(default_factory, *args, **kwargs)
+
+    def __missing__(self, key):
+        self[key] = key
+        return key
+
+
 def _get_scenario_decorator(
-    feature: "Feature", feature_name: str, templated_scenario: "ScenarioTemplate", scenario_name: str
+    feature: "Feature",
+    feature_name: str,
+    templated_scenario: "ScenarioTemplate",
+    scenario_name: str,
+    examples_fixtures_mapping: typing.Union[typing.Set[str], typing.Dict[str, str]] = (),
 ):
     # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
     # when the decorator is misused.
@@ -149,6 +165,13 @@ def _get_scenario_decorator(
     # for a fixture called "fn" that doesn't exist (if it exists then it's even worse).
     # It will error with a "fixture 'fn' not found" message instead.
     # We can avoid this hack by using a pytest hook and check for misuse instead.
+
+    if not isinstance(examples_fixtures_mapping, typing.Mapping):
+        examples_fixtures_mapping = zip(*tee(iter(examples_fixtures_mapping)))
+    examples_fixtures_mapping = FixturesExamplesMapping(examples_fixtures_mapping)
+    if examples_fixtures_mapping:
+        warn(PytestDeprecationWarning("Outlining by fixtures could be removed in future versions"))
+
     def decorator(*args):
         if not args:
             raise exceptions.ScenarioIsDecoratorOnly(
@@ -157,11 +180,38 @@ def _get_scenario_decorator(
         [fn] = args
         args = get_args(fn)
 
+        templated_scenario.validate(external_join_keys=set(examples_fixtures_mapping.keys()))
+
         # We need to tell pytest that the original function requires its fixtures,
         # otherwise indirect fixtures would not work.
         @pytest.mark.usefixtures(*args)
         def scenario_wrapper(request, _pytest_bdd_example):
-            scenario = templated_scenario.render(_pytest_bdd_example, request)
+            def are_examples_and_fixtures_joined():
+                joined = True
+                if _pytest_bdd_example and examples_fixtures_mapping:
+                    for param, fixture_name in examples_fixtures_mapping.items():
+                        try:
+                            if request.getfixturevalue(fixture_name) != _pytest_bdd_example[param]:
+                                joined = False
+                                break
+                        except (FixtureLookupError, KeyError):
+                            continue
+                return joined
+
+            if not are_examples_and_fixtures_joined():
+                pytest.skip(f"Examples and fixtures were not joined for example {_pytest_bdd_example.breadcrumb}")
+
+            scenario = templated_scenario.render(
+                {
+                    **(_pytest_bdd_example or {}),
+                    **{
+                        param: request.getfixturevalue(fixture_name)
+                        for param, fixture_name in examples_fixtures_mapping.items()
+                        if param not in _pytest_bdd_example.keys()
+                    },
+                }
+            )
+
             _execute_scenario(feature, scenario, request)
             fixture_values = [request.getfixturevalue(arg) for arg in args]
             return fn(*fixture_values)
@@ -194,12 +244,19 @@ def collect_example_parametrizations(
     ]
 
 
-def scenario(feature_name: str, scenario_name: str, encoding: str = "utf-8", features_base_dir=None):
+def scenario(
+    feature_name: str,
+    scenario_name: str,
+    encoding: str = "utf-8",
+    features_base_dir=None,
+    examples_fixtures_mapping: typing.Union[typing.Set[str], typing.Dict[str, str]] = (),
+):
     """Scenario decorator.
 
-    :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
-    :param str scenario_name: Scenario name.
-    :param str encoding: Feature file encoding.
+    :param feature_name: Feature file name. Absolute or relative to the configured feature base path.
+    :param scenario_name: Scenario name.
+    :param encoding: Feature file encoding.
+    :param examples_fixtures_mapping: Mapping of examples parameter names to fixtures
     """
 
     scenario_name = str(scenario_name)
@@ -219,11 +276,12 @@ def scenario(feature_name: str, scenario_name: str, encoding: str = "utf-8", fea
             f'Scenario "{scenario_name}" in feature "{feature_name}" in {feature.filename} is not found.'
         )
 
-    # Validate the scenario
-    scenario.validate()
-
     return _get_scenario_decorator(
-        feature=feature, feature_name=feature_name, templated_scenario=scenario, scenario_name=scenario_name
+        feature=feature,
+        feature_name=feature_name,
+        templated_scenario=scenario,
+        scenario_name=scenario_name,
+        examples_fixtures_mapping=examples_fixtures_mapping,
     )
 
 

@@ -2,6 +2,10 @@
 
 from pytest_bdd.scenario import scenario, scenarios
 from pytest_bdd.steps import given, then, when
+from pytest_bdd.warning_types import (
+    PytestBDDScenarioExamplesExtraParamsWarning,
+    PytestBDDScenarioStepsExtraPramsWarning,
+)
 
 __version__ = "5.0.0"
 

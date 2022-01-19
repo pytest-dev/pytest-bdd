@@ -713,6 +713,8 @@ The code will look like:
     @scenario(
         "parametrized.feature",
         "Parametrized given, when, then",
+        # Also could be a set, if names of examples and fixtures are same
+        examples_fixtures_mapping={'start':'start', 'eat':'eat', 'left':'left'}
     )
     # Note that we should take the same arguments in the test function that we use
     # for the test parametrization either directly or indirectly (fixtures depend on them).
