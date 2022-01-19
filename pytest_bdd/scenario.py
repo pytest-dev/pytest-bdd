@@ -191,7 +191,7 @@ def _get_scenario_decorator(
                 if _pytest_bdd_example and examples_fixtures_mapping:
                     for param, fixture_name in examples_fixtures_mapping.items():
                         try:
-                            if request.getfixturevalue(fixture_name) != _pytest_bdd_example[param]:
+                            if str(request.getfixturevalue(fixture_name)) != _pytest_bdd_example[param]:
                                 joined = False
                                 break
                         except (FixtureLookupError, KeyError):

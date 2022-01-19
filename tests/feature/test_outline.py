@@ -904,6 +904,46 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter(te
     # fmt: on
 
 
+def test_outlined_scenario_and_feature_with_parameter_join_by_external_parameter(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+
+                Examples:
+                | fruits    | start | eat | external |
+                | apples    |  12   |  5  |     a    |
+                | oranges   |   5   |  4  |     b    |
+                | cucumbers |   8   |  3  |     c    | # not joined by <external>
+
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are <start> <fruits>
+                    When I eat <eat> <fruits>
+                    Then I should have <left> <fruits>
+
+                    Examples:
+                    | left | external |
+                    |  7   |     a    |
+                    |  1   |     b    |
+                    |  4   |     d    | # not joined by <external>
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=2)
+    parametrizations = collect_dumped_objects(result)
+    # fmt: off
+    assert parametrizations == [
+        12, "apples", 5.0, "apples", "7", "apples",
+        5, "oranges", 4.0, "oranges", "1", "oranges",
+    ]
+    # fmt: on
+
+
 def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter_unbalanced(testdir):
     testdir.makefile(
         ".feature",
