@@ -737,6 +737,62 @@ def test_multi_outlined_empty_examples(testdir):
     # fmt: on
 
 
+def test_multi_outlined_tagged_empty_examples(testdir):
+    testdir.makefile(
+        ".ini",
+        pytest=textwrap.dedent(
+            """
+    [pytest]
+    markers =
+        cool_tag
+        nice_tag
+    """
+        ),
+    )
+
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+
+                Examples:
+
+                Examples: Vertical
+
+                Examples:
+                |@       |
+                |nice_tag|
+
+                Examples: Vertical
+                |
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are 12 apples
+                    When I eat 5 apples
+                    Then I should have 7 apples
+
+                    Examples:
+
+                    @cool_tag
+                    Examples: Vertical
+
+                    Examples:
+                    |
+
+                    Examples: Vertical
+                    |
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest("-s", "-m", "cool_tag and nice_tag")
+    result.assert_outcomes(passed=1)
+    result = testdir.runpytest("-s", "-m", "cool_tag or nice_tag")
+    result.assert_outcomes(passed=7)
+
+
 def test_multi_outlined_feature_with_parameter_union(testdir):
     testdir.makefile(
         ".feature",

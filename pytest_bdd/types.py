@@ -12,6 +12,10 @@ BACKGROUND = "background"
 GIVEN = "given"
 WHEN = "when"
 THEN = "then"
+AND_AND = "and_and"
+AND_BUT = "and_but"
+AND_STAR = "and_star"
 TAG = "tag"
 
-STEP_TYPES = (GIVEN, WHEN, THEN)
+CONTINUATION_STEP_TYPES = (AND_AND, AND_BUT, AND_STAR)
+STEP_TYPES = (GIVEN, WHEN, THEN, *CONTINUATION_STEP_TYPES)
