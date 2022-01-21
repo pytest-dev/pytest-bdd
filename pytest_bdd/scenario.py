@@ -74,12 +74,8 @@ def _find_step_and_step_alias_function(request, step, scenario):
         )
 
 
-def _inject_step_fixtures(request, step, parser, converters):
-    # TODO: maybe `converters` should be part of the SterParser.__init__(),
-    #  and used by StepParser.parse_arguments() method
-    for arg, value in parser.parse_arguments(step.name).items():
-        converted_value = converters.get(arg, lambda _: _)(value)
-        inject_fixture(request, arg, converted_value)
+def _parse_and_apply_converters_to_step_parameters(step, parser, converters):
+    return {arg: converters.get(arg, lambda _: _)(value) for arg, value in parser.parse_arguments(step.name).items()}
 
 
 def _execute_step_function(request, scenario, step, step_func):
@@ -98,7 +94,10 @@ def _execute_step_function(request, scenario, step, step_func):
     kw["step_func_args"] = {}
     try:
         # Get the step argument values.
-        kwargs = {arg: request.getfixturevalue(arg) for arg in get_args(step_func)}
+        kwargs = {
+            param: request.config.hook.pytest_bdd_get_parameter_context_value(param=param, request=request)
+            for param in get_args(step_func)
+        }
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
@@ -134,7 +133,11 @@ def _execute_scenario(feature: "Feature", scenario: "Scenario", request):
                     request=request, feature=feature, scenario=scenario, step=step, exception=exception
                 )
                 raise
-            _inject_step_fixtures(request, step, step_alias_func.parser, step_func.converters)
+            step_arguments = _parse_and_apply_converters_to_step_parameters(
+                step, step_alias_func.parser, step_func.converters
+            )
+            request.getfixturevalue("bdd_context").update(step_arguments)
+
             _execute_step_function(request, scenario, step, step_func)
     finally:
         request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
@@ -150,6 +153,19 @@ class FixturesExamplesMapping(collections.defaultdict):
     def __missing__(self, key):
         self[key] = key
         return key
+
+
+def _are_examples_and_fixtures_joinable(request, bdd_example, examples_fixtures_mapping):
+    joinable = True
+    if bdd_example and examples_fixtures_mapping:
+        for param, fixture_name in examples_fixtures_mapping.items():
+            try:
+                if str(request.getfixturevalue(fixture_name)) != bdd_example[param]:
+                    joinable = False
+                    break
+            except (FixtureLookupError, KeyError):
+                continue
+    return joinable
 
 
 def _get_scenario_decorator(
@@ -185,29 +201,18 @@ def _get_scenario_decorator(
         # We need to tell pytest that the original function requires its fixtures,
         # otherwise indirect fixtures would not work.
         @pytest.mark.usefixtures(*args)
-        def scenario_wrapper(request, _pytest_bdd_example):
-            def are_examples_and_fixtures_joined():
-                joined = True
-                if _pytest_bdd_example and examples_fixtures_mapping:
-                    for param, fixture_name in examples_fixtures_mapping.items():
-                        try:
-                            if str(request.getfixturevalue(fixture_name)) != _pytest_bdd_example[param]:
-                                joined = False
-                                break
-                        except (FixtureLookupError, KeyError):
-                            continue
-                return joined
+        def scenario_wrapper(request, bdd_example):
 
-            if not are_examples_and_fixtures_joined():
-                pytest.skip(f"Examples and fixtures were not joined for example {_pytest_bdd_example.breadcrumb}")
+            if not _are_examples_and_fixtures_joinable(request, bdd_example, examples_fixtures_mapping):
+                pytest.skip(f"Examples and fixtures were not joined for example {bdd_example.breadcrumb}")
 
             scenario = templated_scenario.render(
                 {
-                    **(_pytest_bdd_example or {}),
+                    **bdd_example,
                     **{
                         param: request.getfixturevalue(fixture_name)
                         for param, fixture_name in examples_fixtures_mapping.items()
-                        if param not in _pytest_bdd_example.keys()
+                        if param not in bdd_example.keys()
                     },
                 }
             )
@@ -219,10 +224,7 @@ def _get_scenario_decorator(
         example_parametrizations = collect_example_parametrizations(templated_scenario)
         if example_parametrizations:
             # Parametrize the scenario outlines
-            scenario_wrapper = pytest.mark.parametrize(
-                "_pytest_bdd_example",
-                example_parametrizations,
-            )(scenario_wrapper)
+            scenario_wrapper = pytest.mark.parametrize("bdd_example", example_parametrizations)(scenario_wrapper)
 
         for tag in templated_scenario.tags.union(feature.tags):
             config = CONFIG_STACK[-1]

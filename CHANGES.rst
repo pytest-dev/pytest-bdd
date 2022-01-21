@@ -8,6 +8,9 @@ Unreleased
 - Step functions could get compiled instances of parse, cfparse and re.compile directly
 - Fix support of test step render by pytest parametrization dropped in release 5.0.0 adding adapter between fixtures and examples
 - Refuse usage of pytest versions 4.3, 4.4
+- Added tags support for Examples sections
+- Added joining by parameters between examples sections on different levels (and with fixtures)
+- Parsed step parameters are not fixtures anymore. Hook **pytest_bdd_get_parameter_context_value** could be used to get compiled parameter for current step
 
 5.0.0
 -----

@@ -3,6 +3,7 @@ from typing import Collection, Optional, Union
 from warnings import warn
 
 import pytest
+from _pytest.fixtures import FixtureLookupError
 from _pytest.mark import Mark, MarkDecorator
 from _pytest.warning_types import PytestDeprecationWarning
 
@@ -26,15 +27,22 @@ def trace():
 
 
 @pytest.fixture
-def _pytest_bdd_example():
+def bdd_example():
     """The current scenario outline parametrization.
-
-    This is used internally by pytest_bdd.
 
     If no outline is used, we just return an empty dict to render
     the current template without any actual variable.
     Otherwise pytest_bdd will add all the context variables in this fixture
     from the example definitions in the feature file.
+    """
+    return {}
+
+
+@pytest.fixture
+def bdd_context(request):
+    """Current scenario parsed steps parameters context
+
+    Context has precedence over fixtures and is updated before step run
     """
     return {}
 
@@ -112,3 +120,13 @@ def pytest_bdd_convert_tag_to_marks(
     feature, scenario, example, tag
 ) -> Optional[Collection[Union[Mark, MarkDecorator]]]:
     return [getattr(pytest.mark, tag)]
+
+
+def pytest_bdd_get_parameter_context_value(param, request):
+    try:
+        return request.getfixturevalue("bdd_context")[param]
+    except KeyError as key_error:
+        try:
+            return request.getfixturevalue(param)
+        except FixtureLookupError as fixture_error:
+            raise fixture_error from key_error

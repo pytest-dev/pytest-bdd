@@ -245,6 +245,7 @@ for `re` parser
 or the same:
 
 .. code-block:: python
+
     from re import compile as parse_re
 
     @given(
