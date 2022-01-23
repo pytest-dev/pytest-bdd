@@ -176,9 +176,6 @@ def test_unicode_characters(testdir, monkeypatch):
         ),
     )
 
-    if sys.version_info < (3, 7):
-        monkeypatch.setenv("PYTHONIOENCODING", "utf-8")
-
     result = testdir.run("pytest-bdd", "generate", "unicode_characters.feature")
     expected_output = textwrap.dedent(
         '''\
