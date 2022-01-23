@@ -11,6 +11,8 @@ Unreleased
 - Added tags support for Examples sections
 - Added joining by parameters between examples sections on different levels (and with fixtures)
 - Parsed step parameters are not fixtures anymore. Hook **pytest_bdd_get_parameter_context_value** could be used to get compiled parameter for current step
+- Step could override multiple fixtures using **target_fixtures** parameter
+
 
 5.0.0
 -----

@@ -38,3 +38,7 @@ class PytestBDDScenarioStepsExtraPramsWarning(PytestWarning):
             {", ".join(param for param in self.steps_extra_params)}
         """
         )
+
+
+class PytestBDDStepDefinitionWarning(PytestWarning):
+    __module__ = "pytest_bdd"

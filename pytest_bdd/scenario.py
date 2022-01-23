@@ -13,8 +13,9 @@ test_publish_article = scenario(
 import collections
 import os
 import re
+import sys
 import typing
-from itertools import tee
+from itertools import tee, zip_longest
 from warnings import warn
 
 import pytest
@@ -25,6 +26,14 @@ from . import exceptions
 from .feature import get_feature, get_features
 from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, apply_tag, get_args, get_caller_module_locals, get_caller_module_path
+
+if sys.version_info >= (3, 8):
+    from typing import Protocol, runtime_checkable
+else:
+    try:
+        from typing_extensions import Protocol, runtime_checkable
+    except ImportError:
+        Protocol, runtime_checkable = object, lambda cls: cls
 
 if typing.TYPE_CHECKING:
     from _pytest.mark.structures import ParameterSet
@@ -78,14 +87,18 @@ def _parse_and_apply_converters_to_step_parameters(step, parser, converters):
     return {arg: converters.get(arg, lambda _: _)(value) for arg, value in parser.parse_arguments(step.name).items()}
 
 
+@runtime_checkable
+class StepFunc(Protocol):
+    target_fixtures: typing.List[str]
+
+
 def _execute_step_function(request, scenario, step, step_func):
     """Execute step function.
 
     :param request: PyTest request.
     :param scenario: Scenario.
     :param step: Step.
-    :param function step_func: Step function.
-    :param example: Example table.
+    :param Union[function, StepFunc] step_func: Step function.
     """
     kw = dict(request=request, feature=scenario.feature, scenario=scenario, step=step, step_func=step_func)
 
@@ -101,10 +114,18 @@ def _execute_step_function(request, scenario, step, step_func):
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
-        target_fixture = getattr(step_func, "target_fixture", None)
+
         # Execute the step.
-        return_value = step_func(**kwargs)
-        if target_fixture:
+        step_result = step_func(**kwargs)
+
+        if len(step_func.target_fixtures) == 1:
+            injectable_fixtures = [(step_func.target_fixtures[0], step_result)]
+        elif step_result is not None:
+            injectable_fixtures = zip(step_func.target_fixtures, step_result)
+        else:
+            injectable_fixtures = zip_longest(step_func.target_fixtures, [])
+
+        for target_fixture, return_value in injectable_fixtures:
             inject_fixture(request, target_fixture, return_value)
 
         request.config.hook.pytest_bdd_after_step(**kw)

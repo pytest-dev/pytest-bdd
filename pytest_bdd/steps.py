@@ -34,14 +34,17 @@ def given_beautiful_article(article):
     pass
 
 """
+import warnings
 from typing import Dict, Optional
 
 import pytest
 from _pytest.fixtures import FixtureDef
+from ordered_set import OrderedSet
 
 from .parsers import get_parser
 from .types import GIVEN, THEN, WHEN
 from .utils import get_caller_module_locals
+from .warning_types import PytestBDDStepDefinitionWarning
 
 
 def get_step_fixture_name(name, type_):
@@ -55,57 +58,77 @@ def get_step_fixture_name(name, type_):
     return f"pytestbdd_{type_}_{name}"
 
 
-def given(name, converters=None, target_fixture=None):
+def given(name, converters=None, target_fixture=None, target_fixtures=None):
     """Given step decorator.
 
     :param name: Step name or a parser object.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
+    :param target_fixtures: Target fixture names to be replaced by steps definition function.
 
     :return: Decorator function for the step.
     """
-    return _step_decorator(GIVEN, name, converters=converters, target_fixture=target_fixture)
+    return _step_decorator(
+        GIVEN, name, converters=converters, target_fixture=target_fixture, target_fixtures=target_fixtures
+    )
 
 
-def when(name, converters=None, target_fixture=None):
+def when(name, converters=None, target_fixture=None, target_fixtures=None):
     """When step decorator.
 
     :param name: Step name or a parser object.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
+    :param target_fixtures: Target fixture names to be replaced by steps definition function.
 
     :return: Decorator function for the step.
     """
-    return _step_decorator(WHEN, name, converters=converters, target_fixture=target_fixture)
+    return _step_decorator(
+        WHEN, name, converters=converters, target_fixture=target_fixture, target_fixtures=target_fixtures
+    )
 
 
-def then(name, converters=None, target_fixture=None):
+def then(name, converters=None, target_fixture=None, target_fixtures=None):
     """Then step decorator.
 
     :param name: Step name or a parser object.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
+    :param target_fixtures: Target fixture names to be replaced by steps definition function.
 
     :return: Decorator function for the step.
     """
-    return _step_decorator(THEN, name, converters=converters, target_fixture=target_fixture)
+    return _step_decorator(
+        THEN, name, converters=converters, target_fixture=target_fixture, target_fixtures=target_fixtures
+    )
 
 
-def _step_decorator(step_type, step_name, converters: Optional[Dict] = None, target_fixture=None):
+def _step_decorator(step_type, step_name, converters: Optional[Dict] = None, target_fixture=None, target_fixtures=None):
     """Step decorator for the type and the name.
 
     :param str step_type: Step type (GIVEN, WHEN or THEN).
     :param str step_name: Step name as in the feature file.
     :param dict converters: Optional step arguments converters mapping
     :param target_fixture: Optional fixture name to replace by step definition
+    :param target_fixtures: Target fixture names to be replaced by steps definition function.
 
     :return: Decorator function for the step.
     """
 
     converters = converters or {}
+    if target_fixture is not None and target_fixtures is not None:
+        warnings.warn(PytestBDDStepDefinitionWarning("Both target_fixture and target_fixtures are specified"))
+    target_fixtures = list(
+        OrderedSet(
+            [
+                *([target_fixture] if target_fixture is not None else []),
+                *(target_fixtures if target_fixtures is not None else []),
+            ]
+        )
+    )
 
     def decorator(step_func):
         parser = get_parser(step_name)
@@ -124,7 +147,7 @@ def _step_decorator(step_type, step_name, converters: Optional[Dict] = None, tar
         step_func.parser = step_alias_func.parser = parser
         step_func.converters = step_alias_func.converters = converters
 
-        step_func.target_fixture = step_alias_func.target_fixture = target_fixture
+        step_func.target_fixtures = step_alias_func.target_fixtures = target_fixtures
 
         step_alias_fixture = pytest.fixture(step_alias_func)
         fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
