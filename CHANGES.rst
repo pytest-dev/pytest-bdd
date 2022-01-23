@@ -7,11 +7,13 @@ Unreleased
 - Default parser is switched to cfparse. Step name is compiled to cfparse
 - Step functions could get compiled instances of parse, cfparse and re.compile directly
 - Fix support of test step render by pytest parametrization dropped in release 5.0.0 adding adapter between fixtures and examples
-- Refuse usage of pytest versions 4.3, 4.4
+- Drop pytest 4
+- Drop python 3.6
 - Added tags support for Examples sections
 - Added joining by parameters between examples sections on different levels (and with fixtures)
 - Step could override multiple fixtures using ``target_fixtures`` parameter
 - Default step parameters injection as fixtures behavior could be changed by ``params_fixtures_mapping`` step parameter
+
 
 5.0.0
 -----
