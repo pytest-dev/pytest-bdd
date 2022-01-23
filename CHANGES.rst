@@ -1,6 +1,18 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+This release introduces breaking changes in order to be more in line with the official gherkin specification.
+
+- Cleanup of the documentation and tests related to parametrization (elchupanebrej)
+- Removed feature level examples for the gherkin compatibility (olegpidsadnyi)
+- Removed vertical examples for the gherkin compatibility (olegpidsadnyi)
+- Step arguments are no longer fixtures (olegpidsadnyi)
+
+
+
 5.0.0
 -----
 This release introduces breaking changes, please refer to the :ref:`Migration from 4.x.x`.
