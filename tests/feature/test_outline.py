@@ -904,6 +904,68 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter(te
     # fmt: on
 
 
+def test_outlined_scenario_and_feature_with_parameter_join_empty_and_non_empty_parameter_1(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+
+                Examples:
+                | fruits    | start | eat | left |
+                | apples    |  12   |  5  |  7   |
+                | apples    |  12   |  9  |  3   |
+                | oranges   |   5   |  4  |  1   |
+                | cucumbers |   8   |  3  |  5   |
+
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are <start> <fruits>
+                    When I eat <eat> <fruits>
+                    Then I should have <left> <fruits>
+
+                    Examples:
+                    |
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=4)
+
+
+def test_outlined_scenario_and_feature_with_parameter_join_empty_and_non_empty_parameter_2(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+
+                Examples:
+                |
+
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are <start> <fruits>
+                    When I eat <eat> <fruits>
+                    Then I should have <left> <fruits>
+
+                    Examples:
+                    | fruits    | start | eat | left |
+                    | apples    |  12   |  5  |  7   |
+                    | apples    |  12   |  9  |  3   |
+                    | oranges   |   5   |  4  |  1   |
+                    | cucumbers |   8   |  3  |  5   |
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=4)
+
+
 def test_outlined_scenario_and_feature_with_parameter_join_by_external_parameter(testdir):
     testdir.makefile(
         ".feature",

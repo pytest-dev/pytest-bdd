@@ -453,6 +453,9 @@ class Examples(list):
     def example_params(self):
         return reduce(or_, (set(example_table.example_params) for example_table in self), set())
 
+    def __bool__(self):
+        return bool(self.example_params)
+
 
 @attrs
 class ExampleRow(SimpleMapping):
