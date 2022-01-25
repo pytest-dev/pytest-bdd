@@ -24,7 +24,7 @@ from _pytest.warning_types import PytestDeprecationWarning
 from . import exceptions
 from .feature import get_feature, get_features
 from .steps import get_step_fixture_name, inject_fixture
-from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
+from .utils import CONFIG_STACK, apply_tag, get_args, get_caller_module_locals, get_caller_module_path
 
 if typing.TYPE_CHECKING:
     from _pytest.mark.structures import ParameterSet
@@ -226,7 +226,9 @@ def _get_scenario_decorator(
 
         for tag in templated_scenario.tags.union(feature.tags):
             config = CONFIG_STACK[-1]
-            config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
+            # TODO deprecated usage
+            if not config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper):
+                apply_tag(scenario=templated_scenario, tag=tag, function=scenario_wrapper)
 
         scenario_wrapper.__doc__ = f"{feature_name}: {scenario_name}"
         scenario_wrapper.__scenario__ = templated_scenario
@@ -238,10 +240,29 @@ def _get_scenario_decorator(
 def collect_example_parametrizations(
     templated_scenario: "ScenarioTemplate",
 ) -> "typing.Optional[typing.List[ParameterSet]]":
-    return [
-        pytest.param(united_example_row, id=united_example_row.breadcrumb + ":" + "-".join(united_example_row.values()))
-        for united_example_row in templated_scenario.united_example_rows
-    ]
+    parametrizations = []
+    config = CONFIG_STACK[-1]
+    for united_example_row in templated_scenario.united_example_rows:
+
+        def marks():
+            for tag in united_example_row.tags:
+                _marks = config.hook.pytest_bdd_convert_tag_to_marks(
+                    feature=templated_scenario.feature,
+                    scenario=templated_scenario,
+                    example=united_example_row,
+                    tag=tag,
+                )
+                if _marks:
+                    yield from iter(_marks)
+
+        parametrizations.append(
+            pytest.param(
+                united_example_row,
+                id=united_example_row.breadcrumb + ":" + "-".join(united_example_row.values()),
+                marks=list(marks()),
+            )
+        )
+    return parametrizations
 
 
 def scenario(

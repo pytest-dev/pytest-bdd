@@ -68,6 +68,204 @@ def test_tags_selector(testdir):
     assert result["deselected"] == 2
 
 
+def test_tags_selector_with_examples(testdir):
+    """Test tests selection by tags."""
+    testdir.makefile(
+        ".ini",
+        pytest=textwrap.dedent(
+            """\
+                [pytest]
+                markers =
+                    feature_tag_1
+                    feature_tag_2
+                    background_example_tag_01
+                    background_example_tag_02
+                    background_example_tag_03
+                    background_example_tag_04
+                    scenario_tag_01
+                    scenario_tag_02
+                    scenario_tag_10
+                    scenario_tag_20
+                    scenario_example_tag_01
+                    scenario_example_tag_02
+                    scenario_example_tag_03
+                    scenario_example_tag_04
+                """
+        ),
+    )
+    testdir.makefile(
+        ".feature",
+        test=textwrap.dedent(
+            """\
+        @feature_tag_1 @feature_tag_2
+        Feature: Tags
+            Background:
+                Given I have <background_example>
+
+                @background_example_tag_01
+                Examples: Nice background example
+                  |background_example|
+                  |        1         |
+
+                @background_example_tag_02
+                Examples:
+                  |background_example|
+                  |        2         |
+
+                @background_example_tag_03
+                Examples: Vertical
+                  |background_example| 3 |
+
+                @background_example_tag_04
+                Examples: Vertical Another example
+                  |background_example| 4 |
+
+            @scenario_tag_01 @scenario_tag_02
+            Scenario: Tags
+                Given I have a bar
+
+            @scenario_tag_10 @scenario_tag_20
+            Scenario: Tags 2
+                Given I have a bar
+                Given I have a <scenario_example>
+
+                @scenario_example_tag_01
+                Examples:
+                  |scenario_example|
+                  |        5       |
+
+                @scenario_example_tag_02
+                Examples:
+                  |scenario_example|
+                  |        6       |
+                @scenario_example_tag_03
+                Examples: Vertical Scenario example
+                  |scenario_example| 7 |
+
+                @scenario_example_tag_04
+                Examples: Vertical
+                  |scenario_example| 8 |
+        """,
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        import pytest
+        from pytest_bdd import given, scenarios
+
+        @given('I have a bar')
+        def i_have_bar():
+            return 'bar'
+
+        @given('I have {background_example}')
+        def i_have_bar(background_example):
+            return background_example
+
+        @given('I have a {scenario_example}')
+        def i_have_bar(scenario_example):
+            return scenario_example
+
+        scenarios('test.feature')
+        """
+        )
+    )
+
+    result = testdir.runpytest("-m", "scenario_tag_10 and not scenario_tag_01", "-vv")
+    outcomes = result.parseoutcomes()
+    assert outcomes["passed"] == 16
+    assert outcomes["deselected"] == 4
+
+    result = testdir.runpytest("-m", "scenario_tag_01 and not scenario_tag_10", "-vv").parseoutcomes()
+    assert result["passed"] == 4
+    assert result["deselected"] == 16
+
+    result = testdir.runpytest("-m", "feature_tag_1", "-vv").parseoutcomes()
+    assert result["passed"] == 20
+
+    result = testdir.runpytest("-m", "feature_tag_10", "-vv").parseoutcomes()
+    assert result["deselected"] == 20
+
+    result = testdir.runpytest("-m", "scenario_example_tag_01", "-vv")
+    outcomes = result.parseoutcomes()
+    assert outcomes["passed"] == 4
+    assert outcomes["deselected"] == 16
+
+    result = testdir.runpytest("-m", "background_example_tag_01 and scenario_example_tag_01", "-vv")
+    outcomes = result.parseoutcomes()
+    assert outcomes["passed"] == 1
+    assert outcomes["deselected"] == 19
+
+    result = testdir.runpytest("-m", "background_example_tag_01 and scenario_tag_10", "-vv")
+    outcomes = result.parseoutcomes()
+    assert outcomes["passed"] == 4
+    assert outcomes["deselected"] == 16
+
+
+def test_tags_selector_with_empty_examples(testdir):
+    """Test tests selection by tags."""
+    testdir.makefile(
+        ".ini",
+        pytest=textwrap.dedent(
+            """\
+                [pytest]
+                markers =
+                    feature_tag
+                    background_example_tag
+                    scenario_tag
+                    scenario_example_tag
+                """
+        ),
+    )
+    testdir.makefile(
+        ".feature",
+        test=textwrap.dedent(
+            """\
+        @feature_tag
+        Feature: Tags
+            Background:
+                Given I have <background_example>
+
+                @background_example_tag
+                Examples: Nice background example
+                  |background_example|
+                  |        1         |
+
+
+            @scenario_tag
+            Scenario: Tags
+                Given I have a bar
+
+                @scenario_example_tag
+                Examples:
+                  |
+        """,
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        import pytest
+        from pytest_bdd import given, scenarios
+
+        @given('I have a bar')
+        def i_have_bar():
+            return 'bar'
+
+        @given('I have {background_example}')
+        def i_have_bar(background_example):
+            return background_example
+
+        scenarios('test.feature')
+        """
+        )
+    )
+
+    result = testdir.runpytest("-m", "scenario_example_tag", "-vv")
+    outcomes = result.parseoutcomes()
+    assert outcomes["passed"] == 1
+
+
 def test_tags_after_background_issue_160(testdir):
     """Make sure using a tag after background works."""
     testdir.makefile(
@@ -157,7 +355,7 @@ def test_apply_tag_hook(testdir):
         scenarios('test.feature')
     """
     )
-    result = testdir.runpytest("-rsx")
+    result = testdir.runpytest("-rsx", "-W", "ignore::pytest.PytestDeprecationWarning")
     result.stdout.fnmatch_lines(["SKIP*: Not implemented yet"])
     result.stdout.fnmatch_lines(["*= 1 skipped, 1 xpassed * =*"])
 

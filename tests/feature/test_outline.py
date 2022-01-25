@@ -728,10 +728,10 @@ def test_multi_outlined_empty_examples(testdir):
 
     testdir.makepyfile(STEPS_OUTLINED)
     result = testdir.runpytest("-s")
-    result.assert_outcomes(passed=1)
+    result.assert_outcomes(passed=16)
     parametrizations = collect_dumped_objects(result)
     # fmt: off
-    assert parametrizations == [
+    assert parametrizations == 16 * [
         12, "apples", 5.0, "apples", "7", "apples",
     ]
     # fmt: on

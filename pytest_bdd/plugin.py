@@ -1,6 +1,10 @@
 """Pytest plugin entry point. Used for any fixtures needed."""
+from typing import Collection, Optional, Union
+from warnings import warn
 
 import pytest
+from _pytest.mark import Mark, MarkDecorator
+from _pytest.warning_types import PytestDeprecationWarning
 
 from . import cucumber_json, generation, gherkin_terminal_reporter, given, reporting, then, when
 from .utils import CONFIG_STACK
@@ -91,6 +95,20 @@ def pytest_cmdline_main(config):
     return generation.cmdline_main(config)
 
 
+@pytest.hookimpl(hookwrapper=True)
 def pytest_bdd_apply_tag(tag, function):
-    mark = getattr(pytest.mark, tag)
-    return mark(function)
+    outcome = yield
+    res = outcome.get_result()
+    if res is not None:
+        warn(
+            PytestDeprecationWarning(
+                'Will be removed, use instead "pytest_bdd_convert_tag_to_marks". This doesn\'t work with Examples tags'
+            )
+        )
+
+
+@pytest.mark.trylast
+def pytest_bdd_convert_tag_to_marks(
+    feature, scenario, example, tag
+) -> Optional[Collection[Union[Mark, MarkDecorator]]]:
+    return [getattr(pytest.mark, tag)]

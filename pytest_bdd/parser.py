@@ -4,12 +4,13 @@ import textwrap
 import typing
 from collections import OrderedDict
 from functools import reduce
-from itertools import product, zip_longest
+from itertools import chain, product, zip_longest
 from operator import or_
 from warnings import warn
 
 from _pytest.warning_types import PytestCollectionWarning
 from attr import Factory, attrib, attrs, validate
+from ordered_set import OrderedSet
 
 from . import exceptions, types
 from .utils import SimpleMapping
@@ -111,7 +112,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
     description: typing.List[str] = []
     step = None
     multiline_step = False
-    prev_line = None
+    current_tags = OrderedSet()
 
     with open(abs_filename, encoding=encoding) as f:
         content = f.read()
@@ -140,11 +141,27 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
                 "Step definition outside of a Scenario or a Background", line_number, clean_line, filename
             )
 
+        allowed_prev_mode = (
+            types.EXAMPLE_LINE,
+            types.EXAMPLE_LINE_VERTICAL,
+            types.TAG,
+            *types.STEP_TYPES,
+            types.FEATURE,
+        )
+
+        if mode == types.TAG and prev_mode and prev_mode not in allowed_prev_mode:
+            raise exceptions.FeatureError(
+                "Tag not around Feature, Scenario or Examples ", line_number, clean_line, filename
+            )
+        else:
+            current_tags |= get_tags(clean_line)
+
         if mode == types.FEATURE:
             if prev_mode is None or prev_mode == types.TAG:
                 _, feature.name = parse_line(clean_line)
                 feature.line_number = line_number
-                feature.tags = get_tags(prev_line)
+                feature.tags = current_tags
+                current_tags = OrderedSet()
             elif prev_mode == types.FEATURE:
                 description.append(clean_line)
             else:
@@ -160,10 +177,10 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
         # Remove Feature, Given, When, Then, And
         keyword, parsed_line = parse_line(clean_line)
         if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
-            tags = get_tags(prev_line)
             feature.scenarios[parsed_line] = scenario = current_node = ScenarioTemplate(
-                feature=feature, name=parsed_line, line_number=line_number, tags=tags
+                feature=feature, name=parsed_line, line_number=line_number, tags=current_tags
             )
+            current_tags = OrderedSet()
         elif mode == types.BACKGROUND:
             feature.background = Background(feature=feature, line_number=line_number)
         elif mode in [types.EXAMPLES, types.EXAMPLES_VERTICAL]:
@@ -176,6 +193,8 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
                 name=table_name or None, line_number=line_number, node=current_node
             )
             current_node.examples += [current_example_table]
+            current_example_table.tags = current_tags
+            current_tags = OrderedSet()
         elif mode == types.EXAMPLES_HEADERS:
             mode = types.EXAMPLE_LINE
             current_example_table.example_params = [l for l in split_line(parsed_line) if l]
@@ -218,7 +237,6 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
             else:
                 target = scenario
             target.add_step(step)
-        prev_line = clean_line
 
     feature.description = "\n".join(description).strip()
     return feature
@@ -253,14 +271,14 @@ class ScenarioTemplate:
 
         :param str name: Scenario name.
         :param int line_number: Scenario line number.
-        :param set tags: Set of tags.
+        :param OrderedSet tags: Set of tags.
         """
         self.feature = feature
         self.name = name
         self._steps: typing.List[Step] = []
         self.examples = Examples()
         self.line_number = line_number
-        self.tags = tags or set()
+        self.tags = tags or OrderedSet()
 
     def add_step(self, step):
         """Add step to the scenario.
@@ -453,15 +471,13 @@ class Examples(list):
     def example_params(self):
         return reduce(or_, (set(example_table.example_params) for example_table in self), set())
 
-    def __bool__(self):
-        return bool(self.example_params)
-
 
 @attrs
 class ExampleRow(SimpleMapping):
     mapping = attrib()
     index = attrib(kw_only=True, default=None)
     kind = attrib(kw_only=True, default=None)
+    tags = attrib(default=Factory(OrderedSet), kw_only=True)
     example_table: "ExampleTable" = attrib(kw_only=True, default=None)
 
     def __attrs_post_init__(self):
@@ -471,11 +487,11 @@ class ExampleRow(SimpleMapping):
     def breadcrumb(self):
         node = self.example_table.node
         example_table = self.example_table
-        if node and example_table:
+        if node:
             return (
                 f"[{node.node_kind}:{node.name or '[Empty]'}:line_no:{node.line_number}]>"
                 f"[Examples:{example_table.name or '[Empty]'}:line_no:{example_table.line_number}]>"
-                f"[{self.kind}:{self.index}]"
+                f"[{self.kind or '[Empty]'}:{self.index if self.index is not None else '[Empty]'}]"
             )
         else:
             raise AttributeError
@@ -485,12 +501,13 @@ class ExampleRow(SimpleMapping):
 class ExampleRowUnited(SimpleMapping):
     example_rows: typing.List[ExampleRow] = attrib()
     join_params = attrib(default=Factory(set), kw_only=True)
+    tags = attrib(default=Factory(OrderedSet), kw_only=True)
 
     class BuildError(ValueError):
         ...
 
     def __attrs_post_init__(self):
-        combined_row = {}
+        combined_row = ExampleRow({})
         join_params = set()
         built = False
         for example_row in self.example_rows:
@@ -501,15 +518,31 @@ class ExampleRowUnited(SimpleMapping):
         else:
             built = True
             self._dict = combined_row
+            self.tags = combined_row.tags
             self.join_params = join_params
         if not built:
             raise self.BuildError
 
     @staticmethod
-    def _combine_two_rows(row1, row2) -> typing.Tuple[typing.Optional["ExampleRow"], typing.Optional[typing.Set]]:
+    def _combine_two_rows(
+        row1: ExampleRow, row2: ExampleRow
+    ) -> typing.Tuple[typing.Optional["ExampleRow"], typing.Optional[typing.Set]]:
         common_param_names = set(row1.keys()) & set(row2.keys())
         if all(row1[param_name] == row2[param_name] for param_name in common_param_names):
-            return ExampleRow({**row1, **row2}), common_param_names
+            return (
+                ExampleRow(
+                    {**row1, **row2},
+                    tags=OrderedSet(
+                        chain(
+                            row1.tags,
+                            *((row1.example_table.tags,) if row1.example_table is not None else ()),
+                            row2.tags,
+                            *((row2.example_table.tags,) if row2.example_table is not None else ()),
+                        )
+                    ),
+                ),
+                common_param_names,
+            )
         else:
             return None, None
 
@@ -540,7 +573,7 @@ class ExampleTable:
 
     line_number = attrib(default=None)
     name = attrib(default=None)
-    tags = attrib(default=Factory(list))
+    tags = attrib(default=Factory(OrderedSet), kw_only=True)
     node: typing.Union[Feature, ScenarioTemplate] = attrib(default=None, kw_only=True)
 
     def __iter__(self) -> typing.Iterable[ExampleRow]:
@@ -598,7 +631,15 @@ class ExampleTableCombination(typing.Collection):
 
     @property
     def united_example_rows(self) -> typing.Iterable[ExampleRowUnited]:
-        for rows in product(*self):
+        def get_rows_or_build_default_row(example_table: ExampleTable):
+            rows = iter(example_table)
+            try:
+                yield next(rows)
+            except StopIteration:
+                yield ExampleRow({}, example_table=example_table)
+            yield from rows
+
+        for rows in product(*map(get_rows_or_build_default_row, self)):
             try:
                 yield ExampleRowUnited(rows)
             except ExampleRowUnited.BuildError:
@@ -614,7 +655,7 @@ class ExampleTableCombination(typing.Collection):
         return item in self._list
 
 
-def get_tags(line):
+def get_tags(line) -> typing.Set[str]:
     """Get tags out of the given line.
 
     :param str line: Feature file text line.

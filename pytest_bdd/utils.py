@@ -3,6 +3,7 @@ import base64
 import pickle
 import re
 import typing
+from functools import reduce
 from inspect import getframeinfo, signature
 from sys import _getframe
 
@@ -80,3 +81,14 @@ class SimpleMapping(typing.Mapping):
 
     def __len__(self):
         return len(self._dict)
+
+
+def apply_tag(scenario, tag, function):
+    config = CONFIG_STACK[-1]
+
+    def compose(*func):
+        return reduce(lambda f, g: lambda x: f(g(x)), func, lambda x: x)
+
+    return compose(
+        *config.hook.pytest_bdd_convert_tag_to_marks(feature=scenario.feature, scenario=scenario, example=None, tag=tag)
+    )(function)
