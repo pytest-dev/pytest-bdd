@@ -12,7 +12,7 @@ BDD library for the pytest runner
     :alt: Documentation Status
 
 pytest-bdd implements a subset of the Gherkin language to enable automating project
-requirements testing and to facilitate behavioral driven development.
+requirements testing and to facilitate behavior-driven development.
 
 Unlike many other BDD tools, it does not require a separate runner and benefits from
 the power and flexibility of pytest. It enables unifying unit and functional
@@ -109,7 +109,7 @@ test_publish_article.py:
 Scenario decorator
 ------------------
 
-Functions decorated with the `scenario` decorator behave like a normal test function,
+Functions decorated with the ``scenario`` decorator behave like normal test functions,
 and they will be executed after all scenario steps.
 
 
@@ -128,9 +128,9 @@ and they will be executed after all scenario steps.
 Step aliases
 ------------
 
-Sometimes, one has to declare the same fixtures or steps with
+Sometimes one has to declare the same fixtures or steps with
 different names for better readability. In order to use the same step
-function with multiple step names simply decorate it multiple times:
+function with multiple step names, simply decorate it multiple times:
 
 .. code-block:: python
 
@@ -162,9 +162,9 @@ default author.
 Step arguments
 --------------
 
-Often it's possible to reuse steps giving them a parameter(s).
-This allows to have single implementation and multiple use, so less code.
-Also opens the possibility to use same step twice in single scenario and with different arguments!
+Often it's possible to reuse steps by assigning parameters to them.
+This permits a single implementation and multiple uses, so less code.
+This also allows the use of the same step with different arguments to be used in a single scenario!
 And even more, there are several types of step parameter parsers at your disposal
 (idea taken from behave_ implementation):
 
@@ -172,7 +172,7 @@ And even more, there are several types of step parameter parsers at your disposa
 .. _pypi_parse_type: http://pypi.python.org/pypi/parse_type
 
 **string** (the default)
-    This is the default and can be considered as a `null` or `exact` parser. It parses no parameters
+    This is the default and can be considered as a ``null`` or ``exact`` parser. It parses no parameters
     and matches the step name by equality of strings.
 **parse** (based on: pypi_parse_)
     Provides a simple parser that replaces regular expressions for
@@ -182,7 +182,7 @@ And even more, there are several types of step parameter parsers at your disposa
     Step parameters must use the named fields syntax of pypi_parse_
     in step definitions. The named fields are extracted,
     optionally type converted and then used as step function arguments.
-    Supports type conversions by using type converters passed via `extra_types`
+    Supports type conversions by using type converters passed via ``extra_types``
 **cfparse** (extends: pypi_parse_, based on: pypi_parse_type_)
     Provides an extended parser with "Cardinality Field" (CF) support.
     Automatically creates missing type converters for related cardinality
@@ -196,12 +196,12 @@ And even more, there are several types of step parameter parsers at your disposa
     This uses full regular expressions to parse the clause text. You will
     need to use named groups "(?P<name>...)" to define the variables pulled
     from the text and passed to your ``step()`` function.
-    Type conversion can only be done via `converters` step decorator argument (see example below).
+    Type conversion can only be done via ``converters`` step decorator argument (see example below).
 
-The default parser is `string`, so just plain one-to-one match to the keyword definition.
-Parsers except `string`, as well as their optional arguments are specified like:
+The default parser is ``string``, which is just a plain one-to-one match to the keyword definition.
+Parsers except ``string``, as well as their optional arguments are specified like:
 
-for `cfparse` parser
+for the ``cfparse`` parser:
 
 .. code-block:: python
 
@@ -215,7 +215,7 @@ for `cfparse` parser
     def given_cucumbers(start):
         return dict(start=start, eat=0)
 
-for `re` parser
+for ``re`` parser:
 
 .. code-block:: python
 
@@ -271,10 +271,10 @@ The code will look like:
     def should_have_left_cucumbers(cucumbers, left):
         assert cucumbers['start'] - cucumbers['eat'] == left
 
-Example code also shows possibility to pass argument converters which may be useful if you need to postprocess step
+Example code also shows how to pass argument converters, which may be useful if you need to post-process step
 arguments after the parser.
 
-You can implement your own step parser. It's interface is quite simple. The code can looks like:
+You can also implement your own step parser. The interface is quite simple. The code can look like:
 
 .. code-block:: python
 
@@ -310,9 +310,9 @@ You can implement your own step parser. It's interface is quite simple. The code
 Override fixtures via given steps
 ---------------------------------
 
-Dependency injection is not a panacea if you have complex structure of your test setup data. Sometimes there's a need
+Dependency injection is not a panacea if you the structure of your test setup data is complex. Sometimes there's a need
 such a given step which would imperatively change the fixture only for certain test (scenario), while for other tests
-it will stay untouched. To allow this, special parameter `target_fixture` exists in the `given` decorator:
+it will stay untouched. To allow this, special parameter ``target_fixture`` exists in the ``given`` decorator:
 
 .. code-block:: python
 
@@ -341,10 +341,10 @@ it will stay untouched. To allow this, special parameter `target_fixture` exists
             Then foo should be "injected foo"
 
 
-In this example existing fixture `foo` will be overridden by given step `I have injecting given` only for scenario it's
+In this example existing fixture ``foo`` will be overridden by given step `I have injecting given` only for scenario it's
 used in.
 
-Sometimes it is also useful to let `when` and `then` steps to provide a fixture as well.
+Sometimes it is also useful to let ``when`` and ``then`` steps to provide a fixture as well.
 A common use case is when we have to assert the outcome of an HTTP request:
 
 .. code-block:: python
@@ -390,7 +390,7 @@ Multiline steps
 ---------------
 
 As Gherkin, pytest-bdd supports multiline steps
-(aka `PyStrings <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#pystrings>`_).
+(aka *PyStrings* <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#pystrings>).
 But in much cleaner and powerful way:
 
 .. code-block:: gherkin
@@ -403,7 +403,7 @@ But in much cleaner and powerful way:
                 Lines
             Then the text should be parsed with correct indentation
 
-Step is considered as multiline one, if the **next** line(s) after it's first line, is indented relatively
+Step is considered as multiline one, if the **next** line(s) after its first line, is indented relatively
 to the first line. The step name is then simply extended by adding further lines with newlines.
 In the example above, the Given step name will be:
 
@@ -438,9 +438,9 @@ step arguments and capture lines after first line (or some subset of them) into 
     def text_should_be_correct(i_have_text, text):
         assert i_have_text == text == 'Some\nExtra\nLines'
 
-Note that `then` step definition (`text_should_be_correct`) in this example uses `text` fixture which is provided
-by a `given` step (`i_have_text`) argument with the same name (`text`). This possibility is described in
-the `Step arguments are fixtures as well!`_ section.
+Note that ``then`` step definition (``text_should_be_correct``) in this example uses ``text`` fixture which is provided
+by a ``given`` step (``i_have_text``) argument with the same name (``text``). This possibility is described in
+the ``Step arguments are fixtures as well!`` section.
 
 
 Scenarios shortcut
@@ -449,8 +449,8 @@ Scenarios shortcut
 If you have relatively large set of feature files, it's boring to manually bind scenarios to the tests using the
 scenario decorator. Of course with the manual approach you get all the power to be able to additionally parametrize
 the test, give the test function a nice name, document it, etc, but in the majority of the cases you don't need that.
-Instead you want to bind `all` scenarios found in the `feature` folder(s) recursively automatically.
-For this - there's a `scenarios` helper.
+Instead you want to bind ``all`` scenarios found in the ``feature`` folder(s) recursively automatically.
+For this - there's a ``scenarios`` helper.
 
 .. code-block:: python
 
@@ -471,7 +471,7 @@ Note that you can pass multiple paths, and those paths can be either feature fil
     scenarios('features', 'other_features/some.feature', 'some_other_features')
 
 But what if you need to manually bind certain scenario, leaving others to be automatically bound?
-Just write your scenario in a `normal` way, but ensure you do it `BEFORE` the call of `scenarios` helper.
+Just write your scenario in a ``normal`` way, but ensure you do it ``BEFORE`` the call of ``scenarios`` helper.
 
 
 .. code-block:: python
@@ -485,7 +485,7 @@ Just write your scenario in a `normal` way, but ensure you do it `BEFORE` the ca
     # assume 'features' subfolder is in this file's directory
     scenarios('features')
 
-In the example above `test_something` scenario binding will be kept manual, other scenarios found in the `features`
+In the example above ``test_something`` scenario binding will be kept manual, other scenarios found in the ``features``
 folder will be bound automatically.
 
 
