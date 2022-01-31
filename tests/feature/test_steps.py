@@ -1,5 +1,7 @@
 import textwrap
 
+import pytest
+
 
 def test_steps(testdir):
     testdir.makefile(
@@ -484,3 +486,239 @@ def test_step_trace(testdir):
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["*test_when_step_validation_error*FAILED"])
     assert "INTERNALERROR" not in result.stdout.str()
+
+
+def test_steps_parameter_mapping(testdir):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps parameters don't have to be passed as fixtures
+
+                Scenario: Step parameter don't have to be injected as fixture
+                    Given I have a "foo" parameter which is not injected as fixture
+                    Then parameter "foo" is not visible in fixtures
+
+            """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from _pytest.fixtures import FixtureLookupError
+        from pytest import raises
+        from pytest_bdd import given, then, scenario
+
+        @scenario("steps.feature", "Step parameter don't have to be injected as fixture")
+        def test_steps():
+            pass
+
+        @given('I have a "{foo}" parameter which is not injected as fixture', params_fixtures_mapping={})
+        def foo(foo):
+            assert foo == "foo"
+
+        @then('parameter "foo" is not visible in fixtures')
+        def foo_is_foo(request):
+            with raises(FixtureLookupError):
+                request.getfixturevalue('foo')
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
+
+
+def test_steps_parameter_mapping_could_redirect_to_fixture(testdir):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps parameters could be redirected to another fixture
+
+                Scenario: Steps parameters could be redirected to another fixture
+                    Given I have a "foo" parameter which is injected as fixture "bar"
+                    Then fixture "bar" has value "foo"
+
+            """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from _pytest.fixtures import FixtureLookupError
+        from pytest import raises
+        from pytest_bdd import given, then, scenario
+
+        @scenario("steps.feature", "Steps parameters could be redirected to another fixture")
+        def test_steps():
+            pass
+
+        @given('I have a "{foo}" parameter which is injected as fixture "bar"', params_fixtures_mapping={"foo":"bar"})
+        def foo(foo, bar):
+            assert foo == "foo"
+            assert bar == "foo"
+
+        @then('fixture "bar" has value "foo"')
+        def foo_is_foo(request, bar):
+            with raises(FixtureLookupError):
+                request.getfixturevalue('foo')
+            assert bar == "foo"
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
+
+
+@pytest.mark.parametrize("mapping_string", ["{...: None}", "False", "()", "{}"])
+def test_steps_parameter_mapping_rejection_for_all_parameters(testdir, mapping_string):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps parameters could be rejected at all to be injected as fixtures
+
+                Scenario: Steps parameters could be rejected at all to be injected as fixtures
+                    Given I have a "foo", "bar", "fizz", "buzz" parameters which are rejected by wild pattern
+                    Then parameters "foo", "bar", "fizz", "buzz" are not visible in fixtures
+            """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from _pytest.fixtures import FixtureLookupError
+        from pytest import raises
+        from pytest_bdd import given, then, scenario
+
+        @scenario("steps.feature", "Steps parameters could be rejected at all to be injected as fixtures")
+        def test_steps():
+            pass
+
+        @given('I have a "{foo}", "{bar}", "{fizz}", "{buzz}" parameters which are rejected by wild pattern',
+               """
+            f"""params_fixtures_mapping={mapping_string})"""
+            """
+        def foo(foo, bar, fizz, buzz):
+            assert foo == "foo"
+            assert bar == "bar"
+            assert fizz == "fizz"
+            assert buzz == "buzz"
+
+
+        @then('parameters "foo", "bar", "fizz", "buzz" are not visible in fixtures')
+        def foo_is_foo(request):
+            with raises(FixtureLookupError):
+                request.getfixturevalue('foo')
+            with raises(FixtureLookupError):
+                request.getfixturevalue('bar')
+            with raises(FixtureLookupError):
+                request.getfixturevalue('fizz')
+            with raises(FixtureLookupError):
+                request.getfixturevalue('buzz')
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
+
+
+@pytest.mark.parametrize("mapping_string", ["{...: ...}", "True", "(...)"])
+def test_steps_parameter_mapping_acceptance_for_all_parameters(testdir, mapping_string):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps parameters could be accepted at all to be injected as fixtures
+
+                Scenario: Steps parameters could be accepted at all to be injected as fixtures
+                    Given I have a "foo", "bar", "fizz", "buzz" parameters which are accepted by wild pattern
+                    Then parameters "foo", "bar", "fizz", "buzz" are visible in fixtures
+            """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from _pytest.fixtures import FixtureLookupError
+        from pytest import raises
+        from pytest_bdd import given, then, scenario
+
+        @scenario("steps.feature", "Steps parameters could be accepted at all to be injected as fixtures")
+        def test_steps():
+            pass
+
+        @given('I have a "{foo}", "{bar}", "{fizz}", "{buzz}" parameters which are accepted by wild pattern',
+            """
+            f"""params_fixtures_mapping={mapping_string})"""
+            """
+        def foo(foo, bar, fizz, buzz):
+            assert foo == "foo"
+            assert bar == "bar"
+            assert fizz == "fizz"
+            assert buzz == "buzz"
+
+
+        @then('parameters "foo", "bar", "fizz", "buzz" are visible in fixtures')
+        def foo_is_foo(foo, bar, fizz, buzz):
+            assert foo == "foo"
+            assert bar == "bar"
+            assert fizz == "fizz"
+            assert buzz == "buzz"
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
+
+
+def test_steps_parameter_mapping_acceptance_for_non_listed_parameters_by_wildcard(testdir):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps parameters could be accepted by wildcard and by list to be injected as fixtures
+
+                Scenario: Steps parameters could be accepted by wildcard and by list to be injected as fixtures
+                    Given I have a "foo", "bar", "fizz", "buzz" parameters few of which are accepted by wild pattern
+                    Then parameters "fizz", "buzz" are visible in fixtures
+                    Then parameters "cool_foo", "nice_bar" are visible in fixtures
+            """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from _pytest.fixtures import FixtureLookupError
+        from pytest import raises
+        from pytest_bdd import given, then, scenario
+
+        @scenario("steps.feature", "Steps parameters could be accepted by wildcard and by list to be injected as fixtures")
+        def test_steps():
+            pass
+
+        @given('I have a "{foo}", "{bar}", "{fizz}", "{buzz}" parameters few of which are accepted by wild pattern',
+               params_fixtures_mapping={'foo': 'cool_foo', 'bar': 'nice_bar', ...: ...})
+        def foo(foo, bar, fizz, buzz, cool_foo, nice_bar):
+            assert foo == "foo"
+            assert bar == "bar"
+            assert fizz == "fizz"
+            assert buzz == "buzz"
+
+            assert cool_foo == "foo"
+            assert nice_bar == "bar"
+
+        @then('parameters "fizz", "buzz" are visible in fixtures')
+        def foo_is_foo(fizz, buzz):
+            assert fizz == "fizz"
+            assert buzz == "buzz"
+
+        @then('parameters "cool_foo", "nice_bar" are visible in fixtures')
+        def foo_is_foo(cool_foo, nice_bar):
+            assert cool_foo == "foo"
+            assert nice_bar == "bar"
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)

@@ -2,14 +2,17 @@
 import base64
 import pickle
 import re
-import typing
+from collections import defaultdict
+from contextlib import suppress
 from functools import reduce
 from inspect import getframeinfo, signature
+from itertools import tee
 from sys import _getframe
+from typing import TYPE_CHECKING, Any, Callable, Collection, Dict, Mapping, Union
 
 from attr import Factory, attrib, attrs
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from _pytest.pytester import RunResult
 
 CONFIG_STACK = []
@@ -70,7 +73,7 @@ def collect_dumped_objects(result: "RunResult"):
 
 
 @attrs
-class SimpleMapping(typing.Mapping):
+class SimpleMapping(Mapping):
     _dict = attrib(default=Factory(dict), kw_only=True)
 
     def __getitem__(self, item):
@@ -92,3 +95,43 @@ def apply_tag(scenario, tag, function):
     return compose(
         *config.hook.pytest_bdd_convert_tag_to_marks(feature=scenario.feature, scenario=scenario, example=None, tag=tag)
     )(function)
+
+
+class DefaultMapping(defaultdict):
+    Skip = object()
+
+    def __init__(self, *args, default_factory=None, warm_up_keys=(), **kwargs):
+        super().__init__(default_factory, *args, **kwargs)
+        self.warm_up(*warm_up_keys)
+
+    def __missing__(self, key):
+        if ... in self.keys():
+            intercessor = self[...]
+            if intercessor is self.Skip:
+                raise KeyError(key)
+            elif isinstance(intercessor, Callable):
+                value = intercessor(key)
+            elif intercessor is ...:
+                value = key
+            else:
+                value = intercessor
+            self[key] = value
+            return value
+        else:
+            return super().__missing__(key)
+
+    def warm_up(self, *items):
+        for item in items:
+            with suppress(KeyError):
+                self[item]
+
+    @classmethod
+    def instantiate_from_collection_or_bool(
+        cls, bool_or_items: Union[Collection[str], Dict[str, str], Any] = True, *, warm_up_keys=()
+    ):
+        if isinstance(bool_or_items, Collection):
+            if not isinstance(bool_or_items, Mapping):
+                bool_or_items = zip(*tee(iter(bool_or_items)))
+        else:
+            bool_or_items = {...: ...} if bool_or_items else {...: DefaultMapping.Skip}
+        return cls(bool_or_items, warm_up_keys=warm_up_keys)
