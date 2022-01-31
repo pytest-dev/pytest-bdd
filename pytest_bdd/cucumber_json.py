@@ -61,7 +61,7 @@ class LogBDDCucumberJSON:
             result = {"status": "failed", "error_message": str(report.longrepr) if error_message else ""}
         elif report.skipped:
             result = {"status": "skipped"}
-        result["duration"] = int(math.floor((10 ** 9) * step["duration"]))  # nanosec
+        result["duration"] = int(math.floor((10**9) * step["duration"]))  # nanosec
         return result
 
     def _serialize_tags(self, item):
