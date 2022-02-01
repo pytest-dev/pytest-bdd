@@ -201,7 +201,7 @@ And even more, there are several types of step parameter parsers at your disposa
 The default parser is `string`, so just plain one-to-one match to the keyword definition.
 Parsers except `string`, as well as their optional arguments are specified like:
 
-for `cfparse` parser
+for `cfparse` parser:
 
 .. code-block:: python
 
@@ -216,6 +216,7 @@ for `cfparse` parser
         return dict(start=start, eat=0)
 
 or the same:
+
 .. code-block:: python
 
     from parse_type.cfparse import Parser as cfparse
@@ -245,6 +246,7 @@ for `re` parser
 or the same:
 
 .. code-block:: python
+
     from re import compile as parse_re
 
     @given(
@@ -421,6 +423,14 @@ A common use case is when we have to assert the outcome of an HTTP request:
             When I request the deletion of the article
 
             Then the request should be successful
+
+Also it's possible to override multiple fixtures in one step using `target_fixtures` parameter:
+
+.. code-block:: python
+
+    @given("some compound fixture", target_fixtures=["fixture_a","fixture_b"])
+    def __():
+        return "fixture_a_value", "fixture_b_value"
 
 
 Multiline steps
