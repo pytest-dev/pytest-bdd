@@ -218,6 +218,10 @@ def test_parametrized_mapped_from_fixtures_joining_no_affected_by_non_exisiting_
         from pytest_bdd import given, when, then, scenario, parsers
         from pytest_bdd.utils import dump_obj
 
+        @pytest.fixture
+        def extra():
+            return 'bar'
+
         @pytest.mark.parametrize(["start_fixture", "eat_fixture"], [(12, 5)])
         @scenario(
             "parametrized.feature", "Parametrized given, when, thens",

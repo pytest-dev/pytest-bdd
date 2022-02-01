@@ -15,6 +15,7 @@ import os
 import re
 import sys
 import typing
+from contextlib import suppress
 from itertools import tee, zip_longest
 from warnings import warn
 
@@ -25,7 +26,7 @@ from _pytest.warning_types import PytestDeprecationWarning
 from . import exceptions
 from .feature import get_feature, get_features
 from .steps import get_step_fixture_name, inject_fixture
-from .utils import CONFIG_STACK, apply_tag, get_args, get_caller_module_locals, get_caller_module_path
+from .utils import CONFIG_STACK, DefaultMapping, apply_tag, get_args, get_caller_module_locals, get_caller_module_path
 
 if sys.version_info >= (3, 8):
     from typing import Protocol, runtime_checkable
@@ -92,7 +93,18 @@ class StepFunc(Protocol):
     target_fixtures: typing.List[str]
 
 
-def _execute_step_function(request, scenario, step, step_func):
+def _inject_step_parameters_as_fixtures(request, step_func, step_params):
+    params_fixtures_mapping = DefaultMapping.instantiate_from_collection_or_bool(
+        step_func.params_fixtures_mapping, warm_up_keys=step_params.keys()
+    )
+
+    for param, fixture_name in params_fixtures_mapping.items():
+        if fixture_name is not None:
+            with suppress(KeyError):
+                inject_fixture(request, fixture_name, step_params[param])
+
+
+def _execute_step_function(request, scenario, step, step_func, step_params):
     """Execute step function.
 
     :param request: PyTest request.
@@ -106,11 +118,17 @@ def _execute_step_function(request, scenario, step, step_func):
 
     kw["step_func_args"] = {}
     try:
+        _inject_step_parameters_as_fixtures(request, step_func, step_params)
+
         # Get the step argument values.
-        kwargs = {
-            param: request.config.hook.pytest_bdd_get_parameter_context_value(param=param, request=request)
-            for param in get_args(step_func)
-        }
+        def kwargs_gen():
+            for param in get_args(step_func):
+                try:
+                    yield param, step_params[param]
+                except KeyError:
+                    yield param, request.getfixturevalue(param)
+
+        kwargs = dict(kwargs_gen())
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
@@ -154,26 +172,16 @@ def _execute_scenario(feature: "Feature", scenario: "Scenario", request):
                     request=request, feature=feature, scenario=scenario, step=step, exception=exception
                 )
                 raise
-            step_arguments = _parse_and_apply_converters_to_step_parameters(
+            step_params = _parse_and_apply_converters_to_step_parameters(
                 step, step_alias_func.parser, step_func.converters
             )
-            request.getfixturevalue("bdd_context").update(step_arguments)
 
-            _execute_step_function(request, scenario, step, step_func)
+            _execute_step_function(request, scenario, step, step_func, step_params)
     finally:
         request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
 
 
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
-
-
-class FixturesExamplesMapping(collections.defaultdict):
-    def __init__(self, *args, default_factory=None, **kwargs):
-        super().__init__(default_factory, *args, **kwargs)
-
-    def __missing__(self, key):
-        self[key] = key
-        return key
 
 
 def _are_examples_and_fixtures_joinable(request, bdd_example, examples_fixtures_mapping):
@@ -196,19 +204,16 @@ def _get_scenario_decorator(
     scenario_name: str,
     examples_fixtures_mapping: typing.Union[typing.Set[str], typing.Dict[str, str]] = (),
 ):
+    examples_fixtures_mapping = DefaultMapping.instantiate_from_collection_or_bool(examples_fixtures_mapping)
+    if examples_fixtures_mapping:
+        warn(PytestDeprecationWarning("Outlining by fixtures could be removed in future versions"))
+
     # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
     # when the decorator is misused.
     # Pytest inspect the signature to determine the required fixtures, and in that case it would look
     # for a fixture called "fn" that doesn't exist (if it exists then it's even worse).
     # It will error with a "fixture 'fn' not found" message instead.
     # We can avoid this hack by using a pytest hook and check for misuse instead.
-
-    if not isinstance(examples_fixtures_mapping, typing.Mapping):
-        examples_fixtures_mapping = zip(*tee(iter(examples_fixtures_mapping)))
-    examples_fixtures_mapping = FixturesExamplesMapping(examples_fixtures_mapping)
-    if examples_fixtures_mapping:
-        warn(PytestDeprecationWarning("Outlining by fixtures could be removed in future versions"))
-
     def decorator(*args):
         if not args:
             raise exceptions.ScenarioIsDecoratorOnly(
@@ -224,17 +229,17 @@ def _get_scenario_decorator(
         @pytest.mark.usefixtures(*args)
         def scenario_wrapper(request, bdd_example):
 
+            examples_fixtures_mapping.warm_up(*bdd_example.keys())
             if not _are_examples_and_fixtures_joinable(request, bdd_example, examples_fixtures_mapping):
                 pytest.skip(f"Examples and fixtures were not joined for example {bdd_example.breadcrumb}")
 
             scenario = templated_scenario.render(
                 {
-                    **bdd_example,
                     **{
                         param: request.getfixturevalue(fixture_name)
                         for param, fixture_name in examples_fixtures_mapping.items()
-                        if param not in bdd_example.keys()
                     },
+                    **bdd_example,
                 }
             )
 

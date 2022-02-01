@@ -35,7 +35,7 @@ def given_beautiful_article(article):
 
 """
 import warnings
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Set, Union
 
 import pytest
 from _pytest.fixtures import FixtureDef
@@ -58,7 +58,13 @@ def get_step_fixture_name(name, type_):
     return f"pytestbdd_{type_}_{name}"
 
 
-def given(name, converters=None, target_fixture=None, target_fixtures=None):
+def given(
+    name,
+    converters=None,
+    target_fixture=None,
+    target_fixtures=None,
+    params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+):
     """Given step decorator.
 
     :param name: Step name or a parser object.
@@ -66,15 +72,27 @@ def given(name, converters=None, target_fixture=None, target_fixtures=None):
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
     :param target_fixtures: Target fixture names to be replaced by steps definition function.
+    :param params_fixtures_mapping: Step parameters would be injected as fixtures
 
     :return: Decorator function for the step.
     """
     return _step_decorator(
-        GIVEN, name, converters=converters, target_fixture=target_fixture, target_fixtures=target_fixtures
+        GIVEN,
+        name,
+        converters=converters,
+        target_fixture=target_fixture,
+        target_fixtures=target_fixtures,
+        params_fixtures_mapping=params_fixtures_mapping,
     )
 
 
-def when(name, converters=None, target_fixture=None, target_fixtures=None):
+def when(
+    name,
+    converters=None,
+    target_fixture=None,
+    target_fixtures=None,
+    params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+):
     """When step decorator.
 
     :param name: Step name or a parser object.
@@ -82,15 +100,27 @@ def when(name, converters=None, target_fixture=None, target_fixtures=None):
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
     :param target_fixtures: Target fixture names to be replaced by steps definition function.
+    :param params_fixtures_mapping: Step parameters would be injected as fixtures
 
     :return: Decorator function for the step.
     """
     return _step_decorator(
-        WHEN, name, converters=converters, target_fixture=target_fixture, target_fixtures=target_fixtures
+        WHEN,
+        name,
+        converters=converters,
+        target_fixture=target_fixture,
+        target_fixtures=target_fixtures,
+        params_fixtures_mapping=params_fixtures_mapping,
     )
 
 
-def then(name, converters=None, target_fixture=None, target_fixtures=None):
+def then(
+    name,
+    converters=None,
+    target_fixture=None,
+    target_fixtures=None,
+    params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+):
     """Then step decorator.
 
     :param name: Step name or a parser object.
@@ -98,15 +128,28 @@ def then(name, converters=None, target_fixture=None, target_fixtures=None):
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
     :param target_fixtures: Target fixture names to be replaced by steps definition function.
+    :param params_fixtures_mapping: Step parameters would be injected as fixtures
 
     :return: Decorator function for the step.
     """
     return _step_decorator(
-        THEN, name, converters=converters, target_fixture=target_fixture, target_fixtures=target_fixtures
+        THEN,
+        name,
+        converters=converters,
+        target_fixture=target_fixture,
+        target_fixtures=target_fixtures,
+        params_fixtures_mapping=params_fixtures_mapping,
     )
 
 
-def _step_decorator(step_type, step_name, converters: Optional[Dict] = None, target_fixture=None, target_fixtures=None):
+def _step_decorator(
+    step_type,
+    step_name,
+    converters: Optional[Dict] = None,
+    target_fixture=None,
+    target_fixtures=None,
+    params_fixtures_mapping: Union[Set[str], Dict[str, str]] = (),
+):
     """Step decorator for the type and the name.
 
     :param str step_type: Step type (GIVEN, WHEN or THEN).
@@ -114,6 +157,7 @@ def _step_decorator(step_type, step_name, converters: Optional[Dict] = None, tar
     :param dict converters: Optional step arguments converters mapping
     :param target_fixture: Optional fixture name to replace by step definition
     :param target_fixtures: Target fixture names to be replaced by steps definition function.
+    :param params_fixtures_mapping: Step parameters would be injected as fixtures
 
     :return: Decorator function for the step.
     """
@@ -147,6 +191,7 @@ def _step_decorator(step_type, step_name, converters: Optional[Dict] = None, tar
         step_func.parser = step_alias_func.parser = parser
         step_func.converters = step_alias_func.converters = converters
 
+        step_func.params_fixtures_mapping = step_alias_func.params_fixtures_mapping = params_fixtures_mapping
         step_func.target_fixtures = step_alias_func.target_fixtures = target_fixtures
 
         step_alias_fixture = pytest.fixture(step_alias_func)

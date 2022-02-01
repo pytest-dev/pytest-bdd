@@ -84,17 +84,17 @@ def test_multiline(testdir, feature_text, expected_text):
 
             @scenario("multiline.feature", "Multiline step using sub indentation")
             def test_multiline(request):
-                assert request.config.hook.pytest_bdd_get_parameter_context_value(param="text", request=request) == expected_text
+                pass
 
 
-            @given(parsers.parse("I have a step with:\\n{{text}}"), target_fixture="i_have_text")
+            @given(parsers.parse("I have a step with:\\n{{text}}"), target_fixture="text")
             def i_have_text(text):
                 return text
 
 
             @then("the text should be parsed with correct indentation")
-            def text_should_be_correct(i_have_text, text):
-                assert i_have_text == text == expected_text
+            def text_should_be_correct(text):
+                assert text == expected_text
 
             """.format(
                 expected_text=expected_text.encode("unicode_escape").decode("utf-8"),
