@@ -728,13 +728,69 @@ def test_multi_outlined_empty_examples(testdir):
 
     testdir.makepyfile(STEPS_OUTLINED)
     result = testdir.runpytest("-s")
-    result.assert_outcomes(passed=1)
+    result.assert_outcomes(passed=16)
     parametrizations = collect_dumped_objects(result)
     # fmt: off
-    assert parametrizations == [
+    assert parametrizations == 16 * [
         12, "apples", 5.0, "apples", "7", "apples",
     ]
     # fmt: on
+
+
+def test_multi_outlined_tagged_empty_examples(testdir):
+    testdir.makefile(
+        ".ini",
+        pytest=textwrap.dedent(
+            """
+    [pytest]
+    markers =
+        cool_tag
+        nice_tag
+    """
+        ),
+    )
+
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+
+                Examples:
+
+                Examples: Vertical
+
+                Examples:
+                |@       |
+                |nice_tag|
+
+                Examples: Vertical
+                |
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are 12 apples
+                    When I eat 5 apples
+                    Then I should have 7 apples
+
+                    Examples:
+
+                    @cool_tag
+                    Examples: Vertical
+
+                    Examples:
+                    |
+
+                    Examples: Vertical
+                    |
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest("-s", "-m", "cool_tag and nice_tag")
+    result.assert_outcomes(passed=1)
+    result = testdir.runpytest("-s", "-m", "cool_tag or nice_tag")
+    result.assert_outcomes(passed=7)
 
 
 def test_multi_outlined_feature_with_parameter_union(testdir):
@@ -902,6 +958,68 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter(te
         5, "oranges", 4.0, "oranges", "1", "oranges",
     ]
     # fmt: on
+
+
+def test_outlined_scenario_and_feature_with_parameter_join_empty_and_non_empty_parameter_1(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+
+                Examples:
+                | fruits    | start | eat | left |
+                | apples    |  12   |  5  |  7   |
+                | apples    |  12   |  9  |  3   |
+                | oranges   |   5   |  4  |  1   |
+                | cucumbers |   8   |  3  |  5   |
+
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are <start> <fruits>
+                    When I eat <eat> <fruits>
+                    Then I should have <left> <fruits>
+
+                    Examples:
+                    |
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=4)
+
+
+def test_outlined_scenario_and_feature_with_parameter_join_empty_and_non_empty_parameter_2(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+
+                Examples:
+                |
+
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are <start> <fruits>
+                    When I eat <eat> <fruits>
+                    Then I should have <left> <fruits>
+
+                    Examples:
+                    | fruits    | start | eat | left |
+                    | apples    |  12   |  5  |  7   |
+                    | apples    |  12   |  9  |  3   |
+                    | oranges   |   5   |  4  |  1   |
+                    | cucumbers |   8   |  3  |  5   |
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=4)
 
 
 def test_outlined_scenario_and_feature_with_parameter_join_by_external_parameter(testdir):

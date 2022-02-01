@@ -1,4 +1,7 @@
+from typing import Iterable, Optional
+
 import pytest
+from _pytest.mark.structures import Mark
 
 """Pytest-bdd pytest hooks."""
 
@@ -38,6 +41,16 @@ def pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exceptio
 @pytest.hookspec(firstresult=True)
 def pytest_bdd_apply_tag(tag, function):
     """Apply a tag (from a ``.feature`` file) to the given scenario.
+
+    The default implementation does the equivalent of
+    ``getattr(pytest.mark, tag)(function)``, but you can override this hook and
+    return ``True`` to do more sophisticated handling of tags.
+    """
+
+
+@pytest.hookspec(firstresult=True)
+def pytest_bdd_convert_tag_to_marks(feature, scenario, example, tag) -> Optional[Iterable[Mark]]:
+    """Apply a tag (from a ``.feature`` file) to the given test item.
 
     The default implementation does the equivalent of
     ``getattr(pytest.mark, tag)(function)``, but you can override this hook and
