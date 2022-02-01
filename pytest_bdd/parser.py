@@ -8,12 +8,12 @@ from itertools import product, zip_longest
 from operator import or_
 from warnings import warn
 
-from _pytest.fixtures import FixtureLookupError, FixtureRequest
-from _pytest.warning_types import PytestCollectionWarning, PytestDeprecationWarning
+from _pytest.warning_types import PytestCollectionWarning
 from attr import Factory, attrib, attrs, validate
 
 from . import exceptions, types
 from .utils import SimpleMapping
+from .warning_types import PytestBDDScenarioExamplesExtraParamsWarning, PytestBDDScenarioStepsExtraPramsWarning
 
 SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
@@ -275,10 +275,10 @@ class ScenarioTemplate:
         background = self.feature.background
         return (background.steps if background else []) + self._steps
 
-    def render(self, context: typing.Mapping[str, typing.Any], request: FixtureRequest) -> "Scenario":
+    def render(self, context: typing.Mapping[str, typing.Any]) -> "Scenario":
         steps = [
             Step(
-                name=templated_step.render(context, request),
+                name=templated_step.render(context),
                 type=templated_step.type,
                 indent=templated_step.indent,
                 line_number=templated_step.line_number,
@@ -288,20 +288,35 @@ class ScenarioTemplate:
         ]
         return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
 
-    def validate(self):
+    @property
+    def params(self):
+        return reduce(or_, map(set, (step.params for step in self.steps)), set())
+
+    def validate(self, external_join_keys: typing.Set[str] = ()):
         """Validate the scenario.
 
         :raises ScenarioValidationError: when scenario is not valid
         """
-        params = frozenset(sum((list(step.params) for step in self.steps), []))
-        example_params = self.examples.example_params | self.feature.examples.example_params
-        if params and example_params and params != example_params:
-            raise exceptions.ScenarioExamplesNotValidError(
-                """Scenario "{}" in the feature "{}" has not valid examples. """
-                """Set of step parameters {} should match set of example values {}.""".format(
-                    self.name, self.feature.filename, sorted(params), sorted(example_params)
-                )
-            )
+        params = self.params
+        united_example_rows = list(self.united_example_rows)
+        example_rows_with_extra_params = [
+            row for row in united_example_rows if set(row.keys()) - params - row.join_params - external_join_keys
+        ]
+        external_defined_step_params = reduce(
+            or_,
+            (
+                params - set(row.keys()) - external_join_keys
+                for row in united_example_rows
+                if params - set(row.keys()) - external_join_keys
+            ),
+            set(),
+        )
+
+        if example_rows_with_extra_params:
+            warn(PytestBDDScenarioExamplesExtraParamsWarning(self, example_rows_with_extra_params))
+
+        if external_defined_step_params:
+            warn(PytestBDDScenarioStepsExtraPramsWarning(self, external_defined_step_params))
 
     @property
     def example_table_combinations(self) -> typing.Iterable["ExampleTableCombination"]:
@@ -399,23 +414,16 @@ class Step:
         """Get step params."""
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
-    def render(self, context: typing.Mapping[str, typing.Any], request: FixtureRequest):
+    def render(self, context: typing.Mapping[str, typing.Any]):
         def replacer(m: typing.Match):
             varname = m.group(1)
             try:
                 return str(context[varname])
             except KeyError:
-                try:
-                    result = str(request.getfixturevalue(varname))
-                    warn(PytestDeprecationWarning("Render step using fixture"))
-                    return result
-                except FixtureLookupError:
-                    warn(
-                        PytestCollectionWarning(
-                            f'Name "{varname}" wasn\'t found between examples and fixtures, left as is'
-                        )
-                    )
-                    return f"<{varname}>"
+                warn(
+                    PytestCollectionWarning(f'Name "{varname}" wasn\'t found between examples and fixtures, left as is')
+                )
+                return f"<{varname}>"
 
         return STEP_PARAM_RE.sub(replacer, self.name)
 
@@ -449,9 +457,9 @@ class Examples(list):
 @attrs
 class ExampleRow(SimpleMapping):
     mapping = attrib()
-    index = attrib(kw_only=True)
-    kind = attrib(kw_only=True)
-    example_table: "ExampleTable" = attrib(kw_only=True)
+    index = attrib(kw_only=True, default=None)
+    kind = attrib(kw_only=True, default=None)
+    example_table: "ExampleTable" = attrib(kw_only=True, default=None)
 
     def __attrs_post_init__(self):
         self._dict = dict(self.mapping)
@@ -460,19 +468,47 @@ class ExampleRow(SimpleMapping):
     def breadcrumb(self):
         node = self.example_table.node
         example_table = self.example_table
-        return (
-            f"[{node.node_kind}:{node.name or '[Empty]'}:line_no:{node.line_number}]>"
-            f"[Examples:{example_table.name or '[Empty]'}:line_no:{example_table.line_number}]>"
-            f"[{self.kind}:{self.index}]"
-        )
+        if node and example_table:
+            return (
+                f"[{node.node_kind}:{node.name or '[Empty]'}:line_no:{node.line_number}]>"
+                f"[Examples:{example_table.name or '[Empty]'}:line_no:{example_table.line_number}]>"
+                f"[{self.kind}:{self.index}]"
+            )
+        else:
+            raise AttributeError
 
 
 @attrs
 class ExampleRowUnited(SimpleMapping):
     example_rows: typing.List[ExampleRow] = attrib()
+    join_params = attrib(default=Factory(set), kw_only=True)
+
+    class BuildError(ValueError):
+        ...
 
     def __attrs_post_init__(self):
-        self._dict = reduce(lambda d1, d2: {**d1, **d2}, self.example_rows, {})
+        combined_row = {}
+        join_params = set()
+        built = False
+        for example_row in self.example_rows:
+            combined_row, extra_join_params = self._combine_two_rows(combined_row, example_row)
+            if combined_row is None:
+                break
+            join_params |= extra_join_params
+        else:
+            built = True
+            self._dict = combined_row
+            self.join_params = join_params
+        if not built:
+            raise self.BuildError
+
+    @staticmethod
+    def _combine_two_rows(row1, row2) -> typing.Tuple[typing.Optional["ExampleRow"], typing.Optional[typing.Set]]:
+        common_param_names = set(row1.keys()) & set(row2.keys())
+        if all(row1[param_name] == row2[param_name] for param_name in common_param_names):
+            return ExampleRow({**row1, **row2}), common_param_names
+        else:
+            return None, None
 
     @property
     def breadcrumb(self):
@@ -559,7 +595,11 @@ class ExampleTableCombination(typing.Collection):
 
     @property
     def united_example_rows(self) -> typing.Iterable[ExampleRowUnited]:
-        yield from map(ExampleRowUnited, product(*self))
+        for rows in product(*self):
+            try:
+                yield ExampleRowUnited(rows)
+            except ExampleRowUnited.BuildError:
+                pass
 
     def __len__(self):
         return len(self._list)

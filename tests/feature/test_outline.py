@@ -161,10 +161,8 @@ def test_wrongly_outlined_extra_parameter(testdir):
     )
     result = testdir.runpytest()
     assert_outcomes(result, errors=1)
-    result.stdout.fnmatch_lines(
-        '*ScenarioExamplesNotValidError: Scenario "Outlined with wrong examples"*has not valid examples*',
-    )
-    result.stdout.fnmatch_lines("*should match set of example values [[]'eat', 'left', 'start', 'unknown_param'[]].*")
+    result.stdout.fnmatch_lines("*Example rows have params unused in steps*")
+    result.stdout.fnmatch_lines("*Scenario:Outlined with wrong examples:line_no:2*")
 
 
 def test_wrongly_outlined_duplicated_parameter_scenario(testdir):
@@ -424,10 +422,8 @@ def test_wrongly_outlined_extra_parameter_vertical(testdir):
     )
     result = testdir.runpytest()
     assert_outcomes(result, errors=1)
-    result.stdout.fnmatch_lines(
-        '*ScenarioExamplesNotValidError: Scenario "Outlined with wrong examples"*has not valid examples*',
-    )
-    result.stdout.fnmatch_lines("*should match set of example values [[]'eat', 'left', 'start', 'unknown_param'[]].*")
+    result.stdout.fnmatch_lines("*Example rows have params unused in steps*")
+    result.stdout.fnmatch_lines("*Scenario:Outlined with wrong examples:line_no:2*")
 
 
 def test_wrongly_outlined_duplicated_parameter_vertical_scenario(testdir):
@@ -827,3 +823,291 @@ def test_multi_outlined_scenario_and_feature_with_parameter_union(testdir):
         5, "apples", 4.0, "apples", "1", "apples",
     ]
     # fmt: on
+
+
+def test_outlined_scenario_and_feature_with_parameter_join_by_one_parameter(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+
+                Examples:
+                | start | eat | left |
+                |  12   |  5  |  7   |
+                |   5   |  4  |  1   |
+
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are <start> <fruits>
+                    When I eat <eat> <fruits>
+                    Then I should have <left> <fruits>
+
+                    Examples:
+                    | fruits  | left |
+                    | apples  |  7   |
+                    | oranges |  1   |
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=2)
+    parametrizations = collect_dumped_objects(result)
+    # fmt: off
+    assert parametrizations == [
+        12, "apples", 5.0, "apples", "7", "apples",
+        5, "oranges", 4.0, "oranges", "1", "oranges",
+    ]
+    # fmt: on
+
+
+def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+
+                Examples:
+                | fruits    | start | eat | left |
+                | apples    |  12   |  5  |  7   |
+                | apples    |  12   |  9  |  3   |  # not joined by <eat> <left>
+                | oranges   |   5   |  4  |  1   |
+                | cucumbers |   8   |  3  |  5   |  # not joined by <eat> <left>
+
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are <start> <fruits>
+                    When I eat <eat> <fruits>
+                    Then I should have <left> <fruits>
+
+                    Examples:
+                    | fruits    | eat | left |
+                    | apples    |  5  |  7   |
+                    | oranges   |  4  |  1   |
+                    | cucumbers |  5  |  7   |  # not joined by <fruits>
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=2)
+    parametrizations = collect_dumped_objects(result)
+    # fmt: off
+    assert parametrizations == [
+        12, "apples", 5.0, "apples", "7", "apples",
+        5, "oranges", 4.0, "oranges", "1", "oranges",
+    ]
+    # fmt: on
+
+
+def test_outlined_scenario_and_feature_with_parameter_join_by_external_parameter(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+
+                Examples:
+                | fruits    | start | eat | external |
+                | apples    |  12   |  5  |     a    |
+                | oranges   |   5   |  4  |     b    |
+                | cucumbers |   8   |  3  |     c    | # not joined by <external>
+
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are <start> <fruits>
+                    When I eat <eat> <fruits>
+                    Then I should have <left> <fruits>
+
+                    Examples:
+                    | left | external |
+                    |  7   |     a    |
+                    |  1   |     b    |
+                    |  4   |     d    | # not joined by <external>
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=2)
+    parametrizations = collect_dumped_objects(result)
+    # fmt: off
+    assert parametrizations == [
+        12, "apples", 5.0, "apples", "7", "apples",
+        5, "oranges", 4.0, "oranges", "1", "oranges",
+    ]
+    # fmt: on
+
+
+def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter_unbalanced(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Examples:
+                | start | eat | left |
+                |  14   |  6  |  8   |
+                |  15   |  5  |  10  |
+
+                Examples:
+                | fruits    | start | eat | left |
+                | apples    |  12   |  5  |  7   |
+                | apples    |  12   |  9  |  3   |
+                | oranges   |   5   |  4  |  1   |
+                | cucumbers |   8   |  3  |  5   |
+
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are <start> <fruits>
+                    When I eat <eat> <fruits>
+                    Then I should have <left> <fruits>
+
+                    Examples:
+                    | fruits    | eat | left |
+                    | apples    |  5  |  7   |
+                    | oranges   |  4  |  1   |
+                    | cucumbers |  5  |  7   |
+
+                    Examples:
+                    | fruits     |
+                    | pineapples |
+                    | peaches    |
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=6)
+    parametrizations = collect_dumped_objects(result)
+    # fmt: off
+    assert parametrizations == [
+        14, 'pineapples', 6.0, 'pineapples', '8', 'pineapples',
+        14, 'peaches', 6.0, 'peaches', '8', 'peaches',
+        15, 'pineapples', 5.0, 'pineapples', '10', 'pineapples',
+        15, 'peaches', 5.0, 'peaches', '10', 'peaches',
+        12, 'apples', 5.0, 'apples', '7', 'apples',
+        5, 'oranges', 4.0, 'oranges', '1', 'oranges'
+    ]
+    # fmt: on
+
+
+def test_outlined_scenario_and_feature_with_insufficient_parameter_join(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Examples:
+                | fruits    |
+                | apples    |
+                | oranges   |
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are <start> <fruits>
+                    When I eat <eat> <fruits>
+                    Then I should have <left> <fruits>
+
+                    Examples:
+                    | eat | left |
+                    |  5  |  7   |
+                    |  4  |  1   |
+
+                    Examples:
+                    | fruits     | start |
+                    | pineapples |   12  |
+                    | peaches    |   10  |
+
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest(
+        "-s",
+        "-W ignore::pytest_bdd.PytestBDDScenarioExamplesExtraParamsWarning",
+        "-W ignore::pytest_bdd.PytestBDDScenarioStepsExtraPramsWarning",
+    )
+    result.assert_outcomes(passed=0, failed=4)
+
+
+def test_outlined_scenario_and_feature_with_extra_parameter_join(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Examples:
+                | fruits    | extra      |
+                | apples    | not used   |
+                | oranges   | not needed |
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are <start> <fruits>
+                    When I eat <eat> <fruits>
+                    Then I should have <left> <fruits>
+
+                    Examples:
+                    | start | eat | left |
+                    |   12  |  5  |  7   |
+                    |    5  |  4  |  1   |
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest(
+        "-s",
+        "-W ignore::pytest_bdd.PytestBDDScenarioExamplesExtraParamsWarning",
+        "-W ignore::pytest_bdd.PytestBDDScenarioStepsExtraPramsWarning",
+    )
+    result.assert_outcomes(passed=4)
+
+
+def test_outlined_scenario_and_feature_with_combine_extra_and_insufficient_parameter_join(testdir):
+    testdir.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Examples:
+                | fruits    | extra      |
+                | apples    | not used   |
+                | oranges   | not needed |
+
+                Examples:
+                | fruits    |
+                | cucumbers |
+                | peaches   |
+
+                Scenario Outline: Outlined given, when, thens
+                    Given there are <start> <fruits>
+                    When I eat <eat> <fruits>
+                    Then I should have <left> <fruits>
+
+                    Examples:
+                    | start | eat | left |
+                    |   12  |  5  |  7   |
+                    |    5  |  4  |  1   |
+
+                    Examples:
+                    | eat | left |
+                    |  8  |  6   |
+                    |  9  |  5   |
+            """
+        ),
+    )
+
+    testdir.makepyfile(STEPS_OUTLINED)
+    result = testdir.runpytest(
+        "-s",
+        "-W ignore::pytest_bdd.PytestBDDScenarioExamplesExtraParamsWarning",
+        "-W ignore::pytest_bdd.PytestBDDScenarioStepsExtraPramsWarning",
+    )
+    result.assert_outcomes(passed=8, failed=8)

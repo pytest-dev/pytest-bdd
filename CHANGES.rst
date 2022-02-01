@@ -6,7 +6,7 @@ Unreleased
 
 - Default parser is switched to cfparse. Step name is compiled to cfparse
 - Step functions could get compiled instances of parse, cfparse and re.compile directly
-- Return support of test step render by pytest parametrization drooped in release 5.0.0
+- Fix support of test step render by pytest parametrization dropped in release 5.0.0 adding adapter between fixtures and examples
 - Refuse usage of pytest versions 4.3, 4.4
 
 5.0.0
