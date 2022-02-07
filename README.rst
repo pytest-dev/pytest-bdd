@@ -345,13 +345,49 @@ arguments. This opens a number of possibilities:
 * you can access step's argument as a fixture in other step function just by mentioning it as an argument (just like any other pytest fixture)
 * if the name of the step argument clashes with existing fixture, it will be overridden by step's argument value; this way you can set/override the value for some fixture deeply inside of the fixture tree in a ad-hoc way by just choosing the proper name for the step argument.
 
+By default all step arguments are passed to fixtures, what is equal to
 
-Override fixtures via given steps
----------------------------------
+.. code-block:: python
+
+    @given('I have a "{foo}", "{bar}", "{fizz}", "{buzz}" parameters few of which are accepted by wild pattern',
+        params_fixtures_mapping={...: ...})
+    def step(foo, bar, fizz, buzz):
+        ...
+
+But this behavior could be changed; For example you want to rename some parameters and left other as-is
+
+.. code-block:: python
+
+    @given('I have a "{foo}", "{bar}", "{fizz}", "{buzz}" parameters few of which are accepted by wild pattern',
+               params_fixtures_mapping={'foo': 'cool_foo', 'bar': 'nice_bar', ...: ...})
+    def step(cool_foo, nice_bar, fizz, buzz):
+        ...
+
+Or don't inject parameters at all
+
+.. code-block:: python
+
+    @given('I have a "{foo}", "{bar}", "{fizz}", "{buzz}" parameters few of which are accepted by wild pattern',
+               params_fixtures_mapping={...: None})
+    def step(foo, bar, fizz, buzz):
+        ...
+
+Parameters still could be used in steps, but they are not injected!
+If you would like to inject just some subset of parameters - set of parameters could be used:
+
+.. code-block:: python
+
+    @given('I have a "{foo}", "{bar}", "{fizz}", "{buzz}" parameters few of which are accepted by wild pattern',
+               params_fixtures_mapping={'fizz', 'buzz'})
+    def step(foo, bar, fizz, buzz):
+        ...
+
+Override fixtures by outgoing step results
+------------------------------------------
 
 Dependency injection is not a panacea if you have complex structure of your test setup data. Sometimes there's a need
 such a given step which would imperatively change the fixture only for certain test (scenario), while for other tests
-it will stay untouched. To allow this, special parameter `target_fixture` exists in the `given` decorator:
+it will stay untouched. To allow this, special parameter `target_fixture` exists in the decorator:
 
 .. code-block:: python
 

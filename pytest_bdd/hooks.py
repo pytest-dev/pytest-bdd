@@ -56,8 +56,3 @@ def pytest_bdd_convert_tag_to_marks(feature, scenario, example, tag) -> Optional
     ``getattr(pytest.mark, tag)(function)``, but you can override this hook and
     return ``True`` to do more sophisticated handling of tags.
     """
-
-
-@pytest.hookspec(firstresult=True)
-def pytest_bdd_get_parameter_context_value(param, request):
-    """Get step parameter value basing on previous steps context and fixtures"""
