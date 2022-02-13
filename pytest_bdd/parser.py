@@ -234,19 +234,8 @@ class ScenarioTemplate:
         return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
 
     def validate(self):
-        """Validate the scenario.
-
-        :raises ScenarioValidationError: when scenario is not valid
-        """
-        params = frozenset(sum((list(step.params) for step in self.steps), []))
-        example_params = set(self.examples.example_params)
-        if params and example_params and params != example_params:
-            raise exceptions.ScenarioExamplesNotValidError(
-                """Scenario "{}" in the feature "{}" has not valid examples. """
-                """Set of step parameters {} should match set of example values {}.""".format(
-                    self.name, self.feature.filename, sorted(params), sorted(example_params)
-                )
-            )
+        """Validate the scenario."""
+        pass
 
 
 class Scenario:

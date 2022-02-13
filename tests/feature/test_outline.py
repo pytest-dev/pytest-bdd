@@ -87,14 +87,15 @@ def test_wrongly_outlined(testdir):
         outline=textwrap.dedent(
             """\
             Feature: Outline
-                Scenario Outline: Outlined with wrong examples
+                Scenario Outline: Outlined with unused params
                     Given there are <start> cucumbers
                     When I eat <eat> cucumbers
+                    # And commented out step with <unused_param>
                     Then I should have <left> cucumbers
 
                     Examples:
-                    | start | eat | left | unknown_param |
-                    |  12   |  5  |  7   | value         |
+                    | start | eat | left | unused_param |
+                    |  12   |  5  |  7   | value        |
 
             """
         ),
@@ -106,18 +107,14 @@ def test_wrongly_outlined(testdir):
             """\
         from pytest_bdd import scenario
 
-        @scenario("outline.feature", "Outlined with wrong examples")
+        @scenario("outline.feature", "Outlined with unused params")
         def test_outline(request):
             pass
         """
         )
     )
     result = testdir.runpytest()
-    assert_outcomes(result, errors=1)
-    result.stdout.fnmatch_lines(
-        '*ScenarioExamplesNotValidError: Scenario "Outlined with wrong examples"*has not valid examples*',
-    )
-    result.stdout.fnmatch_lines("*should match set of example values [[]'eat', 'left', 'start', 'unknown_param'[]].*")
+    assert_outcomes(result, passed=1)
 
 
 def test_outlined_with_other_fixtures(testdir):
