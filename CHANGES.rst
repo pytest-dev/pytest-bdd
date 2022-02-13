@@ -10,6 +10,7 @@ This release introduces breaking changes in order to be more in line with the of
 - Removed feature level examples for the gherkin compatibility (olegpidsadnyi)
 - Removed vertical examples for the gherkin compatibility (olegpidsadnyi)
 - Step arguments are no longer fixtures (olegpidsadnyi)
+- Scenario outlines unused example parameter validation is removed (olegpidsadnyi)
 
 
 
