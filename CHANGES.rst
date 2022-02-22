@@ -10,6 +10,7 @@ This release introduces breaking changes in order to be more in line with the of
 - Removed feature level examples for the gherkin compatibility (olegpidsadnyi)
 - Removed vertical examples for the gherkin compatibility (olegpidsadnyi)
 - Step arguments are no longer fixtures (olegpidsadnyi)
+- Drop support of python 3.6, pytest 4 (elchupanebrej)
 
 
 
