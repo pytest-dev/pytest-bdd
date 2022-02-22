@@ -722,3 +722,51 @@ def test_steps_parameter_mapping_acceptance_for_non_listed_parameters_by_wildcar
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
+
+
+def test_steps_with_yield(testdir):
+    """Test that steps definition containing a yield statement work the same way as
+    pytest fixture do, that is the code after the yield is executed during teardown."""
+
+    testdir.makefile(
+        ".feature",
+        a="""\
+Feature: A feature
+
+    Scenario: A scenario
+        When I setup stuff
+        Then stuff should be 42
+""",
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        import pytest
+        from pytest_bdd import given, when, then, scenarios
+
+        scenarios("a.feature")
+
+        @when("I setup stuff", target_fixture="stuff")
+        def stuff():
+            print("Setting up...")
+            yield 42
+            print("Tearing down...")
+
+
+        @then("stuff should be 42")
+        def check_stuff(stuff):
+            assert stuff == 42
+            print("Asserted stuff is 42")
+
+        """
+        )
+    )
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*Setting up...*",
+            "*Asserted stuff is 42*",
+            "*Tearing down...*",
+        ]
+    )

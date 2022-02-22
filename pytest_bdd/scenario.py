@@ -20,7 +20,7 @@ from itertools import tee, zip_longest
 from warnings import warn
 
 import pytest
-from _pytest.fixtures import FixtureLookupError
+from _pytest.fixtures import FixtureLookupError, call_fixture_func
 from _pytest.warning_types import PytestDeprecationWarning
 
 from . import exceptions
@@ -133,8 +133,8 @@ def _execute_step_function(request, scenario, step, step_func, step_params):
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
 
-        # Execute the step.
-        step_result = step_func(**kwargs)
+        # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
+        step_result = call_fixture_func(fixturefunc=step_func, request=request, kwargs=kwargs)
 
         if len(step_func.target_fixtures) == 1:
             injectable_fixtures = [(step_func.target_fixtures[0], step_result)]
