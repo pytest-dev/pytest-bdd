@@ -2,6 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: https://github.com/psf/black
+    # If you update the version here, also update it in tox.ini (py*-pytestlatest-linters)
     rev: 21.12b0
     hooks:
     - id: black
