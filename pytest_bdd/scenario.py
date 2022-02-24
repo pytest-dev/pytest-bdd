@@ -16,7 +16,7 @@ import re
 import typing
 
 import pytest
-from _pytest.fixtures import FixtureLookupError
+from _pytest.fixtures import FixtureLookupError, call_fixture_func
 
 from . import exceptions
 from .feature import get_feature, get_features
@@ -112,8 +112,9 @@ def _execute_step_function(request, scenario, step, step_func):
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
         target_fixture = getattr(step_func, "target_fixture", None)
-        # Execute the step.
-        return_value = step_func(**kwargs)
+
+        # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
+        return_value = call_fixture_func(fixturefunc=step_func, request=request, kwargs=kwargs)
         if target_fixture:
             inject_fixture(request, target_fixture, return_value)
 
