@@ -26,7 +26,7 @@ from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Callable, Iterator
+    from typing import Any, Callable, Iterable
 
     from _pytest.mark.structures import ParameterSet
 
@@ -179,7 +179,7 @@ def _get_scenario_decorator(
         # We need to tell pytest that the original function requires its fixtures,
         # otherwise indirect fixtures would not work.
         @pytest.mark.usefixtures(*func_args)
-        def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> Any | None:
+        def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> Any:
             scenario = templated_scenario.render(_pytest_bdd_example)
             _execute_scenario(feature, scenario, request)
             fixture_values = [request.getfixturevalue(arg) for arg in func_args]
@@ -277,7 +277,7 @@ def make_string_literal(string: str) -> str:
     return "'{}'".format(string.replace("'", "\\'"))
 
 
-def get_python_name_generator(name: str) -> Iterator[Iterator | Iterator[str]]:
+def get_python_name_generator(name: str) -> Iterable[str]:
     """Generate a sequence of suitable python names out of given arbitrary string name."""
     python_name = make_python_name(name)
     suffix = ""

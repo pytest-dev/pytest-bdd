@@ -23,7 +23,7 @@ class OfType:
     def __init__(self, type: type = None) -> None:
         self.type = type
 
-    def __eq__(self, other: Union[int, str]) -> bool:
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, self.type) if self.type else True
 
 
