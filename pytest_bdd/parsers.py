@@ -34,7 +34,7 @@ class re(StepParser):
         super().__init__(name)
         self.regex = base_re.compile(self.name, *args, **kwargs)
 
-    def parse_arguments(self, name: str) -> Dict[str, str]:
+    def parse_arguments(self, name: str) -> dict[str, str]:
         """Get step arguments.
 
         :return: `dict` of step arguments
@@ -55,7 +55,7 @@ class parse(StepParser):
         super().__init__(name)
         self.parser = base_parse.compile(self.name, *args, **kwargs)
 
-    def parse_arguments(self, name: str) -> Dict[str, Any]:
+    def parse_arguments(self, name: str) -> dict[str, Any]:
         """Get step arguments.
 
         :return: `dict` of step arguments
@@ -87,7 +87,7 @@ class string(StepParser):
         name = str(name)
         super().__init__(name)
 
-    def parse_arguments(self, name: str) -> Dict:
+    def parse_arguments(self, name: str) -> dict:
         """No parameters are available for simple string step.
 
         :return: `dict` of step arguments

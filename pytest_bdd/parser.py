@@ -5,7 +5,7 @@ import re
 import textwrap
 import typing
 from collections import OrderedDict
-from typing import Any, List, Optional, Set, Tuple, cast
+from typing import cast
 
 from . import exceptions, types
 
@@ -28,7 +28,7 @@ STEP_PREFIXES = [
 ]
 
 
-def split_line(line: str) -> List[str]:
+def split_line(line: str) -> list[str]:
     """Split the given Examples line.
 
     :param str|unicode line: Feature file Examples line.
@@ -38,7 +38,7 @@ def split_line(line: str) -> List[str]:
     return [cell.replace("\\|", "|").strip() for cell in SPLIT_LINE_RE.split(line)[1:-1]]
 
 
-def parse_line(line: str) -> Tuple[str, str]:
+def parse_line(line: str) -> tuple[str, str]:
     """Parse step line to get the step prefix (Scenario, Given, When, Then or And) and the actual step name.
 
     :param line: Line of the Feature file.
@@ -64,7 +64,7 @@ def strip_comments(line: str) -> str:
     return line.strip()
 
 
-def get_step_type(line: str) -> Optional[str]:
+def get_step_type(line: str) -> str | None:
     """Detect step type by the beginning of the line.
 
     :param str line: Line of the Feature file.
@@ -96,10 +96,10 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
         background=None,
         description="",
     )
-    scenario: typing.Optional[ScenarioTemplate] = None
-    mode: Optional[str] = None
+    scenario: ScenarioTemplate | None = None
+    mode: str | None = None
     prev_mode = None
-    description: typing.List[str] = []
+    description: list[str] = []
     step = None
     multiline_step = False
     prev_line = None
@@ -186,20 +186,20 @@ class Feature:
         scenarios: OrderedDict,
         filename: str,
         rel_filename: str,
-        name: Optional[str],
-        tags: Set,
-        background: Optional[Background],
+        name: str | None,
+        tags: set,
+        background: Background | None,
         line_number: int,
         description: str,
     ) -> None:
-        self.scenarios: typing.Dict[str, ScenarioTemplate] = scenarios
+        self.scenarios: dict[str, ScenarioTemplate] = scenarios
         self.rel_filename: str = rel_filename
         self.filename: str = filename
-        self.tags: Set = tags
-        self.name: Optional[str] = name
+        self.tags: set = tags
+        self.name: str | None = name
         self.line_number: int = line_number
         self.description: str = description
-        self.background: Optional[Background] = background
+        self.background: Background | None = background
 
 
 class ScenarioTemplate:
@@ -216,7 +216,7 @@ class ScenarioTemplate:
         """
         self.feature = feature
         self.name = name
-        self._steps: typing.List[Step] = []
+        self._steps: list[Step] = []
         self.examples = Examples()
         self.line_number = line_number
         self.tags = tags or set()
@@ -230,7 +230,7 @@ class ScenarioTemplate:
         self._steps.append(step)
 
     @property
-    def steps(self) -> List[Step]:
+    def steps(self) -> list[Step]:
         background = self.feature.background
         return (background.steps if background else []) + self._steps
 
@@ -252,7 +252,7 @@ class Scenario:
 
     """Scenario."""
 
-    def __init__(self, feature: Feature, name: str, line_number: int, steps: typing.List[Step], tags=None):
+    def __init__(self, feature: Feature, name: str, line_number: int, steps: list[Step], tags=None):
         """Scenario constructor.
 
         :param pytest_bdd.parser.Feature feature: Feature.
@@ -283,15 +283,15 @@ class Step:
         """
         self.name: str = name
         self.keyword: str = keyword
-        self.lines: List[str] = []
+        self.lines: list[str] = []
         self.indent: int = indent
         self.type: str = type
         self.line_number: int = line_number
         self.failed: bool = False
         self.start: int = 0  # TODO: Unused
         self.stop: int = 0  # TODO: Unused
-        self.scenario: Optional[ScenarioTemplate] = None
-        self.background: Optional[Background] = None
+        self.scenario: ScenarioTemplate | None = None
+        self.background: Background | None = None
 
     def add_line(self, line: str) -> None:
         """Add line to the multiple step.
@@ -326,7 +326,7 @@ class Step:
         return f'{self.type.capitalize()} "{self.name}"'
 
     @property
-    def params(self) -> Tuple[str, ...]:
+    def params(self) -> tuple[str, ...]:
         """Get step params."""
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
@@ -350,7 +350,7 @@ class Background:
         """
         self.feature: Feature = feature
         self.line_number: int = line_number
-        self.steps: typing.List[Step] = []
+        self.steps: list[Step] = []
 
     def add_step(self, step: Step) -> None:
         """Add step to the background."""
@@ -364,26 +364,26 @@ class Examples:
 
     def __init__(self) -> None:
         """Initialize examples instance."""
-        self.example_params: List[str] = []
-        self.examples: List[List[str]] = []
-        self.line_number: Optional[int] = None
+        self.example_params: list[str] = []
+        self.examples: list[list[str]] = []
+        self.line_number: int | None = None
         self.name = None
 
-    def set_param_names(self, keys: List[str]) -> None:
+    def set_param_names(self, keys: list[str]) -> None:
         """Set parameter names.
 
         :param names: `list` of `string` parameter names.
         """
         self.example_params = [str(key) for key in keys]
 
-    def add_example(self, values: List[str]) -> None:
+    def add_example(self, values: list[str]) -> None:
         """Add example.
 
         :param values: `list` of `string` parameter values.
         """
         self.examples.append(values)
 
-    def add_example_row(self, param: str, values: List[str]) -> None:
+    def add_example_row(self, param: str, values: list[str]) -> None:
         """Add example row.
 
         :param param: `str` parameter name
@@ -395,7 +395,7 @@ class Examples:
             )
         self.example_params.append(param)
 
-    def as_contexts(self) -> typing.Iterable[typing.Dict[str, typing.Any]]:
+    def as_contexts(self) -> typing.Iterable[dict[str, typing.Any]]:
         if not self.examples:
             return
 
@@ -410,7 +410,7 @@ class Examples:
         return bool(self.examples)
 
 
-def get_tags(line: Optional[str]) -> Set[str]:
+def get_tags(line: str | None) -> set[str]:
     """Get tags out of the given line.
 
     :param str line: Feature file text line.

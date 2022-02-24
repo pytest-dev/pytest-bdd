@@ -1,7 +1,7 @@
 """Pytest plugin entry point. Used for any fixtures needed."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, Optional
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -9,6 +9,8 @@ from . import cucumber_json, generation, gherkin_terminal_reporter, given, repor
 from .utils import CONFIG_STACK
 
 if TYPE_CHECKING:
+    from typing import Any, Callable, Iterator
+
     from _pytest.config import Config, PytestPluginManager
     from _pytest.config.argparsing import Parser
     from _pytest.fixtures import FixtureRequest
@@ -34,7 +36,7 @@ def trace():
 
 
 @pytest.fixture
-def _pytest_bdd_example() -> Dict:
+def _pytest_bdd_example() -> dict:
     """The current scenario outline parametrization.
 
     This is used internally by pytest_bdd.
@@ -91,7 +93,7 @@ def pytest_bdd_step_error(
     scenario: Scenario,
     step: Step,
     step_func: Callable,
-    step_func_args: Dict,
+    step_func_args: dict,
     exception: Exception,
 ) -> None:
     reporting.step_error(request, feature, scenario, step, step_func, step_func_args, exception)
@@ -111,12 +113,12 @@ def pytest_bdd_after_step(
     scenario: Scenario,
     step: Step,
     step_func: Callable,
-    step_func_args: Dict[str, Any],
+    step_func_args: dict[str, Any],
 ) -> None:
     reporting.after_step(request, feature, scenario, step, step_func, step_func_args)
 
 
-def pytest_cmdline_main(config: Config) -> Optional[int]:
+def pytest_cmdline_main(config: Config) -> int | None:
     return generation.cmdline_main(config)
 
 

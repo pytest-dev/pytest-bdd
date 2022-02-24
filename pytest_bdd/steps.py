@@ -36,7 +36,7 @@ def given_beautiful_article(article):
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional, Union
+import typing
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureRequest
@@ -44,6 +44,9 @@ from _pytest.fixtures import FixtureDef, FixtureRequest
 from .parsers import get_parser
 from .types import GIVEN, THEN, WHEN
 from .utils import get_caller_module_locals
+
+if typing.TYPE_CHECKING:
+    from typing import Any, Callable
 
 
 def get_step_fixture_name(name: str, type_: str) -> str:
@@ -59,8 +62,8 @@ def get_step_fixture_name(name: str, type_: str) -> str:
 
 def given(
     name: Any,
-    converters: Union[Dict[str, Callable], Dict[str, type], None] = None,
-    target_fixture: Optional[str] = None,
+    converters: dict[str, Callable] | dict[str, type] | None = None,
+    target_fixture: str | None = None,
 ) -> Callable:
     """Given step decorator.
 
@@ -74,7 +77,7 @@ def given(
     return _step_decorator(GIVEN, name, converters=converters, target_fixture=target_fixture)
 
 
-def when(name: Any, converters: Optional[Dict[str, type]] = None, target_fixture: Optional[str] = None) -> Callable:
+def when(name: Any, converters: dict[str, type] | None = None, target_fixture: str | None = None) -> Callable:
     """When step decorator.
 
     :param name: Step name or a parser object.
@@ -87,7 +90,7 @@ def when(name: Any, converters: Optional[Dict[str, type]] = None, target_fixture
     return _step_decorator(WHEN, name, converters=converters, target_fixture=target_fixture)
 
 
-def then(name: Any, converters: Optional[Dict[str, type]] = None, target_fixture: Optional[str] = None) -> Callable:
+def then(name: Any, converters: dict[str, type] | None = None, target_fixture: str | None = None) -> Callable:
     """Then step decorator.
 
     :param name: Step name or a parser object.
@@ -103,8 +106,8 @@ def then(name: Any, converters: Optional[Dict[str, type]] = None, target_fixture
 def _step_decorator(
     step_type: str,
     step_name: Any,
-    converters: Union[Dict[str, Callable], Dict[str, type], None] = None,
-    target_fixture: Optional[str] = None,
+    converters: dict[str, Callable] | dict[str, type] | None = None,
+    target_fixture: str | None = None,
 ) -> Callable:
     """Step decorator for the type and the name.
 

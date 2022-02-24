@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional
+import typing
 
 import pytest
 from packaging.utils import Version
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
+    from typing import Any
+
     from _pytest.pytester import RunResult
 
 PYTEST_VERSION = Version(pytest.__version__)
@@ -22,7 +24,7 @@ if PYTEST_6:
         errors: int = 0,
         xpassed: int = 0,
         xfailed: int = 0,
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """Compatibility function for result.assert_outcomes"""
         return result.assert_outcomes(
             errors=errors, passed=passed, skipped=skipped, failed=failed, xpassed=xpassed, xfailed=xfailed

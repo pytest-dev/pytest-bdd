@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+import typing
 
-from _pytest.config import Config
-from _pytest.config.argparsing import Parser
-from _pytest.reports import TestReport
-from _pytest.terminal import TerminalReporter
+if typing.TYPE_CHECKING:
+    from typing import Any
+
+    from _pytest.config import Config
+    from _pytest.config.argparsing import Parser
+    from _pytest.reports import TestReport
+    from _pytest.terminal import TerminalReporter
 
 
 def add_options(parser: Parser) -> None:
@@ -43,7 +46,7 @@ class GherkinTerminalReporter(TerminalReporter):
     def __init__(self, config: Config) -> None:
         super().__init__(config)
 
-    def pytest_runtest_logreport(self, report: TestReport) -> Optional[Any]:
+    def pytest_runtest_logreport(self, report: TestReport) -> Any | None:
         rep = report
         res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
         cat, letter, word = res

@@ -16,7 +16,6 @@ import collections
 import os
 import re
 import typing
-from typing import Any, Callable, Dict, Iterator, Optional, Union
 
 import pytest
 from _pytest.fixtures import FixtureLookupError, FixtureManager, FixtureRequest, call_fixture_func
@@ -27,6 +26,8 @@ from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if typing.TYPE_CHECKING:
+    from typing import Any, Callable, Iterator
+
     from _pytest.mark.structures import ParameterSet
 
     from .parser import Feature, Scenario, ScenarioTemplate, Step
@@ -36,8 +37,8 @@ ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
 def find_argumented_step_fixture_name(
-    name: str, type_: str, fixturemanager: FixtureManager, request: Optional[FixtureRequest] = None
-) -> Optional[str]:
+    name: str, type_: str, fixturemanager: FixtureManager, request: FixtureRequest | None = None
+) -> str | None:
     """Find argumented step fixture name."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
@@ -178,7 +179,7 @@ def _get_scenario_decorator(
         # We need to tell pytest that the original function requires its fixtures,
         # otherwise indirect fixtures would not work.
         @pytest.mark.usefixtures(*func_args)
-        def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: Dict[str, str]) -> Optional[Any]:
+        def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> Any | None:
             scenario = templated_scenario.render(_pytest_bdd_example)
             _execute_scenario(feature, scenario, request)
             fixture_values = [request.getfixturevalue(arg) for arg in func_args]
@@ -205,7 +206,7 @@ def _get_scenario_decorator(
 
 def collect_example_parametrizations(
     templated_scenario: ScenarioTemplate,
-) -> typing.Optional[typing.List[ParameterSet]]:
+) -> list[ParameterSet] | None:
     # We need to evaluate these iterators and store them as lists, otherwise
     # we won't be able to do the cartesian product later (the second iterator will be consumed)
     contexts = list(templated_scenario.examples.as_contexts())
@@ -276,7 +277,7 @@ def make_string_literal(string: str) -> str:
     return "'{}'".format(string.replace("'", "\\'"))
 
 
-def get_python_name_generator(name: str) -> Iterator[Union[Iterator, Iterator[str]]]:
+def get_python_name_generator(name: str) -> Iterator[Iterator | Iterator[str]]:
     """Generate a sequence of suitable python names out of given arbitrary string name."""
     python_name = make_python_name(name)
     suffix = ""

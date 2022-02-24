@@ -6,9 +6,11 @@ that enriches the pytest test reporting.
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Any, Callable, Dict
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from typing import Any, Callable
+
     from _pytest.fixtures import FixtureRequest
     from _pytest.nodes import Item
     from _pytest.reports import TestReport
@@ -31,7 +33,7 @@ class StepReport:
         self.step = step
         self.started = time.perf_counter()
 
-    def serialize(self) -> Dict[str, Any]:
+    def serialize(self) -> dict[str, Any]:
         """Serialize the step execution report.
 
         :return: Serialized step execution report.
@@ -97,7 +99,7 @@ class ScenarioReport:
         """
         self.step_reports.append(step_report)
 
-    def serialize(self) -> Dict[str, Any]:
+    def serialize(self) -> dict[str, Any]:
         """Serialize scenario execution report in order to transfer reporting from nodes in the distributed mode.
 
         :return: Serialized report.
@@ -155,7 +157,7 @@ def step_error(
     scenario: Scenario,
     step: Step,
     step_func: Callable,
-    step_func_args: Dict,
+    step_func_args: dict,
     exception: Exception,
 ) -> None:
     """Finalize the step report as failed."""
@@ -173,7 +175,7 @@ def after_step(
     scenario: Scenario,
     step: Step,
     step_func: Callable,
-    step_func_args: Dict,
+    step_func_args: dict,
 ) -> None:
     """Finalize the step report as successful."""
     request.node.__scenario_report__.current_step_report.finalize(failed=False)

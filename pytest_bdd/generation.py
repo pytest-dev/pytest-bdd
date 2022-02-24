@@ -3,14 +3,9 @@ from __future__ import annotations
 
 import itertools
 import os.path
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple
+from typing import TYPE_CHECKING
 
 import py
-from _pytest.config import Config
-from _pytest.config.argparsing import Parser
-from _pytest.fixtures import FixtureDef, FixtureManager
-from _pytest.main import Session
-from _pytest.python import Function
 from mako.lookup import TemplateLookup
 
 from .feature import get_features
@@ -19,6 +14,14 @@ from .steps import get_step_fixture_name
 from .types import STEP_TYPES
 
 if TYPE_CHECKING:
+    from typing import Any
+
+    from _pytest.config import Config
+    from _pytest.config.argparsing import Parser
+    from _pytest.fixtures import FixtureDef, FixtureManager
+    from _pytest.main import Session
+    from _pytest.python import Function
+
     from .parser import Feature, ScenarioTemplate, Step
 
 template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
@@ -45,13 +48,13 @@ def add_options(parser: Parser) -> None:
     )
 
 
-def cmdline_main(config: Config) -> Optional[int]:
+def cmdline_main(config: Config) -> int | None:
     """Check config option to show missing code."""
     if config.option.generate_missing:
         return show_missing_code(config)
 
 
-def generate_code(features: List[Feature], scenarios: List[ScenarioTemplate], steps: List[Step]) -> str:
+def generate_code(features: list[Feature], scenarios: list[ScenarioTemplate], steps: list[Step]) -> str:
     """Generate test code for the given filenames."""
     grouped_steps = group_steps(steps)
     template = template_lookup.get_template("test.py.mak")
@@ -72,7 +75,7 @@ def show_missing_code(config: Config) -> int:
     return wrap_session(config, _show_missing_code_main)
 
 
-def print_missing_code(scenarios: List[ScenarioTemplate], steps: List[Step]) -> None:
+def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> None:
     """Print missing code with TerminalWriter."""
     tw = py.io.TerminalWriter()
     scenario = step = None
@@ -120,7 +123,7 @@ def print_missing_code(scenarios: List[ScenarioTemplate], steps: List[Step]) -> 
 
 def _find_step_fixturedef(
     fixturemanager: FixtureManager, item: Function, name: str, type_: str
-) -> Optional[Tuple[FixtureDef]]:
+) -> tuple[FixtureDef] | None:
     """Find step fixturedef.
 
     :param request: PyTest Item object.
@@ -139,7 +142,7 @@ def _find_step_fixturedef(
     return None
 
 
-def parse_feature_files(paths: List[str], **kwargs: Any) -> Tuple[List[Feature], List[ScenarioTemplate], List[Step]]:
+def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature], list[ScenarioTemplate], list[Step]]:
     """Parse feature files of given paths.
 
     :param paths: `list` of paths (file or dirs)
@@ -158,7 +161,7 @@ def parse_feature_files(paths: List[str], **kwargs: Any) -> Tuple[List[Feature],
     return features, scenarios, steps
 
 
-def group_steps(steps: List[Step]) -> List[Step]:
+def group_steps(steps: list[Step]) -> list[Step]:
     """Group steps by type."""
     steps = sorted(steps, key=lambda step: step.type)
     seen_steps = set()

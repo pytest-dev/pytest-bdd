@@ -5,9 +5,11 @@ import json
 import math
 import os
 import time
-from typing import TYPE_CHECKING, Any, Dict, List
+import typing
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
+    from typing import Any
+
     from _pytest.config import Config
     from _pytest.config.argparsing import Parser
     from _pytest.reports import TestReport
@@ -50,20 +52,20 @@ class LogBDDCucumberJSON:
     def __init__(self, logfile: str) -> None:
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
-        self.features: Dict[str, Dict] = {}
+        self.features: dict[str, dict] = {}
 
     # TODO: Unused method?
     def append(self, obj):
         self.features[-1].append(obj)
 
-    def _get_result(self, step: Dict[str, Any], report: TestReport, error_message: bool = False) -> Dict[str, Any]:
+    def _get_result(self, step: dict[str, Any], report: TestReport, error_message: bool = False) -> dict[str, Any]:
         """Get scenario test run result.
 
         :param step: `Step` step we get result for
         :param report: pytest `Report` object
         :return: `dict` in form {"status": "<passed|failed|skipped>", ["error_message": "<error_message>"]}
         """
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
         if report.passed or not step["failed"]:  # ignore setup/teardown
             result = {"status": "passed"}
         elif report.failed and step["failed"]:
@@ -73,7 +75,7 @@ class LogBDDCucumberJSON:
         result["duration"] = int(math.floor((10**9) * step["duration"]))  # nanosec
         return result
 
-    def _serialize_tags(self, item: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _serialize_tags(self, item: dict[str, Any]) -> list[dict[str, Any]]:
         """Serialize item's tags.
 
         :param item: json-serialized `Scenario` or `Feature`.
@@ -98,7 +100,7 @@ class LogBDDCucumberJSON:
             # skip if there isn't a result or scenario has no steps
             return
 
-        def stepmap(step: Dict[str, Any]) -> Dict[str, Any]:
+        def stepmap(step: dict[str, Any]) -> dict[str, Any]:
             error_message = False
             if step["failed"] and not scenario.setdefault("failed", False):
                 scenario["failed"] = True

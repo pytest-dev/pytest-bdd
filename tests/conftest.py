@@ -1,5 +1,3 @@
-from typing import Iterator
-
 import pytest
 
 from tests.utils import PYTEST_6
