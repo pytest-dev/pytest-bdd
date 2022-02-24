@@ -1,4 +1,5 @@
 """Cucumber json output formatter."""
+from __future__ import annotations
 
 import json
 import math
@@ -13,7 +14,7 @@ if TYPE_CHECKING:
     from _pytest.terminal import TerminalReporter
 
 
-def add_options(parser: "Parser") -> None:
+def add_options(parser: Parser) -> None:
     """Add pytest-bdd options."""
     group = parser.getgroup("bdd", "Cucumber JSON")
     group.addoption(
@@ -27,7 +28,7 @@ def add_options(parser: "Parser") -> None:
     )
 
 
-def configure(config: "Config") -> None:
+def configure(config: Config) -> None:
     cucumber_json_path = config.option.cucumber_json_path
     # prevent opening json log on worker nodes (xdist)
     if cucumber_json_path and not hasattr(config, "workerinput"):
@@ -35,7 +36,7 @@ def configure(config: "Config") -> None:
         config.pluginmanager.register(config._bddcucumberjson)
 
 
-def unconfigure(config: "Config") -> None:
+def unconfigure(config: Config) -> None:
     xml = getattr(config, "_bddcucumberjson", None)
     if xml is not None:
         del config._bddcucumberjson
@@ -55,7 +56,7 @@ class LogBDDCucumberJSON:
     def append(self, obj):
         self.features[-1].append(obj)
 
-    def _get_result(self, step: Dict[str, Any], report: "TestReport", error_message: bool = False) -> Dict[str, Any]:
+    def _get_result(self, step: Dict[str, Any], report: TestReport, error_message: bool = False) -> Dict[str, Any]:
         """Get scenario test run result.
 
         :param step: `Step` step we get result for
@@ -86,7 +87,7 @@ class LogBDDCucumberJSON:
         """
         return [{"name": tag, "line": item["line_number"] - 1} for tag in item["tags"]]
 
-    def pytest_runtest_logreport(self, report: "TestReport") -> None:
+    def pytest_runtest_logreport(self, report: TestReport) -> None:
         try:
             scenario = report.scenario
         except AttributeError:
@@ -145,5 +146,5 @@ class LogBDDCucumberJSON:
         with open(self.logfile, "w", encoding="utf-8") as logfile:
             logfile.write(json.dumps(list(self.features.values())))
 
-    def pytest_terminal_summary(self, terminalreporter: "TerminalReporter") -> None:
+    def pytest_terminal_summary(self, terminalreporter: TerminalReporter) -> None:
         terminalreporter.write_sep("-", f"generated json file: {self.logfile}")

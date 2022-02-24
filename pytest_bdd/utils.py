@@ -1,4 +1,6 @@
 """Various utility functions."""
+from __future__ import annotations
+
 import base64
 import pickle
 import re
@@ -11,7 +13,7 @@ if typing.TYPE_CHECKING:
     from _pytest.config import Config
     from _pytest.pytester import RunResult
 
-CONFIG_STACK: "List[Config]" = []
+CONFIG_STACK: List[Config] = []
 
 
 def get_args(func: Callable) -> List[str]:
@@ -57,7 +59,7 @@ def dump_obj(*objects: Any) -> None:
         print(f"{_DUMP_START}{encoded}{_DUMP_END}")
 
 
-def collect_dumped_objects(result: "RunResult"):
+def collect_dumped_objects(result: RunResult):
     """Parse all the objects dumped with `dump_object` from the result.
 
     Note: You must run the result with output to stdout enabled.

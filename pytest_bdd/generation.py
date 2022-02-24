@@ -1,4 +1,5 @@
 """pytest-bdd missing test code generation."""
+from __future__ import annotations
 
 import itertools
 import os.path
@@ -50,7 +51,7 @@ def cmdline_main(config: Config) -> Optional[int]:
         return show_missing_code(config)
 
 
-def generate_code(features: "List[Feature]", scenarios: "List[ScenarioTemplate]", steps: "List[Step]") -> str:
+def generate_code(features: List[Feature], scenarios: List[ScenarioTemplate], steps: List[Step]) -> str:
     """Generate test code for the given filenames."""
     grouped_steps = group_steps(steps)
     template = template_lookup.get_template("test.py.mak")
@@ -71,7 +72,7 @@ def show_missing_code(config: Config) -> int:
     return wrap_session(config, _show_missing_code_main)
 
 
-def print_missing_code(scenarios: "List[ScenarioTemplate]", steps: "List[Step]") -> None:
+def print_missing_code(scenarios: List[ScenarioTemplate], steps: List[Step]) -> None:
     """Print missing code with TerminalWriter."""
     tw = py.io.TerminalWriter()
     scenario = step = None
@@ -138,7 +139,7 @@ def _find_step_fixturedef(
     return None
 
 
-def parse_feature_files(paths: List[str], **kwargs: Any) -> "Tuple[List[Feature], List[ScenarioTemplate], List[Step]]":
+def parse_feature_files(paths: List[str], **kwargs: Any) -> Tuple[List[Feature], List[ScenarioTemplate], List[Step]]:
     """Parse feature files of given paths.
 
     :param paths: `list` of paths (file or dirs)
@@ -157,7 +158,7 @@ def parse_feature_files(paths: List[str], **kwargs: Any) -> "Tuple[List[Feature]
     return features, scenarios, steps
 
 
-def group_steps(steps: "List[Step]") -> "List[Step]":
+def group_steps(steps: List[Step]) -> List[Step]:
     """Group steps by type."""
     steps = sorted(steps, key=lambda step: step.type)
     seen_steps = set()

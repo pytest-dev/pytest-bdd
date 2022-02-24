@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os.path
 import re
 import textwrap
@@ -75,7 +77,7 @@ def get_step_type(line: str) -> Optional[str]:
     return None
 
 
-def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feature":
+def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Feature:
     """Parse the feature file.
 
     :param str basedir: Feature files base directory.
@@ -186,7 +188,7 @@ class Feature:
         rel_filename: str,
         name: Optional[str],
         tags: Set,
-        background: "Optional[Background]",
+        background: Optional[Background],
         line_number: int,
         description: str,
     ) -> None:
@@ -197,7 +199,7 @@ class Feature:
         self.name: Optional[str] = name
         self.line_number: int = line_number
         self.description: str = description
-        self.background: "Optional[Background]" = background
+        self.background: Optional[Background] = background
 
 
 class ScenarioTemplate:
@@ -205,7 +207,7 @@ class ScenarioTemplate:
 
     Created when parsing the feature file, it will then be combined with the examples to create a Scenario."""
 
-    def __init__(self, feature: "Feature", name: str, line_number: int, tags=None):
+    def __init__(self, feature: Feature, name: str, line_number: int, tags=None):
         """
 
         :param str name: Scenario name.
@@ -214,12 +216,12 @@ class ScenarioTemplate:
         """
         self.feature = feature
         self.name = name
-        self._steps: "typing.List[Step]" = []
+        self._steps: typing.List[Step] = []
         self.examples = Examples()
         self.line_number = line_number
         self.tags = tags or set()
 
-    def add_step(self, step: "Step") -> None:
+    def add_step(self, step: Step) -> None:
         """Add step to the scenario.
 
         :param pytest_bdd.parser.Step step: Step.
@@ -228,11 +230,11 @@ class ScenarioTemplate:
         self._steps.append(step)
 
     @property
-    def steps(self) -> "List[Step]":
+    def steps(self) -> List[Step]:
         background = self.feature.background
         return (background.steps if background else []) + self._steps
 
-    def render(self, context: typing.Mapping[str, typing.Any]) -> "Scenario":
+    def render(self, context: typing.Mapping[str, typing.Any]) -> Scenario:
         steps = [
             Step(
                 name=templated_step.render(context),
@@ -250,7 +252,7 @@ class Scenario:
 
     """Scenario."""
 
-    def __init__(self, feature: "Feature", name: str, line_number: int, steps: "typing.List[Step]", tags=None):
+    def __init__(self, feature: Feature, name: str, line_number: int, steps: typing.List[Step], tags=None):
         """Scenario constructor.
 
         :param pytest_bdd.parser.Feature feature: Feature.
@@ -288,8 +290,8 @@ class Step:
         self.failed: bool = False
         self.start: int = 0  # TODO: Unused
         self.stop: int = 0  # TODO: Unused
-        self.scenario: "Optional[ScenarioTemplate]" = None
-        self.background: "Optional[Background]" = None
+        self.scenario: Optional[ScenarioTemplate] = None
+        self.background: Optional[Background] = None
 
     def add_line(self, line: str) -> None:
         """Add line to the multiple step.
@@ -340,17 +342,17 @@ class Background:
 
     """Background."""
 
-    def __init__(self, feature: "Feature", line_number: int) -> None:
+    def __init__(self, feature: Feature, line_number: int) -> None:
         """Background constructor.
 
         :param pytest_bdd.parser.Feature feature: Feature.
         :param int line_number: Line number.
         """
-        self.feature: "Feature" = feature
+        self.feature: Feature = feature
         self.line_number: int = line_number
-        self.steps: "typing.List[Step]" = []
+        self.steps: typing.List[Step] = []
 
-    def add_step(self, step: "Step") -> None:
+    def add_step(self, step: Step) -> None:
         """Add step to the background."""
         step.background = self
         self.steps.append(step)

@@ -10,6 +10,8 @@ test_publish_article = scenario(
     scenario_name="Publishing the article",
 )
 """
+from __future__ import annotations
+
 import collections
 import os
 import re
@@ -57,7 +59,7 @@ def find_argumented_step_fixture_name(
     return None
 
 
-def _find_step_function(request: FixtureRequest, step: "Step", scenario: "Scenario") -> Any:
+def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario) -> Any:
     """Match the step defined by the regular expression pattern.
 
     :param request: PyTest request object.
@@ -85,7 +87,7 @@ def _find_step_function(request: FixtureRequest, step: "Step", scenario: "Scenar
             )
 
 
-def _execute_step_function(request: FixtureRequest, scenario: "Scenario", step: "Step", step_func: Callable) -> None:
+def _execute_step_function(request: FixtureRequest, scenario: Scenario, step: Step, step_func: Callable) -> None:
     """Execute step function.
 
     :param request: PyTest request.
@@ -128,7 +130,7 @@ def _execute_step_function(request: FixtureRequest, scenario: "Scenario", step: 
         raise
 
 
-def _execute_scenario(feature: "Feature", scenario: "Scenario", request):
+def _execute_scenario(feature: Feature, scenario: Scenario, request):
     """Execute the scenario.
 
     :param feature: Feature.
@@ -157,7 +159,7 @@ FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
 def _get_scenario_decorator(
-    feature: "Feature", feature_name: str, templated_scenario: "ScenarioTemplate", scenario_name: str
+    feature: Feature, feature_name: str, templated_scenario: ScenarioTemplate, scenario_name: str
 ):
     # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
     # when the decorator is misused.
@@ -202,8 +204,8 @@ def _get_scenario_decorator(
 
 
 def collect_example_parametrizations(
-    templated_scenario: "ScenarioTemplate",
-) -> "typing.Optional[typing.List[ParameterSet]]":
+    templated_scenario: ScenarioTemplate,
+) -> typing.Optional[typing.List[ParameterSet]]:
     # We need to evaluate these iterators and store them as lists, otherwise
     # we won't be able to do the cartesian product later (the second iterator will be consumed)
     contexts = list(templated_scenario.examples.as_contexts())

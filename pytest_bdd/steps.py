@@ -34,6 +34,7 @@ def given_beautiful_article(article):
     pass
 
 """
+from __future__ import annotations
 
 from typing import Any, Callable, Dict, Optional, Union
 

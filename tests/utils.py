@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any, Optional
 
 import pytest
@@ -13,7 +15,7 @@ PYTEST_6 = PYTEST_VERSION >= Version("6")
 if PYTEST_6:
 
     def assert_outcomes(
-        result: "RunResult",
+        result: RunResult,
         passed: int = 0,
         skipped: int = 0,
         failed: int = 0,
@@ -29,7 +31,7 @@ if PYTEST_6:
 else:
 
     def assert_outcomes(
-        result: "RunResult",
+        result: RunResult,
         passed=0,
         skipped=0,
         failed=0,

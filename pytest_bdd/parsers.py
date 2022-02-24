@@ -1,8 +1,7 @@
 """Step parsers."""
-
+from __future__ import annotations
 
 import re as base_re
-from functools import partial
 from typing import Any, Dict, cast
 
 import parse as base_parse
