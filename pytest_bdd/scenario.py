@@ -258,6 +258,8 @@ def get_from_ini(key: str, default: str) -> str:
     """
     config = CONFIG_STACK[-1]
     value = config.getini(key)
+    if not isinstance(value, str):
+        raise TypeError(f"Expected a string for configuration option {value!r}, got a {type(value)} instead")
     return value if value != "" else default
 
 
