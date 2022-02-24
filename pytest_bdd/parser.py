@@ -233,10 +233,6 @@ class ScenarioTemplate:
         ]
         return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
 
-    def validate(self):
-        """Validate the scenario."""
-        pass
-
 
 class Scenario:
 

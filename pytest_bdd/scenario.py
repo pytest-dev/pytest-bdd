@@ -234,9 +234,6 @@ def scenario(feature_name: str, scenario_name: str, encoding: str = "utf-8", fea
             f'Scenario "{scenario_name}" in feature "{feature_name}" in {feature.filename} is not found.'
         )
 
-    # Validate the scenario
-    scenario.validate()
-
     return _get_scenario_decorator(
         feature=feature, feature_name=feature_name, templated_scenario=scenario, scenario_name=scenario_name
     )
