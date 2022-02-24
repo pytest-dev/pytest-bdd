@@ -17,7 +17,7 @@ import typing
 from typing import Any, Callable, Dict, Iterator, Optional, Union
 
 import pytest
-from _pytest.fixtures import FixtureLookupError, FixtureManager, FixtureRequest
+from _pytest.fixtures import FixtureLookupError, FixtureManager, FixtureRequest, call_fixture_func
 
 from . import exceptions
 from .feature import get_feature, get_features
@@ -47,14 +47,6 @@ def find_argumented_step_fixture_name(
             if not match:
                 continue
 
-            # TODO: maybe `converters` should be part of the SterParser.__init__(),
-            #  and used by StepParser.parse_arguments() method
-            converters = getattr(fixturedef.func, "converters", {})
-            for arg, value in parser.parse_arguments(name).items():
-                if arg in converters:
-                    value = converters[arg](value)
-                if request:
-                    inject_fixture(request, arg, value)
             parser_name = get_step_fixture_name(parser.name, type_)
             if request:
                 try:
@@ -109,13 +101,24 @@ def _execute_step_function(request: FixtureRequest, scenario: "Scenario", step: 
     kw["step_func_args"] = {}
     try:
         # Get the step argument values.
-        kwargs = {arg: request.getfixturevalue(arg) for arg in get_args(step_func)}
+        converters = getattr(step_func, "converters", {})
+        kwargs = {}
+
+        parser = getattr(step_func, "parser", None)
+        if parser is not None:
+            for arg, value in parser.parse_arguments(step.name).items():
+                if arg in converters:
+                    value = converters[arg](value)
+                kwargs[arg] = value
+
+        kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in get_args(step_func)}
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
         target_fixture = getattr(step_func, "target_fixture", None)
-        # Execute the step.
-        return_value = step_func(**kwargs)
+
+        # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
+        return_value = call_fixture_func(fixturefunc=step_func, request=request, kwargs=kwargs)
         if target_fixture:
             inject_fixture(request, target_fixture, return_value)
 
@@ -203,19 +206,10 @@ def collect_example_parametrizations(
 ) -> "typing.Optional[typing.List[ParameterSet]]":
     # We need to evaluate these iterators and store them as lists, otherwise
     # we won't be able to do the cartesian product later (the second iterator will be consumed)
-    feature_contexts = list(templated_scenario.feature.examples.as_contexts())
-    scenario_contexts = list(templated_scenario.examples.as_contexts())
-
-    contexts = [
-        {**feature_context, **scenario_context}
-        # We must make sure that we always have at least one element in each list, otherwise
-        # the cartesian product will result in an empty list too, even if one of the 2 sets
-        # is non empty.
-        for feature_context in feature_contexts or [{}]
-        for scenario_context in scenario_contexts or [{}]
-    ]
-    if contexts == [{}]:
+    contexts = list(templated_scenario.examples.as_contexts())
+    if not contexts:
         return None
+
     return [pytest.param(context, id="-".join(context.values())) for context in contexts]
 
 
@@ -243,9 +237,6 @@ def scenario(feature_name: str, scenario_name: str, encoding: str = "utf-8", fea
         raise exceptions.ScenarioNotFound(
             f'Scenario "{scenario_name}" in feature "{feature_name}" in {feature.filename} is not found.'
         )
-
-    # Validate the scenario
-    scenario.validate()
 
     return _get_scenario_decorator(
         feature=feature, feature_name=feature_name, templated_scenario=scenario, scenario_name=scenario_name

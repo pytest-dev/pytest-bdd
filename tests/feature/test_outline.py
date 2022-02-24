@@ -9,27 +9,25 @@ from pytest_bdd import parsers, given, when, then
 from pytest_bdd.utils import dump_obj
 
 
-@given(parsers.parse("there are {start:d} cucumbers"), target_fixture="start_cucumbers")
-def start_cucumbers(start):
+@given(parsers.parse("there are {start:d} cucumbers"), target_fixture="cucumbers")
+def given_cucumbers(start):
     assert isinstance(start, int)
     dump_obj(start)
     return {"start": start}
 
 
 @when(parsers.parse("I eat {eat:g} cucumbers"))
-def eat_cucumbers(start_cucumbers, eat):
+def eat_cucumbers(cucumbers, eat):
     assert isinstance(eat, float)
     dump_obj(eat)
-    start_cucumbers["eat"] = eat
+    cucumbers["eat"] = eat
 
 
 @then(parsers.parse("I should have {left} cucumbers"))
-def should_have_left_cucumbers(start_cucumbers, start, eat, left):
+def should_have_left_cucumbers(cucumbers, left):
     assert isinstance(left, str)
     dump_obj(left)
-    assert start - eat == int(left)
-    assert start_cucumbers["start"] == start
-    assert start_cucumbers["eat"] == eat
+    assert cucumbers["start"] - cucumbers["eat"] == int(left)
 
 """
 
@@ -81,7 +79,7 @@ def test_outlined(testdir):
     # fmt: on
 
 
-def test_wrongly_outlined(testdir):
+def test_unused_params(testdir):
     """Test parametrized scenario when the test function lacks parameters."""
 
     testdir.makefile(
@@ -89,14 +87,15 @@ def test_wrongly_outlined(testdir):
         outline=textwrap.dedent(
             """\
             Feature: Outline
-                Scenario Outline: Outlined with wrong examples
+                Scenario Outline: Outlined with unused params
                     Given there are <start> cucumbers
                     When I eat <eat> cucumbers
+                    # And commented out step with <unused_param>
                     Then I should have <left> cucumbers
 
                     Examples:
-                    | start | eat | left | unknown_param |
-                    |  12   |  5  |  7   | value         |
+                    | start | eat | left | unused_param |
+                    |  12   |  5  |  7   | value        |
 
             """
         ),
@@ -108,99 +107,14 @@ def test_wrongly_outlined(testdir):
             """\
         from pytest_bdd import scenario
 
-        @scenario("outline.feature", "Outlined with wrong examples")
+        @scenario("outline.feature", "Outlined with unused params")
         def test_outline(request):
             pass
         """
         )
     )
     result = testdir.runpytest()
-    assert_outcomes(result, errors=1)
-    result.stdout.fnmatch_lines(
-        '*ScenarioExamplesNotValidError: Scenario "Outlined with wrong examples"*has not valid examples*',
-    )
-    result.stdout.fnmatch_lines("*should match set of example values [[]'eat', 'left', 'start', 'unknown_param'[]].*")
-
-
-def test_wrong_vertical_examples_scenario(testdir):
-    """Test parametrized scenario vertical example table has wrong format."""
-    testdir.makefile(
-        ".feature",
-        outline=textwrap.dedent(
-            """\
-            Feature: Outline
-                Scenario Outline: Outlined with wrong vertical example table
-                    Given there are <start> cucumbers
-                    When I eat <eat> cucumbers
-                    Then I should have <left> cucumbers
-
-                    Examples: Vertical
-                    | start | 12 | 2 |
-                    | start | 10 | 1 |
-                    | left  | 7  | 1 |
-            """
-        ),
-    )
-    testdir.makeconftest(textwrap.dedent(STEPS))
-
-    testdir.makepyfile(
-        textwrap.dedent(
-            """\
-        from pytest_bdd import scenario
-
-        @scenario("outline.feature", "Outlined with wrong vertical example table")
-        def test_outline(request):
-            pass
-        """
-        )
-    )
-    result = testdir.runpytest()
-    assert_outcomes(result, errors=1)
-    result.stdout.fnmatch_lines(
-        "*Scenario has not valid examples. Example rows should contain unique parameters. "
-        '"start" appeared more than once.*'
-    )
-
-
-def test_wrong_vertical_examples_feature(testdir):
-    """Test parametrized feature vertical example table has wrong format."""
-    testdir.makefile(
-        ".feature",
-        outline=textwrap.dedent(
-            """\
-            Feature: Outlines
-
-                Examples: Vertical
-                | start | 12 | 2 |
-                | start | 10 | 1 |
-                | left  | 7  | 1 |
-
-                Scenario Outline: Outlined with wrong vertical example table
-                    Given there are <start> cucumbers
-                    When I eat <eat> cucumbers
-                    Then I should have <left> cucumbers
-            """
-        ),
-    )
-    testdir.makeconftest(textwrap.dedent(STEPS))
-
-    testdir.makepyfile(
-        textwrap.dedent(
-            """\
-        from pytest_bdd import scenario
-
-        @scenario("outline.feature", "Outlined with wrong vertical example table")
-        def test_outline(request):
-            pass
-        """
-        )
-    )
-    result = testdir.runpytest()
-    assert_outcomes(result, errors=1)
-    result.stdout.fnmatch_lines(
-        "*Feature has not valid examples. Example rows should contain unique parameters. "
-        '"start" appeared more than once.*'
-    )
+    assert_outcomes(result, passed=1)
 
 
 def test_outlined_with_other_fixtures(testdir):
@@ -250,133 +164,6 @@ def test_outlined_with_other_fixtures(testdir):
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=6)
-
-
-def test_vertical_example(testdir):
-    """Test outlined scenario with vertical examples table."""
-    testdir.makefile(
-        ".feature",
-        outline=textwrap.dedent(
-            """\
-            Feature: Outline
-                Scenario Outline: Outlined with vertical example table
-                    Given there are <start> cucumbers
-                    When I eat <eat> cucumbers
-                    Then I should have <left> cucumbers
-
-                    Examples: Vertical
-                    | start | 12 | 2 |
-                    | eat   | 5  | 1 |
-                    | left  | 7  | 1 |
-
-            """
-        ),
-    )
-
-    testdir.makeconftest(textwrap.dedent(STEPS))
-
-    testdir.makepyfile(
-        textwrap.dedent(
-            """\
-        from pytest_bdd import scenario
-
-        @scenario(
-            "outline.feature",
-            "Outlined with vertical example table",
-        )
-        def test_outline():
-            pass
-        """
-        )
-    )
-    result = testdir.runpytest("-s")
-    result.assert_outcomes(passed=2)
-    parametrizations = collect_dumped_objects(result)
-    # fmt: off
-    assert parametrizations == [
-        12, 5.0, "7",
-        2, 1.0, "1",
-    ]
-    # fmt: on
-
-
-def test_outlined_feature(testdir):
-    testdir.makefile(
-        ".feature",
-        outline=textwrap.dedent(
-            """\
-            Feature: Outline
-
-                Examples:
-                | start | eat | left |
-                |  12   |  5  |  7   |
-                |  5    |  4  |  1   |
-
-                Scenario Outline: Outlined given, when, thens
-                    Given there are <start> <fruits>
-                    When I eat <eat> <fruits>
-                    Then I should have <left> <fruits>
-
-                    Examples:
-                    | fruits  |
-                    | oranges |
-                    | apples  |
-            """
-        ),
-    )
-
-    testdir.makepyfile(
-        textwrap.dedent(
-            """\
-        from pytest_bdd import given, when, then, scenario, parsers
-        from pytest_bdd.utils import dump_obj
-
-        @scenario(
-            "outline.feature",
-            "Outlined given, when, thens",
-        )
-        def test_outline():
-            pass
-
-        @given(parsers.parse("there are {start:d} {fruits}"), target_fixture="start_fruits")
-        def start_fruits(start, fruits):
-            dump_obj(start, fruits)
-
-            assert isinstance(start, int)
-            return {fruits: dict(start=start)}
-
-
-        @when(parsers.parse("I eat {eat:g} {fruits}"))
-        def eat_fruits(start_fruits, eat, fruits):
-            dump_obj(eat, fruits)
-
-            assert isinstance(eat, float)
-            start_fruits[fruits]["eat"] = eat
-
-
-        @then(parsers.parse("I should have {left} {fruits}"))
-        def should_have_left_fruits(start_fruits, start, eat, left, fruits):
-            dump_obj(left, fruits)
-
-            assert isinstance(left, str)
-            assert start - eat == int(left)
-            assert start_fruits[fruits]["start"] == start
-            assert start_fruits[fruits]["eat"] == eat
-
-        """
-        )
-    )
-    result = testdir.runpytest("-s")
-    result.assert_outcomes(passed=4)
-    parametrizations = collect_dumped_objects(result)
-    # fmt: off
-    assert parametrizations == [
-        12, "oranges", 5.0, "oranges", "7", "oranges",
-        12, "apples", 5.0, "apples", "7", "apples",
-        5, "oranges", 4.0, "oranges", "1", "oranges",
-        5, "apples", 4.0, "apples", "1", "apples",
-    ]
-    # fmt: on
 
 
 def test_outline_with_escaped_pipes(testdir):

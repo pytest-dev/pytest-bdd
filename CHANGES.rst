@@ -2,7 +2,22 @@ Changelog
 =========
 
 Unreleased
------------
+----------
+
+This release introduces breaking changes in order to be more in line with the official gherkin specification.
+
+- Cleanup of the documentation and tests related to parametrization (elchupanebrej)
+- Removed feature level examples for the gherkin compatibility (olegpidsadnyi)
+- Removed vertical examples for the gherkin compatibility (olegpidsadnyi)
+- Step arguments are no longer fixtures (olegpidsadnyi)
+- Drop support of python 3.6, pytest 4 (elchupanebrej)
+- Step definitions can have "yield" statements again (4.0 release broke it). They will be executed as normal fixtures: code after the yield is executed during teardown of the test. (youtux)
+- Scenario outlines unused example parameter validation is removed (olegpidsadnyi)
+
+
+
+5.0.0
+-----
 This release introduces breaking changes, please refer to the :ref:`Migration from 4.x.x`.
 
 - Rewrite the logic to parse Examples for Scenario Outlines. Now the substitution of the examples is done during the parsing of Gherkin feature files. You won't need to define the steps twice like ``@given("there are <start> cucumbers")`` and ``@given(parsers.parse("there are {start} cucumbers"))``. The latter will be enough.

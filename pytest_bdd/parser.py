@@ -13,7 +13,6 @@ COMMENT_RE = re.compile(r"(^|(?<=\s))#")
 STEP_PREFIXES = [
     ("Feature: ", types.FEATURE),
     ("Scenario Outline: ", types.SCENARIO_OUTLINE),
-    ("Examples: Vertical", types.EXAMPLES_VERTICAL),
     ("Examples:", types.EXAMPLES),
     ("Scenario: ", types.SCENARIO),
     ("Background:", types.BACKGROUND),
@@ -92,7 +91,6 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
         line_number=1,
         name=None,
         tags=set(),
-        examples=Examples(),
         background=None,
         description="",
     )
@@ -159,37 +157,15 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
             feature.background = Background(feature=feature, line_number=line_number)
         elif mode == types.EXAMPLES:
             mode = types.EXAMPLES_HEADERS
-            (scenario or feature).examples.line_number = line_number
-        elif mode == types.EXAMPLES_VERTICAL:
-            mode = types.EXAMPLE_LINE_VERTICAL
-            (scenario or feature).examples.line_number = line_number
+            scenario.examples.line_number = line_number
         elif mode == types.EXAMPLES_HEADERS:
-            (scenario or feature).examples.set_param_names([l for l in split_line(parsed_line) if l])
+            scenario.examples.set_param_names([l for l in split_line(parsed_line) if l])
             mode = types.EXAMPLE_LINE
         elif mode == types.EXAMPLE_LINE:
-            (scenario or feature).examples.add_example([l for l in split_line(stripped_line)])
-        elif mode == types.EXAMPLE_LINE_VERTICAL:
-            param_line_parts = [l for l in split_line(stripped_line)]
-            try:
-                (scenario or feature).examples.add_example_row(param_line_parts[0], param_line_parts[1:])
-            except exceptions.ExamplesNotValidError as exc:
-                if scenario:
-                    raise exceptions.FeatureError(
-                        f"Scenario has not valid examples. {exc.args[0]}",
-                        line_number,
-                        clean_line,
-                        filename,
-                    )
-                else:
-                    raise exceptions.FeatureError(
-                        f"Feature has not valid examples. {exc.args[0]}",
-                        line_number,
-                        clean_line,
-                        filename,
-                    )
+            scenario.examples.add_example([l for l in split_line(stripped_line)])
         elif mode and mode not in (types.FEATURE, types.TAG):
             step = Step(name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword)
-            if feature.background and scenario:
+            if feature.background and not scenario:
                 feature.background.add_step(step)
             else:
                 scenario = cast(ScenarioTemplate, scenario)
@@ -210,7 +186,6 @@ class Feature:
         rel_filename: str,
         name: Optional[str],
         tags: Set,
-        examples: "Examples",
         background: "Optional[Background]",
         line_number: int,
         description: str,
@@ -219,7 +194,6 @@ class Feature:
         self.rel_filename: str = rel_filename
         self.filename: str = filename
         self.tags: Set = tags
-        self.examples: "Examples" = examples
         self.name: Optional[str] = name
         self.line_number: int = line_number
         self.description: str = description
@@ -270,21 +244,6 @@ class ScenarioTemplate:
             for templated_step in self.steps
         ]
         return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
-
-    def validate(self) -> None:
-        """Validate the scenario.
-
-        :raises ScenarioValidationError: when scenario is not valid
-        """
-        params = frozenset(sum((list(step.params) for step in self.steps), []))
-        example_params = set(self.examples.example_params + self.feature.examples.example_params)
-        if params and example_params and params != example_params:
-            raise exceptions.ScenarioExamplesNotValidError(
-                """Scenario "{}" in the feature "{}" has not valid examples. """
-                """Set of step parameters {} should match set of example values {}.""".format(
-                    self.name, self.feature.filename, sorted(params), sorted(example_params)
-                )
-            )
 
 
 class Scenario:
@@ -405,7 +364,6 @@ class Examples:
         """Initialize examples instance."""
         self.example_params: List[str] = []
         self.examples: List[List[str]] = []
-        self.vertical_examples: List[List[str]] = []
         self.line_number: Optional[int] = None
         self.name = None
 
@@ -434,17 +392,8 @@ class Examples:
                 f"""Example rows should contain unique parameters. "{param}" appeared more than once"""
             )
         self.example_params.append(param)
-        self.vertical_examples.append(values)
 
     def as_contexts(self) -> typing.Iterable[typing.Dict[str, typing.Any]]:
-        param_count = len(self.example_params)
-        if self.vertical_examples and not self.examples:
-            for value_index in range(len(self.vertical_examples[0])):
-                example = []
-                for param_index in range(param_count):
-                    example.append(self.vertical_examples[param_index][value_index])
-                self.examples.append(example)
-
         if not self.examples:
             return
 
@@ -452,12 +401,11 @@ class Examples:
 
         for row in rows:
             assert len(header) == len(row)
-
             yield dict(zip(header, row))
 
     def __bool__(self):
         """Bool comparison."""
-        return bool(self.vertical_examples or self.examples)
+        return bool(self.examples)
 
 
 def get_tags(line: Optional[str]) -> Set[str]:

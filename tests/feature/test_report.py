@@ -80,24 +80,22 @@ def test_step_trace(testdir):
         def a_failing_step():
             raise Exception('Error')
 
-        @given(parsers.parse('there are {start:d} cucumbers'), target_fixture="start_cucumbers")
-        def start_cucumbers(start):
+        @given(parsers.parse('there are {start:d} cucumbers'), target_fixture="cucumbers")
+        def given_cucumbers(start):
             assert isinstance(start, int)
             return {"start": start}
 
 
         @when(parsers.parse('I eat {eat:g} cucumbers'))
-        def eat_cucumbers(start_cucumbers, eat):
+        def eat_cucumbers(cucumbers, eat):
             assert isinstance(eat, float)
-            start_cucumbers['eat'] = eat
+            cucumbers['eat'] = eat
 
 
         @then(parsers.parse('I should have {left} cucumbers'))
-        def should_have_left_cucumbers(start_cucumbers, start, eat, left):
+        def should_have_left_cucumbers(cucumbers, left):
             assert isinstance(left, str)
-            assert start - eat == int(left)
-            assert start_cucumbers['start'] == start
-            assert start_cucumbers['eat'] == eat
+            assert cucumbers['start'] - cucumbers['eat'] == int(left)
 
 
         scenarios('test.feature')
