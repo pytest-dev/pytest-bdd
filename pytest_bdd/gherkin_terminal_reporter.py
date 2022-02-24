@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import typing
 
+from _pytest.terminal import TerminalReporter
+
 if typing.TYPE_CHECKING:
     from typing import Any
 
     from _pytest.config import Config
     from _pytest.config.argparsing import Parser
     from _pytest.reports import TestReport
-    from _pytest.terminal import TerminalReporter
 
 
 def add_options(parser: Parser) -> None:
