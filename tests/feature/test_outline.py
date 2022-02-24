@@ -79,7 +79,7 @@ def test_outlined(testdir):
     # fmt: on
 
 
-def test_wrongly_outlined(testdir):
+def test_unused_params(testdir):
     """Test parametrized scenario when the test function lacks parameters."""
 
     testdir.makefile(
