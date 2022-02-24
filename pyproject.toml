@@ -12,7 +12,7 @@ line_length = 120
 multi_line_output = 3
 
 [tool.mypy]
-python_version = "3.6"
+python_version = "3.7"
 warn_return_any = true
 warn_unused_configs = true
 files = "pytest_bdd/**/*.py"
