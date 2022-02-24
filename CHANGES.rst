@@ -11,6 +11,7 @@ This release introduces breaking changes in order to be more in line with the of
 - Removed vertical examples for the gherkin compatibility (olegpidsadnyi)
 - Step arguments are no longer fixtures (olegpidsadnyi)
 - Drop support of python 3.6, pytest 4 (elchupanebrej)
+- Step definitions can have "yield" statements again (4.0 release broke it). They will be executed as normal fixtures: code after the yield is executed during teardown of the test. (youtux)
 
 
 
