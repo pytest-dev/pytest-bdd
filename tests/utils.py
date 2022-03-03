@@ -6,8 +6,6 @@ import pytest
 from packaging.utils import Version
 
 if typing.TYPE_CHECKING:
-    from typing import Any
-
     from _pytest.pytester import RunResult
 
 PYTEST_VERSION = Version(pytest.__version__)

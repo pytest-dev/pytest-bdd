@@ -5,7 +5,7 @@ NOT_EXISTING_FEATURE_PATHS = [".", "/does/not/exist/"]
 
 
 @pytest.mark.parametrize("base_dir", NOT_EXISTING_FEATURE_PATHS)
-def test_feature_path_not_found(testdir, base_dir: str):
+def test_feature_path_not_found(testdir, base_dir):
     """Test feature base dir."""
     prepare_testdir(testdir, base_dir)
 
@@ -32,7 +32,7 @@ def test_feature_path_by_param_not_found(testdir):
 
 
 @pytest.mark.parametrize("base_dir", NOT_EXISTING_FEATURE_PATHS)
-def test_feature_path_by_param_ok(testdir, base_dir: str):
+def test_feature_path_by_param_ok(testdir, base_dir):
     """If ini config is incorrect but param path is fine it should be able
     to find features"""
     prepare_testdir(testdir, base_dir)
@@ -41,7 +41,7 @@ def test_feature_path_by_param_ok(testdir, base_dir: str):
     result.assert_outcomes(passed=2)
 
 
-def prepare_testdir(testdir, ini_base_dir: str):
+def prepare_testdir(testdir, ini_base_dir):
     testdir.makeini(
         """
             [pytest]

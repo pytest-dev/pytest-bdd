@@ -1,11 +1,7 @@
 """Test scenario reporting."""
 import textwrap
-from typing import TYPE_CHECKING
 
 import pytest
-
-if TYPE_CHECKING:
-    from _pytest.config import Config
 
 
 class OfType:
@@ -258,7 +254,7 @@ def test_step_trace(testdir):
     assert report == expected
 
 
-def test_complex_types(testdir, pytestconfig: "Config"):
+def test_complex_types(testdir, pytestconfig):
     """Test serialization of the complex types."""
     if not pytestconfig.pluginmanager.has_plugin("xdist"):
         pytest.skip("Execnet not installed")

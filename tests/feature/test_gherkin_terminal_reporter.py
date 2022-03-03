@@ -1,5 +1,4 @@
 import textwrap
-from typing import List
 
 import pytest
 
@@ -44,7 +43,7 @@ def test_default_output_should_be_the_same_as_regular_terminal_reporter(testdir)
     regular.assert_outcomes(passed=1, failed=0)
     gherkin.assert_outcomes(passed=1, failed=0)
 
-    def parse_lines(lines: List[str]) -> List[str]:
+    def parse_lines(lines: list[str]) -> list[str]:
         return [line for line in lines if not line.startswith("===")]
 
     assert all(l1 == l2 for l1, l2 in zip(parse_lines(regular.stdout.lines), parse_lines(gherkin.stdout.lines)))
@@ -93,7 +92,7 @@ def test_double_verbose_mode_should_display_full_scenario_description(testdir):
 
 
 @pytest.mark.parametrize("verbosity", ["", "-v", "-vv"])
-def test_error_message_for_missing_steps(testdir, verbosity: str):
+def test_error_message_for_missing_steps(testdir, verbosity):
     testdir.makefile(".feature", test=FEATURE)
     testdir.makepyfile(
         textwrap.dedent(
@@ -113,7 +112,7 @@ def test_error_message_for_missing_steps(testdir, verbosity: str):
 
 
 @pytest.mark.parametrize("verbosity", ["", "-v", "-vv"])
-def test_error_message_should_be_displayed(testdir, verbosity: str):
+def test_error_message_should_be_displayed(testdir, verbosity):
     testdir.makefile(".feature", test=FEATURE)
     testdir.makepyfile(
         textwrap.dedent(

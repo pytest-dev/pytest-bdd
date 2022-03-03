@@ -46,7 +46,7 @@ def test_when_then(testdir):
     ("step", "keyword"),
     [("given", "Given"), ("when", "When"), ("then", "Then")],
 )
-def test_preserve_decorator(testdir, step: str, keyword: str):
+def test_preserve_decorator(testdir, step, keyword):
     """Check that we preserve original function attributes after decorating it."""
     testdir.makepyfile(
         textwrap.dedent(
