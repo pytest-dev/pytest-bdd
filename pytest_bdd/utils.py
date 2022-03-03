@@ -60,7 +60,7 @@ def dump_obj(*objects: Any) -> None:
         print(f"{_DUMP_START}{encoded}{_DUMP_END}")
 
 
-def collect_dumped_objects(result: RunResult):
+def collect_dumped_objects(result: RunResult) -> list:
     """Parse all the objects dumped with `dump_object` from the result.
 
     Note: You must run the result with output to stdout enabled.

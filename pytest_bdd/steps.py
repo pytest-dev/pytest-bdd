@@ -106,7 +106,7 @@ def then(name: Any, converters: dict[str, type] | None = None, target_fixture: s
 def _step_decorator(
     step_type: str,
     step_name: Any,
-    converters: dict[str, Callable] | dict[str, type] | None = None,
+    converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
 ) -> Callable:
     """Step decorator for the type and the name.
