@@ -27,6 +27,9 @@ STEP_PREFIXES = [
     ("But ", None),
 ]
 
+if typing.TYPE_CHECKING:
+    from typing import Any, Iterable, Mapping, Match
+
 
 def split_line(line: str) -> list[str]:
     """Split the given Examples line.
@@ -207,7 +210,7 @@ class ScenarioTemplate:
 
     Created when parsing the feature file, it will then be combined with the examples to create a Scenario."""
 
-    def __init__(self, feature: Feature, name: str, line_number: int, tags=None):
+    def __init__(self, feature: Feature, name: str, line_number: int, tags=None) -> None:
         """
 
         :param str name: Scenario name.
@@ -234,7 +237,7 @@ class ScenarioTemplate:
         background = self.feature.background
         return (background.steps if background else []) + self._steps
 
-    def render(self, context: typing.Mapping[str, typing.Any]) -> Scenario:
+    def render(self, context: Mapping[str, Any]) -> Scenario:
         steps = [
             Step(
                 name=templated_step.render(context),
@@ -252,7 +255,7 @@ class Scenario:
 
     """Scenario."""
 
-    def __init__(self, feature: Feature, name: str, line_number: int, steps: list[Step], tags=None):
+    def __init__(self, feature: Feature, name: str, line_number: int, steps: list[Step], tags=None) -> None:
         """Scenario constructor.
 
         :param pytest_bdd.parser.Feature feature: Feature.
@@ -288,8 +291,6 @@ class Step:
         self.type: str = type
         self.line_number: int = line_number
         self.failed: bool = False
-        self.start: int = 0  # TODO: Unused
-        self.stop: int = 0  # TODO: Unused
         self.scenario: ScenarioTemplate | None = None
         self.background: Background | None = None
 
@@ -330,8 +331,8 @@ class Step:
         """Get step params."""
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
-    def render(self, context: typing.Mapping[str, typing.Any]):
-        def replacer(m: typing.Match):
+    def render(self, context: Mapping[str, Any]):
+        def replacer(m: Match):
             varname = m.group(1)
             return str(context[varname])
 
@@ -383,19 +384,7 @@ class Examples:
         """
         self.examples.append(values)
 
-    def add_example_row(self, param: str, values: list[str]) -> None:
-        """Add example row.
-
-        :param param: `str` parameter name
-        :param values: `list` of `string` parameter values
-        """
-        if param in self.example_params:
-            raise exceptions.ExamplesNotValidError(
-                f"""Example rows should contain unique parameters. "{param}" appeared more than once"""
-            )
-        self.example_params.append(param)
-
-    def as_contexts(self) -> typing.Iterable[dict[str, typing.Any]]:
+    def as_contexts(self) -> Iterable[dict[str, Any]]:
         if not self.examples:
             return
 
@@ -405,7 +394,7 @@ class Examples:
             assert len(header) == len(row)
             yield dict(zip(header, row))
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         """Bool comparison."""
         return bool(self.examples)
 
