@@ -27,10 +27,6 @@ def pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func
     """Called when step function failed to execute."""
 
 
-def pytest_bdd_step_validation_error(request, feature, scenario, step, step_func, step_func_args, exception):
-    """Called when step failed to validate."""
-
-
 def pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception):
     """Called when step lookup failed."""
 
