@@ -1,7 +1,7 @@
 """Pytest plugin entry point. Used for any fixtures needed."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Callable, cast
 
 import pytest
 
@@ -9,7 +9,7 @@ from . import cucumber_json, generation, gherkin_terminal_reporter, given, repor
 from .utils import CONFIG_STACK
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Generator
+    from typing import Any, Generator
 
     from _pytest.config import Config, PytestPluginManager
     from _pytest.config.argparsing import Parser
