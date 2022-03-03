@@ -2,13 +2,13 @@
 import json
 import os.path
 import textwrap
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from _pytest.pytester import RunResult, Testdir
 
 
-def runandparse(testdir: "Testdir", *args: Any) -> "Tuple[RunResult, List[Dict[str, Any]]]":
+def runandparse(testdir: Testdir, *args: Any) -> tuple[RunResult, list[dict[str, Any]]]:
     """Run tests in testdir and parse json output."""
     resultpath = testdir.tmpdir.join("cucumber.json")
     result = testdir.runpytest(f"--cucumberjson={resultpath}", "-s", *args)
