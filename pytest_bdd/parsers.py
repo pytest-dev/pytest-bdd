@@ -16,7 +16,7 @@ class StepParser(abc.ABC):
         self.name = name
 
     @abc.abstractmethod
-    def parse_arguments(self, name: str) -> dict[str, Any]:
+    def parse_arguments(self, name: str) -> dict[str, Any] | None:
         """Get step arguments from the given step name.
 
         :return: `dict` of step arguments
@@ -37,13 +37,15 @@ class re(StepParser):
         super().__init__(name)
         self.regex = base_re.compile(self.name, *args, **kwargs)
 
-    def parse_arguments(self, name: str) -> dict[str, str]:
+    def parse_arguments(self, name: str) -> dict[str, str] | None:
         """Get step arguments.
 
         :return: `dict` of step arguments
         """
-        # TODO: This is a potential bug, as groupdict can return None (found with typing)
-        return self.regex.match(name).groupdict()
+        match = self.regex.match(name)
+        if match is None:
+            return None
+        return match.groupdict()
 
     def is_matching(self, name: str) -> bool:
         """Match given name with the step name."""

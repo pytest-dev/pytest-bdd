@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import itertools
 import os.path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import py
 from mako.lookup import TemplateLookup
@@ -14,7 +14,7 @@ from .steps import get_step_fixture_name
 from .types import STEP_TYPES
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Sequence
 
     from _pytest.config import Config
     from _pytest.config.argparsing import Parser
@@ -52,13 +52,14 @@ def cmdline_main(config: Config) -> int | None:
     """Check config option to show missing code."""
     if config.option.generate_missing:
         return show_missing_code(config)
+    return None  # Make mypy happy
 
 
 def generate_code(features: list[Feature], scenarios: list[ScenarioTemplate], steps: list[Step]) -> str:
     """Generate test code for the given filenames."""
     grouped_steps = group_steps(steps)
     template = template_lookup.get_template("test.py.mak")
-    return template.render(
+    code = template.render(
         features=features,
         scenarios=scenarios,
         steps=grouped_steps,
@@ -66,6 +67,7 @@ def generate_code(features: list[Feature], scenarios: list[ScenarioTemplate], st
         make_python_docstring=make_python_docstring,
         make_string_literal=make_string_literal,
     )
+    return cast(str, code)
 
 
 def show_missing_code(config: Config) -> int:
@@ -123,14 +125,8 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
 
 def _find_step_fixturedef(
     fixturemanager: FixtureManager, item: Function, name: str, type_: str
-) -> tuple[FixtureDef] | None:
-    """Find step fixturedef.
-
-    :param request: PyTest Item object.
-    :param step: `Step`.
-
-    :return: Step function.
-    """
+) -> Sequence[FixtureDef[Any]] | None:
+    """Find step fixturedef."""
     step_fixture_name = get_step_fixture_name(name, type_)
     fixturedefs = fixturemanager.getfixturedefs(step_fixture_name, item.nodeid)
     if fixturedefs is not None:

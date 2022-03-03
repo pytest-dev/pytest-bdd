@@ -1,7 +1,7 @@
 """Pytest plugin entry point. Used for any fixtures needed."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
@@ -9,13 +9,15 @@ from . import cucumber_json, generation, gherkin_terminal_reporter, given, repor
 from .utils import CONFIG_STACK
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Iterator
+    from typing import Any, Callable, Generator
 
     from _pytest.config import Config, PytestPluginManager
     from _pytest.config.argparsing import Parser
     from _pytest.fixtures import FixtureRequest
+    from _pytest.mark.structures import _ParametrizeMarkDecorator
     from _pytest.nodes import Item
     from _pytest.runner import CallInfo
+    from pluggy._result import _Result
 
     from .parser import Feature, Scenario, Step
 
@@ -76,7 +78,7 @@ def pytest_unconfigure(config: Config) -> None:
 
 
 @pytest.mark.hookwrapper
-def pytest_runtest_makereport(item: Item, call: CallInfo) -> Iterator:
+def pytest_runtest_makereport(item: Item, call: CallInfo) -> Generator[None, _Result, None]:
     outcome = yield
     reporting.runtest_makereport(item, call, outcome.get_result())
 
@@ -124,4 +126,5 @@ def pytest_cmdline_main(config: Config) -> int | None:
 
 def pytest_bdd_apply_tag(tag: str, function: Callable) -> Callable:
     mark = getattr(pytest.mark, tag)
-    return mark(function)
+    marked = mark(function)
+    return cast(_ParametrizeMarkDecorator, marked)

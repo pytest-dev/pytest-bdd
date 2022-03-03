@@ -79,8 +79,8 @@ class ScenarioReport:
         :param pytest_bdd.parser.Scenario scenario: Scenario.
         :param node: pytest test node object
         """
-        self.scenario = scenario
-        self.step_reports = []
+        self.scenario: Scenario = scenario
+        self.step_reports: list[StepReport] = []
 
     @property
     def current_step_report(self) -> StepReport:
@@ -138,7 +138,7 @@ class ScenarioReport:
 def runtest_makereport(item: Item, call: CallInfo, rep: TestReport) -> None:
     """Store item in the report object."""
     try:
-        scenario_report = item.__scenario_report__
+        scenario_report: ScenarioReport = item.__scenario_report__
     except AttributeError:
         pass
     else:
