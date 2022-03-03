@@ -26,7 +26,7 @@ from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Callable, Iterable
+    from typing import Any, Callable, Iterable, cast
 
     from _pytest.mark.structures import ParameterSet
 
@@ -131,7 +131,7 @@ def _execute_step_function(request: FixtureRequest, scenario: Scenario, step: St
         raise
 
 
-def _execute_scenario(feature: Feature, scenario: Scenario, request):
+def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequest) -> None:
     """Execute the scenario.
 
     :param feature: Feature.
@@ -161,7 +161,7 @@ FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 def _get_scenario_decorator(
     feature: Feature, feature_name: str, templated_scenario: ScenarioTemplate, scenario_name: str
-):
+) -> Callable[[Callable], Callable]:
     # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
     # when the decorator is misused.
     # Pytest inspect the signature to determine the required fixtures, and in that case it would look
@@ -199,7 +199,7 @@ def _get_scenario_decorator(
 
         scenario_wrapper.__doc__ = f"{feature_name}: {scenario_name}"
         scenario_wrapper.__scenario__ = templated_scenario
-        return scenario_wrapper
+        return cast(Callable, scenario_wrapper)
 
     return decorator
 
@@ -216,7 +216,9 @@ def collect_example_parametrizations(
     return [pytest.param(context, id="-".join(context.values())) for context in contexts]
 
 
-def scenario(feature_name: str, scenario_name: str, encoding: str = "utf-8", features_base_dir=None):
+def scenario(
+    feature_name: str, scenario_name: str, encoding: str = "utf-8", features_base_dir=None
+) -> Callable[[Callable], Callable]:
     """Scenario decorator.
 
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
