@@ -71,10 +71,6 @@ class LogBDDCucumberJSON:
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.features: dict[str, dict] = {}
 
-    # TODO: Unused method?
-    def append(self, obj):
-        self.features[-1].append(obj)
-
     def _get_result(self, step: dict[str, Any], report: TestReport, error_message: bool = False) -> dict[str, Any]:
         """Get scenario test run result.
 
