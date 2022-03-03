@@ -87,11 +87,6 @@ class cfparse(parse):
 class string(StepParser):
     """Exact string step parser."""
 
-    def __init__(self, name: str) -> None:
-        """Stringify"""
-        name = str(name)
-        super().__init__(name)
-
     def parse_arguments(self, name: str) -> dict:
         """No parameters are available for simple string step.
 
