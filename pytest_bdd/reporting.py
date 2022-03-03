@@ -72,8 +72,7 @@ class StepReport:
 class ScenarioReport:
     """Scenario execution report."""
 
-    # TODO: Remove unused argument "node"
-    def __init__(self, scenario: Scenario, node: Any) -> None:
+    def __init__(self, scenario: Scenario) -> None:
         """Scenario report constructor.
 
         :param pytest_bdd.parser.Scenario scenario: Scenario.
@@ -148,7 +147,7 @@ def runtest_makereport(item: Item, call: CallInfo, rep: TestReport) -> None:
 
 def before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
     """Create scenario report for the item."""
-    request.node.__scenario_report__ = ScenarioReport(scenario=scenario, node=request.node)
+    request.node.__scenario_report__ = ScenarioReport(scenario=scenario)
 
 
 def step_error(

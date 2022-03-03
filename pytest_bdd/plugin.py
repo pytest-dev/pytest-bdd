@@ -31,7 +31,7 @@ def pytest_addhooks(pluginmanager: PytestPluginManager) -> None:
 @given("trace")
 @when("trace")
 @then("trace")
-def trace():
+def trace() -> None:
     """Enter pytest's pdb trace."""
     pytest.set_trace()
 
