@@ -47,7 +47,7 @@ class GherkinTerminalReporter(TerminalReporter):
     def __init__(self, config: Config) -> None:
         super().__init__(config)
 
-    def pytest_runtest_logreport(self, report: TestReport) -> Any | None:
+    def pytest_runtest_logreport(self, report: TestReport) -> Any:
         rep = report
         res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
         cat, letter, word = res
