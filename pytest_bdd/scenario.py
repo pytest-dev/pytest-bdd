@@ -15,7 +15,7 @@ from __future__ import annotations
 import collections
 import os
 import re
-import typing
+from typing import TYPE_CHECKING, Callable, cast
 
 import pytest
 from _pytest.fixtures import FixtureLookupError, FixtureManager, FixtureRequest, call_fixture_func
@@ -25,8 +25,8 @@ from .feature import get_feature, get_features
 from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
-if typing.TYPE_CHECKING:
-    from typing import Any, Callable, Iterable, cast
+if TYPE_CHECKING:
+    from typing import Any, Iterable
 
     from _pytest.mark.structures import ParameterSet
 
