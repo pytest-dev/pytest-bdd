@@ -14,6 +14,7 @@ Unreleased
 - Step could override multiple fixtures using ``target_fixtures`` parameter
 - Default step parameters injection as fixtures behavior could be changed by ``params_fixtures_mapping`` step parameter
 - Step definitions can have "yield" statements again (4.0 release broke it). They will be executed as normal fixtures: code after the yield is executed during teardown of the test. (youtux)
+- Show pass/fail status per step in Gherkin terminal reporter
 
 
 5.0.0

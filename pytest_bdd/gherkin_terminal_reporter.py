@@ -54,37 +54,25 @@ class GherkinTerminalReporter(TerminalReporter):
                 word_markup = {"red": True}
             elif rep.skipped:
                 word_markup = {"yellow": True}
-        feature_markup = {"blue": True}
         scenario_markup = word_markup
 
-        if self.verbosity <= 0:
-            return super().pytest_runtest_logreport(rep)
-        elif self.verbosity == 1:
-            if hasattr(report, "scenario"):
-                self.ensure_newline()
-                self._tw.write("Feature: ", **feature_markup)
-                self._tw.write(report.scenario["feature"]["name"], **feature_markup)
-                self._tw.write("\n")
-                self._tw.write("    Scenario: ", **scenario_markup)
-                self._tw.write(report.scenario["name"], **scenario_markup)
-                self._tw.write(" ")
-                self._tw.write(word, **word_markup)
-                self._tw.write("\n")
-            else:
-                return super().pytest_runtest_logreport(rep)
-        elif self.verbosity > 1:
-            if hasattr(report, "scenario"):
-                self.ensure_newline()
-                self._tw.write("Feature: ", **feature_markup)
-                self._tw.write(report.scenario["feature"]["name"], **feature_markup)
-                self._tw.write("\n")
-                self._tw.write("    Scenario: ", **scenario_markup)
-                self._tw.write(report.scenario["name"], **scenario_markup)
-                self._tw.write("\n")
-                for step in report.scenario["steps"]:
-                    self._tw.write(f"        {step['keyword']} {step['name']}\n", **scenario_markup)
-                self._tw.write("    " + word, **word_markup)
-                self._tw.write("\n\n")
-            else:
-                return super().pytest_runtest_logreport(rep)
+        if self.verbosity <= 0 or not hasattr(report, "scenario"):
+            return super().pytest_runtest_logreport(report)
+
+        scenario = report.scenario
+        self.ensure_newline()
+        self._tw.write(f"Feature: {scenario['feature']['name']}\n", blue=True)
+        self._tw.write(f"    Scenario: {scenario['name']}", **scenario_markup)
+        if self.verbosity > 1:
+            self._tw.write("\n")
+            has_already_failed = False
+            for step in scenario["steps"]:
+                step_markup = {"red" if step["failed"] else "green": True}
+                # Highlight first failed step
+                if step["failed"] and not has_already_failed:
+                    step_markup["bold"] = True
+                    has_already_failed = True
+                step_status_text = "(FAILED)" if step["failed"] else "(PASSED)"
+                self._tw.write(f"        {step['keyword']} {step['name']} {step_status_text}\n", **step_markup)
+        self._tw.write(f"    {word}\n", **word_markup)
         self.stats.setdefault(cat, []).append(rep)

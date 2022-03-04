@@ -55,7 +55,7 @@ def test_verbose_mode_should_display_feature_and_scenario_names_instead_of_test_
     result = testdir.runpytest("--gherkin-terminal-reporter", "-v")
     result.assert_outcomes(passed=1, failed=0)
     result.stdout.fnmatch_lines("Feature: Gherkin terminal output feature")
-    result.stdout.fnmatch_lines("*Scenario: Scenario example 1 PASSED")
+    result.stdout.fnmatch_lines("*Scenario: Scenario example 1    PASSED")
 
 
 def test_verbose_mode_should_preserve_displaying_regular_tests_as_usual(testdir):
@@ -85,9 +85,9 @@ def test_double_verbose_mode_should_display_full_scenario_description(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
     result.stdout.fnmatch_lines("*Scenario: Scenario example 1")
-    result.stdout.fnmatch_lines("*Given there is a bar")
-    result.stdout.fnmatch_lines("*When the bar is accessed")
-    result.stdout.fnmatch_lines("*Then world explodes")
+    result.stdout.fnmatch_lines("*Given there is a bar (PASSED)")
+    result.stdout.fnmatch_lines("*When the bar is accessed (PASSED)")
+    result.stdout.fnmatch_lines("*Then world explodes (PASSED)")
     result.stdout.fnmatch_lines("*PASSED")
 
 
@@ -228,7 +228,7 @@ def test_step_parameters_should_be_replaced_by_their_values(testdir):
     result = testdir.runpytest("--gherkin-terminal-reporter", "-vv")
     result.assert_outcomes(passed=1, failed=0)
     result.stdout.fnmatch_lines("*Scenario: Scenario example 2")
-    result.stdout.fnmatch_lines("*Given there are {start} cucumbers".format(**example))
-    result.stdout.fnmatch_lines("*When I eat {eat} cucumbers".format(**example))
-    result.stdout.fnmatch_lines("*Then I should have {left} cucumbers".format(**example))
+    result.stdout.fnmatch_lines("*Given there are {start} cucumbers (PASSED)".format(**example))
+    result.stdout.fnmatch_lines("*When I eat {eat} cucumbers (PASSED)".format(**example))
+    result.stdout.fnmatch_lines("*Then I should have {left} cucumbers (PASSED)".format(**example))
     result.stdout.fnmatch_lines("*PASSED")
