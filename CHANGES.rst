@@ -276,7 +276,7 @@ This release introduces breaking changes, please refer to the :ref:`Migration fr
 2.6.2
 -----
 
-- Parse comments only in the begining of words (santagada)
+- Parse comments only in the beginning of words (santagada)
 
 2.6.1
 -----

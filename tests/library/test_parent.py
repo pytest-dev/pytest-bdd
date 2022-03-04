@@ -1,6 +1,6 @@
 """Test givens declared in the parent conftest and plugin files.
 
-Check the parent givens are collected and overriden in the local conftest.
+Check the parent givens are collected and overridden in the local conftest.
 """
 import textwrap
 
