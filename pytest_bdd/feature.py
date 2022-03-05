@@ -23,15 +23,16 @@ Syntax example:
 :note: There are no multiline steps, the description of the step must fit in
 one line.
 """
+from __future__ import annotations
+
 import os.path
-import typing
 
 import glob2
 
 from .parser import Feature, parse_feature
 
 # Global features dictionary
-features: typing.Dict[str, Feature] = {}
+features: dict[str, Feature] = {}
 
 
 def get_feature(base_path: str, filename: str, encoding: str = "utf-8") -> Feature:
@@ -56,7 +57,7 @@ def get_feature(base_path: str, filename: str, encoding: str = "utf-8") -> Featu
     return feature
 
 
-def get_features(paths: typing.List[str], **kwargs) -> typing.List[Feature]:
+def get_features(paths: list[str], **kwargs) -> list[Feature]:
     """Get features for given paths.
 
     :param list paths: `list` of paths (file or dirs)

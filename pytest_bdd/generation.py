@@ -1,7 +1,9 @@
 """pytest-bdd missing test code generation."""
+from __future__ import annotations
 
 import itertools
 import os.path
+from typing import TYPE_CHECKING, cast
 
 import py
 from mako.lookup import TemplateLookup
@@ -11,10 +13,21 @@ from .scenario import find_argumented_step_fixture_name, make_python_docstring, 
 from .steps import get_step_fixture_name
 from .types import STEP_TYPES
 
+if TYPE_CHECKING:
+    from typing import Any, Sequence
+
+    from _pytest.config import Config
+    from _pytest.config.argparsing import Parser
+    from _pytest.fixtures import FixtureDef, FixtureManager
+    from _pytest.main import Session
+    from _pytest.python import Function
+
+    from .parser import Feature, ScenarioTemplate, Step
+
 template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
 
 
-def add_options(parser):
+def add_options(parser: Parser) -> None:
     """Add pytest-bdd options."""
     group = parser.getgroup("bdd", "Generation")
 
@@ -35,17 +48,18 @@ def add_options(parser):
     )
 
 
-def cmdline_main(config):
+def cmdline_main(config: Config) -> int | None:
     """Check config option to show missing code."""
     if config.option.generate_missing:
         return show_missing_code(config)
+    return None  # Make mypy happy
 
 
-def generate_code(features, scenarios, steps):
+def generate_code(features: list[Feature], scenarios: list[ScenarioTemplate], steps: list[Step]) -> str:
     """Generate test code for the given filenames."""
     grouped_steps = group_steps(steps)
     template = template_lookup.get_template("test.py.mak")
-    return template.render(
+    code = template.render(
         features=features,
         scenarios=scenarios,
         steps=grouped_steps,
@@ -53,16 +67,17 @@ def generate_code(features, scenarios, steps):
         make_python_docstring=make_python_docstring,
         make_string_literal=make_string_literal,
     )
+    return cast(str, code)
 
 
-def show_missing_code(config):
+def show_missing_code(config: Config) -> int:
     """Wrap pytest session to show missing code."""
     from _pytest.main import wrap_session
 
     return wrap_session(config, _show_missing_code_main)
 
 
-def print_missing_code(scenarios, steps):
+def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> None:
     """Print missing code with TerminalWriter."""
     tw = py.io.TerminalWriter()
     scenario = step = None
@@ -108,14 +123,10 @@ def print_missing_code(scenarios, steps):
     tw.write(code)
 
 
-def _find_step_fixturedef(fixturemanager, item, name, type_):
-    """Find step fixturedef.
-
-    :param request: PyTest Item object.
-    :param step: `Step`.
-
-    :return: Step function.
-    """
+def _find_step_fixturedef(
+    fixturemanager: FixtureManager, item: Function, name: str, type_: str
+) -> Sequence[FixtureDef[Any]] | None:
+    """Find step fixturedef."""
     step_fixture_name = get_step_fixture_name(name, type_)
     fixturedefs = fixturemanager.getfixturedefs(step_fixture_name, item.nodeid)
     if fixturedefs is not None:
@@ -127,7 +138,7 @@ def _find_step_fixturedef(fixturemanager, item, name, type_):
     return None
 
 
-def parse_feature_files(paths, **kwargs):
+def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature], list[ScenarioTemplate], list[Step]]:
     """Parse feature files of given paths.
 
     :param paths: `list` of paths (file or dirs)
@@ -146,7 +157,7 @@ def parse_feature_files(paths, **kwargs):
     return features, scenarios, steps
 
 
-def group_steps(steps):
+def group_steps(steps: list[Step]) -> list[Step]:
     """Group steps by type."""
     steps = sorted(steps, key=lambda step: step.type)
     seen_steps = set()
@@ -161,7 +172,7 @@ def group_steps(steps):
     return grouped_steps
 
 
-def _show_missing_code_main(config, session):
+def _show_missing_code_main(config: Config, session: Session) -> None:
     """Preparing fixture duplicates for output."""
     tw = py.io.TerminalWriter()
     session.perform_collect()
