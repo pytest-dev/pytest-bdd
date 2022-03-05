@@ -1,17 +1,26 @@
-import io
+from __future__ import annotations
+
 import os.path
+import pkgutil
 import textwrap
 from collections import OrderedDict
+from typing import TYPE_CHECKING
 
 import lark
-import lark.indenter
-import six
+from lark import Lark, Token, Tree, v_args
+from lark.indenter import Indenter
 
 from pytest_bdd import types as pytest_bdd_types
-from pytest_bdd.parser import Examples, Feature, Scenario, Step
+from pytest_bdd.parser import Examples, Feature, Scenario, ScenarioTemplate, Step
+
+if TYPE_CHECKING:
+    from typing import Tuple
+
+# TODOs:
+#  - line numbers don't seem to work correctly.
 
 
-class TreeIndenter(lark.indenter.Indenter):
+class TreeIndenter(Indenter):
     NL_type = "_NL"
     OPEN_PAREN_types = []
     CLOSE_PAREN_types = []
@@ -20,9 +29,8 @@ class TreeIndenter(lark.indenter.Indenter):
     tab_len = 8
 
 
-with open(os.path.join(os.path.dirname(__file__), "parser_data/gherkin.grammar.lark")) as f:
-    grammar = f.read()
-parser = lark.Lark(grammar, start="start", parser="lalr", postlex=TreeIndenter(), maybe_placeholders=True, debug=True)
+grammar = pkgutil.get_data("pytest_bdd", "parser_data/gherkin.grammar.lark").decode("utf-8")
+parser = Lark(grammar, start="start", parser="lalr", postlex=TreeIndenter(), maybe_placeholders=True, debug=True)
 
 
 def extract_text_from_step_docstring(docstring):
@@ -34,25 +42,25 @@ def extract_text_from_step_docstring(docstring):
 
 
 class TreeToGherkin(lark.Transformer):
-    def gherkin_document(self, value):
-        [feature] = value
-        return feature
+    @v_args(inline=True)
+    def gherkin_document(self, value: Feature) -> Feature:
+        return value
 
-    def string(self, value):
+    @v_args(inline=True)
+    def string(self, value: Token) -> Token:
         # TODO: Unescape characters?
-        [s] = value
-        return s
+        return value
 
-    def given(self, _):
+    def given(self, _: Token) -> str:
         return pytest_bdd_types.GIVEN
 
-    def when(self, _):
+    def when(self, _: Token) -> str:
         return pytest_bdd_types.WHEN
 
-    def then(self, _):
+    def then(self, _: Token) -> str:
         return pytest_bdd_types.THEN
 
-    def step_docstring(self, value):
+    def step_docstring(self, value: Token) -> str:
         # TODO: Unescape escaped characters?
         [text] = value
         content = text[4:-3]
@@ -61,24 +69,13 @@ class TreeToGherkin(lark.Transformer):
         dedented_without_newline = dedented[:-1]
         return dedented_without_newline
 
-    def step_arg(self, value):
-        docstring, step_datatable = value
+    @v_args(inline=True)
+    def step_arg(self, docstring, step_datatable) -> tuple:
         return docstring, step_datatable
 
-    def data_table_row(self, cols):
-        # TODO: Unescape escaped PIPE char (|)
-        return [col[:-1] for col in cols]
-
-    def data_table(self, value):
-        return value
-
-    def step(self, value):
-        step_line, step_arg = value
-        if step_arg is not None:
-            docstring, datatable = step_arg
-        else:
-            docstring = datatable = None
-
+    @v_args(inline=True)
+    def step(self, step_line: Token, step_arg: tuple):
+        # TODO: step_arg not implemented yet
         step_type, step_name = step_line.children
 
         line = step_name.line
@@ -88,27 +85,30 @@ class TreeToGherkin(lark.Transformer):
             indent=0,
             keyword=step_name + " ",
             line_number=line,
-            docstring=docstring,
-            datatable=datatable,
         )
 
-    def scenario(self, value):
-        scenario_line, *steps = value
-        [scenario_name] = scenario_line.children
+    @v_args(inline=True)
+    def scenario_line(self, value: Token) -> Token:
+        return value
 
-        return {
-            "name": str(scenario_name),
-            "line_number": scenario_name.line,
-            "example_converters": None,
-            "tags": None,
-            "steps": steps,
-        }
+    @v_args(inline=True)
+    def scenario(self, scenario_line: Token, *steps: list[Step]):
+        scenario = ScenarioTemplate(
+            name=str(scenario_line),
+            line_number=scenario_line.line,
+            # example_converters=None,
+            tags=None,
+            feature=None,  # added later
+        )
+        for step in steps:
+            scenario.add_step(step)
+        return scenario
 
+    @v_args(inline=True)
     def tag(self, value):
-        [tag] = value
-        return tag
+        return value
 
-    def feature(self, value):
+    def feature(self, value: list[Tree]):
         try:
             feature_header = next(el for el in value if el.data == "feature_header")
             tag_lines = [el for el in feature_header.children if el.data == "tag_line"]
@@ -117,7 +117,7 @@ class TreeToGherkin(lark.Transformer):
             tags = []
 
         feature_line = next(el for el in value if el.data == "feature_line")
-        raw_scenarios = next(el for el in value if el.data == "scenarios")
+        scenarios = next(el for el in value if el.data == "scenarios")
 
         [feature_name] = feature_line.children
 
@@ -127,21 +127,17 @@ class TreeToGherkin(lark.Transformer):
             rel_filename=None,
             name=str(feature_name),
             tags=tags,
-            examples=Examples(),
             background=None,
             line_number=feature_name.line,
             description=None,
         )
-        for raw_scenario in raw_scenarios.children:
-            scenario = Scenario(feature, name=raw_scenario["name"], line_number=raw_scenario["line_number"])
+        for scenario in scenarios.children:
+            scenario.feature = feature
             feature.scenarios[scenario.name] = scenario
-            for step in raw_scenario["steps"]:
-                scenario.add_step(step)
         return feature
 
 
-def parse(content):
-    # type: (six.text_type) -> Feature
+def parse(content: str) -> Feature:
     tree = parser.parse(content)
     # print(tree.pretty())
     gherkin = TreeToGherkin().transform(tree)
@@ -158,7 +154,7 @@ def parse_feature(basedir, filename, encoding="utf-8"):
     abs_filename = os.path.abspath(os.path.join(basedir, filename))
     rel_filename = os.path.join(os.path.basename(basedir), filename)
 
-    with open(abs_filename, "rt", encoding=encoding) as f:
+    with open(abs_filename, encoding=encoding) as f:
         content = f.read()
 
     parsed = parse(content)

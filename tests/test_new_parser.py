@@ -47,6 +47,13 @@ Feature: a feature
 """,
             2,
         ),
+        #         (
+        #             """\
+        # Scenario: scenario 1
+        # Scenario: scenario 2
+        # """,
+        #             2,
+        #         ),  # 2 scenario, no Feature header. Not sure we want to support this, or if it's still possible
     ],
 )
 def test_scenario(src, expected_scenarios):
@@ -129,6 +136,7 @@ def test_step(src, expected_steps):
         # TODO: assert step.background
 
 
+@pytest.mark.xfail(reason="Not implemented yet")
 def test_step_docstring_and_datatable():
     feature = parse(
         '''\
