@@ -1,4 +1,5 @@
 """pytest-bdd Exceptions."""
+from __future__ import annotations
 
 
 class ScenarioIsDecoratorOnly(Exception):
@@ -30,6 +31,6 @@ class FeatureError(Exception):
 
     message = "{0}.\nLine number: {1}.\nLine: {2}.\nFile: {3}"
 
-    def __str__(self):
+    def __str__(self) -> str:
         """String representation."""
         return self.message.format(*self.args)

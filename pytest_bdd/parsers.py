@@ -1,47 +1,53 @@
 """Step parsers."""
+from __future__ import annotations
 
-
+import abc
 import re as base_re
-from functools import partial
+from typing import Any, Dict, cast
 
 import parse as base_parse
 from parse_type import cfparse as base_cfparse
 
 
-class StepParser:
+class StepParser(abc.ABC):
     """Parser of the individual step."""
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         self.name = name
 
-    def parse_arguments(self, name):
+    @abc.abstractmethod
+    def parse_arguments(self, name: str) -> dict[str, Any] | None:
         """Get step arguments from the given step name.
 
         :return: `dict` of step arguments
         """
-        raise NotImplementedError()  # pragma: no cover
+        ...
 
-    def is_matching(self, name):
+    @abc.abstractmethod
+    def is_matching(self, name: str) -> bool:
         """Match given name with the step name."""
-        raise NotImplementedError()  # pragma: no cover
+        ...
 
 
 class re(StepParser):
     """Regex step parser."""
 
-    def __init__(self, name, *args, **kwargs):
+    def __init__(self, name: str, *args: Any, **kwargs: Any) -> None:
         """Compile regex."""
         super().__init__(name)
         self.regex = base_re.compile(self.name, *args, **kwargs)
 
-    def parse_arguments(self, name):
+    def parse_arguments(self, name: str) -> dict[str, str] | None:
         """Get step arguments.
 
         :return: `dict` of step arguments
         """
-        return self.regex.match(name).groupdict()
+        match = self.regex.match(name)
+        if match is None:
+            return None
+        return match.groupdict()
 
-    def is_matching(self, name):
+    def is_matching(self, name: str) -> bool:
         """Match given name with the step name."""
         return bool(self.regex.match(name))
 
@@ -49,19 +55,19 @@ class re(StepParser):
 class parse(StepParser):
     """parse step parser."""
 
-    def __init__(self, name, *args, **kwargs):
+    def __init__(self, name: str, *args: Any, **kwargs: Any) -> None:
         """Compile parse expression."""
         super().__init__(name)
         self.parser = base_parse.compile(self.name, *args, **kwargs)
 
-    def parse_arguments(self, name):
+    def parse_arguments(self, name: str) -> dict[str, Any]:
         """Get step arguments.
 
         :return: `dict` of step arguments
         """
-        return self.parser.parse(name).named
+        return cast(Dict[str, Any], self.parser.parse(name).named)
 
-    def is_matching(self, name):
+    def is_matching(self, name: str) -> bool:
         """Match given name with the step name."""
         try:
             return bool(self.parser.parse(name))
@@ -72,7 +78,7 @@ class parse(StepParser):
 class cfparse(parse):
     """cfparse step parser."""
 
-    def __init__(self, name, *args, **kwargs):
+    def __init__(self, name: str, *args: Any, **kwargs: Any) -> None:
         """Compile parse expression."""
         super(parse, self).__init__(name)
         self.parser = base_cfparse.Parser(self.name, *args, **kwargs)
@@ -81,36 +87,22 @@ class cfparse(parse):
 class string(StepParser):
     """Exact string step parser."""
 
-    def __init__(self, name):
-        """Stringify"""
-        name = str(name, **({"encoding": "utf-8"} if isinstance(name, bytes) else {}))
-        super().__init__(name)
-
-    def parse_arguments(self, name):
+    def parse_arguments(self, name: str) -> dict:
         """No parameters are available for simple string step.
 
         :return: `dict` of step arguments
         """
         return {}
 
-    def is_matching(self, name):
+    def is_matching(self, name: str) -> bool:
         """Match given name with the step name."""
         return self.name == name
 
 
-def get_parser(step_name):
-    """Get parser by given name.
+def get_parser(step_name: Any) -> StepParser:
+    """Get parser by given name."""
 
-    :param step_name: name of the step to parse
-
-    :return: step parser object
-    :rtype: StepArgumentParser
-    """
-
-    def does_support_parser_interface(obj):
-        return all(map(partial(hasattr, obj), ["is_matching", "parse_arguments"]))
-
-    if does_support_parser_interface(step_name):
+    if isinstance(step_name, StepParser):
         return step_name
-    else:
-        return string(step_name)
+
+    return string(step_name)
