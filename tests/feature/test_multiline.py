@@ -87,14 +87,14 @@ def test_multiline(testdir, feature_text, expected_text):
                 assert request.getfixturevalue("text") == expected_text
 
 
-            @given(parsers.parse("I have a step with:\\n{{text}}"), target_fixture="i_have_text")
+            @given(parsers.parse("I have a step with:\\n{{text}}"), target_fixture="text")
             def i_have_text(text):
                 return text
 
 
             @then("the text should be parsed with correct indentation")
-            def text_should_be_correct(i_have_text, text):
-                assert i_have_text == text == expected_text
+            def text_should_be_correct(text):
+                assert text == expected_text
 
             """.format(
                 expected_text=expected_text.encode("unicode_escape").decode("utf-8"),
@@ -137,14 +137,14 @@ def test_multiline_wrong_indent(testdir):
                 pass
 
 
-            @given(parsers.parse("I have a step with:\\n{{text}}"))
+            @given(parsers.parse("I have a step with:\\n{{text}}"), target_fixture="text")
             def i_have_text(text):
                 return text
 
 
             @then("the text should be parsed with correct indentation")
-            def text_should_be_correct(i_have_text, text):
-                assert i_have_text == text == expected_text
+            def text_should_be_correct(text):
+                assert text == expected_text
 
             """
         )

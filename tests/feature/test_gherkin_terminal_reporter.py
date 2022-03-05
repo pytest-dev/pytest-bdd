@@ -1,6 +1,8 @@
-import textwrap
-import pytest
+from __future__ import annotations
 
+import textwrap
+
+import pytest
 
 FEATURE = """\
 Feature: Gherkin terminal output feature
@@ -43,7 +45,7 @@ def test_default_output_should_be_the_same_as_regular_terminal_reporter(testdir)
     regular.assert_outcomes(passed=1, failed=0)
     gherkin.assert_outcomes(passed=1, failed=0)
 
-    def parse_lines(lines):
+    def parse_lines(lines: list[str]) -> list[str]:
         return [line for line in lines if not line.startswith("===")]
 
     assert all(l1 == l2 for l1, l2 in zip(parse_lines(regular.stdout.lines), parse_lines(gherkin.stdout.lines)))
@@ -204,18 +206,18 @@ def test_step_parameters_should_be_replaced_by_their_values(testdir):
     testdir.makepyfile(
         test_gherkin=textwrap.dedent(
             """\
-            from pytest_bdd import given, when, scenario, then
+            from pytest_bdd import given, when, scenario, then, parsers
 
-            @given('there are <start> cucumbers', target_fixture="start_cucumbers")
+            @given(parsers.parse('there are {start} cucumbers'), target_fixture="start_cucumbers")
             def start_cucumbers(start):
                 return start
 
-            @when('I eat <eat> cucumbers')
+            @when(parsers.parse('I eat {eat} cucumbers'))
             def eat_cucumbers(start_cucumbers, eat):
                 pass
 
-            @then('I should have <left> cucumbers')
-            def should_have_left_cucumbers(start_cucumbers, start, eat, left):
+            @then(parsers.parse('I should have {left} cucumbers'))
+            def should_have_left_cucumbers(start_cucumbers, left):
                 pass
 
             @scenario('test.feature', 'Scenario example 2')
@@ -225,7 +227,7 @@ def test_step_parameters_should_be_replaced_by_their_values(testdir):
         )
     )
 
-    result = testdir.runpytest("--gherkin-terminal-reporter", "--gherkin-terminal-reporter-expanded", "-vv")
+    result = testdir.runpytest("--gherkin-terminal-reporter", "-vv")
     result.assert_outcomes(passed=1, failed=0)
     result.stdout.fnmatch_lines("*Scenario: Scenario example 2")
     result.stdout.fnmatch_lines("*Given there are {start} cucumbers".format(**example))

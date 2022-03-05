@@ -34,75 +34,81 @@ def given_beautiful_article(article):
     pass
 
 """
+from __future__ import annotations
 
-from __future__ import absolute_import
-import inspect
+import typing
 
 import pytest
+from _pytest.fixtures import FixtureDef, FixtureRequest
 
-try:
-    from _pytest import fixtures as pytest_fixtures
-except ImportError:
-    from _pytest import python as pytest_fixtures
-
-from .feature import force_encode
-from .types import GIVEN, WHEN, THEN
 from .parsers import get_parser
-from .utils import get_args, get_caller_module_locals
+from .types import GIVEN, THEN, WHEN
+from .utils import get_caller_module_locals
+
+if typing.TYPE_CHECKING:
+    from typing import Any, Callable
 
 
-def get_step_fixture_name(name, type_, encoding=None):
+def get_step_fixture_name(name: str, type_: str) -> str:
     """Get step fixture name.
 
-    :param name: unicode string
+    :param name: string
     :param type: step type
-    :param encoding: encoding
     :return: step fixture name
     :rtype: string
     """
-    return "pytestbdd_{type}_{name}".format(
-        type=type_, name=force_encode(name, **(dict(encoding=encoding) if encoding else {}))
-    )
+    return f"pytestbdd_{type_}_{name}"
 
 
-def given(name, converters=None, target_fixture=None):
+def given(
+    name: Any,
+    converters: dict[str, Callable] | None = None,
+    target_fixture: str | None = None,
+) -> Callable:
     """Given step decorator.
 
     :param name: Step name or a parser object.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
-    :param target_fixture: Target fixture name to replace by steps definition function
+    :param target_fixture: Target fixture name to replace by steps definition function.
 
     :return: Decorator function for the step.
     """
     return _step_decorator(GIVEN, name, converters=converters, target_fixture=target_fixture)
 
 
-def when(name, converters=None):
+def when(name: Any, converters: dict[str, Callable] | None = None, target_fixture: str | None = None) -> Callable:
     """When step decorator.
 
     :param name: Step name or a parser object.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
+    :param target_fixture: Target fixture name to replace by steps definition function.
 
     :return: Decorator function for the step.
     """
-    return _step_decorator(WHEN, name, converters=converters)
+    return _step_decorator(WHEN, name, converters=converters, target_fixture=target_fixture)
 
 
-def then(name, converters=None):
+def then(name: Any, converters: dict[str, Callable] | None = None, target_fixture: str | None = None) -> Callable:
     """Then step decorator.
 
     :param name: Step name or a parser object.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
+    :param target_fixture: Target fixture name to replace by steps definition function.
 
     :return: Decorator function for the step.
     """
-    return _step_decorator(THEN, name, converters=converters)
+    return _step_decorator(THEN, name, converters=converters, target_fixture=target_fixture)
 
 
-def _step_decorator(step_type, step_name, converters=None, target_fixture=None):
+def _step_decorator(
+    step_type: str,
+    step_name: Any,
+    converters: dict[str, Callable] | None = None,
+    target_fixture: str | None = None,
+) -> Callable:
     """Step decorator for the type and the name.
 
     :param str step_type: Step type (GIVEN, WHEN or THEN).
@@ -113,14 +119,14 @@ def _step_decorator(step_type, step_name, converters=None, target_fixture=None):
     :return: Decorator function for the step.
     """
 
-    def decorator(func):
+    def decorator(func: Callable) -> Callable:
         step_func = func
         parser_instance = get_parser(step_name)
         parsed_step_name = parser_instance.name
 
-        step_func.__name__ = force_encode(parsed_step_name)
+        step_func.__name__ = str(parsed_step_name)
 
-        def lazy_step_func():
+        def lazy_step_func() -> Callable:
             return step_func
 
         step_func.step_type = step_type
@@ -145,32 +151,28 @@ def _step_decorator(step_type, step_name, converters=None, target_fixture=None):
     return decorator
 
 
-def inject_fixture(request, arg, value):
+def inject_fixture(request: FixtureRequest, arg: str, value: Any) -> None:
     """Inject fixture into pytest fixture request.
 
     :param request: pytest fixture request
     :param arg: argument name
     :param value: argument value
     """
-    fd_kwargs = {
-        "fixturemanager": request._fixturemanager,
-        "baseid": None,
-        "argname": arg,
-        "func": lambda: value,
-        "scope": "function",
-        "params": None,
-    }
 
-    if "yieldctx" in get_args(pytest_fixtures.FixtureDef.__init__):
-        fd_kwargs["yieldctx"] = False
-
-    fd = pytest_fixtures.FixtureDef(**fd_kwargs)
+    fd = FixtureDef(
+        fixturemanager=request._fixturemanager,
+        baseid=None,
+        argname=arg,
+        func=lambda: value,
+        scope="function",
+        params=None,
+    )
     fd.cached_result = (value, 0, None)
 
     old_fd = request._fixture_defs.get(arg)
     add_fixturename = arg not in request.fixturenames
 
-    def fin():
+    def fin() -> None:
         request._fixturemanager._arg2fixturedefs[arg].remove(fd)
         request._fixture_defs[arg] = old_fd
 

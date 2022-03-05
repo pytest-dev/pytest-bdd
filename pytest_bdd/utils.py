@@ -1,51 +1,35 @@
 """Various utility functions."""
+from __future__ import annotations
 
+import base64
+import pickle
+import re
+import typing
+from inspect import getframeinfo, signature
 from sys import _getframe
-from inspect import getframeinfo
 
-import six
+if typing.TYPE_CHECKING:
+    from typing import Any, Callable
 
-CONFIG_STACK = []
+    from _pytest.config import Config
+    from _pytest.pytester import RunResult
 
-if six.PY2:
-    from inspect import getargspec as _getargspec
-
-    def get_args(func):
-        """Get a list of argument names for a function.
-
-        :param func: The function to inspect.
-
-        :return: A list of argument names.
-        :rtype: list
-        """
-        return _getargspec(func).args
+CONFIG_STACK: list[Config] = []
 
 
-else:
-    from inspect import signature as _signature
+def get_args(func: Callable) -> list[str]:
+    """Get a list of argument names for a function.
 
-    def get_args(func):
-        """Get a list of argument names for a function.
+    :param func: The function to inspect.
 
-        :param func: The function to inspect.
-
-        :return: A list of argument names.
-        :rtype: list
-        """
-        params = _signature(func).parameters.values()
-        return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
-
-
-def get_parametrize_markers_args(node):
-    """In pytest 3.6 new API to access markers has been introduced and it deprecated
-    MarkInfo objects.
-
-    This function uses that API if it is available otherwise it uses MarkInfo objects.
+    :return: A list of argument names.
+    :rtype: list
     """
-    return tuple(arg for mark in node.iter_markers("parametrize") for arg in mark.args)
+    params = signature(func).parameters.values()
+    return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
 
 
-def get_caller_module_locals(depth=2):
+def get_caller_module_locals(depth: int = 2) -> dict[str, Any]:
     """Get the caller module locals dictionary.
 
     We use sys._getframe instead of inspect.stack(0) because the latter is way slower, since it iterates over
@@ -54,7 +38,7 @@ def get_caller_module_locals(depth=2):
     return _getframe(depth).f_locals
 
 
-def get_caller_module_path(depth=2):
+def get_caller_module_path(depth: int = 2) -> str:
     """Get the caller module path.
 
     We use sys._getframe instead of inspect.stack(0) because the latter is way slower, since it iterates over
@@ -62,3 +46,26 @@ def get_caller_module_path(depth=2):
     """
     frame = _getframe(depth)
     return getframeinfo(frame, context=0).filename
+
+
+_DUMP_START = "_pytest_bdd_>>>"
+_DUMP_END = "<<<_pytest_bdd_"
+
+
+def dump_obj(*objects: Any) -> None:
+    """Dump objects to stdout so that they can be inspected by the test suite."""
+    for obj in objects:
+        dump = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
+        encoded = base64.b64encode(dump).decode("ascii")
+        print(f"{_DUMP_START}{encoded}{_DUMP_END}")
+
+
+def collect_dumped_objects(result: RunResult) -> list:
+    """Parse all the objects dumped with `dump_object` from the result.
+
+    Note: You must run the result with output to stdout enabled.
+    For example, using ``testdir.runpytest("-s")``.
+    """
+    stdout = result.stdout.str()  # pytest < 6.2, otherwise we could just do str(result.stdout)
+    payloads = re.findall(rf"{_DUMP_START}(.*?){_DUMP_END}", stdout)
+    return [pickle.loads(base64.b64decode(payload)) for payload in payloads]

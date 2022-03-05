@@ -22,7 +22,7 @@ def test_feature_path_ok(testdir):
 
 
 def test_feature_path_by_param_not_found(testdir):
-    """As param takes precendence even if ini config is correct it should fail
+    """As param takes precedence even if ini config is correct it should fail
     if passed param is incorrect"""
     base_dir = "features"
     prepare_testdir(testdir, base_dir)

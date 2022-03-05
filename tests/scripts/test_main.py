@@ -9,7 +9,7 @@ PATH = os.path.dirname(__file__)
 
 
 def test_main(monkeypatch, capsys):
-    """Test if main commmand shows help when called without the subcommand."""
+    """Test if main command shows help when called without the subcommand."""
     monkeypatch.setattr(sys, "argv", ["pytest-bdd"])
     monkeypatch.setattr(sys, "exit", lambda x: x)
     main()

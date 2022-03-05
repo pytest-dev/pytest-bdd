@@ -9,7 +9,7 @@ develop: .env
 	.env/bin/pip install -e . -r requirements-testing.txt tox python-coveralls
 
 coverage: develop
-	coverage run --source=pytest_bdd .env/bin/py.test tests
+	coverage run --source=pytest_bdd .env/bin/pytest tests
 	coverage report -m
 
 test: develop
@@ -18,6 +18,6 @@ test: develop
 coveralls: coverage
 	coveralls
 
-# clean the development envrironment
+# clean the development environment
 clean:
 	-rm -rf .env

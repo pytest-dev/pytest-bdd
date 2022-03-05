@@ -1,5 +1,4 @@
 import textwrap
-import pytest
 
 
 def test_steps(testdir):
@@ -71,6 +70,59 @@ def test_steps(testdir):
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
+
+
+def test_all_steps_can_provide_fixtures(testdir):
+    """Test that given/when/then can all provide fixtures."""
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Step fixture
+                Scenario: Given steps can provide fixture
+                    Given Foo is "bar"
+                    Then foo should be "bar"
+                Scenario: When steps can provide fixture
+                    When Foo is "baz"
+                    Then foo should be "baz"
+                Scenario: Then steps can provide fixture
+                    Then foo is "qux"
+                    And foo should be "qux"
+            """
+        ),
+    )
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, when, then, parsers, scenarios
+
+        scenarios("steps.feature")
+
+        @given(parsers.parse('Foo is "{value}"'), target_fixture="foo")
+        def given_foo_is_value(value):
+            return value
+
+
+        @when(parsers.parse('Foo is "{value}"'), target_fixture="foo")
+        def when_foo_is_value(value):
+            return value
+
+
+        @then(parsers.parse('Foo is "{value}"'), target_fixture="foo")
+        def then_foo_is_value(value):
+            return value
+
+
+        @then(parsers.parse('foo should be "{value}"'))
+        def foo_is_foo(foo, value):
+            assert foo == value
+
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=3, failed=0)
 
 
 def test_when_first(testdir):
@@ -432,3 +484,51 @@ def test_step_trace(testdir):
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["*test_when_step_validation_error*FAILED"])
     assert "INTERNALERROR" not in result.stdout.str()
+
+
+def test_steps_with_yield(testdir):
+    """Test that steps definition containing a yield statement work the same way as
+    pytest fixture do, that is the code after the yield is executed during teardown."""
+
+    testdir.makefile(
+        ".feature",
+        a="""\
+Feature: A feature
+
+    Scenario: A scenario
+        When I setup stuff
+        Then stuff should be 42
+""",
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        import pytest
+        from pytest_bdd import given, when, then, scenarios
+
+        scenarios("a.feature")
+
+        @when("I setup stuff", target_fixture="stuff")
+        def stuff():
+            print("Setting up...")
+            yield 42
+            print("Tearing down...")
+
+
+        @then("stuff should be 42")
+        def check_stuff(stuff):
+            assert stuff == 42
+            print("Asserted stuff is 42")
+
+        """
+        )
+    )
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*Setting up...*",
+            "*Asserted stuff is 42*",
+            "*Tearing down...*",
+        ]
+    )

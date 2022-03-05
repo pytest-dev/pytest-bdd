@@ -1,33 +1,29 @@
-# -*- encoding: utf-8 -*-
+from __future__ import annotations
 
-from __future__ import unicode_literals
-
-import re
+import typing
 
 from _pytest.terminal import TerminalReporter
 
-from .parser import STEP_PARAM_RE
+if typing.TYPE_CHECKING:
+    from typing import Any
+
+    from _pytest.config import Config
+    from _pytest.config.argparsing import Parser
+    from _pytest.reports import TestReport
 
 
-def add_options(parser):
+def add_options(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group._addoption(
         "--gherkin-terminal-reporter",
         action="store_true",
         dest="gherkin_terminal_reporter",
         default=False,
-        help=("enable gherkin output"),
-    )
-    group._addoption(
-        "--gherkin-terminal-reporter-expanded",
-        action="store_true",
-        dest="expand",
-        default=False,
-        help="expand scenario outlines into scenarios and fill in the step names",
+        help="enable gherkin output",
     )
 
 
-def configure(config):
+def configure(config: Config) -> None:
     if config.option.gherkin_terminal_reporter:
         # Get the standard terminal reporter plugin and replace it with our
         current_reporter = config.pluginmanager.getplugin("terminalreporter")
@@ -48,17 +44,17 @@ def configure(config):
 
 
 class GherkinTerminalReporter(TerminalReporter):
-    def __init__(self, config):
-        TerminalReporter.__init__(self, config)
+    def __init__(self, config: Config) -> None:
+        super().__init__(config)
 
-    def pytest_runtest_logreport(self, report):
+    def pytest_runtest_logreport(self, report: TestReport) -> Any:
         rep = report
         res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
         cat, letter, word = res
 
         if not letter and not word:
             # probably passed setup/teardown
-            return
+            return None
 
         if isinstance(word, tuple):
             word, word_markup = word
@@ -73,7 +69,7 @@ class GherkinTerminalReporter(TerminalReporter):
         scenario_markup = word_markup
 
         if self.verbosity <= 0:
-            return TerminalReporter.pytest_runtest_logreport(self, rep)
+            return super().pytest_runtest_logreport(rep)
         elif self.verbosity == 1:
             if hasattr(report, "scenario"):
                 self.ensure_newline()
@@ -86,7 +82,7 @@ class GherkinTerminalReporter(TerminalReporter):
                 self._tw.write(word, **word_markup)
                 self._tw.write("\n")
             else:
-                return TerminalReporter.pytest_runtest_logreport(self, rep)
+                return super().pytest_runtest_logreport(rep)
         elif self.verbosity > 1:
             if hasattr(report, "scenario"):
                 self.ensure_newline()
@@ -97,24 +93,10 @@ class GherkinTerminalReporter(TerminalReporter):
                 self._tw.write(report.scenario["name"], **scenario_markup)
                 self._tw.write("\n")
                 for step in report.scenario["steps"]:
-                    if self.config.option.expand:
-                        step_name = self._format_step_name(step["name"], **report.scenario["example_kwargs"])
-                    else:
-                        step_name = step["name"]
-                    self._tw.write("        {} {}\n".format(step["keyword"], step_name), **scenario_markup)
+                    self._tw.write(f"        {step['keyword']} {step['name']}\n", **scenario_markup)
                 self._tw.write("    " + word, **word_markup)
                 self._tw.write("\n\n")
             else:
-                return TerminalReporter.pytest_runtest_logreport(self, rep)
+                return super().pytest_runtest_logreport(rep)
         self.stats.setdefault(cat, []).append(rep)
-
-    def _format_step_name(self, step_name, **example_kwargs):
-        while True:
-            param_match = re.search(STEP_PARAM_RE, step_name)
-            if not param_match:
-                break
-            param_token = param_match.group(0)
-            param_name = param_match.group(1)
-            param_value = example_kwargs[param_name]
-            step_name = step_name.replace(param_token, param_value)
-        return step_name
+        return None

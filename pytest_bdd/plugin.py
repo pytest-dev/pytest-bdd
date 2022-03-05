@@ -1,16 +1,27 @@
 """Pytest plugin entry point. Used for any fixtures needed."""
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Callable, cast
 
 import pytest
 
-from . import given, when, then
-from . import cucumber_json
-from . import generation
-from . import reporting
-from . import gherkin_terminal_reporter
+from . import cucumber_json, generation, gherkin_terminal_reporter, given, reporting, then, when
 from .utils import CONFIG_STACK
 
+if TYPE_CHECKING:
+    from typing import Any, Generator
 
-def pytest_addhooks(pluginmanager):
+    from _pytest.config import Config, PytestPluginManager
+    from _pytest.config.argparsing import Parser
+    from _pytest.fixtures import FixtureRequest
+    from _pytest.nodes import Item
+    from _pytest.runner import CallInfo
+    from pluggy._result import _Result
+
+    from .parser import Feature, Scenario, Step
+
+
+def pytest_addhooks(pluginmanager: PytestPluginManager) -> None:
     """Register plugin hooks."""
     from pytest_bdd import hooks
 
@@ -20,12 +31,26 @@ def pytest_addhooks(pluginmanager):
 @given("trace")
 @when("trace")
 @then("trace")
-def trace():
+def trace() -> None:
     """Enter pytest's pdb trace."""
     pytest.set_trace()
 
 
-def pytest_addoption(parser):
+@pytest.fixture
+def _pytest_bdd_example() -> dict:
+    """The current scenario outline parametrization.
+
+    This is used internally by pytest_bdd.
+
+    If no outline is used, we just return an empty dict to render
+    the current template without any actual variable.
+    Otherwise pytest_bdd will add all the context variables in this fixture
+    from the example definitions in the feature file.
+    """
+    return {}
+
+
+def pytest_addoption(parser: Parser) -> None:
     """Add pytest-bdd options."""
     add_bdd_ini(parser)
     cucumber_json.add_options(parser)
@@ -33,77 +58,73 @@ def pytest_addoption(parser):
     gherkin_terminal_reporter.add_options(parser)
 
 
-def add_bdd_ini(parser):
+def add_bdd_ini(parser: Parser) -> None:
     parser.addini("bdd_features_base_dir", "Base features directory.")
     parser.addini("bdd_parser", "Parser to use.", default="legacy")
 
 
 @pytest.mark.trylast
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     """Configure all subplugins."""
     CONFIG_STACK.append(config)
     cucumber_json.configure(config)
     gherkin_terminal_reporter.configure(config)
 
 
-def pytest_unconfigure(config):
+def pytest_unconfigure(config: Config) -> None:
     """Unconfigure all subplugins."""
     CONFIG_STACK.pop()
     cucumber_json.unconfigure(config)
 
 
 @pytest.mark.hookwrapper
-def pytest_runtest_makereport(item, call):
+def pytest_runtest_makereport(item: Item, call: CallInfo) -> Generator[None, _Result, None]:
     outcome = yield
     reporting.runtest_makereport(item, call, outcome.get_result())
 
 
 @pytest.mark.tryfirst
-def pytest_bdd_before_scenario(request, feature, scenario):
+def pytest_bdd_before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
     reporting.before_scenario(request, feature, scenario)
 
 
 @pytest.mark.tryfirst
-def pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception):
+def pytest_bdd_step_error(
+    request: FixtureRequest,
+    feature: Feature,
+    scenario: Scenario,
+    step: Step,
+    step_func: Callable,
+    step_func_args: dict,
+    exception: Exception,
+) -> None:
     reporting.step_error(request, feature, scenario, step, step_func, step_func_args, exception)
 
 
 @pytest.mark.tryfirst
-def pytest_bdd_before_step(request, feature, scenario, step, step_func):
+def pytest_bdd_before_step(
+    request: FixtureRequest, feature: Feature, scenario: Scenario, step: Step, step_func: Callable
+) -> None:
     reporting.before_step(request, feature, scenario, step, step_func)
 
 
 @pytest.mark.tryfirst
-def pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args):
+def pytest_bdd_after_step(
+    request: FixtureRequest,
+    feature: Feature,
+    scenario: Scenario,
+    step: Step,
+    step_func: Callable,
+    step_func_args: dict[str, Any],
+) -> None:
     reporting.after_step(request, feature, scenario, step, step_func, step_func_args)
 
 
-def pytest_cmdline_main(config):
+def pytest_cmdline_main(config: Config) -> int | None:
     return generation.cmdline_main(config)
 
 
-def pytest_bdd_apply_tag(tag, function):
+def pytest_bdd_apply_tag(tag: str, function: Callable) -> Callable:
     mark = getattr(pytest.mark, tag)
-    return mark(function)
-
-
-@pytest.mark.tryfirst
-def pytest_collection_modifyitems(session, config, items):
-    """Re-order items using the creation counter as fallback.
-
-    Pytest has troubles to correctly order the test items for python < 3.6.
-    For this reason, we have to apply some better ordering for pytest_bdd scenario-decorated test functions.
-
-    This is not needed for python 3.6+, but this logic is safe to apply in that case as well.
-    """
-    # TODO: Try to only re-sort the items that have __pytest_bdd_counter__, and not the others,
-    #  since there may be other hooks that are executed before this and that want to reorder item as well
-    def item_key(item):
-        if isinstance(item, pytest.Function):
-            declaration_order = getattr(item.function, "__pytest_bdd_counter__", 0)
-        else:
-            declaration_order = 0
-        func, linenum = item.reportinfo()[:2]
-        return (func, linenum if linenum is not None else -1, declaration_order)
-
-    items.sort(key=item_key)
+    marked = mark(function)
+    return cast(Callable, marked)
