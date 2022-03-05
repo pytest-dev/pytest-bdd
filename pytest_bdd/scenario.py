@@ -10,29 +10,35 @@ test_publish_article = scenario(
     scenario_name="Publishing the article",
 )
 """
+from __future__ import annotations
+
 import collections
 import os
 import re
-import typing
+from typing import TYPE_CHECKING, Callable, cast
 
 import pytest
-from _pytest.fixtures import FixtureLookupError, call_fixture_func
+from _pytest.fixtures import FixtureLookupError, FixtureManager, FixtureRequest, call_fixture_func
 
 from . import exceptions
 from .feature import get_feature, get_features
 from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
+    from typing import Any, Iterable
+
     from _pytest.mark.structures import ParameterSet
 
-    from .parser import Feature, Scenario, ScenarioTemplate
+    from .parser import Feature, Scenario, ScenarioTemplate, Step
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
-def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None):
+def find_argumented_step_fixture_name(
+    name: str, type_: str, fixturemanager: FixtureManager, request: FixtureRequest | None = None
+) -> str | None:
     """Find argumented step fixture name."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
@@ -51,9 +57,10 @@ def find_argumented_step_fixture_name(name, type_, fixturemanager, request=None)
                 except FixtureLookupError:
                     continue
             return parser_name
+    return None
 
 
-def _find_step_function(request, step, scenario):
+def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario) -> Any:
     """Match the step defined by the regular expression pattern.
 
     :param request: PyTest request object.
@@ -70,9 +77,9 @@ def _find_step_function(request, step, scenario):
     except FixtureLookupError:
         try:
             # Could not find a fixture with the same name, let's see if there is a parser involved
-            name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager, request)
-            if name:
-                return request.getfixturevalue(name)
+            argumented_name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager, request)
+            if argumented_name:
+                return request.getfixturevalue(argumented_name)
             raise
         except FixtureLookupError:
             raise exceptions.StepDefinitionNotFoundError(
@@ -81,7 +88,7 @@ def _find_step_function(request, step, scenario):
             )
 
 
-def _execute_step_function(request, scenario, step, step_func):
+def _execute_step_function(request: FixtureRequest, scenario: Scenario, step: Step, step_func: Callable) -> None:
     """Execute step function.
 
     :param request: PyTest request.
@@ -124,7 +131,7 @@ def _execute_step_function(request, scenario, step, step_func):
         raise
 
 
-def _execute_scenario(feature: "Feature", scenario: "Scenario", request):
+def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequest) -> None:
     """Execute the scenario.
 
     :param feature: Feature.
@@ -153,29 +160,29 @@ FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
 def _get_scenario_decorator(
-    feature: "Feature", feature_name: str, templated_scenario: "ScenarioTemplate", scenario_name: str
-):
+    feature: Feature, feature_name: str, templated_scenario: ScenarioTemplate, scenario_name: str
+) -> Callable[[Callable], Callable]:
     # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
     # when the decorator is misused.
     # Pytest inspect the signature to determine the required fixtures, and in that case it would look
     # for a fixture called "fn" that doesn't exist (if it exists then it's even worse).
     # It will error with a "fixture 'fn' not found" message instead.
     # We can avoid this hack by using a pytest hook and check for misuse instead.
-    def decorator(*args):
+    def decorator(*args: Callable) -> Callable:
         if not args:
             raise exceptions.ScenarioIsDecoratorOnly(
                 "scenario function can only be used as a decorator. Refer to the documentation."
             )
         [fn] = args
-        args = get_args(fn)
+        func_args = get_args(fn)
 
         # We need to tell pytest that the original function requires its fixtures,
         # otherwise indirect fixtures would not work.
-        @pytest.mark.usefixtures(*args)
-        def scenario_wrapper(request, _pytest_bdd_example):
+        @pytest.mark.usefixtures(*func_args)
+        def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> Any:
             scenario = templated_scenario.render(_pytest_bdd_example)
             _execute_scenario(feature, scenario, request)
-            fixture_values = [request.getfixturevalue(arg) for arg in args]
+            fixture_values = [request.getfixturevalue(arg) for arg in func_args]
             return fn(*fixture_values)
 
         example_parametrizations = collect_example_parametrizations(templated_scenario)
@@ -192,14 +199,14 @@ def _get_scenario_decorator(
 
         scenario_wrapper.__doc__ = f"{feature_name}: {scenario_name}"
         scenario_wrapper.__scenario__ = templated_scenario
-        return scenario_wrapper
+        return cast(Callable, scenario_wrapper)
 
     return decorator
 
 
 def collect_example_parametrizations(
-    templated_scenario: "ScenarioTemplate",
-) -> "typing.Optional[typing.List[ParameterSet]]":
+    templated_scenario: ScenarioTemplate,
+) -> list[ParameterSet] | None:
     # We need to evaluate these iterators and store them as lists, otherwise
     # we won't be able to do the cartesian product later (the second iterator will be consumed)
     contexts = list(templated_scenario.examples.as_contexts())
@@ -209,7 +216,9 @@ def collect_example_parametrizations(
     return [pytest.param(context, id="-".join(context.values())) for context in contexts]
 
 
-def scenario(feature_name: str, scenario_name: str, encoding: str = "utf-8", features_base_dir=None):
+def scenario(
+    feature_name: str, scenario_name: str, encoding: str = "utf-8", features_base_dir=None
+) -> Callable[[Callable], Callable]:
     """Scenario decorator.
 
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
@@ -239,44 +248,46 @@ def scenario(feature_name: str, scenario_name: str, encoding: str = "utf-8", fea
     )
 
 
-def get_features_base_dir(caller_module_path):
+def get_features_base_dir(caller_module_path: str) -> str:
     default_base_dir = os.path.dirname(caller_module_path)
     return get_from_ini("bdd_features_base_dir", default_base_dir)
 
 
-def get_from_ini(key, default):
+def get_from_ini(key: str, default: str) -> str:
     """Get value from ini config. Return default if value has not been set.
 
     Use if the default value is dynamic. Otherwise set default on addini call.
     """
     config = CONFIG_STACK[-1]
     value = config.getini(key)
+    if not isinstance(value, str):
+        raise TypeError(f"Expected a string for configuration option {value!r}, got a {type(value)} instead")
     return value if value != "" else default
 
 
-def make_python_name(string):
+def make_python_name(string: str) -> str:
     """Make python attribute name out of a given string."""
     string = re.sub(PYTHON_REPLACE_REGEX, "", string.replace(" ", "_"))
     return re.sub(ALPHA_REGEX, "", string).lower()
 
 
-def make_python_docstring(string):
+def make_python_docstring(string: str) -> str:
     """Make a python docstring literal out of a given string."""
     return '"""{}."""'.format(string.replace('"""', '\\"\\"\\"'))
 
 
-def make_string_literal(string):
+def make_string_literal(string: str) -> str:
     """Make python string literal out of a given string."""
     return "'{}'".format(string.replace("'", "\\'"))
 
 
-def get_python_name_generator(name):
+def get_python_name_generator(name: str) -> Iterable[str]:
     """Generate a sequence of suitable python names out of given arbitrary string name."""
     python_name = make_python_name(name)
     suffix = ""
     index = 0
 
-    def get_name():
+    def get_name() -> str:
         return f"test_{python_name}{suffix}"
 
     while True:
@@ -285,7 +296,7 @@ def get_python_name_generator(name):
         suffix = f"_{index}"
 
 
-def scenarios(*feature_paths, **kwargs):
+def scenarios(*feature_paths: str, **kwargs: Any) -> None:
     """Parse features from the paths and put all found scenarios in the caller module.
 
     :param *feature_paths: feature file paths to use for scenarios
@@ -316,7 +327,7 @@ def scenarios(*feature_paths, **kwargs):
             if (scenario_object.feature.filename, scenario_name) not in module_scenarios:
 
                 @scenario(feature.filename, scenario_name, **kwargs)
-                def _scenario():
+                def _scenario() -> None:
                     pass  # pragma: no cover
 
                 for test_name in get_python_name_generator(scenario_name):

@@ -10,3 +10,13 @@ target-version = ["py37", "py38", "py39", "py310"]
 profile = "black"
 line_length = 120
 multi_line_output = 3
+
+[tool.mypy]
+python_version = "3.7"
+warn_return_any = true
+warn_unused_configs = true
+files = "pytest_bdd/**/*.py"
+
+[[tool.mypy.overrides]]
+module = ["parse", "parse_type", "glob2"]
+ignore_missing_imports = true
