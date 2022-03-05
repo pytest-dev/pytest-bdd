@@ -44,9 +44,9 @@ Example
 An example test for a blog hosting software could look like this.
 Note that pytest-splinter_ is used to get the browser fixture.
 
-publish_article.feature:
-
 .. code-block:: gherkin
+
+    # content of publish_article.feature
 
     Feature: Blog
         A site where you can publish your articles.
@@ -63,9 +63,9 @@ publish_article.feature:
 
 Note that only one feature is allowed per feature file.
 
-test_publish_article.py:
-
 .. code-block:: python
+
+    # content of test_publish_article.py
 
     from pytest_bdd import scenario, given, when, then
 
@@ -349,7 +349,7 @@ A common use case is when we have to assert the outcome of an HTTP request:
 
 .. code-block:: python
 
-    # test_blog.py
+    # content of test_blog.py
 
     from pytest_bdd import scenarios, given, when, then
 
@@ -375,7 +375,7 @@ A common use case is when we have to assert the outcome of an HTTP request:
 
 .. code-block:: gherkin
 
-    # blog.feature
+    # content of blog.feature
 
     Feature: Blog
         Scenario: Deleting the article
@@ -754,17 +754,17 @@ Reusing steps
 It is possible to define some common steps in the parent conftest.py and
 simply expect them in the child test file.
 
-common_steps.feature:
-
 .. code-block:: gherkin
+
+    # content of common_steps.feature
 
     Scenario: All steps are declared in the conftest
         Given I have a bar
         Then bar should have value "bar"
 
-conftest.py:
-
 .. code-block:: python
+
+    # content of conftest.py
 
     from pytest_bdd import given, then
 
@@ -778,9 +778,9 @@ conftest.py:
     def bar_is_bar(bar):
         assert bar == "bar"
 
-test_common.py:
-
 .. code-block:: python
+
+    # content of test_common.py
 
     @scenario("common_steps.feature", "All steps are declared in the conftest")
     def test_conftest():
@@ -846,9 +846,9 @@ Avoid retyping the feature file name
 If you want to avoid retyping the feature file name when defining your scenarios in a test file, use ``functools.partial``.
 This will make your life much easier when defining multiple scenarios in a test file. For example:
 
-test_publish_article.py:
-
 .. code-block:: python
+
+    # content of test_publish_article.py
 
     from functools import partial
 
