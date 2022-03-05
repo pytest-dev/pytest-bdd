@@ -28,7 +28,7 @@ STEP_PREFIXES = [
 ]
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Iterable, Mapping, Match
+    from typing import Any, Collection, Iterable, Mapping, Match
 
 
 def split_line(line: str) -> list[str]:
@@ -190,7 +190,7 @@ class Feature:
         filename: str,
         rel_filename: str,
         name: str | None,
-        tags: set,
+        tags: Collection,
         background: Background | None,
         line_number: int,
         description: str,
@@ -198,7 +198,7 @@ class Feature:
         self.scenarios: dict[str, ScenarioTemplate] = scenarios
         self.rel_filename: str = rel_filename
         self.filename: str = filename
-        self.tags: set = tags
+        self.tags: Collection = tags
         self.name: str | None = name
         self.line_number: int = line_number
         self.description: str = description
