@@ -1,11 +1,9 @@
-from __future__ import absolute_import, unicode_literals
-
 import pytest
+from more_itertools import zip_equal
 
 from pytest_bdd.new_parser import parse
 from pytest_bdd.parser import Feature
-from pytest_bdd.types import GIVEN, WHEN, THEN
-from more_itertools import zip_equal
+from pytest_bdd.types import GIVEN, THEN, WHEN
 
 
 def test_feature():
@@ -56,7 +54,7 @@ def test_scenario(src, expected_scenarios):
 
     assert len(feature.scenarios) == expected_scenarios
     for i, (k, scenario) in enumerate(feature.scenarios.items(), start=1):
-        assert k == scenario.name == "scenario {}".format(i)
+        assert k == scenario.name == f"scenario {i}"
         assert scenario.feature == feature
         assert scenario.line_number == 1 + i
         # TODO: assert scenario.example_converters

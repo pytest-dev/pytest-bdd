@@ -7,8 +7,8 @@ import lark
 import lark.indenter
 import six
 
-from pytest_bdd.parser import Step, Scenario, Feature, Examples
 from pytest_bdd import types as pytest_bdd_types
+from pytest_bdd.parser import Examples, Feature, Scenario, Step
 
 
 class TreeIndenter(lark.indenter.Indenter):
@@ -20,7 +20,7 @@ class TreeIndenter(lark.indenter.Indenter):
     tab_len = 8
 
 
-with io.open(os.path.join(os.path.dirname(__file__), "parser_data/gherkin.grammar.lark")) as f:
+with open(os.path.join(os.path.dirname(__file__), "parser_data/gherkin.grammar.lark")) as f:
     grammar = f.read()
 parser = lark.Lark(grammar, start="start", parser="lalr", postlex=TreeIndenter(), maybe_placeholders=True, debug=True)
 
@@ -83,7 +83,7 @@ class TreeToGherkin(lark.Transformer):
 
         line = step_name.line
         return Step(
-            name=six.text_type(step_name),
+            name=str(step_name),
             type=step_type,
             indent=0,
             keyword=step_name + " ",
@@ -97,7 +97,7 @@ class TreeToGherkin(lark.Transformer):
         [scenario_name] = scenario_line.children
 
         return {
-            "name": six.text_type(scenario_name),
+            "name": str(scenario_name),
             "line_number": scenario_name.line,
             "example_converters": None,
             "tags": None,
@@ -116,8 +116,8 @@ class TreeToGherkin(lark.Transformer):
         except StopIteration:
             tags = []
 
-        feature_line = next((el for el in value if el.data == "feature_line"))
-        raw_scenarios = next((el for el in value if el.data == "scenarios"))
+        feature_line = next(el for el in value if el.data == "feature_line")
+        raw_scenarios = next(el for el in value if el.data == "scenarios")
 
         [feature_name] = feature_line.children
 
@@ -125,7 +125,7 @@ class TreeToGherkin(lark.Transformer):
             scenarios=OrderedDict(),
             filename=None,
             rel_filename=None,
-            name=six.text_type(feature_name),
+            name=str(feature_name),
             tags=tags,
             examples=Examples(),
             background=None,
@@ -158,7 +158,7 @@ def parse_feature(basedir, filename, encoding="utf-8"):
     abs_filename = os.path.abspath(os.path.join(basedir, filename))
     rel_filename = os.path.join(os.path.basename(basedir), filename)
 
-    with io.open(abs_filename, "rt", encoding=encoding) as f:
+    with open(abs_filename, "rt", encoding=encoding) as f:
         content = f.read()
 
     parsed = parse(content)
