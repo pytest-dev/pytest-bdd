@@ -5,6 +5,9 @@ from pytest_bdd.new_parser import parse
 from pytest_bdd.parser import Feature
 from pytest_bdd.types import GIVEN, THEN, WHEN
 
+# TODOs:
+#  - test comments
+
 
 def test_feature():
     feature = parse(
@@ -127,6 +130,16 @@ Feature: a feature
                 (GIVEN, "there is a third foo"),
                 (THEN, "I should see a foo"),
             ],
+        ),
+        pytest.param(
+            """\
+Feature: a feature
+    Scenario: a scenario
+        When I click the foo""",
+            [
+                (WHEN, "I click the foo"),
+            ],
+            id="no_ending_newline",
         ),
     ],
 )
