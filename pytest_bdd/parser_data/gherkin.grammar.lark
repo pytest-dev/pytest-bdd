@@ -21,7 +21,8 @@ givens: step{GIVEN}+ step{AND}*
 whens: step{WHEN}+ step{AND}*
 thens: step{THEN}+ step{AND}*
 
-step{type}: step_line{type} (_INDENT step_arg _DEDENT)?
+// step{type}: step_line{type} (_INDENT step_arg _DEDENT)?
+step{type}: step_line{type}
 step_line{type}: type string _NL?
 
 GIVEN: "Given"
@@ -38,7 +39,10 @@ data_table_row: "|" (/.*?(?<!\\)(\\\\)*?\|/)+
 tag: "@" CNAME
 tag_line: tag (tag)* _NL
 
-string: /[^\n]+/
+//string: /[^\n]+/
+// anything but new lines and comments
+string: /[^\n#]+/
+
 // TODO: Probably the following does not need the negative lookbehind part
 //step_docstring: /"""\n.*?(?<!\\)(\\\\)*?\n\s*"""/is
 //              | /'''\n.*?(?<!\\)(\\\\)*?\n\s*'''/is
@@ -54,4 +58,9 @@ step_docstring: /"""\n.*?\n\s*"""/is
 %declare _INDENT _DEDENT
 %ignore WS_INLINE
 
-_NL: /(\r?\n[\t ]*)+/
+COMMENT: /#[^\n]*/
+%ignore COMMENT
+
+// _NL: /(\r?\n[\t ]*)+/
+
+_NL: ( /\r?\n[\t ]*/ | COMMENT )+

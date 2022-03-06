@@ -141,6 +141,29 @@ Feature: a feature
             ],
             id="no_ending_newline",
         ),
+        pytest.param(
+            """\
+Feature: a feature
+    Scenario: a scenario
+        When I click the foo  # a comment
+        Then I should see the foo  # another comment
+""",
+            [
+                (WHEN, "I click the foo"),
+                (THEN, "I should see the foo"),
+            ],
+            id="comment",
+        ),
+        pytest.param(
+            """\
+Feature: a feature
+    Scenario: a scenario
+        When I click the foo  # a comment""",
+            [
+                (WHEN, "I click the foo"),
+            ],
+            id="comment_and_no_eol",
+        ),  # this edge case may cause the Indenter to fail. See https://github.com/lark-parser/lark/issues/321
     ],
 )
 def test_step(src, expected_steps):
@@ -163,6 +186,76 @@ def test_step(src, expected_steps):
         # TODO: assert step.stop
         # TODO: assert step.scenario
         # TODO: assert step.background
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        """\
+Feature: a feature
+    Scenario: a scenario
+        Given there is a foo
+
+        Then there should be a foo""",
+        """\
+
+Feature: a feature
+    Scenario: a scenario
+        Given there is a foo
+        Then there should be a foo""",
+        """\
+Feature: a feature
+
+    Scenario: a scenario
+        Given there is a foo
+        Then there should be a foo""",
+        """\
+
+
+
+Feature: a feature
+
+
+    Scenario: a scenario
+
+        Given there is a foo
+
+
+
+        Then there should be a foo""",
+        pytest.param(
+            """\
+        Feature: a feature
+            Scenario: a scenario
+                Given there is a foo
+                # a comment
+                Then there should be a foo""",
+            id="new_line_and_comment",
+        ),
+        pytest.param(
+            """\
+        Feature: a feature
+            Scenario: a scenario
+                Given there is a foo
+
+                Then there should be a foo""",
+            id="new_line_indented",
+        ),
+    ],
+)
+def test_new_lines_are_ignored(src):
+    feature = parse(src)
+    assert feature.name == "a feature"
+    [scenario] = feature.scenarios.values()
+    assert scenario.name == "a scenario"
+
+    given, then = scenario.steps
+
+    assert given.name == "there is a foo"
+    assert given.type == GIVEN
+
+    assert then.name == "there should be a foo"
+    assert then.type == THEN
 
 
 @pytest.mark.xfail(reason="Not implemented yet")

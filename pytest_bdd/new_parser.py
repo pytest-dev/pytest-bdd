@@ -161,6 +161,10 @@ class TreeToGherkin(lark.Transformer):
 
 
 def parse(content: str) -> Feature:
+    if content[-1] != "\n":
+        # Fix for the Indenter not working well when thers is no \n at the end of file
+        # See https://github.com/lark-parser/lark/issues/321
+        content += "\n"
     tree = parser.parse(content)
     print(tree.pretty())  # TODO: Remove before merge
     gherkin = TreeToGherkin().transform(tree)
