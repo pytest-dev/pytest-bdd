@@ -60,7 +60,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 def add_bdd_ini(parser: Parser) -> None:
     parser.addini("bdd_features_base_dir", "Base features directory.")
-    parser.addini("bdd_parser", "Parser to use.", default="legacy")
+    parser.addini("bdd_parser", "Parser to use.", default="2020")
 
 
 @pytest.mark.trylast

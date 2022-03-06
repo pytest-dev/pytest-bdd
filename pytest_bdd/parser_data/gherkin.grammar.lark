@@ -12,16 +12,24 @@ scenarios: [_INDENT scenario* _DEDENT]
 feature_header: tag_line*
 feature_line: "Feature: " string _NL
 
-scenario: scenario_line [_INDENT step* _DEDENT]
+scenario: scenario_line [_INDENT steps _DEDENT]
 scenario_line: "Scenario: " string _NL
 
-step: step_line [_INDENT step_arg _DEDENT]
+steps: givens? (whens | thens) *
 
-step_type: "Given " -> given
-         | "When " -> when
-         | "Then " -> then
+givens: step{GIVEN}+ step{AND}*
+whens: step{WHEN}+ step{AND}*
+thens: step{THEN}+ step{AND}*
 
-step_line: step_type string _NL
+step{type}: step_line{type} (_INDENT step_arg _DEDENT)?
+step_line{type}: type string _NL
+
+GIVEN: "Given"
+WHEN: "When"
+THEN: "Then"
+AND: "And"
+
+
 step_arg: [step_docstring _NL] [data_table]
 
 data_table: data_table_row (_NL data_table_row)+ _NL

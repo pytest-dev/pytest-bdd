@@ -326,6 +326,9 @@ class Step:
         """Full step name including the type."""
         return f'{self.type.capitalize()} "{self.name}"'
 
+    def __repr__(self) -> str:
+        return f"Step <{self.type.capitalize()} {self.name} [{self.line_number}:{self.indent}]>"
+
     @property
     def params(self) -> tuple[str, ...]:
         """Get step params."""

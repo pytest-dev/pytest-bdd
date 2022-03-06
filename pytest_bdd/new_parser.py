@@ -30,7 +30,14 @@ class TreeIndenter(Indenter):
 
 
 grammar = pkgutil.get_data("pytest_bdd", "parser_data/gherkin.grammar.lark").decode("utf-8")
-parser = Lark(grammar, start="start", parser="lalr", postlex=TreeIndenter(), maybe_placeholders=True, debug=True)
+parser = Lark(
+    grammar,
+    start="start",
+    parser="lalr",
+    postlex=TreeIndenter(),
+    maybe_placeholders=True,
+    debug=True,
+)
 
 
 def extract_text_from_step_docstring(docstring):
@@ -70,29 +77,45 @@ class TreeToGherkin(lark.Transformer):
         return dedented_without_newline
 
     @v_args(inline=True)
-    def step_arg(self, docstring, step_datatable) -> tuple:
+    def step_arg(self, docstring, step_datatable) -> tuple[str, str]:
         return docstring, step_datatable
 
-    @v_args(inline=True)
-    def step(self, step_line: Token, step_arg: tuple):
-        # TODO: step_arg not implemented yet
-        step_type, step_name = step_line.children
+    def givens(self, steps: list[Tree]) -> tuple[str, list[Tree]]:
+        return pytest_bdd_types.GIVEN, steps
 
-        line = step_name.line
-        return Step(
-            name=str(step_name),
-            type=step_type,
-            indent=0,
-            keyword=step_name + " ",
-            line_number=line,
-        )
+    def whens(self, steps: list[Tree]) -> tuple[str, list[Tree]]:
+        return pytest_bdd_types.WHEN, steps
+
+    def thens(self, steps: list[Tree]) -> tuple[str, list[Tree]]:
+        return pytest_bdd_types.THEN, steps
+
+    @v_args(inline=True)
+    def step(self, step_line: Token, step_arg: tuple = None):
+        # TODO: step_arg not implemented yet
+        return step_line, step_arg
+
+    def steps(self, step_groups: list[tuple[str, list[Tree]]]) -> list[Step]:
+        steps_data: list[tuple[str, tuple[Token, Token]]] = [
+            (type, step_tree.children) for type, step_group in step_groups for step_tree, _ in step_group
+        ]
+        steps = [
+            Step(
+                name=str(value_token),
+                type=bdd_type,
+                line_number=type_token.line,
+                indent=type_token.column,
+                keyword=type_token + " ",
+            )
+            for bdd_type, [type_token, value_token] in steps_data
+        ]
+        return steps
 
     @v_args(inline=True)
     def scenario_line(self, value: Token) -> Token:
         return value
 
     @v_args(inline=True)
-    def scenario(self, scenario_line: Token, *steps: list[Step]):
+    def scenario(self, scenario_line: Token, steps: list[Step] | None):
         scenario = ScenarioTemplate(
             name=str(scenario_line),
             line_number=scenario_line.line,
@@ -100,7 +123,7 @@ class TreeToGherkin(lark.Transformer):
             tags=None,
             feature=None,  # added later
         )
-        for step in steps:
+        for step in steps or []:
             scenario.add_step(step)
         return scenario
 
@@ -139,7 +162,7 @@ class TreeToGherkin(lark.Transformer):
 
 def parse(content: str) -> Feature:
     tree = parser.parse(content)
-    # print(tree.pretty())
+    print(tree.pretty())  # TODO: Remove before merge
     gherkin = TreeToGherkin().transform(tree)
     return gherkin
 

@@ -112,6 +112,22 @@ Feature: a feature
 """,
             [(GIVEN, "there is a foo"), (WHEN, "I click the foo"), (THEN, "I should see a foo")],
         ),
+        (
+            """\
+Feature: a feature
+    Scenario: a scenario
+        Given there is a foo
+        Given there is a second foo
+        And there is a third foo
+        Then I should see a foo
+""",
+            [
+                (GIVEN, "there is a foo"),
+                (GIVEN, "there is a second foo"),
+                (GIVEN, "there is a third foo"),
+                (THEN, "I should see a foo"),
+            ],
+        ),
     ],
 )
 def test_step(src, expected_steps):
