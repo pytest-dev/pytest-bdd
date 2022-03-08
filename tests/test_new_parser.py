@@ -23,7 +23,7 @@ Feature: a feature
     # TODO: assert feature.examples
     assert feature.line_number == 3
     # TODO: assert feature.description
-    # TODO: assert feature.background
+    assert feature.background is None
 
 
 @pytest.mark.parametrize(
@@ -256,6 +256,32 @@ def test_new_lines_are_ignored(src):
 
     assert then.name == "there should be a foo"
     assert then.type == THEN
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        """\
+Feature: Background support
+
+    Background:
+        Given there is a foo
+        And I click the foo
+
+
+    Scenario: a scenario
+"""
+    ],
+)
+def test_feature_background(src):
+    feature = parse(src)
+    assert feature.name == "Background support"
+
+    first_given, second_given = feature.background.steps
+    assert first_given.type == GIVEN
+    assert first_given.name == "there is a foo"
+    assert second_given.type == GIVEN
+    assert second_given.name == "I click the foo"
 
 
 @pytest.mark.xfail(reason="Not implemented yet")

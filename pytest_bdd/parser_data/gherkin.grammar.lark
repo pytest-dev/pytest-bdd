@@ -5,9 +5,12 @@ gherkin_document: feature?
 //Feature! := FeatureHeader Background? ScenarioDefinition* Rule*
 //FeatureHeader! := #Language? Tags? #FeatureLine DescriptionHelper
 
-feature: _NL* feature_header? feature_line scenarios
+feature: _NL* [feature_header] feature_line [_INDENT [background] [scenarios] _DEDENT]
 
-scenarios: [_INDENT scenario* _DEDENT]
+background: background_line [_INDENT steps _DEDENT]
+!background_line: "Background:" [string] _NL?
+
+scenarios: scenario*
 
 feature_header: tag_line*
 feature_line: "Feature: " string _NL?

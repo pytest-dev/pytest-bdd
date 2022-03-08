@@ -11,7 +11,7 @@ from lark import Lark, Token, Tree, v_args
 from lark.indenter import Indenter
 
 from pytest_bdd import types as pytest_bdd_types
-from pytest_bdd.parser import Examples, Feature, Scenario, ScenarioTemplate, Step
+from pytest_bdd.parser import Background, Examples, Feature, Scenario, ScenarioTemplate, Step
 
 if TYPE_CHECKING:
     from typing import Tuple
@@ -128,19 +128,40 @@ class TreeToGherkin(lark.Transformer):
         return scenario
 
     @v_args(inline=True)
+    def background_line(self, line: Token, value: Token, nl: Token) -> tuple[int, Token]:
+        return line.line, value
+
+    @v_args(inline=True)
+    def background(self, background_line: tuple[int, Token], steps: list[Step] | None):
+        b = Background(feature=None, line_number=background_line[0])
+        for step in steps:
+            b.add_step(step)
+        return b
+
+    @v_args(inline=True)
     def tag(self, value):
         return value
 
-    def feature(self, value: list[Tree]):
-        try:
-            feature_header = next(el for el in value if el.data == "feature_header")
+    @v_args(inline=True)
+    def feature(
+        self, feature_header: Tree | None, feature_line: Tree, background: Background | None, scenarios: Tree | None
+    ) -> Feature:
+        # nodes = [el for el in value if el is not None]
+        # try:
+        #     feature_header = next(el for el in nodes if el.data == "feature_header")
+        #     tag_lines = [el for el in feature_header.children if el.data == "tag_line"]
+        #     tags = [el for tag_line in tag_lines for el in tag_line.children]
+        # except StopIteration:
+        #     tags = []
+        if feature_header is not None:
             tag_lines = [el for el in feature_header.children if el.data == "tag_line"]
             tags = [el for tag_line in tag_lines for el in tag_line.children]
-        except StopIteration:
+        else:
             tags = []
 
-        feature_line = next(el for el in value if el.data == "feature_line")
-        scenarios = next(el for el in value if el.data == "scenarios")
+        # feature_line = next(el for el in nodes if el.data == "feature_line")
+        # scenarios = next(el for el in nodes if el.data == "scenarios")
+        # background = next(el for el in nodes if el.data == "background")
 
         [feature_name] = feature_line.children
 
@@ -154,9 +175,15 @@ class TreeToGherkin(lark.Transformer):
             line_number=feature_name.line,
             description=None,
         )
-        for scenario in scenarios.children:
-            scenario.feature = feature
-            feature.scenarios[scenario.name] = scenario
+        if scenarios is not None:
+            for scenario in scenarios.children:
+                scenario.feature = feature
+                feature.scenarios[scenario.name] = scenario
+
+        if background is not None:
+            background.feature = feature
+            feature.background = background
+
         return feature
 
 
