@@ -5,17 +5,17 @@ gherkin_document: feature?
 //Feature! := FeatureHeader Background? ScenarioDefinition* Rule*
 //FeatureHeader! := #Language? Tags? #FeatureLine DescriptionHelper
 
-feature: _NL* [feature_header] feature_line [_INDENT [background] [scenarios] _DEDENT]
+feature: _NL* [tag_lines] feature_line [_INDENT [background] [scenarios] _DEDENT]
 
 background: background_line [_INDENT steps _DEDENT]
 !background_line: "Background:" [string] _NL?
 
 scenarios: scenario*
 
-feature_header: tag_line*
+feature_header: [tag_lines]
 feature_line: "Feature: " string _NL?
 
-scenario: scenario_line [_INDENT steps _DEDENT]
+scenario: [tag_lines] scenario_line [_INDENT steps _DEDENT]
 scenario_line: "Scenario: " string _NL?
 
 steps: givens? (whens | thens) *
@@ -39,8 +39,9 @@ step_arg: [step_docstring _NL] [data_table]
 data_table: data_table_row (_NL data_table_row)+ _NL
 data_table_row: "|" (/.*?(?<!\\)(\\\\)*?\|/)+
 
-tag: "@" CNAME
-tag_line: tag (tag)* _NL
+tag: /@[^\s]+/
+tag_line: tag+ _NL
+tag_lines: tag_line+
 
 //string: /[^\n]+/
 // anything but new lines and comments

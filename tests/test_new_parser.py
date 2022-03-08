@@ -1,4 +1,5 @@
 import pytest
+from lark import GrammarError
 from more_itertools import zip_equal
 
 from pytest_bdd.new_parser import parse
@@ -24,6 +25,82 @@ Feature: a feature
     assert feature.line_number == 3
     # TODO: assert feature.description
     assert feature.background is None
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        """\
+@a_tag @a_second_tag @a-third-tag
+Feature: a feature
+""",
+        """\
+@a_tag
+@a_second_tag
+@a-third-tag
+Feature: a feature
+""",
+        """\
+@a_tag @a_second_tag
+@a-third-tag
+Feature: a feature
+""",
+        """\
+@a_tag @a_second_tag @a-third-tag  # a comment
+Feature: a feature
+""",
+    ],
+)
+def test_feature_tags(src):
+    feature = parse(src)
+    assert feature.tags == ["a_tag", "a_second_tag", "a-third-tag"]
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        """\
+Feature: a feature
+    @a_tag @a_second_tag @a-third-tag
+    Scenario: a scenario
+""",
+        """\
+Feature: a feature
+    @a_tag
+    @a_second_tag
+    @a-third-tag
+    Scenario: a scenario
+""",
+        """\
+Feature: a feature
+    @a_tag @a_second_tag
+    @a-third-tag
+    Scenario: a scenario
+""",
+        """\
+Feature: a feature
+    @a_tag @a_second_tag @a-third-tag  # a comment
+    Scenario: a scenario
+""",
+    ],
+)
+def test_scenario_tags(src):
+    feature = parse(src)
+    assert feature.tags == []
+
+    [scenario] = feature.scenarios.values()
+    assert scenario.tags == ["a_tag", "a_second_tag", "a-third-tag"]
+
+
+def test_not_a_tag():
+    # TODO: Improve exception
+    with pytest.raises(Exception) as e:
+        feature = parse(
+            """\
+@ a_tag
+Feature: a feature
+"""
+        )
 
 
 @pytest.mark.parametrize(

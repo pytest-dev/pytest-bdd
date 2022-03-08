@@ -210,7 +210,7 @@ class ScenarioTemplate:
 
     Created when parsing the feature file, it will then be combined with the examples to create a Scenario."""
 
-    def __init__(self, feature: Feature, name: str, line_number: int, tags=None) -> None:
+    def __init__(self, feature: Feature, name: str, line_number: int, tags: Collection | None = None) -> None:
         """
 
         :param str name: Scenario name.
