@@ -17,8 +17,16 @@ scenarios: scenario*
 feature_header: [tag_lines]
 feature_line: FEATURE STRING _NL?
 
-scenario: [tag_lines] scenario_line [_INDENT steps _DEDENT]
+scenario: [tag_lines] scenario_line [_INDENT [steps] [examples] _DEDENT]
 scenario_line: SCENARIO STRING _NL?
+
+examples: example_line example_table
+example_line: EXAMPLE [STRING] _NL?
+
+example_table: example_table_row example_table_row+
+example_table_row: "|" (EXAMPLE_STRING "|")+ _NL
+
+EXAMPLE_STRING.0:  /[^\n#|]+/
 
 steps: givens? (whens | thens) *
 
@@ -54,6 +62,7 @@ AND.1: "And"
 SCENARIO.1: "Scenario:"
 BACKGROUND.1: "Background:"
 FEATURE.1: "Feature:"
+EXAMPLE.1: "Examples:"
 
 // TODO: Probably the following does not need the negative lookbehind part
 //step_docstring: /"""\n.*?(?<!\\)(\\\\)*?\n\s*"""/is

@@ -115,13 +115,16 @@ class TreeToGherkin(lark.Transformer):
         return tags
 
     @v_args(inline=True)
-    def scenario(self, tag_lines: list[str] | None, scenario_line: Token, steps: list[Step] | None):
+    def scenario(
+        self, tag_lines: list[str] | None, scenario_line: Token, steps: list[Step] | None, examples: Examples | None
+    ):
         scenario = ScenarioTemplate(
             name=str(scenario_line),
             line_number=scenario_line.line,
             # example_converters=None,
             tags=tag_lines or [],
             feature=None,  # added later
+            examples=examples,
         )
         for step in steps or []:
             scenario.add_step(step)
@@ -145,6 +148,31 @@ class TreeToGherkin(lark.Transformer):
 
     def description(self, value: list[Token]) -> str:
         return "\n".join(value)
+
+    def example_table(self, value: list[tuple[str]]) -> tuple[list[str], list[tuple[str]]]:
+        header, rows = value[0], value[1:]
+        # TODO: Validate lengths
+
+        return header, rows
+
+    def example_table_row(self, values):
+        return [v.strip() for v in values]
+
+    @v_args(inline=True)
+    def examples(self, example_line: Tree, example_table: tuple[list[str], list[tuple[str]]]) -> Examples:
+        examples_token, title = example_line.children
+        ex = Examples()
+
+        ex.line_number = examples_token.line
+        ex.name = title
+        header, rows = example_table
+        ex.set_param_names(header)
+        for row in rows:
+            ex.add_example(row)
+        return ex
+
+    # def EXAMPLE_STRING(self, value):
+    #     return value
 
     @v_args(inline=True)
     def feature(

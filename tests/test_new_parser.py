@@ -467,6 +467,60 @@ def test_indentation_feature(src):
     assert feature.name == "A feature"
 
 
+@pytest.mark.parametrize(
+    ["src", "expected"],
+    [
+        (
+            """\
+Feature: A feature
+    Scenario: A scenario
+        Examples:
+        |  foo  |
+        |  bar  |
+""",
+            [{"foo": "bar"}],
+        ),
+        (
+            """\
+Feature: A feature
+    Scenario: A scenario
+        Examples:
+        | first name | last name |
+        | Alessio    | Bogon     |
+        | Oleg       | Pidsadnyi |
+""",
+            [
+                {"first name": "Alessio", "last name": "Bogon"},
+                {"first name": "Oleg", "last name": "Pidsadnyi"},
+            ],
+        ),
+        (
+            """\
+Feature: A feature
+    Scenario: A scenario
+""",
+            [],
+        ),
+        (
+            """\
+Feature: A feature
+    Scenario: A scenario
+        Examples:
+        |  pipe in the \| middle  |
+        |  foo    |
+""",
+            [
+                {"pipe in the | middle": "foo"},
+            ],
+        ),
+    ],
+)
+def test_scenario_examples(src, expected):
+    feature = parse(src)
+    [scenario] = feature.scenarios.values()
+    assert list(scenario.examples.as_contexts()) == expected
+
+
 @pytest.mark.xfail(reason="Not implemented yet")
 def test_step_docstring_and_datatable():
     feature = parse(

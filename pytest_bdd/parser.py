@@ -9,6 +9,9 @@ from typing import cast
 
 from . import exceptions, types
 
+if typing.TYPE_CHECKING:
+    from typing import Any, Collection, Iterable, Mapping, Match, Sequence
+
 SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
 COMMENT_RE = re.compile(r"(^|(?<=\s))#")
@@ -26,9 +29,6 @@ STEP_PREFIXES = [
     ("And ", None),
     ("But ", None),
 ]
-
-if typing.TYPE_CHECKING:
-    from typing import Any, Collection, Iterable, Mapping, Match
 
 
 def split_line(line: str) -> list[str]:
@@ -210,7 +210,14 @@ class ScenarioTemplate:
 
     Created when parsing the feature file, it will then be combined with the examples to create a Scenario."""
 
-    def __init__(self, feature: Feature, name: str, line_number: int, tags: Collection | None = None) -> None:
+    def __init__(
+        self,
+        feature: Feature,
+        name: str,
+        line_number: int,
+        tags: Collection | None = None,
+        examples: Examples | None = None,
+    ) -> None:
         """
 
         :param str name: Scenario name.
@@ -220,7 +227,7 @@ class ScenarioTemplate:
         self.feature = feature
         self.name = name
         self._steps: list[Step] = []
-        self.examples = Examples()
+        self.examples = examples or Examples()
         self.line_number = line_number
         self.tags = tags or set()
 
@@ -369,18 +376,18 @@ class Examples:
     def __init__(self) -> None:
         """Initialize examples instance."""
         self.example_params: list[str] = []
-        self.examples: list[list[str]] = []
+        self.examples: list[Sequence[str]] = []
         self.line_number: int | None = None
-        self.name = None
+        self.name: str | None = None
 
-    def set_param_names(self, keys: list[str]) -> None:
+    def set_param_names(self, keys: Iterable[str]) -> None:
         """Set parameter names.
 
         :param names: `list` of `string` parameter names.
         """
         self.example_params = [str(key) for key in keys]
 
-    def add_example(self, values: list[str]) -> None:
+    def add_example(self, values: Sequence[str]) -> None:
         """Add example.
 
         :param values: `list` of `string` parameter values.
