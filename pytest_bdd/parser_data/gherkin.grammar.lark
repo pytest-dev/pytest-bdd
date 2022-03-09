@@ -5,18 +5,20 @@ gherkin_document: feature?
 //Feature! := FeatureHeader Background? ScenarioDefinition* Rule*
 //FeatureHeader! := #Language? Tags? #FeatureLine DescriptionHelper
 
-feature: _NL* [tag_lines] feature_line [_INDENT [background] [scenarios] _DEDENT]
+feature: _NL* [tag_lines] feature_line [_INDENT [description] [background] [scenarios] _DEDENT]
+
+description: (STRING _NL)+
 
 background: background_line [_INDENT steps _DEDENT]
-!background_line: "Background:" [string] _NL?
+background_line: BACKGROUND [STRING] _NL?
 
 scenarios: scenario*
 
 feature_header: [tag_lines]
-feature_line: "Feature: " string _NL?
+feature_line: FEATURE STRING _NL?
 
 scenario: [tag_lines] scenario_line [_INDENT steps _DEDENT]
-scenario_line: "Scenario: " string _NL?
+scenario_line: SCENARIO STRING _NL?
 
 steps: givens? (whens | thens) *
 
@@ -26,12 +28,7 @@ thens: step{THEN}+ step{AND}*
 
 // step{type}: step_line{type} (_INDENT step_arg _DEDENT)?
 step{type}: step_line{type}
-step_line{type}: type string _NL?
-
-GIVEN: "Given"
-WHEN: "When"
-THEN: "Then"
-AND: "And"
+step_line{type}: type STRING _NL?
 
 
 step_arg: [step_docstring _NL] [data_table]
@@ -44,8 +41,19 @@ tag_line: tag+ _NL
 tag_lines: tag_line+
 
 //string: /[^\n]+/
-// anything but new lines and comments
-string: /[^\n#]+/
+// anything but new lines and comments.
+// Use low priority (0), so that we attempt to first match other terminals with priority 1.
+// This is needed to avoid having "description" greedy matching other rules like "background" and "scenarios"
+STRING.0: /[^\n#]+/
+
+GIVEN.1: "Given"
+WHEN.1: "When"
+THEN.1: "Then"
+AND.1: "And"
+
+SCENARIO.1: "Scenario:"
+BACKGROUND.1: "Background:"
+FEATURE.1: "Feature:"
 
 // TODO: Probably the following does not need the negative lookbehind part
 //step_docstring: /"""\n.*?(?<!\\)(\\\\)*?\n\s*"""/is

@@ -361,6 +361,66 @@ def test_feature_background(src):
     assert second_given.name == "I click the foo"
 
 
+@pytest.mark.parametrize(
+    ["src", "expected"],
+    [
+        (
+            """\
+Feature: No description
+
+    Scenario: Description
+        Given I have a bar
+""",
+            "",
+        ),
+        (
+            """\
+Feature: A feature
+    Description of the feature
+    Scenario: Description
+        Given I have a bar
+""",
+            "Description of the feature",
+        ),
+        (
+            """\
+Feature: A feature
+    Description of the feature
+    Background:
+        Given I have a bar
+""",
+            "Description of the feature",
+        ),
+        (
+            """\
+Feature: A feature
+    Description of the feature
+    Background:
+        Given I have a background bar
+    Scenario: Description
+        Given I have a bar
+""",
+            "Description of the feature",
+        ),
+        (
+            """\
+Feature: A feature
+    Multiline
+    description
+    Background:
+        Given I have a background bar
+    Scenario: Description
+        Given I have a bar
+""",
+            "Multiline\ndescription",
+        ),
+    ],
+)
+def test_feature_description(src, expected):
+    feature = parse(src)
+    assert feature.description == expected
+
+
 @pytest.mark.xfail(reason="Not implemented yet")
 def test_step_docstring_and_datatable():
     feature = parse(

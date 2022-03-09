@@ -111,7 +111,7 @@ class TreeToGherkin(lark.Transformer):
         return steps
 
     @v_args(inline=True)
-    def scenario_line(self, value: Token) -> Token:
+    def scenario_line(self, _: Token, value: Token) -> Token:
         return value
 
     def tag_lines(self, value: list[Tree]) -> list[str]:
@@ -132,7 +132,7 @@ class TreeToGherkin(lark.Transformer):
         return scenario
 
     @v_args(inline=True)
-    def background_line(self, line: Token, value: Token, nl: Token) -> tuple[int, Token]:
+    def background_line(self, line: Token, value: Token) -> tuple[int, Token]:
         return line.line, value
 
     @v_args(inline=True)
@@ -147,12 +147,20 @@ class TreeToGherkin(lark.Transformer):
         assert value[0] == "@"
         return value[1:]
 
+    def description(self, value: list[Token]) -> str:
+        return "\n".join(value)
+
     @v_args(inline=True)
     def feature(
-        self, tag_lines: list[str] | None, feature_line: Tree, background: Background | None, scenarios: Tree | None
+        self,
+        tag_lines: list[str] | None,
+        feature_line: Tree,
+        description: str | None,
+        background: Background | None,
+        scenarios: Tree | None,
     ) -> Feature:
 
-        [feature_name] = feature_line.children
+        [_, feature_name] = feature_line.children
 
         feature = Feature(
             scenarios=OrderedDict(),
@@ -162,7 +170,7 @@ class TreeToGherkin(lark.Transformer):
             tags=tag_lines or [],
             background=None,
             line_number=feature_name.line,
-            description=None,
+            description=description or "",
         )
         if scenarios is not None:
             for scenario in scenarios.children:
