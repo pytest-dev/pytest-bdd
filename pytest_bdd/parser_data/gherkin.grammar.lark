@@ -1,11 +1,11 @@
 ?start: gherkin_document
 
-gherkin_document: feature?
+?gherkin_document: _NL* (feature? | _INDENT feature? _DEDENT)
 
 //Feature! := FeatureHeader Background? ScenarioDefinition* Rule*
 //FeatureHeader! := #Language? Tags? #FeatureLine DescriptionHelper
 
-feature: _NL* [tag_lines] feature_line [_INDENT [description] [background] [scenarios] _DEDENT]
+feature: [tag_lines] feature_line [_INDENT [description] [background] [scenarios] _DEDENT]
 
 description: (STRING _NL)+
 

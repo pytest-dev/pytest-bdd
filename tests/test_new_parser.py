@@ -421,6 +421,52 @@ def test_feature_description(src, expected):
     assert feature.description == expected
 
 
+# TODO: This test parametrization makes the trailing-whitespaces pre-commit hook fail.
+#  Find a way to solve it somehow.
+@pytest.mark.parametrize(
+    "src",
+    [
+        """\
+Feature: A feature
+""",
+        """\
+  Feature: A feature
+""",
+        """\
+    Feature: A feature
+""",
+        """\
+
+Feature: A feature
+""",
+        """\
+
+  Feature: A feature
+""",
+        """\
+
+    Feature: A feature
+""",
+        """\
+    
+Feature: A feature
+""",
+        """\
+    
+
+Feature: A feature
+""",
+        """\
+    
+    Feature: A feature
+""",
+    ],
+)
+def test_indentation_feature(src):
+    feature = parse(src)
+    assert feature.name == "A feature"
+
+
 @pytest.mark.xfail(reason="Not implemented yet")
 def test_step_docstring_and_datatable():
     feature = parse(

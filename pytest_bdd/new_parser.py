@@ -50,10 +50,6 @@ def extract_text_from_step_docstring(docstring):
 
 class TreeToGherkin(lark.Transformer):
     @v_args(inline=True)
-    def gherkin_document(self, value: Feature) -> Feature:
-        return value
-
-    @v_args(inline=True)
     def string(self, value: Token) -> Token:
         # TODO: Unescape characters?
         return value
