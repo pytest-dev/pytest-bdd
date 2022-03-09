@@ -448,16 +448,16 @@ Feature: A feature
     Feature: A feature
 """,
         """\
+    
+Feature: A feature
+""",
+        """\
+    
 
 Feature: A feature
 """,
         """\
-
-
-Feature: A feature
-""",
-        """\
-
+    
     Feature: A feature
 """,
     ],
