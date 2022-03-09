@@ -506,7 +506,7 @@ Feature: A feature
 Feature: A feature
     Scenario: A scenario
         Examples:
-        |  pipe in the \| middle  |
+        |  pipe in the \\| middle  |
         |  foo    |
 """,
             [
