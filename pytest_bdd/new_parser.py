@@ -14,7 +14,7 @@ from pytest_bdd import types as pytest_bdd_types
 from pytest_bdd.parser import Background, Examples, Feature, Scenario, ScenarioTemplate, Step, split_line
 
 if TYPE_CHECKING:
-    from typing import Tuple
+    from typing import Sequence
 
 # TODOs:
 #  - line numbers don't seem to work correctly.
@@ -149,7 +149,7 @@ class TreeToGherkin(lark.Transformer):
     def description(self, value: list[Token]) -> str:
         return "\n".join(value)
 
-    def example_table(self, value: list[tuple[str]]) -> tuple[list[str], list[tuple[str]]]:
+    def example_table(self, value: Sequence[Sequence[str]]) -> Sequence[Sequence[str], Sequence[Sequence[str]]]:
         header, rows = value[0], value[1:]
         # TODO: Validate lengths
 
