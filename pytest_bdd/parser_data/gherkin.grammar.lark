@@ -24,9 +24,8 @@ examples: example_line example_table
 example_line: EXAMPLE [STRING] _NL?
 
 example_table: example_table_row example_table_row+
-example_table_row: "|" (EXAMPLE_STRING "|")+ _NL
+example_table_row: /\|.*\|/ _NL
 
-EXAMPLE_STRING.0:  /[^\n#|]+/
 
 steps: givens? (whens | thens) *
 

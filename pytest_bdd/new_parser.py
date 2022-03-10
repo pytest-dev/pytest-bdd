@@ -11,7 +11,7 @@ from lark import Lark, Token, Tree, v_args
 from lark.indenter import Indenter
 
 from pytest_bdd import types as pytest_bdd_types
-from pytest_bdd.parser import Background, Examples, Feature, Scenario, ScenarioTemplate, Step
+from pytest_bdd.parser import Background, Examples, Feature, Scenario, ScenarioTemplate, Step, split_line
 
 if TYPE_CHECKING:
     from typing import Tuple
@@ -155,8 +155,10 @@ class TreeToGherkin(lark.Transformer):
 
         return header, rows
 
-    def example_table_row(self, values):
-        return [v.strip() for v in values]
+    @v_args(inline=True)
+    def example_table_row(self, value: Token) -> list[str]:
+        cells = split_line(value)
+        return cells
 
     @v_args(inline=True)
     def examples(self, example_line: Tree, example_table: tuple[list[str], list[tuple[str]]]) -> Examples:
