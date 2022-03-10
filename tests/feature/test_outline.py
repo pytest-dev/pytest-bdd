@@ -171,7 +171,7 @@ def test_outline_with_escaped_pipes(testdir):
     testdir.makefile(
         ".feature",
         outline=textwrap.dedent(
-            r"""\
+            r"""
             Feature: Outline With Special characters
 
                 Scenario Outline: Outline with escaped pipe character

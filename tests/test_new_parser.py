@@ -6,7 +6,7 @@ from pytest_bdd.new_parser import parse
 from pytest_bdd.parser import Feature
 from pytest_bdd.types import GIVEN, THEN, WHEN
 
-# TODOs:
+# TODO:
 #  - test comments
 
 

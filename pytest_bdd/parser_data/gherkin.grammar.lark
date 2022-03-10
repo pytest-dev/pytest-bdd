@@ -18,7 +18,7 @@ feature_header: [tag_lines]
 feature_line: FEATURE STRING _NL?
 
 scenario: [tag_lines] scenario_line [_INDENT [steps] [examples] _DEDENT]
-scenario_line: SCENARIO STRING _NL?
+scenario_line: (SCENARIO | SCENARIO_OUTLINE) STRING _NL?
 
 examples: example_line example_table
 example_line: EXAMPLE [STRING] _NL?
@@ -59,6 +59,7 @@ THEN.1: "Then"
 AND.1: "And"
 
 SCENARIO.1: "Scenario:"
+SCENARIO_OUTLINE.1: "Scenario Outline:"
 BACKGROUND.1: "Background:"
 FEATURE.1: "Feature:"
 EXAMPLE.1: "Examples:"
