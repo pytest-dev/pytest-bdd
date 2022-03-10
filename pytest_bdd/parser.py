@@ -190,7 +190,7 @@ class Feature:
         filename: str,
         rel_filename: str,
         name: str | None,
-        tags: Collection,
+        tags: set,
         background: Background | None,
         line_number: int,
         description: str,
@@ -198,7 +198,7 @@ class Feature:
         self.scenarios: dict[str, ScenarioTemplate] = scenarios
         self.rel_filename: str = rel_filename
         self.filename: str = filename
-        self.tags: Collection = tags
+        self.tags: set = tags
         self.name: str | None = name
         self.line_number: int = line_number
         self.description: str = description
@@ -215,7 +215,7 @@ class ScenarioTemplate:
         feature: Feature,
         name: str,
         line_number: int,
-        tags: Collection | None = None,
+        tags: set[str] | None = None,
         examples: Examples | None = None,
     ) -> None:
         """
@@ -229,7 +229,7 @@ class ScenarioTemplate:
         self._steps: list[Step] = []
         self.examples = examples or Examples()
         self.line_number = line_number
-        self.tags = tags or set()
+        self.tags: set[str] = tags or set()
 
     def add_step(self, step: Step) -> None:
         """Add step to the scenario.
@@ -262,7 +262,9 @@ class Scenario:
 
     """Scenario."""
 
-    def __init__(self, feature: Feature, name: str, line_number: int, steps: list[Step], tags=None) -> None:
+    def __init__(
+        self, feature: Feature, name: str, line_number: int, steps: list[Step], tags: set[str] | None = None
+    ) -> None:
         """Scenario constructor.
 
         :param pytest_bdd.parser.Feature feature: Feature.
@@ -274,7 +276,7 @@ class Scenario:
         self.name = name
         self.steps = steps
         self.line_number = line_number
-        self.tags = tags or set()
+        self.tags: set[str] = tags or set()
         self.failed = False
 
 

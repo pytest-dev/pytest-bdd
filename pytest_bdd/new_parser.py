@@ -100,7 +100,7 @@ class TreeToGherkin(lark.Transformer):
                 type=bdd_type,
                 line_number=type_token.line,
                 indent=type_token.column,
-                keyword=type_token + " ",
+                keyword=str(type_token),
             )
             for bdd_type, [type_token, value_token] in steps_data
         ]
@@ -110,19 +110,19 @@ class TreeToGherkin(lark.Transformer):
     def scenario_line(self, _: Token, value: Token) -> Token:
         return value
 
-    def tag_lines(self, value: list[Tree]) -> list[str]:
-        tags = [el for tag_line in value for el in tag_line.children]
+    def tag_lines(self, value: list[Tree]) -> set[str]:
+        tags = {el for tag_line in value for el in tag_line.children}
         return tags
 
     @v_args(inline=True)
     def scenario(
-        self, tag_lines: list[str] | None, scenario_line: Token, steps: list[Step] | None, examples: Examples | None
+        self, tag_lines: set[str] | None, scenario_line: Token, steps: list[Step] | None, examples: Examples | None
     ):
         scenario = ScenarioTemplate(
             name=str(scenario_line),
             line_number=scenario_line.line,
             # example_converters=None,
-            tags=tag_lines or [],
+            tags=tag_lines or {},
             feature=None,  # added later
             examples=examples,
         )
@@ -179,7 +179,7 @@ class TreeToGherkin(lark.Transformer):
     @v_args(inline=True)
     def feature(
         self,
-        tag_lines: list[str] | None,
+        tag_lines: set[str] | None,
         feature_line: Tree,
         description: str | None,
         background: Background | None,
@@ -193,7 +193,7 @@ class TreeToGherkin(lark.Transformer):
             filename=None,
             rel_filename=None,
             name=str(feature_name),
-            tags=tag_lines or [],
+            tags=tag_lines or {},
             background=None,
             line_number=feature_name.line,
             description=description or "",

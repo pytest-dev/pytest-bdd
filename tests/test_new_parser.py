@@ -20,7 +20,7 @@ Feature: a feature
     )
     assert isinstance(feature, Feature)
     assert feature.name == "a feature"
-    assert feature.tags == ["atag", "another_tag", "a_third_tag"]
+    assert feature.tags == {"atag", "another_tag", "a_third_tag"}
     # TODO: assert feature.examples
     assert feature.line_number == 3
     # TODO: assert feature.description
@@ -53,7 +53,7 @@ Feature: a feature
 )
 def test_feature_tags(src):
     feature = parse(src)
-    assert feature.tags == ["a_tag", "a_second_tag", "a-third-tag"]
+    assert feature.tags == {"a_tag", "a_second_tag", "a-third-tag"}
 
 
 @pytest.mark.parametrize(
@@ -86,10 +86,10 @@ Feature: a feature
 )
 def test_scenario_tags(src):
     feature = parse(src)
-    assert feature.tags == []
+    assert feature.tags == {}
 
     [scenario] = feature.scenarios.values()
-    assert scenario.tags == ["a_tag", "a_second_tag", "a-third-tag"]
+    assert scenario.tags == {"a_tag", "a_second_tag", "a-third-tag"}
 
 
 def test_not_a_tag():
