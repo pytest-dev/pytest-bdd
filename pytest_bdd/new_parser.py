@@ -122,7 +122,7 @@ class TreeToGherkin(lark.Transformer):
             name=scenario_line.strip(),
             line_number=scenario_line.line,
             # example_converters=None,
-            tags=tag_lines or {},
+            tags=tag_lines or set(),
             feature=None,  # added later
             examples=examples,
         )

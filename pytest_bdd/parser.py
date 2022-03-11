@@ -12,7 +12,7 @@ from attrs import define, field  # add attrs dep
 from . import exceptions, types
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Collection, Iterable, Mapping, Match, Sequence
+    from typing import Any, Iterable, Mapping, Match, Sequence
 
 SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
@@ -183,55 +183,38 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
     return feature
 
 
+@define
 class Feature:
     """Feature."""
 
-    def __init__(
-        self,
-        scenarios: OrderedDict,
-        filename: str,
-        rel_filename: str,
-        name: str | None,
-        tags: set,
-        background: Background | None,
-        line_number: int,
-        description: str,
-    ) -> None:
-        self.scenarios: dict[str, ScenarioTemplate] = scenarios
-        self.rel_filename: str = rel_filename
-        self.filename: str = filename
-        self.tags: set = tags
-        self.name: str | None = name
-        self.line_number: int = line_number
-        self.description: str = description
-        self.background: Background | None = background
+    scenarios: OrderedDict[str, ScenarioTemplate]
+    filename: str
+    rel_filename: str
+    name: str | None
+    tags: set[str]
+    background: Background | None
+    line_number: int
+    description: str
 
 
+@define
 class ScenarioTemplate:
     """A scenario template.
 
     Created when parsing the feature file, it will then be combined with the examples to create a Scenario."""
 
-    def __init__(
-        self,
-        feature: Feature,
-        name: str,
-        line_number: int,
-        tags: set[str] | None = None,
-        examples: Examples | None = None,
-    ) -> None:
-        """
-
-        :param str name: Scenario name.
-        :param int line_number: Scenario line number.
-        :param set tags: Set of tags.
-        """
-        self.feature = feature
-        self.name = name
-        self._steps: list[Step] = []
-        self.examples = examples or Examples()
-        self.line_number = line_number
-        self.tags: set[str] = tags or set()
+    feature: Feature
+    name: str
+    line_number: int
+    tags: set[str] = field(
+        factory=set,
+        converter=lambda v: v if v is not None else set(),
+    )
+    examples: Examples | None = field(
+        factory=lambda: Examples(),
+        converter=lambda v: v if v is not None else Examples(),
+    )
+    _steps: list[Step] = field(factory=list)
 
     def add_step(self, step: Step) -> None:
         """Add step to the scenario.
@@ -260,26 +243,18 @@ class ScenarioTemplate:
         return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
 
 
+@define
 class Scenario:
-
     """Scenario."""
 
-    def __init__(
-        self, feature: Feature, name: str, line_number: int, steps: list[Step], tags: set[str] | None = None
-    ) -> None:
-        """Scenario constructor.
-
-        :param pytest_bdd.parser.Feature feature: Feature.
-        :param str name: Scenario name.
-        :param int line_number: Scenario line number.
-        :param set tags: Set of tags.
-        """
-        self.feature = feature
-        self.name = name
-        self.steps = steps
-        self.line_number = line_number
-        self.tags: set[str] = tags or set()
-        self.failed = False
+    feature: Feature
+    name: str
+    line_number: int
+    steps: list[Step]
+    tags: set[str] = field(
+        factory=set,
+        converter=lambda v: v if v is not None else set(),
+    )
 
 
 @define(eq=True)
@@ -342,19 +317,11 @@ class Step:
         return STEP_PARAM_RE.sub(replacer, self.name)
 
 
+@define
 class Background:
-
-    """Background."""
-
-    def __init__(self, feature: Feature, line_number: int) -> None:
-        """Background constructor.
-
-        :param pytest_bdd.parser.Feature feature: Feature.
-        :param int line_number: Line number.
-        """
-        self.feature: Feature = feature
-        self.line_number: int = line_number
-        self.steps: list[Step] = []
+    feature: Feature
+    line_number: int
+    steps: list[Step] = field(factory=list)
 
     def add_step(self, step: Step) -> None:
         """Add step to the background."""
@@ -362,16 +329,14 @@ class Background:
         self.steps.append(step)
 
 
+@define
 class Examples:
-
     """Example table."""
 
-    def __init__(self) -> None:
-        """Initialize examples instance."""
-        self.example_params: list[str] = []
-        self.examples: list[Sequence[str]] = []
-        self.line_number: int | None = None
-        self.name: str | None = None
+    example_params: list[str] = field(factory=list)
+    examples: list[Sequence[str]] = field(factory=list)
+    line_number: int | None = field(default=None)
+    name: str | None = field(default=None)
 
     def set_param_names(self, keys: Iterable[str]) -> None:
         """Set parameter names.
