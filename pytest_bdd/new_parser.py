@@ -119,7 +119,7 @@ class TreeToGherkin(lark.Transformer):
         self, tag_lines: set[str] | None, scenario_line: Token, steps: list[Step] | None, examples: Examples | None
     ):
         scenario = ScenarioTemplate(
-            name=str(scenario_line),
+            name=scenario_line.strip(),
             line_number=scenario_line.line,
             # example_converters=None,
             tags=tag_lines or {},

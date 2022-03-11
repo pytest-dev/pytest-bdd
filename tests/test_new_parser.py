@@ -6,8 +6,9 @@ from pytest_bdd.new_parser import parse
 from pytest_bdd.parser import Feature
 from pytest_bdd.types import GIVEN, THEN, WHEN
 
-# TODO:
-#  - test comments
+# TODO: Changes to document
+#  - Comments are now only allowed in their own lines.
+#  - Other changes. Check the modifications to the tests.
 
 
 def test_feature():
@@ -46,7 +47,7 @@ Feature: a feature
 Feature: a feature
 """,
         """\
-@a_tag @a_second_tag @a-third-tag  # a comment
+@a_tag @a_second_tag @a-third-tag
 Feature: a feature
 """,
     ],
@@ -79,7 +80,7 @@ Feature: a feature
 """,
         """\
 Feature: a feature
-    @a_tag @a_second_tag @a-third-tag  # a comment
+    @a_tag @a_second_tag @a-third-tag
     Scenario: a scenario
 """,
     ],
@@ -90,6 +91,28 @@ def test_scenario_tags(src):
 
     [scenario] = feature.scenarios.values()
     assert scenario.tags == {"a_tag", "a_second_tag", "a-third-tag"}
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        """\
+Feature: a   feature
+    Scenario: a   scenario
+        Given there is a   foo
+""",
+    ],
+)
+def test_whitespaces_are_kept(src):
+    feature = parse(src)
+    assert feature.name == "a   feature"
+
+    [scenario] = feature.scenarios.values()
+    assert scenario.name == "a   scenario"
+
+    [given] = scenario.steps
+    assert given.type == GIVEN
+    assert given.name == "there is a   foo"
 
 
 def test_not_a_tag():
@@ -218,29 +241,6 @@ Feature: a feature
             ],
             id="no_ending_newline",
         ),
-        pytest.param(
-            """\
-Feature: a feature
-    Scenario: a scenario
-        When I click the foo  # a comment
-        Then I should see the foo  # another comment
-""",
-            [
-                (WHEN, "I click the foo"),
-                (THEN, "I should see the foo"),
-            ],
-            id="comment",
-        ),
-        pytest.param(
-            """\
-Feature: a feature
-    Scenario: a scenario
-        When I click the foo  # a comment""",
-            [
-                (WHEN, "I click the foo"),
-            ],
-            id="comment_and_no_eol",
-        ),  # this edge case may cause the Indenter to fail. See https://github.com/lark-parser/lark/issues/321
     ],
 )
 def test_step(src, expected_steps):
@@ -263,6 +263,34 @@ def test_step(src, expected_steps):
         # TODO: assert step.stop
         # TODO: assert step.scenario
         # TODO: assert step.background
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        """\
+Feature: a feature
+    Scenario: a scenario
+        Giventhere is a foo""",
+        """\
+Feature: a feature
+    Scenario: a scenario
+        Given there is a foo
+        Andthere is a second foo""",
+        """\
+Feature: a feature
+    Scenario: a scenario
+        WhenI click the foo""",
+        """\
+Feature: a feature
+    Scenario: a scenario
+        Thenthere should be a foo""",
+    ],
+)
+def test_steps_need_a_space_after_keyword(src):
+    with pytest.raises(Exception) as exc:
+        feature = parse(src)
+    # TODO: Test the exception
 
 
 @pytest.mark.parametrize(
@@ -468,6 +496,55 @@ def test_indentation_feature(src):
 
 
 @pytest.mark.parametrize(
+    "src",
+    [
+        """\
+Feature: A feature
+    Scenario: A scenario
+        Given there is a foo
+        When I click the foo
+        Then there should be a foo
+""",
+        """
+
+
+Feature: A feature
+
+
+
+    Scenario: A scenario
+
+
+        Given there is a foo
+        When I click the foo
+
+
+
+
+        Then there should be a foo
+""",
+    ],
+)
+def test_empty_lines(src):
+    feature = parse(src)
+    assert feature.name == "A feature"
+    [scenario] = feature.scenarios.values()
+    assert feature.description == ""
+
+    assert scenario.name == "A scenario"
+    given, when, then = scenario.steps
+
+    assert given.type == GIVEN
+    assert given.name == "there is a foo"
+
+    assert when.type == WHEN
+    assert when.name == "I click the foo"
+
+    assert then.type == THEN
+    assert then.name == "there should be a foo"
+
+
+@pytest.mark.parametrize(
     ["src", "expected"],
     [
         (
@@ -519,6 +596,32 @@ def test_scenario_examples(src, expected):
     feature = parse(src)
     [scenario] = feature.scenarios.values()
     assert list(scenario.examples.as_contexts()) == expected
+
+
+def test_comment():
+    src = """\
+# feature comment
+Feature: Comments  # n
+    # scenario comment
+    Scenario: Comments can only be at start of lines  # not a comment
+        # steps comment
+        Given foo
+        And a line without a #comment
+        # mid-steps comment
+        And this is not a#comment
+        And this is not "#acomment"
+"""
+    feature = parse(src)
+    assert feature.name == "Comments  # n"
+    assert feature.description == ""
+    [scenario] = feature.scenarios.values()
+
+    assert scenario.name == "Comments can only be at start of lines  # not a comment"
+
+    assert all(step.type == GIVEN for step in scenario.steps)
+
+    step_names = [step.name for step in scenario.steps]
+    assert step_names == ["foo", "a line without a #comment", "this is not a#comment", 'this is not "#acomment"']
 
 
 @pytest.mark.xfail(reason="Not implemented yet")

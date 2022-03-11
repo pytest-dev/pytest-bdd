@@ -21,7 +21,7 @@ scenario: [tag_lines] scenario_line [_INDENT [steps] [examples] _DEDENT]
 scenario_line: (SCENARIO | SCENARIO_OUTLINE) STRING _NL?
 
 examples: example_line example_table
-example_line: EXAMPLE [STRING] _NL?
+example_line: EXAMPLES [STRING] _NL?
 
 example_table: example_table_row example_table_row+
 example_table_row: /\|.*\|/ _NL
@@ -49,20 +49,20 @@ tag_lines: tag_line+
 
 //string: /[^\n]+/
 // anything but new lines and comments.
-// Use low priority (0), so that we attempt to first match other terminals with priority 1.
+// Use low priority (-1), so that we attempt to first match other terminals with priority 0 (the default).
 // This is needed to avoid having "description" greedy matching other rules like "background" and "scenarios"
-STRING.0: /[^\n#]+/
+STRING.-1: /.+/
 
-GIVEN.1: "Given"
-WHEN.1: "When"
-THEN.1: "Then"
-AND.1: "And"
+GIVEN: "Given "
+WHEN: "When "
+THEN: "Then "
+AND: "And "
 
-SCENARIO.1: "Scenario:"
-SCENARIO_OUTLINE.1: "Scenario Outline:"
-BACKGROUND.1: "Background:"
-FEATURE.1: "Feature:"
-EXAMPLE.1: "Examples:"
+SCENARIO: "Scenario:"
+SCENARIO_OUTLINE: "Scenario Outline:"
+BACKGROUND: "Background:"
+FEATURE: "Feature:"
+EXAMPLES: "Examples:"
 
 // TODO: Probably the following does not need the negative lookbehind part
 //step_docstring: /"""\n.*?(?<!\\)(\\\\)*?\n\s*"""/is
@@ -79,9 +79,9 @@ step_docstring: /"""\n.*?\n\s*"""/is
 %declare _INDENT _DEDENT
 %ignore WS_INLINE
 
-COMMENT: /#[^\n]*/
-%ignore COMMENT
+COMMENT_LINE: /#.*/ _NL
+%ignore COMMENT_LINE
 
 // _NL: /(\r?\n[\t ]*)+/
 
-_NL: ( /\r?\n[\t ]*/ | COMMENT )+
+_NL: /(\r?\n[\t ]*)+/
