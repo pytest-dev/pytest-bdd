@@ -125,14 +125,14 @@ def test_step_trace(testdir):
                     "name": "Passing",
                     "steps": [
                         {
-                            "keyword": "Given",
+                            "keyword": "Given ",
                             "line": 6,
                             "match": {"location": ""},
                             "name": "a passing step",
                             "result": {"status": "passed", "duration": OfType(int)},
                         },
                         {
-                            "keyword": "And",
+                            "keyword": "And ",
                             "line": 7,
                             "match": {"location": ""},
                             "name": "some other passing step",
@@ -150,14 +150,14 @@ def test_step_trace(testdir):
                     "name": "Failing",
                     "steps": [
                         {
-                            "keyword": "Given",
+                            "keyword": "Given ",
                             "line": 11,
                             "match": {"location": ""},
                             "name": "a passing step",
                             "result": {"status": "passed", "duration": OfType(int)},
                         },
                         {
-                            "keyword": "And",
+                            "keyword": "And ",
                             "line": 12,
                             "match": {"location": ""},
                             "name": "a failing step",
@@ -176,7 +176,7 @@ def test_step_trace(testdir):
                             "line": 16,
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
-                            "keyword": "Given",
+                            "keyword": "Given ",
                             "name": "type str and value hello",
                         }
                     ],
@@ -194,7 +194,7 @@ def test_step_trace(testdir):
                             "line": 16,
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
-                            "keyword": "Given",
+                            "keyword": "Given ",
                             "name": "type int and value 42",
                         }
                     ],
@@ -212,7 +212,7 @@ def test_step_trace(testdir):
                             "line": 16,
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
-                            "keyword": "Given",
+                            "keyword": "Given ",
                             "name": "type float and value 1.0",
                         }
                     ],
