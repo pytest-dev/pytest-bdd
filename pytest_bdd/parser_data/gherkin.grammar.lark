@@ -29,9 +29,9 @@ example_table_row: /\|.*\|/ _NL
 
 steps: givens? (whens | thens) *
 
-givens: step{GIVEN}+ step{AND}*
-whens: step{WHEN}+ step{AND}*
-thens: step{THEN}+ step{AND}*
+givens: step{GIVEN}+ (step{AND} | step{BUT})*
+whens: step{WHEN}+ (step{AND} | step{BUT})*
+thens: step{THEN}+ (step{AND} | step{BUT})*
 
 // step{type}: step_line{type} (_INDENT step_arg _DEDENT)?
 step{type}: step_line{type}
@@ -57,6 +57,7 @@ GIVEN: "Given "
 WHEN: "When "
 THEN: "Then "
 AND: "And "
+BUT: "But "
 
 SCENARIO: "Scenario:"
 SCENARIO_OUTLINE: "Scenario Outline:"
