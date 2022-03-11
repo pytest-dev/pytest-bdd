@@ -302,20 +302,21 @@ def test_step_hooks(testdir):
     testdir.makefile(
         ".feature",
         test="""
-    Scenario: When step has hook on failure
-        Given I have a bar
-        When it fails
-
-    Scenario: When step's dependency a has failure
-        Given I have a bar
-        When it's dependency fails
-
-    Scenario: When step is not found
-        Given not found
-
-    Scenario: When step validation error happens
-        Given foo
-        And foo
+        Feature: Step hooks
+            Scenario: When step has hook on failure
+                Given I have a bar
+                When it fails
+        
+            Scenario: When step's dependency a has failure
+                Given I have a bar
+                When it's dependency fails
+        
+            Scenario: When step is not found
+                Given not found
+        
+            Scenario: When step validation error happens
+                Given foo
+                And foo
     """,
     )
     testdir.makepyfile(
@@ -419,16 +420,17 @@ def test_step_trace(testdir):
     testdir.makefile(
         ".feature",
         test="""
-    Scenario: When step has failure
-        Given I have a bar
-        When it fails
-
-    Scenario: When step is not found
-        Given not found
-
-    Scenario: When step validation error happens
-        Given foo
-        And foo
+        Feature: Test step trace
+            Scenario: When step has failure
+                Given I have a bar
+                When it fails
+        
+            Scenario: When step is not found
+                Given not found
+        
+            Scenario: When step validation error happens
+                Given foo
+                And foo
     """,
     )
     testdir.makepyfile(
