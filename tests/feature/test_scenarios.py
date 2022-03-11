@@ -29,9 +29,10 @@ def test_scenarios(testdir, pytest_params, bdd_parser):
     features = testdir.mkdir("features")
     features.join("test.feature").write_text(
         textwrap.dedent(
-            """
-    Scenario: Test scenario
-        Given I have a bar
+            """\
+            Feature: A feature
+                Scenario: Test scenario
+                    Given I have a bar
     """
         ),
         "utf-8",

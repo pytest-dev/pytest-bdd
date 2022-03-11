@@ -45,7 +45,8 @@ def test_outlined(testdir):
 
                     Examples:
                     | start | eat | left |
-                    |  12   |  5  |  7   | # a comment
+                    # a comment
+                    |  12   |  5  |  7   |
                     |  5    |  4  |  1   |
 
             """
