@@ -186,7 +186,7 @@ Feature: a feature
     Scenario: a scenario
         Given there is a foo
 """,
-            [Step(GIVEN, "there is a foo", 3, 9, "Given ")],
+            [Step(GIVEN, "there is a foo", 3, 9, "Given")],
         ),
         (
             """\
@@ -194,7 +194,7 @@ Feature: a feature
     Scenario: a scenario
         When I click the foo
 """,
-            [Step(WHEN, "I click the foo", 3, 9, "When ")],
+            [Step(WHEN, "I click the foo", 3, 9, "When")],
         ),
         (
             """\
@@ -202,7 +202,7 @@ Feature: a feature
     Scenario: a scenario
         Then I should see a foo
 """,
-            [Step(THEN, "I should see a foo", 3, 9, "Then ")],
+            [Step(THEN, "I should see a foo", 3, 9, "Then")],
         ),
         (
             """\
@@ -213,9 +213,9 @@ Feature: a feature
         Then I should see a foo
 """,
             [
-                Step(GIVEN, "there is a foo", 3, 9, "Given "),
-                Step(WHEN, "I click the foo", 4, 9, "When "),
-                Step(THEN, "I should see a foo", 5, 9, "Then "),
+                Step(GIVEN, "there is a foo", 3, 9, "Given"),
+                Step(WHEN, "I click the foo", 4, 9, "When"),
+                Step(THEN, "I should see a foo", 5, 9, "Then"),
             ],
         ),
         (
@@ -229,11 +229,11 @@ Feature: a feature
         But I should not see more than one foo
 """,
             [
-                Step(GIVEN, "there is a foo", 3, 9, "Given "),
-                Step(GIVEN, "there is a second foo", 4, 9, "Given "),
-                Step(GIVEN, "there is a third foo", 5, 9, "And "),
-                Step(THEN, "I should see a foo", 6, 9, "Then "),
-                Step(THEN, "I should not see more than one foo", 7, 9, "But "),
+                Step(GIVEN, "there is a foo", 3, 9, "Given"),
+                Step(GIVEN, "there is a second foo", 4, 9, "Given"),
+                Step(GIVEN, "there is a third foo", 5, 9, "And"),
+                Step(THEN, "I should see a foo", 6, 9, "Then"),
+                Step(THEN, "I should not see more than one foo", 7, 9, "But"),
             ],
         ),
         pytest.param(
@@ -242,7 +242,7 @@ Feature: a feature
     Scenario: a scenario
         When I click the foo""",
             [
-                Step(WHEN, "I click the foo", 3, 9, "When "),
+                Step(WHEN, "I click the foo", 3, 9, "When"),
             ],
             id="no_ending_newline",
         ),

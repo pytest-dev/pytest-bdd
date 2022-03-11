@@ -100,7 +100,7 @@ class TreeToGherkin(lark.Transformer):
                 type=bdd_type,
                 line_number=type_token.line,
                 indent=type_token.column,
-                keyword=str(type_token),
+                keyword=str(type_token.strip()),
             )
             for bdd_type, [type_token, value_token] in steps_data
         ]
