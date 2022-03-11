@@ -116,7 +116,7 @@ def test_step_trace(testdir):
             {
                 "duration": OfType(float),
                 "failed": False,
-                "keyword": "Given",
+                "keyword": "Given ",
                 "line_number": 6,
                 "name": "a passing step",
                 "type": "given",
@@ -124,7 +124,7 @@ def test_step_trace(testdir):
             {
                 "duration": OfType(float),
                 "failed": False,
-                "keyword": "And",
+                "keyword": "And ",
                 "line_number": 7,
                 "name": "some other passing step",
                 "type": "given",
@@ -151,7 +151,7 @@ def test_step_trace(testdir):
             {
                 "duration": OfType(float),
                 "failed": False,
-                "keyword": "Given",
+                "keyword": "Given ",
                 "line_number": 11,
                 "name": "a passing step",
                 "type": "given",
@@ -159,7 +159,7 @@ def test_step_trace(testdir):
             {
                 "duration": OfType(float),
                 "failed": True,
-                "keyword": "And",
+                "keyword": "And ",
                 "line_number": 12,
                 "name": "a failing step",
                 "type": "given",
@@ -185,7 +185,7 @@ def test_step_trace(testdir):
             {
                 "duration": OfType(float),
                 "failed": False,
-                "keyword": "Given",
+                "keyword": "Given ",
                 "line_number": 15,
                 "name": "there are 12 cucumbers",
                 "type": "given",
@@ -193,7 +193,7 @@ def test_step_trace(testdir):
             {
                 "duration": OfType(float),
                 "failed": False,
-                "keyword": "When",
+                "keyword": "When ",
                 "line_number": 16,
                 "name": "I eat 5 cucumbers",
                 "type": "when",
@@ -201,7 +201,7 @@ def test_step_trace(testdir):
             {
                 "duration": OfType(float),
                 "failed": False,
-                "keyword": "Then",
+                "keyword": "Then ",
                 "line_number": 17,
                 "name": "I should have 7 cucumbers",
                 "type": "then",
@@ -227,7 +227,7 @@ def test_step_trace(testdir):
             {
                 "duration": OfType(float),
                 "failed": False,
-                "keyword": "Given",
+                "keyword": "Given ",
                 "line_number": 15,
                 "name": "there are 5 cucumbers",
                 "type": "given",
@@ -235,7 +235,7 @@ def test_step_trace(testdir):
             {
                 "duration": OfType(float),
                 "failed": False,
-                "keyword": "When",
+                "keyword": "When ",
                 "line_number": 16,
                 "name": "I eat 4 cucumbers",
                 "type": "when",
@@ -243,7 +243,7 @@ def test_step_trace(testdir):
             {
                 "duration": OfType(float),
                 "failed": False,
-                "keyword": "Then",
+                "keyword": "Then ",
                 "line_number": 17,
                 "name": "I should have 1 cucumbers",
                 "type": "then",
