@@ -33,26 +33,27 @@ def test_scenarios(testdir, pytest_params, bdd_parser):
             Feature: A feature
                 Scenario: Test scenario
                     Given I have a bar
-    """
+            """
         ),
         "utf-8",
         ensure=True,
     )
     features.join("subfolder", "test.feature").write_text(
         textwrap.dedent(
+            """\
+            Feature: Subfolder
+                Scenario: Test subfolder scenario
+                    Given I have a bar
+            
+                Scenario: Test failing subfolder scenario
+                    Given I have a failing bar
+            
+                Scenario: Test already bound scenario
+                    Given I have a bar
+            
+                Scenario: Test scenario
+                    Given I have a bar
             """
-    Scenario: Test subfolder scenario
-        Given I have a bar
-
-    Scenario: Test failing subfolder scenario
-        Given I have a failing bar
-
-    Scenario: Test already bound scenario
-        Given I have a bar
-
-    Scenario: Test scenario
-        Given I have a bar
-    """
         ),
         "utf-8",
         ensure=True,
