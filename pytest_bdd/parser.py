@@ -7,6 +7,8 @@ import typing
 from collections import OrderedDict
 from typing import cast
 
+from attrs import define, field  # add attrs dep
+
 from . import exceptions, types
 
 if typing.TYPE_CHECKING:
@@ -280,28 +282,17 @@ class Scenario:
         self.failed = False
 
 
+@define(eq=True)
 class Step:
-
-    """Step."""
-
-    def __init__(self, name: str, type: str, indent: int, line_number: int, keyword: str) -> None:
-        """Step constructor.
-
-        :param str name: step name.
-        :param str type: step type.
-        :param int indent: step text indent.
-        :param int line_number: line number.
-        :param str keyword: step keyword.
-        """
-        self.name: str = name
-        self.keyword: str = keyword
-        self.lines: list[str] = []
-        self.indent: int = indent
-        self.type: str = type
-        self.line_number: int = line_number
-        self.failed: bool = False
-        self.scenario: ScenarioTemplate | None = None
-        self.background: Background | None = None
+    type: str
+    _name: str
+    line_number: int
+    indent: int
+    keyword: str
+    failed: bool = field(init=False, default=False)
+    scenario: ScenarioTemplate | None = field(init=False, default=None)
+    background: Background | None = field(init=False, default=None)
+    lines: list[str] = field(init=False, factory=list)
 
     def add_line(self, line: str) -> None:
         """Add line to the multiple step.
@@ -335,15 +326,15 @@ class Step:
         """Full step name including the type."""
         return f'{self.type.capitalize()} "{self.name}"'
 
-    def __repr__(self) -> str:
-        return f"Step <{self.type.capitalize()} {self.name} [{self.line_number}:{self.indent}]>"
+    # def __repr__(self) -> str:
+    #     return f"Step <{self.type.capitalize()} {self.name} [{self.line_number}:{self.indent}]>"
 
     @property
     def params(self) -> tuple[str, ...]:
         """Get step params."""
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
-    def render(self, context: Mapping[str, Any]):
+    def render(self, context: Mapping[str, Any]) -> str:
         def replacer(m: Match):
             varname = m.group(1)
             return str(context[varname])

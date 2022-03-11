@@ -1,9 +1,9 @@
 import pytest
 from lark import GrammarError
-from more_itertools import zip_equal
+from more_itertools import zip_equal  # add requirement
 
 from pytest_bdd.new_parser import parse
-from pytest_bdd.parser import Feature
+from pytest_bdd.parser import Feature, Step
 from pytest_bdd.types import GIVEN, THEN, WHEN
 
 # TODO: Changes to document
@@ -23,9 +23,7 @@ Feature: a feature
     assert isinstance(feature, Feature)
     assert feature.name == "a feature"
     assert feature.tags == {"atag", "another_tag", "a_third_tag"}
-    # TODO: assert feature.examples
     assert feature.line_number == 3
-    # TODO: assert feature.description
     assert feature.background is None
 
 
@@ -188,7 +186,7 @@ Feature: a feature
     Scenario: a scenario
         Given there is a foo
 """,
-            [(GIVEN, "there is a foo")],
+            [Step(GIVEN, "there is a foo", 3, 9, "Given ")],
         ),
         (
             """\
@@ -196,7 +194,7 @@ Feature: a feature
     Scenario: a scenario
         When I click the foo
 """,
-            [(WHEN, "I click the foo")],
+            [Step(WHEN, "I click the foo", 3, 9, "When ")],
         ),
         (
             """\
@@ -204,7 +202,7 @@ Feature: a feature
     Scenario: a scenario
         Then I should see a foo
 """,
-            [(THEN, "I should see a foo")],
+            [Step(THEN, "I should see a foo", 3, 9, "Then ")],
         ),
         (
             """\
@@ -214,7 +212,11 @@ Feature: a feature
         When I click the foo
         Then I should see a foo
 """,
-            [(GIVEN, "there is a foo"), (WHEN, "I click the foo"), (THEN, "I should see a foo")],
+            [
+                Step(GIVEN, "there is a foo", 3, 9, "Given "),
+                Step(WHEN, "I click the foo", 4, 9, "When "),
+                Step(THEN, "I should see a foo", 5, 9, "Then "),
+            ],
         ),
         (
             """\
@@ -227,11 +229,11 @@ Feature: a feature
         But I should not see more than one foo
 """,
             [
-                (GIVEN, "there is a foo"),
-                (GIVEN, "there is a second foo"),
-                (GIVEN, "there is a third foo"),
-                (THEN, "I should see a foo"),
-                (THEN, "I should not see more than one foo"),
+                Step(GIVEN, "there is a foo", 3, 9, "Given "),
+                Step(GIVEN, "there is a second foo", 4, 9, "Given "),
+                Step(GIVEN, "there is a third foo", 5, 9, "And "),
+                Step(THEN, "I should see a foo", 6, 9, "Then "),
+                Step(THEN, "I should not see more than one foo", 7, 9, "But "),
             ],
         ),
         pytest.param(
@@ -240,7 +242,7 @@ Feature: a feature
     Scenario: a scenario
         When I click the foo""",
             [
-                (WHEN, "I click the foo"),
+                Step(WHEN, "I click the foo", 3, 9, "When "),
             ],
             id="no_ending_newline",
         ),
@@ -250,22 +252,36 @@ def test_step(src, expected_steps):
     feature = parse(src)
 
     [scenario] = feature.scenarios.values()
-    for i, (step, expected_step) in enumerate(zip_equal(scenario.steps, expected_steps), start=3):
-        expected_type, expected_name = expected_step
-        assert step.type == expected_type
-        assert step.name == expected_name
-        assert step.line_number == i
-        # TODO: assert step.name
-        # TODO: assert step.keyword
-        # TODO: assert step.lines
-        # TODO: assert step.indent
-        # TODO: assert step.type
-        # TODO: assert step.line_number
-        # TODO: assert step.failed
-        # TODO: assert step.start
-        # TODO: assert step.stop
-        # TODO: assert step.scenario
-        # TODO: assert step.background
+    for step, expected_step in zip_equal(scenario.steps, expected_steps):
+        assert step.type == expected_step.type
+        assert step.name == expected_step.name
+        assert step.line_number == expected_step.line_number
+        assert step.indent == expected_step.indent
+        assert step.keyword == expected_step.keyword
+
+        assert step.failed is False
+        assert step.scenario == scenario
+
+
+def test_step_background():
+    src = """\
+Feature: a feature
+    Background:
+        Given I have a foo
+    Scenario: a scenario
+        When I click the foo"""
+    feature = parse(src)
+    [background_step] = feature.background.steps
+
+    assert background_step.name == "I have a foo"
+    assert background_step.background is not None
+    assert background_step.background == feature.background
+
+    [scenario] = feature.scenarios.values()
+    [given, when] = scenario.steps
+
+    assert given is background_step
+    assert when.name == "I click the foo"
 
 
 @pytest.mark.parametrize(
