@@ -8,6 +8,7 @@ from pytest_bdd.types import GIVEN, THEN, WHEN
 
 # TODO: Changes to document
 #  - Comments are now only allowed in their own lines.
+#  - "Feature:" line is always required.
 #  - Other changes. Check the modifications to the tests.
 
 
