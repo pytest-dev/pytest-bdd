@@ -5,9 +5,8 @@ import re
 import textwrap
 import typing
 from collections import OrderedDict
+from dataclasses import dataclass, field
 from typing import cast
-
-from attrs import define, field  # add attrs dep
 
 from . import exceptions, types
 
@@ -183,7 +182,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
     return feature
 
 
-@define
+@dataclass
 class Feature:
     """Feature."""
 
@@ -197,7 +196,7 @@ class Feature:
     description: str
 
 
-@define
+@dataclass
 class ScenarioTemplate:
     """A scenario template.
 
@@ -206,15 +205,15 @@ class ScenarioTemplate:
     feature: Feature
     name: str
     line_number: int
-    tags: set[str] = field(
-        factory=set,
-        converter=lambda v: v if v is not None else set(),
-    )
-    examples: Examples | None = field(
-        factory=lambda: Examples(),
-        converter=lambda v: v if v is not None else Examples(),
-    )
-    _steps: list[Step] = field(factory=list)
+    tags: set[str] = field(default_factory=set)
+    examples: Examples | None = field(default_factory=lambda: Examples())
+    _steps: list[Step] = field(init=False, default_factory=list)
+
+    def __post_init__(self):
+        if self.examples is None:
+            self.examples = Examples()
+        if self.tags is None:
+            self.tags = set()
 
     def add_step(self, step: Step) -> None:
         """Add step to the scenario.
@@ -243,7 +242,7 @@ class ScenarioTemplate:
         return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
 
 
-@define
+@dataclass
 class Scenario:
     """Scenario."""
 
@@ -251,13 +250,14 @@ class Scenario:
     name: str
     line_number: int
     steps: list[Step]
-    tags: set[str] = field(
-        factory=set,
-        converter=lambda v: v if v is not None else set(),
-    )
+    tags: set[str] = field(default_factory=set)
+
+    def __post_init__(self):
+        if self.tags is None:
+            self.tags = set()
 
 
-@define(eq=True)
+@dataclass
 class Step:
     type: str
     _name: str
@@ -267,7 +267,18 @@ class Step:
     failed: bool = field(init=False, default=False)
     scenario: ScenarioTemplate | None = field(init=False, default=None)
     background: Background | None = field(init=False, default=None)
-    lines: list[str] = field(init=False, factory=list)
+    lines: list[str] = field(init=False, default_factory=list)
+
+    def __init__(self, type: str, name: str, line_number: int, indent: int, keyword: str):
+        self.type = type
+        self.name = name
+        self.line_number = line_number
+        self.indent = indent
+        self.keyword = keyword
+        self.failed = False
+        self.scenario = None
+        self.background = None
+        self.lines = []
 
     def add_line(self, line: str) -> None:
         """Add line to the multiple step.
@@ -301,9 +312,6 @@ class Step:
         """Full step name including the type."""
         return f'{self.type.capitalize()} "{self.name}"'
 
-    # def __repr__(self) -> str:
-    #     return f"Step <{self.type.capitalize()} {self.name} [{self.line_number}:{self.indent}]>"
-
     @property
     def params(self) -> tuple[str, ...]:
         """Get step params."""
@@ -317,11 +325,11 @@ class Step:
         return STEP_PARAM_RE.sub(replacer, self.name)
 
 
-@define
+@dataclass
 class Background:
     feature: Feature
     line_number: int
-    steps: list[Step] = field(factory=list)
+    steps: list[Step] = field(init=False, default_factory=list)
 
     def add_step(self, step: Step) -> None:
         """Add step to the background."""
@@ -329,12 +337,12 @@ class Background:
         self.steps.append(step)
 
 
-@define
+@dataclass
 class Examples:
     """Example table."""
 
-    example_params: list[str] = field(factory=list)
-    examples: list[Sequence[str]] = field(factory=list)
+    example_params: list[str] = field(default_factory=list)
+    examples: list[Sequence[str]] = field(default_factory=list)
     line_number: int | None = field(default=None)
     name: str | None = field(default=None)
 
