@@ -10,6 +10,7 @@ from pytest_bdd.types import GIVEN, THEN, WHEN
 #  - Comments are now only allowed in their own lines.
 #  - "Feature:" line is always required.
 #  - Other changes. Check the modifications to the tests.
+#  - Tags can only be "valid" identifiers, e.g. no spaces.
 
 
 def test_feature():
