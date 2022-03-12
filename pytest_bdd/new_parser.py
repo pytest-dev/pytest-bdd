@@ -63,17 +63,30 @@ class TreeToGherkin(lark.Transformer):
     def then(self, _: Token) -> str:
         return pytest_bdd_types.THEN
 
-    def step_docstring(self, value: Token) -> str:
+    def step_docstring(self, value: list[Token]) -> str:
         # TODO: Unescape escaped characters?
         # TODO: Try to handle also \r\n
         # TODO: Check if tabs and spaces work?
 
         EOF_MARKER = "PYTEST_BDD_EOF_DOCSTRING_MARKER"
         [text] = value
-        column = text.column - 1  # text.column is 1-indexed
-        pre, raw_content, post = text[:4], text[4:-4], text[-4:]
-        assert pre in {'"""\n', "'''\n"}
-        assert post in {'"""\n', "'''\n"}
+
+        if text.find('"""') == -1:
+            quotes = "'''"
+        elif text.find("'''") == -1:
+            quotes = '"""'
+        elif text.find('"""') < text.find("'''"):
+            quotes = '"""'
+        else:
+            quotes = "'''"
+        before_quotes, _, after_quotes = text.partition(quotes)
+        last_new_line = before_quotes.rfind("\n")
+        assert last_new_line >= 0
+        indents = before_quotes[last_new_line:]
+        column = len(indents) - 1  # because the \n is in the string
+        pre, raw_content, post = after_quotes[:1], after_quotes[1:-3], after_quotes[-3:]
+        assert pre == "\n"
+        assert post in {'"""', "'''"}
 
         # HACK: We append to the content a non-whitespace marker, so that textwrap.dedent will retain the indentation
         #  of the last line. This will allow us to check the indentation of all lines, including the last one.

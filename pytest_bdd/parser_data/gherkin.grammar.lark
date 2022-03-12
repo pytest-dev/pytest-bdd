@@ -36,9 +36,11 @@ thens: step{THEN}+ (step{AND} | step{BUT})*
 
 // step{type}: step_line{type} (_INDENT step_arg _DEDENT)?
 step{type}: step_line{type} step_arg
-step_line{type}: type STRING _NL
+step_line{type}: type STRING
 
-step_arg: [step_docstring] [_INDENT [data_table] _DEDENT]
+// "step_docstring" handles the newlines before it by itself, without relying on _NL.
+// If we relied on _NL, we would have to rewrite the TreeIndenter, which I'm not looking forward to.
+step_arg: [step_docstring] [_NL _INDENT [data_table] _DEDENT] _NL
 
 data_table: data_table_row (_NL data_table_row)+ _NL
 data_table_row: "|" (/.*?(?<!\\)(\\\\)*?\|/)+
@@ -69,10 +71,10 @@ EXAMPLES: "Examples:" | "Scenarios:"
 //step_docstring: /"""\n.*?(?<!\\)(\\\\)*?\n\s*"""/is
 //              | /'''\n.*?(?<!\\)(\\\\)*?\n\s*'''/is
 
-STEP_DOCSTRING: /"""/ STEP_DOCSTRING_INNER /"""/ _NL
-              | /'''/ STEP_DOCSTRING_INNER /'''/ _NL
+STEP_DOCSTRING: /\n[ \t]*/ /"""/ STEP_DOCSTRING_INNER /"""/
+              | /\n[ \t]*/ /'''/ STEP_DOCSTRING_INNER /'''/
 STEP_DOCSTRING_INNER: /\n.*?/is _NL
-step_docstring: _INDENT STEP_DOCSTRING _DEDENT
+step_docstring: STEP_DOCSTRING
 
 // %import common.ESCAPED_STRING -> string
 %import common.WS_INLINE
