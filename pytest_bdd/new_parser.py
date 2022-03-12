@@ -115,13 +115,25 @@ class TreeToGherkin(lark.Transformer):
         return tags
 
     @v_args(inline=True)
-    def scenario(
+    def scenario(self, tag_lines: set[str] | None, scenario_line: Token, steps: list[Step] | None):
+        # TODO: Try to remove duplicated code with "scenario_outline"
+        scenario = ScenarioTemplate(
+            name=scenario_line.strip(),
+            line_number=scenario_line.line,
+            tags=tag_lines or set(),
+            feature=None,  # added later
+        )
+        for step in steps or []:
+            scenario.add_step(step)
+        return scenario
+
+    @v_args(inline=True)
+    def scenario_outline(
         self, tag_lines: set[str] | None, scenario_line: Token, steps: list[Step] | None, examples: Examples | None
     ):
         scenario = ScenarioTemplate(
             name=scenario_line.strip(),
             line_number=scenario_line.line,
-            # example_converters=None,
             tags=tag_lines or set(),
             feature=None,  # added later
             examples=examples,

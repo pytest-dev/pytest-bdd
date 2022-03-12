@@ -11,6 +11,7 @@ from pytest_bdd.types import GIVEN, THEN, WHEN
 #  - "Feature:" line is always required.
 #  - Other changes. Check the modifications to the tests.
 #  - Tags can only be "valid" identifiers, e.g. no spaces.
+#  - Must use "Scenario Outline" (or "Scenario Template") for outlined scenarios. "Scenario" will not work anymore
 
 
 def test_feature():
@@ -567,20 +568,43 @@ def test_empty_lines(src):
 @pytest.mark.parametrize(
     ["src", "expected"],
     [
-        (
+        pytest.param(
             """\
 Feature: A feature
-    Scenario: A scenario
+    Scenario Outline: A scenario
         Examples:
         |  foo  |
         |  bar  |
 """,
             [{"foo": "bar"}],
+            id="basic",
+        ),
+        pytest.param(
+            """\
+Feature: A feature
+    Scenario Template: A scenario
+        Examples:
+        |  foo  |
+        |  bar  |
+""",
+            [{"foo": "bar"}],
+            id="scenario_template_instead_of_scenario_outline_keyword",
+        ),
+        pytest.param(
+            """\
+Feature: A feature
+    Scenario Outline: A scenario
+        Scenarios:
+        |  foo  |
+        |  bar  |
+""",
+            [{"foo": "bar"}],
+            id="scenarios_instead_of_examples_keyword",
         ),
         (
             """\
 Feature: A feature
-    Scenario: A scenario
+    Scenario Outline: A scenario
         Examples:
         | first name | last name |
         | Alessio    | Bogon     |
@@ -594,14 +618,14 @@ Feature: A feature
         (
             """\
 Feature: A feature
-    Scenario: A scenario
+    Scenario Outline: A scenario
 """,
             [],
         ),
         (
             """\
 Feature: A feature
-    Scenario: A scenario
+    Scenario Outline: A scenario
         Examples:
         |  pipe in the \\| middle  |
         |  foo    |
@@ -616,6 +640,29 @@ def test_scenario_examples(src, expected):
     feature = parse(src)
     [scenario] = feature.scenarios.values()
     assert list(scenario.examples.as_contexts()) == expected
+
+
+@pytest.mark.parametrize(
+    ["src", "expected"],
+    [
+        (
+            """\
+Feature: A feature
+    Scenario: A scenario
+        Given foo is <foo>
+        Examples:
+        |  foo  |
+        |  bar  |
+""",
+            [{"foo": "bar"}],
+        ),
+    ],
+)
+def test_examples_not_allowed_in_scenario(src, expected):
+    """Test that "Examples:" are not allowed in scenarios (only in scenario outlines)"""
+    with pytest.raises(Exception):
+        feature = parse(src)
+    # TODO: Test exception
 
 
 def test_comment():

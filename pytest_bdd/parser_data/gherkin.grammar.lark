@@ -17,8 +17,9 @@ scenarios: scenario*
 feature_header: [tag_lines]
 feature_line: FEATURE STRING _NL?
 
-scenario: [tag_lines] scenario_line [_INDENT [steps] [examples] _DEDENT]
-scenario_line: (SCENARIO | SCENARIO_OUTLINE) STRING _NL?
+scenario: [tag_lines] scenario_line{SCENARIO} [_INDENT [steps] _DEDENT] -> scenario
+        | [tag_lines] scenario_line{SCENARIO_OUTLINE} [_INDENT [steps] examples _DEDENT] -> scenario_outline
+scenario_line{type}: type STRING _NL?
 
 examples: example_line example_table
 example_line: EXAMPLES [STRING] _NL?
@@ -60,10 +61,10 @@ AND: "And "
 BUT: "But "
 
 SCENARIO: "Scenario:"
-SCENARIO_OUTLINE: "Scenario Outline:"
+SCENARIO_OUTLINE: "Scenario Outline:" | "Scenario Template:"
 BACKGROUND: "Background:"
 FEATURE: "Feature:"
-EXAMPLES: "Examples:"
+EXAMPLES: "Examples:" | "Scenarios:"
 
 // TODO: Probably the following does not need the negative lookbehind part
 //step_docstring: /"""\n.*?(?<!\\)(\\\\)*?\n\s*"""/is
