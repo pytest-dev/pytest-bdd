@@ -34,13 +34,10 @@ givens: step{GIVEN}+ (step{AND} | step{BUT})*
 whens: step{WHEN}+ (step{AND} | step{BUT})*
 thens: step{THEN}+ (step{AND} | step{BUT})*
 
-// step{type}: step_line{type} (_INDENT step_arg _DEDENT)?
-step{type}: step_line{type} step_arg
-step_line{type}: type STRING
-
-// "step_docstring" handles the newlines before it by itself, without relying on _NL.
+// "step_docstring" handles the newlines before it by itself, without relying on _NL, because it can disregard
+// the current indentation altogether.
 // If we relied on _NL, we would have to rewrite the TreeIndenter, which I'm not looking forward to.
-step_arg: [step_docstring] [_NL _INDENT [data_table] _DEDENT] _NL
+step{type}: type STRING [step_docstring] [_NL _INDENT [data_table] _DEDENT] _NL
 
 data_table: data_table_row (_NL data_table_row)+ _NL
 data_table_row: "|" (/.*?(?<!\\)(\\\\)*?\|/)+

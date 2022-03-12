@@ -130,16 +130,10 @@ class TreeToGherkin(lark.Transformer):
         return pytest_bdd_types.THEN, steps
 
     @v_args(inline=True)
-    def step(self, step_line: Token, step_arg: tuple = None):
-        # TODO: step_arg not implemented yet
-        return step_line, step_arg
+    def step(self, type: Token, name: Token, docstring: Token | None, datatable) -> tuple[Token, str, str, None]:
+        return type, name, docstring, datatable
 
-    def steps(self, step_groups: list[tuple[str, tuple[str, Tree]]]) -> list[Step]:
-        steps_data: list[tuple[str, tuple[Token, Token], str]] = [
-            (type, step_tree.children, docstring)
-            for type, step_group in step_groups
-            for step_tree, [docstring, _] in step_group
-        ]
+    def steps(self, step_groups: list[tuple[str, tuple[Token, str, str, None]]]) -> list[Step]:
         steps = [
             Step(
                 name=str(value_token),
@@ -149,7 +143,8 @@ class TreeToGherkin(lark.Transformer):
                 keyword=str(type_token.strip()),
                 docstring=docstring,
             )
-            for bdd_type, [type_token, value_token], docstring in steps_data
+            for bdd_type, step_group in step_groups
+            for type_token, value_token, docstring, _ in step_group
         ]
         return steps
 
