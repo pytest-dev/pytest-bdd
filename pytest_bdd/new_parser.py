@@ -65,15 +65,46 @@ class TreeToGherkin(lark.Transformer):
 
     def step_docstring(self, value: Token) -> str:
         # TODO: Unescape escaped characters?
+        # TODO: Try to handle also \r\n
+        # TODO: Check if tabs and spaces work?
+
+        EOF_MARKER = "PYTEST_BDD_EOF_DOCSTRING_MARKER"
         [text] = value
-        content = text[4:-3]
-        dedented = textwrap.dedent(content)
-        assert dedented[-1] == "\n"
-        dedented_without_newline = dedented[:-1]
-        return dedented_without_newline
+        column = text.column - 1  # text.column is 1-indexed
+        pre, raw_content, post = text[:4], text[4:-4], text[-4:]
+        assert pre in {'"""\n', "'''\n"}
+        assert post in {'"""\n', "'''\n"}
+
+        # HACK: We append to the content a non-whitespace marker, so that textwrap.dedent will retain the indentation
+        #  of the last line. This will allow us to check the indentation of all lines, including the last one.
+        #  We will remove the marker before returning the result.
+        raw_content += EOF_MARKER
+
+        dedented = textwrap.dedent(raw_content)
+
+        # Determine the indentation of the content with respect to the indentation of the triple quotes.
+        indentation_diff = raw_content.find(dedented.split("\n")[0]) - column
+        if indentation_diff < 0:
+            # If it is negative, it means that the content had some lines that had less indentation
+            # than the triple quotes line. This is an error.
+            raise ValueError("Invalid indentation")  # TODO: Raise a better custom error
+        elif indentation_diff > 0:
+            # If the difference is positive, it means that the content has more indentation,
+            # so we should add the difference back to it.
+            content = "\n".join(" " * indentation_diff + line for line in dedented.split("\n"))
+        else:
+            # Otherwise, there is no difference; nothing to do.
+            content = dedented
+
+        # Remove the marker we added initially.
+        suffix = f"\n{EOF_MARKER}"
+        assert content.endswith(suffix)
+        content = content[: -len(suffix)]
+
+        return content
 
     @v_args(inline=True)
-    def step_arg(self, docstring, step_datatable) -> tuple[str, str]:
+    def step_arg(self, docstring: str | None, step_datatable) -> tuple[str, str]:
         return docstring, step_datatable
 
     def givens(self, steps: list[Tree]) -> tuple[str, list[Tree]]:
@@ -90,9 +121,11 @@ class TreeToGherkin(lark.Transformer):
         # TODO: step_arg not implemented yet
         return step_line, step_arg
 
-    def steps(self, step_groups: list[tuple[str, list[Tree]]]) -> list[Step]:
-        steps_data: list[tuple[str, tuple[Token, Token]]] = [
-            (type, step_tree.children) for type, step_group in step_groups for step_tree, _ in step_group
+    def steps(self, step_groups: list[tuple[str, tuple[str, Tree]]]) -> list[Step]:
+        steps_data: list[tuple[str, tuple[Token, Token], str]] = [
+            (type, step_tree.children, docstring)
+            for type, step_group in step_groups
+            for step_tree, [docstring, _] in step_group
         ]
         steps = [
             Step(
@@ -101,8 +134,9 @@ class TreeToGherkin(lark.Transformer):
                 line_number=type_token.line,
                 indent=type_token.column,
                 keyword=str(type_token.strip()),
+                docstring=docstring,
             )
-            for bdd_type, [type_token, value_token] in steps_data
+            for bdd_type, [type_token, value_token], docstring in steps_data
         ]
         return steps
 

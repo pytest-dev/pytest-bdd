@@ -693,6 +693,191 @@ Feature: Comments  # n
     assert step_names == ["foo", "a line without a #comment", "this is not a#comment", 'this is not "#acomment"']
 
 
+@pytest.mark.parametrize(
+    ["src", "expected"],
+    [
+        pytest.param(
+            '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+            """
+            A simple docstring
+            """
+''',
+            "A simple docstring",
+            id="triple_double_quotes",
+        ),
+        pytest.param(
+            """\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+            '''
+            A simple docstring
+            '''
+""",
+            "A simple docstring",
+            id="triple_single_quotes",
+        ),
+        pytest.param(
+            '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+                    """
+                    A simple docstring
+                    """
+''',
+            "A simple docstring",
+            id="a_lot_of_indentation",
+        ),
+        pytest.param(
+            '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+"""
+A simple docstring
+"""
+''',
+            "A simple docstring",
+            id="no_indentation",
+        ),
+        pytest.param(
+            '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+            """
+            Multiline
+            docstring
+            """
+''',
+            "Multiline\ndocstring",
+            id="multiline",
+        ),
+        pytest.param(
+            '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+            """
+                Indented
+                docstring
+            """
+''',
+            "    Indented\n    docstring",
+            id="preserves_indentation_difference",
+        ),
+    ],
+)
+def test_step_docstring(src, expected):
+    feature = parse(src)
+    [scenario] = feature.scenarios.values()
+    [given] = scenario.steps
+    assert given.type == GIVEN
+    assert given.name == "I have a step with docstring"
+    assert given.docstring == expected
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        pytest.param(
+            '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+            """
+            Invalid quotes
+            \'\'\'
+''',
+            id="mixed_quotes",
+        ),
+        pytest.param(
+            '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+            """
+Invalid indent
+            """
+''',
+            id="invalid_indentation",
+        ),
+        pytest.param(
+            '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+            """
+        Invalid indent
+            """
+''',
+            id="invalid_indentation",
+        ),
+        pytest.param(
+            '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+            """
+                Invalid
+        indent
+            """
+''',
+            id="invalid_indentation",
+        ),
+        pytest.param(
+            '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+            """Invalid quote indent"""
+''',
+            id="invalid_quotes_indentation",
+        ),
+        pytest.param(
+            '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+            """
+            Invalid quote indent"""
+''',
+            id="invalid_quotes_indentation",
+        ),
+        pytest.param(
+            '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+            """
+            Invalid quote indent
+        """
+''',
+            id="invalid_quotes_indentation",
+        ),
+        pytest.param(
+            '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+            """
+            Invalid quote indent
+                """
+''',
+            id="invalid_quotes_indentation",
+        ),
+    ],
+)
+def test_step_invalid_docstring(src):
+    with pytest.raises(Exception) as exc:
+        feature = parse(src)
+    # TODO: Check the exception
+
+
 @pytest.mark.xfail(reason="Not implemented yet")
 def test_step_docstring_and_datatable():
     feature = parse(

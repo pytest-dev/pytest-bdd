@@ -35,11 +35,10 @@ whens: step{WHEN}+ (step{AND} | step{BUT})*
 thens: step{THEN}+ (step{AND} | step{BUT})*
 
 // step{type}: step_line{type} (_INDENT step_arg _DEDENT)?
-step{type}: step_line{type}
-step_line{type}: type STRING _NL?
+step{type}: step_line{type} step_arg
+step_line{type}: type STRING _NL
 
-
-step_arg: [step_docstring _NL] [data_table]
+step_arg: [step_docstring] [_INDENT [data_table] _DEDENT]
 
 data_table: data_table_row (_NL data_table_row)+ _NL
 data_table_row: "|" (/.*?(?<!\\)(\\\\)*?\|/)+
@@ -70,7 +69,10 @@ EXAMPLES: "Examples:" | "Scenarios:"
 //step_docstring: /"""\n.*?(?<!\\)(\\\\)*?\n\s*"""/is
 //              | /'''\n.*?(?<!\\)(\\\\)*?\n\s*'''/is
 
-step_docstring: /"""\n.*?\n\s*"""/is
+STEP_DOCSTRING: /"""/ STEP_DOCSTRING_INNER /"""/ _NL
+              | /'''/ STEP_DOCSTRING_INNER /'''/ _NL
+STEP_DOCSTRING_INNER: /\n.*?/is _NL
+step_docstring: _INDENT STEP_DOCSTRING _DEDENT
 
 // %import common.ESCAPED_STRING -> string
 %import common.WS_INLINE

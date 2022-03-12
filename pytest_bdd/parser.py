@@ -264,17 +264,19 @@ class Step:
     line_number: int
     indent: int
     keyword: str
+    docstring: str | None = None
     failed: bool = field(init=False, default=False)
     scenario: ScenarioTemplate | None = field(init=False, default=None)
     background: Background | None = field(init=False, default=None)
     lines: list[str] = field(init=False, default_factory=list)
 
-    def __init__(self, type: str, name: str, line_number: int, indent: int, keyword: str):
+    def __init__(self, type: str, name: str, line_number: int, indent: int, keyword: str, docstring: str | None = None):
         self.type = type
         self.name = name
         self.line_number = line_number
         self.indent = indent
         self.keyword = keyword
+        self.docstring = docstring
         self.failed = False
         self.scenario = None
         self.background = None
