@@ -33,29 +33,31 @@ Feature: a feature
     "src",
     [
         """\
-@a_tag @a_second_tag @a-third-tag
+@a_tag @a_second_tag @a-third-tag @1.tag-with?punctuation!
 Feature: a feature
 """,
         """\
 @a_tag
 @a_second_tag
 @a-third-tag
+@1.tag-with?punctuation!
 Feature: a feature
 """,
         """\
 @a_tag @a_second_tag
 @a-third-tag
+@1.tag-with?punctuation!
 Feature: a feature
 """,
         """\
-@a_tag @a_second_tag @a-third-tag
+@a_tag @a_second_tag @a-third-tag @1.tag-with?punctuation!
 Feature: a feature
 """,
     ],
 )
 def test_feature_tags(src):
     feature = parse(src)
-    assert feature.tags == {"a_tag", "a_second_tag", "a-third-tag"}
+    assert feature.tags == {"a_tag", "a_second_tag", "a-third-tag", "1.tag-with?punctuation!"}
 
 
 @pytest.mark.parametrize(
