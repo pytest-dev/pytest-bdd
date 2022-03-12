@@ -70,7 +70,7 @@ EXAMPLES: "Examples:" | "Scenarios:"
 
 STEP_DOCSTRING: /\n[ \t]*/ /"""/ STEP_DOCSTRING_INNER /"""/
               | /\n[ \t]*/ /'''/ STEP_DOCSTRING_INNER /'''/
-STEP_DOCSTRING_INNER: /\n.*?/is _NL
+STEP_DOCSTRING_INNER: /\n.*?/is
 step_docstring: STEP_DOCSTRING
 
 // %import common.ESCAPED_STRING -> string
