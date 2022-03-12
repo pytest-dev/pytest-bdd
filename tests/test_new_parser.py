@@ -781,6 +781,27 @@ def test_step_docstring(src, expected):
     assert given.docstring == expected
 
 
+def test_step_after_docstring():
+    src = '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+            """
+            A docstring
+            """
+        When I click the foo
+'''
+    feature = parse(src)
+    [scenario] = feature.scenarios.values()
+    [given, when] = scenario.steps
+    assert given.type == GIVEN
+    assert given.name == "I have a step with docstring"
+    assert given.docstring == "A docstring"
+
+    assert when.type == WHEN
+    assert when.name == "I click the foo"
+
+
 @pytest.mark.parametrize(
     "src",
     [
