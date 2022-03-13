@@ -645,6 +645,31 @@ def test_scenario_examples(src, expected):
 
 
 @pytest.mark.parametrize(
+    "src",
+    [
+        """\
+Feature: A feature
+    Scenario Outline: A scenario
+        Examples:
+        |  backslash at the end\\|
+        |  foo    |
+""",
+        """\
+Feature: A feature
+    Scenario Outline: Mismatching number of cells
+        Examples:
+        | first name |
+        | Alessio | Bogon |
+""",
+    ],
+)
+def test_invalid_examples_table(src):
+    with pytest.raises(Exception) as exc:
+        feature = parse(src)
+    # TODO: we should use the appropriate exception
+
+
+@pytest.mark.parametrize(
     ["src", "expected"],
     [
         (
@@ -899,7 +924,32 @@ def test_step_invalid_docstring(src):
     # TODO: Check the exception
 
 
-@pytest.mark.xfail(reason="Not implemented yet")
+def test_step_datatable():
+    feature = parse(
+        """\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with a datatable
+            |A|multiline|
+            |data|table|
+        When I look at the docstring
+"""
+    )
+    [scenario] = feature.scenarios.values()
+    given, when = scenario.steps
+    assert given.type == GIVEN
+    assert given.name == "I have a step with a datatable"
+    # fmt: off
+    assert given.datatable == [
+        ('A', 'multiline'),
+        ('data', 'table'),
+    ]
+    # fmt: on
+
+    assert when.type == WHEN
+    assert when.name == "I look at the docstring"
+
+
 def test_step_docstring_and_datatable():
     feature = parse(
         '''\
@@ -921,8 +971,8 @@ Feature: a feature
     assert given.docstring == "content of the docstring"
     # fmt: off
     assert given.datatable == [
-        ['A', 'multiline'],
-        ['data', 'table'],
+        ('A', 'multiline'),
+        ('data', 'table'),
     ]
     # fmt: on
 

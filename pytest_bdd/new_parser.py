@@ -14,10 +14,12 @@ from pytest_bdd import types as pytest_bdd_types
 from pytest_bdd.parser import Background, Examples, Feature, Scenario, ScenarioTemplate, Step, split_line
 
 if TYPE_CHECKING:
-    from typing import Sequence
+    from typing import Sequence, TypeAlias
 
 # TODOs:
 #  - line numbers don't seem to work correctly.
+
+TableType: TypeAlias = list[tuple[str, ...]]
 
 
 class TreeIndenter(Indenter):
@@ -130,10 +132,12 @@ class TreeToGherkin(lark.Transformer):
         return pytest_bdd_types.THEN, steps
 
     @v_args(inline=True)
-    def step(self, type: Token, name: Token, docstring: Token | None, datatable) -> tuple[Token, str, str, None]:
+    def step(
+        self, type: Token, name: Token, docstring: Token | None = None, datatable: TableType | None = None
+    ) -> tuple[Token, str, str, TableType]:
         return type, name, docstring, datatable
 
-    def steps(self, step_groups: list[tuple[str, tuple[Token, str, str, None]]]) -> list[Step]:
+    def steps(self, step_groups: list[tuple[str, tuple[Token, str, str, TableType]]]) -> list[Step]:
         steps = [
             Step(
                 name=str(value_token),
@@ -142,9 +146,10 @@ class TreeToGherkin(lark.Transformer):
                 indent=type_token.column,
                 keyword=str(type_token.strip()),
                 docstring=docstring,
+                datatable=datatable,
             )
             for bdd_type, step_group in step_groups
-            for type_token, value_token, docstring, _ in step_group
+            for type_token, value_token, docstring, datatable in step_group
         ]
         return steps
 
@@ -203,25 +208,30 @@ class TreeToGherkin(lark.Transformer):
     def description(self, value: list[Token]) -> str:
         return "\n".join(value)
 
-    def example_table(self, value: Sequence[Sequence[str]]) -> Sequence[Sequence[str], Sequence[Sequence[str]]]:
-        header, rows = value[0], value[1:]
+    def table(self, value: Sequence[Sequence[str]]) -> TableType:
         # TODO: Validate lengths
+        for i, row in enumerate(value[1:]):
+            if len(row) != len(value[0]):
+                # TODO: Test this, use a custom exception
+                raise ValueError(
+                    f"Row #{i} has a mismatch number of cells ({len(row)}). Expected {len(value[0])} cells"
+                )
 
-        return header, rows
+        return [tuple(row) for row in value]
 
     @v_args(inline=True)
-    def example_table_row(self, value: Token) -> list[str]:
+    def table_row(self, value: Token) -> list[str]:
         cells = split_line(value)
         return cells
 
     @v_args(inline=True)
-    def examples(self, example_line: Tree, example_table: tuple[list[str], list[tuple[str]]]) -> Examples:
+    def examples(self, example_line: Tree, table: TableType) -> Examples:
         examples_token, title = example_line.children
         ex = Examples()
 
         ex.line_number = examples_token.line
         ex.name = title
-        header, rows = example_table
+        header, rows = table[0], table[1:]
         ex.set_param_names(header)
         for row in rows:
             ex.add_example(row)
