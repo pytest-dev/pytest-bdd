@@ -200,11 +200,6 @@ class Feature:
     description: str
 
     def validate(self):
-        if self.filename is None:
-            raise ValidationError("Missing filename")
-        if self.rel_filename is None:
-            raise ValidationError("Missing rel_filename")
-
         for scenario_name, scenario in self.scenarios.items():
             if scenario_name != scenario.name:
                 raise ValidationError(
@@ -212,7 +207,8 @@ class Feature:
                 )
             scenario.validate()
 
-        self.background.validate()
+        if self.background is not None:
+            self.background.validate()
 
 
 @dataclass
@@ -381,6 +377,8 @@ class Background:
         self.steps.append(step)
 
     def validate(self):
+        if self.feature is None:
+            raise ValidationError(f"Background {self} not connected to a feature.")
         for step in self.steps:
             if step.background != self:
                 raise ValidationError(f"Step {step} is not connected to the background {self}")

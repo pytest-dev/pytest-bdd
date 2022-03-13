@@ -11,7 +11,16 @@ from lark import Lark, Token, Tree, v_args
 from lark.indenter import Indenter
 
 from pytest_bdd import types as pytest_bdd_types
-from pytest_bdd.parser import Background, Examples, Feature, Scenario, ScenarioTemplate, Step, split_line
+from pytest_bdd.parser import (
+    Background,
+    Examples,
+    Feature,
+    Scenario,
+    ScenarioTemplate,
+    Step,
+    ValidationError,
+    split_line,
+)
 
 if TYPE_CHECKING:
     from typing import Sequence, TypeAlias
@@ -276,13 +285,16 @@ class TreeToGherkin(lark.Transformer):
 
 def parse(content: str) -> Feature:
     if content[-1] != "\n":
-        # Fix for the Indenter not working well when thers is no \n at the end of file
+        # Fix for the Indenter not working well when there is no \n at the end of file
         # See https://github.com/lark-parser/lark/issues/321
         content += "\n"
     tree = parser.parse(content)
     print(tree.pretty())  # TODO: Remove before merge
-    gherkin = TreeToGherkin().transform(tree)
-    return gherkin
+
+    feature = TreeToGherkin().transform(tree)
+    feature.validate()
+
+    return feature
 
 
 def parse_feature(basedir, filename, encoding="utf-8"):
@@ -302,6 +314,9 @@ def parse_feature(basedir, filename, encoding="utf-8"):
     feature.filename = abs_filename
     feature.rel_filename = rel_filename
 
-    feature.validate()
+    if feature.filename is None:
+        raise ValidationError("Missing filename")
+    if feature.rel_filename is None:
+        raise ValidationError("Missing rel_filename")
 
     return feature
