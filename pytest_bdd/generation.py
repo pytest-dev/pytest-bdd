@@ -9,7 +9,7 @@ import py
 from mako.lookup import TemplateLookup
 
 from .feature import get_features
-from .scenario import find_argumented_step_fixture_name, make_python_docstring, make_python_name, make_string_literal
+from .scenario import make_python_docstring, make_python_name, make_string_literal
 from .steps import get_step_fixture_name
 from .types import STEP_TYPES
 
@@ -132,6 +132,7 @@ def _find_step_fixturedef(
     if fixturedefs is not None:
         return fixturedefs
 
+    return
     argumented_step_name = find_argumented_step_fixture_name(name, type_, fixturemanager)
     if argumented_step_name is not None:
         return fixturemanager.getfixturedefs(argumented_step_name, item.nodeid)

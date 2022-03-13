@@ -104,5 +104,3 @@ def get_parser(step_name: Any) -> StepParser:
 
     if isinstance(step_name, StepParser):
         return step_name
-
-    return string(step_name)

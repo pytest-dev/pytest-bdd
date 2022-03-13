@@ -18,11 +18,11 @@ import re
 from typing import TYPE_CHECKING, Callable, cast
 
 import pytest
-from _pytest.fixtures import FixtureLookupError, FixtureManager, FixtureRequest, call_fixture_func
+from _pytest.fixtures import FixtureRequest, call_fixture_func
 
 from . import exceptions
 from .feature import get_feature, get_features
-from .steps import get_step_fixture_name, inject_fixture
+from .steps import inject_fixture, registry, parser_registry
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if TYPE_CHECKING:
@@ -36,30 +36,6 @@ PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
-def find_argumented_step_fixture_name(
-    name: str, type_: str, fixturemanager: FixtureManager, request: FixtureRequest | None = None
-) -> str | None:
-    """Find argumented step fixture name."""
-    # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
-    for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
-        for fixturedef in fixturedefs:
-            parser = getattr(fixturedef.func, "parser", None)
-            if parser is None:
-                continue
-            match = parser.is_matching(name)
-            if not match:
-                continue
-
-            parser_name = get_step_fixture_name(parser.name, type_)
-            if request:
-                try:
-                    request.getfixturevalue(parser_name)
-                except FixtureLookupError:
-                    continue
-            return parser_name
-    return None
-
-
 def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario) -> Any:
     """Match the step defined by the regular expression pattern.
 
@@ -71,21 +47,18 @@ def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario)
     :rtype: function
     """
     name = step.name
-    try:
+    if name in registry[step.type]:
         # Simple case where no parser is used for the step
-        return request.getfixturevalue(get_step_fixture_name(name, step.type))
-    except FixtureLookupError:
-        try:
-            # Could not find a fixture with the same name, let's see if there is a parser involved
-            argumented_name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager, request)
-            if argumented_name:
-                return request.getfixturevalue(argumented_name)
-            raise
-        except FixtureLookupError:
-            raise exceptions.StepDefinitionNotFoundError(
-                f"Step definition is not found: {step}. "
-                f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
-            )
+        return registry[step.type][name]
+    else:
+        for func in parser_registry[step.type].values():
+            if func.parser.is_matching(name):
+                return func
+
+    raise exceptions.StepDefinitionNotFoundError(
+        f"Step definition is not found: {step}. "
+        f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
+    )
 
 
 def _execute_step_function(request: FixtureRequest, scenario: Scenario, step: Step, step_func: Callable) -> None:

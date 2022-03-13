@@ -38,15 +38,17 @@ from __future__ import annotations
 
 import typing
 
-import pytest
 from _pytest.fixtures import FixtureDef, FixtureRequest
 
 from .parsers import get_parser
 from .types import GIVEN, THEN, WHEN
-from .utils import get_caller_module_locals
 
 if typing.TYPE_CHECKING:
     from typing import Any, Callable
+
+
+registry = {GIVEN: {}, THEN: {}, WHEN: {}}
+parser_registry = {GIVEN: {}, THEN: {}, WHEN: {}}
 
 
 def get_step_fixture_name(name: str, type_: str) -> str:
@@ -122,7 +124,7 @@ def _step_decorator(
     def decorator(func: Callable) -> Callable:
         step_func = func
         parser_instance = get_parser(step_name)
-        parsed_step_name = parser_instance.name
+        parsed_step_name = parser_instance.name if parser_instance is not None else step_name
 
         step_func.__name__ = str(parsed_step_name)
 
@@ -141,11 +143,11 @@ def _step_decorator(
 
         step_func.target_fixture = lazy_step_func.target_fixture = target_fixture
 
-        lazy_step_func = pytest.fixture()(lazy_step_func)
-        fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
+        if parser_instance:
+            parser_registry[step_type][parsed_step_name] = func
+        else:
+            registry[step_type][parsed_step_name] = func
 
-        caller_locals = get_caller_module_locals()
-        caller_locals[fixture_step_name] = lazy_step_func
         return func
 
     return decorator
