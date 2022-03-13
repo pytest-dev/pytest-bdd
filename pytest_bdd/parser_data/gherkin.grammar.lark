@@ -9,7 +9,7 @@ feature: [tag_lines] feature_line [_INDENT [description] [background] [scenarios
 
 description: (STRING _NL)+
 
-background: background_line [_INDENT steps _DEDENT]
+background: background_line [_INDENT givens _DEDENT]
 background_line: BACKGROUND [STRING] _NL?
 
 scenarios: scenario*

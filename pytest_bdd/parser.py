@@ -8,7 +8,8 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import cast
 
-from . import exceptions, types
+from . import types
+from .exceptions import FeatureError
 
 if typing.TYPE_CHECKING:
     from typing import Any, Iterable, Mapping, Match, Sequence
@@ -135,7 +136,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
         allowed_prev_mode = (types.BACKGROUND, types.GIVEN, types.WHEN)
 
         if not scenario and prev_mode not in allowed_prev_mode and mode in types.STEP_TYPES:
-            raise exceptions.FeatureError(
+            raise FeatureError(
                 "Step definition outside of a Scenario or a Background", line_number, clean_line, filename
             )
 
@@ -147,7 +148,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
             elif prev_mode == types.FEATURE:
                 description.append(clean_line)
             else:
-                raise exceptions.FeatureError(
+                raise FeatureError(
                     "Multiple features are not allowed in a single feature file",
                     line_number,
                     clean_line,

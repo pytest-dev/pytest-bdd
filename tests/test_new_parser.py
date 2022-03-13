@@ -12,6 +12,7 @@ from pytest_bdd.types import GIVEN, THEN, WHEN
 #  - Other changes. Check the modifications to the tests.
 #  - Tags can only be "valid" identifiers, e.g. no spaces.
 #  - Must use "Scenario Outline" (or "Scenario Template") for outlined scenarios. "Scenario" will not work anymore
+#  - Background can only contain "Given" steps (according to gherkin spec)
 
 
 def test_feature():
@@ -410,6 +411,42 @@ def test_feature_background(src):
     assert first_given.name == "there is a foo"
     assert second_given.type == GIVEN
     assert second_given.name == "I click the foo"
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        """\
+Feature: Background support
+
+    Background:
+        Given there is a foo
+        When I click the foo
+
+
+    Scenario: a scenario
+""",
+        """\
+Feature: Background support
+
+    Background:
+        Given there is a foo
+        Then I click the foo
+
+
+    Scenario: a scenario
+""",
+        """\
+Feature: Background support
+    Background:
+        Then I click the foo
+    Scenario: a scenario
+""",
+    ],
+)
+def test_feature_background_can_only_have_given_steps(src):
+    with pytest.raises(Exception) as exc:
+        feature = parse(src)
 
 
 @pytest.mark.parametrize(

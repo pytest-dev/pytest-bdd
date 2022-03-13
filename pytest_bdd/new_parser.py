@@ -23,7 +23,7 @@ from pytest_bdd.parser import (
 )
 
 if TYPE_CHECKING:
-    from typing import Sequence, TypeAlias
+    from typing import Callable, Sequence, TypeAlias
 
 # TODOs:
 #  - line numbers don't seem to work correctly.
@@ -131,35 +131,34 @@ class TreeToGherkin(lark.Transformer):
     def step_arg(self, docstring: str | None, step_datatable) -> tuple[str, str]:
         return docstring, step_datatable
 
-    def givens(self, steps: list[Tree]) -> tuple[str, list[Tree]]:
-        return pytest_bdd_types.GIVEN, steps
+    def givens(self, steps: list[Callable[[str], Step]]) -> list[Step]:
+        return [step_maker(pytest_bdd_types.GIVEN) for step_maker in steps]
 
-    def whens(self, steps: list[Tree]) -> tuple[str, list[Tree]]:
-        return pytest_bdd_types.WHEN, steps
+    def whens(self, steps: list[Callable[[str], Step]]) -> list[Step]:
+        return [step_maker(pytest_bdd_types.WHEN) for step_maker in steps]
 
-    def thens(self, steps: list[Tree]) -> tuple[str, list[Tree]]:
-        return pytest_bdd_types.THEN, steps
+    def thens(self, steps: list[Callable[[str], Step]]) -> list[Step]:
+        return [step_maker(pytest_bdd_types.THEN) for step_maker in steps]
 
     @v_args(inline=True)
     def step(
         self, type: Token, name: Token, docstring: Token | None = None, datatable: TableType | None = None
-    ) -> tuple[Token, str, str, TableType]:
-        return type, name, docstring, datatable
-
-    def steps(self, step_groups: list[tuple[str, tuple[Token, str, str, TableType]]]) -> list[Step]:
-        steps = [
-            Step(
-                name=str(value_token),
+    ) -> Callable[[str], Step]:
+        def step_maker(bdd_type: str) -> Step:
+            return Step(
+                name=str(name),
                 type=bdd_type,
-                line_number=type_token.line,
-                indent=type_token.column,
-                keyword=str(type_token.strip()),
+                line_number=type.line,
+                indent=type.column,
+                keyword=str(type.strip()),
                 docstring=docstring,
                 datatable=datatable,
             )
-            for bdd_type, step_group in step_groups
-            for type_token, value_token, docstring, datatable in step_group
-        ]
+
+        return step_maker
+
+    def steps(self, step_groups: list[list[Step]]) -> list[Step]:
+        steps = [step for step_group in step_groups for step in step_group]
         return steps
 
     @v_args(inline=True)
@@ -218,7 +217,6 @@ class TreeToGherkin(lark.Transformer):
         return "\n".join(value)
 
     def table(self, value: Sequence[Sequence[str]]) -> TableType:
-        # TODO: Validate lengths
         for i, row in enumerate(value[1:]):
             if len(row) != len(value[0]):
                 # TODO: Test this, use a custom exception
@@ -245,9 +243,6 @@ class TreeToGherkin(lark.Transformer):
         for row in rows:
             ex.add_example(row)
         return ex
-
-    # def EXAMPLE_STRING(self, value):
-    #     return value
 
     @v_args(inline=True)
     def feature(
