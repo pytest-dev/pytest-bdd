@@ -32,6 +32,10 @@ STEP_PREFIXES = [
 ]
 
 
+class ValidationError(Exception):
+    pass
+
+
 def split_line(line: str) -> list[str]:
     """Split the given Examples line.
 
@@ -195,6 +199,21 @@ class Feature:
     line_number: int
     description: str
 
+    def validate(self):
+        if self.filename is None:
+            raise ValidationError("Missing filename")
+        if self.rel_filename is None:
+            raise ValidationError("Missing rel_filename")
+
+        for scenario_name, scenario in self.scenarios.items():
+            if scenario_name != scenario.name:
+                raise ValidationError(
+                    f"Expected scenario_name and scenario " f"to be the same: {scenario_name} != {scenario.name}"
+                )
+            scenario.validate()
+
+        self.background.validate()
+
 
 @dataclass
 class ScenarioTemplate:
@@ -240,6 +259,18 @@ class ScenarioTemplate:
             for templated_step in self.steps
         ]
         return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
+
+    def validate(self):
+        if self.feature is None:
+            raise ValidationError("Missing feature")
+        for step in self._steps:
+            if step.background is not None:
+                raise ValidationError(
+                    f"Step {step} is connected to a background ({step.background}), "
+                    f"but it should not since it's part of a scenario ({self})."
+                )
+            if step.scenario != self:
+                raise ValidationError(f"Step {step} is not connected to the scenario {self}")
 
 
 @dataclass
@@ -348,6 +379,16 @@ class Background:
         """Add step to the background."""
         step.background = self
         self.steps.append(step)
+
+    def validate(self):
+        for step in self.steps:
+            if step.background != self:
+                raise ValidationError(f"Step {step} is not connected to the background {self}")
+            if step.scenario is not None:
+                raise ValidationError(
+                    f"Step {step} is connected to a scenario ({step.scenario}), "
+                    f"but it's already part of a background ({self})."
+                )
 
 
 @dataclass

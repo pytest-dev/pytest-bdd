@@ -298,7 +298,10 @@ def parse_feature(basedir, filename, encoding="utf-8"):
     with open(abs_filename, encoding=encoding) as f:
         content = f.read()
 
-    parsed = parse(content)
-    parsed.filename = abs_filename
-    parsed.rel_filename = rel_filename
-    return parsed
+    feature = parse(content)
+    feature.filename = abs_filename
+    feature.rel_filename = rel_filename
+
+    feature.validate()
+
+    return feature
