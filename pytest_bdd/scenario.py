@@ -22,7 +22,7 @@ from _pytest.fixtures import FixtureRequest, call_fixture_func
 
 from . import exceptions
 from .feature import get_feature, get_features
-from .steps import inject_fixture, registry, parser_registry
+from .steps import inject_fixture, parser_registry, registry
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if TYPE_CHECKING:
