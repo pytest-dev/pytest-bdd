@@ -1,8 +1,7 @@
 import pytest
-from lark import GrammarError
 from more_itertools import zip_equal  # add requirement
 
-from pytest_bdd.new_parser import parse
+from pytest_bdd.new_parser import GherkinMissingFeatureName, GherkinMultipleFeatures, GherkinUnexpectedInput, parse
 from pytest_bdd.parser import Feature, Step
 from pytest_bdd.types import GIVEN, THEN, WHEN
 
@@ -13,6 +12,7 @@ from pytest_bdd.types import GIVEN, THEN, WHEN
 #  - Tags can only be "valid" identifiers, e.g. no spaces.
 #  - Must use "Scenario Outline" (or "Scenario Template") for outlined scenarios. "Scenario" will not work anymore
 #  - Background can only contain "Given" steps (according to gherkin spec)
+#  - Test error reporting when filename is passed
 
 
 def test_feature():
@@ -28,6 +28,112 @@ Feature: a feature
     assert feature.tags == {"atag", "another_tag", "a_third_tag"}
     assert feature.line_number == 3
     assert feature.background is None
+
+
+@pytest.mark.parametrize(
+    ["src", "line", "column"],
+    [
+        (
+            """\
+Feature: a feature
+    Scenario: a scenario
+Feature: a second feature
+    Scenario: another scenario
+""",
+            3,
+            1,
+        ),
+        (
+            """\
+Feature: a feature
+    Scenario: a scenario
+        Given foo
+Feature: a second feature
+""",
+            4,
+            1,
+        ),
+        (
+            """\
+Feature: a feature
+    Scenario: a scenario
+        Given foo
+Feature: a second feature
+    Scenario: foo
+Feature: a third feature
+""",
+            4,
+            1,
+        ),
+        (
+            """\
+Feature: a feature
+Feature: a second feature
+""",
+            2,
+            1,
+        ),
+    ],
+)
+def test_no_more_than_one_feature_allowed(src, line, column):
+    with pytest.raises(GherkinMultipleFeatures) as exc:
+        parse(src)
+
+    message = str(exc.value)
+    assert message.startswith(
+        f"""\
+Multiple features found at line {line}, column {column}:
+
+Feature: a second feature
+"""
+    )
+    assert message.endswith("File: <unknown>")
+
+
+@pytest.mark.parametrize(
+    ["src", "line", "column"],
+    [
+        (
+            "Feature:",
+            1,
+            9,
+        ),
+        (
+            "Feature: ",
+            1,
+            9 + 1,  # There is a space after "Feature:",
+        ),
+        (
+            """\
+Feature:\t \t
+invalid text
+""",
+            1,
+            9 + 3,  # 3 whitespaces after "Feature:"
+        ),
+        (
+            """\
+Feature:
+    Scenario: foo
+        Given foo
+""",
+            1,
+            9,
+        ),
+    ],
+)
+def test_missing_feature_name(src, line, column):
+    with pytest.raises(GherkinMissingFeatureName) as exc:
+        parse(src)
+
+    message = str(exc.value)
+    assert message.startswith(
+        f"""\
+Missing feature name at line {line}, column {column}:
+
+Feature:"""
+    )
+    assert message.endswith("File: <unknown>")
 
 
 @pytest.mark.parametrize(
@@ -290,31 +396,50 @@ Feature: a feature
 
 
 @pytest.mark.parametrize(
-    "src",
+    ["src", "line", "column"],
     [
-        """\
+        (
+            """\
 Feature: a feature
     Scenario: a scenario
         Giventhere is a foo""",
-        """\
+            3,
+            9,
+        ),
+        (
+            """\
 Feature: a feature
     Scenario: a scenario
         Given there is a foo
         Andthere is a second foo""",
-        """\
+            4,
+            9,
+        ),
+        (
+            """\
 Feature: a feature
     Scenario: a scenario
         WhenI click the foo""",
-        """\
+            3,
+            9,
+        ),
+        (
+            """\
 Feature: a feature
     Scenario: a scenario
         Thenthere should be a foo""",
+            3,
+            9,
+        ),
     ],
 )
-def test_steps_need_a_space_after_keyword(src):
-    with pytest.raises(Exception) as exc:
-        feature = parse(src)
-    # TODO: Test the exception
+def test_steps_need_a_space_after_keyword(src, line, column):
+    with pytest.raises(GherkinUnexpectedInput) as exc:
+        parse(src)
+
+    message = str(exc.value)
+    assert message.startswith(f"Unexpected input at line {line}, column {column}:")
+    assert message.endswith("File: <unknown>")
 
 
 @pytest.mark.parametrize(

@@ -7,7 +7,7 @@ from collections import OrderedDict
 from typing import TYPE_CHECKING
 
 import lark
-from lark import Lark, Token, Tree, v_args
+from lark import Lark, Token, Tree, UnexpectedInput, v_args
 from lark.indenter import Indenter
 
 from pytest_bdd import types as pytest_bdd_types
@@ -278,15 +278,70 @@ class TreeToGherkin(lark.Transformer):
         return feature
 
 
-def parse(content: str) -> Feature:
+class GherkinSyntaxError(Exception):
+    label = "Gherkin syntax error"
+
+    def __init__(self, context: str, line: int, column: int, filename: str | None):
+        self.context = context
+        self.line = line
+        self.column = column
+        self.filename = filename
+
+    def __str__(self):
+        filename = self.filename if self.filename is not None else "<unknown>"
+        return f"{self.label} at line {self.line}, column {self.column}:\n\n{self.context}\n\nFile: {filename}"
+
+
+class GherkinMultipleFeatures(GherkinSyntaxError):
+    label = "Multiple features found"
+
+
+class GherkinMissingFeatureName(GherkinSyntaxError):
+    label = "Missing feature name"
+
+
+class GherkinUnexpectedInput(GherkinSyntaxError):
+    label = "Unexpected input"
+
+
+def parse(content: str, filename: str | None = None) -> Feature:
     if content[-1] != "\n":
         # Fix for the Indenter not working well when there is no \n at the end of file
         # See https://github.com/lark-parser/lark/issues/321
         content += "\n"
-    tree = parser.parse(content)
+
+    try:
+        tree = parser.parse(content)
+    except UnexpectedInput as u:
+        exc_class = u.match_examples(
+            parser.parse,
+            {
+                GherkinMultipleFeatures: [
+                    """\
+Feature: a
+    Scenario: b
+Feature: c
+    Scenario: d
+""",
+                    """\
+Feature: a
+Feature: c
+""",
+                ],
+                GherkinMissingFeatureName: [
+                    "Feature:",
+                ],
+            },
+            use_accepts=True,
+        )
+        if exc_class is None:
+            exc_class = GherkinUnexpectedInput
+        raise exc_class(context=u.get_context(content), line=u.line, column=u.column, filename=filename) from u
+
     print(tree.pretty())  # TODO: Remove before merge
 
     feature = TreeToGherkin().transform(tree)
+
     feature.validate()
 
     return feature
@@ -305,7 +360,7 @@ def parse_feature(basedir, filename, encoding="utf-8"):
     with open(abs_filename, encoding=encoding) as f:
         content = f.read()
 
-    feature = parse(content)
+    feature = parse(content, abs_filename)
     feature.filename = abs_filename
     feature.rel_filename = rel_filename
 
