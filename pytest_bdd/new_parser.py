@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import lark
 from lark import Lark, Token, Tree, UnexpectedInput, v_args
+from lark.exceptions import VisitError
 from lark.indenter import Indenter
 
 from pytest_bdd import types as pytest_bdd_types
@@ -111,7 +112,7 @@ class TreeToGherkin(lark.Transformer):
         if indentation_diff < 0:
             # If it is negative, it means that the content had some lines that had less indentation
             # than the triple quotes line. This is an error.
-            raise ValueError("Invalid indentation")  # TODO: Raise a better custom error
+            raise GherkinInvalidDocstringDefinition(context=text, line=text.line + 1)
         elif indentation_diff > 0:
             # If the difference is positive, it means that the content has more indentation,
             # so we should add the difference back to it.
@@ -122,7 +123,12 @@ class TreeToGherkin(lark.Transformer):
 
         # Remove the marker we added initially.
         suffix = f"\n{EOF_MARKER}"
-        assert content.endswith(suffix)
+        if not content.endswith(suffix):
+            # At this point, this can happen with a docstring like this:
+            # """
+            #   Invalid quote indent
+            #     """
+            raise GherkinInvalidDocstringDefinition(context=text, line=text.line + 1)
         content = content[: -len(suffix)]
 
         return content
@@ -281,7 +287,7 @@ class TreeToGherkin(lark.Transformer):
 class GherkinSyntaxError(Exception):
     label = "Gherkin syntax error"
 
-    def __init__(self, context: str, line: int, column: int, filename: str | None):
+    def __init__(self, context: str, line: int, column: int | None = None, filename: str | None = None):
         self.context = context
         self.line = line
         self.column = column
@@ -289,15 +295,27 @@ class GherkinSyntaxError(Exception):
 
     def __str__(self):
         filename = self.filename if self.filename is not None else "<unknown>"
-        return f"{self.label} at line {self.line}, column {self.column}:\n\n{self.context}\n\nFile: {filename}"
+        message = f"{self.label} at line {self.line}"
+        if self.column is not None:
+            message += f", column {self.column}"
+        message += f":\n\n{self.context}\n\nFile: {filename}"
+        return message
 
 
 class GherkinMultipleFeatures(GherkinSyntaxError):
     label = "Multiple features found"
 
 
+class GherkinMissingFeatureDefinition(GherkinSyntaxError):
+    label = "Missing feature definition"
+
+
 class GherkinMissingFeatureName(GherkinSyntaxError):
     label = "Missing feature name"
+
+
+class GherkinInvalidDocstringDefinition(GherkinSyntaxError):
+    label = "Invalid docstring definition"
 
 
 class GherkinUnexpectedInput(GherkinSyntaxError):
@@ -328,8 +346,40 @@ Feature: a
 Feature: c
 """,
                 ],
+                GherkinMissingFeatureDefinition: [
+                    """\
+Scenario: foo
+    Given bar
+""",
+                ],
                 GherkinMissingFeatureName: [
                     "Feature:",
+                ],
+                GherkinInvalidDocstringDefinition: [
+                    """\
+Feature: foo
+    Scenario: bar
+        Given baz
+            '''
+            mismatching quotes
+            \"\"\"
+""",
+                    """\
+Feature: foo
+    Scenario: bar
+        Given baz
+            '''
+            too much trailing indentation
+                '''
+""",
+                    """\
+Feature: foo
+    Scenario: bar
+        Given baz
+            '''
+            too few trailing indentation
+        '''
+                    """,
                 ],
             },
             use_accepts=True,
@@ -340,7 +390,14 @@ Feature: c
 
     print(tree.pretty())  # TODO: Remove before merge
 
-    feature = TreeToGherkin().transform(tree)
+    try:
+        feature = TreeToGherkin().transform(tree)
+    except VisitError as e:
+        original_exc = e.orig_exc
+        if isinstance(original_exc, GherkinSyntaxError):
+            original_exc.filename = filename
+            raise original_exc from None
+        raise
 
     feature.validate()
 

@@ -1,7 +1,14 @@
 import pytest
 from more_itertools import zip_equal  # add requirement
 
-from pytest_bdd.new_parser import GherkinMissingFeatureName, GherkinMultipleFeatures, GherkinUnexpectedInput, parse
+from pytest_bdd.new_parser import (
+    GherkinInvalidDocstringDefinition,
+    GherkinMissingFeatureDefinition,
+    GherkinMissingFeatureName,
+    GherkinMultipleFeatures,
+    GherkinUnexpectedInput,
+    parse,
+)
 from pytest_bdd.parser import Feature, Step
 from pytest_bdd.types import GIVEN, THEN, WHEN
 
@@ -13,6 +20,7 @@ from pytest_bdd.types import GIVEN, THEN, WHEN
 #  - Must use "Scenario Outline" (or "Scenario Template") for outlined scenarios. "Scenario" will not work anymore
 #  - Background can only contain "Given" steps (according to gherkin spec)
 #  - Test error reporting when filename is passed
+#  - Multiline steps are removed
 
 
 def test_feature():
@@ -225,17 +233,6 @@ def test_whitespaces_are_kept(src):
     assert given.name == "there is a   foo"
 
 
-def test_not_a_tag():
-    # TODO: Improve exception
-    with pytest.raises(Exception) as e:
-        feature = parse(
-            """\
-@ a_tag
-Feature: a feature
-"""
-        )
-
-
 @pytest.mark.parametrize(
     "src, expected_scenarios",
     [
@@ -260,13 +257,6 @@ Feature: a feature
 """,
             2,
         ),
-        #         (
-        #             """\
-        # Scenario: scenario 1
-        # Scenario: scenario 2
-        # """,
-        #             2,
-        #         ),  # 2 scenario, no Feature header. Not sure we want to support this, or if it's still possible
     ],
 )
 def test_scenario(src, expected_scenarios):
@@ -992,6 +982,25 @@ Feature: a feature
 @pytest.mark.parametrize(
     "src",
     [
+        """\
+Scenario: foo
+    Given foo
+Scenario: bar
+    Given foo
+"""
+    ],
+)
+def test_missing_feature_definition(src):
+    with pytest.raises(GherkinMissingFeatureDefinition) as exc:
+        parse(src)
+
+    message = str(exc.value)
+    assert message.startswith(f"Missing feature definition at line 1, column 1:\n\nScenario: foo")
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
         pytest.param(
             '''\
 Feature: a feature
@@ -1081,9 +1090,11 @@ Feature: a feature
     ],
 )
 def test_step_invalid_docstring(src):
-    with pytest.raises(Exception) as exc:
-        feature = parse(src)
-    # TODO: Check the exception
+    with pytest.raises(GherkinInvalidDocstringDefinition) as exc:
+        parse(src)
+    message = str(exc.value)
+
+    assert message.startswith("Invalid docstring definition at line 4")
 
 
 def test_step_datatable():

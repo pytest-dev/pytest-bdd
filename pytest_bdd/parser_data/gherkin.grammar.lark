@@ -72,7 +72,7 @@ EXAMPLES: "Examples:" | "Scenarios:"
 // TODO: Maybe we should handle escaped docstring characters?
 STEP_DOCSTRING: /\n[ \t]*/ /"""/ STEP_DOCSTRING_INNER /"""/
               | /\n[ \t]*/ /'''/ STEP_DOCSTRING_INNER /'''/
-STEP_DOCSTRING_INNER: /\n.*?/is
+STEP_DOCSTRING_INNER: /\n.*?\n[ \t]*/is
 step_docstring: STEP_DOCSTRING
 
 // %import common.ESCAPED_STRING -> string
