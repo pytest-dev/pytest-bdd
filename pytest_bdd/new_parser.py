@@ -314,6 +314,10 @@ class GherkinUnexpectedInput(GherkinSyntaxError):
     label = "Unexpected input"
 
 
+class GherkinInvalidTable(GherkinSyntaxError):
+    label = "Invalid table"
+
+
 def parse(content: str, filename: str | None = None) -> Feature:
     if content[-1] != "\n":
         # Fix for the Indenter not working well when there is no \n at the end of file
@@ -372,6 +376,29 @@ Feature: foo
             too few trailing indentation
         '''
                     """,
+                ],
+                GherkinInvalidTable: [
+                    """\
+Feature: foo
+    Scenario Outline: bar
+        Examples:
+        | no trailing "pipe" in header (it's escaped) \\|
+""",
+                    """\
+Feature: foo
+    Scenario Outline: bar
+        Examples:
+        | foo |
+        | no trailing "pipe" in cell(it's escaped) \\|
+""",
+                    """\
+Feature: foo
+    Scenario Outline: bar
+        Examples:
+        | foo |
+        | bar |
+        | no trailing "pipe" in cell(it's escaped) \\|
+""",
                 ],
             },
             use_accepts=True,

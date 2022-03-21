@@ -5,6 +5,7 @@ from more_itertools import zip_equal  # add requirement
 
 from pytest_bdd.new_parser import (
     GherkinInvalidDocstring,
+    GherkinInvalidTable,
     GherkinMissingFeatureDefinition,
     GherkinMissingFeatureName,
     GherkinMultipleFeatures,
@@ -795,27 +796,115 @@ def test_scenario_examples(src, expected):
 
 
 @pytest.mark.parametrize(
-    "src",
+    ["src", "line"],
     [
-        """\
+        (
+            """\
 Feature: A feature
     Scenario Outline: A scenario
         Examples:
-        |  backslash at the end\\|
+        |  backslash at the end of a header\\|
         |  foo    |
 """,
-        """\
+            4,
+        ),
+        (
+            """\
+Feature: A feature
+    Scenario Outline: A scenario
+        Examples:
+        |  foo    |
+        |  backslash at the end of a cell\\|
+""",
+            5,
+        ),
+        (
+            """\
+Feature: A feature
+    Scenario Outline: A scenario
+        Examples:
+        | foo |
+        | bar |
+        | backslash at the end of the third cell\\|
+""",
+            6,
+        ),
+        (
+            """\
+Feature: A feature
+    Scenario Outline: A scenario
+        Examples:
+        | header |
+        | bar |
+        | baz | 
+        | backslash at the end of the fourth cell\\|
+""",
+            7,
+        ),
+        (
+            """\
+Feature: A feature
+    Scenario Outline: A scenario
+        Examples:
+        | header |
+        | bar |
+        | baz |
+        | lam | 
+        | backslash at the end of the fifth cell\\|
+""",
+            8,
+        ),
+        (
+            """\
+Feature: A feature
+    Scenario Outline: A scenario
+        Examples:
+        | header |
+        | bar |
+        | baz |
+        | backslash at the end of a cell in the middle\\|
+        | lam |
+""",
+            7,
+        ),
+        (
+            """\
+Feature: A feature
+    Scenario Outline: A scenario
+        Given foo
+        Examples:
+        | backslash at the end of a cell in the middle\\|
+""",
+            7,
+        ),
+        (
+            """\
 Feature: A feature
     Scenario Outline: Mismatching number of cells
         Examples:
         | first name |
         | Alessio | Bogon |
 """,
+            4,
+        ),
+        (
+            """\
+Feature: A feature
+    Scenario Outline: Mismatching number of cells
+        Examples:
+        | first name | last name |
+        | Alessio |
+""",
+            4,
+        ),
     ],
 )
-def test_invalid_examples_table(src):
-    with pytest.raises(Exception) as exc:
-        feature = parse(src)
+def test_invalid_examples_table(src, line):
+    with pytest.raises(GherkinInvalidTable) as exc:
+        parse(src)
+
+    message = str(exc.value)
+    assert message.startswith(f"Invalid table at line {line}")
     # TODO: we should use the appropriate exception
 
 
