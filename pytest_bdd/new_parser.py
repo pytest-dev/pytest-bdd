@@ -52,14 +52,6 @@ parser = Lark(
 )
 
 
-def extract_text_from_step_docstring(docstring):
-    content = docstring[4:-3]
-    dedented = textwrap.dedent(content)
-    assert dedented[-1] == "\n"
-    dedented_without_newline = dedented[:-1]
-    return dedented_without_newline
-
-
 class TreeToGherkin(lark.Transformer):
     @v_args(inline=True)
     def string(self, value: Token) -> Token:
@@ -112,7 +104,7 @@ class TreeToGherkin(lark.Transformer):
         if indentation_diff < 0:
             # If it is negative, it means that the content had some lines that had less indentation
             # than the triple quotes line. This is an error.
-            raise GherkinInvalidDocstringDefinition(context=text, line=text.line + 1)
+            raise GherkinInvalidDocstring(context=text, line=text.line + 1)
         elif indentation_diff > 0:
             # If the difference is positive, it means that the content has more indentation,
             # so we should add the difference back to it.
@@ -128,7 +120,7 @@ class TreeToGherkin(lark.Transformer):
             # """
             #   Invalid quote indent
             #     """
-            raise GherkinInvalidDocstringDefinition(context=text, line=text.line + 1)
+            raise GherkinInvalidDocstring(context=text, line=text.line + 1)
         content = content[: -len(suffix)]
 
         return content
@@ -314,8 +306,8 @@ class GherkinMissingFeatureName(GherkinSyntaxError):
     label = "Missing feature name"
 
 
-class GherkinInvalidDocstringDefinition(GherkinSyntaxError):
-    label = "Invalid docstring definition"
+class GherkinInvalidDocstring(GherkinSyntaxError):
+    label = "Invalid docstring"
 
 
 class GherkinUnexpectedInput(GherkinSyntaxError):
@@ -355,7 +347,7 @@ Scenario: foo
                 GherkinMissingFeatureName: [
                     "Feature:",
                 ],
-                GherkinInvalidDocstringDefinition: [
+                GherkinInvalidDocstring: [
                     """\
 Feature: foo
     Scenario: bar

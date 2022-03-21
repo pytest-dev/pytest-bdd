@@ -1,8 +1,10 @@
+import logging
+
 import pytest
 from more_itertools import zip_equal  # add requirement
 
 from pytest_bdd.new_parser import (
-    GherkinInvalidDocstringDefinition,
+    GherkinInvalidDocstring,
     GherkinMissingFeatureDefinition,
     GherkinMissingFeatureName,
     GherkinMultipleFeatures,
@@ -267,8 +269,6 @@ def test_scenario(src, expected_scenarios):
         assert k == scenario.name == f"scenario {i}"
         assert scenario.feature == feature
         assert scenario.line_number == 1 + i
-        # TODO: assert scenario.example_converters
-        # TODO: assert scenario.tags
 
 
 @pytest.mark.parametrize(
@@ -624,8 +624,6 @@ def test_feature_description(src, expected):
     assert feature.description == expected
 
 
-# TODO: This test parametrization makes the trailing-whitespaces pre-commit hook fail.
-#  Find a way to solve it somehow.
 @pytest.mark.parametrize(
     "src",
     [
@@ -665,7 +663,7 @@ Feature: A feature
 """,
     ],
 )
-def test_indentation_feature(src):
+def test_whitespaces_feature(src):
     feature = parse(src)
     assert feature.name == "A feature"
 
@@ -1090,11 +1088,10 @@ Feature: a feature
     ],
 )
 def test_step_invalid_docstring(src):
-    with pytest.raises(GherkinInvalidDocstringDefinition) as exc:
+    with pytest.raises(GherkinInvalidDocstring) as exc:
         parse(src)
     message = str(exc.value)
-
-    assert message.startswith("Invalid docstring definition at line 4")
+    assert message.startswith("Invalid docstring at line 4")
 
 
 def test_step_datatable():
