@@ -333,10 +333,6 @@ def test_step_hooks(testdir):
         def when_it_fails():
             raise Exception('when fails')
 
-        @given('I have a bar')
-        def i_have_bar():
-            return 'bar'
-
         @pytest.fixture
         def dependency():
             raise Exception('dependency fails')
@@ -731,12 +727,12 @@ def test_steps_with_yield(testdir):
     testdir.makefile(
         ".feature",
         a="""\
-Feature: A feature
+            Feature: A feature
 
-    Scenario: A scenario
-        When I setup stuff
-        Then stuff should be 42
-""",
+                Scenario: A scenario
+                    When I setup stuff
+                    Then stuff should be 42
+            """,
     )
     testdir.makepyfile(
         textwrap.dedent(
@@ -770,3 +766,334 @@ Feature: A feature
             "*Tearing down...*",
         ]
     )
+
+
+def test_liberal_step_decorator(testdir):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps are executed one by one
+                Steps are executed one by one. Given and When sections
+                are not mandatory in some cases. All steps could be
+                executed by "step" decorator
+
+                Scenario: Executed step by step
+                    Given I execute foo step
+                    And I execute bar step
+                    When I execute fizz step
+                    But I execute buzz step
+                    Then I execute nice step
+                    * I execute good step
+            """
+        ),
+    )
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import step, scenario
+        from pytest import fixture
+
+        @fixture
+        def step_values():
+            return []
+
+        @scenario("steps.feature", "Executed step by step")
+        def test_steps(step_values):
+            assert "foo" in step_values
+            assert "bar" in step_values
+            assert "fizz" in step_values
+            assert "buzz" in step_values
+            assert "nice" in step_values
+            assert "good" in step_values
+
+        @step('I execute {value} step')
+        def foo(step_values, value):
+            step_values.append(value)
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
+
+
+def test_liberal_keyworded_step_decorator(testdir):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps are executed one by one
+                Steps are executed one by one. Given and When sections
+                are not mandatory in some cases. All steps could be
+                executed by "step" decorator
+
+                Scenario: Executed step by step
+                    Given I execute foo step
+                    And I execute bar step
+                    When I execute fizz step
+                    But I execute buzz step
+                    Then I execute nice step
+                    * I execute good step
+            """
+        ),
+    )
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, scenario
+        from pytest import fixture
+
+        @fixture
+        def step_values():
+            return []
+
+        @scenario("steps.feature", "Executed step by step")
+        def test_steps(step_values):
+            assert "foo" in step_values
+            assert "bar" in step_values
+            assert "fizz" in step_values
+            assert "buzz" in step_values
+            assert "nice" in step_values
+            assert "good" in step_values
+
+        @given('I execute {value} step', liberal=True)
+        def foo(step_values, value):
+            step_values.append(value)
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
+
+
+def test_liberal_keyworded_step_decorator_cli_option(testdir):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps are executed one by one
+                Steps are executed one by one. Given and When sections
+                are not mandatory in some cases. All steps could be
+                executed by "step" decorator
+
+                Scenario: Executed step by step
+                    Given I execute foo step
+                    And I execute bar step
+                    When I execute fizz step
+                    But I execute buzz step
+                    Then I execute nice step
+                    * I execute good step
+            """
+        ),
+    )
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, scenario
+        from pytest import fixture
+
+        @fixture
+        def step_values():
+            return []
+
+        @scenario("steps.feature", "Executed step by step")
+        def test_steps(step_values):
+            assert "foo" in step_values
+            assert "bar" in step_values
+            assert "fizz" in step_values
+            assert "buzz" in step_values
+            assert "nice" in step_values
+            assert "good" in step_values
+
+        @given('I execute {value} step')
+        def foo(step_values, value):
+            step_values.append(value)
+        """
+        )
+    )
+    result = testdir.runpytest("--liberal-steps")
+    result.assert_outcomes(passed=1, failed=0)
+
+
+def test_liberal_keyworded_step_decorator_ini_option(testdir):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps are executed one by one
+                Steps are executed one by one. Given and When sections
+                are not mandatory in some cases. All steps could be
+                executed by "step" decorator
+
+                Scenario: Executed step by step
+                    Given I execute foo step
+                    And I execute bar step
+                    When I execute fizz step
+                    But I execute buzz step
+                    Then I execute nice step
+                    * I execute good step
+            """
+        ),
+    )
+
+    testdir.makeini(
+        """
+            [pytest]
+            liberal_steps = True
+        """
+    )
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, scenario
+        from pytest import fixture
+
+        @fixture
+        def step_values():
+            return []
+
+        @scenario("steps.feature", "Executed step by step")
+        def test_steps(step_values):
+            assert "foo" in step_values
+            assert "bar" in step_values
+            assert "fizz" in step_values
+            assert "buzz" in step_values
+            assert "nice" in step_values
+            assert "good" in step_values
+
+        @given('I execute {value} step')
+        def foo(step_values, value):
+            step_values.append(value)
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
+
+
+def test_strict_step_has_precedence_over_liberal_step_decorator(testdir):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps are executed one by one
+                Steps are executed one by one. Given and When sections
+                are not mandatory in some cases. All steps could be
+                executed by "step" decorator
+
+                Scenario: Executed step by step
+                    Given I execute foo step
+                    And I execute bar step
+                    When I execute fizz step
+                    But I execute buzz step
+                    Then I execute nice step
+                    * I execute good step
+            """
+        ),
+    )
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, when, step, scenario
+        from pytest import fixture
+
+        @fixture
+        def liberal_step_values():
+            return []
+
+        @fixture
+        def given_step_values():
+            return []
+
+        @fixture
+        def when_step_values():
+            return []
+
+        @scenario("steps.feature", "Executed step by step")
+        def test_steps(liberal_step_values, given_step_values, when_step_values):
+            assert "foo" in given_step_values
+            assert "bar" in given_step_values
+            assert "fizz" in when_step_values
+            assert "buzz" in when_step_values
+            assert "nice" in liberal_step_values
+            assert "good" in liberal_step_values
+
+        @given('I execute {value} step')
+        def foo(given_step_values, value):
+            given_step_values.append(value)
+
+        @step('I execute {value} step')
+        def foo(liberal_step_values, value):
+            liberal_step_values.append(value)
+
+        @when('I execute {value} step', liberal=True)
+        def foo(when_step_values, value):
+            when_step_values.append(value)
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
+
+
+def test_found_alternate_step_decorators_produce_warning(testdir):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps are executed one by one
+                Steps are executed one by one. Given and When sections
+                are not mandatory in some cases. All steps could be
+                executed by "step" decorator
+
+                Scenario: Executed step by step
+                    Given I execute foo step
+                    And I execute bar step
+                    When I execute fizz step
+                    But I execute buzz step
+                    Then I execute nice step
+                    * I execute good step
+            """
+        ),
+    )
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import when, then, scenario
+        from pytest import fixture
+
+        @fixture
+        def when_step_values():
+            return []
+
+        @fixture
+        def then_step_values():
+            return []
+
+        @scenario("steps.feature", "Executed step by step")
+        def test_steps(when_step_values, then_step_values,):
+            assert "foo" in when_step_values or "foo" in then_step_values
+            assert "bar" in when_step_values or "bar" in then_step_values
+            assert "fizz" in when_step_values
+            assert "buzz" in when_step_values
+            assert "nice" in then_step_values
+            assert "good" in then_step_values
+
+        @when('I execute {value} step', liberal=True)
+        def foo(when_step_values, value):
+            when_step_values.append(value)
+
+        @then('I execute {value} step', liberal=True)
+        def foo(then_step_values, value):
+            then_step_values.append(value)
+        """
+        )
+    )
+    result = testdir.runpytest("-W", "ignore::pytest_bdd.PytestBDDStepDefinitionWarning")
+    result.assert_outcomes(passed=1, failed=0)

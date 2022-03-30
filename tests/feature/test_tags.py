@@ -100,7 +100,7 @@ def test_tags_selector_with_examples(testdir):
         @feature_tag_1 @feature_tag_2
         Feature: Tags
             Background:
-                Given I have <background_example>
+                Given I have an <background_example> for background
 
                 @background_example_tag_01
                 Examples: Nice background example
@@ -127,7 +127,7 @@ def test_tags_selector_with_examples(testdir):
             @scenario_tag_10 @scenario_tag_20
             Scenario: Tags 2
                 Given I have a bar
-                Given I have a <scenario_example>
+                Given I have an <scenario_example> for scenario
 
                 @scenario_example_tag_01
                 Examples:
@@ -158,13 +158,13 @@ def test_tags_selector_with_examples(testdir):
         def i_have_bar():
             return 'bar'
 
-        @given('I have {background_example}')
-        def i_have_bar(background_example):
-            return background_example
+        @given('I have an {example} for background')
+        def i_have_bar(example):
+            return example
 
-        @given('I have a {scenario_example}')
-        def i_have_bar(scenario_example):
-            return scenario_example
+        @given('I have an {example} for scenario')
+        def i_have_bar(example):
+            return example
 
         scenarios('test.feature')
         """
@@ -252,7 +252,7 @@ def test_tags_selector_with_empty_examples(testdir):
         def i_have_bar():
             return 'bar'
 
-        @given('I have {background_example}')
+        @given('I have {background_example:d}')
         def i_have_bar(background_example):
             return background_example
 
@@ -295,7 +295,7 @@ def test_tags_selector_with_inlined_tags_examples(testdir):
             """\
                 Feature: Tags
                     Background:
-                        Given I have <background_example>
+                        Given I have an <background_example> for background
 
                         Examples: Nice background example
                           | background_example | @                         | @                         |
@@ -320,7 +320,7 @@ def test_tags_selector_with_inlined_tags_examples(testdir):
                     @scenario_tag_10 @scenario_tag_20
                     Scenario: Tags 2
                         Given I have a bar
-                        Given I have a <scenario_example>
+                        Given I have an <scenario_example> for scenario
 
                         @scenario_example_tag_01
                         Examples:
@@ -352,13 +352,13 @@ def test_tags_selector_with_inlined_tags_examples(testdir):
         def i_have_bar():
             return 'bar'
 
-        @given('I have {background_example}')
-        def i_have_bar(background_example):
-            return background_example
+        @given('I have an {example} for background')
+        def i_have_bar(example):
+            return example
 
-        @given('I have a {scenario_example}')
-        def i_have_bar(scenario_example):
-            return scenario_example
+        @given('I have an {example} for scenario')
+        def i_have_bar(example):
+            return example
 
         scenarios('test.feature')
         """

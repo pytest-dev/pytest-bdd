@@ -15,17 +15,15 @@ import os
 import re
 import sys
 import typing
-from contextlib import suppress
-from itertools import tee, zip_longest
 from warnings import warn
 
 import pytest
-from _pytest.fixtures import FixtureLookupError, call_fixture_func
+from _pytest.fixtures import FixtureLookupError
 from _pytest.warning_types import PytestDeprecationWarning
 
 from . import exceptions
 from .feature import get_feature, get_features
-from .steps import get_step_fixture_name, inject_fixture
+from .steps import Step
 from .utils import CONFIG_STACK, DefaultMapping, apply_tag, get_args, get_caller_module_locals, get_caller_module_path
 
 if sys.version_info >= (3, 8):
@@ -45,111 +43,9 @@ PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
-def find_argumented_step_fixture_name_and_step_alias_function(name, type_, fixturemanager):
-    """Find argumented step fixture name."""
-    for fixturename, fixturedefs in fixturemanager._arg2fixturedefs.items():
-        for fixturedef in fixturedefs:
-            parser = getattr(fixturedef.func, "parser", None)
-            if parser is None:
-                continue
-            match = parser.is_matching(name)
-            if not match:
-                continue
-
-            parser_name = get_step_fixture_name(parser.name, type_)
-            step_alias_func = fixturedef.func
-            return parser_name, step_alias_func
-    return None, None
-
-
-def _find_step_and_step_alias_function(request, step, scenario):
-    """Match the step defined by the regular expression pattern.
-
-    :param request: PyTest request object.
-    :param step: Step.
-    :param scenario: Scenario.
-
-    :return: Function of the step.
-    :rtype: function
-    """
-    try:
-        name, fixture = find_argumented_step_fixture_name_and_step_alias_function(
-            step.name, step.type, request._fixturemanager
-        )
-        return request.getfixturevalue(name), fixture
-    except FixtureLookupError:
-        raise exceptions.StepDefinitionNotFoundError(
-            f"Step definition is not found: {step}. "
-            f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
-        )
-
-
-def _parse_and_apply_converters_to_step_parameters(step, parser, converters):
-    return {arg: converters.get(arg, lambda _: _)(value) for arg, value in parser.parse_arguments(step.name).items()}
-
-
 @runtime_checkable
 class StepFunc(Protocol):
     target_fixtures: typing.List[str]
-
-
-def _inject_step_parameters_as_fixtures(request, step_func, step_params):
-    params_fixtures_mapping = DefaultMapping.instantiate_from_collection_or_bool(
-        step_func.params_fixtures_mapping, warm_up_keys=step_params.keys()
-    )
-
-    for param, fixture_name in params_fixtures_mapping.items():
-        if fixture_name is not None:
-            with suppress(KeyError):
-                inject_fixture(request, fixture_name, step_params[param])
-
-
-def _execute_step_function(request, scenario, step, step_func, step_params):
-    """Execute step function.
-
-    :param request: PyTest request.
-    :param scenario: Scenario.
-    :param step: Step.
-    :param Union[function, StepFunc] step_func: Step function.
-    """
-    kw = dict(request=request, feature=scenario.feature, scenario=scenario, step=step, step_func=step_func)
-
-    request.config.hook.pytest_bdd_before_step(**kw)
-
-    kw["step_func_args"] = {}
-    try:
-        _inject_step_parameters_as_fixtures(request, step_func, step_params)
-
-        # Get the step argument values.
-        def kwargs_gen():
-            for param in get_args(step_func):
-                try:
-                    yield param, step_params[param]
-                except KeyError:
-                    yield param, request.getfixturevalue(param)
-
-        kwargs = dict(kwargs_gen())
-        kw["step_func_args"] = kwargs
-
-        request.config.hook.pytest_bdd_before_step_call(**kw)
-
-        # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
-        step_result = call_fixture_func(fixturefunc=step_func, request=request, kwargs=kwargs)
-
-        if len(step_func.target_fixtures) == 1:
-            injectable_fixtures = [(step_func.target_fixtures[0], step_result)]
-        elif step_result is not None:
-            injectable_fixtures = zip(step_func.target_fixtures, step_result)
-        else:
-            injectable_fixtures = zip_longest(step_func.target_fixtures, [])
-
-        for target_fixture, return_value in injectable_fixtures:
-            inject_fixture(request, target_fixture, return_value)
-
-        request.config.hook.pytest_bdd_after_step(**kw)
-    except Exception as exception:
-        request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
-        raise
 
 
 def _execute_scenario(feature: "Feature", scenario: "Scenario", request):
@@ -163,20 +59,8 @@ def _execute_scenario(feature: "Feature", scenario: "Scenario", request):
     request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
 
     try:
-        # Execute scenario steps
         for step in scenario.steps:
-            try:
-                step_func, step_alias_func = _find_step_and_step_alias_function(request, step, scenario)
-            except exceptions.StepDefinitionNotFoundError as exception:
-                request.config.hook.pytest_bdd_step_func_lookup_error(
-                    request=request, feature=feature, scenario=scenario, step=step, exception=exception
-                )
-                raise
-            step_params = _parse_and_apply_converters_to_step_parameters(
-                step, step_alias_func.parser, step_func.converters
-            )
-
-            _execute_step_function(request, scenario, step, step_func, step_params)
+            Step.Executor(request=request, scenario=scenario, step=step).execute()
     finally:
         request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
 

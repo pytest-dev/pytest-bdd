@@ -35,95 +35,147 @@ def given_beautiful_article(article):
 
 """
 import warnings
-from typing import Any, Dict, Optional, Set, Union
+from contextlib import suppress
+from itertools import zip_longest
+from typing import Any, Dict, List, Optional, Set, Union
+from warnings import warn
 
 import pytest
-from _pytest.fixtures import FixtureDef
+from _pytest.config import Config
+from _pytest.fixtures import FixtureRequest, call_fixture_func
+from attr import Factory, attrib, attrs
 from ordered_set import OrderedSet
 
-from .parsers import get_parser
+from . import exceptions
+from .parser import Scenario as ScenarioModel
+from .parser import Step as StepModel
+from .parsers import StepParser, get_parser
 from .types import GIVEN, THEN, WHEN
-from .utils import get_caller_module_locals
+from .utils import DefaultMapping, get_args, get_caller_module_locals, inject_fixture
 from .warning_types import PytestBDDStepDefinitionWarning
 
 
-def get_step_fixture_name(name, type_):
-    """Get step fixture name.
-
-    :param name: string
-    :param type: step type
-    :return: step fixture name
-    :rtype: string
-    """
-    return f"pytestbdd_{type_}_{name}"
+def add_options(parser):
+    """Add pytest-bdd options."""
+    group = parser.getgroup("bdd", "Steps")
+    group.addoption(
+        "--liberal-steps",
+        action="store_true",
+        dest="liberal_steps",
+        default=None,
+        help="Allow use different keywords with same step definition",
+    )
+    parser.addini(
+        "liberal_steps",
+        default=False,
+        type="bool",
+        help="Allow use different keywords with same step definition",
+    )
 
 
 def given(
-    name,
+    parserlike,
     converters=None,
     target_fixture=None,
     target_fixtures=None,
     params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+    liberal=None,
 ):
     """Given step decorator.
 
-    :param name: Step name or a parser object.
+    :param parserlike: Step name or a parser object.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
     :param target_fixtures: Target fixture names to be replaced by steps definition function.
     :param params_fixtures_mapping: Step parameters would be injected as fixtures
+    :param liberal: Could step definition be used with other keywords
 
     :return: Decorator function for the step.
     """
-    return _step_decorator(
+    return Step.decorator_builder(
         GIVEN,
-        name,
+        parserlike,
         converters=converters,
         target_fixture=target_fixture,
         target_fixtures=target_fixtures,
         params_fixtures_mapping=params_fixtures_mapping,
+        liberal=liberal,
     )
 
 
 def when(
-    name,
+    parserlike,
     converters=None,
     target_fixture=None,
     target_fixtures=None,
     params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+    liberal=None,
 ):
     """When step decorator.
 
-    :param name: Step name or a parser object.
+    :param parserlike: Step name or a parser object.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
     :param target_fixtures: Target fixture names to be replaced by steps definition function.
     :param params_fixtures_mapping: Step parameters would be injected as fixtures
+    :param liberal: Could step definition be used with other keywords
 
     :return: Decorator function for the step.
     """
-    return _step_decorator(
+    return Step.decorator_builder(
         WHEN,
-        name,
+        parserlike,
         converters=converters,
         target_fixture=target_fixture,
         target_fixtures=target_fixtures,
         params_fixtures_mapping=params_fixtures_mapping,
+        liberal=liberal,
     )
 
 
 def then(
-    name,
+    parserlike,
+    converters=None,
+    target_fixture=None,
+    target_fixtures=None,
+    params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+    liberal=None,
+):
+    """Then step decorator.
+
+    :param parserlike: Step name or a parser object.
+    :param converters: Optional `dict` of the argument or parameter converters in form
+                       {<param_name>: <converter function>}.
+    :param target_fixture: Target fixture name to replace by steps definition function.
+    :param target_fixtures: Target fixture names to be replaced by steps definition function.
+    :param params_fixtures_mapping: Step parameters would be injected as fixtures
+    :param liberal: Could step definition be used with other keywords
+
+    :return: Decorator function for the step.
+    """
+    return Step.decorator_builder(
+        THEN,
+        parserlike,
+        converters=converters,
+        target_fixture=target_fixture,
+        target_fixtures=target_fixtures,
+        params_fixtures_mapping=params_fixtures_mapping,
+        liberal=liberal,
+    )
+
+
+def step(
+    parserlike,
     converters=None,
     target_fixture=None,
     target_fixtures=None,
     params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
 ):
-    """Then step decorator.
+    """Liberal step decorator which could be used with any keyword.
 
-    :param name: Step name or a parser object.
+    :param parserlike: Step name or a parser object.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
@@ -132,112 +184,295 @@ def then(
 
     :return: Decorator function for the step.
     """
-    return _step_decorator(
-        THEN,
-        name,
+    return Step.decorator_builder(
+        None,
+        parserlike,
         converters=converters,
         target_fixture=target_fixture,
         target_fixtures=target_fixtures,
         params_fixtures_mapping=params_fixtures_mapping,
+        liberal=True,
     )
 
 
-def _step_decorator(
-    step_type,
-    step_name,
-    converters: Optional[Dict] = None,
-    target_fixture=None,
-    target_fixtures=None,
-    params_fixtures_mapping: Union[Set[str], Dict[str, str]] = (),
-):
-    """Step decorator for the type and the name.
+class Step:
+    Model = StepModel
 
-    :param str step_type: Step type (GIVEN, WHEN or THEN).
-    :param str step_name: Step name as in the feature file.
-    :param dict converters: Optional step arguments converters mapping
-    :param target_fixture: Optional fixture name to replace by step definition
-    :param target_fixtures: Target fixture names to be replaced by steps definition function.
-    :param params_fixtures_mapping: Step parameters would be injected as fixtures
+    @attrs
+    class Matcher:
+        config: Config = attrib()
+        step = attrib(init=False)
+        step_registry: "Step.Registry" = attrib(init=False)
 
-    :return: Decorator function for the step.
-    """
+        class MatchNotFoundError(RuntimeError):
+            pass
 
-    converters = converters or {}
-    if target_fixture is not None and target_fixtures is not None:
-        warnings.warn(PytestBDDStepDefinitionWarning("Both target_fixture and target_fixtures are specified"))
-    target_fixtures = list(
-        OrderedSet(
-            [
-                *([target_fixture] if target_fixture is not None else []),
-                *(target_fixtures if target_fixtures is not None else []),
-            ]
+        def __call__(self, step: "Step.Model", step_registry: "Step.Registry") -> "Step.Definition":
+            self.step = step
+            self.step_registry = step_registry
+
+            step_definitions = list(
+                self.find_step_definition_matches(
+                    self.step_registry, (self.strict_matcher, self.liberal_matcher, self.alternate_matcher)
+                )
+            )
+
+            if len(step_definitions) > 0:
+                if len(step_definitions) > 1:
+                    warn(PytestBDDStepDefinitionWarning(f"Alternative step definitions are found: {step_definitions}"))
+                return step_definitions[0]
+            raise self.MatchNotFoundError
+
+        def strict_matcher(self, step_definition):
+            return step_definition.type_ == self.step.type and step_definition.parser.is_matching(self.step.name)
+
+        def liberal_matcher(self, step_definition):
+            return (step_definition.type_ is None) and step_definition.parser.is_matching(self.step.name)
+
+        def alternate_matcher(self, step_definition):
+            if step_definition.liberal is None:
+                if self.config.option.liberal_steps is not None:
+                    is_step_definition_liberal = self.config.option.liberal_steps
+                else:
+                    is_step_definition_liberal = self.config.getini("liberal_steps")
+            else:
+                is_step_definition_liberal = step_definition.liberal
+
+            return all(
+                (
+                    is_step_definition_liberal,
+                    step_definition.type_ != self.step.type,
+                    step_definition.parser.is_matching(self.step.name),
+                )
+            )
+
+        @staticmethod
+        def find_step_definition_matches(registry, matchers):
+            while registry is not None:
+                found_matches = False
+                for matcher in matchers:
+                    for step_definition in registry.registry:
+                        if matcher(step_definition):
+                            found_matches = True
+                            yield step_definition
+                    if found_matches:
+                        break
+                if not found_matches:
+                    registry = getattr(registry, "parent", None)
+                else:
+                    break
+
+    @attrs
+    class Definition:
+        func: type(lambda: ()) = attrib()
+        type_ = attrib()
+        parser: StepParser = attrib()
+        converters = attrib()
+        params_fixtures_mapping = attrib()
+        target_fixtures = attrib()
+        liberal = attrib()
+
+        def get_parameters(self, step: StepModel):
+            return {
+                arg: self.converters.get(arg, lambda _: _)(value)
+                for arg, value in self.parser.parse_arguments(step.name).items()
+            }
+
+    @attrs
+    class Executor:
+        request: FixtureRequest = attrib()
+        scenario: ScenarioModel = attrib()
+        step: StepModel = attrib()
+        step_params: dict = attrib(init=False)
+        step_definition: "Step.Definition" = attrib(init=False)
+        step_result: Any = attrib(init=False)
+
+        def _inject_step_parameters_as_fixtures(
+            self, step_params: Optional[Dict] = None, params_fixtures_mapping: Optional[Dict] = None
+        ):
+            step_params = step_params or {}
+            params_fixtures_mapping = DefaultMapping.instantiate_from_collection_or_bool(
+                params_fixtures_mapping or {}, warm_up_keys=self.step_params.keys()
+            )
+
+            for param, fixture_name in params_fixtures_mapping.items():
+                if fixture_name is not None:
+                    with suppress(KeyError):
+                        inject_fixture(self.request, fixture_name, step_params[param])
+
+        @property
+        def _step_function_kwargs(self):
+            for param in get_args(self.step_definition.func):
+                try:
+                    yield param, self.step_params[param]
+                except KeyError:
+                    yield param, self.request.getfixturevalue(param)
+
+        def _inject_target_fixtures(self):
+            if len(self.step_definition.target_fixtures) == 1:
+                injectable_fixtures = [(self.step_definition.target_fixtures[0], self.step_result)]
+            elif self.step_result is not None and len(self.step_definition.target_fixtures) != 0:
+                injectable_fixtures = zip(self.step_definition.target_fixtures, self.step_result)
+            else:
+                injectable_fixtures = zip_longest(self.step_definition.target_fixtures, [])
+
+            for target_fixture, return_value in injectable_fixtures:
+                inject_fixture(self.request, target_fixture, return_value)
+
+        def __call__(self):
+            hook_kwargs = dict(
+                request=self.request,
+                feature=self.scenario.feature,
+                scenario=self.scenario,
+                step=self.step,
+            )
+
+            try:
+                self.step_definition = self.match_to_step()
+            except exceptions.StepDefinitionNotFoundError as exception:
+                hook_kwargs["exception"] = exception
+                self.request.config.hook.pytest_bdd_step_func_lookup_error(**hook_kwargs)
+                raise
+            else:
+                hook_kwargs["step_func"] = self.step_definition.func
+
+            self.request.config.hook.pytest_bdd_before_step(**hook_kwargs)
+
+            hook_kwargs["step_func_args"] = {}
+            self.step_params = self.step_definition.get_parameters(self.step)
+            try:
+                self._inject_step_parameters_as_fixtures(
+                    step_params=self.step_params, params_fixtures_mapping=self.step_definition.params_fixtures_mapping
+                )
+
+                step_function_kwargs = dict(self._step_function_kwargs)
+                hook_kwargs["step_func_args"] = step_function_kwargs
+
+                self.request.config.hook.pytest_bdd_before_step_call(**hook_kwargs)
+
+                # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
+                self.step_result = call_fixture_func(
+                    fixturefunc=self.step_definition.func, request=self.request, kwargs=step_function_kwargs
+                )
+
+                self._inject_target_fixtures()
+                self.request.config.hook.pytest_bdd_after_step(**hook_kwargs)
+            except Exception as exception:
+                hook_kwargs["exception"] = exception
+                self.request.config.hook.pytest_bdd_step_error(**hook_kwargs)
+                raise
+
+        execute = __call__
+
+        def match_to_step(self):
+            try:
+                return self.request.config.hook.pytest_bdd_match_step_definition_to_step(
+                    request=self.request, step=self.step
+                )
+            except Step.Matcher.MatchNotFoundError as e:
+                raise exceptions.StepDefinitionNotFoundError(
+                    f"Step definition is not found: {self.step}. "
+                    f"Line {self.step.line_number} "
+                    f'in scenario "{self.scenario.name}" '
+                    f'in the feature "{self.scenario.feature.filename}"'
+                ) from e
+
+    @attrs
+    class Registry:
+        registry: List["Step.Definition"] = attrib(default=Factory(list))
+        parent: "Step.Registry" = attrib(default=None, init=False)
+
+        @classmethod
+        def register_step(
+            cls,
+            caller_locals: Dict,
+            func,
+            type_,
+            parserlike,
+            converters,
+            params_fixtures_mapping,
+            target_fixtures,
+            liberal,
+        ):
+            if "step_registry" not in caller_locals.keys():
+                registry = cls()
+                caller_locals["step_registry"] = registry.bind_pytest_bdd_step_registry_fixture()
+
+            registry: "Step.Registry" = caller_locals["step_registry"].__registry__
+
+            parser = get_parser(parserlike)
+            registry.registry.append(
+                Step.Definition(
+                    func=func,
+                    type_=type_,
+                    parser=parser,
+                    converters=converters,
+                    params_fixtures_mapping=params_fixtures_mapping,
+                    target_fixtures=target_fixtures,
+                    liberal=liberal,
+                )
+            )
+
+        def bind_pytest_bdd_step_registry_fixture(self):
+            @pytest.fixture
+            def step_registry(step_registry):
+                self.parent = step_registry
+                return self
+
+            step_registry.__registry__ = self
+            return step_registry
+
+    @staticmethod
+    def decorator_builder(
+        step_type,
+        step_parserlike,
+        converters: Optional[Dict] = None,
+        target_fixture=None,
+        target_fixtures=None,
+        params_fixtures_mapping: Union[Set[str], Dict[str, str]] = (),
+        liberal=None,
+    ):
+        """Step decorator for the type and the name.
+
+        :param str or None step_type: Step type (GIVEN, WHEN or THEN).
+        :param str step_parserlike: Step name as in the feature file.
+        :param dict converters: Optional step arguments converters mapping
+        :param target_fixture: Optional fixture name to replace by step definition
+        :param target_fixtures: Target fixture names to be replaced by steps definition function.
+        :param params_fixtures_mapping: Step parameters would be injected as fixtures
+        :param liberal: Could step definition be used with other keywords
+
+        :return: Decorator function for the step.
+        """
+
+        converters = converters or {}
+        if target_fixture is not None and target_fixtures is not None:
+            warnings.warn(PytestBDDStepDefinitionWarning("Both target_fixture and target_fixtures are specified"))
+        target_fixtures = list(
+            OrderedSet(
+                [
+                    *([target_fixture] if target_fixture is not None else []),
+                    *(target_fixtures if target_fixtures is not None else []),
+                ]
+            )
         )
-    )
 
-    def decorator(step_func):
-        parser = get_parser(step_name)
-        parsed_step_name = parser.name
+        def decorator(step_func):
+            """
+            Step decorator
 
-        step_func.__name__ = str(parsed_step_name)
-
-        def step_alias_func():
+            :param function step_func: Step definition function
+            """
+            Step.Registry.register_step(
+                caller_locals=get_caller_module_locals(),
+                func=step_func,
+                type_=step_type,
+                parserlike=step_parserlike,
+                converters=converters,
+                params_fixtures_mapping=params_fixtures_mapping,
+                target_fixtures=target_fixtures,
+                liberal=liberal,
+            )
             return step_func
 
-        step_func.step_type = step_alias_func.step_type = step_type
-
-        # Preserve the docstring
-        step_alias_func.__doc__ = step_func.__doc__
-
-        step_func.parser = step_alias_func.parser = parser
-        step_func.converters = step_alias_func.converters = converters
-
-        step_func.params_fixtures_mapping = step_alias_func.params_fixtures_mapping = params_fixtures_mapping
-        step_func.target_fixtures = step_alias_func.target_fixtures = target_fixtures
-
-        step_alias_fixture = pytest.fixture(step_alias_func)
-        fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
-
-        # Inject step alias fixture into module scope
-        caller_locals = get_caller_module_locals()
-        caller_locals[fixture_step_name] = step_alias_fixture
-        return step_func
-
-    return decorator
-
-
-def inject_fixture(request, arg, value):
-    """Inject fixture into pytest fixture request.
-
-    :param request: pytest fixture request
-    :param arg: argument name
-    :param value: argument value
-    """
-
-    fd = FixtureDef(
-        fixturemanager=request._fixturemanager,
-        baseid=None,
-        argname=arg,
-        func=lambda: value,
-        scope="function",
-        params=None,
-    )
-    fd.cached_result = (value, 0, None)
-
-    old_fd = request._fixture_defs.get(arg)
-    add_fixturename = arg not in request.fixturenames
-
-    def fin():
-        request._fixturemanager._arg2fixturedefs[arg].remove(fd)
-        request._fixture_defs[arg] = old_fd
-
-        if add_fixturename:
-            request._pyfuncitem._fixtureinfo.names_closure.remove(arg)
-
-    request.addfinalizer(fin)
-
-    # inject fixture definition
-    request._fixturemanager._arg2fixturedefs.setdefault(arg, []).insert(0, fd)
-    # inject fixture value in request cache
-    request._fixture_defs[arg] = fd
-    if add_fixturename:
-        request._pyfuncitem._fixtureinfo.names_closure.append(arg)
+        return decorator

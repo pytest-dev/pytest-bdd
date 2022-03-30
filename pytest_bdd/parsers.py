@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, Union
 
 import parse as base_parse
-from parse_type import cfparse as base_cfparse
+import parse_type.cfparse as base_cfparse
 
 if sys.version_info >= (3, 8):
     from typing import Protocol, runtime_checkable
@@ -136,20 +136,20 @@ class string(StepParser):
         return self.name == name
 
 
-def get_parser(step_name: Union[str, StepParser, StepParserProtocol]) -> Union[StepParser, StepParserProtocol]:
+def get_parser(parserlike: Union[str, StepParser, StepParserProtocol]) -> Union[StepParser, StepParserProtocol]:
     """Get parser by given name.
 
-    :param step_name: name of the step to parse
+    :param parserlike: name of the step to parse
 
     :return: step parser object
     :rtype: StepArgumentParser
     """
 
-    if isinstance(step_name, StepParserProtocol):
-        return step_name
-    elif isinstance(step_name, _Re_Pattern):
-        return _re(step_name)
-    elif isinstance(step_name, base_parse.Parser):
-        return _parse(step_name)
+    if isinstance(parserlike, StepParserProtocol):
+        return parserlike
+    elif isinstance(parserlike, _Re_Pattern):
+        return _re(parserlike)
+    elif isinstance(parserlike, base_parse.Parser):
+        return _parse(parserlike)
     else:
-        return cfparse(step_name)
+        return cfparse(parserlike)

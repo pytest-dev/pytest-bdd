@@ -10,6 +10,7 @@ from itertools import tee
 from sys import _getframe
 from typing import TYPE_CHECKING, Any, Callable, Collection, Dict, Mapping, Union
 
+from _pytest.fixtures import FixtureDef
 from attr import Factory, attrib, attrs
 
 if TYPE_CHECKING:
@@ -135,3 +136,41 @@ class DefaultMapping(defaultdict):
         else:
             bool_or_items = {...: ...} if bool_or_items else {...: DefaultMapping.Skip}
         return cls(bool_or_items, warm_up_keys=warm_up_keys)
+
+
+def inject_fixture(request, arg, value):
+    """Inject fixture into pytest fixture request.
+
+    :param request: pytest fixture request
+    :param arg: argument name
+    :param value: argument value
+    """
+
+    fd = FixtureDef(
+        fixturemanager=request._fixturemanager,
+        baseid=None,
+        argname=arg,
+        func=lambda: value,
+        scope="function",
+        params=None,
+    )
+    fd.cached_result = (value, 0, None)
+
+    old_fd = request._fixture_defs.get(arg)
+    add_fixturename = arg not in request.fixturenames
+
+    def fin():
+        request._fixturemanager._arg2fixturedefs[arg].remove(fd)
+        request._fixture_defs[arg] = old_fd
+
+        if add_fixturename:
+            request._pyfuncitem._fixtureinfo.names_closure.remove(arg)
+
+    request.addfinalizer(fin)
+
+    # inject fixture definition
+    request._fixturemanager._arg2fixturedefs.setdefault(arg, []).insert(0, fd)
+    # inject fixture value in request cache
+    request._fixture_defs[arg] = fd
+    if add_fixturename:
+        request._pyfuncitem._fixtureinfo.names_closure.append(arg)

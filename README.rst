@@ -158,6 +158,31 @@ default author.
             Given I'm the admin
             And there's an article
 
+Liberal step decorator
+---------------------
+Sometimes you want use same step for all types of steps without re-defining alias;
+this step could be used with any keyword:
+
+.. code-block:: python
+
+    from pytest_bdd import step
+
+    @step("I'm an author user")
+    def author_user(auth, author):
+        auth['user'] = author.user
+
+Other steps also could be used as wildcard steps without aliases:
+
+.. code-block:: python
+
+    from pytest_bdd import given
+
+    @given("I'm an author user", liberal=True)
+    def author_user(auth, author):
+        auth['user'] = author.user
+
+
+This behavior could be set globally by defining `--liberal-steps` cli option or by `liberal_steps` pytest.ini option
 
 Step arguments
 --------------
@@ -1183,6 +1208,19 @@ which might be helpful building useful reporting, visualization, etc on top of i
   function failed to execute
 
 * pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception) - Called when step lookup failed
+
+* pytest_bdd_match_step_definition_to_step(request, step) - Called to match step to step definition
+
+Fixtures
+--------
+
+pytest-bdd exposes several plugin fixtures to give more testing flexibility
+
+* bdd_example - The current scenario outline parametrization.
+
+* step_registry - Contains registry of all user-defined steps
+
+* step_matcher- Contains matcher to help find step definition for selected step of scenario
 
 
 Browser testing

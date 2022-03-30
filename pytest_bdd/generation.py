@@ -2,18 +2,15 @@
 
 import itertools
 import os.path
+from operator import methodcaller
 
 import py
 from mako.lookup import TemplateLookup
+from pkg_resources import get_distribution, parse_version
 
 from .feature import get_features
-from .scenario import (
-    find_argumented_step_fixture_name_and_step_alias_function,
-    make_python_docstring,
-    make_python_name,
-    make_string_literal,
-)
-from .steps import get_step_fixture_name
+from .scenario import make_python_docstring, make_python_name, make_string_literal
+from .steps import Step
 from .types import STEP_TYPES
 
 template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
@@ -113,25 +110,6 @@ def print_missing_code(scenarios, steps):
     tw.write(code)
 
 
-def _find_step_fixturedef(fixturemanager, item, name, type_):
-    """Find step fixturedef.
-
-    :param request: PyTest Item object.
-    :param step: `Step`.
-
-    :return: Step function.
-    """
-    step_fixture_name = get_step_fixture_name(name, type_)
-    fixturedefs = fixturemanager.getfixturedefs(step_fixture_name, item.nodeid)
-    if fixturedefs is not None:
-        return fixturedefs
-
-    argumented_step_name, _ = find_argumented_step_fixture_name_and_step_alias_function(name, type_, fixturemanager)
-    if argumented_step_name is not None:
-        return fixturemanager.getfixturedefs(argumented_step_name, item.nodeid)
-    return None
-
-
 def parse_feature_files(paths, **kwargs):
     """Parse feature files of given paths.
 
@@ -169,9 +147,7 @@ def group_steps(steps):
 def _show_missing_code_main(config, session):
     """Preparing fixture duplicates for output."""
     tw = py.io.TerminalWriter()
-    session.perform_collect()
-
-    fm = session._fixturemanager
+    config.hook.pytest_collection(session=session)
 
     if config.option.features is None:
         tw.line("The --feature parameter is required.", red=True)
@@ -185,13 +161,24 @@ def _show_missing_code_main(config, session):
         if scenario:
             if scenario in scenarios:
                 scenarios.remove(scenario)
+
+            is_legacy_pytest = get_distribution("pytest").parsed_version < parse_version("7.0")
+
+            method_name = "prepare" if is_legacy_pytest else "setup"
+            methodcaller(method_name, item)(item.session._setupstate)
+
+            item_request = item._request
+
             for step in scenario.steps:
-                fixturedefs = _find_step_fixturedef(fm, item, step.name, step.type)
-                if fixturedefs:
-                    try:
-                        steps.remove(step)
-                    except ValueError:
-                        pass
+                try:
+                    item_request.config.hook.pytest_bdd_match_step_definition_to_step(request=item_request, step=step)
+                except Step.Matcher.MatchNotFoundError:
+                    pass
+                else:
+                    steps.remove(step)
+
+            item.session._setupstate.teardown_exact(*((item,) if is_legacy_pytest else ()), None)
+
     for scenario in scenarios:
         for step in scenario.steps:
             if step.background is None:

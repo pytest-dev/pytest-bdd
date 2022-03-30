@@ -6,7 +6,8 @@ import pytest
 from _pytest.mark import Mark, MarkDecorator
 from _pytest.warning_types import PytestDeprecationWarning
 
-from . import cucumber_json, generation, gherkin_terminal_reporter, given, reporting, then, when
+from . import cucumber_json, generation, gherkin_terminal_reporter, given, reporting, steps, then, when
+from .steps import Step
 from .utils import CONFIG_STACK
 
 
@@ -37,9 +38,21 @@ def bdd_example():
     return {}
 
 
+@pytest.fixture
+def step_registry():
+    """Fixture containing registry of all user-defined steps"""
+
+
+@pytest.fixture
+def step_matcher(pytestconfig):
+    """Fixture containing matcher to help find step definition for selected step of scenario"""
+    return Step.Matcher(pytestconfig)
+
+
 def pytest_addoption(parser):
     """Add pytest-bdd options."""
     add_bdd_ini(parser)
+    steps.add_options(parser)
     cucumber_json.add_options(parser)
     generation.add_options(parser)
     gherkin_terminal_reporter.add_options(parser)
@@ -110,3 +123,10 @@ def pytest_bdd_convert_tag_to_marks(
     feature, scenario, example, tag
 ) -> Optional[Collection[Union[Mark, MarkDecorator]]]:
     return [getattr(pytest.mark, tag)]
+
+
+def pytest_bdd_match_step_definition_to_step(request, step) -> "Step.Definition":
+    step_registry: Step.Registry = request.getfixturevalue("step_registry")
+    step_matcher: Step.Matcher = request.getfixturevalue("step_matcher")
+
+    return step_matcher(step, step_registry)
