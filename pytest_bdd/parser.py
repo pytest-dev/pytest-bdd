@@ -1,43 +1,61 @@
+from __future__ import annotations
+
 import os.path
 import re
 import textwrap
-import typing
 from collections import OrderedDict
 from functools import reduce
 from itertools import chain, product, zip_longest
 from operator import or_
+from typing import TYPE_CHECKING, Collection, Iterator, Mapping, Match, cast
 from warnings import warn
 
 from _pytest.warning_types import PytestCollectionWarning
 from attr import Factory, attrib, attrs, validate
 from ordered_set import OrderedSet
 
-from . import exceptions, types
+import pytest_bdd.steps
+
+from . import exceptions
 from .utils import SimpleMapping
 from .warning_types import PytestBDDScenarioExamplesExtraParamsWarning, PytestBDDScenarioStepsExtraPramsWarning
+
+if TYPE_CHECKING:
+    from typing import Any, Iterable
+
+FEATURE = "feature"
+SCENARIO_OUTLINE = "scenario outline"
+EXAMPLES = "examples"
+EXAMPLES_VERTICAL = "examples vertical"
+SCENARIO = "scenario"
+BACKGROUND = "background"
+EXAMPLES_HEADERS = "example headers"
+EXAMPLE_LINE = "example line"
+EXAMPLE_LINE_VERTICAL = "example line vertical"
+
+STEP_PREFIXES = {
+    FEATURE: "Feature: ",
+    SCENARIO_OUTLINE: "Scenario Outline: ",
+    EXAMPLES_VERTICAL: "Examples: Vertical",
+    EXAMPLES: "Examples:",
+    SCENARIO: "Scenario: ",
+    BACKGROUND: "Background:",
+    pytest_bdd.steps.GIVEN: "Given ",
+    pytest_bdd.steps.WHEN: "When ",
+    pytest_bdd.steps.THEN: "Then ",
+    pytest_bdd.steps.TAG: "@",
+    # Continuation of the previously mentioned step type
+    pytest_bdd.steps.AND_AND: "And ",
+    pytest_bdd.steps.AND_BUT: "But ",
+    pytest_bdd.steps.AND_STAR: "* ",
+}
 
 SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
 COMMENT_RE = re.compile(r"(^|(?<=\s))#")
-STEP_PREFIXES = {
-    types.FEATURE: "Feature: ",
-    types.SCENARIO_OUTLINE: "Scenario Outline: ",
-    types.EXAMPLES_VERTICAL: "Examples: Vertical",
-    types.EXAMPLES: "Examples:",
-    types.SCENARIO: "Scenario: ",
-    types.BACKGROUND: "Background:",
-    types.GIVEN: "Given ",
-    types.WHEN: "When ",
-    types.THEN: "Then ",
-    types.TAG: "@",
-    # Continuation of the previously mentioned step type
-    types.AND_AND: "And ",
-    types.AND_BUT: "But ",
-    types.AND_STAR: "* ",
-}
 
 
-def split_line(line):
+def split_line(line: str) -> list[str]:
     """Split the given Examples line.
 
     :param str|unicode line: Feature file Examples line.
@@ -47,7 +65,7 @@ def split_line(line):
     return [cell.replace("\\|", "|").strip() for cell in SPLIT_LINE_RE.split(line)[1:-1]]
 
 
-def parse_line(line):
+def parse_line(line: str) -> tuple[str, str]:
     """Parse step line to get the step prefix (Scenario, Given, When, Then or And) and the actual step name.
 
     :param line: Line of the Feature file.
@@ -60,7 +78,7 @@ def parse_line(line):
     return "", line
 
 
-def strip_comments(line):
+def strip_comments(line: str) -> str:
     """Remove comments.
 
     :param str line: Line of the Feature file.
@@ -73,7 +91,7 @@ def strip_comments(line):
     return line.strip()
 
 
-def get_step_type(line):
+def get_step_type(line: str) -> str | None:
     """Detect step type by the beginning of the line.
 
     :param str line: Line of the Feature file.
@@ -81,11 +99,12 @@ def get_step_type(line):
     :return: SCENARIO, GIVEN, WHEN, THEN, or `None` if can't be detected.
     """
     for _type, prefix in STEP_PREFIXES.items():
-        if line.startswith(prefix) and _type not in types.CONTINUATION_STEP_TYPES:
+        if line.startswith(prefix) and _type not in pytest_bdd.steps.CONTINUATION_STEP_TYPES:
             return _type
+    return None
 
 
-def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feature":
+def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Feature:
     """Parse the feature file.
 
     :param str basedir: Feature files base directory.
@@ -94,8 +113,8 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
     """
     abs_filename = os.path.abspath(os.path.join(basedir, filename))
     rel_filename = os.path.join(os.path.basename(basedir), filename)
-    current_node: typing.Union[Feature, ScenarioTemplate]
-    current_example_table: typing.Optional[ExampleTable] = None
+    current_node: Feature | ScenarioTemplate
+    current_example_table: ExampleTable
     feature = current_node = Feature(
         scenarios=OrderedDict(),
         filename=abs_filename,
@@ -107,13 +126,13 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
         background=None,
         description="",
     )
-    scenario: typing.Optional[ScenarioTemplate] = None
-    mode = None
+    scenario: ScenarioTemplate | None = None
+    mode: str | None = None
     prev_mode = None
-    description: typing.List[str] = []
+    description: list[str] = []
     step = None
     multiline_step = False
-    current_tags = OrderedSet()
+    current_tags: OrderedSet = OrderedSet()
 
     with open(abs_filename, encoding=encoding) as f:
         content = f.read()
@@ -131,41 +150,41 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
             multiline_step = False
         stripped_line = line.strip()
         clean_line = strip_comments(line)
-        if not clean_line and (not prev_mode or prev_mode not in types.FEATURE):
+        if not clean_line and (not prev_mode or prev_mode not in FEATURE):
             continue
         mode = get_step_type(clean_line) or mode
 
-        allowed_prev_mode = (types.BACKGROUND, types.GIVEN, types.WHEN)
+        allowed_prev_mode: tuple[str, ...] = (BACKGROUND, pytest_bdd.steps.GIVEN, pytest_bdd.steps.WHEN)
 
-        if not scenario and prev_mode not in allowed_prev_mode and mode in types.STEP_TYPES:
+        if not scenario and prev_mode not in allowed_prev_mode and mode in pytest_bdd.steps.STEP_TYPES:
             raise exceptions.FeatureError(
                 "Step definition outside of a Scenario or a Background", line_number, clean_line, filename
             )
 
         allowed_prev_mode = (
-            types.EXAMPLES,
-            types.EXAMPLES_VERTICAL,
-            types.EXAMPLE_LINE,
-            types.EXAMPLE_LINE_VERTICAL,
-            types.TAG,
-            *types.STEP_TYPES,
-            types.FEATURE,
+            EXAMPLES,
+            EXAMPLES_VERTICAL,
+            EXAMPLE_LINE,
+            EXAMPLE_LINE_VERTICAL,
+            pytest_bdd.steps.TAG,
+            *pytest_bdd.steps.STEP_TYPES,
+            FEATURE,
         )
 
-        if mode == types.TAG and prev_mode and prev_mode not in allowed_prev_mode:
+        if mode == pytest_bdd.steps.TAG and prev_mode and prev_mode not in allowed_prev_mode:
             raise exceptions.FeatureError(
                 "Tag not around Feature, Scenario or Examples ", line_number, clean_line, filename
             )
         else:
-            current_tags |= get_tags(clean_line)
+            current_tags = OrderedSet(current_tags | get_tags(clean_line))
 
-        if mode == types.FEATURE:
-            if prev_mode is None or prev_mode == types.TAG:
+        if mode == FEATURE:
+            if prev_mode is None or prev_mode == pytest_bdd.steps.TAG:
                 _, feature.name = parse_line(clean_line)
                 feature.line_number = line_number
-                feature.tags = current_tags
-                current_tags = OrderedSet()
-            elif prev_mode == types.FEATURE:
+                feature.tags = set(current_tags)
+                current_tags: OrderedSet = OrderedSet()  # type: ignore[no-redef]
+            elif prev_mode == FEATURE:
                 description.append(clean_line)
             else:
                 raise exceptions.FeatureError(
@@ -179,18 +198,19 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
 
         # Remove Feature, Given, When, Then, And
         keyword, parsed_line = parse_line(clean_line)
-        if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
+        if mode in [SCENARIO, SCENARIO_OUTLINE]:
             feature.scenarios[parsed_line] = scenario = current_node = ScenarioTemplate(
                 feature=feature, name=parsed_line, line_number=line_number, tags=current_tags
             )
             current_tags = OrderedSet()
-        elif mode == types.BACKGROUND:
+        elif mode == BACKGROUND:
             feature.background = Background(feature=feature, line_number=line_number)
-        elif mode in [types.EXAMPLES, types.EXAMPLES_VERTICAL]:
-            if mode == types.EXAMPLES:
-                mode, ExampleTableBuilder = types.EXAMPLES_HEADERS, ExampleTableRows
+        elif mode in [EXAMPLES, EXAMPLES_VERTICAL]:
+            ExampleTableBuilder: type[ExampleTable]
+            if mode == EXAMPLES:
+                mode, ExampleTableBuilder = EXAMPLES_HEADERS, ExampleTableRows
             else:
-                mode, ExampleTableBuilder = types.EXAMPLE_LINE_VERTICAL, ExampleTableColumns
+                mode, ExampleTableBuilder = EXAMPLE_LINE_VERTICAL, ExampleTableColumns  # type: ignore[no-redef]
             _, table_name = parse_line(clean_line)
             current_example_table = ExampleTableBuilder(
                 name=table_name or None, line_number=line_number, node=current_node
@@ -198,8 +218,8 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
             current_node.examples += [current_example_table]
             current_example_table.tags = current_tags
             current_tags = OrderedSet()
-        elif mode == types.EXAMPLES_HEADERS:
-            mode = types.EXAMPLE_LINE
+        elif mode == EXAMPLES_HEADERS:
+            mode = EXAMPLE_LINE
             current_example_table.example_params = [*split_line(parsed_line)]
             try:
                 validate(current_example_table)
@@ -207,7 +227,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
                 raise exceptions.FeatureError(
                     f"{current_node.node_kind} has not valid examples. {exc.args[0]}", line_number, clean_line, filename
                 ) from exc
-        elif mode == types.EXAMPLE_LINE:
+        elif mode == EXAMPLE_LINE:
             try:
                 current_example_table.examples += [[*split_line(stripped_line)]]
                 validate(current_example_table)
@@ -215,15 +235,14 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
                 node_message_prefix = "Scenario" if scenario else "Feature"
                 message = f"{node_message_prefix} has not valid examples. {exc.args[0]}"
                 raise exceptions.FeatureError(message, line_number, clean_line, filename) from exc
-        elif mode == types.EXAMPLE_LINE_VERTICAL:
+        elif mode == EXAMPLE_LINE_VERTICAL:
             try:
                 param, *examples = split_line(stripped_line)
             except ValueError:
                 pass
             else:
                 try:
-                    current_example_table: ExampleTableColumns
-                    current_example_table.example_params += [param]
+                    cast(ExampleTableColumns, current_example_table).example_params += [param]
                     current_example_table.examples_transposed += [examples]
                     validate(current_example_table)
                 except exceptions.ExamplesNotValidError as exc:
@@ -233,12 +252,13 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> "Feat
                         clean_line,
                         filename,
                     ) from exc
-        elif mode and mode not in (types.FEATURE, types.TAG):
+        elif mode and mode not in (FEATURE, pytest_bdd.steps.TAG):
             step = Step(name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword)
+            target: Background | ScenarioTemplate
             if feature.background and not scenario:
                 target = feature.background
             else:
-                target = scenario
+                target = cast(ScenarioTemplate, scenario)
             target.add_step(step)
 
     feature.description = "\n".join(description).strip()
@@ -250,16 +270,27 @@ class Feature:
 
     node_kind = "Feature"
 
-    def __init__(self, scenarios, filename, rel_filename, name, tags, examples, background, line_number, description):
-        self.scenarios: typing.Dict[str, ScenarioTemplate] = scenarios
-        self.rel_filename = rel_filename
-        self.filename = filename
-        self.tags = tags
+    def __init__(
+        self,
+        scenarios: OrderedDict,
+        filename: str,
+        rel_filename: str,
+        name: str | None,
+        tags: set,
+        examples,
+        background: Background | None,
+        line_number: int,
+        description: str,
+    ) -> None:
+        self.scenarios: dict[str, ScenarioTemplate] = scenarios
+        self.rel_filename: str = rel_filename
+        self.filename: str = filename
+        self.tags: set = tags
         self.examples = examples
-        self.name = name
-        self.line_number = line_number
-        self.description = description
-        self.background = background
+        self.name: str | None = name
+        self.line_number: int = line_number
+        self.description: str = description
+        self.background: Background | None = background
 
 
 class ScenarioTemplate:
@@ -269,21 +300,20 @@ class ScenarioTemplate:
 
     node_kind = "Scenario"
 
-    def __init__(self, feature: Feature, name: str, line_number: int, tags=None):
+    def __init__(self, feature: Feature, name: str, line_number: int, tags=None) -> None:
         """
-
-        :param str name: Scenario name.
-        :param int line_number: Scenario line number.
-        :param OrderedSet tags: Set of tags.
+        :param name: Scenario name.
+        :param line_number: Scenario line number.
+        :param tags: Set of tags.
         """
         self.feature = feature
         self.name = name
-        self._steps: typing.List[Step] = []
+        self._steps: list[Step] = []
         self.examples = Examples()
         self.line_number = line_number
         self.tags = tags or OrderedSet()
 
-    def add_step(self, step):
+    def add_step(self, step: Step) -> None:
         """Add step to the scenario.
 
         :param pytest_bdd.parser.Step step: Step.
@@ -292,11 +322,11 @@ class ScenarioTemplate:
         self._steps.append(step)
 
     @property
-    def steps(self):
+    def steps(self) -> list[Step]:
         background = self.feature.background
         return (background.steps if background else []) + self._steps
 
-    def render(self, context: typing.Mapping[str, typing.Any]) -> "Scenario":
+    def render(self, context: Mapping[str, Any]) -> Scenario:
         steps = [
             Step(
                 name=templated_step.render(context),
@@ -307,13 +337,15 @@ class ScenarioTemplate:
             )
             for templated_step in self.steps
         ]
-        return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
+        return Scenario(
+            feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=set(self.tags)
+        )
 
     @property
     def params(self):
         return reduce(or_, map(set, (step.params for step in self.steps)), set())
 
-    def validate(self, external_join_keys: typing.Set[str] = ()):
+    def validate(self, external_join_keys: set[str] | tuple = ()):
         """Validate the scenario.
 
         :raises ScenarioValidationError: when scenario is not valid
@@ -323,7 +355,7 @@ class ScenarioTemplate:
         example_rows_with_extra_params = [
             row for row in united_example_rows if set(row.keys()) - params - row.join_params - external_join_keys
         ]
-        external_defined_step_params = reduce(
+        external_defined_step_params: set[ExampleRowUnited] = reduce(
             or_,
             (
                 params - set(row.keys()) - external_join_keys
@@ -340,7 +372,8 @@ class ScenarioTemplate:
             warn(PytestBDDScenarioStepsExtraPramsWarning(self, external_defined_step_params))
 
     @property
-    def example_table_combinations(self) -> typing.Iterable["ExampleTableCombination"]:
+    def example_table_combinations(self) -> Iterable[ExampleTableCombination]:
+        example_table_combinations: Iterable
         if self.feature.examples and self.examples:
             example_table_combinations = product(self.feature.examples, self.examples)
         else:
@@ -348,7 +381,7 @@ class ScenarioTemplate:
         yield from map(ExampleTableCombination, example_table_combinations)
 
     @property
-    def united_example_rows(self) -> typing.Iterable["ExampleRowUnited"]:
+    def united_example_rows(self) -> Iterable[ExampleRowUnited]:
         for example_table_combination in self.example_table_combinations:
             yield from example_table_combination.united_example_rows
 
@@ -357,13 +390,15 @@ class Scenario:
 
     """Scenario."""
 
-    def __init__(self, feature: Feature, name: str, line_number: int, steps: "typing.List[Step]", tags=None):
+    def __init__(
+        self, feature: Feature, name: str, line_number: int, steps: list[Step], tags: set | None = None
+    ) -> None:
         """Scenario constructor.
 
-        :param pytest_bdd.parser.Feature feature: Feature.
-        :param str name: Scenario name.
-        :param int line_number: Scenario line number.
-        :param set tags: Set of tags.
+        :param feature: Feature.
+        :param name: Scenario name.
+        :param line_number: Scenario line number.
+        :param tags: Set of tags.
         """
         self.feature = feature
         self.name = name
@@ -373,40 +408,31 @@ class Scenario:
         self.failed = False
 
 
+@attrs
 class Step:
+    name: str = attrib()
+    type: str = attrib()
+    indent: int = attrib()
+    line_number: int = attrib()
+    keyword: str = attrib()
 
-    """Step."""
+    first_name_row: str | None = attrib(default=None, init=False)
+    lines: list[str] = attrib(default=Factory(list), init=False)
+    failed: bool = attrib(default=False, init=False)
+    scenario: ScenarioTemplate | None = attrib(default=None, init=False)
+    background: Background | None = attrib(default=None, init=False)
 
-    def __init__(self, name, type, indent, line_number, keyword):
-        """Step constructor.
-
-        :param str name: step name.
-        :param str type: step type.
-        :param int indent: step text indent.
-        :param int line_number: line number.
-        :param str keyword: step keyword.
-        """
-        self.name = name
-        self.keyword = keyword
-        self.lines = []
-        self.indent = indent
-        self.type = type
-        self.line_number = line_number
-        self.failed = False
-        self.start = 0
-        self.stop = 0
-        self.scenario = None
-        self.background = None
-
-    def add_line(self, line):
+    def add_line(self, line: str) -> None:
         """Add line to the multiple step.
 
         :param str line: Line of text - the continuation of the step name.
         """
+        if not self.lines:
+            self.first_name_row = self.name
         self.lines.append(line)
+        self._update_name()
 
-    @property
-    def name(self):
+    def _update_name(self) -> None:
         """Get step name."""
         multilines_content = textwrap.dedent("\n".join(self.lines)) if self.lines else ""
 
@@ -418,25 +444,20 @@ class Step:
             flags=re.DOTALL,  # Needed to make the "." match also new lines
         )
 
-        lines = [self._name] + [multilines_content]
-        return "\n".join(lines).strip()
+        lines = ([self.first_name_row] if self.first_name_row else []) + [multilines_content]
+        self.name = "\n".join(lines).strip()
 
-    @name.setter
-    def name(self, value):
-        """Set step name."""
-        self._name = value
-
-    def __str__(self):
+    def __str__(self) -> str:
         """Full step name including the type."""
         return f'{self.type.capitalize()} "{self.name}"'
 
     @property
-    def params(self):
+    def params(self) -> tuple[str, ...]:
         """Get step params."""
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
-    def render(self, context: typing.Mapping[str, typing.Any]):
-        def replacer(m: typing.Match):
+    def render(self, context: Mapping[str, Any]):
+        def replacer(m: Match):
             varname = m.group(1)
             try:
                 return str(context[varname])
@@ -453,17 +474,17 @@ class Background:
 
     """Background."""
 
-    def __init__(self, feature, line_number):
+    def __init__(self, feature: Feature, line_number: int) -> None:
         """Background constructor.
 
         :param pytest_bdd.parser.Feature feature: Feature.
         :param int line_number: Line number.
         """
-        self.feature = feature
-        self.line_number = line_number
-        self.steps = []
+        self.feature: Feature = feature
+        self.line_number: int = line_number
+        self.steps: list[Step] = []
 
-    def add_step(self, step):
+    def add_step(self, step: Step) -> None:
         """Add step to the background."""
         step.background = self
         self.steps.append(step)
@@ -477,23 +498,23 @@ class Examples(list):
 
 @attrs
 class ExampleRow(SimpleMapping):
-    mapping: typing.Union[typing.Mapping, typing.Iterable] = attrib()
+    mapping: Mapping | Iterable = attrib()
     index = attrib(kw_only=True, default=None)
     kind = attrib(kw_only=True, default=None)
     tags = attrib(default=Factory(OrderedSet), kw_only=True)
-    example_table: "ExampleTable" = attrib(kw_only=True, default=None)
+    example_table: ExampleTable = attrib(kw_only=True, default=None)
 
     def __attrs_post_init__(self):
         self._dict = {}
-        mapping = self.mapping.items() if isinstance(self.mapping, typing.Mapping) else self.mapping
+        mapping = self.mapping.items() if isinstance(self.mapping, Mapping) else self.mapping
         for key, value in mapping:
-            if key == STEP_PREFIXES[types.TAG]:
+            if key == STEP_PREFIXES[pytest_bdd.steps.TAG]:
                 self.tags |= {value}
             else:
                 self._dict[key] = value
 
     @property
-    def breadcrumb(self):
+    def breadcrumb(self) -> str:
         node = self.example_table.node
         example_table = self.example_table
         if node:
@@ -508,7 +529,7 @@ class ExampleRow(SimpleMapping):
 
 @attrs
 class ExampleRowUnited(SimpleMapping):
-    example_rows: typing.List[ExampleRow] = attrib()
+    example_rows: list[ExampleRow] = attrib()
     join_params = attrib(default=Factory(set), kw_only=True)
     tags = attrib(default=Factory(OrderedSet), kw_only=True)
 
@@ -533,9 +554,7 @@ class ExampleRowUnited(SimpleMapping):
             raise self.BuildError
 
     @staticmethod
-    def _combine_two_rows(
-        row1: ExampleRow, row2: ExampleRow
-    ) -> typing.Tuple[typing.Optional["ExampleRow"], typing.Optional[typing.Set]]:
+    def _combine_two_rows(row1: ExampleRow, row2: ExampleRow) -> tuple[ExampleRow | None, set | None]:
         common_param_names = set(row1.keys()) & set(row2.keys())
         if all(row1[param_name] == row2[param_name] for param_name in common_param_names):
             return (
@@ -567,12 +586,12 @@ class ExampleTable:
     examples: list
     examples_transposed: list
     kind: str
-    example_params = attrib(default=Factory(list))
+    example_params: list[str] = attrib(default=Factory(list))
 
     @example_params.validator
     def unique(self, attribute, value):
         unique_items = set()
-        excluded_items = {STEP_PREFIXES[types.TAG]}
+        excluded_items = {STEP_PREFIXES[pytest_bdd.steps.TAG]}
         for item in value:
             if item not in excluded_items and item in unique_items:
                 raise exceptions.ExamplesNotValidError(
@@ -584,14 +603,14 @@ class ExampleTable:
     line_number = attrib(default=None)
     name = attrib(default=None)
     tags = attrib(default=Factory(OrderedSet), kw_only=True)
-    node: typing.Union[Feature, ScenarioTemplate] = attrib(default=None, kw_only=True)
+    node: Feature | ScenarioTemplate = attrib(default=None, kw_only=True)
 
-    def __iter__(self) -> typing.Iterable[ExampleRow]:
+    def __iter__(self) -> Iterator[ExampleRow]:
         for index, example_row in enumerate(self.examples):
             assert len(self.example_params) == len(example_row)
             yield ExampleRow(zip(self.example_params, example_row), example_table=self, index=index, kind=self.kind)
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         """Bool comparison."""
         return bool(self.examples)
 
@@ -633,14 +652,14 @@ class ExampleTableRows(ExampleTable):
 
 
 @attrs
-class ExampleTableCombination(typing.Collection):
+class ExampleTableCombination(Collection):
     iterable = attrib()
 
     def __attrs_post_init__(self):
         self._list = list(self.iterable)
 
     @property
-    def united_example_rows(self) -> typing.Iterable[ExampleRowUnited]:
+    def united_example_rows(self) -> Iterable[ExampleRowUnited]:
         def get_rows_or_build_default_row(example_table: ExampleTable):
             rows = iter(example_table)
             try:
@@ -665,17 +684,19 @@ class ExampleTableCombination(typing.Collection):
         return item in self._list
 
 
-def get_tags(line) -> typing.Set[str]:
+def get_tags(line: str | None) -> OrderedSet[str]:
     """Get tags out of the given line.
 
     :param str line: Feature file text line.
 
     :return: List of tags.
     """
-    if not line or not line.strip().startswith(STEP_PREFIXES[types.TAG]):
-        return set()
-    return {
-        tag.lstrip(STEP_PREFIXES[types.TAG])
-        for tag in line.strip().split(f" {STEP_PREFIXES[types.TAG]}")
-        if len(tag) > 1
-    }
+    if not line or not line.strip().startswith(STEP_PREFIXES[pytest_bdd.steps.TAG]):
+        return OrderedSet()
+    return OrderedSet(
+        [
+            tag.lstrip(STEP_PREFIXES[pytest_bdd.steps.TAG])
+            for tag in line.strip().split(f" {STEP_PREFIXES[pytest_bdd.steps.TAG]}")
+            if len(tag) > 1
+        ]
+    )

@@ -1,21 +1,28 @@
 """Common type definitions."""
+from __future__ import annotations
 
-FEATURE = "feature"
-SCENARIO_OUTLINE = "scenario outline"
-EXAMPLES = "examples"
-EXAMPLES_VERTICAL = "examples vertical"
-EXAMPLES_HEADERS = "example headers"
-EXAMPLE_LINE = "example line"
-EXAMPLE_LINE_VERTICAL = "example line vertical"
-SCENARIO = "scenario"
-BACKGROUND = "background"
-GIVEN = "given"
-WHEN = "when"
-THEN = "then"
-AND_AND = "and_and"
-AND_BUT = "and_but"
-AND_STAR = "and_star"
-TAG = "tag"
+from typing import TYPE_CHECKING
 
-CONTINUATION_STEP_TYPES = (AND_AND, AND_BUT, AND_STAR)
-STEP_TYPES = (GIVEN, WHEN, THEN, *CONTINUATION_STEP_TYPES)
+from _pytest.fixtures import FixtureRequest
+
+from pytest_bdd.parser import ScenarioTemplate
+
+if TYPE_CHECKING:
+    from typing import Any
+
+    from _pytest.nodes import Item as BaseItem
+    from _pytest.reports import TestReport as BaseTestReport
+
+    from pytest_bdd.reporting import ScenarioReport
+
+    class TestReport(BaseTestReport):  # type: ignore[misc]
+        scenario: dict[str, Any]
+        item: dict[str, str]
+
+    class TestFunc(type(lambda: ())):  # type: ignore[misc]
+        __scenario__: ScenarioTemplate
+
+    class Item(BaseItem):
+        __scenario_report__: ScenarioReport
+        obj: TestFunc
+        _request: FixtureRequest

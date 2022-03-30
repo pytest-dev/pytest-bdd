@@ -1,4 +1,6 @@
 """Various utility functions."""
+from __future__ import annotations
+
 import base64
 import pickle
 import re
@@ -7,19 +9,23 @@ from contextlib import suppress
 from functools import reduce
 from inspect import getframeinfo, signature
 from itertools import tee
+from operator import getitem
 from sys import _getframe
-from typing import TYPE_CHECKING, Any, Callable, Collection, Dict, Mapping, Union
+from typing import TYPE_CHECKING, Callable, Collection, Mapping, cast
 
 from _pytest.fixtures import FixtureDef
 from attr import Factory, attrib, attrs
 
 if TYPE_CHECKING:
+    from typing import Any
+
+    from _pytest.config import Config
     from _pytest.pytester import RunResult
 
-CONFIG_STACK = []
+CONFIG_STACK: list[Config] = []
 
 
-def get_args(func):
+def get_args(func: Callable) -> list[str]:
     """Get a list of argument names for a function.
 
     :param func: The function to inspect.
@@ -31,7 +37,7 @@ def get_args(func):
     return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
 
 
-def get_caller_module_locals(depth=2):
+def get_caller_module_locals(depth: int = 2) -> dict[str, Any]:
     """Get the caller module locals dictionary.
 
     We use sys._getframe instead of inspect.stack(0) because the latter is way slower, since it iterates over
@@ -40,7 +46,7 @@ def get_caller_module_locals(depth=2):
     return _getframe(depth).f_locals
 
 
-def get_caller_module_path(depth=2):
+def get_caller_module_path(depth: int = 2) -> str:
     """Get the caller module path.
 
     We use sys._getframe instead of inspect.stack(0) because the latter is way slower, since it iterates over
@@ -54,7 +60,7 @@ _DUMP_START = "_pytest_bdd_>>>"
 _DUMP_END = "<<<_pytest_bdd_"
 
 
-def dump_obj(*objects):
+def dump_obj(*objects: Any) -> None:
     """Dump objects to stdout so that they can be inspected by the test suite."""
     for obj in objects:
         dump = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
@@ -62,7 +68,7 @@ def dump_obj(*objects):
         print(f"{_DUMP_START}{encoded}{_DUMP_END}")
 
 
-def collect_dumped_objects(result: "RunResult"):
+def collect_dumped_objects(result: RunResult):
     """Parse all the objects dumped with `dump_object` from the result.
 
     Note: You must run the result with output to stdout enabled.
@@ -75,7 +81,7 @@ def collect_dumped_objects(result: "RunResult"):
 
 @attrs
 class SimpleMapping(Mapping):
-    _dict = attrib(default=Factory(dict), kw_only=True)
+    _dict: dict = attrib(default=Factory(dict), kw_only=True)
 
     def __getitem__(self, item):
         return self._dict[item]
@@ -124,17 +130,17 @@ class DefaultMapping(defaultdict):
     def warm_up(self, *items):
         for item in items:
             with suppress(KeyError):
-                self[item]
+                getitem(self, item)
 
     @classmethod
     def instantiate_from_collection_or_bool(
-        cls, bool_or_items: Union[Collection[str], Dict[str, str], Any] = True, *, warm_up_keys=()
+        cls, bool_or_items: Collection[str] | dict[str, Any] | Any = True, *, warm_up_keys=()
     ):
         if isinstance(bool_or_items, Collection):
             if not isinstance(bool_or_items, Mapping):
                 bool_or_items = zip(*tee(iter(bool_or_items)))
         else:
-            bool_or_items = {...: ...} if bool_or_items else {...: DefaultMapping.Skip}
+            bool_or_items = cast(dict, {...: ...} if bool_or_items else {...: DefaultMapping.Skip})
         return cls(bool_or_items, warm_up_keys=warm_up_keys)
 
 

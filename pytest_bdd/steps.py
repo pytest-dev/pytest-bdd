@@ -34,10 +34,13 @@ def given_beautiful_article(article):
     pass
 
 """
+from __future__ import annotations
+
+import sys
 import warnings
 from contextlib import suppress
 from itertools import zip_longest
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Iterable, Iterator, Sequence
 from warnings import warn
 
 import pytest
@@ -47,15 +50,37 @@ from attr import Factory, attrib, attrs
 from ordered_set import OrderedSet
 
 from . import exceptions
-from .parser import Scenario as ScenarioModel
-from .parser import Step as StepModel
 from .parsers import StepParser, get_parser
-from .types import GIVEN, THEN, WHEN
 from .utils import DefaultMapping, get_args, get_caller_module_locals, inject_fixture
 from .warning_types import PytestBDDStepDefinitionWarning
 
+if sys.version_info >= (3, 10):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
 
-def add_options(parser):
+
+if TYPE_CHECKING:
+    from typing import Any, Callable
+
+    from _pytest.config.argparsing import Parser
+
+    from .parser import Scenario as ScenarioModel
+    from .parser import Step as StepModel
+
+
+GIVEN = "given"
+WHEN = "when"
+THEN = "then"
+AND_AND = "and_and"
+AND_BUT = "and_but"
+AND_STAR = "and_star"
+TAG = "tag"
+CONTINUATION_STEP_TYPES = (AND_AND, AND_BUT, AND_STAR)
+STEP_TYPES = (GIVEN, WHEN, THEN, *CONTINUATION_STEP_TYPES)
+
+
+def add_options(parser: Parser):
     """Add pytest-bdd options."""
     group = parser.getgroup("bdd", "Steps")
     group.addoption(
@@ -74,13 +99,13 @@ def add_options(parser):
 
 
 def given(
-    parserlike,
-    converters=None,
-    target_fixture=None,
-    target_fixtures=None,
-    params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
-    liberal=None,
-):
+    parserlike: Any,
+    converters: dict[str, Callable] | None = None,
+    target_fixture: str | None = None,
+    target_fixtures: list[str] = None,
+    params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
+    liberal: bool | None = None,
+) -> Callable:
     """Given step decorator.
 
     :param parserlike: Step name or a parser object.
@@ -105,13 +130,13 @@ def given(
 
 
 def when(
-    parserlike,
-    converters=None,
-    target_fixture=None,
-    target_fixtures=None,
-    params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
-    liberal=None,
-):
+    parserlike: Any,
+    converters: dict[str, Callable] | None = None,
+    target_fixture: str | None = None,
+    target_fixtures: list[str] = None,
+    params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
+    liberal: bool | None = None,
+) -> Callable:
     """When step decorator.
 
     :param parserlike: Step name or a parser object.
@@ -136,13 +161,13 @@ def when(
 
 
 def then(
-    parserlike,
-    converters=None,
-    target_fixture=None,
-    target_fixtures=None,
-    params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
-    liberal=None,
-):
+    parserlike: Any,
+    converters: dict[str, Callable] | None = None,
+    target_fixture: str | None = None,
+    target_fixtures: list[str] = None,
+    params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
+    liberal: bool | None = None,
+) -> Callable:
     """Then step decorator.
 
     :param parserlike: Step name or a parser object.
@@ -167,11 +192,11 @@ def then(
 
 
 def step(
-    parserlike,
-    converters=None,
-    target_fixture=None,
-    target_fixtures=None,
-    params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+    parserlike: Any,
+    converters: dict[str, Callable] | None = None,
+    target_fixture: str | None = None,
+    target_fixtures: list[str] = None,
+    params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
 ):
     """Liberal step decorator which could be used with any keyword.
 
@@ -196,18 +221,18 @@ def step(
 
 
 class Step:
-    Model = StepModel
+    Model: TypeAlias = "StepModel"
 
     @attrs
     class Matcher:
         config: Config = attrib()
         step = attrib(init=False)
-        step_registry: "Step.Registry" = attrib(init=False)
+        step_registry: Step.Registry = attrib(init=False)
 
         class MatchNotFoundError(RuntimeError):
             pass
 
-        def __call__(self, step: "Step.Model", step_registry: "Step.Registry") -> "Step.Definition":
+        def __call__(self, step: Step.Model, step_registry: Step.Registry) -> Step.Definition:
             self.step = step
             self.step_registry = step_registry
 
@@ -247,24 +272,25 @@ class Step:
             )
 
         @staticmethod
-        def find_step_definition_matches(registry, matchers):
-            while registry is not None:
+        def find_step_definition_matches(
+            registry: Step.Registry | None, matchers: Sequence[Callable[[Step.Definition], bool]]
+        ) -> Iterable[Step.Definition]:
+            if registry:
                 found_matches = False
                 for matcher in matchers:
-                    for step_definition in registry.registry:
+                    for step_definition in registry:
                         if matcher(step_definition):
                             found_matches = True
                             yield step_definition
                     if found_matches:
                         break
                 if not found_matches:
-                    registry = getattr(registry, "parent", None)
-                else:
-                    break
+                    with suppress(AttributeError):
+                        yield from Step.Matcher.find_step_definition_matches(registry.parent, matchers)
 
     @attrs
     class Definition:
-        func: type(lambda: ()) = attrib()
+        func: Callable = attrib()
         type_ = attrib()
         parser: StepParser = attrib()
         converters = attrib()
@@ -272,27 +298,28 @@ class Step:
         target_fixtures = attrib()
         liberal = attrib()
 
-        def get_parameters(self, step: StepModel):
-            return {
-                arg: self.converters.get(arg, lambda _: _)(value)
-                for arg, value in self.parser.parse_arguments(step.name).items()
-            }
+        def get_parameters(self, step: Step.Model):
+            parsed_arguments = self.parser.parse_arguments(step.name) or {}
+            return {arg: self.converters.get(arg, lambda _: _)(value) for arg, value in parsed_arguments.items()}
 
     @attrs
     class Executor:
         request: FixtureRequest = attrib()
         scenario: ScenarioModel = attrib()
-        step: StepModel = attrib()
+        step: Step.Model = attrib()
         step_params: dict = attrib(init=False)
-        step_definition: "Step.Definition" = attrib(init=False)
+        step_definition: Step.Definition = attrib(init=False)
         step_result: Any = attrib(init=False)
 
         def _inject_step_parameters_as_fixtures(
-            self, step_params: Optional[Dict] = None, params_fixtures_mapping: Optional[Dict] = None
+            self, step_params: dict | None = None, params_fixtures_mapping: dict | None = None
         ):
             step_params = step_params or {}
-            params_fixtures_mapping = DefaultMapping.instantiate_from_collection_or_bool(
-                params_fixtures_mapping or {}, warm_up_keys=self.step_params.keys()
+            params_fixtures_mapping = (
+                DefaultMapping.instantiate_from_collection_or_bool(
+                    params_fixtures_mapping or {}, warm_up_keys=self.step_params.keys()
+                )
+                or {}
             )
 
             for param, fixture_name in params_fixtures_mapping.items():
@@ -379,13 +406,13 @@ class Step:
 
     @attrs
     class Registry:
-        registry: List["Step.Definition"] = attrib(default=Factory(list))
-        parent: "Step.Registry" = attrib(default=None, init=False)
+        registry: list[Step.Definition] = attrib(default=Factory(list))
+        parent: Step.Registry = attrib(default=None, init=False)
 
         @classmethod
         def register_step(
             cls,
-            caller_locals: Dict,
+            caller_locals: dict,
             func,
             type_,
             parserlike,
@@ -395,10 +422,10 @@ class Step:
             liberal,
         ):
             if "step_registry" not in caller_locals.keys():
-                registry = cls()
-                caller_locals["step_registry"] = registry.bind_pytest_bdd_step_registry_fixture()
+                built_registry = cls()
+                caller_locals["step_registry"] = built_registry.bind_pytest_bdd_step_registry_fixture()
 
-            registry: "Step.Registry" = caller_locals["step_registry"].__registry__
+            registry: Step.Registry = caller_locals["step_registry"].__registry__
 
             parser = get_parser(parserlike)
             registry.registry.append(
@@ -422,21 +449,24 @@ class Step:
             step_registry.__registry__ = self
             return step_registry
 
+        def __iter__(self) -> Iterator[Step.Definition]:
+            return iter(self.registry)
+
     @staticmethod
     def decorator_builder(
-        step_type,
-        step_parserlike,
-        converters: Optional[Dict] = None,
-        target_fixture=None,
-        target_fixtures=None,
-        params_fixtures_mapping: Union[Set[str], Dict[str, str]] = (),
-        liberal=None,
-    ):
+        step_type: str | None,
+        step_parserlike: Any,
+        converters: dict[str, Callable] | None = None,
+        target_fixture: str | None = None,
+        target_fixtures: list[str] = None,
+        params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
+        liberal: bool | None = None,
+    ) -> Callable:
         """Step decorator for the type and the name.
 
-        :param str or None step_type: Step type (GIVEN, WHEN or THEN).
-        :param str step_parserlike: Step name as in the feature file.
-        :param dict converters: Optional step arguments converters mapping
+        :param step_type: Step type (GIVEN, WHEN or THEN).
+        :param step_parserlike: Step name as in the feature file.
+        :param converters: Optional step arguments converters mapping
         :param target_fixture: Optional fixture name to replace by step definition
         :param target_fixtures: Target fixture names to be replaced by steps definition function.
         :param params_fixtures_mapping: Step parameters would be injected as fixtures
@@ -457,7 +487,7 @@ class Step:
             )
         )
 
-        def decorator(step_func):
+        def decorator(step_func: Callable) -> Callable:
             """
             Step decorator
 

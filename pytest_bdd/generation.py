@@ -1,22 +1,40 @@
 """pytest-bdd missing test code generation."""
+from __future__ import annotations
 
 import itertools
 import os.path
+from contextlib import suppress
 from operator import methodcaller
+from typing import TYPE_CHECKING, cast
 
 import py
+from _pytest.config.argparsing import Parser
 from mako.lookup import TemplateLookup
 from pkg_resources import get_distribution, parse_version
 
 from .feature import get_features
 from .scenario import make_python_docstring, make_python_name, make_string_literal
-from .steps import Step
-from .types import STEP_TYPES
+from .steps import STEP_TYPES, Step
+
+if TYPE_CHECKING:
+    from typing import Any
+
+    from _pytest.config import Config
+    from _pytest.config.argparsing import Parser
+    from _pytest.main import Session
+
+    from .parser import Feature, ScenarioTemplate
+    from .parser import Step as StepModel
+    from .types import Item
+
+else:
+    from _pytest.nodes import Item
+
 
 template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
 
 
-def add_options(parser):
+def add_options(parser: Parser) -> None:
     """Add pytest-bdd options."""
     group = parser.getgroup("bdd", "Generation")
 
@@ -37,17 +55,18 @@ def add_options(parser):
     )
 
 
-def cmdline_main(config):
+def cmdline_main(config: Config) -> int | None:
     """Check config option to show missing code."""
     if config.option.generate_missing:
         return show_missing_code(config)
+    return None  # Make mypy happy
 
 
-def generate_code(features, scenarios, steps):
+def generate_code(features: list[Feature], scenarios: list[ScenarioTemplate], steps: list[StepModel]) -> str:
     """Generate test code for the given filenames."""
     grouped_steps = group_steps(steps)
     template = template_lookup.get_template("test.py.mak")
-    return template.render(
+    code = template.render(
         features=features,
         scenarios=scenarios,
         steps=grouped_steps,
@@ -55,16 +74,17 @@ def generate_code(features, scenarios, steps):
         make_python_docstring=make_python_docstring,
         make_string_literal=make_string_literal,
     )
+    return cast(str, code)
 
 
-def show_missing_code(config):
+def show_missing_code(config: Config) -> int:
     """Wrap pytest session to show missing code."""
     from _pytest.main import wrap_session
 
     return wrap_session(config, _show_missing_code_main)
 
 
-def print_missing_code(scenarios, steps):
+def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[StepModel]) -> None:
     """Print missing code with TerminalWriter."""
     tw = py.io.TerminalWriter()
     scenario = step = None
@@ -110,7 +130,9 @@ def print_missing_code(scenarios, steps):
     tw.write(code)
 
 
-def parse_feature_files(paths, **kwargs):
+def parse_feature_files(
+    paths: list[str], **kwargs: Any
+) -> tuple[list[Feature], list[ScenarioTemplate], list[StepModel]]:
     """Parse feature files of given paths.
 
     :param paths: `list` of paths (file or dirs)
@@ -124,16 +146,16 @@ def parse_feature_files(paths, **kwargs):
         key=lambda scenario: (scenario.feature.name or scenario.feature.filename, scenario.name),
     )
     steps = sorted(
-        set(itertools.chain.from_iterable(scenario.steps for scenario in scenarios)), key=lambda step: step.name
+        {step.name: step for step in itertools.chain.from_iterable(scenario.steps for scenario in scenarios)}.values()
     )
     return features, scenarios, steps
 
 
-def group_steps(steps):
+def group_steps(steps: list[StepModel]) -> list[StepModel]:
     """Group steps by type."""
     steps = sorted(steps, key=lambda step: step.type)
     seen_steps = set()
-    grouped_steps = []
+    grouped_steps: list[StepModel] = []
     for step in itertools.chain.from_iterable(
         sorted(group, key=lambda step: step.name) for _, group in itertools.groupby(steps, lambda step: step.type)
     ):
@@ -144,7 +166,7 @@ def group_steps(steps):
     return grouped_steps
 
 
-def _show_missing_code_main(config, session):
+def _show_missing_code_main(config: Config, session: Session) -> None:
     """Preparing fixture duplicates for output."""
     tw = py.io.TerminalWriter()
     config.hook.pytest_collection(session=session)
@@ -157,8 +179,11 @@ def _show_missing_code_main(config, session):
     features, scenarios, steps = parse_feature_files(config.option.features)
 
     for item in session.items:
-        scenario = getattr(item.obj, "__scenario__", None)
-        if scenario:
+
+        item = cast(Item, item)
+        with suppress(AttributeError):
+            scenario = item.obj.__scenario__
+
             if scenario in scenarios:
                 scenarios.remove(scenario)
 
@@ -177,12 +202,13 @@ def _show_missing_code_main(config, session):
                 else:
                     steps.remove(step)
 
-            item.session._setupstate.teardown_exact(*((item,) if is_legacy_pytest else ()), None)
+            item.session._setupstate.teardown_exact(*((item,) if is_legacy_pytest else ()), None)  # type: ignore[call-arg]
 
     for scenario in scenarios:
         for step in scenario.steps:
             if step.background is None:
-                steps.remove(step)
+                with suppress(ValueError):
+                    steps.remove(step)
     grouped_steps = group_steps(steps)
     print_missing_code(scenarios, grouped_steps)
 

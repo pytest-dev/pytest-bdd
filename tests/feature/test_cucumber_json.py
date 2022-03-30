@@ -1,10 +1,16 @@
 """Test cucumber json output."""
+from __future__ import annotations
+
 import json
 import os.path
 import textwrap
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from _pytest.pytester import RunResult, Testdir
 
 
-def runandparse(testdir, *args):
+def runandparse(testdir: Testdir, *args: Any) -> tuple[RunResult, list[dict[str, Any]]]:
     """Run tests in testdir and parse json output."""
     resultpath = testdir.tmpdir.join("cucumber.json")
     result = testdir.runpytest(f"--cucumberjson={resultpath}", "-s", *args)
@@ -16,10 +22,10 @@ def runandparse(testdir, *args):
 class OfType:
     """Helper object to help compare object type to initialization type"""
 
-    def __init__(self, type=None):
+    def __init__(self, type: type = None) -> None:
         self.type = type
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, self.type) if self.type else True
 
 

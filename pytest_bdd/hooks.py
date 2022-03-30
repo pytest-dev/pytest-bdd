@@ -1,4 +1,6 @@
-from typing import Iterable, Optional
+from __future__ import annotations
+
+from typing import Iterable
 
 import pytest
 from _pytest.mark.structures import Mark
@@ -49,7 +51,7 @@ def pytest_bdd_apply_tag(tag, function):
 
 
 @pytest.hookspec(firstresult=True)
-def pytest_bdd_convert_tag_to_marks(feature, scenario, example, tag) -> Optional[Iterable[Mark]]:
+def pytest_bdd_convert_tag_to_marks(feature, scenario, example, tag) -> Iterable[Mark] | None:
     """Apply a tag (from a ``.feature`` file) to the given test item.
 
     The default implementation does the equivalent of

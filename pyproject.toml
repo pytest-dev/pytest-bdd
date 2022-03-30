@@ -12,11 +12,12 @@ line_length = 120
 multi_line_output = 3
 
 [tool.mypy]
+files = "pytest_bdd/**/*.py"
 python_version = "3.7"
+show_error_codes = true
 warn_return_any = true
 warn_unused_configs = true
-files = "pytest_bdd/**/*.py"
 
 [[tool.mypy.overrides]]
-module = ["parse", "parse_type", "glob2"]
+module = ["parse", "parse_type.*", "glob2", "mako.*", "pluggy.*"]
 ignore_missing_imports = true

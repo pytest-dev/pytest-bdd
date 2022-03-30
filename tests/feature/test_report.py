@@ -2,15 +2,16 @@
 import textwrap
 
 import execnet.gateway_base
+import pytest
 
 
 class OfType:
     """Helper object comparison to which is always 'equal'."""
 
-    def __init__(self, type=None):
+    def __init__(self, type: type = None) -> None:
         self.type = type
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, self.type) if self.type else True
 
 
