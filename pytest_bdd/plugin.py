@@ -12,7 +12,7 @@ from . import cucumber_json, generation, gherkin_terminal_reporter, given, repor
 from .steps import Step
 from .utils import CONFIG_STACK
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing import Any, Callable, Collection, Generator
 
     from _pytest.config import Config, PytestPluginManager

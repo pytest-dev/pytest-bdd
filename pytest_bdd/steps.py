@@ -60,7 +60,7 @@ else:
     from typing_extensions import TypeAlias
 
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing import Any, Callable
 
     from _pytest.config.argparsing import Parser

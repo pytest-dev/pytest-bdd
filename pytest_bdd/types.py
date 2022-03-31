@@ -7,7 +7,7 @@ from _pytest.fixtures import FixtureRequest
 
 from pytest_bdd.parser import ScenarioTemplate
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
 
     from _pytest.nodes import Item as BaseItem

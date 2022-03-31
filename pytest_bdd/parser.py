@@ -20,7 +20,7 @@ from . import exceptions
 from .utils import SimpleMapping
 from .warning_types import PytestBDDScenarioExamplesExtraParamsWarning, PytestBDDScenarioStepsExtraPramsWarning
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing import Any, Iterable
 
 FEATURE = "feature"

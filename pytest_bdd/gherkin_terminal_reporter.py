@@ -4,7 +4,7 @@ import typing
 
 from _pytest.terminal import TerminalReporter
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from typing import Any
 
     from _pytest.config import Config

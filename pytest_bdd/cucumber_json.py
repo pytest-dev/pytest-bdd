@@ -13,7 +13,7 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Protocol, runtime_checkable
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
 
     from _pytest.config import Config as BaseConfig

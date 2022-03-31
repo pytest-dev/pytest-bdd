@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Callable, Collection, Mapping, cast
 from _pytest.fixtures import FixtureDef
 from attr import Factory, attrib, attrs
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
 
     from _pytest.config import Config

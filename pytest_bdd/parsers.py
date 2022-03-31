@@ -14,7 +14,7 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Protocol, runtime_checkable
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from re import Pattern as _RePattern
 else:
     _RePattern = base_re.Pattern if sys.version_info >= (3, 7) else type(base_re.compile(""))

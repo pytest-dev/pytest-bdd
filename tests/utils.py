@@ -5,7 +5,7 @@ import typing
 import pytest
 from packaging.utils import Version
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from _pytest.pytester import RunResult
 
 PYTEST_VERSION = Version(pytest.__version__)

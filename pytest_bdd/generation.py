@@ -16,7 +16,7 @@ from .feature import get_features
 from .scenario import make_python_docstring, make_python_name, make_string_literal
 from .steps import STEP_TYPES, Step
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
 
     from _pytest.config import Config
