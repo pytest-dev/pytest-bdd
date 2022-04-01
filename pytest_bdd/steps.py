@@ -288,15 +288,15 @@ class Step:
                     with suppress(AttributeError):
                         yield from Step.Matcher.find_step_definition_matches(registry.parent, matchers)
 
-    @attrs
+    @attrs(auto_attribs=True)
     class Definition:
-        func: Callable = attrib()
-        type_ = attrib()
-        parser: StepParser = attrib()
-        converters = attrib()
-        params_fixtures_mapping = attrib()
-        target_fixtures = attrib()
-        liberal = attrib()
+        func: Callable
+        type_: str | None
+        parser: StepParser
+        converters: dict[str, Any]
+        params_fixtures_mapping: dict[str, str]
+        target_fixtures: list[str]
+        liberal: bool
 
         def get_parameters(self, step: Step.Model):
             parsed_arguments = self.parser.parse_arguments(step.name) or {}
@@ -429,7 +429,7 @@ class Step:
 
             parser = get_parser(parserlike)
             registry.registry.append(
-                Step.Definition(
+                Step.Definition(  # type: ignore[call-arg]
                     func=func,
                     type_=type_,
                     parser=parser,

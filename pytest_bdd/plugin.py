@@ -61,7 +61,7 @@ def step_registry() -> Step.Registry:
 @pytest.fixture
 def step_matcher(pytestconfig) -> Step.Matcher:
     """Fixture containing matcher to help find step definition for selected step of scenario"""
-    return Step.Matcher(pytestconfig)
+    return Step.Matcher(pytestconfig)  # type: ignore[call-arg]
 
 
 def pytest_addoption(parser: Parser) -> None:

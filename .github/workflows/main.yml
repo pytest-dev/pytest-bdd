@@ -27,7 +27,8 @@ jobs:
     - name: Type checking
       continue-on-error: true
       run: |
-        tox -e mypy
+        tox -e py310-pytestlatest-mypy
+        tox -e py37-pytest50-mypy
     - name: Test with tox
       run: |
         tox

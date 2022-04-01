@@ -19,5 +19,5 @@ warn_return_any = true
 warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = ["parse", "parse_type.*", "glob2", "mako.*", "pluggy.*"]
+module = ["attr.*", "glob2", "mako.*", "ordered_set", "parse", "parse_type.*", "pluggy.*"]
 ignore_missing_imports = true

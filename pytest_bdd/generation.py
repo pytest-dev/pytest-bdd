@@ -19,7 +19,7 @@ from .steps import STEP_TYPES, Step
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
 
-    from _pytest.config import Config
+    from _pytest.config import Config, ExitCode
     from _pytest.config.argparsing import Parser
     from _pytest.main import Session
 
@@ -77,7 +77,7 @@ def generate_code(features: list[Feature], scenarios: list[ScenarioTemplate], st
     return cast(str, code)
 
 
-def show_missing_code(config: Config) -> int:
+def show_missing_code(config: Config) -> int | ExitCode:
     """Wrap pytest session to show missing code."""
     from _pytest.main import wrap_session
 
@@ -141,12 +141,19 @@ def parse_feature_files(
              (`list` of `Feature` objects, `list` of `Scenario` objects, `list` of `Step` objects).
     """
     features = get_features(paths, **kwargs)
-    scenarios = sorted(
+    scenarios: list[ScenarioTemplate] = sorted(
         itertools.chain.from_iterable(feature.scenarios.values() for feature in features),
         key=lambda scenario: (scenario.feature.name or scenario.feature.filename, scenario.name),
     )
-    steps = sorted(
-        {step.name: step for step in itertools.chain.from_iterable(scenario.steps for scenario in scenarios)}.values()
+
+    seen = set()
+    steps: list[StepModel] = sorted(
+        (
+            seen.add(step.name) or step  # type: ignore[func-returns-value]
+            for step in itertools.chain.from_iterable(scenario.steps for scenario in scenarios)
+            if step.name not in seen
+        ),
+        key=lambda step: step.name,
     )
     return features, scenarios, steps
 
@@ -200,15 +207,15 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
                 except Step.Matcher.MatchNotFoundError:
                     pass
                 else:
-                    steps.remove(step)
+                    steps = [same_step for same_step in steps if same_step.name != step.name]
 
             item.session._setupstate.teardown_exact(*((item,) if is_legacy_pytest else ()), None)  # type: ignore[call-arg]
 
     for scenario in scenarios:
         for step in scenario.steps:
             if step.background is None:
-                with suppress(ValueError):
-                    steps.remove(step)
+                steps = [same_step for same_step in steps if same_step.name != step.name]
+
     grouped_steps = group_steps(steps)
     print_missing_code(scenarios, grouped_steps)
 

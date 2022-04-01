@@ -8,7 +8,7 @@ from functools import reduce
 from itertools import chain, product, zip_longest
 from operator import or_
 from pathlib import Path
-from typing import TYPE_CHECKING, Collection, Iterator, Mapping, Match, cast
+from typing import TYPE_CHECKING, Callable, Collection, Iterator, Mapping, Match, cast
 from warnings import warn
 
 from _pytest.warning_types import PytestCollectionWarning
@@ -213,7 +213,7 @@ def parse_feature(basedir: Path | str, filename: Path | str, encoding: str = "ut
             else:
                 mode, ExampleTableBuilder = EXAMPLE_LINE_VERTICAL, ExampleTableColumns  # type: ignore[no-redef]
             _, table_name = parse_line(clean_line)
-            current_example_table = ExampleTableBuilder(
+            current_example_table = ExampleTableBuilder(  # type: ignore[call-arg]
                 name=table_name or None, line_number=line_number, node=current_node
             )
             current_node.examples += [current_example_table]
@@ -254,7 +254,7 @@ def parse_feature(basedir: Path | str, filename: Path | str, encoding: str = "ut
                         filename,
                     ) from exc
         elif mode and mode not in (FEATURE, pytest_bdd.steps.TAG):
-            step = Step(name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword)
+            step = Step(name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword)  # type: ignore[call-arg]
             target: Background | ScenarioTemplate
             if feature.background and not scenario:
                 target = feature.background
@@ -329,7 +329,7 @@ class ScenarioTemplate:
 
     def render(self, context: Mapping[str, Any]) -> Scenario:
         steps = [
-            Step(
+            Step(  # type: ignore[call-arg]
                 name=templated_step.render(context),
                 type=templated_step.type,
                 indent=templated_step.indent,
@@ -379,7 +379,8 @@ class ScenarioTemplate:
             example_table_combinations = product(self.feature.examples, self.examples)
         else:
             example_table_combinations = ([example_table] for example_table in self.feature.examples or self.examples)
-        yield from map(ExampleTableCombination, example_table_combinations)
+        # https://github.com/python/mypy/issues/6811
+        yield from map(ExampleTableCombination, example_table_combinations)  # type: ignore[arg-type]
 
     @property
     def united_example_rows(self) -> Iterable[ExampleRowUnited]:
@@ -561,7 +562,7 @@ class ExampleRowUnited(SimpleMapping):
             return (
                 ExampleRow(
                     {**row1, **row2},
-                    tags=OrderedSet(
+                    tags=OrderedSet(  # type: ignore[call-arg]
                         chain(
                             row1.tags,
                             *((row1.example_table.tags,) if row1.example_table is not None else ()),
@@ -589,7 +590,7 @@ class ExampleTable:
     kind: str
     example_params: list[str] = attrib(default=Factory(list))
 
-    @example_params.validator
+    @example_params.validator  # type: ignore[attr-defined]
     def unique(self, attribute, value):
         unique_items = set()
         excluded_items = {STEP_PREFIXES[pytest_bdd.steps.TAG]}
@@ -609,7 +610,7 @@ class ExampleTable:
     def __iter__(self) -> Iterator[ExampleRow]:
         for index, example_row in enumerate(self.examples):
             assert len(self.example_params) == len(example_row)
-            yield ExampleRow(zip(self.example_params, example_row), example_table=self, index=index, kind=self.kind)
+            yield ExampleRow(zip(self.example_params, example_row), example_table=self, index=index, kind=self.kind)  # type: ignore[call-arg]
 
     def __bool__(self) -> bool:
         """Bool comparison."""
@@ -666,12 +667,12 @@ class ExampleTableCombination(Collection):
             try:
                 yield next(rows)
             except StopIteration:
-                yield ExampleRow({}, example_table=example_table)
+                yield ExampleRow({}, example_table=example_table)  # type: ignore[call-arg]
             yield from rows
 
         for rows in product(*map(get_rows_or_build_default_row, self)):
             try:
-                yield ExampleRowUnited(rows)
+                yield ExampleRowUnited(rows)  # type: ignore[call-arg]
             except ExampleRowUnited.BuildError:
                 pass
 

@@ -63,7 +63,7 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request):
 
     try:
         for step in scenario.steps:
-            Step.Executor(request=request, scenario=scenario, step=step).execute()
+            Step.Executor(request=request, scenario=scenario, step=step).execute()  # type: ignore[call-arg]
     finally:
         request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
 
