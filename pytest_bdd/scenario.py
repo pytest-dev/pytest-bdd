@@ -16,6 +16,7 @@ import collections
 import os
 import re
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING, cast
 from warnings import warn
 
@@ -85,7 +86,7 @@ def _are_examples_and_fixtures_joinable(request, bdd_example, examples_fixtures_
 
 def _get_scenario_decorator(
     feature: Feature,
-    feature_name: str,
+    feature_name: Path | str,
     templated_scenario: ScenarioTemplate,
     scenario_name: str,
     examples_fixtures_mapping: set[str] | dict[str, str] | None = None,
@@ -188,7 +189,7 @@ def collect_example_parametrizations(
 
 
 def scenario(
-    feature_name: str,
+    feature_name: Path | str,
     scenario_name: str,
     encoding: str = "utf-8",
     features_base_dir: str | None = None,

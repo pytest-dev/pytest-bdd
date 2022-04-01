@@ -26,6 +26,7 @@ one line.
 from __future__ import annotations
 
 import os.path
+from pathlib import Path
 
 import glob2
 
@@ -35,7 +36,7 @@ from .parser import Feature, parse_feature
 features: dict[str, Feature] = {}
 
 
-def get_feature(base_path: str, filename: str, encoding: str = "utf-8") -> Feature:
+def get_feature(base_path: Path | str, filename: Path | str, encoding: str = "utf-8") -> Feature:
     """Get a feature by the filename.
 
     :param str base_path: Base feature directory.
@@ -49,7 +50,7 @@ def get_feature(base_path: str, filename: str, encoding: str = "utf-8") -> Featu
            when multiple scenarios are referencing the same file.
     """
 
-    full_name = os.path.abspath(os.path.join(base_path, filename))
+    full_name = str((Path(base_path) / filename).resolve())
     feature = features.get(full_name)
     if not feature:
         feature = parse_feature(base_path, filename, encoding=encoding)

@@ -7,6 +7,7 @@ from collections import OrderedDict
 from functools import reduce
 from itertools import chain, product, zip_longest
 from operator import or_
+from pathlib import Path
 from typing import TYPE_CHECKING, Collection, Iterator, Mapping, Match, cast
 from warnings import warn
 
@@ -104,15 +105,15 @@ def get_step_type(line: str) -> str | None:
     return None
 
 
-def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Feature:
+def parse_feature(basedir: Path | str, filename: Path | str, encoding: str = "utf-8") -> Feature:
     """Parse the feature file.
 
     :param str basedir: Feature files base directory.
     :param str filename: Relative path to the feature file.
     :param str encoding: Feature file encoding (utf-8 by default).
     """
-    abs_filename = os.path.abspath(os.path.join(basedir, filename))
-    rel_filename = os.path.join(os.path.basename(basedir), filename)
+    abs_filename = str((Path(basedir) / filename).resolve().as_posix())
+    rel_filename = (Path(Path(basedir).name) / filename).as_posix()
     current_node: Feature | ScenarioTemplate
     current_example_table: ExampleTable
     feature = current_node = Feature(

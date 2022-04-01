@@ -61,10 +61,9 @@ def prepare_testdir(testdir, ini_base_dir):
     )
 
     testdir.makepyfile(
-        """
-    import os.path
-
+        """\
     import pytest
+    from pathlib import Path
 
     from pytest_bdd import scenario, scenarios
 
@@ -87,7 +86,7 @@ def prepare_testdir(testdir, ini_base_dir):
                 scenarios(FEATURE)
             else:
                 scenario(FEATURE, scenario_name)
-        assert os.path.abspath(os.path.join('{}', FEATURE)) in str(exc.value)
+        assert str((Path('{}') / FEATURE).resolve().as_posix()) in exc.value.filename
 
 
     @pytest.mark.parametrize(
@@ -116,7 +115,7 @@ def prepare_testdir(testdir, ini_base_dir):
                 scenarios(FEATURE, features_base_dir=param_base_dir)
             else:
                 scenario(FEATURE, scenario_name, features_base_dir=param_base_dir)
-        assert os.path.abspath(os.path.join(param_base_dir, FEATURE)) in str(exc.value)
+        assert str((Path(param_base_dir) / FEATURE).resolve().as_posix()) in exc.value.filename
 
 
     @pytest.mark.parametrize(

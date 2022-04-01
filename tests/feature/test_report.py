@@ -1,8 +1,8 @@
 """Test scenario reporting."""
 import textwrap
+from pathlib import Path
 
 import execnet.gateway_base
-import pytest
 
 
 class OfType:
@@ -107,10 +107,10 @@ def test_step_trace(testdir):
     expected = {
         "feature": {
             "description": "",
-            "filename": feature.strpath,
+            "filename": Path(feature.strpath).as_posix(),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
-            "rel_filename": relpath,
+            "rel_filename": Path(relpath).as_posix(),
             "tags": ["feature-tag"],
         },
         "line_number": 5,
@@ -142,10 +142,10 @@ def test_step_trace(testdir):
     expected = {
         "feature": {
             "description": "",
-            "filename": feature.strpath,
+            "filename": Path(feature.strpath).as_posix(),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
-            "rel_filename": relpath,
+            "rel_filename": Path(relpath).as_posix(),
             "tags": ["feature-tag"],
         },
         "line_number": 10,
@@ -178,10 +178,10 @@ def test_step_trace(testdir):
     expected = {
         "feature": {
             "description": "",
-            "filename": feature.strpath,
+            "filename": Path(feature.strpath).as_posix(),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
-            "rel_filename": relpath,
+            "rel_filename": Path(relpath).as_posix(),
             "tags": ["feature-tag"],
         },
         "line_number": 14,
@@ -222,10 +222,10 @@ def test_step_trace(testdir):
     expected = {
         "feature": {
             "description": "",
-            "filename": feature.strpath,
+            "filename": Path(feature.strpath).as_posix(),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
-            "rel_filename": relpath,
+            "rel_filename": Path(relpath).as_posix(),
             "tags": ["feature-tag"],
         },
         "line_number": 14,

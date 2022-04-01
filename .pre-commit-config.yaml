@@ -3,7 +3,7 @@
 repos:
 -   repo: https://github.com/psf/black
     # If you update the version here, also update it in tox.ini (py*-pytestlatest-linters)
-    rev: 22.1.0
+    rev: 22.3.0
     hooks:
     - id: black
 -   repo: https://github.com/pycqa/isort

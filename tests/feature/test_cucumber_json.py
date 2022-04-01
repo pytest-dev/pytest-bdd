@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 import json
-import os.path
 import textwrap
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -237,12 +237,12 @@ def test_step_trace(testdir):
                     "name": "Passing outline",
                 },
             ],
-            "id": os.path.join("test_step_trace0", "test.feature"),
+            "id": (Path("test_step_trace0") / "test.feature").as_posix(),
             "keyword": "Feature",
             "line": 2,
             "name": "One passing scenario, one failing scenario",
             "tags": [{"name": "feature-tag", "line": 1}],
-            "uri": os.path.join(testdir.tmpdir.basename, "test.feature"),
+            "uri": (Path(testdir.tmpdir.basename) / "test.feature").as_posix(),
         }
     ]
 

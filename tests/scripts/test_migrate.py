@@ -3,6 +3,8 @@
 import os
 import sys
 import textwrap
+from pathlib import Path
+from unicodedata import normalize
 
 from pytest_bdd.scripts import main
 
@@ -29,13 +31,9 @@ def test_migrate(monkeypatch, capsys, testdir):
     out, err = capsys.readouterr()
     out = "\n".join(sorted(out.splitlines()))
     expected = textwrap.dedent(
-        """
-    migrated: {0}/test_foo.py
-    skipped: {0}/__init__.py""".format(
-            tests.strpath
-        )[
-            1:
-        ]
+        f"""\
+            migrated: {Path(tests.strpath)/'test_foo.py'}
+            skipped: {Path(tests.strpath)/'__init__.py'}"""
     )
     assert out == expected
     assert tests.join("test_foo.py").read() == textwrap.dedent(
