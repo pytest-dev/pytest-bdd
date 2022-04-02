@@ -25,10 +25,9 @@ jobs:
         pip install -U setuptools
         pip install tox tox-gh-actions codecov
     - name: Type checking
-      continue-on-error: true
+      if: "matrix.python-version == '3.7'"
       run: |
-        tox -e py310-pytestlatest-mypy
-        tox -e py37-pytest50-mypy
+        tox -e py37-pytestlatest-mypy
     - name: Test with tox
       run: |
         tox
