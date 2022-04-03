@@ -1,0 +1,102 @@
+@@grammar::Gherkin
+@@whitespace :: /[\t ]+/
+@@parseinfo :: True
+# It doesn't really work for our grammar
+@@eol_comments :: /#.*?$/
+
+start = gherkin_document $;
+
+gherkin_document = [_NL] @:feature [_NL];
+
+bg_scenarios = [background:background] scenarios:scenarios ;
+
+feature_def =
+    | >bg_scenarios
+    | description:description >bg_scenarios
+    | ()
+    ;
+
+simpledesc = {/.+/ _NL}+ ;
+feature = [tags:tag_lines] feature_line:feature_line >feature_def;
+feature_line = FEATURE ":" ~ feature_name:string _NL ;
+
+
+
+description = lines:{ !bg_scenarios /.+/ _NL } &bg_scenarios ;
+#description = { !bg_scenarios /(?s)./ _NL } &bg_scenarios ;  # working
+#description = { !bg_scenarios ?'.' } &bg_scenarios ;  # working
+#description = { !bg_scenarios /./ } &bg_scenarios ;  # working
+#description = ->&bg_scenarios ;
+
+# tag = /@\S+/ ;
+# tag_line = {tag:tag}+ _NL ;
+# tag_lines = {tag_line}+ ;
+
+tag_lines = {tag:/@\S+/ /\s+/}+ ;
+
+background = BACKGROUND ":" ~ [name:string] _NL [steps:given_steps] ;
+
+scenarios = @:{scenario}+ ;
+
+scenario =
+    [tags:tag_lines] (
+        | SCENARIO ":" ~ scenario_name:string _NL [steps:steps_section]
+        | SCENARIO_OUTLINE_ALTS ":" ~ scenario_name:string _NL [steps:steps_section] [examples:examples]
+    )
+    ;
+
+step_def = name:string [_NL docstring:step_docstring] [_NL table:table] _NL ;
+
+steps_section =
+    | plain_steps:given_steps nested_steps:{when_steps | then_steps}
+    | [plain_steps:given_steps] nested_steps:{when_steps | then_steps}+
+    ;
+
+# TODO: Try out this:
+# step(keyword=GIVEN) = GIVEN step_def:step_def ;
+
+given_step = keyword:GIVEN step_def:step_def ;
+when_step = keyword:WHEN step_def:step_def ;
+then_step = keyword:THEN step_def:step_def ;
+and_step = keyword:AND step_def:step_def ;
+but_step = keyword:BUT step_def:step_def ;
+
+given_steps = {steps+:given_step}+ {steps+:and_step | steps+:but_step} ;
+when_steps = {steps+:when_step}+ {steps+:and_step | steps+:but_step} ;
+then_steps = {steps+:then_step}+ {steps+:and_step | steps+:but_step} ;
+
+examples = example_line table ;
+example_line = EXAMPLES_ALTS [string] _NL ;
+
+table = {table_row}+ ;
+table_row = EXAMPLE_TABLE_ROW _NL ;
+# The idea here is to match the initial "|" and the each cell is a .* match but it cannot end with a "\" (it would
+# escape the following "|")
+EXAMPLE_TABLE_ROW = "|" {/.*?(?<!\\)(\\\\)*?\|/} + ;
+
+
+step_docstring =
+    | /"""/ STEP_DOCSTRING_INNER /"""/
+    | /'''/ STEP_DOCSTRING_INNER /'''/
+    ;
+STEP_DOCSTRING_INNER = /(?s)\n.*?\n[ \t]*/ ;
+
+string = /.+/ ;
+
+EXAMPLES = "Examples" ;
+SCENARIOS = "Scenarios" ;
+BACKGROUND = "Background" ;
+SCENARIO = "Scenario" ;
+SCENARIO_OUTLINE = "Scenario Outline" ;
+SCENARIO_TEMPLATE = "Scenario Template" ;
+FEATURE = "Feature" ;
+GIVEN = "Given" ;
+WHEN = "When" ;
+THEN = "Then" ;
+AND = "And" ;
+BUT = "But" ;
+
+EXAMPLES_ALTS = EXAMPLES | SCENARIOS ;
+SCENARIO_OUTLINE_ALTS = SCENARIO_OUTLINE | SCENARIO_TEMPLATE ;
+
+_NL = /(\r?\n[\t ]*)+/ ;

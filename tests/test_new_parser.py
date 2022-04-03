@@ -13,6 +13,7 @@ from pytest_bdd.new_parser import (
     parse,
 )
 from pytest_bdd.parser import Feature, Step
+from pytest_bdd.tatsu_parser import parse
 from pytest_bdd.types import GIVEN, THEN, WHEN
 
 # TODO: Changes to document
@@ -208,7 +209,7 @@ Feature: a feature
 )
 def test_scenario_tags(src):
     feature = parse(src)
-    assert feature.tags == {}
+    assert feature.tags == set()
 
     [scenario] = feature.scenarios.values()
     assert scenario.tags == {"a_tag", "a_second_tag", "a-third-tag"}
@@ -337,6 +338,60 @@ Feature: a feature
                 Step(THEN, "I should see a foo", 6, 9, "Then"),
                 Step(THEN, "I should not see more than one foo", 7, 9, "But"),
             ],
+        ),
+        pytest.param(
+            """\
+Feature: a feature
+    Scenario: a scenario
+        Given there is a foo
+        And there is a second foo
+        When I click a foo
+        Then I should see a foo
+        When I click the second foo
+        Then I should see the second foo
+        But I should not see the foo
+        When I click the first foo
+        Then I should see the first foo
+""",
+            [
+                Step(GIVEN, "there is a foo", 3, 9, "Given"),
+                Step(GIVEN, "there is a second foo", 4, 9, "And"),
+                Step(WHEN, "I click a foo", 5, 9, "When"),
+                Step(THEN, "I should see a foo", 6, 9, "Then"),
+                Step(WHEN, "I click the second foo", 7, 9, "When"),
+                Step(THEN, "I should see the second foo", 8, 9, "Then"),
+                Step(THEN, "I should not see the foo", 9, 9, "But"),
+                Step(WHEN, "I click the first foo", 10, 9, "When"),
+                Step(THEN, "I should see the first foo", 11, 9, "Then"),
+            ],
+            id="interleaved_when_then",
+        ),
+        pytest.param(
+            """\
+Feature: a feature
+    Scenario: a scenario
+        When I do nothing
+        And I do nothing
+        When I click a foo
+        Then I should see a foo
+        When I click the second foo
+        Then I should see the second foo
+        But I should not see the foo
+        When I click the first foo
+        Then I should see the first foo
+""",
+            [
+                Step(WHEN, "I do nothing", 3, 9, "When"),
+                Step(WHEN, "I do nothing", 4, 9, "And"),
+                Step(WHEN, "I click a foo", 5, 9, "When"),
+                Step(THEN, "I should see a foo", 6, 9, "Then"),
+                Step(WHEN, "I click the second foo", 7, 9, "When"),
+                Step(THEN, "I should see the second foo", 8, 9, "Then"),
+                Step(THEN, "I should not see the foo", 9, 9, "But"),
+                Step(WHEN, "I click the first foo", 10, 9, "When"),
+                Step(THEN, "I should see the first foo", 11, 9, "Then"),
+            ],
+            id="interleaved_when_then_without_givens",
         ),
         pytest.param(
             """\
