@@ -99,4 +99,4 @@ BUT = "But" ;
 EXAMPLES_ALTS = EXAMPLES | SCENARIOS ;
 SCENARIO_OUTLINE_ALTS = SCENARIO_OUTLINE | SCENARIO_TEMPLATE ;
 
-_NL = /(\r?\n[\t ]*)+/ ;
+_NL = /(\r?\n[\t ]*)+/ | $ ;
