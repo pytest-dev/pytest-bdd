@@ -442,53 +442,6 @@ Feature: a feature
 
 
 @pytest.mark.parametrize(
-    ["src", "line", "column"],
-    [
-        (
-            """\
-Feature: a feature
-    Scenario: a scenario
-        Giventhere is a foo""",
-            3,
-            9,
-        ),
-        (
-            """\
-Feature: a feature
-    Scenario: a scenario
-        Given there is a foo
-        Andthere is a second foo""",
-            4,
-            9,
-        ),
-        (
-            """\
-Feature: a feature
-    Scenario: a scenario
-        WhenI click the foo""",
-            3,
-            9,
-        ),
-        (
-            """\
-Feature: a feature
-    Scenario: a scenario
-        Thenthere should be a foo""",
-            3,
-            9,
-        ),
-    ],
-)
-def test_steps_need_a_space_after_keyword(src, line, column):
-    with pytest.raises(GherkinUnexpectedInput) as exc:
-        parse(src)
-
-    message = str(exc.value)
-    assert message.startswith(f"Unexpected input at line {line}, column {column}:")
-    assert message.endswith("File: <unknown>")
-
-
-@pytest.mark.parametrize(
     "src",
     [
         """\
