@@ -972,7 +972,7 @@ Feature: Comments  # n
 
 
 @pytest.mark.parametrize(
-    ["src", "expected"],
+    ["src", "expected_body", "expected_content_type"],
     [
         pytest.param(
             '''\
@@ -984,6 +984,7 @@ Feature: a feature
             """
 ''',
             "A simple docstring",
+            None,
             id="triple_double_quotes",
         ),
         pytest.param(
@@ -996,7 +997,22 @@ Feature: a feature
             '''
 """,
             "A simple docstring",
+            None,
             id="triple_single_quotes",
+        ),
+        pytest.param(
+            '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+            """
+            A simple docstring
+            """
+        And there is another step
+''',
+            "A simple docstring",
+            None,
+            id="another_step_after_docstring",
         ),
         pytest.param(
             '''\
@@ -1008,6 +1024,7 @@ Feature: a feature
                     """
 ''',
             "A simple docstring",
+            None,
             id="a_lot_of_indentation",
         ),
         pytest.param(
@@ -1020,6 +1037,7 @@ A simple docstring
 """
 ''',
             "A simple docstring",
+            None,
             id="no_indentation",
         ),
         pytest.param(
@@ -1033,6 +1051,7 @@ Feature: a feature
             """
 ''',
             "Multiline\ndocstring",
+            None,
             id="multiline",
         ),
         pytest.param(
@@ -1046,17 +1065,32 @@ Feature: a feature
             """
 ''',
             "    Indented\n    docstring",
+            None,
+            id="preserves_indentation_difference",
+        ),
+        pytest.param(
+            '''\
+Feature: a feature
+    Scenario: a scenario
+        Given I have a step with docstring
+            """markdown
+            *foo*
+            """
+''',
+            "*foo*",
+            "markdown",
             id="preserves_indentation_difference",
         ),
     ],
 )
-def test_step_docstring(src, expected):
+def test_step_docstring(src, expected_body, expected_content_type):
     feature = parse(src)
     [scenario] = feature.scenarios.values()
-    [given] = scenario.steps
+    [given, *_] = scenario.steps
     assert given.type == GIVEN
     assert given.name == "I have a step with docstring"
-    assert given.docstring == expected
+    assert given.docstring.data == str(given.docstring) == expected_body
+    assert given.docstring.content_type == expected_content_type
 
 
 def test_step_after_docstring():

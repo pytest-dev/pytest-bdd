@@ -70,17 +70,20 @@ table_row = cells:/(?x)
 (
   \|                  # Initial pipe
   .*                  # Anything...
-  (?<!\\)(?:\\\\)*?     # ...that ends with an even number of backslashes (r'', r'\\', r'\\\\', ...)...
+  (?<!\\)(?:\\\\)*?   # ...that ends with an even number of backslashes (r'', r'\\', r'\\\\', ...)...
   \|                  # ...before the ending pipe
 )
 / _NL ;
 
 
-step_docstring =
-    | /"""/ STEP_DOCSTRING_INNER /"""/
-    | /'''/ STEP_DOCSTRING_INNER /'''/
-    ;
-STEP_DOCSTRING_INNER = /(?s)\n.*?\n[ \t]*/ ;
+step_docstring = container:/(?sx)
+("""|'''|```)(.*?)    # The triple quotes, followed optionally by the content type
+\n                    # new line
+(.*)                  # Anything
+\n[t ]*               # We require a new line (and whitespaces)...
+\1                    # ...before matching the initial triple quote
+/ ;
+
 
 string = /.+/ ;
 

@@ -2,18 +2,17 @@ from __future__ import annotations
 
 import functools
 import os.path
-import pprint
+import re
 import textwrap
 from collections import OrderedDict
 
-import tatsu
 from tatsu.ast import AST
 
 from pytest_bdd import types as bdd_types
 
 from ._tatsu_parser import GherkinParser
 from ._tatsu_parser import GherkinSemantics as _GherkinSemantics
-from .parser import Background, Examples, Feature, ScenarioTemplate, Step, ValidationError, split_line
+from .parser import Background, Docstring, Examples, Feature, ScenarioTemplate, Step, ValidationError, split_line
 
 parser = GherkinParser()
 
@@ -158,7 +157,23 @@ class GherkinSemantics(_GherkinSemantics):
         return ast
 
     def step_docstring(self, ast):  # noqa
-        return ast
+        quotes, content_type, body = ast["container"]
+
+        if not content_type:
+            content_type = None
+
+        # Dedent the lines of the body by the amount of indentation of the first triple quotes,
+        # as per gherkin specification.
+
+        quotes_indent = get_column(ast)
+
+        lines = body.split("\n")
+        sub_re = re.compile(rf"^[\t ]{{{quotes_indent}}}")
+
+        dedented_lines = [sub_re.sub("", l) for l in lines]
+
+        dedented = "\n".join(dedented_lines)
+        return Docstring(dedented, content_type=content_type)
 
     def STEP_DOCSTRING_INNER(self, ast):  # noqa
         return ast

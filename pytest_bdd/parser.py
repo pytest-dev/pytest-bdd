@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import collections
 import os.path
 import re
 import textwrap
@@ -292,7 +293,7 @@ class Step:
     line_number: int
     indent: int
     keyword: str
-    docstring: str | None = None
+    docstring: Docstring | None = None
     datatable: list[tuple[str, ...]] | None = None
     failed: bool = field(init=False, default=False)
     scenario: ScenarioTemplate | None = field(init=False, default=None)
@@ -364,6 +365,12 @@ class Step:
             return str(context[varname])
 
         return STEP_PARAM_RE.sub(replacer, self.name)
+
+
+class Docstring(collections.UserString):
+    def __init__(self, body: str, content_type: str | None):
+        super().__init__(body)
+        self.content_type = content_type
 
 
 @dataclass
