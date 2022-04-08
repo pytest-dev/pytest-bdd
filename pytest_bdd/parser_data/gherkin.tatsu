@@ -1,8 +1,7 @@
 @@grammar::Gherkin
 @@whitespace :: /[\t ]+/
 @@parseinfo :: True
-# It doesn't really work for our grammar
-@@eol_comments :: /#.*?$/
+@@eol_comments :: /#(.*)(\n|$)/
 
 start = gherkin_document $;
 

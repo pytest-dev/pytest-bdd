@@ -963,7 +963,12 @@ Feature: Comments  # n
     assert all(step.type == GIVEN for step in scenario.steps)
 
     step_names = [step.name for step in scenario.steps]
-    assert step_names == ["foo", "a line without a #comment", "this is not a#comment", 'this is not "#acomment"']
+    assert step_names == [
+        "foo",
+        "a line without a #comment",
+        "this is not a#comment",
+        'this is not "#acomment"',
+    ]
 
 
 @pytest.mark.parametrize(
