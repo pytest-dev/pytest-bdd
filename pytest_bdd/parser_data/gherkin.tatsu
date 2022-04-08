@@ -38,8 +38,9 @@ scenario =
 
 
 step_def =
-    | name:string _NL  # Hack to have an error message displaying "Expecting Given" in case we only want given steps
-    | name:string [_NL docstring:step_docstring] [_NL table:table] _NL
+    # The hack actually prevents us from parsing step docstring and table :(
+    # | name:string _NL  # Hack to have an error message displaying "Expecting Given" in case we only want given steps
+    name:string [_NL docstring:step_docstring] [_NL table:table] _NL
     ;
 
 steps_section =
