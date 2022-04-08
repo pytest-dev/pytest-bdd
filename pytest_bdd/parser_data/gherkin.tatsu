@@ -8,33 +8,25 @@ start = gherkin_document $;
 
 gherkin_document = [_NL] @:feature [_NL];
 
-bg_scenarios = [background:background] scenarios:scenarios ;
-
-feature_def =
-    | >bg_scenarios
-    | description:description >bg_scenarios
-    | ()
-    ;
-
 simpledesc = {/.+/ _NL}+ ;
-feature = [tags:tag_lines] feature_line:feature_line >feature_def;
+feature = [tags:tag_lines] feature_line:feature_line [description:description] [background:background] [scenarios:scenarios] ;
 feature_line = FEATURE ":" ~ feature_name:string _NL ;
 
 
-
-description = lines:{ !bg_scenarios /.+/ _NL } &bg_scenarios ;
+description = lines:{!(BACKGROUND | SCENARIO | SCENARIO_OUTLINE | tag) /.+/ _NL} ;
+#description = lines:{ !bg_scenarios /.+/ _NL } &bg_scenarios ;
 #description = { !bg_scenarios /(?s)./ _NL } &bg_scenarios ;  # working
 #description = { !bg_scenarios ?'.' } &bg_scenarios ;  # working
 #description = { !bg_scenarios /./ } &bg_scenarios ;  # working
 #description = ->&bg_scenarios ;
 
-# tag = /@\S+/ ;
+tag = /@\S+/ ;
 # tag_line = {tag:tag}+ _NL ;
 # tag_lines = {tag_line}+ ;
 
-tag_lines = {tag:/@\S+/ /\s+/}+ ;
+tag_lines = {tag:tag /\s+/}+ ;
 
-background = BACKGROUND ":" ~ [name:string] _NL [steps:given_steps] ;
+background = keyword:BACKGROUND ":" ~ [name:string] _NL [steps:given_steps] ;
 
 scenarios = @:{scenario}+ ;
 
@@ -45,7 +37,11 @@ scenario =
     )
     ;
 
-step_def = name:string [_NL docstring:step_docstring] [_NL table:table] _NL ;
+
+step_def =
+    | name:string _NL  # Hack to have an error message displaying "Expecting Given" in case we only want given steps
+    | name:string [_NL docstring:step_docstring] [_NL table:table] _NL
+    ;
 
 steps_section =
     | plain_steps:given_steps nested_steps:{when_steps | then_steps}
@@ -55,24 +51,29 @@ steps_section =
 # TODO: Try out this:
 # step(keyword=GIVEN) = GIVEN step_def:step_def ;
 
-given_step = keyword:GIVEN step_def:step_def ;
-when_step = keyword:WHEN step_def:step_def ;
-then_step = keyword:THEN step_def:step_def ;
-and_step = keyword:AND step_def:step_def ;
-but_step = keyword:BUT step_def:step_def ;
+given_step = keyword:GIVEN ~ step_def:step_def ;
+when_step = keyword:WHEN ~ step_def:step_def ;
+then_step = keyword:THEN ~ step_def:step_def ;
+and_step = keyword:AND ~ step_def:step_def ;
+but_step = keyword:BUT ~ step_def:step_def ;
 
 given_steps = {steps+:given_step}+ {steps+:and_step | steps+:but_step} ;
 when_steps = {steps+:when_step}+ {steps+:and_step | steps+:but_step} ;
 then_steps = {steps+:then_step}+ {steps+:and_step | steps+:but_step} ;
 
-examples = example_line table ;
-example_line = EXAMPLES_ALTS [string] _NL ;
+examples = EXAMPLES_ALTS ":" ~ [name:string] _NL table:table ;
 
-table = {table_row}+ ;
-table_row = EXAMPLE_TABLE_ROW _NL ;
+table = rows:{table_row}+ ;
 # The idea here is to match the initial "|" and the each cell is a .* match but it cannot end with a "\" (it would
 # escape the following "|")
-EXAMPLE_TABLE_ROW = "|" {/.*?(?<!\\)(\\\\)*?\|/} + ;
+table_row = cells:/(?x)
+(
+  \|                  # Initial pipe
+  .*                  # Anything...
+  (?<!\\)(?:\\\\)*?     # ...that ends with an even number of backslashes (r'', r'\\', r'\\\\', ...)...
+  \|                  # ...before the ending pipe
+)
+/ _NL ;
 
 
 step_docstring =

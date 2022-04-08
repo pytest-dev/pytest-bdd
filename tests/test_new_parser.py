@@ -569,7 +569,8 @@ Feature: Background support
     ],
 )
 def test_feature_background_can_only_have_given_steps(src):
-    with pytest.raises(Exception) as exc:
+    # TODO: Check exception
+    with pytest.raises(Exception, match=r"expecting .Given") as exc:
         feature = parse(src)
 
 

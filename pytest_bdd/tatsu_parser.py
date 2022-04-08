@@ -13,7 +13,7 @@ from pytest_bdd import types as bdd_types
 
 from ._tatsu_parser import GherkinParser
 from ._tatsu_parser import GherkinSemantics as _GherkinSemantics
-from .parser import Background, Feature, ScenarioTemplate, Step, ValidationError
+from .parser import Background, Examples, Feature, ScenarioTemplate, Step, ValidationError, split_line
 
 parser = GherkinParser()
 
@@ -77,6 +77,7 @@ class GherkinSemantics(_GherkinSemantics):
             line_number=ast.parseinfo.line + 1,
             tags=set(ast["tags"]) if ast["tags"] else set(),
             feature=None,  # added later
+            examples=ast["examples"],
         )
         assert isinstance(ast["steps"], list) or ast["steps"] is None
         for step in ast["steps"] or []:
@@ -129,17 +130,29 @@ class GherkinSemantics(_GherkinSemantics):
     def then_steps(self, ast):  # noqa
         return [step_maker(bdd_type=bdd_types.THEN) for step_maker in ast["steps"]]
 
-    def examples(self, ast):  # noqa
-        return ast
+    def examples(self, ast):
+        table = ast["table"]
+        ex = Examples(
+            line_number=ast.parseinfo.line + 1,
+            name=ast["name"],
+        )
+
+        header, rows = table[0], table[1:]
+        ex.set_param_names(header)
+        for row in rows:
+            ex.add_example(row)
+        return ex
 
     def example_line(self, ast):  # noqa
         return ast
 
-    def table(self, ast):  # noqa
-        return ast
+    def table(self, ast):
+        return ast["rows"]
 
     def table_row(self, ast):  # noqa
-        return ast
+        cells = ast["cells"]
+        cells = split_line(cells)
+        return cells
 
     def EXAMPLE_TABLE_ROW(self, ast):  # noqa
         return ast
