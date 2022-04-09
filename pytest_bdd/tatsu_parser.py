@@ -168,7 +168,7 @@ class GherkinSemantics(_GherkinSemantics):
     def EXAMPLE_TABLE_ROW(self, ast):  # noqa
         return ast
 
-    def step_docstring(self, ast):  # noqa
+    def step_docstring(self, ast):
         quotes, content_type, body = ast["container"]
 
         if not content_type:
