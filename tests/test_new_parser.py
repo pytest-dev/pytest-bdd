@@ -1305,8 +1305,8 @@ Feature: a feature
     assert given.docstring == "content of the docstring"
     # fmt: off
     assert given.datatable == [
-        ('A', 'multiline'),
-        ('data', 'table'),
+        ['A', 'multiline'],
+        ['data', 'table'],
     ]
     # fmt: on
 
