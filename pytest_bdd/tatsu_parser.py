@@ -18,14 +18,18 @@ parser = GherkinParser()
 
 
 def get_column(node: AST) -> int:
-    return node.parseinfo.tokenizer.line_info(node.parseinfo.pos).col
+    parseinfo = node.parseinfo
+    tokenizer = parseinfo.tokenizer
+    position = parseinfo.pos
+    line_info = tokenizer.line_info(position)
+    return line_info.col
 
 
 class GherkinSemantics(_GherkinSemantics):
     def feature(self, ast):
         feature_line = ast["feature_line"]
         tags = ast["tags"]
-        description = textwrap.dedent(ast["description"] or "").strip()
+        description = ast["description"] or ""
         background = ast["background"]
         feature = Feature(
             scenarios=OrderedDict(),
@@ -51,8 +55,11 @@ class GherkinSemantics(_GherkinSemantics):
     def bg_scenarios(self, ast):  # noqa
         return ast
 
-    def description(self, ast):  # noqa
-        return "".join([line_part for line_parts in ast["lines"] for line_part in line_parts])
+    def DESCRIPTION(self, ast):  # noqa
+        lines = ast["lines"]
+        body = "".join(line["body"] + line["nl"] for line in lines)
+        dedented = textwrap.dedent(body)
+        return dedented.strip()
 
     def tag_lines(self, ast):
         tags = ast["tag"]
@@ -105,20 +112,25 @@ class GherkinSemantics(_GherkinSemantics):
     def step(self, ast, keyword):
         return ast
 
-    def given_step(self, ast):  # noqa
-        return functools.partial(ast["step_def"], keyword=ast["keyword"], column=get_column(ast) + 1)
+    def given_step(self, ast):
+        col = get_column(ast["keyword"]) + 1
+        return functools.partial(ast["step_def"], keyword=ast["keyword"]["keyword"], column=col)
 
-    def when_step(self, ast):  # noqa
-        return functools.partial(ast["step_def"], keyword=ast["keyword"], column=get_column(ast) + 1)
+    def when_step(self, ast):
+        col = get_column(ast["keyword"]) + 1
+        return functools.partial(ast["step_def"], keyword=ast["keyword"]["keyword"], column=col)
 
-    def then_step(self, ast):  # noqa
-        return functools.partial(ast["step_def"], keyword=ast["keyword"], column=get_column(ast) + 1)
+    def then_step(self, ast):
+        col = get_column(ast["keyword"]) + 1
+        return functools.partial(ast["step_def"], keyword=ast["keyword"]["keyword"], column=col)
 
-    def and_step(self, ast):  # noqa
-        return functools.partial(ast["step_def"], keyword=ast["keyword"], column=get_column(ast) + 1)
+    def and_step(self, ast):
+        col = get_column(ast["keyword"]) + 1
+        return functools.partial(ast["step_def"], keyword=ast["keyword"]["keyword"], column=col)
 
-    def but_step(self, ast):  # noqa
-        return functools.partial(ast["step_def"], keyword=ast["keyword"], column=get_column(ast) + 1)
+    def but_step(self, ast):
+        col = get_column(ast["keyword"]) + 1
+        return functools.partial(ast["step_def"], keyword=ast["keyword"]["keyword"], column=col)
 
     def given_steps(self, ast):  # noqa
         return [step_maker(bdd_type=bdd_types.GIVEN) for step_maker in ast["steps"]]

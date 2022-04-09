@@ -8,11 +8,13 @@ start = gherkin_document $;
 gherkin_document = [_NL] @:feature [_NL];
 
 simpledesc = {/.+/ _NL}+ ;
-feature = [tags:tag_lines] feature_line:feature_line [description:description] [background:background] [scenarios:scenarios] ;
+feature = [tags:tag_lines] feature_line:feature_line [description:DESCRIPTION] [background:background] [scenarios:scenarios] ;
 feature_line = FEATURE ":" ~ feature_name:string _NL ;
 
 
-description = lines:{!(BACKGROUND | SCENARIO | SCENARIO_OUTLINE | tag) /.+/ _NL} ;
+# Using uppercase rule name will avoiding ignoring the whitespaces at the beginning
+DESCRIPTION = lines:{DESCRIPTION_LINE} ;
+DESCRIPTION_LINE = !(BACKGROUND | SCENARIO | SCENARIO_OUTLINE | tag) body:/.+/ nl:_NL;
 #description = lines:{ !bg_scenarios /.+/ _NL } &bg_scenarios ;
 #description = { !bg_scenarios /(?s)./ _NL } &bg_scenarios ;  # working
 #description = { !bg_scenarios ?'.' } &bg_scenarios ;  # working
@@ -51,11 +53,17 @@ steps_section =
 # TODO: Try out this:
 # step(keyword=GIVEN) = GIVEN step_def:step_def ;
 
-given_step = keyword:GIVEN ~ step_def:step_def ;
-when_step = keyword:WHEN ~ step_def:step_def ;
-then_step = keyword:THEN ~ step_def:step_def ;
-and_step = keyword:AND ~ step_def:step_def ;
-but_step = keyword:BUT ~ step_def:step_def ;
+given_step = keyword:step_keyword_given ~ step_def:step_def ;
+when_step = keyword:step_keyword_when ~ step_def:step_def ;
+then_step = keyword:step_keyword_then ~ step_def:step_def ;
+and_step = keyword:step_keyword_and ~ step_def:step_def ;
+but_step = keyword:step_keyword_but ~ step_def:step_def ;
+
+step_keyword_given = keyword:GIVEN ;
+step_keyword_when = keyword:WHEN ;
+step_keyword_then = keyword:THEN ;
+step_keyword_and = keyword:AND ;
+step_keyword_but = keyword:BUT ;
 
 given_steps = {steps+:given_step}+ {steps+:and_step | steps+:but_step} ;
 when_steps = {steps+:when_step}+ {steps+:and_step | steps+:but_step} ;
@@ -103,4 +111,5 @@ BUT = "But" ;
 EXAMPLES_ALTS = EXAMPLES | SCENARIOS ;
 SCENARIO_OUTLINE_ALTS = SCENARIO_OUTLINE | SCENARIO_TEMPLATE ;
 
-_NL = /(\r?\n[\t ]*)+/ | $ ;
+# _NL = /(\r?\n[\t ]*)+/ | $ ;
+_NL = /(\r?\n)+/ | $ ;

@@ -615,7 +615,7 @@ Feature: A feature
 """,
             "Description of the feature",
         ),
-        (
+        pytest.param(
             """\
 Feature: A feature
     Multiline
@@ -626,6 +626,33 @@ Feature: A feature
         Given I have a bar
 """,
             "Multiline\ndescription",
+            id="multiline",
+        ),
+        pytest.param(
+            """\
+Feature: A feature
+    Multiline
+        indented description
+    Background:
+        Given I have a background bar
+    Scenario: Description
+        Given I have a bar
+""",
+            "Multiline\n    indented description",
+            id="multiline_with_indentation",
+        ),
+        pytest.param(
+            """\
+Feature: A feature
+    A description
+    
+    
+    
+    Scenario: Description
+        Given I have a bar
+""",
+            "A description",
+            id="trailing_newlines",
         ),
     ],
 )
