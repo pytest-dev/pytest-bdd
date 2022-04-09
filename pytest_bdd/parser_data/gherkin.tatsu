@@ -40,7 +40,7 @@ scenario =
 step_def =
     # The hack actually prevents us from parsing step docstring and table :(
     # | name:string _NL  # Hack to have an error message displaying "Expecting Given" in case we only want given steps
-    name:string [_NL docstring:step_docstring] [_NL table:table] _NL
+    name:string _NL [docstring:step_docstring] [table:table]
     ;
 
 steps_section =
@@ -82,7 +82,7 @@ step_docstring = container:/(?sx)
 (.*)                  # Anything
 \n[t ]*               # We require a new line (and whitespaces)...
 \1                    # ...before matching the initial triple quote
-/ ;
+/ _NL ;
 
 
 string = /.+/ ;

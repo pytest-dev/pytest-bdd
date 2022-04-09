@@ -1248,8 +1248,8 @@ Feature: a feature
     assert given.name == "I have a step with a datatable"
     # fmt: off
     assert given.datatable == [
-        ('A', 'multiline'),
-        ('data', 'table'),
+        ['A', 'multiline'],
+        ['data', 'table'],
     ]
     # fmt: on
 
