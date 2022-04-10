@@ -84,7 +84,7 @@ table_row = cells:/(?x)
 / _NL ;
 
 # This trick allows us to get the right initial indentation
-step_docstring = @step_docstring_inner ;
+step_docstring = @:step_docstring_inner ;
 
 step_docstring_inner = container:/(?sx)
 ("""|'''|```)(.*?)    # The triple quotes, followed optionally by the content type
