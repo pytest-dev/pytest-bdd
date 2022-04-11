@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import base64
 import pickle
+import pkgutil
 import re
 import typing
 from inspect import getframeinfo, signature
@@ -69,3 +70,15 @@ def collect_dumped_objects(result: RunResult) -> list:
     stdout = result.stdout.str()  # pytest < 6.2, otherwise we could just do str(result.stdout)
     payloads = re.findall(rf"{_DUMP_START}(.*?){_DUMP_END}", stdout)
     return [pickle.loads(base64.b64decode(payload)) for payload in payloads]
+
+
+# TODO: Remove this dev junk
+def load_tatsu_parser():
+    cache = pkgutil.get_data("pytest_bdd", "parser_data/gherkin.tatsu").decode("utf-8")
+    try:
+        from pytest_bdd import _tatsu_parser
+    except ImportError:
+        grammar = pkgutil.get_data("pytest_bdd", "parser_data/gherkin.tatsu").decode("utf-8")
+        import tatsu
+
+        tatsu.to_python_sourcecode(grammar)
