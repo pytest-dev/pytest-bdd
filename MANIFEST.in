@@ -2,5 +2,6 @@ include *.rst
 include *.txt
 include setup.py
 include pytest_bdd/templates/*.mak
+include pytest_bdd/parser_data/*
 include pytest_bdd/gherkin.tatsu
 include build_parser.py
