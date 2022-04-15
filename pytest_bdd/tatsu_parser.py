@@ -17,6 +17,8 @@ print(f"===== sys.path is: {sys.path}")
 print(f"===== os.getcwd() is: {os.getcwd()}")
 for path in sys.path:
     print(path, " ====> ", subprocess.run(["ls", path], stdout=subprocess.PIPE).stdout.decode(), "\n\n\n\n\n")
+    path = path + "/pytest_bdd"
+    print(path, " ====> ", subprocess.run(["ls", path], stdout=subprocess.PIPE).stdout.decode(), "\n\n\n\n\n")
 from ._gherkin import GherkinParser
 from ._gherkin import GherkinSemantics as _GherkinSemantics
 from .parser import Background, Docstring, Examples, Feature, ScenarioTemplate, Step, ValidationError, split_line
