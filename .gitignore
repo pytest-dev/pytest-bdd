@@ -1,5 +1,5 @@
 # Generated parser file
-/pytest_bdd/_gherkin.py
+src/pytest_bdd/_gherkin.py
 
 *.rej
 *.py[cod]
