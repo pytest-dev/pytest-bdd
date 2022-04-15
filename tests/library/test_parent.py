@@ -160,7 +160,6 @@ def test_local(testdir):
         textwrap.dedent(
             """\
             from pytest_bdd import given, scenario
-            from pytest_bdd.steps import GIVEN
 
 
             @given("I have an overridable fixture", target_fixture="overridable")
@@ -214,7 +213,6 @@ def test_local_multiple_target_fixtures(testdir):
         textwrap.dedent(
             """\
                 from pytest_bdd import given, scenario
-                from pytest_bdd.steps import GIVEN
 
                 @given("I have a parent fixture", target_fixtures=["parent", "overridable"])
                 def parent():
@@ -261,7 +259,6 @@ def test_local_both_target_fixture_and_target_fixtures(testdir):
         textwrap.dedent(
             """\
                 from pytest_bdd import given, scenario
-                from pytest_bdd.steps import GIVEN
 
                 @given("I have a parent fixture", target_fixtures=["parent", "overridable"])
                 def parent():
