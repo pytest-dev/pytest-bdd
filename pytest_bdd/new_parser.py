@@ -26,10 +26,10 @@ from pytest_bdd.parser import (
 if TYPE_CHECKING:
     from typing import Callable, Sequence, TypeAlias
 
+    TableType: TypeAlias = list[tuple[str, ...]]
+
 # TODOs:
 #  - line numbers don't seem to work correctly.
-
-TableType: TypeAlias = list[tuple[str, ...]]
 
 
 class TreeIndenter(Indenter):
