@@ -12,6 +12,10 @@ from tatsu.ast import AST
 
 from pytest_bdd import types as bdd_types
 
+from . import parser as _parser
+
+print(".parser is: ", _parser)
+
 # TODO: Remove before merge
 print(f"===== sys.path is: {sys.path}")
 print(f"===== os.getcwd() is: {os.getcwd()}")
