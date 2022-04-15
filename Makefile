@@ -11,16 +11,16 @@ dependencies:
 
 
 .PHONY: develop
-develop: | .env dependencies pytest_bdd/_gherkin.py
+develop: | .env dependencies src/pytest_bdd/_gherkin.py
 
 
 .PHONY: live-reload
 live-reload:
 	@echo "Listening to changes to pytest_bdd/gherkin.tatsu..."
 	@which entr > /dev/null || (echo "Installing entr..."; brew install entr)
-	echo "pytest_bdd/gherkin.tatsu" | entr -s "tatsu pytest_bdd/gherkin.tatsu --generate-parser > pytest_bdd/_gherkin.py "
+	echo "src/pytest_bdd/gherkin.tatsu" | entr -s "tatsu src/pytest_bdd/gherkin.tatsu --generate-parser > src/pytest_bdd/_gherkin.py "
 
-pytest_bdd/_gherkin.py:
+src/pytest_bdd/_gherkin.py:
 	tatsu pytest_bdd/gherkin.tatsu --generate-parser > pytest_bdd/_gherkin.py
 
 .PHONY: coverage
