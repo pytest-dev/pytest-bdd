@@ -3,6 +3,7 @@ from __future__ import annotations
 import functools
 import os.path
 import re
+import subprocess
 import sys
 import textwrap
 from collections import OrderedDict
@@ -14,6 +15,8 @@ from pytest_bdd import types as bdd_types
 # TODO: Remove before merge
 print(f"===== sys.path is: {sys.path}")
 print(f"===== os.getcwd() is: {os.getcwd()}")
+for path in sys.path:
+    print(path, " ====> ", subprocess.run(["ls", "-lah", path], stdout=subprocess.PIPE).stdout, "\n\n\n\n\n")
 from ._gherkin import GherkinParser
 from ._gherkin import GherkinSemantics as _GherkinSemantics
 from .parser import Background, Docstring, Examples, Feature, ScenarioTemplate, Step, ValidationError, split_line
