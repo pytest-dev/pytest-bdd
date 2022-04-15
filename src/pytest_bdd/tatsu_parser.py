@@ -3,8 +3,6 @@ from __future__ import annotations
 import functools
 import os.path
 import re
-import subprocess
-import sys
 import textwrap
 from collections import OrderedDict
 
@@ -54,9 +52,6 @@ class GherkinSemantics(_GherkinSemantics):
 
         return feature
 
-    def bg_scenarios(self, ast):  # noqa
-        return ast
-
     def DESCRIPTION(self, ast):  # noqa
         lines = ast["lines"]
         body = "".join(line["body"] + line["nl"] for line in lines)
@@ -75,9 +70,6 @@ class GherkinSemantics(_GherkinSemantics):
         for step in steps:
             b.add_step(step)
         return b
-
-    def scenarios(self, ast):  # noqa
-        return ast
 
     def scenario(self, ast):  # noqa
         scenario = ScenarioTemplate(
@@ -110,9 +102,6 @@ class GherkinSemantics(_GherkinSemantics):
         return (ast["plain_steps"] if ast["plain_steps"] else []) + [
             step for step_group in ast["nested_steps"] for step in step_group
         ]
-
-    def step(self, ast, keyword):
-        return ast
 
     def given_step(self, ast):
         col = get_column(ast["keyword"]) + 1
@@ -156,19 +145,13 @@ class GherkinSemantics(_GherkinSemantics):
             ex.add_example(row)
         return ex
 
-    def example_line(self, ast):  # noqa
-        return ast
-
     def table(self, ast):
         return ast["rows"]
 
-    def table_row(self, ast):  # noqa
+    def table_row(self, ast):
         cells = ast["cells"]
         cells = split_line(cells)
         return cells
-
-    def EXAMPLE_TABLE_ROW(self, ast):  # noqa
-        return ast
 
     def step_docstring(self, ast):
         quotes, content_type, body = ast["container"]
@@ -189,57 +172,6 @@ class GherkinSemantics(_GherkinSemantics):
         dedented = "\n".join(dedented_lines)
         return Docstring(dedented, content_type=content_type)
 
-    def STEP_DOCSTRING_INNER(self, ast):  # noqa
-        return ast
-
-    def string(self, ast):  # noqa
-        return ast
-
-    def EXAMPLES(self, ast):  # noqa
-        return ast
-
-    def SCENARIOS(self, ast):  # noqa
-        return ast
-
-    def BACKGROUND(self, ast):  # noqa
-        return ast
-
-    def SCENARIO(self, ast):  # noqa
-        return ast
-
-    def SCENARIO_OUTLINE(self, ast):  # noqa
-        return ast
-
-    def SCENARIO_TEMPLATE(self, ast):  # noqa
-        return ast
-
-    def FEATURE(self, ast):  # noqa
-        return ast
-
-    def GIVEN(self, ast):  # noqa
-        return ast
-
-    def WHEN(self, ast):  # noqa
-        return ast
-
-    def THEN(self, ast):  # noqa
-        return ast
-
-    def AND(self, ast):  # noqa
-        return ast
-
-    def BUT(self, ast):  # noqa
-        return ast
-
-    def EXAMPLES_ALTS(self, ast):  # noqa
-        return ast
-
-    def SCENARIO_OUTLINE_ALTS(self, ast):  # noqa
-        return ast
-
-    def _NL(self, ast):  # noqa
-        return ast
-
 
 feat = """
 Feature: feature name
@@ -250,26 +182,6 @@ Feature: feature name
     Scenario: Another scenario
     Scenario:nospace  #comment
 """
-
-
-def main():
-    import json
-    import pprint
-
-    from tatsu import parse
-    from tatsu.util import asjson
-
-    ast = parser.parse(feat, semantics=GherkinSemantics(), trace=True, colorize=True)
-    # print('PPRINT')
-    pprint.pprint(ast, indent=2, width=20)
-    # print()
-
-    # print('JSON')
-    # print(json.dumps(asjson(ast), indent=2))
-    # print()
-
-
-# main()
 
 
 def parse(content: str, filename: str | None = None) -> Feature:
