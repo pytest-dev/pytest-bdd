@@ -10,8 +10,8 @@ from tatsu.ast import AST
 
 from pytest_bdd import types as bdd_types
 
-from ._tatsu_parser import GherkinParser
-from ._tatsu_parser import GherkinSemantics as _GherkinSemantics
+from ._gherkin import GherkinParser
+from ._gherkin import GherkinSemantics as _GherkinSemantics
 from .parser import Background, Docstring, Examples, Feature, ScenarioTemplate, Step, ValidationError, split_line
 
 parser = GherkinParser()

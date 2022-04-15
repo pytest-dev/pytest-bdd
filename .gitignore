@@ -1,3 +1,6 @@
+# Generated parser file
+/pytest_bdd/_gherkin.py
+
 *.rej
 *.py[cod]
 /.env
