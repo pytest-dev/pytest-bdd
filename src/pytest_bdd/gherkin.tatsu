@@ -25,7 +25,7 @@ tag = /@\S+/ ;
 # tag_line = {tag:tag}+ _NL ;
 # tag_lines = {tag_line}+ ;
 
-tag_lines = {tag:tag /\s+/}+ ;
+tag_lines = {tag+:tag /\s+/}+ ;
 
 background = keyword:BACKGROUND ":" ~ [name:string] _NL [steps:given_steps] ;
 

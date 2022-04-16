@@ -149,34 +149,50 @@ Feature:"""
 
 
 @pytest.mark.parametrize(
-    "src",
+    ["src", "tags"],
     [
-        """\
+        pytest.param(
+            """\
+@a_tag
+Feature: a feature
+""",
+            {"a_tag"},
+            id="one_tag",
+        ),
+        pytest.param(
+            """\
 @a_tag @a_second_tag @a-third-tag @1.tag-with?punctuation!
 Feature: a feature
 """,
-        """\
+            {"a_tag", "a_second_tag", "a-third-tag", "1.tag-with?punctuation!"},
+            id="single_line",
+        ),
+        pytest.param(
+            """\
 @a_tag
 @a_second_tag
 @a-third-tag
 @1.tag-with?punctuation!
 Feature: a feature
 """,
-        """\
+            {"a_tag", "a_second_tag", "a-third-tag", "1.tag-with?punctuation!"},
+            id="multiple_lines",
+        ),
+        pytest.param(
+            """\
 @a_tag @a_second_tag
 @a-third-tag
 @1.tag-with?punctuation!
 Feature: a feature
 """,
-        """\
-@a_tag @a_second_tag @a-third-tag @1.tag-with?punctuation!
-Feature: a feature
-""",
+            {"a_tag", "a_second_tag", "a-third-tag", "1.tag-with?punctuation!"},
+            id="mixed",
+        ),
     ],
 )
-def test_feature_tags(src):
+def test_feature_tags(src, tags):
     feature = parse(src)
-    assert feature.tags == {"a_tag", "a_second_tag", "a-third-tag", "1.tag-with?punctuation!"}
+    assert feature.tags == tags
 
 
 @pytest.mark.parametrize(
