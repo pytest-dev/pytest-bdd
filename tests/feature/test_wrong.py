@@ -52,4 +52,4 @@ def test_multiple_features_single_file(testdir):
     )
     result = testdir.runpytest()
     assert_outcomes(result, errors=1)
-    result.stdout.fnmatch_lines("*FeatureError: Multiple features are not allowed in a single feature file.*")
+    result.stdout.fnmatch_lines("*FeatureError: *")

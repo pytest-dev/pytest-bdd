@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import textwrap
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -119,7 +118,7 @@ def test_step_trace(testdir):
             "elements": [
                 {
                     "description": "",
-                    "id": "test_passing",
+                    "id": "test_passing[test.feature-One passing scenario, one failing scenario-Passing]",
                     "keyword": "Scenario",
                     "line": 5,
                     "name": "Passing",
@@ -144,7 +143,7 @@ def test_step_trace(testdir):
                 },
                 {
                     "description": "",
-                    "id": "test_failing",
+                    "id": "test_failing[test.feature-One passing scenario, one failing scenario-Failing]",
                     "keyword": "Scenario",
                     "line": 10,
                     "name": "Failing",
@@ -183,10 +182,10 @@ def test_step_trace(testdir):
                     "line": 15,
                     "type": "scenario",
                     "id": (
-                        "test_passing_outline"
-                        "[[Scenario:Passing outline:line_no:15]>"
-                        "[Examples:example1:line_no:18]>"
-                        "[Row:0]:str-hello]"
+                        "test_passing_outline["
+                        "test.feature-One passing scenario, one failing scenario-"
+                        "Passing outline[table_rows:[line: 20]]"
+                        "]"
                     ),
                     "name": "Passing outline",
                 },
@@ -206,10 +205,10 @@ def test_step_trace(testdir):
                     "line": 15,
                     "type": "scenario",
                     "id": (
-                        "test_passing_outline"
-                        "[[Scenario:Passing outline:line_no:15]>"
-                        "[Examples:example1:line_no:18]>"
-                        "[Row:1]:int-42]"
+                        "test_passing_outline["
+                        "test.feature-One passing scenario, one failing scenario-"
+                        "Passing outline[table_rows:[line: 21]]"
+                        "]"
                     ),
                     "name": "Passing outline",
                 },
@@ -229,21 +228,24 @@ def test_step_trace(testdir):
                     "line": 15,
                     "type": "scenario",
                     "id": (
-                        "test_passing_outline"
-                        "[[Scenario:Passing outline:line_no:15]>"
-                        "[Examples:example1:line_no:18]>"
-                        "[Row:2]:float-1.0]"
+                        "test_passing_outline["
+                        "test.feature-One passing scenario, one failing scenario-"
+                        "Passing outline[table_rows:[line: 22]]"
+                        "]"
                     ),
                     "name": "Passing outline",
                 },
             ],
-            "id": (Path("test_step_trace0") / "test.feature").as_posix(),
+            "id": "test.feature",
             "keyword": "Feature",
             "line": 2,
             "name": "One passing scenario, one failing scenario",
             "tags": [{"name": "feature-tag", "line": 1}],
-            "uri": (Path(testdir.tmpdir.basename) / "test.feature").as_posix(),
+            "uri": "test.feature",
         }
     ]
 
+    from deepdiff import DeepDiff
+
+    diff = DeepDiff(expected, jsonobject)
     assert jsonobject == expected

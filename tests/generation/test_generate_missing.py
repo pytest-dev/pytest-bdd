@@ -75,13 +75,9 @@ def test_generate_missing(testdir):
 
     result.stdout.fnmatch_lines(
         [
-            'Step Given "I have a custom bar" is not defined in the scenario '
+            'StepHandler Given "I have a custom bar" is not defined in the scenario '
             '"Code is generated for scenario steps which are not yet defined(implemented)" *'
         ]
-    )
-
-    result.stdout.fnmatch_lines(
-        ['Step Given "I have a foobar" is not defined in the background of the feature "Missing code generation" *']
     )
 
     result.stdout.fnmatch_lines(["Please place the code above to the test file(s):"])
@@ -95,7 +91,7 @@ def test_generate_missing_with_step_parsers(testdir):
             """\
             Feature: Missing code generation with step parsers
 
-                Scenario: Step parsers are correctly discovered
+                Scenario: StepHandler parsers are correctly discovered
                     Given I use the string parser without parameter
                     And I use parsers.parse with parameter 1
                     And I use parsers.re with parameter 2

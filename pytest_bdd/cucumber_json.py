@@ -74,7 +74,7 @@ class LogBDDCucumberJSON:
     def _get_result(self, step: dict[str, Any], report: TestReport, error_message: bool = False) -> dict[str, Any]:
         """Get scenario test run result.
 
-        :param step: `Step` step we get result for
+        :param step: `StepHandler` step we get result for
         :param report: pytest `Report` object
         :return: `dict` in form {"status": "<passed|failed|skipped>", ["error_message": "<error_message>"]}
         """

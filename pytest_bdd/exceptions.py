@@ -27,7 +27,7 @@ class FeatureExamplesNotValidError(ScenarioValidationError):
 
 
 class StepDefinitionNotFoundError(Exception):
-    """Step definition not found."""
+    """StepHandler definition not found."""
 
 
 class NoScenariosFound(Exception):

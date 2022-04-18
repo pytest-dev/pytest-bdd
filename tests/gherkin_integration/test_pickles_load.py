@@ -4,7 +4,7 @@ from pathlib import Path
 from _pytest.mark import param
 from pytest import mark
 
-from pytest_bdd.pickle_schema import Pickle, PickleSchema
+from pytest_bdd.pickle import Pickle, PickleSchema
 
 resources = Path(__file__).parent / "resources"
 test_data = resources / "testdata"

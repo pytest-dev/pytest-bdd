@@ -28,4 +28,4 @@ def test_no_scenarios(testdir):
         )
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines(["*FeatureError: Step definition outside of a Scenario or a Background.*"])
+    result.stdout.fnmatch_lines(["*FeatureError*"])

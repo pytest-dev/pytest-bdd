@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import itertools
 import os.path
-from contextlib import suppress
+from functools import reduce
 from operator import methodcaller
+from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 import py
@@ -12,9 +13,10 @@ from _pytest.config.argparsing import Parser
 from mako.lookup import TemplateLookup
 from pkg_resources import get_distribution, parse_version
 
-from .feature import get_features
+from .const import STEP_TYPES_BY_NORMALIZED_PREFIX
+from .feature import Feature
 from .scenario import make_python_docstring, make_python_name, make_string_literal
-from .steps import STEP_TYPES, Step
+from .steps import StepHandler
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
@@ -23,8 +25,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from _pytest.config.argparsing import Parser
     from _pytest.main import Session
 
-    from .parser import Feature, ScenarioTemplate
-    from .parser import Step as StepModel
+    from .feature import Feature
+    from .pickle import Pickle, Step
     from .types import Item
 
 else:
@@ -62,7 +64,7 @@ def cmdline_main(config: Config) -> int | None:
     return None  # Make mypy happy
 
 
-def generate_code(features: list[Feature], scenarios: list[ScenarioTemplate], steps: list[StepModel]) -> str:
+def generate_code(features: list[Feature], scenarios: list[Pickle], steps: list[Step]) -> str:
     """Generate test code for the given filenames."""
     grouped_steps = group_steps(steps)
     template = template_lookup.get_template("test.py.mak")
@@ -84,7 +86,7 @@ def show_missing_code(config: Config) -> int | ExitCode:
     return wrap_session(config, _show_missing_code_main)
 
 
-def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[StepModel]) -> None:
+def print_missing_code(scenarios: list[Pickle], steps: list[Step]) -> None:
     """Print missing code with TerminalWriter."""
     tw = py.io.TerminalWriter()
     scenario = step = None
@@ -92,8 +94,8 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[StepModel]
     for scenario in scenarios:
         tw.line()
         tw.line(
-            'Scenario "{scenario.name}" is not bound to any test in the feature "{scenario.feature.name}"'
-            " in the file {scenario.feature.filename}:{scenario.line_number}".format(scenario=scenario),
+            f'Scenario "{scenario.name}" is not bound to any test in the feature "{scenario.feature.name}"'
+            f" in the file {scenario.feature.filename}:{scenario.line_number}",
             red=True,
         )
 
@@ -102,20 +104,14 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[StepModel]
 
     for step in steps:
         tw.line()
-        if step.scenario is not None:
-            tw.line(
-                """Step {step} is not defined in the scenario "{step.scenario.name}" in the feature"""
-                """ "{step.scenario.feature.name}" in the file"""
-                """ {step.scenario.feature.filename}:{step.line_number}""".format(step=step),
-                red=True,
-            )
-        elif step.background is not None:
-            tw.line(
-                """Step {step} is not defined in the background of the feature"""
-                """ "{step.background.feature.name}" in the file"""
-                """ {step.background.feature.filename}:{step.line_number}""".format(step=step),
-                red=True,
-            )
+        # # TODO refactor
+        # if getattr(step, "scenario", None) is not None:
+        tw.line(
+            f"""StepHandler {step.keyword} "{step.name}" is not defined in the scenario "{step.pickle.name}" in the feature"""
+            f""" "{step.pickle.feature.name}" in the file"""
+            f""" {step.pickle.feature.filename}:{step.line_number}""",
+            red=True,
+        )
 
     if step:
         tw.sep("-", red=True)
@@ -123,53 +119,63 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[StepModel]
     tw.line("Please place the code above to the test file(s):")
     tw.line()
 
-    features = sorted(
-        {scenario.feature for scenario in scenarios}, key=lambda feature: feature.name or feature.filename
+    features: list[Feature] = sorted(
+        reduce(
+            lambda list_, item: cast(list, list_) + [item] if item not in list_ else list_,
+            [scenario.feature for scenario in scenarios],
+            [],
+        ),
+        key=lambda feature: feature.uri,  # type: ignore[no-any-return]  # https://github.com/python/typing/issues/760
     )
     code = generate_code(features, scenarios, steps)
     tw.write(code)
 
 
-def parse_feature_files(
-    paths: list[str], **kwargs: Any
-) -> tuple[list[Feature], list[ScenarioTemplate], list[StepModel]]:
+def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature], list[Pickle], list[Step]]:
     """Parse feature files of given paths.
 
     :param paths: `list` of paths (file or dirs)
 
     :return: `list` of `tuple` in form:
-             (`list` of `Feature` objects, `list` of `Scenario` objects, `list` of `Step` objects).
+             (`list` of `Feature` objects, `list` of `Scenario` objects, `list` of `StepHandler` objects).
     """
-    features = get_features(paths, **kwargs)
-    scenarios: list[ScenarioTemplate] = sorted(
-        itertools.chain.from_iterable(feature.scenarios.values() for feature in features),
-        key=lambda scenario: (scenario.feature.name or scenario.feature.filename, scenario.name),
+    features = Feature.get_from_paths(list(map(Path, paths)), **kwargs)
+    _, scenarios = zip(
+        *sorted(
+            itertools.chain.from_iterable(
+                itertools.zip_longest([], feature.pickles, fillvalue=feature) for feature in features
+            ),
+            key=lambda item: (item[0].uri, item[1].id, item[1].name),
+        )
     )
 
     seen = set()
-    steps: list[StepModel] = sorted(
+    steps: list[Step] = sorted(
         (
             seen.add(step.name) or step  # type: ignore[func-returns-value]
             for step in itertools.chain.from_iterable(scenario.steps for scenario in scenarios)
             if step.name not in seen
         ),
-        key=lambda step: step.name,
+        key=lambda step: step.name,  # type: ignore[no-any-return]  # https://github.com/python/typing/issues/760
     )
     return features, scenarios, steps
 
 
-def group_steps(steps: list[StepModel]) -> list[StepModel]:
+def group_steps(steps: list[Step]) -> list[Step]:
     """Group steps by type."""
-    steps = sorted(steps, key=lambda step: step.type)
+    steps = sorted(steps, key=lambda step: STEP_TYPES_BY_NORMALIZED_PREFIX[step.prefix])
     seen_steps = set()
-    grouped_steps: list[StepModel] = []
+    grouped_steps: list[Step] = []
     for step in itertools.chain.from_iterable(
-        sorted(group, key=lambda step: step.name) for _, group in itertools.groupby(steps, lambda step: step.type)
+        sorted(group, key=lambda step: step.name)  # type: ignore[no-any-return]  # https://github.com/python/typing/issues/760
+        for _, group in itertools.groupby(
+            steps, lambda step: sorted(steps, key=lambda step: STEP_TYPES_BY_NORMALIZED_PREFIX[step.prefix])
+        )
     ):
         if step.name not in seen_steps:
             grouped_steps.append(step)
             seen_steps.add(step.name)
-    grouped_steps.sort(key=lambda step: STEP_TYPES.index(step.type))
+    grouped_steps.sort(key=lambda step: step.prefix)  # type: ignore[no-any-return]  # https://github.com/python/typing/issues/760
     return grouped_steps
 
 
@@ -184,37 +190,41 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
         return
 
     features, scenarios, steps = parse_feature_files(config.option.features)
+    scenarios = list(scenarios)
 
     for item in session.items:
 
         item = cast(Item, item)
-        with suppress(AttributeError):
-            scenario = item.obj.__scenario__
+        # with suppress(AttributeError):
+        pickle = item.obj.__pytest_bdd_pickle__
+        feature = item.obj.__pytest_bdd_feature__
 
-            if scenario in scenarios:
-                scenarios.remove(scenario)
+        for i, s in enumerate(scenarios):
+            if s.id == pickle.id and s.uri == pickle.uri:
+                scenarios.remove(s)
+                break
 
-            is_legacy_pytest = get_distribution("pytest").parsed_version < parse_version("7.0")
+        is_legacy_pytest = get_distribution("pytest").parsed_version < parse_version("7.0")
 
-            method_name = "prepare" if is_legacy_pytest else "setup"
-            methodcaller(method_name, item)(item.session._setupstate)
+        method_name = "prepare" if is_legacy_pytest else "setup"
+        methodcaller(method_name, item)(item.session._setupstate)
 
-            item_request = item._request
+        item_request = item._request
 
-            for step in scenario.steps:
-                try:
-                    item_request.config.hook.pytest_bdd_match_step_definition_to_step(request=item_request, step=step)
-                except Step.Matcher.MatchNotFoundError:
-                    pass
-                else:
-                    steps = [same_step for same_step in steps if same_step.name != step.name]
+        previous_step = None
+        for step in pickle.steps:
+            try:
+                item_request.config.hook.pytest_bdd_match_step_definition_to_step(
+                    request=item_request, feature=feature, pickle=pickle, step=step, previous_step=previous_step
+                )
+            except StepHandler.Matcher.MatchNotFoundError:
+                pass
+            else:
+                steps = [non_found_steps for non_found_steps in steps if non_found_steps.name != step.name]
+            finally:
+                previous_step = step
 
-            item.session._setupstate.teardown_exact(*((item,) if is_legacy_pytest else ()), None)  # type: ignore[call-arg]
-
-    for scenario in scenarios:
-        for step in scenario.steps:
-            if step.background is None:
-                steps = [same_step for same_step in steps if same_step.name != step.name]
+        item.session._setupstate.teardown_exact(*((item,) if is_legacy_pytest else ()), None)  # type: ignore[call-arg]
 
     grouped_steps = group_steps(steps)
     print_missing_code(scenarios, grouped_steps)

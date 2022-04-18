@@ -5,6 +5,7 @@ Planned
 -------
 - Use official gherkin parser
 - Allow call steps from other steps
+- Move old parser to use pickles
 
 Unreleased
 ----------
@@ -21,6 +22,7 @@ Unreleased
 - Step definitions can have "yield" statements again (4.0 release broke it). They will be executed as normal fixtures: code after the yield is executed during teardown of the test. (youtux)
 - Show pass/fail status per step in Gherkin terminal reporter
 - Step definitions could be used independently from keyword
+- ``pytest_bdd_apply_tag`` was removed; ``pytest_bdd_convert_tag_to_marks`` was added instead
 
 5.0.0
 -----

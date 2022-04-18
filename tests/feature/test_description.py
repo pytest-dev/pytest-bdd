@@ -40,14 +40,14 @@ def test_description(testdir):
             return "bar"
 
         def test_scenario_description():
-            assert test_description.__scenario__.feature.description == textwrap.dedent(
-                \"\"\"\\
+            assert test_description.__pytest_bdd_feature__.description == textwrap.dedent(
+                '''\\
                 In order to achieve something
                 I want something
                 Because it will be cool
 
 
-                Some description goes here.\"\"\"
+                Some description goes here.'''
             )
         """
         )

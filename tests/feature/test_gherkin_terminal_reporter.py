@@ -108,7 +108,7 @@ def test_error_message_for_missing_steps(testdir, verbosity):
     result = testdir.runpytest("--gherkin-terminal-reporter", verbosity)
     result.assert_outcomes(passed=0, failed=1)
     result.stdout.fnmatch_lines(
-        """*StepDefinitionNotFoundError: Step definition is not found: Given "there is a bar". """
+        """*StepDefinitionNotFoundError: StepHandler definition is not found: "there is a bar". StepHandler keyword: "Given".*"""
         """Line 3 in scenario "Scenario example 1"*"""
     )
 

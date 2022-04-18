@@ -41,17 +41,7 @@ def pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exceptio
 
 
 @pytest.hookspec(firstresult=True)
-def pytest_bdd_apply_tag(tag, function):
-    """Apply a tag (from a ``.feature`` file) to the given scenario.
-
-    The default implementation does the equivalent of
-    ``getattr(pytest.mark, tag)(function)``, but you can override this hook and
-    return ``True`` to do more sophisticated handling of tags.
-    """
-
-
-@pytest.hookspec(firstresult=True)
-def pytest_bdd_convert_tag_to_marks(feature, scenario, example, tag) -> Iterable[Mark] | None:
+def pytest_bdd_convert_tag_to_marks(feature, scenario, tag) -> Iterable[Mark] | None:
     """Apply a tag (from a ``.feature`` file) to the given test item.
 
     The default implementation does the equivalent of
@@ -61,5 +51,5 @@ def pytest_bdd_convert_tag_to_marks(feature, scenario, example, tag) -> Iterable
 
 
 @pytest.hookspec(firstresult=True)
-def pytest_bdd_match_step_definition_to_step(request, step):
+def pytest_bdd_match_step_definition_to_step(request, feature, pickle, step, previous_step):
     """Find match between scenario step and user defined step function"""

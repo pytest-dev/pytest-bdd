@@ -58,7 +58,6 @@ def test_step_trace(testdir):
     """
         ),
     )
-    relpath = feature.relto(testdir.tmpdir.dirname)
     testdir.makepyfile(
         textwrap.dedent(
             """
@@ -103,14 +102,17 @@ def test_step_trace(testdir):
     )
     result = testdir.inline_run("-vvl")
     assert result.ret
-    report = result.matchreport("test_passing", when="call").scenario
+
+    report = result.matchreport(
+        "test_passing[test.feature-One passing scenario, one failing scenario-Passing]", when="call"
+    ).scenario
     expected = {
         "feature": {
             "description": "",
             "filename": Path(feature.strpath).as_posix(),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
-            "rel_filename": Path(relpath).as_posix(),
+            "rel_filename": "test.feature",
             "tags": ["feature-tag"],
         },
         "line_number": 5,
@@ -130,7 +132,7 @@ def test_step_trace(testdir):
                 "keyword": "And",
                 "line_number": 7,
                 "name": "some other passing step",
-                "type": "given",
+                "type": "and",
             },
         ],
         "tags": ["scenario-passing-tag"],
@@ -138,14 +140,16 @@ def test_step_trace(testdir):
 
     assert report == expected
 
-    report = result.matchreport("test_failing", when="call").scenario
+    report = result.matchreport(
+        "test_failing[test.feature-One passing scenario, one failing scenario-Failing]", when="call"
+    ).scenario
     expected = {
         "feature": {
             "description": "",
             "filename": Path(feature.strpath).as_posix(),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
-            "rel_filename": Path(relpath).as_posix(),
+            "rel_filename": "test.feature",
             "tags": ["feature-tag"],
         },
         "line_number": 10,
@@ -165,7 +169,7 @@ def test_step_trace(testdir):
                 "keyword": "And",
                 "line_number": 12,
                 "name": "a failing step",
-                "type": "given",
+                "type": "and",
             },
         ],
         "tags": ["scenario-failing-tag"],
@@ -173,7 +177,8 @@ def test_step_trace(testdir):
     assert report == expected
 
     report = result.matchreport(
-        "test_outlined[[Scenario:Outlined:line_no:14]>[Examples:[Empty]:line_no:19]>[Row:0]:12-5-7]", when="call"
+        "test_outlined[test.feature-One passing scenario, one failing scenario-Outlined[table_rows:[line: 21]]]",
+        when="call",
     ).scenario
     expected = {
         "feature": {
@@ -181,7 +186,7 @@ def test_step_trace(testdir):
             "filename": Path(feature.strpath).as_posix(),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
-            "rel_filename": Path(relpath).as_posix(),
+            "rel_filename": "test.feature",
             "tags": ["feature-tag"],
         },
         "line_number": 14,
@@ -217,7 +222,8 @@ def test_step_trace(testdir):
     assert report == expected
 
     report = result.matchreport(
-        "test_outlined[[Scenario:Outlined:line_no:14]>[Examples:[Empty]:line_no:19]>[Row:1]:5-4-1]", when="call"
+        "test_outlined[test.feature-One passing scenario, one failing scenario-Outlined[table_rows:[line: 22]]]",
+        when="call",
     ).scenario
     expected = {
         "feature": {
@@ -225,7 +231,7 @@ def test_step_trace(testdir):
             "filename": Path(feature.strpath).as_posix(),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
-            "rel_filename": Path(relpath).as_posix(),
+            "rel_filename": "test.feature",
             "tags": ["feature-tag"],
         },
         "line_number": 14,
@@ -318,7 +324,11 @@ def test_complex_types(testdir, pytestconfig):
     )
     result = testdir.inline_run("-vvl")
     report = result.matchreport(
-        "test_complex[[Scenario:Complex:line_no:3]>[Examples:[Empty]:line_no:6]>[Row:0]:10,20-alien0]", when="call"
+        "test_complex["
+        "test.feature-Report serialization containing parameters of complex types-"
+        "Complex[table_rows:[line: 8]]-alien0"
+        "]",
+        when="call",
     )
     assert report.passed
     assert execnet.gateway_base.dumps(report.item)

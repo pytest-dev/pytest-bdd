@@ -80,7 +80,7 @@ def test_all_steps_can_provide_fixtures(testdir):
         ".feature",
         steps=textwrap.dedent(
             """\
-            Feature: Step fixture
+            Feature: StepHandler fixture
                 Scenario: Given steps can provide fixture
                     Given Foo is "bar"
                     Then foo should be "bar"
@@ -303,22 +303,25 @@ def test_step_hooks(testdir):
     """When step fails."""
     testdir.makefile(
         ".feature",
-        test="""
-    Scenario: When step has hook on failure
-        Given I have a bar
-        When it fails
+        test=textwrap.dedent(
+            """\
+            Feature: StepHandler hooks
+                Scenario: When step has hook on failure
+                    Given I have a bar
+                    When it fails
 
-    Scenario: When step's dependency a has failure
-        Given I have a bar
-        When it's dependency fails
+                Scenario: When step's dependency a has failure
+                    Given I have a bar
+                    When it's dependency fails
 
-    Scenario: When step is not found
-        Given not found
+                Scenario: When step is not found
+                    Given not found
 
-    Scenario: When step validation error happens
-        Given foo
-        And foo
-    """,
+                Scenario: When step validation error happens
+                    Given foo
+                    And foo
+            """
+        ),
     )
     testdir.makepyfile(
         """
@@ -416,18 +419,21 @@ def test_step_trace(testdir):
 
     testdir.makefile(
         ".feature",
-        test="""
-    Scenario: When step has failure
-        Given I have a bar
-        When it fails
+        test=textwrap.dedent(
+            """\
+            Feature: Test step trace
+                Scenario: When step has failure
+                    Given I have a bar
+                    When it fails
 
-    Scenario: When step is not found
-        Given not found
+                Scenario: When step is not found
+                    Given not found
 
-    Scenario: When step validation error happens
-        Given foo
-        And foo
-    """,
+                Scenario: When step validation error happens
+                    Given foo
+                    And foo
+            """
+        ),
     )
     testdir.makepyfile(
         """
@@ -491,7 +497,7 @@ def test_steps_parameter_mapping(testdir):
             """\
             Feature: Steps parameters don't have to be passed as fixtures
 
-                Scenario: Step parameter don't have to be injected as fixture
+                Scenario: StepHandler parameter don't have to be injected as fixture
                     Given I have a "foo" parameter which is not injected as fixture
                     Then parameter "foo" is not visible in fixtures
 
@@ -505,7 +511,7 @@ def test_steps_parameter_mapping(testdir):
         from pytest import raises
         from pytest_bdd import given, then, scenario
 
-        @scenario("steps.feature", "Step parameter don't have to be injected as fixture")
+        @scenario("steps.feature", "StepHandler parameter don't have to be injected as fixture")
         def test_steps():
             pass
 

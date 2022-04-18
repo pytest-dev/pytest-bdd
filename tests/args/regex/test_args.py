@@ -1,4 +1,4 @@
-"""Step arguments tests."""
+"""StepHandler arguments tests."""
 
 import textwrap
 
@@ -17,7 +17,7 @@ def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_strin
         ".feature",
         arguments=textwrap.dedent(
             """\
-            Feature: Step arguments
+            Feature: StepHandler arguments
                 Scenario: Every step takes a parameter with the same name
                     Given I have 1 Euro
                     When I pay 2 Euro
@@ -79,7 +79,7 @@ def test_argument_in_when(testdir, parser_import_string):
         ".feature",
         arguments=textwrap.dedent(
             """\
-            Feature: Step arguments
+            Feature: StepHandler arguments
                 Scenario: Argument in when, step 1
                     Given I have an argument 1
                     When I get argument 5

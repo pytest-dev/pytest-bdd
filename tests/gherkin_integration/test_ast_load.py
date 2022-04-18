@@ -4,7 +4,7 @@ from pathlib import Path
 from _pytest.mark import param
 from pytest import mark
 
-from pytest_bdd.ast_schema import AST, ASTSchema
+from pytest_bdd.ast import AST, ASTSchema
 
 resources = Path(__file__).parent / "resources"
 test_data = resources / "testdata"

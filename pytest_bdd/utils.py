@@ -6,15 +6,19 @@ import pickle
 import re
 from collections import defaultdict
 from contextlib import suppress
-from functools import reduce
+from functools import partial, reduce
 from inspect import getframeinfo, signature
 from itertools import tee
-from operator import getitem
+from operator import getitem, itemgetter
 from sys import _getframe
 from typing import TYPE_CHECKING, Callable, Collection, Mapping, cast
 
 from _pytest.fixtures import FixtureDef
 from attr import Factory, attrib, attrs
+from marshmallow import post_load
+from ordered_set import OrderedSet
+
+from pytest_bdd.const import STEP_PREFIXES, TAG
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
@@ -93,14 +97,14 @@ class SimpleMapping(Mapping):
         return len(self._dict)
 
 
-def apply_tag(scenario, tag, function):
+def apply_tag(feature_context, pickle, tag, function):
     config = CONFIG_STACK[-1]
 
     def compose(*func):
         return reduce(lambda f, g: lambda x: f(g(x)), func, lambda x: x)
 
     return compose(
-        *config.hook.pytest_bdd_convert_tag_to_marks(feature=scenario.feature, scenario=scenario, example=None, tag=tag)
+        *config.hook.pytest_bdd_convert_tag_to_marks(feature=feature_context, scenario=pickle, example=None, tag=tag)
     )(function)
 
 
@@ -180,3 +184,55 @@ def inject_fixture(request, arg, value):
     request._fixture_defs[arg] = fd
     if add_fixturename:
         request._pyfuncitem._fixtureinfo.names_closure.append(arg)
+
+
+def get_tags(line: str | None) -> OrderedSet[str]:
+    """Get tags out of the given line.
+
+    :param str line: Feature file text line.
+
+    :return: List of tags.
+    """
+    if not line or not line.strip().startswith(STEP_PREFIXES[TAG]):
+        return OrderedSet()
+    return OrderedSet(
+        [tag.lstrip(STEP_PREFIXES[TAG]) for tag in line.strip().split(f" {STEP_PREFIXES[TAG]}") if len(tag) > 1]
+    )
+
+
+class ModelSchemaPostlLoadable:
+    postbuild_attrs: list[str] = []
+
+    @staticmethod
+    def build_from_schema(cls, data, many, **kwargs):
+        return cls.postbuild_attr_builder(cls, data, cls.postbuild_attrs)
+
+    @classmethod
+    def schema_post_loader(cls):
+        return post_load(partial(cls.build_from_schema, cls))
+
+    @staticmethod
+    def postbuild_attr_builder(cls, data, postbuild_args):
+        _data = {**data}
+        empty = object()
+        postbuildable_args = []
+        for argument in postbuild_args:
+            value = _data.pop(argument, empty)
+            if value is not empty:
+                postbuildable_args.append((argument, value))
+        instance = cls(**_data)
+        for argument, value in postbuildable_args:
+            setattr(instance, argument, value)
+        return instance
+
+
+def _itemgetter(*items):
+    def func(obj):
+        if len(items) == 0:
+            return []
+        elif len(items) == 1:
+            return [obj[items[0]]]
+        else:
+            return itemgetter(*items)(obj)
+
+    return func

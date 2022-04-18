@@ -1,4 +1,4 @@
-"""Step arguments tests."""
+"""StepHandler arguments tests."""
 
 import textwrap
 
@@ -15,28 +15,26 @@ from pytest import mark
 def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_string):
     testdir.makefile(
         ".feature",
-        arguments=textwrap.dedent(
-            """\
-            Feature: Step arguments
+        arguments="""\
+            Feature: StepHandler arguments
                 Scenario: Every step takes a parameter with the same name
                     Given I have 1 Euro
                     When I pay 2 Euro
                     And I pay 1 Euro
                     Then I should have 0 Euro
-                    And I should have 999999 Euro # In my dream...
+                    # In my dream...
+                    And I should have 999999 Euro
 
-            """
-        ),
+        """,
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         import pytest
         from pytest_bdd import given, when, then, scenario
         """
-            f"{parser_import_string}"
-            """
+        f"{parser_import_string}"
+        """
         @scenario("arguments.feature", "Every step takes a parameter with the same name")
         def test_arguments():
             pass
@@ -61,8 +59,8 @@ def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_strin
             assert euro == values.pop(0)
 
         """
-        )
     )
+
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)
 
@@ -79,7 +77,7 @@ def test_argument_in_when_step_1(testdir, parser_import_string):
         ".feature",
         arguments=textwrap.dedent(
             """\
-            Feature: Step arguments
+            Feature: StepHandler arguments
                 Scenario: Argument in when
                     Given I have an argument 1
                     When I get argument 5

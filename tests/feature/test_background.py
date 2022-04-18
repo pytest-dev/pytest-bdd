@@ -2,15 +2,16 @@
 
 import textwrap
 
-FEATURE = """\
+FEATURE = '''\
 Feature: Background support
 
     Background:
         Given foo has a value "bar"
         And a background step with multiple lines:
+            """
             one
             two
-
+            """
 
     Scenario: Basic usage
         Then foo should have value "bar"
@@ -21,7 +22,7 @@ Feature: Background support
 
         Then foo should have value "dummy"
         And foo should not have value "bar"
-"""
+'''
 
 STEPS = r"""\
 import re
@@ -33,9 +34,9 @@ def foo():
     return {}
 
 
-@given(parsers.re(r"a background step with multiple lines:\n(?P<data>.+)", flags=re.DOTALL))
-def multi_line(foo, data):
-    assert data == "one\ntwo"
+@given(parsers.re(r"a background step"))
+def multi_line(foo, step):
+    assert step.doc_string.content == "one\ntwo"
 
 
 @given('foo has a value "bar"')

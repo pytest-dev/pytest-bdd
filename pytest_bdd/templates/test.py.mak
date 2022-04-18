@@ -2,10 +2,8 @@
 """${ features[0].name or features[0].rel_filename } feature tests."""
 
 from pytest_bdd import (
-    given,
     scenario,
-    then,
-    when,
+    step,
 )
 
 
@@ -18,7 +16,7 @@ def test_${ make_python_name(scenario.name)}():
 
 % endfor
 % for step in steps:
-@${step.type}(${ make_string_literal(step.name)})
+@step(${ make_string_literal(step.name)})
 def ${ make_python_name(step.name)}():
     ${make_python_docstring(step.name)}
     raise NotImplementedError

@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING
 
 from _pytest.fixtures import FixtureRequest
 
-from pytest_bdd.parser import ScenarioTemplate
+from pytest_bdd.feature import Feature
+from pytest_bdd.pickle import Pickle
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
@@ -20,9 +21,10 @@ if TYPE_CHECKING:  # pragma: no cover
         item: dict[str, str]
 
     class TestFunc(type(lambda: ())):  # type: ignore[misc]
-        __scenario__: ScenarioTemplate
+        __pytest_bdd_pickle__: Pickle
+        __pytest_bdd_feature__: Feature
 
     class Item(BaseItem):
-        __scenario_report__: ScenarioReport
+        __pytest_bdd_scenario_report__: ScenarioReport
         obj: TestFunc
         _request: FixtureRequest

@@ -8,7 +8,7 @@ def test_step_alias(testdir):
         ".feature",
         alias=textwrap.dedent(
             """\
-            Feature: Step aliases
+            Feature: StepHandler aliases
                 Scenario: Multiple step aliases
                     Given I have an empty list
                     And I have foo (which is 1) in my list

@@ -16,18 +16,21 @@ import collections
 import os
 import re
 import sys
+from functools import reduce
+from operator import truediv
+from os.path import commonpath
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
-from warnings import warn
 
 import pytest
-from _pytest.fixtures import FixtureLookupError, FixtureRequest
-from _pytest.warning_types import PytestDeprecationWarning
+from _pytest.config import Config
+from _pytest.fixtures import FixtureRequest
 
 from . import exceptions
-from .feature import get_feature, get_features
-from .steps import Step
-from .utils import CONFIG_STACK, DefaultMapping, apply_tag, get_args, get_caller_module_locals, get_caller_module_path
+from .feature import Feature
+from .pickle import Pickle
+from .steps import StepHandler
+from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if sys.version_info >= (3, 8):
     from typing import Protocol, runtime_checkable
@@ -37,9 +40,7 @@ else:
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any, Callable, Iterable
 
-    from _pytest.mark.structures import ParameterSet
-
-    from .parser import ExampleRowUnited, Feature, Scenario, ScenarioTemplate
+    from .feature import Feature
     from .types import TestFunc
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
@@ -51,50 +52,43 @@ class StepFunc(Protocol):
     target_fixtures: list[str]
 
 
-def _execute_scenario(feature: Feature, scenario: Scenario, request):
-    """Execute the scenario.
+def _execute_pickle(feature: Feature, pickle: Pickle, request):
+    """Execute the pickles.
 
     :param feature: Feature.
-    :param scenario: Scenario.
+    :param pickle: Scenario.
     :param request: request.
     :param encoding: Encoding.
     """
-    request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
+    request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=pickle)
 
     try:
-        for step in scenario.steps:
-            Step.Executor(request=request, scenario=scenario, step=step).execute()  # type: ignore[call-arg]
+        previous_step = None
+        for step in pickle.steps:
+            StepHandler.Executor(
+                request=request, feature=feature, pickle=pickle, step=step, previous_step=previous_step
+            ).execute()  # type: ignore[call-arg]
+            previous_step = step
     finally:
-        request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
+        request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=pickle)
 
 
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
-def _are_examples_and_fixtures_joinable(request, bdd_example, examples_fixtures_mapping):
-    joinable = True
-    if bdd_example and examples_fixtures_mapping:
-        for param, fixture_name in examples_fixtures_mapping.items():
-            try:
-                if str(request.getfixturevalue(fixture_name)) != bdd_example[param]:
-                    joinable = False
-                    break
-            except (FixtureLookupError, KeyError):
-                continue
-    return joinable
+def _build_pickle_param(feature: Feature, pickle: Pickle, config: Config):
+    marks = []
+    for tag in pickle.tag_names:
+        tag_marks = config.hook.pytest_bdd_convert_tag_to_marks(feature=feature, scenario=pickle, tag=tag)
+        if tag_marks is not None:
+            marks.extend(tag_marks)
+    return pytest.param(pickle, id=f"{pickle.name}{pickle.table_rows_breadcrumb}", marks=marks)
 
 
 def _get_scenario_decorator(
     feature: Feature,
-    feature_name: Path | str,
-    templated_scenario: ScenarioTemplate,
-    scenario_name: str,
-    examples_fixtures_mapping: set[str] | dict[str, str] | None = None,
+    pickles: list[Pickle],
 ):
-    _examples_fixtures_mapping = DefaultMapping.instantiate_from_collection_or_bool(examples_fixtures_mapping or ())
-    if _examples_fixtures_mapping:
-        warn(PytestDeprecationWarning("Outlining by fixtures could be removed in future versions"))
-
     # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
     # when the decorator is misused.
     # Pytest inspect the signature to determine the required fixtures, and in that case it would look
@@ -109,98 +103,42 @@ def _get_scenario_decorator(
         [fn] = args
         fn_args = get_args(fn)
 
-        external_join_keys: set[str]
-        scenario_wrapper: TestFunc
-        if isinstance(_examples_fixtures_mapping, dict):
-            external_join_keys = set(_examples_fixtures_mapping.keys())
-        elif _examples_fixtures_mapping is None:
-            external_join_keys = set()
-        else:
-            external_join_keys = _examples_fixtures_mapping
-        templated_scenario.validate(external_join_keys=external_join_keys)
+        test_function: TestFunc
 
+        # TODO investigate other approach to pass config
+        config = CONFIG_STACK[-1]
+
+        @pytest.mark.parametrize("pickle", [_build_pickle_param(feature, pickle, config) for pickle in pickles])  # type: ignore[no-redef]
+        @pytest.mark.parametrize("feature", [pytest.param(feature, id=f"{feature.uri}-{feature.name}")])
         # We need to tell pytest that the original function requires its fixtures,
         # otherwise indirect fixtures would not work.
-        @pytest.mark.usefixtures(*fn_args)  # type: ignore[no-redef]
-        def scenario_wrapper(request: FixtureRequest, bdd_example: ExampleRowUnited) -> Any:
-
-            _examples_fixtures_mapping.warm_up(*bdd_example.keys())
-            if not _are_examples_and_fixtures_joinable(request, bdd_example, _examples_fixtures_mapping):
-                pytest.skip(f"Examples and fixtures were not joined for example {bdd_example.breadcrumb}")
-
-            scenario = templated_scenario.render(
-                {
-                    **{
-                        param: request.getfixturevalue(fixture_name)
-                        for param, fixture_name in _examples_fixtures_mapping.items()
-                    },
-                    **bdd_example,
-                }
-            )
-
-            _execute_scenario(feature, scenario, request)
+        @pytest.mark.usefixtures(*fn_args)
+        def test_function(request: FixtureRequest, feature, pickle) -> Any:
+            _execute_pickle(feature, pickle, request)
             fixture_values = [request.getfixturevalue(arg) for arg in fn_args]
             return fn(*fixture_values)
 
-        example_parametrizations = collect_example_parametrizations(templated_scenario)
-        if example_parametrizations:
-            # Parametrize the scenario outlines
-            scenario_wrapper = pytest.mark.parametrize("bdd_example", example_parametrizations)(scenario_wrapper)
-
-        for tag in templated_scenario.tags.union(feature.tags):
-            config = CONFIG_STACK[-1]
-            # TODO deprecated usage
-            if not config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper):
-                apply_tag(scenario=templated_scenario, tag=tag, function=scenario_wrapper)
-
-        scenario_wrapper.__doc__ = f"{feature_name}: {scenario_name}"
-        scenario_wrapper.__scenario__ = templated_scenario
-        return cast("TestFunc", scenario_wrapper)
+        # TODO review usage & fix
+        test_function.__doc__ = f"{feature.uri}: {pickles[0].name} {pickles[0].id}"
+        # TODO review usage & fix
+        test_function.__pytest_bdd_pickle__ = pickles[0]
+        test_function.__pytest_bdd_feature__ = feature
+        return cast("TestFunc", test_function)
 
     return decorator
-
-
-def collect_example_parametrizations(
-    templated_scenario: ScenarioTemplate,
-) -> list[ParameterSet] | None:
-    parametrizations = []
-    config = CONFIG_STACK[-1]
-    for united_example_row in templated_scenario.united_example_rows:
-
-        def marks():
-            for tag in united_example_row.tags:
-                _marks = config.hook.pytest_bdd_convert_tag_to_marks(
-                    feature=templated_scenario.feature,
-                    scenario=templated_scenario,
-                    example=united_example_row,
-                    tag=tag,
-                )
-                if _marks:
-                    yield from iter(_marks)
-
-        parametrizations.append(
-            pytest.param(
-                united_example_row,
-                id=united_example_row.breadcrumb + ":" + "-".join(united_example_row.values()),
-                marks=list(marks()),
-            )
-        )
-    return parametrizations
 
 
 def scenario(
     feature_name: Path | str,
     scenario_name: str,
     encoding: str = "utf-8",
-    features_base_dir: str | None = None,
-    examples_fixtures_mapping: set[str] | dict[str, str] | None = None,
+    features_base_dir: Path | str | None = None,
 ):
     """Scenario decorator.
 
     :param feature_name: Feature file name. Absolute or relative to the configured feature base path.
     :param scenario_name: Scenario name.
     :param encoding: Feature file encoding.
-    :param examples_fixtures_mapping: Mapping of examples parameter names to fixtures
     """
 
     scenario_name = str(scenario_name)
@@ -209,29 +147,24 @@ def scenario(
     # Get the feature
     if features_base_dir is None:
         features_base_dir = get_features_base_dir(caller_module_path)
-    feature = get_feature(features_base_dir, feature_name, encoding=encoding)
+    features_base_dir = (Path.cwd() / Path(features_base_dir)).resolve()
 
-    # Get the scenario
-    try:
-        scenario = feature.scenarios[scenario_name]
-    except KeyError:
+    # TODO: possibility to use alternate parsers
+    feature = Feature.get_from_path(features_base_dir, feature_name, encoding=encoding)
+
+    pickles = list(filter(lambda pickle: pickle.name == scenario_name, feature.pickles))
+    if not pickles:
         feature_name = feature.name or "[Empty]"
         raise exceptions.ScenarioNotFound(
             f'Scenario "{scenario_name}" in feature "{feature_name}" in {feature.filename} is not found.'
         )
 
-    return _get_scenario_decorator(
-        feature=feature,
-        feature_name=feature_name,
-        templated_scenario=scenario,
-        scenario_name=scenario_name,
-        examples_fixtures_mapping=examples_fixtures_mapping,
-    )
+    return _get_scenario_decorator(feature=feature, pickles=pickles)
 
 
-def get_features_base_dir(caller_module_path: str) -> str:
+def get_features_base_dir(caller_module_path: str) -> Path:
     default_base_dir = os.path.dirname(caller_module_path)
-    return get_from_ini("bdd_features_base_dir", default_base_dir)
+    return Path(get_from_ini("bdd_features_base_dir", default_base_dir))
 
 
 def get_from_ini(key: str, default: str) -> str:
@@ -277,7 +210,7 @@ def get_python_name_generator(name: str) -> Iterable[str]:
         suffix = f"_{index}"
 
 
-def scenarios(*feature_paths: str, **kwargs: Any) -> None:
+def scenarios(*feature_paths: str | Path, **kwargs: Any) -> None:
     """Parse features from the paths and put all found scenarios in the caller module.
 
     :param *feature_paths: feature file paths to use for scenarios
@@ -288,26 +221,43 @@ def scenarios(*feature_paths: str, **kwargs: Any) -> None:
     features_base_dir = kwargs.get("features_base_dir")
     if features_base_dir is None:
         features_base_dir = get_features_base_dir(caller_path)
+    features_base_dir = (Path.cwd() / Path(features_base_dir)).resolve()
 
     abs_feature_paths = []
     for path in feature_paths:
         if not os.path.isabs(path):
             path = os.path.abspath(os.path.join(features_base_dir, path))
         abs_feature_paths.append(path)
+
+    rel_feature_paths = []
+    for path in map(Path, feature_paths):
+        if path.is_absolute():
+            try:
+                common_path = Path(commonpath([path, features_base_dir]))
+            except ValueError:
+                rel_feature_paths.append(path)
+            else:
+                sub_levels = len(features_base_dir.relative_to(common_path).parts)
+                sub_path = reduce(truediv, map(Path, [".."] * sub_levels), Path())
+                rel_feature_paths.append(sub_path / path.relative_to(common_path))
+        else:
+            rel_feature_paths.append(path)
+
     found = False
 
     module_scenarios = frozenset(
-        (attr.__scenario__.feature.filename, attr.__scenario__.name)
+        (attr.__pytest_bdd_feature__.filename, attr.__pytest_bdd_pickle__.name)
         for name, attr in caller_locals.items()
-        if hasattr(attr, "__scenario__")
+        if hasattr(attr, "__pytest_bdd_pickle__")
     )
 
-    for feature in get_features(abs_feature_paths):
-        for scenario_name, scenario_object in feature.scenarios.items():
+    for feature in Feature.get_from_paths(rel_feature_paths, features_base_dir=features_base_dir):
+        for scenario_object in feature.pickles:
+            scenario_name = scenario_object.name
             # skip already bound scenarios
-            if (scenario_object.feature.filename, scenario_name) not in module_scenarios:
+            if (feature.filename, scenario_name) not in module_scenarios:
 
-                @scenario(feature.filename, scenario_name, **kwargs)
+                @scenario(feature.uri, scenario_name, **{**kwargs, **dict(features_base_dir=features_base_dir)})
                 def _scenario() -> None:
                     pass  # pragma: no cover
 

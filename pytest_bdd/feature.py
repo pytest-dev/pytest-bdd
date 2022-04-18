@@ -1,12 +1,6 @@
 """Feature.
 
-The way of describing the behavior is based on Gherkin language, but a very
-limited version. It doesn't support any parameter tables.
-If the parametrization is needed to generate more test cases it can be done
-on the fixture level of the pytest.
-The <variable> syntax can be used here to make a connection between steps and
-it will also validate the parameters mentioned in the steps with ones
-provided in the pytest parametrization table.
+The way of describing the behavior is based on Gherkin language
 
 Syntax example:
 
@@ -17,7 +11,9 @@ Syntax example:
             When I go to the article page
             And I press the publish button
             Then I should not see the error message
-            And the article should be published  # Note: will query the database
+
+            # Note: will query the database
+            And the article should be published
 
 :note: The "#" symbol is used for comments.
 :note: There are no multiline steps, the description of the step must fit in
@@ -25,56 +21,126 @@ one line.
 """
 from __future__ import annotations
 
-import os.path
+import linecache
 from pathlib import Path
+from textwrap import dedent
+from typing import cast
 
-import glob2
+from attr import Factory, attrib, attrs
+from gherkin.errors import CompositeParserException
+from gherkin.parser import Parser
+from gherkin.pickles.compiler import Compiler
 
-from .parser import Feature, parse_feature
-
-# Global features dictionary
-features: dict[str, Feature] = {}
-
-
-def get_feature(base_path: Path | str, filename: Path | str, encoding: str = "utf-8") -> Feature:
-    """Get a feature by the filename.
-
-    :param str base_path: Base feature directory.
-    :param str filename: Filename of the feature file.
-    :param str encoding: Feature file encoding.
-
-    :return: `Feature` instance from the parsed feature cache.
-
-    :note: The features are parsed on the execution of the test and
-           stored in the global variable cache to improve the performance
-           when multiple scenarios are referencing the same file.
-    """
-
-    full_name = str((Path(base_path) / filename).resolve())
-    feature = features.get(full_name)
-    if not feature:
-        feature = parse_feature(base_path, filename, encoding=encoding)
-        features[full_name] = feature
-    return feature
+from pytest_bdd.ast import AST, ASTSchema
+from pytest_bdd.const import STEP_PREFIXES, TAG
+from pytest_bdd.exceptions import FeatureError
+from pytest_bdd.pickle import Pickle, PickleSchema
 
 
-def get_features(paths: list[str], **kwargs) -> list[Feature]:
-    """Get features for given paths.
+@attrs
+class Feature:
+    gherkin_ast: AST = attrib()
+    uri = attrib()
+    filename: str = attrib()
 
-    :param list paths: `list` of paths (file or dirs)
+    pickles: list[Pickle] = attrib(default=Factory(list))
 
-    :return: `list` of `Feature` objects.
-    """
-    seen_names = set()
-    features = []
-    for path in paths:
-        if path not in seen_names:
-            seen_names.add(path)
-            if os.path.isdir(path):
-                features.extend(get_features(glob2.iglob(os.path.join(path, "**", "*.feature")), **kwargs))
-            else:
-                base, name = os.path.split(path)
-                feature = get_feature(base, name, **kwargs)
-                features.append(feature)
-    features.sort(key=lambda feature: feature.name or feature.filename)
-    return features
+    @classmethod
+    def get_from_path(cls, features_base_dir: Path | str, filename: Path | str, encoding: str = "utf-8") -> Feature:
+        absolute_feature_path = (Path(features_base_dir) / filename).resolve()
+        _filename = Path(filename)
+        relative_posix_feature_path = (
+            _filename.relative_to(features_base_dir) if _filename.is_absolute() else _filename
+        ).as_posix()
+
+        uri = str(relative_posix_feature_path)
+
+        with absolute_feature_path.open(mode="r", encoding=encoding) as feature_file:
+            feature_file_data = feature_file.read()
+
+        try:
+            gherkin_ast_data = Parser().parse(feature_file_data)
+        except CompositeParserException as e:
+            raise FeatureError(
+                e.args[0],
+                e.errors[0].location["line"],
+                linecache.getline(str(absolute_feature_path), e.errors[0].location["line"]).rstrip("\n"),
+                uri,
+            ) from e
+        gherkin_ast_data["uri"] = uri
+
+        gherkin_ast = cls.load_ast({"gherkinDocument": gherkin_ast_data})
+
+        pickles_data = Compiler().compile(gherkin_ast_data)
+        pickles = cls.load_pickles(pickles_data)
+
+        instance = cls(  # type: ignore[call-arg]
+            gherkin_ast=gherkin_ast,
+            uri=uri,
+            pickles=pickles,
+            filename=str(absolute_feature_path.as_posix()),
+        )
+
+        for pickle in pickles:
+            pickle.bind_feature(instance)
+
+        return instance
+
+    @classmethod
+    def get_from_paths(cls, paths: list[Path], **kwargs) -> list[Feature]:
+        """Get features for given paths.
+
+        :param list paths: `list` of paths (file or dirs)
+
+        :return: `list` of `Feature` objects.
+        """
+        seen_names = set()
+        features: list[Feature] = []
+        features_base_dir = kwargs.pop("features_base_dir", Path.cwd())
+        for path in map(Path, paths):
+            if path not in seen_names:
+                seen_names.add(path)
+                if path.is_dir():
+                    _path = path if path.is_absolute() else Path(features_base_dir) / path
+                    features.extend(cls.get_from_paths(list(_path.rglob("*.feature")), **kwargs))
+                else:
+                    feature = cls.get_from_path(features_base_dir, path, **kwargs)
+                    features.append(feature)
+        return sorted(features, key=lambda feature: feature.name or feature.filename)
+
+    @staticmethod
+    def load_pickles(pickles_data) -> list[Pickle]:
+        return [PickleSchema().load(data=pickle_datum, unknown="RAISE") for pickle_datum in pickles_data]
+
+    @staticmethod
+    def load_ast(ast_data) -> AST:
+        return cast(AST, ASTSchema().load(data=ast_data, unknown="RAISE"))
+
+    # region TODO: Deprecated
+    @property
+    def name(self) -> str:
+        return self.gherkin_ast.gherkin_document.feature.name
+
+    @property
+    def rel_filename(self):
+        return self.uri
+
+    @property
+    def line_number(self):
+        return self.gherkin_ast.gherkin_document.feature.location.line
+
+    @property
+    def description(self):
+        return dedent(self.gherkin_ast.gherkin_document.feature.description)
+
+    @property
+    def registry(self):
+        return self.gherkin_ast.registry
+
+    @property
+    def tag_names(self):
+        return sorted(
+            map(lambda tag: tag.name.lstrip(STEP_PREFIXES[TAG]), self.gherkin_ast.gherkin_document.feature.tags)
+        )
+
+    # endregion

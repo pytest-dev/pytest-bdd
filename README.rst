@@ -1209,7 +1209,7 @@ which might be helpful building useful reporting, visualization, etc on top of i
 
 * pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception) - Called when step lookup failed
 
-* pytest_bdd_match_step_definition_to_step(request, step) - Called to match step to step definition
+* pytest_bdd_match_step_definition_to_step(request, feature, pickle, step, previous_step) - Called to match step to step definition
 
 Fixtures
 --------

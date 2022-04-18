@@ -26,29 +26,32 @@ def test_scenarios(testdir, pytest_params):
     features = testdir.mkdir("features")
     features.join("test.feature").write_text(
         textwrap.dedent(
+            """\
+            Feature: Test scenarios
+
+                Scenario: Test scenario
+                    Given I have a bar
             """
-    Scenario: Test scenario
-        Given I have a bar
-    """
         ),
         "utf-8",
         ensure=True,
     )
     features.join("subfolder", "test.feature").write_text(
         textwrap.dedent(
+            """\
+            Feature: Test scenarios
+                Scenario: Test subfolder scenario
+                    Given I have a bar
+
+                Scenario: Test failing subfolder scenario
+                    Given I have a failing bar
+
+                Scenario: Test already bound scenario
+                    Given I have a bar
+
+                Scenario: Test scenario
+                    Given I have a bar
             """
-    Scenario: Test subfolder scenario
-        Given I have a bar
-
-    Scenario: Test failing subfolder scenario
-        Given I have a failing bar
-
-    Scenario: Test already bound scenario
-        Given I have a bar
-
-    Scenario: Test scenario
-        Given I have a bar
-    """
         ),
         "utf-8",
         ensure=True,
@@ -68,11 +71,11 @@ def test_scenarios(testdir, pytest_params):
     result = testdir.runpytest_subprocess("-v", "-s", *pytest_params)
     assert_outcomes(result, passed=4, failed=1)
     result.stdout.fnmatch_lines(["*collected 5 items"])
-    result.stdout.fnmatch_lines(["*test_test_subfolder_scenario *bar!", "PASSED"])
-    result.stdout.fnmatch_lines(["*test_test_scenario *bar!", "PASSED"])
-    result.stdout.fnmatch_lines(["*test_test_failing_subfolder_scenario *FAILED"])
-    result.stdout.fnmatch_lines(["*test_already_bound *bar!", "PASSED"])
-    result.stdout.fnmatch_lines(["*test_test_scenario_1 *bar!", "PASSED"])
+    result.stdout.fnmatch_lines(["*test_test_subfolder_scenario* bar!", "PASSED"])
+    result.stdout.fnmatch_lines(["*test_test_scenario* bar!", "PASSED"])
+    result.stdout.fnmatch_lines(["*test_test_failing_subfolder_scenario* FAILED"])
+    result.stdout.fnmatch_lines(["*test_already_bound* bar!", "PASSED"])
+    result.stdout.fnmatch_lines(["*test_test_scenario_1* bar!", "PASSED"])
 
 
 def test_scenarios_none_found(testdir, pytest_params):

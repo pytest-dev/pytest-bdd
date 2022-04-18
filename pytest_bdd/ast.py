@@ -1,36 +1,9 @@
 from __future__ import annotations
 
-from functools import partial
-
 from attr import attrib, attrs
 from marshmallow import Schema, fields, post_load
 
-
-# TODO move to separate module
-class ModelSchemaPostlLoadable:
-    postbuild_attrs: list[str] = []
-
-    @staticmethod
-    def build_from_schema(cls, data, many, **kwargs):
-        return cls.postbuild_attr_builder(cls, data, cls.postbuild_attrs)
-
-    @classmethod
-    def schema_post_loader(cls):
-        return post_load(partial(cls.build_from_schema, cls))
-
-    @staticmethod
-    def postbuild_attr_builder(cls, data, postbuild_args):
-        _data = {**data}
-        empty = object()
-        postbuildable_args = []
-        for argument in postbuild_args:
-            value = _data.pop(argument, empty)
-            if value is not empty:
-                postbuildable_args.append((argument, value))
-        instance = cls(**_data)
-        for argument, value in postbuildable_args:
-            setattr(instance, argument, value)
-        return instance
+from pytest_bdd.utils import ModelSchemaPostlLoadable
 
 
 @attrs
@@ -343,7 +316,7 @@ class StepSchema(IdentifiableSchema, KeywordableSchema, LocatableSchema, Schema)
 
 @attrs
 class Example(Descriptable, Identifiable, Keywordable, Locatable, Nameable, Tagable, ModelSchemaPostlLoadable):
-    table_body: list[ExampleTableRow] = attrib()
+    table_body: list[TableRow] = attrib()
     table_header: ExampleTableHeader = attrib(init=False)
 
     postbuild_attrs = ["table_header"]
@@ -369,18 +342,18 @@ class ExampleSchema(
 
 
 @attrs
-class ExampleTableRow(Identifiable, Locatable, ModelSchemaPostlLoadable):
+class TableRow(Identifiable, Locatable, ModelSchemaPostlLoadable):
     cells: list[TableCell] = attrib()
 
 
 class TableRowSchema(IdentifiableSchema, LocatableSchema, Schema):
     cells = fields.Nested(lambda: TableCellSchema(many=True))
 
-    build_table_row = ExampleTableRow.schema_post_loader()
+    build_table_row = TableRow.schema_post_loader()
 
 
 @attrs
-class ExampleTableHeader(ExampleTableRow):
+class ExampleTableHeader(TableRow):
     ...
 
 
@@ -401,7 +374,7 @@ class TableCellSchema(LocatableSchema, Schema):
 
 @attrs
 class DataTable(Locatable, ModelSchemaPostlLoadable):
-    rows: list[ExampleTableRow] = attrib()
+    rows: list[TableRow] = attrib()
 
     @property
     def registry(self):
