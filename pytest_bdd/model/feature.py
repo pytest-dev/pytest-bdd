@@ -27,9 +27,9 @@ from textwrap import dedent
 from typing import cast
 
 from attr import Factory, attrib, attrs
-from gherkin.errors import CompositeParserException
-from gherkin.parser import Parser
-from gherkin.pickles.compiler import Compiler
+from gherkin.errors import CompositeParserException  # type: ignore[import]
+from gherkin.parser import Parser  # type: ignore[import]
+from gherkin.pickles.compiler import Compiler  # type: ignore[import]
 
 from pytest_bdd.ast import AST, ASTSchema
 from pytest_bdd.const import STEP_PREFIXES, TAG

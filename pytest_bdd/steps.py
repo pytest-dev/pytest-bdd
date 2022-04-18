@@ -323,7 +323,7 @@ class StepHandler:
         feature: Feature = attrib()
         scenario: Scenario = attrib()
         step: Step = attrib()
-        previous_step: Step = attrib()
+        previous_step: Step | None = attrib()
         step_params: dict = attrib(init=False)
         step_definition: StepHandler.Definition = attrib(init=False)
         step_result: Any = attrib(init=False)
