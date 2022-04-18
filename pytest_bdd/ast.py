@@ -3,11 +3,11 @@ from __future__ import annotations
 from attr import attrib, attrs
 from marshmallow import Schema, fields, post_load
 
-from pytest_bdd.utils import ModelSchemaPostlLoadable
+from pytest_bdd.utils import ModelSchemaPostLoadable
 
 
 @attrs
-class AST(ModelSchemaPostlLoadable):
+class AST(ModelSchemaPostLoadable):
     gherkin_document: GherkinDocument = attrib()
 
     @property
@@ -22,7 +22,7 @@ class ASTSchema(Schema):
 
 
 @attrs
-class GherkinDocument(ModelSchemaPostlLoadable):
+class GherkinDocument(ModelSchemaPostLoadable):
     comments: list[Comment] = attrib()
     uri: str = attrib()
     feature: Feature = attrib(init=False)
@@ -108,7 +108,7 @@ class NameableSchema(Schema):
 
 
 @attrs
-class Tag(Identifiable, Locatable, Nameable, ModelSchemaPostlLoadable):
+class Tag(Identifiable, Locatable, Nameable, ModelSchemaPostLoadable):
     ...
 
 
@@ -117,7 +117,7 @@ class TagSchema(IdentifiableSchema, LocatableSchema, NameableSchema):
 
 
 @attrs
-class Comment(Locatable, ModelSchemaPostlLoadable):
+class Comment(Locatable, ModelSchemaPostLoadable):
     text: str = attrib()
 
 
@@ -169,7 +169,7 @@ class NodeStepContainerProtoSchema(NodeProtoSchema, Schema):
 
 
 @attrs
-class Feature(NodeContainerProto, ModelSchemaPostlLoadable):
+class Feature(NodeContainerProto, ModelSchemaPostLoadable):
     language: str = attrib()
     keyword: str = attrib(init=False)
 
@@ -184,7 +184,7 @@ class FeatureSchema(NodeContainerProtoSchema, Schema):
 
 
 @attrs
-class Rule(NodeContainerProto, Identifiable, ModelSchemaPostlLoadable):
+class Rule(NodeContainerProto, Identifiable, ModelSchemaPostLoadable):
     @property
     def registry(self):
         return {
@@ -198,7 +198,7 @@ class RuleSchema(NodeContainerProtoSchema, IdentifiableSchema, Schema):
 
 
 @attrs
-class Background(NodeStepContainerProto, Identifiable, ModelSchemaPostlLoadable):
+class Background(NodeStepContainerProto, Identifiable, ModelSchemaPostLoadable):
     @property
     def registry(self):
         return {
@@ -212,7 +212,7 @@ class BackgroundSchema(NodeStepContainerProtoSchema, IdentifiableSchema, Schema)
 
 
 @attrs
-class Scenario(NodeStepContainerProto, Identifiable, Tagable, ModelSchemaPostlLoadable):
+class Scenario(NodeStepContainerProto, Identifiable, Tagable, ModelSchemaPostLoadable):
     examples: list[Example] = attrib()
 
     @property
@@ -234,7 +234,7 @@ class ScenarioSchema(NodeStepContainerProtoSchema, IdentifiableSchema, TagableSc
 
 
 @attrs
-class NodeContainerChild(ModelSchemaPostlLoadable):
+class NodeContainerChild(ModelSchemaPostLoadable):
     background: Background = attrib(init=False)
     scenario: Scenario = attrib(init=False)
     rule: Rule = attrib(init=False)
@@ -260,7 +260,7 @@ class NodeContainerChildSchema(Schema):
 
 
 @attrs
-class Location(ModelSchemaPostlLoadable):
+class Location(ModelSchemaPostLoadable):
     column: int = attrib()
     line: int = attrib()
 
@@ -273,7 +273,7 @@ class LocationSchema(Schema):
 
 
 @attrs
-class DocString(Locatable, ModelSchemaPostlLoadable):
+class DocString(Locatable, ModelSchemaPostLoadable):
     content: str = attrib()
     delimiter: str = attrib()
     media_type: str = attrib(init=False)
@@ -290,7 +290,7 @@ class DocStringSchema(LocatableSchema, Schema):
 
 
 @attrs
-class Step(Identifiable, Keywordable, Locatable, ModelSchemaPostlLoadable):
+class Step(Identifiable, Keywordable, Locatable, ModelSchemaPostLoadable):
     text: str = attrib()
     data_table: DataTable = attrib(init=False)
     doc_string: DocString = attrib(init=False)
@@ -315,7 +315,7 @@ class StepSchema(IdentifiableSchema, KeywordableSchema, LocatableSchema, Schema)
 
 
 @attrs
-class Example(Descriptable, Identifiable, Keywordable, Locatable, Nameable, Tagable, ModelSchemaPostlLoadable):
+class Example(Descriptable, Identifiable, Keywordable, Locatable, Nameable, Tagable, ModelSchemaPostLoadable):
     table_body: list[TableRow] = attrib()
     table_header: ExampleTableHeader = attrib(init=False)
 
@@ -342,7 +342,7 @@ class ExampleSchema(
 
 
 @attrs
-class TableRow(Identifiable, Locatable, ModelSchemaPostlLoadable):
+class TableRow(Identifiable, Locatable, ModelSchemaPostLoadable):
     cells: list[TableCell] = attrib()
 
 
@@ -362,7 +362,7 @@ class TableHeaderSchema(TableRowSchema, Schema):
 
 
 @attrs
-class TableCell(Locatable, ModelSchemaPostlLoadable):
+class TableCell(Locatable, ModelSchemaPostLoadable):
     value: str = attrib()
 
 
@@ -373,7 +373,7 @@ class TableCellSchema(LocatableSchema, Schema):
 
 
 @attrs
-class DataTable(Locatable, ModelSchemaPostlLoadable):
+class DataTable(Locatable, ModelSchemaPostLoadable):
     rows: list[TableRow] = attrib()
 
     @property

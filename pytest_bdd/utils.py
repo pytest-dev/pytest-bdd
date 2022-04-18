@@ -200,7 +200,7 @@ def get_tags(line: str | None) -> OrderedSet[str]:
     )
 
 
-class ModelSchemaPostlLoadable:
+class ModelSchemaPostLoadable:
     postbuild_attrs: list[str] = []
 
     @staticmethod
