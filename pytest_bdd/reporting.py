@@ -10,8 +10,7 @@ from typing import TYPE_CHECKING
 
 from attr import Factory, attrib, attrs
 
-from .feature import Feature
-from .pickle import Pickle, Step
+from .model import Feature, Scenario, Step
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any, Callable
@@ -77,7 +76,7 @@ class ScenarioReport:
     """Scenario execution report."""
 
     feature: Feature = attrib()
-    pickle: Pickle = attrib()
+    scenario: Scenario = attrib()
     step_reports: list[StepReport] = attrib(default=Factory(list))
 
     @property
@@ -103,7 +102,7 @@ class ScenarioReport:
         :return: Serialized report.
         :rtype: dict
         """
-        pickle = self.pickle
+        pickle = self.scenario
         feature = self.feature
 
         return {
@@ -124,7 +123,7 @@ class ScenarioReport:
     def fail(self) -> None:
         """Stop collecting information and finalize the report as failed."""
         self.current_step_report.finalize(failed=True)
-        remaining_steps = self.pickle.steps[len(self.step_reports) :]
+        remaining_steps = self.scenario.steps[len(self.step_reports) :]
 
         # Fail the rest of the steps and make reports.
         for step in remaining_steps:
@@ -136,7 +135,7 @@ class ScenarioReport:
 def runtest_makereport(item: Item, call: CallInfo, rep: TestReport) -> None:
     """Store item in the report object."""
     try:
-        scenario_report: ScenarioReport = item.__pytest_bdd_scenario_report__
+        scenario_report: ScenarioReport = item.__scenario_report__
     except AttributeError:
         pass
     else:
@@ -144,39 +143,37 @@ def runtest_makereport(item: Item, call: CallInfo, rep: TestReport) -> None:
         rep.item = {"name": item.name}
 
 
-def before_scenario(request: FixtureRequest, feature: Feature, scenario: Pickle) -> None:
+def before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
     """Create scenario report for the item."""
     # TODO chek usages
-    request.node.__pytest_bdd_scenario_report__ = ScenarioReport(  # type: ignore[call-arg]
-        feature=feature, pickle=scenario
-    )
+    request.node.__scenario_report__ = ScenarioReport(feature=feature, scenario=scenario)  # type: ignore[call-arg]
 
 
 def step_error(
     request: FixtureRequest,
     feature: Feature,
-    scenario: Pickle,
+    scenario: Scenario,
     step: Step,
     step_func: Callable,
     step_func_args: dict,
     exception: Exception,
 ) -> None:
     """Finalize the step report as failed."""
-    request.node.__pytest_bdd_scenario_report__.fail()
+    request.node.__scenario_report__.fail()
 
 
-def before_step(request: FixtureRequest, feature: Feature, scenario: Pickle, step: Step, step_func: Callable) -> None:
+def before_step(request: FixtureRequest, feature: Feature, scenario: Scenario, step: Step, step_func: Callable) -> None:
     """Store step start time."""
-    request.node.__pytest_bdd_scenario_report__.add_step_report(StepReport(step=step))
+    request.node.__scenario_report__.add_step_report(StepReport(step=step))
 
 
 def after_step(
     request: FixtureRequest,
     feature: Feature,
-    scenario: Pickle,
+    scenario: Scenario,
     step: Step,
     step_func: Callable,
     step_func_args: dict,
 ) -> None:
     """Finalize the step report as successful."""
-    request.node.__pytest_bdd_scenario_report__.current_step_report.finalize(failed=False)
+    request.node.__scenario_report__.current_step_report.finalize(failed=False)

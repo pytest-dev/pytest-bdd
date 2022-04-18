@@ -51,5 +51,5 @@ def pytest_bdd_convert_tag_to_marks(feature, scenario, tag) -> Iterable[Mark] | 
 
 
 @pytest.hookspec(firstresult=True)
-def pytest_bdd_match_step_definition_to_step(request, feature, pickle, step, previous_step):
+def pytest_bdd_match_step_definition_to_step(request, feature, scenario, step, previous_step):
     """Find match between scenario step and user defined step function"""

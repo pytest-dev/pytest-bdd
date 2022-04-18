@@ -51,8 +51,8 @@ from ordered_set import OrderedSet
 
 from . import exceptions
 from .const import STEP_TYPE, STEP_TYPES_BY_NORMALIZED_PREFIX
+from .model import Feature, Scenario, Step
 from .parsers import StepParser, get_parser
-from .pickle import Pickle, Step
 from .utils import DefaultMapping, get_args, get_caller_module_locals, inject_fixture
 from .warning_types import PytestBDDStepDefinitionWarning
 
@@ -66,8 +66,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from typing import Any, Callable
 
     from _pytest.config.argparsing import Parser
-
-    from .feature import Feature
 
 
 def add_options(parser: Parser):
@@ -217,7 +215,7 @@ class StepHandler:
     class Matcher:
         config: Config = attrib()
         feature: Feature = attrib(init=False)
-        pickle: Pickle = attrib(init=False)
+        pickle: Scenario = attrib(init=False)
         step: Step = attrib(init=False)
         previous_step: StepHandler = attrib(init=False)
         step_registry: StepHandler.Registry = attrib(init=False)
@@ -229,7 +227,7 @@ class StepHandler:
         def __call__(
             self,
             feature: Feature,
-            pickle: Pickle,
+            pickle: Scenario,
             step: Step,
             previous_step,
             step_registry: StepHandler.Registry,
@@ -323,7 +321,7 @@ class StepHandler:
     class Executor:
         request: FixtureRequest = attrib()
         feature: Feature = attrib()
-        pickle: Pickle = attrib()
+        scenario: Scenario = attrib()
         step: Step = attrib()
         previous_step: Step = attrib()
         step_params: dict = attrib(init=False)
@@ -372,7 +370,7 @@ class StepHandler:
             hook_kwargs = dict(
                 request=self.request,
                 feature=self.feature,
-                scenario=self.pickle,
+                scenario=self.scenario,
                 step=self.step,
                 previous_step=self.previous_step,
             )
@@ -419,7 +417,7 @@ class StepHandler:
                 return self.request.config.hook.pytest_bdd_match_step_definition_to_step(
                     request=self.request,
                     feature=self.feature,
-                    pickle=self.pickle,
+                    scenario=self.scenario,
                     step=self.step,
                     previous_step=self.previous_step,
                 )
@@ -428,7 +426,7 @@ class StepHandler:
                     f'StepHandler definition is not found: "{self.step.name}". '
                     f'StepHandler keyword: "{self.step.keyword}". '
                     f"Line {self.step.line_number} "
-                    f'in scenario "{self.pickle.name}" '
+                    f'in scenario "{self.scenario.name}" '
                     f'in the feature "{self.feature.filename}"'
                 ) from e
 

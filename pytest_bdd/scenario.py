@@ -27,8 +27,7 @@ from _pytest.config import Config
 from _pytest.fixtures import FixtureRequest
 
 from . import exceptions
-from .feature import Feature
-from .pickle import Pickle
+from .model import Feature, Scenario
 from .steps import StepHandler
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
@@ -40,7 +39,6 @@ else:
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any, Callable, Iterable
 
-    from .feature import Feature
     from .types import TestFunc
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
@@ -52,42 +50,42 @@ class StepFunc(Protocol):
     target_fixtures: list[str]
 
 
-def _execute_pickle(feature: Feature, pickle: Pickle, request):
-    """Execute the pickles.
+def _execute_scenario(feature: Feature, scenario: Scenario, request):
+    """Execute the scenarios.
 
     :param feature: Feature.
-    :param pickle: Scenario.
+    :param scenario: Scenario.
     :param request: request.
     :param encoding: Encoding.
     """
-    request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=pickle)
+    request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
 
     try:
         previous_step = None
-        for step in pickle.steps:
+        for step in scenario.steps:
             StepHandler.Executor(
-                request=request, feature=feature, pickle=pickle, step=step, previous_step=previous_step
+                request=request, feature=feature, scenario=scenario, step=step, previous_step=previous_step
             ).execute()  # type: ignore[call-arg]
             previous_step = step
     finally:
-        request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=pickle)
+        request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
 
 
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
-def _build_pickle_param(feature: Feature, pickle: Pickle, config: Config):
+def _build_scenario_param(feature: Feature, scenario: Scenario, config: Config):
     marks = []
-    for tag in pickle.tag_names:
-        tag_marks = config.hook.pytest_bdd_convert_tag_to_marks(feature=feature, scenario=pickle, tag=tag)
+    for tag in scenario.tag_names:
+        tag_marks = config.hook.pytest_bdd_convert_tag_to_marks(feature=feature, scenario=scenario, tag=tag)
         if tag_marks is not None:
             marks.extend(tag_marks)
-    return pytest.param(pickle, id=f"{pickle.name}{pickle.table_rows_breadcrumb}", marks=marks)
+    return pytest.param(scenario, id=f"{scenario.name}{scenario.table_rows_breadcrumb}", marks=marks)
 
 
 def _get_scenario_decorator(
     feature: Feature,
-    pickles: list[Pickle],
+    scenarios: list[Scenario],
 ):
     # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
     # when the decorator is misused.
@@ -108,21 +106,21 @@ def _get_scenario_decorator(
         # TODO investigate other approach to pass config
         config = CONFIG_STACK[-1]
 
-        @pytest.mark.parametrize("pickle", [_build_pickle_param(feature, pickle, config) for pickle in pickles])  # type: ignore[no-redef]
+        @pytest.mark.parametrize("scenario", [_build_scenario_param(feature, scenario, config) for scenario in scenarios])  # type: ignore[no-redef]
         @pytest.mark.parametrize("feature", [pytest.param(feature, id=f"{feature.uri}-{feature.name}")])
         # We need to tell pytest that the original function requires its fixtures,
         # otherwise indirect fixtures would not work.
         @pytest.mark.usefixtures(*fn_args)
-        def test_function(request: FixtureRequest, feature, pickle) -> Any:
-            _execute_pickle(feature, pickle, request)
+        def test_function(request: FixtureRequest, feature, scenario) -> Any:
+            _execute_scenario(feature, scenario, request)
             fixture_values = [request.getfixturevalue(arg) for arg in fn_args]
             return fn(*fixture_values)
 
-        # TODO review usage & fix
-        test_function.__doc__ = f"{feature.uri}: {pickles[0].name} {pickles[0].id}"
-        # TODO review usage & fix
-        test_function.__pytest_bdd_pickle__ = pickles[0]
-        test_function.__pytest_bdd_feature__ = feature
+        # region TODO potential bug for scenarios with same name
+        test_function.__doc__ = f"{feature.uri}: {scenarios[0].name} {scenarios[0].id}"
+        test_function.__scenario__ = scenarios[0]
+        # endregion
+
         return cast("TestFunc", test_function)
 
     return decorator
@@ -152,14 +150,14 @@ def scenario(
     # TODO: possibility to use alternate parsers
     feature = Feature.get_from_path(features_base_dir, feature_name, encoding=encoding)
 
-    pickles = list(filter(lambda pickle: pickle.name == scenario_name, feature.pickles))
-    if not pickles:
+    scenarios = list(filter(lambda scenario: scenario.name == scenario_name, feature.scenarios))
+    if not scenarios:
         feature_name = feature.name or "[Empty]"
         raise exceptions.ScenarioNotFound(
             f'Scenario "{scenario_name}" in feature "{feature_name}" in {feature.filename} is not found.'
         )
 
-    return _get_scenario_decorator(feature=feature, pickles=pickles)
+    return _get_scenario_decorator(feature=feature, scenarios=scenarios)
 
 
 def get_features_base_dir(caller_module_path: str) -> Path:
@@ -246,13 +244,13 @@ def scenarios(*feature_paths: str | Path, **kwargs: Any) -> None:
     found = False
 
     module_scenarios = frozenset(
-        (attr.__pytest_bdd_feature__.filename, attr.__pytest_bdd_pickle__.name)
+        (attr.__scenario__.feature.filename, attr.__scenario__.name)
         for name, attr in caller_locals.items()
-        if hasattr(attr, "__pytest_bdd_pickle__")
+        if hasattr(attr, "__scenario__")
     )
 
     for feature in Feature.get_from_paths(rel_feature_paths, features_base_dir=features_base_dir):
-        for scenario_object in feature.pickles:
+        for scenario_object in feature.scenarios:
             scenario_name = scenario_object.name
             # skip already bound scenarios
             if (feature.filename, scenario_name) not in module_scenarios:

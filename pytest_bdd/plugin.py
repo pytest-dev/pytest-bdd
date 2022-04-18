@@ -7,7 +7,7 @@ import pytest
 from _pytest.mark import Mark, MarkDecorator
 
 from . import cucumber_json, generation, gherkin_terminal_reporter, given, reporting, steps, then, when
-from .pickle import Step
+from .model import Feature, Scenario, Step
 from .steps import StepHandler
 from .utils import CONFIG_STACK
 
@@ -20,8 +20,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from _pytest.runner import CallInfo
     from pluggy._result import _Result
 
-    from .feature import Feature
-    from .pickle import Pickle, Step
     from .types import Item
 
 
@@ -85,7 +83,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo) -> Generator[None, _Re
 
 
 @pytest.mark.tryfirst
-def pytest_bdd_before_scenario(request: FixtureRequest, feature: Feature, scenario: Pickle) -> None:
+def pytest_bdd_before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
     reporting.before_scenario(request, feature, scenario)
 
 
@@ -93,7 +91,7 @@ def pytest_bdd_before_scenario(request: FixtureRequest, feature: Feature, scenar
 def pytest_bdd_step_error(
     request: FixtureRequest,
     feature: Feature,
-    scenario: Pickle,
+    scenario: Scenario,
     step: Step,
     step_func: Callable,
     step_func_args: dict,
@@ -104,7 +102,7 @@ def pytest_bdd_step_error(
 
 @pytest.mark.tryfirst
 def pytest_bdd_before_step(
-    request: FixtureRequest, feature: Feature, scenario: Pickle, step: Step, step_func: Callable
+    request: FixtureRequest, feature: Feature, scenario: Scenario, step: Step, step_func: Callable
 ) -> None:
     reporting.before_step(request, feature, scenario, step, step_func)
 
@@ -113,7 +111,7 @@ def pytest_bdd_before_step(
 def pytest_bdd_after_step(
     request: FixtureRequest,
     feature: Feature,
-    scenario: Pickle,
+    scenario: Scenario,
     step: Step,
     step_func: Callable,
     step_func_args: dict[str, Any],
@@ -130,8 +128,8 @@ def pytest_bdd_convert_tag_to_marks(feature, scenario, tag) -> Collection[Mark |
     return [getattr(pytest.mark, tag)]
 
 
-def pytest_bdd_match_step_definition_to_step(request, feature, pickle, step, previous_step) -> StepHandler.Definition:
+def pytest_bdd_match_step_definition_to_step(request, feature, scenario, step, previous_step) -> StepHandler.Definition:
     step_registry: StepHandler.Registry = request.getfixturevalue("step_registry")
     step_matcher: StepHandler.Matcher = request.getfixturevalue("step_matcher")
 
-    return step_matcher(feature, pickle, step, previous_step, step_registry)
+    return step_matcher(feature, scenario, step, previous_step, step_registry)

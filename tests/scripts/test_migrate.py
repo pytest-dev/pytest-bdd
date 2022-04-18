@@ -4,7 +4,6 @@ import os
 import sys
 import textwrap
 from pathlib import Path
-from unicodedata import normalize
 
 from pytest_bdd.scripts import main
 

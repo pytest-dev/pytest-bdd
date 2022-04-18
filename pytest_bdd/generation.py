@@ -14,7 +14,7 @@ from mako.lookup import TemplateLookup
 from pkg_resources import get_distribution, parse_version
 
 from .const import STEP_TYPES_BY_NORMALIZED_PREFIX
-from .feature import Feature
+from .model import Feature, Scenario, Step
 from .scenario import make_python_docstring, make_python_name, make_string_literal
 from .steps import StepHandler
 
@@ -25,8 +25,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from _pytest.config.argparsing import Parser
     from _pytest.main import Session
 
-    from .feature import Feature
-    from .pickle import Pickle, Step
     from .types import Item
 
 else:
@@ -64,7 +62,7 @@ def cmdline_main(config: Config) -> int | None:
     return None  # Make mypy happy
 
 
-def generate_code(features: list[Feature], scenarios: list[Pickle], steps: list[Step]) -> str:
+def generate_code(features: list[Feature], scenarios: list[Scenario], steps: list[Step]) -> str:
     """Generate test code for the given filenames."""
     grouped_steps = group_steps(steps)
     template = template_lookup.get_template("test.py.mak")
@@ -86,7 +84,7 @@ def show_missing_code(config: Config) -> int | ExitCode:
     return wrap_session(config, _show_missing_code_main)
 
 
-def print_missing_code(scenarios: list[Pickle], steps: list[Step]) -> None:
+def print_missing_code(scenarios: list[Scenario], steps: list[Step]) -> None:
     """Print missing code with TerminalWriter."""
     tw = py.io.TerminalWriter()
     scenario = step = None
@@ -104,12 +102,10 @@ def print_missing_code(scenarios: list[Pickle], steps: list[Step]) -> None:
 
     for step in steps:
         tw.line()
-        # # TODO refactor
-        # if getattr(step, "scenario", None) is not None:
         tw.line(
-            f"""StepHandler {step.keyword} "{step.name}" is not defined in the scenario "{step.pickle.name}" in the feature"""
-            f""" "{step.pickle.feature.name}" in the file"""
-            f""" {step.pickle.feature.filename}:{step.line_number}""",
+            f"""StepHandler {step.keyword} "{step.name}" is not defined in the scenario "{step.scenario.name}" in the feature"""
+            f""" "{step.scenario.feature.name}" in the file"""
+            f""" {step.scenario.feature.filename}:{step.line_number}""",
             red=True,
         )
 
@@ -131,7 +127,7 @@ def print_missing_code(scenarios: list[Pickle], steps: list[Step]) -> None:
     tw.write(code)
 
 
-def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature], list[Pickle], list[Step]]:
+def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature], list[Scenario], list[Step]]:
     """Parse feature files of given paths.
 
     :param paths: `list` of paths (file or dirs)
@@ -143,7 +139,7 @@ def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature],
     _, scenarios = zip(
         *sorted(
             itertools.chain.from_iterable(
-                itertools.zip_longest([], feature.pickles, fillvalue=feature) for feature in features
+                itertools.zip_longest([], feature.scenarios, fillvalue=feature) for feature in features
             ),
             key=lambda item: (item[0].uri, item[1].id, item[1].name),
         )
@@ -196,11 +192,11 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
 
         item = cast(Item, item)
         # with suppress(AttributeError):
-        pickle = item.obj.__pytest_bdd_pickle__
-        feature = item.obj.__pytest_bdd_feature__
+        scenario = item.obj.__scenario__
+        feature = item.obj.__scenario__.feature
 
         for i, s in enumerate(scenarios):
-            if s.id == pickle.id and s.uri == pickle.uri:
+            if s.id == scenario.id and s.uri == scenario.uri:
                 scenarios.remove(s)
                 break
 
@@ -212,10 +208,10 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
         item_request = item._request
 
         previous_step = None
-        for step in pickle.steps:
+        for step in scenario.steps:
             try:
                 item_request.config.hook.pytest_bdd_match_step_definition_to_step(
-                    request=item_request, feature=feature, pickle=pickle, step=step, previous_step=previous_step
+                    request=item_request, feature=feature, scenario=scenario, step=step, previous_step=previous_step
                 )
             except StepHandler.Matcher.MatchNotFoundError:
                 pass

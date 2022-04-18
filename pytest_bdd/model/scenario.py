@@ -5,14 +5,14 @@ from typing import TYPE_CHECKING, cast
 from attr import attrib, attrs
 from marshmallow import Schema, fields, post_load
 
-from .ast import Scenario as ASTScenario
-from .ast import Step as ASTStep
-from .ast import TableRow as ASTTableRow
-from .const import STEP_PREFIXES, TAG
-from .utils import ModelSchemaPostLoadable, _itemgetter
+from pytest_bdd.ast import Scenario as ASTScenario
+from pytest_bdd.ast import Step as ASTStep
+from pytest_bdd.ast import TableRow as ASTTableRow
+from pytest_bdd.const import STEP_PREFIXES, TAG
+from pytest_bdd.utils import ModelSchemaPostLoadable, _itemgetter
 
 if TYPE_CHECKING:
-    from .feature import Feature
+    from pytest_bdd.model.feature import Feature
 
 
 @attrs
@@ -108,7 +108,7 @@ class Step(ASTNodeIDsMixin, ModelSchemaPostLoadable):
     postbuild_attrs = ["argument"]
 
     # region Indirectly loadable
-    pickle = attrib(init=False)
+    scenario = attrib(init=False)
     # endregion
 
     @property
@@ -162,7 +162,7 @@ class TagSchema(Schema):
 
 
 @attrs
-class Pickle(ASTNodeIDsMixin, ModelSchemaPostLoadable):
+class Scenario(ASTNodeIDsMixin, ModelSchemaPostLoadable):
     id: str = attrib()
     name: str = attrib()
     language: str = attrib()
@@ -211,10 +211,10 @@ class Pickle(ASTNodeIDsMixin, ModelSchemaPostLoadable):
 
     def bind_steps(self):
         for step in self.steps:
-            step.pickle = self
+            step.scenario = self
 
 
-class PickleSchema(ASTNodeIDsSchemaMixin, Schema):
+class ScenarioSchema(ASTNodeIDsSchemaMixin, Schema):
     id = fields.Str()
     name = fields.Str()
     language = fields.Str()
@@ -223,7 +223,7 @@ class PickleSchema(ASTNodeIDsSchemaMixin, Schema):
     uri = fields.Str()
 
     @post_load
-    def build_pickle(self, data, many, **kwargs):
-        pickle = Pickle(**data)
-        pickle.bind_steps()
-        return pickle
+    def build_scenario(self, data, many, **kwargs):
+        scenario = Scenario(**data)
+        scenario.bind_steps()
+        return scenario

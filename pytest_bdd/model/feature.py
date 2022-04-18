@@ -34,7 +34,7 @@ from gherkin.pickles.compiler import Compiler
 from pytest_bdd.ast import AST, ASTSchema
 from pytest_bdd.const import STEP_PREFIXES, TAG
 from pytest_bdd.exceptions import FeatureError
-from pytest_bdd.pickle import Pickle, PickleSchema
+from pytest_bdd.model.scenario import Scenario, ScenarioSchema
 
 
 @attrs
@@ -43,7 +43,7 @@ class Feature:
     uri = attrib()
     filename: str = attrib()
 
-    pickles: list[Pickle] = attrib(default=Factory(list))
+    scenarios: list[Scenario] = attrib(default=Factory(list))
 
     @classmethod
     def get_from_path(cls, features_base_dir: Path | str, filename: Path | str, encoding: str = "utf-8") -> Feature:
@@ -71,18 +71,18 @@ class Feature:
 
         gherkin_ast = cls.load_ast({"gherkinDocument": gherkin_ast_data})
 
-        pickles_data = Compiler().compile(gherkin_ast_data)
-        pickles = cls.load_pickles(pickles_data)
+        scenarios_data = Compiler().compile(gherkin_ast_data)
+        scenarios = cls.load_scenarios(scenarios_data)
 
         instance = cls(  # type: ignore[call-arg]
             gherkin_ast=gherkin_ast,
             uri=uri,
-            pickles=pickles,
+            scenarios=scenarios,
             filename=str(absolute_feature_path.as_posix()),
         )
 
-        for pickle in pickles:
-            pickle.bind_feature(instance)
+        for scenario in scenarios:
+            scenario.bind_feature(instance)
 
         return instance
 
@@ -109,8 +109,8 @@ class Feature:
         return sorted(features, key=lambda feature: feature.name or feature.filename)
 
     @staticmethod
-    def load_pickles(pickles_data) -> list[Pickle]:
-        return [PickleSchema().load(data=pickle_datum, unknown="RAISE") for pickle_datum in pickles_data]
+    def load_scenarios(scenarios_data) -> list[Scenario]:
+        return [ScenarioSchema().load(data=scenario_datum, unknown="RAISE") for scenario_datum in scenarios_data]
 
     @staticmethod
     def load_ast(ast_data) -> AST:
