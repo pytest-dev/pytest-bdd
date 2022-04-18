@@ -4,8 +4,7 @@ from __future__ import annotations
 import argparse
 import os.path
 import re
-
-import glob2
+from pathlib import Path
 
 from .generation import generate_code, parse_feature_files
 
@@ -15,14 +14,14 @@ MIGRATE_REGEX = re.compile(r"\s?(\w+)\s=\sscenario\((.+)\)", flags=re.MULTILINE)
 def migrate_tests(args):
     """Migrate outdated tests to the most recent form."""
     path = args.path
-    for file_path in glob2.iglob(os.path.join(os.path.abspath(path), "**", "*.py")):
+    for file_path in Path(path).rglob("*.py"):
         migrate_tests_in_file(file_path)
 
 
 def migrate_tests_in_file(file_path):
     """Migrate all bdd-based tests in the given test file."""
     try:
-        with open(file_path, "r+") as fd:
+        with file_path.open("r+") as fd:
             content = fd.read()
             new_content = MIGRATE_REGEX.sub(r"\n@scenario(\2)\ndef \1():\n    pass\n", content)
             if new_content != content:
