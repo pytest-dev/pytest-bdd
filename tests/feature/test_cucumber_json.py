@@ -245,7 +245,4 @@ def test_step_trace(testdir):
         }
     ]
 
-    from deepdiff import DeepDiff
-
-    diff = DeepDiff(expected, jsonobject)
     assert jsonobject == expected
