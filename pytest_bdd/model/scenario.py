@@ -11,7 +11,7 @@ from pytest_bdd.ast import TableRow as ASTTableRow
 from pytest_bdd.const import STEP_PREFIXES, TAG
 from pytest_bdd.utils import ModelSchemaPostLoadable, _itemgetter
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.model.feature import Feature
 
 
