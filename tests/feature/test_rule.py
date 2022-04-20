@@ -82,4 +82,4 @@ def test_background_basic(testdir):
         """
     )
     result = testdir.runpytest()
-    result.assert_outcomes(passed=14)
+    result.assert_outcomes(passed=8)

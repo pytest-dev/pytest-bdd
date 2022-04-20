@@ -1,26 +1,24 @@
 """Pytest plugin entry point. Used for any fixtures needed."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generator
+from contextlib import suppress
+from typing import TYPE_CHECKING
 
 import pytest
 from _pytest.mark import Mark, MarkDecorator
+from _pytest.python import Metafunc
 
-from . import cucumber_json, generation, gherkin_terminal_reporter, given, reporting, steps, then, when
-from .model import Feature, Scenario, Step
+from . import cucumber_json, generation, gherkin_terminal_reporter, given, steps, then, when
+from .reporting import ScenarioReporterPlugin
+from .runner import ScenarioRunner
 from .steps import StepHandler
 from .utils import CONFIG_STACK
 
 if TYPE_CHECKING:  # pragma: no cover
-    from typing import Any, Callable, Collection, Generator
+    from typing import Collection
 
     from _pytest.config import Config, PytestPluginManager
     from _pytest.config.argparsing import Parser
-    from _pytest.fixtures import FixtureRequest
-    from _pytest.runner import CallInfo
-    from pluggy._result import _Result
-
-    from .types import Item
 
 
 def pytest_addhooks(pluginmanager: PytestPluginManager) -> None:
@@ -65,9 +63,12 @@ def add_bdd_ini(parser: Parser) -> None:
 @pytest.mark.trylast
 def pytest_configure(config: Config) -> None:
     """Configure all subplugins."""
+    config.addinivalue_line("markers", "pytest_bdd_scenario: marker to identify pytest_bdd tests")
     CONFIG_STACK.append(config)
     cucumber_json.configure(config)
     gherkin_terminal_reporter.configure(config)
+    config.pluginmanager.register(ScenarioReporterPlugin())
+    config.pluginmanager.register(ScenarioRunner())
 
 
 def pytest_unconfigure(config: Config) -> None:
@@ -76,47 +77,9 @@ def pytest_unconfigure(config: Config) -> None:
     cucumber_json.unconfigure(config)
 
 
-@pytest.mark.hookwrapper
-def pytest_runtest_makereport(item: Item, call: CallInfo) -> Generator[None, _Result, None]:
-    outcome = yield
-    reporting.runtest_makereport(item, call, outcome.get_result())
-
-
-@pytest.mark.tryfirst
-def pytest_bdd_before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
-    reporting.before_scenario(request, feature, scenario)
-
-
-@pytest.mark.tryfirst
-def pytest_bdd_step_error(
-    request: FixtureRequest,
-    feature: Feature,
-    scenario: Scenario,
-    step: Step,
-    step_func: Callable,
-    step_func_args: dict,
-    exception: Exception,
-) -> None:
-    reporting.step_error(request, feature, scenario, step, step_func, step_func_args, exception)
-
-
-@pytest.mark.tryfirst
-def pytest_bdd_before_step(
-    request: FixtureRequest, feature: Feature, scenario: Scenario, step: Step, step_func: Callable
-) -> None:
-    reporting.before_step(request, feature, scenario, step, step_func)
-
-
-@pytest.mark.tryfirst
-def pytest_bdd_after_step(
-    request: FixtureRequest,
-    feature: Feature,
-    scenario: Scenario,
-    step: Step,
-    step_func: Callable,
-    step_func_args: dict[str, Any],
-) -> None:
-    reporting.after_step(request, feature, scenario, step, step_func, step_func_args)
+def pytest_generate_tests(metafunc: Metafunc):
+    with suppress(AttributeError):
+        metafunc.function.__pytest_bdd_scenario_registry__.parametrize(metafunc)
 
 
 def pytest_cmdline_main(config: Config) -> int | None:

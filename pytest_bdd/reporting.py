@@ -8,6 +8,7 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
+import pytest
 from attr import Factory, attrib, attrs
 
 from .model import Feature, Scenario, Step
@@ -18,7 +19,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from _pytest.fixtures import FixtureRequest
     from _pytest.runner import CallInfo
 
-    from .types import Item, TestReport
+    from .types import Item
 
 
 class StepReport:
@@ -132,48 +133,57 @@ class ScenarioReport:
             self.add_step_report(report)
 
 
-def runtest_makereport(item: Item, call: CallInfo, rep: TestReport) -> None:
-    """Store item in the report object."""
-    try:
-        scenario_report: ScenarioReport = item.__scenario_report__
-    except AttributeError:
-        pass
-    else:
-        rep.scenario = scenario_report.serialize()
-        rep.item = {"name": item.name}
+class ScenarioReporterPlugin:
+    def __init__(self):
+        self.current_report = None
 
+    @pytest.mark.hookwrapper
+    def pytest_runtest_makereport(self, item: Item, call: CallInfo):
+        outcome = yield
+        if call.when != "setup":
+            rep = outcome.get_result()
+            """Store item in the report object."""
+            scenario_report: ScenarioReport = self.current_report
 
-def before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
-    """Create scenario report for the item."""
-    # TODO chek usages
-    request.node.__scenario_report__ = ScenarioReport(feature=feature, scenario=scenario)  # type: ignore[call-arg]
+            if scenario_report is not None:
+                rep.scenario = scenario_report.serialize()
+                rep.item = {"name": item.name}
 
+    @pytest.mark.tryfirst
+    def pytest_bdd_before_scenario(self, request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
+        """Create scenario report for the item."""
+        self.current_report = ScenarioReport(feature=feature, scenario=scenario)  # type: ignore[call-arg]
 
-def step_error(
-    request: FixtureRequest,
-    feature: Feature,
-    scenario: Scenario,
-    step: Step,
-    step_func: Callable,
-    step_func_args: dict,
-    exception: Exception,
-) -> None:
-    """Finalize the step report as failed."""
-    request.node.__scenario_report__.fail()
+    @pytest.mark.tryfirst
+    def pytest_bdd_step_error(
+        self,
+        request: FixtureRequest,
+        feature: Feature,
+        scenario: Scenario,
+        step: Step,
+        step_func: Callable,
+        step_func_args: dict,
+        exception: Exception,
+    ) -> None:
+        """Finalize the step report as failed."""
+        self.current_report.fail()
 
+    @pytest.mark.tryfirst
+    def pytest_bdd_before_step(
+        self, request: FixtureRequest, feature: Feature, scenario: Scenario, step: Step, step_func: Callable
+    ) -> None:
+        """Store step start time."""
+        self.current_report.add_step_report(StepReport(step=step))
 
-def before_step(request: FixtureRequest, feature: Feature, scenario: Scenario, step: Step, step_func: Callable) -> None:
-    """Store step start time."""
-    request.node.__scenario_report__.add_step_report(StepReport(step=step))
-
-
-def after_step(
-    request: FixtureRequest,
-    feature: Feature,
-    scenario: Scenario,
-    step: Step,
-    step_func: Callable,
-    step_func_args: dict,
-) -> None:
-    """Finalize the step report as successful."""
-    request.node.__scenario_report__.current_step_report.finalize(failed=False)
+    @pytest.mark.tryfirst
+    def pytest_bdd_after_step(
+        self,
+        request: FixtureRequest,
+        feature: Feature,
+        scenario: Scenario,
+        step: Step,
+        step_func: Callable,
+        step_func_args: dict,
+    ) -> None:
+        """Finalize the step report as successful."""
+        self.current_report.current_step_report.finalize(failed=False)

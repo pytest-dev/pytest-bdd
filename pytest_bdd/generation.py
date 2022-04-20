@@ -10,13 +10,14 @@ from typing import TYPE_CHECKING, cast
 
 import py
 from _pytest.config.argparsing import Parser
+from _pytest.fixtures import FixtureRequest
 from mako.lookup import TemplateLookup
 from pkg_resources import get_distribution, parse_version
 
 from .const import STEP_TYPES_BY_NORMALIZED_PREFIX
 from .model import Feature, Scenario, Step
-from .scenario import make_python_docstring, make_python_name, make_string_literal
 from .steps import StepHandler
+from .utils import make_python_name
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
@@ -190,22 +191,20 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
 
     for item in session.items:
 
-        item = cast(Item, item)
-        # with suppress(AttributeError):
-        scenario = item.obj.__scenario__
-        feature = item.obj.__scenario__.feature
-
-        for i, s in enumerate(scenarios):
-            if s.id == scenario.id and s.uri == scenario.uri:
-                scenarios.remove(s)
-                break
-
         is_legacy_pytest = get_distribution("pytest").parsed_version < parse_version("7.0")
 
         method_name = "prepare" if is_legacy_pytest else "setup"
         methodcaller(method_name, item)(item.session._setupstate)
 
-        item_request = item._request
+        item = cast(Item, item)
+        item_request: FixtureRequest = item._request
+        scenario: Scenario = item_request.getfixturevalue("scenario")
+        feature: Feature = scenario.feature
+
+        for i, s in enumerate(scenarios):
+            if s.id == scenario.id and s.uri == scenario.uri:
+                scenarios.remove(s)
+                break
 
         previous_step = None
         for step in scenario.steps:
@@ -227,3 +226,13 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
 
     if scenarios or steps:
         session.exitstatus = 100
+
+
+def make_python_docstring(string: str) -> str:
+    """Make a python docstring literal out of a given string."""
+    return '"""{}."""'.format(string.replace('"""', '\\"\\"\\"'))
+
+
+def make_string_literal(string: str) -> str:
+    """Make python string literal out of a given string."""
+    return "'{}'".format(string.replace("'", "\\'"))

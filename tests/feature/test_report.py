@@ -1,4 +1,7 @@
 """Test scenario reporting."""
+from __future__ import annotations
+
+import re
 import textwrap
 from pathlib import Path
 
@@ -13,6 +16,34 @@ class OfType:
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, self.type) if self.type else True
+
+
+def matchreport(
+    result,
+    inamepart_match: str | re.Pattern = "",
+    names="pytest_runtest_logreport pytest_collectreport",
+    when=None,
+):
+    """return a testreport whose dotted import path matches"""
+    values = []
+    for rep in result.getreports(names=names):
+        if not when and rep.when != "call" and rep.passed:
+            # setup/teardown passing reports - let's ignore those
+            continue
+        if when and rep.when != when:
+            continue
+        iname_parts = rep.nodeid.split("::")
+        if not inamepart_match:
+            values.append(rep)
+        elif inamepart_match in iname_parts:
+            values.append(rep)
+        elif isinstance(inamepart_match, re.Pattern) and any(map(inamepart_match.match, iname_parts)):
+            values.append(rep)
+    if not values:
+        raise ValueError(f"could not find test report matching {inamepart_match}: no test reports at all!")
+    if len(values) > 1:
+        raise ValueError(f"found 2 or more testreports matching {inamepart_match!r}: {values}")
+    return values[0]
 
 
 def test_step_trace(testdir):
@@ -103,8 +134,8 @@ def test_step_trace(testdir):
     result = testdir.inline_run("-vvl")
     assert result.ret
 
-    report = result.matchreport(
-        "test_passing[test.feature-One passing scenario, one failing scenario-Passing]", when="call"
+    report = matchreport(
+        result, re.compile(r"test.*\[test\.feature-One passing scenario, one failing scenario-Passing\]"), when="call"
     ).scenario
     expected = {
         "feature": {
@@ -140,8 +171,8 @@ def test_step_trace(testdir):
 
     assert report == expected
 
-    report = result.matchreport(
-        "test_failing[test.feature-One passing scenario, one failing scenario-Failing]", when="call"
+    report = matchreport(
+        result, re.compile(r"test.*\[test.feature-One passing scenario, one failing scenario-Failing]"), when="call"
     ).scenario
     expected = {
         "feature": {
@@ -176,8 +207,11 @@ def test_step_trace(testdir):
     }
     assert report == expected
 
-    report = result.matchreport(
-        "test_outlined[test.feature-One passing scenario, one failing scenario-Outlined[table_rows:[line: 21]]]",
+    report = matchreport(
+        result,
+        re.compile(
+            r"test.*\[test\.feature-One passing scenario, one failing scenario-Outlined\[table_rows:\[line: 21]]]"
+        ),
         when="call",
     ).scenario
     expected = {
@@ -221,8 +255,11 @@ def test_step_trace(testdir):
     }
     assert report == expected
 
-    report = result.matchreport(
-        "test_outlined[test.feature-One passing scenario, one failing scenario-Outlined[table_rows:[line: 22]]]",
+    report = matchreport(
+        result,
+        re.compile(
+            r"test.*\[test\.feature-One passing scenario, one failing scenario-Outlined\[table_rows:\[line: 22]]]"
+        ),
         when="call",
     ).scenario
     expected = {
@@ -323,11 +360,14 @@ def test_complex_types(testdir, pytestconfig):
         )
     )
     result = testdir.inline_run("-vvl")
-    report = result.matchreport(
-        "test_complex["
-        "test.feature-Report serialization containing parameters of complex types-"
-        "Complex[table_rows:[line: 8]]-alien0"
-        "]",
+    report = matchreport(
+        result,
+        re.compile(
+            r"test_complex.*\["
+            r"test\.feature-Report serialization containing parameters of complex types-"
+            r"Complex\[table_rows:\[line: 8]]-alien0"
+            r"]"
+        ),
         when="call",
     )
     assert report.passed

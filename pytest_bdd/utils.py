@@ -18,7 +18,7 @@ from attr import Factory, attrib, attrs
 from marshmallow import post_load
 from ordered_set import OrderedSet
 
-from pytest_bdd.const import STEP_PREFIXES, TAG
+from pytest_bdd.const import ALPHA_REGEX, PYTHON_REPLACE_REGEX, STEP_PREFIXES, TAG
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
@@ -41,7 +41,7 @@ def get_args(func: Callable) -> list[str]:
     return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
 
 
-def get_caller_module_locals(depth: int = 2) -> dict[str, Any]:
+def get_caller_module_locals(depth: int = 1) -> dict[str, Any]:
     """Get the caller module locals dictionary.
 
     We use sys._getframe instead of inspect.stack(0) because the latter is way slower, since it iterates over
@@ -50,7 +50,7 @@ def get_caller_module_locals(depth: int = 2) -> dict[str, Any]:
     return _getframe(depth).f_locals
 
 
-def get_caller_module_path(depth: int = 2) -> str:
+def get_caller_module_path(depth: int = 1) -> str:
     """Get the caller module path.
 
     We use sys._getframe instead of inspect.stack(0) because the latter is way slower, since it iterates over
@@ -95,17 +95,6 @@ class SimpleMapping(Mapping):
 
     def __len__(self):
         return len(self._dict)
-
-
-def apply_tag(feature_context, pickle, tag, function):
-    config = CONFIG_STACK[-1]
-
-    def compose(*func):
-        return reduce(lambda f, g: lambda x: f(g(x)), func, lambda x: x)
-
-    return compose(
-        *config.hook.pytest_bdd_convert_tag_to_marks(feature=feature_context, scenario=pickle, example=None, tag=tag)
-    )(function)
 
 
 class DefaultMapping(defaultdict):
@@ -236,3 +225,9 @@ def _itemgetter(*items):
             return itemgetter(*items)(obj)
 
     return func
+
+
+def make_python_name(string: str) -> str:
+    """Make python attribute name out of a given string."""
+    string = re.sub(PYTHON_REPLACE_REGEX, "", string.replace(" ", "_"))
+    return re.sub(ALPHA_REGEX, "", string).lower()

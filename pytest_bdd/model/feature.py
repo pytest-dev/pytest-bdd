@@ -116,7 +116,6 @@ class Feature:
     def load_ast(ast_data) -> AST:
         return cast(AST, ASTSchema().load(data=ast_data, unknown="RAISE"))
 
-    # region TODO: Deprecated
     @property
     def name(self) -> str:
         return self.gherkin_ast.gherkin_document.feature.name
@@ -134,13 +133,7 @@ class Feature:
         return dedent(self.gherkin_ast.gherkin_document.feature.description)
 
     @property
-    def registry(self):
-        return self.gherkin_ast.registry
-
-    @property
     def tag_names(self):
         return sorted(
             map(lambda tag: tag.name.lstrip(STEP_PREFIXES[TAG]), self.gherkin_ast.gherkin_document.feature.tags)
         )
-
-    # endregion

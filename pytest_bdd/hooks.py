@@ -12,12 +12,20 @@ def pytest_bdd_before_scenario(request, feature, scenario):
     """Called before scenario is executed."""
 
 
+def pytest_bdd_run_scenario(request, feature, scenario):
+    """Execution scenario protocol"""
+
+
 def pytest_bdd_after_scenario(request, feature, scenario):
     """Called after scenario is executed."""
 
 
 def pytest_bdd_before_step(request, feature, scenario, step, step_func):
     """Called before step function is set up."""
+
+
+def pytest_bdd_run_step(request, feature, scenario, step, previous_step):
+    """Execution step protocol"""
 
 
 def pytest_bdd_before_step_call(request, feature, scenario, step, step_func, step_func_args):

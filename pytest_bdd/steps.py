@@ -39,21 +39,18 @@ from __future__ import annotations
 import sys
 import warnings
 from contextlib import suppress
-from itertools import zip_longest
 from typing import TYPE_CHECKING, Iterable, Iterator, Sequence
 from warnings import warn
 
 import pytest
 from _pytest.config import Config
-from _pytest.fixtures import FixtureRequest, call_fixture_func
 from attr import Factory, attrib, attrs
 from ordered_set import OrderedSet
 
-from . import exceptions
 from .const import STEP_TYPE, STEP_TYPES_BY_NORMALIZED_PREFIX
 from .model import Feature, Scenario, Step
 from .parsers import StepParser, get_parser
-from .utils import DefaultMapping, get_args, get_caller_module_locals, inject_fixture
+from .utils import get_caller_module_locals
 from .warning_types import PytestBDDStepDefinitionWarning
 
 if sys.version_info >= (3, 10):
@@ -217,7 +214,7 @@ class StepHandler:
         feature: Feature = attrib(init=False)
         pickle: Scenario = attrib(init=False)
         step: Step = attrib(init=False)
-        previous_step: StepHandler = attrib(init=False)
+        previous_step: Step | None = attrib(init=False)
         step_registry: StepHandler.Registry = attrib(init=False)
         step_type_context = attrib(default=None)
 
@@ -229,7 +226,7 @@ class StepHandler:
             feature: Feature,
             pickle: Scenario,
             step: Step,
-            previous_step,
+            previous_step: Step | None,
             step_registry: StepHandler.Registry,
         ) -> StepHandler.Definition:
             self.feature = feature
@@ -316,119 +313,6 @@ class StepHandler:
         def get_parameters(self, step: Step):
             parsed_arguments = self.parser.parse_arguments(step.name) or {}
             return {arg: self.converters.get(arg, lambda _: _)(value) for arg, value in parsed_arguments.items()}
-
-    @attrs
-    class Executor:
-        request: FixtureRequest = attrib()
-        feature: Feature = attrib()
-        scenario: Scenario = attrib()
-        step: Step = attrib()
-        previous_step: Step | None = attrib()
-        step_params: dict = attrib(init=False)
-        step_definition: StepHandler.Definition = attrib(init=False)
-        step_result: Any = attrib(init=False)
-
-        def _inject_step_parameters_as_fixtures(
-            self, step_params: dict | None = None, params_fixtures_mapping: dict | None = None
-        ):
-            step_params = step_params or {}
-            params_fixtures_mapping = (
-                DefaultMapping.instantiate_from_collection_or_bool(
-                    params_fixtures_mapping or {}, warm_up_keys=self.step_params.keys()
-                )
-                or {}
-            )
-
-            for param, fixture_name in params_fixtures_mapping.items():
-                if fixture_name is not None:
-                    with suppress(KeyError):
-                        inject_fixture(self.request, fixture_name, step_params[param])
-
-        @property
-        def _step_function_kwargs(self):
-            for param in get_args(self.step_definition.func):
-                try:
-                    yield param, self.step_params[param]
-                except KeyError:
-                    try:
-                        yield param, dict(step=self.step)[param]
-                    except KeyError:
-                        yield param, self.request.getfixturevalue(param)
-
-        def _inject_target_fixtures(self):
-            if len(self.step_definition.target_fixtures) == 1:
-                injectable_fixtures = [(self.step_definition.target_fixtures[0], self.step_result)]
-            elif self.step_result is not None and len(self.step_definition.target_fixtures) != 0:
-                injectable_fixtures = zip(self.step_definition.target_fixtures, self.step_result)
-            else:
-                injectable_fixtures = zip_longest(self.step_definition.target_fixtures, [])
-
-            for target_fixture, return_value in injectable_fixtures:
-                inject_fixture(self.request, target_fixture, return_value)
-
-        def __call__(self):
-            hook_kwargs = dict(
-                request=self.request,
-                feature=self.feature,
-                scenario=self.scenario,
-                step=self.step,
-                previous_step=self.previous_step,
-            )
-
-            try:
-                self.step_definition = self.match_to_step()
-            except exceptions.StepDefinitionNotFoundError as exception:
-                hook_kwargs["exception"] = exception
-                self.request.config.hook.pytest_bdd_step_func_lookup_error(**hook_kwargs)
-                raise
-            else:
-                hook_kwargs["step_func"] = self.step_definition.func
-
-            self.request.config.hook.pytest_bdd_before_step(**hook_kwargs)
-
-            hook_kwargs["step_func_args"] = {}
-            self.step_params = self.step_definition.get_parameters(self.step)
-            try:
-                self._inject_step_parameters_as_fixtures(
-                    step_params=self.step_params, params_fixtures_mapping=self.step_definition.params_fixtures_mapping
-                )
-
-                step_function_kwargs = dict(self._step_function_kwargs)
-                hook_kwargs["step_func_args"] = step_function_kwargs
-
-                self.request.config.hook.pytest_bdd_before_step_call(**hook_kwargs)
-
-                # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
-                self.step_result = call_fixture_func(
-                    fixturefunc=self.step_definition.func, request=self.request, kwargs=step_function_kwargs
-                )
-
-                self._inject_target_fixtures()
-                self.request.config.hook.pytest_bdd_after_step(**hook_kwargs)
-            except Exception as exception:
-                hook_kwargs["exception"] = exception
-                self.request.config.hook.pytest_bdd_step_error(**hook_kwargs)
-                raise
-
-        execute = __call__
-
-        def match_to_step(self):
-            try:
-                return self.request.config.hook.pytest_bdd_match_step_definition_to_step(
-                    request=self.request,
-                    feature=self.feature,
-                    scenario=self.scenario,
-                    step=self.step,
-                    previous_step=self.previous_step,
-                )
-            except StepHandler.Matcher.MatchNotFoundError as e:
-                raise exceptions.StepDefinitionNotFoundError(
-                    f'StepHandler definition is not found: "{self.step.name}". '
-                    f'StepHandler keyword: "{self.step.keyword}". '
-                    f"Line {self.step.line_number} "
-                    f'in scenario "{self.scenario.name}" '
-                    f'in the feature "{self.feature.filename}"'
-                ) from e
 
     @attrs
     class Registry:
@@ -520,7 +404,7 @@ class StepHandler:
             :param function step_func: StepHandler definition function
             """
             StepHandler.Registry.register_step(
-                caller_locals=get_caller_module_locals(),
+                caller_locals=get_caller_module_locals(depth=2),
                 func=step_func,
                 type_=step_type,
                 parserlike=step_parserlike,

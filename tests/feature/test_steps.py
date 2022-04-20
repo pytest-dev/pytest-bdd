@@ -419,10 +419,13 @@ def test_step_trace(testdir):
 
     testdir.makefile(
         ".feature",
-        test=textwrap.dedent(
-            """\
+        test="""\
             Feature: Test step trace
                 Scenario: When step has failure
+                    Given I have a bar
+                    When it fails
+
+                Scenario: When step has failure inline
                     Given I have a bar
                     When it fails
 
@@ -432,11 +435,10 @@ def test_step_trace(testdir):
                 Scenario: When step validation error happens
                     Given foo
                     And foo
-            """
-        ),
+            """,
     )
     testdir.makepyfile(
-        """
+        """\
         import pytest
         from pytest_bdd import given, when, scenario
 
@@ -448,9 +450,7 @@ def test_step_trace(testdir):
         def when_it_fails():
             raise Exception('when fails')
 
-        @scenario('test.feature', 'When step has failure')
-        def test_when_fails_inline():
-            pass
+        test_when_fails_inline = scenario('test.feature', 'When step has failure inline', return_test_decorator=False)
 
         @scenario('test.feature', 'When step has failure')
         def test_when_fails_decorated():

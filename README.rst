@@ -579,23 +579,35 @@ Note that you can pass multiple paths, and those paths can be either feature fil
     scenarios('features', 'other_features/some.feature', 'some_other_features')
 
 But what if you need to manually bind certain scenario, leaving others to be automatically bound?
-Just write your scenario in a `normal` way, but ensure you do it `BEFORE` the call of `scenarios` helper.
+Just write your scenario in a `normal` way, but ensure you do it `AFTER` the call of `scenarios` helper.
 
 
 .. code-block:: python
 
     from pytest_bdd import scenario, scenarios
 
+    # assume 'features' subfolder is in this file's directory
+    scenarios('features')
+
     @scenario('features/some.feature', 'Test something')
     def test_something():
         pass
 
-    # assume 'features' subfolder is in this file's directory
-    scenarios('features')
-
 In the example above `test_something` scenario binding will be kept manual, other scenarios found in the `features`
 folder will be bound automatically.
 
+Scenarios registered by `scenario` or `scenarios` are registered once per test module (and re-registered by
+latest inclusions, so keep it wisely).
+
+Both `scenario` or `scenarios` could be used as decorators or as operator calls. Also they could be inlined:
+
+.. code-block:: python
+
+    from pytest_bdd import scenario, scenarios
+
+    test_features = scenarios('features', return_test_decorator=False)
+
+    test_specific_scenario = scenario('features/some.feature', 'Test something', return_test_decorator=False)
 
 Scenario outlines
 -----------------
@@ -902,18 +914,15 @@ Note that if you use pytest `--strict` option, all bdd tags mentioned in the fea
 names, eg starts with a non-number, underscore alphanumeric, etc. That way you can safely use tags for tests filtering.
 
 You can customize how tags are converted to pytest marks by implementing the
-``pytest_bdd_apply_tag`` hook and returning ``True`` from it:
+``pytest_bdd_convert_tag_to_marks`` hook and returning list of resulting marks from it:
 
 .. code-block:: python
 
-   def pytest_bdd_apply_tag(tag, function):
+   def pytest_bdd_convert_tag_to_marks(feature, scenario, tag):
        if tag == 'todo':
            marker = pytest.mark.skip(reason="Not implemented yet")
-           marker(function)
-           return True
-       else:
-           # Fall back to the default behavior of pytest-bdd
-           return None
+           return [marker]
+
 
 Test setup
 ----------
@@ -1192,11 +1201,15 @@ which might be helpful building useful reporting, visualization, etc on top of i
 
 * pytest_bdd_before_scenario(request, feature, scenario) - Called before scenario is executed
 
+* pytest_bdd_run_scenario(request, feature, scenario) - Execution scenario protocol
+
 * pytest_bdd_after_scenario(request, feature, scenario) - Called after scenario is executed
   (even if one of steps has failed)
 
 * pytest_bdd_before_step(request, feature, scenario, step, step_func) - Called before step function
   is executed and it's arguments evaluated
+
+* pytest_bdd_run_step(request, feature, scenario, step, previous_step): - Execution step protocol
 
 * pytest_bdd_before_step_call(request, feature, scenario, step, step_func, step_func_args) - Called before step
   function is executed with evaluated arguments

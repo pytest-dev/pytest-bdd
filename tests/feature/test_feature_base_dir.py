@@ -1,19 +1,7 @@
 """Test feature base dir."""
 import pytest
 
-NOT_EXISTING_FEATURE_PATHS = [
-    ".",
-    # "/does/not/exist/"
-]
-
-
-@pytest.mark.parametrize("base_dir", NOT_EXISTING_FEATURE_PATHS)
-def test_feature_path_not_found(testdir, base_dir):
-    """Test feature base dir."""
-    prepare_testdir(testdir, base_dir)
-
-    result = testdir.runpytest("-k", "test_not_found_by_ini")
-    result.assert_outcomes(passed=2)
+NOT_EXISTING_FEATURE_PATHS = [".", "/does/not/exist/"]
 
 
 def test_feature_path_ok(testdir):
@@ -22,16 +10,6 @@ def test_feature_path_ok(testdir):
 
     result = testdir.runpytest("-k", "test_ok_by_ini")
     result.assert_outcomes(passed=2)
-
-
-def test_feature_path_by_param_not_found(testdir):
-    """As param takes precedence even if ini config is correct it should fail
-    if passed param is incorrect"""
-    base_dir = "features"
-    prepare_testdir(testdir, base_dir)
-
-    result = testdir.runpytest("-k", "test_not_found_by_param")
-    result.assert_outcomes(passed=4)
 
 
 @pytest.mark.parametrize("base_dir", NOT_EXISTING_FEATURE_PATHS)

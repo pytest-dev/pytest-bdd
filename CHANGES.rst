@@ -23,6 +23,9 @@ Unreleased
 - Show pass/fail status per step in Gherkin terminal reporter
 - Step definitions could be used independently from keyword
 - ``pytest_bdd_apply_tag`` was removed; ``pytest_bdd_convert_tag_to_marks`` was added instead
+- Parser switched to original one
+- Changes ``scenario`` and ``scenarios`` function/decorator feature registration order. Both could be used as decorators
+- Move scenario execution & step matching to hooks
 
 5.0.0
 -----

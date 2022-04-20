@@ -1,4 +1,5 @@
 # Refactor to Enums
+import re
 from collections import defaultdict
 
 TAG = "tag"
@@ -44,3 +45,5 @@ STEP_TYPES_BY_NORMALIZED_PREFIX = defaultdict(
         "*": STEP_TYPE.AND,
     },
 )
+PYTHON_REPLACE_REGEX = re.compile(r"\W")
+ALPHA_REGEX = re.compile(r"^\d+_*")

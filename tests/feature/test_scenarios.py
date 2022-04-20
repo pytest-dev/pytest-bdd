@@ -61,21 +61,25 @@ def test_scenarios(testdir, pytest_params):
         import pytest
         from pytest_bdd import scenarios, scenario
 
+        scenarios('features')
+
         @scenario('features/subfolder/test.feature', 'Test already bound scenario')
         def test_already_bound():
             pass
-
-        scenarios('features')
     """
     )
-    result = testdir.runpytest_subprocess("-v", "-s", *pytest_params)
+    result = testdir.runpytest("-v", "-s", *pytest_params)
     assert_outcomes(result, passed=4, failed=1)
     result.stdout.fnmatch_lines(["*collected 5 items"])
-    result.stdout.fnmatch_lines(["*test_test_subfolder_scenario* bar!", "PASSED"])
-    result.stdout.fnmatch_lines(["*test_test_scenario* bar!", "PASSED"])
-    result.stdout.fnmatch_lines(["*test_test_failing_subfolder_scenario* FAILED"])
+    result.stdout.fnmatch_lines(
+        ["*test*features/subfolder/test.feature-Test scenarios-Test subfolder scenario* bar!", "PASSED"]
+    )
+    result.stdout.fnmatch_lines(["*test*features/test.feature-Test scenarios-Test scenario* bar!", "PASSED"])
+    result.stdout.fnmatch_lines(
+        ["*test*features/subfolder/test.feature-Test scenarios-Test failing subfolder scenario* FAILED"]
+    )
     result.stdout.fnmatch_lines(["*test_already_bound* bar!", "PASSED"])
-    result.stdout.fnmatch_lines(["*test_test_scenario_1* bar!", "PASSED"])
+    result.stdout.fnmatch_lines(["*test*features/subfolder/test.feature-Test scenarios-Test scenario* bar!", "PASSED"])
 
 
 def test_scenarios_none_found(testdir, pytest_params):
@@ -89,5 +93,4 @@ def test_scenarios_none_found(testdir, pytest_params):
     """
     )
     result = testdir.runpytest_subprocess(testpath, *pytest_params)
-    assert_outcomes(result, errors=1)
-    result.stdout.fnmatch_lines(["*NoScenariosFound*"])
+    assert_outcomes(result, skipped=1)

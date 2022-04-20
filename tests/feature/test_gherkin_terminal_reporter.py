@@ -108,7 +108,7 @@ def test_error_message_for_missing_steps(testdir, verbosity):
     result = testdir.runpytest("--gherkin-terminal-reporter", verbosity)
     result.assert_outcomes(passed=0, failed=1)
     result.stdout.fnmatch_lines(
-        """*StepDefinitionNotFoundError: StepHandler definition is not found: "there is a bar". StepHandler keyword: "Given".*"""
+        """*StepDefinitionNotFoundError: Step definition is not found: "there is a bar". Step keyword: "Given".*"""
         """Line 3 in scenario "Scenario example 1"*"""
     )
 
@@ -166,7 +166,7 @@ def test_local_variables_should_be_displayed_when_showlocals_option_is_used(test
 
 
         @then('world explodes')
-        def world_explodes():
+        def world_explodes(request):
             local_var = "MULTIPASS"
             raise Exception("BIGBADABOOM")
 

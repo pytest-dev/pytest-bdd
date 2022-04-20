@@ -32,8 +32,7 @@ def test_scenario_not_found(testdir, pytest_params):
     )
     result = testdir.runpytest_subprocess(*pytest_params)
 
-    assert_outcomes(result, errors=1)
-    result.stdout.fnmatch_lines('*Scenario "NOT FOUND" in feature "Scenario is not found" in*')
+    assert_outcomes(result, skipped=1)
 
 
 def test_scenario_comments(testdir):
@@ -93,30 +92,6 @@ def test_scenario_comments(testdir):
     result = testdir.runpytest()
 
     result.assert_outcomes(passed=2)
-
-
-def test_scenario_not_decorator(testdir, pytest_params):
-    """Test scenario function is used not as decorator."""
-    testdir.makefile(
-        ".feature",
-        foo="""
-        Feature: Test function is not a decorator
-            Scenario: Foo
-                Given I have a bar
-        """,
-    )
-    testdir.makepyfile(
-        """
-        from pytest_bdd import scenario
-
-        test_foo = scenario('foo.feature', 'Foo')
-        """
-    )
-
-    result = testdir.runpytest_subprocess(*pytest_params)
-
-    result.assert_outcomes(failed=1)
-    result.stdout.fnmatch_lines("*ScenarioIsDecoratorOnly: scenario function can only be used as a decorator*")
 
 
 def test_simple(testdir, pytest_params):
