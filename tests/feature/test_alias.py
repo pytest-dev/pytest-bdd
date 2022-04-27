@@ -1,13 +1,13 @@
 """Test step alias when decorated multiple times."""
 
-import textwrap
+from pytest import mark, param
 
 
-def test_step_alias(testdir):
+@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
+def test_step_alias(testdir, parser):
     testdir.makefile(
         ".feature",
-        alias=textwrap.dedent(
-            """\
+        alias="""\
             Feature: StepHandler aliases
                 Scenario: Multiple step aliases
                     Given I have an empty list
@@ -18,17 +18,16 @@ def test_step_alias(testdir):
                     When I do crash (which is 2)
                     And I do boom (alias of crash)
                     Then my list should be [1, 1, 2, 2]
-            """
-        ),
+            """,
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        f"""\
         import pytest
         from pytest_bdd import given, when, then, scenario
+        from pytest_bdd.parser import {parser} as Parser
 
-        @scenario("alias.feature", "Multiple step aliases")
+        @scenario("alias.feature", "Multiple step aliases", _parser=Parser())
         def test_alias():
             pass
 
@@ -54,7 +53,6 @@ def test_step_alias(testdir):
         def check_results(results):
             assert results == [1, 1, 2, 2]
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)

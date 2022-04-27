@@ -2,55 +2,55 @@
 import textwrap
 
 import pkg_resources
-import pytest
+from pytest import mark, param
 
 from pytest_bdd.utils import get_tags
 
 
-def test_tags_selector(testdir):
+@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
+def test_tags_selector(testdir, parser):
     """Test tests selection by tags."""
     testdir.makefile(
         ".ini",
-        pytest=textwrap.dedent(
-            """
-    [pytest]
-    markers =
-        feature_tag_1
-        feature_tag_2
-        scenario_tag_01
-        scenario_tag_02
-        scenario_tag_10
-        scenario_tag_20
-    """
-        ),
+        pytest="""
+            [pytest]
+            markers =
+                feature_tag_1
+                feature_tag_2
+                scenario_tag_01
+                scenario_tag_02
+                scenario_tag_10
+                scenario_tag_20
+            """,
     )
     testdir.makefile(
         ".feature",
         test="""
-    @feature_tag_1 @feature_tag_2
-    Feature: Tags
+            @feature_tag_1 @feature_tag_2
+            Feature: Tags
 
-    @scenario_tag_01 @scenario_tag_02
-    Scenario: Tags
-        Given I have a bar
+            @scenario_tag_01 @scenario_tag_02
+            Scenario: Tags
+                Given I have a bar
 
-    @scenario_tag_10 @scenario_tag_20
-    Scenario: Tags 2
-        Given I have a bar
+            @scenario_tag_10 @scenario_tag_20
+            Scenario: Tags 2
+                Given I have a bar
 
-    """,
+            """,
     )
     testdir.makepyfile(
-        """
+        f"""
         import pytest
         from pytest_bdd import given, scenarios
+        from pytest_bdd.parser import {parser} as Parser
 
         @given('I have a bar')
         def i_have_bar():
             return 'bar'
 
-        scenarios('test.feature')
-    """
+        scenarios('test.feature', _parser=Parser())
+        """
     )
     result = testdir.runpytest("-m", "scenario_tag_10 and not scenario_tag_01", "-vv")
     outcomes = result.parseoutcomes()
@@ -68,7 +68,8 @@ def test_tags_selector(testdir):
     assert result["deselected"] == 2
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_tags_selector_with_examples(testdir):
     """Test tests selection by tags."""
     testdir.makefile(
@@ -168,29 +169,35 @@ def test_tags_selector_with_examples(testdir):
         """
     )
 
-    result = testdir.runpytest("-m", "scenario_tag_10 and not scenario_tag_01", "-vv")
-    result.assert_outcomes(passed=16, deselected=4)
+    result = testdir.runpytest("-m", "scenario_tag_10 and not scenario_tag_01", "-vv").parseoutcomes()
+    assert result["passed"] == 16
+    assert result["deselected"] == 4
 
-    result = testdir.runpytest("-m", "scenario_tag_01 and not scenario_tag_10", "-vv")
-    result.assert_outcomes(passed=4, deselected=16)
+    result = testdir.runpytest("-m", "scenario_tag_01 and not scenario_tag_10", "-vv").parseoutcomes()
+    assert result["passed"] == 4
+    assert result["deselected"] == 16
 
-    result = testdir.runpytest("-m", "feature_tag_1", "-vv")
-    result.assert_outcomes(passed=20)
+    result = testdir.runpytest("-m", "feature_tag_1", "-vv").parseoutcomes()
+    assert result["passed"] == 20
 
-    result = testdir.runpytest("-m", "feature_tag_10", "-vv")
-    result.assert_outcomes(deselected=20)
+    result = testdir.runpytest("-m", "feature_tag_10", "-vv").parseoutcomes()
+    assert result["deselected"] == 20
 
-    result = testdir.runpytest("-m", "scenario_example_tag_01", "-vv")
-    result.assert_outcomes(passed=4, deselected=16)
+    result = testdir.runpytest("-m", "scenario_example_tag_01", "-vv").parseoutcomes()
+    assert result["passed"] == 4
+    assert result["deselected"] == 16
 
-    result = testdir.runpytest("-m", "background_example_tag_01 and scenario_example_tag_01", "-vv")
-    result.assert_outcomes(passed=1, deselected=19)
+    result = testdir.runpytest("-m", "background_example_tag_01 and scenario_example_tag_01", "-vv").parseoutcomes()
+    assert result["passed"] == 1
+    assert result["deselected"] == 19
 
-    result = testdir.runpytest("-m", "background_example_tag_01 and scenario_tag_10", "-vv")
-    result.assert_outcomes(passed=4, deselected=16)
+    result = testdir.runpytest("-m", "background_example_tag_01 and scenario_tag_10", "-vv").parseoutcomes()
+    assert result["passed"] == 4
+    assert result["deselected"] == 16
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_tags_selector_with_empty_examples(testdir):
     """Test tests selection by tags."""
     testdir.makefile(
@@ -249,7 +256,8 @@ def test_tags_selector_with_empty_examples(testdir):
     result.assert_outcomes(passed=1)
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_tags_selector_with_inlined_tags_examples(testdir):
     """Test tests selection by tags in examples rows."""
     testdir.makefile(
@@ -344,57 +352,61 @@ def test_tags_selector_with_inlined_tags_examples(testdir):
         """
     )
 
-    result = testdir.runpytest("-m", "scenario_example_tag_01", "-vv")
-    result.assert_outcomes(passed=4, deselected=16)
+    result = testdir.runpytest("-m", "scenario_example_tag_01", "-vv").parseoutcomes()
+    assert result["passed"] == 4
+    assert result["deselected"] == 16
 
     result = testdir.runpytest(
         "-m", "scenario_example_tag_03 and scenario_example_tag_04 and not background_example_tag_02", "-vv"
-    )
-    result.assert_outcomes(passed=3, deselected=17)
+    ).parseoutcomes()
+    assert result["passed"] == 3
+    assert result["deselected"] == 17
 
-    result = testdir.runpytest("-m", "background_example_tag_01 and scenario_example_tag_01", "-vv")
-    result.assert_outcomes(passed=1, deselected=19)
+    result = testdir.runpytest("-m", "background_example_tag_01 and scenario_example_tag_01", "-vv").parseoutcomes()
+    assert result["passed"] == 1
+    assert result["deselected"] == 19
 
     result = testdir.runpytest(
         "-m", "background_example_tag_01 and not background_example_tag_04 and scenario_example_tag_01", "-vv"
-    )
-    result.assert_outcomes(deselected=20)
+    ).parseoutcomes()
+    assert result["deselected"] == 20
 
-    result = testdir.runpytest("-m", "background_example_tag_01 and scenario_tag_10", "-vv")
-    result.assert_outcomes(passed=4, deselected=16)
+    result = testdir.runpytest("-m", "background_example_tag_01 and scenario_tag_10", "-vv").parseoutcomes()
+    assert result["passed"] == 4
+    assert result["deselected"] == 16
 
 
-def test_tags_after_background_issue_160(testdir):
+@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
+def test_tags_after_background_issue_160(testdir, parser):
     """Make sure using a tag after background works."""
     testdir.makefile(
         ".ini",
-        pytest=textwrap.dedent(
-            """
-    [pytest]
-    markers = tag
-    """
-        ),
+        pytest="""\
+            [pytest]
+            markers = tag
+            """,
     )
     testdir.makefile(
         ".feature",
-        test="""
-    Feature: Tags after background
+        test="""\
+            Feature: Tags after background
 
-        Background:
-            Given I have a bar
+                Background:
+                    Given I have a bar
 
-        @tag
-        Scenario: Tags
-            Given I have a baz
+                @tag
+                Scenario: Tags
+                    Given I have a baz
 
-        Scenario: Tags 2
-            Given I have a baz
-    """,
+                Scenario: Tags 2
+                    Given I have a baz
+            """,
     )
     testdir.makepyfile(
-        """
+        f"""
         import pytest
         from pytest_bdd import given, scenarios
+        from pytest_bdd.parser import {parser} as Parser
 
         @given('I have a bar')
         def i_have_bar():
@@ -404,15 +416,16 @@ def test_tags_after_background_issue_160(testdir):
         def i_have_baz():
             return 'baz'
 
-        scenarios('test.feature')
-    """
+        scenarios('test.feature', _parser=Parser())
+        """
     )
     result = testdir.runpytest("-m", "tag", "-vv").parseoutcomes()
     assert result["passed"] == 1
     assert result["deselected"] == 1
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_tag_with_spaces(testdir):
     testdir.makefile(
         ".ini",
@@ -424,9 +437,9 @@ def test_tag_with_spaces(testdir):
     )
     testdir.makeconftest(
         """\
-        import pytest
+        from pytest import hookimpl
 
-        @pytest.hookimpl(tryfirst=True)
+        @hookimpl(tryfirst=True)
         def pytest_bdd_convert_tag_to_marks(feature, scenario, tag):
             assert tag == 'test with spaces'
         """
@@ -458,22 +471,24 @@ def test_tag_with_spaces(testdir):
     result.stdout.fnmatch_lines(["*= 1 passed * =*"])
 
 
-def test_at_in_scenario(testdir):
+@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
+def test_at_in_scenario(testdir, parser):
     testdir.makefile(
         ".feature",
-        test="""
-    Feature: At sign in a scenario
+        test="""\
+            Feature: At sign in a scenario
 
-        Scenario: Tags
-            Given I have a foo@bar
+                Scenario: Tags
+                    Given I have a foo@bar
 
-        Scenario: Second
-            Given I have a baz
-    """,
+                Scenario: Second
+                    Given I have a baz
+            """,
     )
     testdir.makepyfile(
-        """
+        f"""
         from pytest_bdd import given, scenarios
+        from pytest_bdd.parser import {parser} as Parser
 
         @given('I have a foo@bar')
         def i_have_at():
@@ -483,12 +498,12 @@ def test_at_in_scenario(testdir):
         def i_have_baz():
             return 'baz'
 
-        scenarios('test.feature')
+        scenarios('test.feature', _parser=Parser())
     """
     )
 
     # Deprecate --strict after pytest 6.1
-    # https://docs.pytest.org/en/stable/deprecations.html#the-strict-command-line-option
+    # https://docs.org/en/stable/deprecations.html#the-strict-command-line-option
     pytest_version = pkg_resources.get_distribution("pytest").parsed_version
     if pytest_version >= pkg_resources.parse_version("6.2"):
         strict_option = "--strict-markers"
@@ -498,7 +513,7 @@ def test_at_in_scenario(testdir):
     result.stdout.fnmatch_lines(["*= 2 passed * =*"])
 
 
-@pytest.mark.parametrize(
+@mark.parametrize(
     "line, expected",
     [
         ("@foo @bar", {"foo", "bar"}),
@@ -514,30 +529,30 @@ def test_get_tags(line, expected):
     assert get_tags(line) == expected
 
 
-def test_invalid_tags(testdir):
+@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
+def test_invalid_tags(testdir, parser):
     features = testdir.mkdir("features")
     features.join("test.feature").write_text(
         textwrap.dedent(
             """\
-                Feature: Invalid tags
-                    Scenario: Invalid tags
-                        @tag
-                        Given foo
-                        When bar
-                        Then baz
-                """
+            Feature: Invalid tags
+                Scenario: Invalid tags
+                    @tag
+                    Given foo
+                    When bar
+                    Then baz
+            """
         ),
         "utf-8",
         ensure=True,
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
-                from pytest_bdd import scenarios
+        f"""\
+        from pytest_bdd import scenarios
+        from pytest_bdd.parser import {parser} as Parser
 
-                scenarios('features')
-                """
-        )
+        scenarios('features', _parser=Parser())
+        """
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*FeatureError*"])

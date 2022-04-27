@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import textwrap
+from pytest import mark, param
 
-import pytest
+pytestmark = [mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])]
 
 FEATURE = """\
 Feature: Gherkin terminal output feature
@@ -13,33 +13,32 @@ Feature: Gherkin terminal output feature
 """
 
 TEST = """\
-from pytest_bdd import given, when, then, scenario
+    from pytest_bdd import given, when, then, scenario
+    from pytest_bdd.parser import {parser} as Parser
+
+    @given('there is a bar')
+    def a_bar():
+        return 'bar'
+
+    @when('the bar is accessed')
+    def the_bar_is_accessed():
+        pass
 
 
-@given('there is a bar')
-def a_bar():
-    return 'bar'
-
-@when('the bar is accessed')
-def the_bar_is_accessed():
-    pass
+    @then('world explodes')
+    def world_explodes():
+        pass
 
 
-@then('world explodes')
-def world_explodes():
-    pass
-
-
-@scenario('test.feature', 'Scenario example 1')
-def test_scenario_1():
-    pass
-
+    @scenario('test.feature', 'Scenario example 1', _parser=Parser())
+    def test_scenario_1():
+        pass
 """
 
 
-def test_default_output_should_be_the_same_as_regular_terminal_reporter(testdir):
+def test_default_output_should_be_the_same_as_regular_terminal_reporter(testdir, parser):
     testdir.makefile(".feature", test=FEATURE)
-    testdir.makepyfile(TEST)
+    testdir.makepyfile(TEST.format(parser=parser))
     regular = testdir.runpytest()
     gherkin = testdir.runpytest("--gherkin-terminal-reporter")
     regular.assert_outcomes(passed=1, failed=0)
@@ -51,23 +50,21 @@ def test_default_output_should_be_the_same_as_regular_terminal_reporter(testdir)
     assert all(l1 == l2 for l1, l2 in zip(parse_lines(regular.stdout.lines), parse_lines(gherkin.stdout.lines)))
 
 
-def test_verbose_mode_should_display_feature_and_scenario_names_instead_of_test_names_in_a_single_line(testdir):
+def test_verbose_mode_should_display_feature_and_scenario_names_instead_of_test_names_in_a_single_line(testdir, parser):
     testdir.makefile(".feature", test=FEATURE)
-    testdir.makepyfile(TEST)
+    testdir.makepyfile(TEST.format(parser=parser))
     result = testdir.runpytest("--gherkin-terminal-reporter", "-v")
     result.assert_outcomes(passed=1, failed=0)
     result.stdout.fnmatch_lines("Feature: Gherkin terminal output feature")
     result.stdout.fnmatch_lines("*Scenario: Scenario example 1    PASSED")
 
 
-def test_verbose_mode_should_preserve_displaying_regular_tests_as_usual(testdir):
+def test_verbose_mode_should_preserve_displaying_regular_tests_as_usual(testdir, parser):
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         def test_1():
             pass
         """
-        )
     )
     regular = testdir.runpytest()
     gherkin = testdir.runpytest("--gherkin-terminal-reporter", "-v")
@@ -80,9 +77,9 @@ def test_verbose_mode_should_preserve_displaying_regular_tests_as_usual(testdir)
     )
 
 
-def test_double_verbose_mode_should_display_full_scenario_description(testdir):
+def test_double_verbose_mode_should_display_full_scenario_description(testdir, parser):
     testdir.makefile(".feature", test=FEATURE)
-    testdir.makepyfile(TEST)
+    testdir.makepyfile(TEST.format(parser=parser))
     result = testdir.runpytest("--gherkin-terminal-reporter", "-vv")
     result.assert_outcomes(passed=1, failed=0)
 
@@ -93,17 +90,16 @@ def test_double_verbose_mode_should_display_full_scenario_description(testdir):
     result.stdout.fnmatch_lines("*PASSED")
 
 
-@pytest.mark.parametrize("verbosity", ["", "-v", "-vv"])
-def test_error_message_for_missing_steps(testdir, verbosity):
+@mark.parametrize("verbosity", ["", "-v", "-vv"])
+def test_error_message_for_missing_steps(testdir, verbosity, parser):
     testdir.makefile(".feature", test=FEATURE)
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        f"""\
         from pytest_bdd import scenarios
+        from pytest_bdd.parser import {parser} as Parser
 
-        scenarios('.')
+        scenarios('.', _parser=Parser())
         """
-        )
     )
     result = testdir.runpytest("--gherkin-terminal-reporter", verbosity)
     result.assert_outcomes(passed=0, failed=1)
@@ -113,14 +109,13 @@ def test_error_message_for_missing_steps(testdir, verbosity):
     )
 
 
-@pytest.mark.parametrize("verbosity", ["", "-v", "-vv"])
-def test_error_message_should_be_displayed(testdir, verbosity):
+@mark.parametrize("verbosity", ["", "-v", "-vv"])
+def test_error_message_should_be_displayed(testdir, verbosity, parser):
     testdir.makefile(".feature", test=FEATURE)
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        f"""\
         from pytest_bdd import given, when, then, scenario
-
+        from pytest_bdd.parser import {parser} as Parser
 
         @given('there is a bar')
         def a_bar():
@@ -136,11 +131,10 @@ def test_error_message_should_be_displayed(testdir, verbosity):
             raise Exception("BIGBADABOOM")
 
 
-        @scenario('test.feature', 'Scenario example 1')
+        @scenario('test.feature', 'Scenario example 1', _parser=Parser())
         def test_scenario_1():
             pass
         """
-        )
     )
     result = testdir.runpytest("--gherkin-terminal-reporter", verbosity)
     result.assert_outcomes(passed=0, failed=1)
@@ -148,12 +142,12 @@ def test_error_message_should_be_displayed(testdir, verbosity):
     result.stdout.fnmatch_lines("test_error_message_should_be_displayed.py:15: Exception")
 
 
-def test_local_variables_should_be_displayed_when_showlocals_option_is_used(testdir):
+def test_local_variables_should_be_displayed_when_showlocals_option_is_used(testdir, parser):
     testdir.makefile(".feature", test=FEATURE)
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        f"""\
         from pytest_bdd import given, when, then, scenario
+        from pytest_bdd.parser import {parser} as Parser
 
 
         @given('there is a bar')
@@ -171,11 +165,10 @@ def test_local_variables_should_be_displayed_when_showlocals_option_is_used(test
             raise Exception("BIGBADABOOM")
 
 
-        @scenario('test.feature', 'Scenario example 1')
+        @scenario('test.feature', 'Scenario example 1', _parser=Parser())
         def test_scenario_1():
             pass
         """
-        )
     )
     result = testdir.runpytest("--gherkin-terminal-reporter", "--showlocals")
     result.assert_outcomes(passed=0, failed=1)
@@ -183,48 +176,45 @@ def test_local_variables_should_be_displayed_when_showlocals_option_is_used(test
     result.stdout.fnmatch_lines("""local_var*=*MULTIPASS*""")
 
 
-def test_step_parameters_should_be_replaced_by_their_values(testdir):
+def test_step_parameters_should_be_replaced_by_their_values(testdir, parser):
     example = {"start": 10, "eat": 3, "left": 7}
     testdir.makefile(
         ".feature",
-        test=textwrap.dedent(
-            """\
-        Feature: Gherkin terminal output feature
-            Scenario Outline: Scenario example 2
-                Given there are <start> cucumbers
-                When I eat <eat> cucumbers
-                Then I should have <left> cucumbers
+        test="""\
+            Feature: Gherkin terminal output feature
+                Scenario Outline: Scenario example 2
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers
 
-            Examples:
-            | start | eat | left |
-            |{start}|{eat}|{left}|
-        """.format(
-                **example
-            )
+                Examples:
+                | start | eat | left |
+                |{start}|{eat}|{left}|
+            """.format(
+            **example
         ),
     )
     testdir.makepyfile(
-        test_gherkin=textwrap.dedent(
-            """\
+        test_gherkin=f"""\
             from pytest_bdd import given, when, scenario, then, parsers
+            from pytest_bdd.parser import {parser} as Parser
 
-            @given(parsers.parse('there are {start} cucumbers'), target_fixture="start_cucumbers")
+            @given(parsers.parse('there are {{start}} cucumbers'), target_fixture="start_cucumbers")
             def start_cucumbers(start):
                 return start
 
-            @when(parsers.parse('I eat {eat} cucumbers'))
+            @when(parsers.parse('I eat {{eat}} cucumbers'))
             def eat_cucumbers(start_cucumbers, eat):
                 pass
 
-            @then(parsers.parse('I should have {left} cucumbers'))
+            @then(parsers.parse('I should have {{left}} cucumbers'))
             def should_have_left_cucumbers(start_cucumbers, left):
                 pass
 
-            @scenario('test.feature', 'Scenario example 2')
+            @scenario('test.feature', 'Scenario example 2', _parser=Parser())
             def test_scenario_2():
                 pass
-        """
-        )
+            """
     )
 
     result = testdir.runpytest("--gherkin-terminal-reporter", "-vv")

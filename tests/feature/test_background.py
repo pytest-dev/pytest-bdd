@@ -2,6 +2,8 @@
 
 import textwrap
 
+from pytest import mark, param
+
 FEATURE = '''\
 Feature: Background support
 
@@ -74,29 +76,29 @@ def foo_has_no_bar(foo):
 """
 
 
-def test_background_basic(testdir):
+@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated, mark.deficient, mark.skip]), "GherkinParser"])
+def test_background_basic(testdir, parser):
     """Test feature background."""
     testdir.makefile(".feature", background=textwrap.dedent(FEATURE))
 
     testdir.makeconftest(textwrap.dedent(STEPS))
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        f"""\
         from pytest_bdd import scenario
+        from pytest_bdd.parser import {parser} as Parser
 
-        @scenario("background.feature", "Basic usage")
+        @scenario("background.feature", "Basic usage", _parser=Parser())
         def test_background():
             pass
-
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)
 
 
-def test_background_check_order(testdir):
+@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
+def test_background_check_order(testdir, parser):
     """Test feature background to ensure that background steps are executed first."""
 
     testdir.makefile(".feature", background=textwrap.dedent(FEATURE))
@@ -104,16 +106,14 @@ def test_background_check_order(testdir):
     testdir.makeconftest(textwrap.dedent(STEPS))
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        f"""\
         from pytest_bdd import scenario
+        from pytest_bdd.parser import {parser} as Parser
 
         @scenario("background.feature", "Background steps are executed first")
         def test_background():
             pass
-
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)

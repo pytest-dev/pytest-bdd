@@ -2,8 +2,10 @@
 import textwrap
 
 import pytest
+from pytest import mark, param
 
 
+@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated, mark.deficient, mark.skip]), "GherkinParser"])
 @pytest.mark.parametrize(
     ["feature_text", "expected_text"],
     [
@@ -59,18 +61,19 @@ import pytest
         ),
     ],
 )
-def test_multiline(testdir, feature_text, expected_text):
+def test_multiline(testdir, feature_text, expected_text, parser):
     testdir.makefile(".feature", multiline=feature_text)
 
     testdir.makepyfile(
         textwrap.dedent(
-            """\
+            f"""\
             from pytest_bdd import parsers, given, then, scenario
+            from pytest_bdd.parser import {parser} as Parser
 
-            expected_text = '''{expected_text}'''
+            expected_text = '''{{expected_text}}'''
 
 
-            @scenario("multiline.feature", "Multiline step using sub indentation")
+            @scenario("multiline.feature", "Multiline step using sub indentation", _parser=Parser())
             def test_multiline(request):
                 pass
 

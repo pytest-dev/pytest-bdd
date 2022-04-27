@@ -1,39 +1,38 @@
 """Scenario Outline tests."""
-import textwrap
 
-import pytest
+from pytest import mark, param
 
 from pytest_bdd.utils import collect_dumped_objects
 from tests.utils import assert_outcomes
 
 STEPS = """\
-from pytest_bdd import parsers, given, when, then
-from pytest_bdd.utils import dump_obj
+    from pytest_bdd import parsers, given, when, then
+    from pytest_bdd.utils import dump_obj
 
 
-@given(parsers.parse("there are {start:d} cucumbers"), target_fixture="start_cucumbers")
-def start_cucumbers(start):
-    assert isinstance(start, int)
-    dump_obj(start)
-    return {"start": start}
+    @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="start_cucumbers")
+    def start_cucumbers(start):
+        assert isinstance(start, int)
+        dump_obj(start)
+        return {"start": start}
 
 
-@when(parsers.parse("I eat {eat:g} cucumbers"))
-def eat_cucumbers(start_cucumbers, eat):
-    assert isinstance(eat, float)
-    dump_obj(eat)
-    start_cucumbers["eat"] = eat
+    @when(parsers.parse("I eat {eat:g} cucumbers"))
+    def eat_cucumbers(start_cucumbers, eat):
+        assert isinstance(eat, float)
+        dump_obj(eat)
+        start_cucumbers["eat"] = eat
 
 
-@then(parsers.parse("I should have {left} cucumbers"))
-def should_have_left_cucumbers(start_cucumbers, start, eat, left):
-    assert isinstance(left, str)
-    dump_obj(left)
-    assert start - eat == int(left)
-    assert start_cucumbers["start"] == start
-    assert start_cucumbers["eat"] == eat
-
+    @then(parsers.parse("I should have {left} cucumbers"))
+    def should_have_left_cucumbers(start_cucumbers, start, eat, left):
+        assert isinstance(left, str)
+        dump_obj(left)
+        assert start - eat == int(left)
+        assert start_cucumbers["start"] == start
+        assert start_cucumbers["eat"] == eat
 """
+
 STEPS_OUTLINED = """\
     from pytest_bdd import given, when, then, scenario, parsers
     from pytest_bdd.utils import dump_obj
@@ -74,18 +73,18 @@ STEPS_OUTLINED = """\
 """
 
 
-@pytest.mark.parametrize(
+@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
+@mark.parametrize(
     "examples_header",
     (
-        pytest.param("Examples:", id="non_named"),
-        pytest.param("Examples: Named", id="named"),
+        param("Examples:", id="non_named"),
+        param("Examples: Named", id="named"),
     ),
 )
-def test_outlined(testdir, examples_header):
+def test_outlined(testdir, examples_header, parser):
     testdir.makefile(
         ".feature",
-        outline=textwrap.dedent(
-            f"""\
+        outline=f"""\
             Feature: Outline
                 Scenario Outline: Outlined given, when, thens
                     Given there are <start> cucumbers
@@ -97,26 +96,24 @@ def test_outlined(testdir, examples_header):
                     |  12   |  5  |  7   | # a comment
                     |  5    |  4  |  1   |
 
-            """
-        ),
+            """,
     )
 
-    testdir.makeconftest(textwrap.dedent(STEPS))
+    testdir.makeconftest(STEPS)
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        f"""\
         from pytest_bdd import scenario
+        from pytest_bdd.parser import {parser} as Parser
 
         @scenario(
             "outline.feature",
             "Outlined given, when, thens",
+            _parser=Parser()
         )
         def test_outline(request):
             pass
-
         """
-        )
     )
     result = testdir.runpytest("-s")
     result.assert_outcomes(passed=2)
@@ -128,13 +125,18 @@ def test_outlined(testdir, examples_header):
     # fmt: on
 
 
-@pytest.mark.xfail(reason="https://github.com/cucumber/common/issues/1953")
-def test_wrongly_outlined_duplicated_parameter_scenario(testdir):
+@mark.parametrize(
+    "parser,",
+    [
+        param("Parser", marks=[mark.deprecated]),
+        param("GherkinParser", marks=[mark.xfail(reason="https://github.com/cucumber/common/issues/1953")]),
+    ],
+)
+def test_wrongly_outlined_duplicated_parameter_scenario(testdir, parser):
     """Test parametrized scenario vertical example table has wrong format."""
     testdir.makefile(
         ".feature",
-        outline=textwrap.dedent(
-            """\
+        outline="""\
             Feature: Outline
                 Scenario Outline: Outlined with duplicated parameter example table
                     Given there are <start> cucumbers
@@ -145,21 +147,19 @@ def test_wrongly_outlined_duplicated_parameter_scenario(testdir):
                     | start | start | left |
                     |   12  |   10  |   7  |
                     |    2  |    1  |   1  |
-            """
-        ),
+            """,
     )
-    testdir.makeconftest(textwrap.dedent(STEPS))
+    testdir.makeconftest(STEPS)
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        f"""\
         from pytest_bdd import scenario
+        from pytest_bdd.parser import {parser} as Parser
 
-        @scenario("outline.feature", "Outlined with wrong vertical example table")
+        @scenario("outline.feature", "Outlined with wrong vertical example table", _parser=Parser())
         def test_outline(request):
             pass
         """
-        )
     )
     result = testdir.runpytest()
     assert_outcomes(result, errors=1)
@@ -169,12 +169,12 @@ def test_wrongly_outlined_duplicated_parameter_scenario(testdir):
     )
 
 
-def test_wrongly_outlined_missing_parameter_scenario(testdir):
+@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
+def test_wrongly_outlined_missing_parameter_scenario(testdir, parser):
     """Test parametrized scenario vertical example table has wrong format."""
     testdir.makefile(
         ".feature",
-        outline=textwrap.dedent(
-            """\
+        outline="""\
             Feature: Outline
                 Scenario Outline: Outlined with wrong vertical example table
                     Given there are <start> cucumbers
@@ -185,28 +185,28 @@ def test_wrongly_outlined_missing_parameter_scenario(testdir):
                     | start | eat | left |
                     |   12  | 10  |   7  |
                     |    2  |  1  |
-            """
-        ),
+            """,
     )
-    testdir.makeconftest(textwrap.dedent(STEPS))
+    testdir.makeconftest(STEPS)
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        f"""\
         from pytest_bdd import scenario
+        from pytest_bdd.parser import {parser} as Parser
 
-        @scenario("outline.feature", "Outlined with wrong vertical example table")
+
+        @scenario("outline.feature", "Outlined with wrong vertical example table", _parser=Parser())
         def test_outline(request):
             pass
         """
-        )
     )
     result = testdir.runpytest()
     assert_outcomes(result, errors=1)
     result.stdout.fnmatch_lines("*FeatureError*")
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_wrongly_outlined_duplicated_parameter_feature(testdir):
     """Test parametrized scenario vertical example table has wrong format."""
     testdir.makefile(
@@ -224,7 +224,7 @@ def test_wrongly_outlined_duplicated_parameter_feature(testdir):
                     Then I should have <left> cucumbers
             """,
     )
-    testdir.makeconftest(textwrap.dedent(STEPS))
+    testdir.makeconftest(STEPS)
 
     testdir.makepyfile(
         """\
@@ -244,12 +244,12 @@ def test_wrongly_outlined_duplicated_parameter_feature(testdir):
     )
 
 
-def test_outlined_with_other_fixtures(testdir):
+@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
+def test_outlined_with_other_fixtures(testdir, parser):
     """Test outlined scenario also using other parametrized fixture."""
     testdir.makefile(
         ".feature",
-        outline=textwrap.dedent(
-            """\
+        outline="""\
             Feature: Outline
                 Scenario Outline: Outlined given, when, thens
                     Given there are <start> cucumbers
@@ -260,21 +260,18 @@ def test_outlined_with_other_fixtures(testdir):
                     | start | eat | left |
                     |  12   |  5  |  7   |
                     |  5    |  4  |  1   |
-
-            """
-        ),
+            """,
     )
 
-    testdir.makeconftest(textwrap.dedent(STEPS))
+    testdir.makeconftest(STEPS)
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
-        import pytest
+        f"""\
+        from pytest import fixture
         from pytest_bdd import scenario
+        from pytest_bdd.parser import {parser} as Parser
 
-
-        @pytest.fixture(params=[1, 2, 3])
+        @fixture(params=[1, 2, 3])
         def other_fixture(request):
             return request.param
 
@@ -282,23 +279,23 @@ def test_outlined_with_other_fixtures(testdir):
         @scenario(
             "outline.feature",
             "Outlined given, when, thens",
+            _parser=Parser(),
         )
         def test_outline(other_fixture):
             pass
-
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=6)
 
 
-@pytest.mark.deprecated
-@pytest.mark.parametrize(
+@mark.surplus
+@mark.deprecated
+@mark.parametrize(
     "examples_header",
     (
-        pytest.param("Examples: Vertical", id="non_named"),
-        pytest.param("Examples: Vertical Named", id="named"),
+        param("Examples: Vertical", id="non_named"),
+        param("Examples: Vertical Named", id="named"),
     ),
 )
 def test_vertical_example(testdir, examples_header):
@@ -319,7 +316,7 @@ def test_vertical_example(testdir, examples_header):
         """,
     )
 
-    testdir.makeconftest(textwrap.dedent(STEPS))
+    testdir.makeconftest(STEPS)
 
     testdir.makepyfile(
         """\
@@ -346,7 +343,8 @@ def test_vertical_example(testdir, examples_header):
     # fmt: on
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_wrongly_outlined_duplicated_parameter_vertical_scenario(testdir):
     """Test parametrized scenario vertical example table has wrong format."""
     testdir.makefile(
@@ -364,7 +362,7 @@ def test_wrongly_outlined_duplicated_parameter_vertical_scenario(testdir):
                     | left  | 7  | 1 |
         """,
     )
-    testdir.makeconftest(textwrap.dedent(STEPS))
+    testdir.makeconftest(STEPS)
 
     testdir.makepyfile(
         """\
@@ -384,7 +382,8 @@ def test_wrongly_outlined_duplicated_parameter_vertical_scenario(testdir):
     )
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_wrongly_outlined_missing_parameter_vertical_scenario(testdir):
     """Test parametrized scenario vertical example table has wrong format."""
     testdir.makefile(
@@ -402,7 +401,7 @@ def test_wrongly_outlined_missing_parameter_vertical_scenario(testdir):
                     | left  | 7  |
             """,
     )
-    testdir.makeconftest(textwrap.dedent(STEPS))
+    testdir.makeconftest(STEPS)
 
     testdir.makepyfile(
         """\
@@ -421,7 +420,8 @@ def test_wrongly_outlined_missing_parameter_vertical_scenario(testdir):
     )
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_wrongly_outlined_duplicated_parameter_vertical_feature(testdir):
     """Test parametrized feature vertical example table has wrong format."""
     testdir.makefile(
@@ -440,7 +440,7 @@ def test_wrongly_outlined_duplicated_parameter_vertical_feature(testdir):
                     Then I should have <left> cucumbers
             """,
     )
-    testdir.makeconftest(textwrap.dedent(STEPS))
+    testdir.makeconftest(STEPS)
 
     testdir.makepyfile(
         """\
@@ -460,7 +460,8 @@ def test_wrongly_outlined_duplicated_parameter_vertical_feature(testdir):
     )
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_outlined_feature(testdir):
     testdir.makefile(
         ".feature",
@@ -498,13 +499,18 @@ def test_outlined_feature(testdir):
     # fmt: on
 
 
-@pytest.mark.xfail(reason="https://github.com/cucumber/common/issues/1954")
-def test_outline_with_escaped_pipes(testdir):
+@mark.parametrize(
+    "parser,",
+    [
+        param("Parser", marks=[mark.deprecated]),
+        param("GherkinParser", marks=[mark.xfail(reason="https://github.com/cucumber/common/issues/1954")]),
+    ],
+)
+def test_outline_with_escaped_pipes(testdir, parser):
     """Test parametrized feature example table with escaped pipe characters in input."""
     testdir.makefile(
         ".feature",
-        outline=textwrap.dedent(
-            r"""\
+        outline=r"""\
             Feature: Outline With Special characters
 
                 Scenario Outline: Outline with escaped pipe character
@@ -520,27 +526,25 @@ def test_outline_with_escaped_pipes(testdir):
                     | \|           |
                     | bork      \\ |
                     | bork    \\\| |
-            """
-        ),
+            """,
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
-            from pytest_bdd import scenario, given, parsers
-            from pytest_bdd.utils import dump_obj
+        f"""\
+        from pytest_bdd import scenario, given, parsers
+        from pytest_bdd.utils import dump_obj
+        from pytest_bdd.parser import {parser} as Parser
 
 
-            @scenario("outline.feature", "Outline with escaped pipe character")
-            def test_outline_with_escaped_pipe_character(request):
-                pass
+        @scenario("outline.feature", "Outline with escaped pipe character", _parser=Parser())
+        def test_outline_with_escaped_pipe_character(request):
+            pass
 
 
-            @given(parsers.parse("I print the {string}"))
-            def i_print_the_string(string):
-                dump_obj(string)
-            """
-        )
+        @given(parsers.parse("I print the {{string}}"))
+        def i_print_the_string(string):
+            dump_obj(string)
+        """
     )
     result = testdir.runpytest("-s")
     result.assert_outcomes(passed=7)
@@ -550,12 +554,13 @@ def test_outline_with_escaped_pipes(testdir):
         r"bork |",
         r"bork||bork",
         r"|",
-        r"bork      \\",
-        r"bork    \\|",
+        "bork      \\",
+        "bork    \\|",
     ]
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_multi_outlined(testdir):
     testdir.makefile(
         ".feature",
@@ -577,7 +582,7 @@ def test_multi_outlined(testdir):
             """,
     )
 
-    testdir.makeconftest(textwrap.dedent(STEPS))
+    testdir.makeconftest(STEPS)
 
     testdir.makepyfile(
         """\
@@ -603,7 +608,8 @@ def test_multi_outlined(testdir):
     # fmt: on
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_multi_outlined_empty_examples(testdir):
     testdir.makefile(
         ".feature",
@@ -648,7 +654,8 @@ def test_multi_outlined_empty_examples(testdir):
     # fmt: on
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_multi_outlined_tagged_empty_examples(testdir):
     testdir.makefile(
         ".ini",
@@ -701,7 +708,8 @@ def test_multi_outlined_tagged_empty_examples(testdir):
     result.assert_outcomes(passed=7)
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_multi_outlined_feature_with_parameter_union(testdir):
     testdir.makefile(
         ".feature",
@@ -743,7 +751,8 @@ def test_multi_outlined_feature_with_parameter_union(testdir):
     # fmt: on
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_multi_outlined_scenario_and_feature_with_parameter_union(testdir):
     testdir.makefile(
         ".feature",
@@ -787,7 +796,8 @@ def test_multi_outlined_scenario_and_feature_with_parameter_union(testdir):
     # fmt: on
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_outlined_scenario_and_feature_with_parameter_join_by_one_parameter(testdir):
     testdir.makefile(
         ".feature",
@@ -824,7 +834,8 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_one_parameter(test
     # fmt: on
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter(testdir):
     testdir.makefile(
         ".feature",
@@ -864,7 +875,8 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter(te
     # fmt: on
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_outlined_scenario_and_feature_with_parameter_join_empty_and_non_empty_parameter_1(testdir):
     testdir.makefile(
         ".feature",
@@ -894,7 +906,8 @@ def test_outlined_scenario_and_feature_with_parameter_join_empty_and_non_empty_p
     result.assert_outcomes(passed=4)
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_outlined_scenario_and_feature_with_parameter_join_empty_and_non_empty_parameter_2(testdir):
     testdir.makefile(
         ".feature",
@@ -924,7 +937,8 @@ def test_outlined_scenario_and_feature_with_parameter_join_empty_and_non_empty_p
     result.assert_outcomes(passed=4)
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_outlined_scenario_and_feature_with_parameter_join_by_external_parameter(testdir):
     testdir.makefile(
         ".feature",
@@ -963,7 +977,8 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_external_parameter
     # fmt: on
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter_unbalanced(testdir):
     testdir.makefile(
         ".feature",
@@ -1016,7 +1031,8 @@ def test_outlined_scenario_and_feature_with_parameter_join_by_multi_parameter_un
     # fmt: on
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_outlined_scenario_and_feature_with_insufficient_parameter_join(testdir):
     testdir.makefile(
         ".feature",
@@ -1053,7 +1069,8 @@ def test_outlined_scenario_and_feature_with_insufficient_parameter_join(testdir)
     result.assert_outcomes(passed=0, failed=4)
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_outlined_scenario_and_feature_with_extra_parameter_join(testdir):
     testdir.makefile(
         ".feature",
@@ -1085,7 +1102,8 @@ def test_outlined_scenario_and_feature_with_extra_parameter_join(testdir):
     result.assert_outcomes(passed=4)
 
 
-@pytest.mark.deprecated
+@mark.surplus
+@mark.deprecated
 def test_outlined_scenario_and_feature_with_combine_extra_and_insufficient_parameter_join(testdir):
     testdir.makefile(
         ".feature",

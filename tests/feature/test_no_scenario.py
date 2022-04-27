@@ -1,31 +1,28 @@
 """Test no scenarios defined in the feature file."""
 
-import textwrap
+from pytest import mark, param
 
 
-def test_no_scenarios(testdir):
+@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
+def test_no_scenarios(testdir, parser):
     """Test no scenarios defined in the feature file."""
     features = testdir.mkdir("features")
     features.join("test.feature").write_text(
-        textwrap.dedent(
-            """
+        """\
         Given foo
         When bar
         Then baz
-    """
-        ),
+        """,
         "utf-8",
         ensure=True,
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            """
-
+        f"""\
         from pytest_bdd import scenarios
+        from pytest_bdd.parser import {parser} as Parser
 
-        scenarios('features')
-    """
-        )
+        scenarios('features', _parser=Parser())
+        """
     )
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*FeatureError*"])

@@ -5,6 +5,8 @@ import json
 import textwrap
 from typing import TYPE_CHECKING, Any
 
+from pytest import mark, param
+
 if TYPE_CHECKING:  # pragma: no cover
     from _pytest.pytester import RunResult, Testdir
 
@@ -28,7 +30,8 @@ class OfType:
         return isinstance(other, self.type) if self.type else True
 
 
-def test_step_trace(testdir):
+@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated, mark.deficient, mark.skip]), "GherkinParser"])
+def test_step_trace(testdir, parser):
     """Test step trace."""
     testdir.makefile(
         ".ini",
@@ -74,9 +77,10 @@ def test_step_trace(testdir):
     )
     testdir.makepyfile(
         textwrap.dedent(
-            """
+            f"""
         import pytest
         from pytest_bdd import given, when, scenario, parsers
+        from pytest_bdd.parser import {parser} as Parser
 
         @given('a passing step')
         def a_passing_step():
@@ -90,19 +94,19 @@ def test_step_trace(testdir):
         def a_failing_step():
             raise Exception('Error')
 
-        @given(parsers.parse('type {type} and value {value}'))
+        @given(parsers.parse('type {{type}} and value {{value}}'))
         def type_type_and_value_value():
             return 'pass'
 
-        @scenario('test.feature', 'Passing')
+        @scenario('test.feature', 'Passing', _parser=Parser(),)
         def test_passing():
             pass
 
-        @scenario('test.feature', 'Failing')
+        @scenario('test.feature', 'Failing', _parser=Parser(),)
         def test_failing():
             pass
 
-        @scenario('test.feature', 'Passing outline')
+        @scenario('test.feature', 'Passing outline', _parser=Parser(),)
         def test_passing_outline():
             pass
     """
