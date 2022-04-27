@@ -9,7 +9,7 @@ from pytest_bdd.ast import Scenario as ASTScenario
 from pytest_bdd.ast import Step as ASTStep
 from pytest_bdd.ast import TableRow as ASTTableRow
 from pytest_bdd.const import STEP_PREFIXES, TAG
-from pytest_bdd.utils import ModelSchemaPostLoadable, _itemgetter
+from pytest_bdd.utils import ModelSchemaPostLoadable, _itemgetter, deepattrgetter
 
 if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.model.feature import Feature
@@ -184,7 +184,9 @@ class Scenario(ASTNodeIDsMixin, ModelSchemaPostLoadable):
 
     @property
     def table_rows_breadcrumb(self):
-        table_rows_lines = ",".join(map(lambda row: f"line: {row.location.line}", self._ast_table_rows))
+        table_rows_lines = ",".join(
+            map(lambda row: f"line: {deepattrgetter('location.line', default=-1)(row)[0]}", self._ast_table_rows)
+        )
         return f"[table_rows:[{table_rows_lines}]]" if table_rows_lines else ""
 
     @property

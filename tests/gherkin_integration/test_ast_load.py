@@ -17,7 +17,7 @@ test_data = resources / "testdata"
         (test_data / "good").glob("*.ast.ndjson"),
     ),
 )
-def test_simple_load_ast(ast_path):
+def test_simple_load_ast(ast_path: Path):
     with ast_path.open(mode="r") as ast_file:
         for ast_line in ast_file:
             ast_datum = json.loads(ast_line)

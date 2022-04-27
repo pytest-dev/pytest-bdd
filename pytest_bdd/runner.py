@@ -49,7 +49,6 @@ class ScenarioRunner:
         :param feature: Feature.
         :param scenario: Scenario.
         :param request: request.
-        :param encoding: Encoding.
         """
         previous_step = None
         for step in scenario.steps:

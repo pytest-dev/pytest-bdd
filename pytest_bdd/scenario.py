@@ -42,6 +42,7 @@ class ModuleScenarioRegistry:
         scenario_name = attrib(default=None)
         encoding = attrib(default="utf-8")
         features_base_dir = attrib(default=None)
+        parser = attrib(default=None)
 
     caller_locals = attrib()
     caller_module_path = attrib()
@@ -111,7 +112,10 @@ class ModuleScenarioRegistry:
                 rel_feature_path = feature_path
 
             feature = Feature.get_from_path(
-                features_base_dir=features_base_dir, filename=rel_feature_path, encoding=locator.encoding
+                features_base_dir=features_base_dir,
+                filename=rel_feature_path,
+                encoding=locator.encoding,
+                parser=locator.parser,
             )
 
             for scenario in feature.scenarios:
@@ -122,11 +126,9 @@ class ModuleScenarioRegistry:
         test_func = metafunc.function
         self.config = metafunc.config
 
-        parametrizations = (
-            (feature, scenario)
-            for (_, _), (func, feature, scenario) in self.resolved_locators.items()
-            if func is test_func
-        )
+        parametrizations = [
+            (feature, scenario) for _, (func, feature, scenario) in self.resolved_locators.items() if func is test_func
+        ]
 
         metafunc.parametrize(
             "feature, scenario",
@@ -189,6 +191,7 @@ def scenario(
     return_test_decorator=True,
     _caller_module_locals=None,
     _caller_module_path=None,
+    _parser=None,
 ):
     """
     Scenario decorator.
@@ -207,6 +210,7 @@ def scenario(
         return_test_decorator=return_test_decorator,
         _caller_module_locals=_caller_module_locals or get_caller_module_locals(depth=2),
         _caller_module_path=_caller_module_path or get_caller_module_path(depth=2),
+        _parser=_parser,
     )
 
 
@@ -217,6 +221,7 @@ def scenarios(
     return_test_decorator=True,
     _caller_module_locals=None,
     _caller_module_path=None,
+    _parser=None,
 ):
     """
     Scenario decorator.
@@ -234,6 +239,7 @@ def scenarios(
         return_test_decorator=return_test_decorator,
         _caller_module_locals=_caller_module_locals or get_caller_module_locals(depth=2),
         _caller_module_path=_caller_module_path or get_caller_module_path(depth=2),
+        _parser=_parser,
     )
 
 
@@ -245,6 +251,7 @@ def _scenarios(
     return_test_decorator=True,
     _caller_module_locals=None,
     _caller_module_path=None,
+    _parser=None,
 ):
     """
     Scenario decorator.
@@ -260,6 +267,7 @@ def _scenarios(
         scenario_name=scenario_name,
         encoding=encoding,
         features_base_dir=features_base_dir,
+        parser=_parser,
     )
     module_scenario_registry = ModuleScenarioRegistry.get(
         caller_locals=_caller_module_locals,

@@ -28,7 +28,6 @@ from typing import cast
 
 from attr import Factory, attrib, attrs
 from gherkin.errors import CompositeParserException  # type: ignore[import]
-from gherkin.parser import Parser  # type: ignore[import]
 from gherkin.pickles.compiler import Compiler  # type: ignore[import]
 
 from pytest_bdd.ast import AST, ASTSchema
@@ -46,7 +45,13 @@ class Feature:
     scenarios: list[Scenario] = attrib(default=Factory(list))
 
     @classmethod
-    def get_from_path(cls, features_base_dir: Path | str, filename: Path | str, encoding: str = "utf-8") -> Feature:
+    def get_from_path(
+        cls, features_base_dir: Path | str, filename: Path | str, encoding: str = "utf-8", parser=None
+    ) -> Feature:
+        if parser is None:
+            from pytest_bdd.parser import GherkinParser
+
+            parser = GherkinParser()
         absolute_feature_path = (Path(features_base_dir) / filename).resolve()
         _filename = Path(filename)
         relative_posix_feature_path = (
@@ -59,7 +64,7 @@ class Feature:
             feature_file_data = feature_file.read()
 
         try:
-            gherkin_ast_data = Parser().parse(feature_file_data)
+            gherkin_ast_data = parser.parse(feature_file_data, uri=uri)
         except CompositeParserException as e:
             raise FeatureError(
                 e.args[0],
@@ -67,11 +72,10 @@ class Feature:
                 linecache.getline(str(absolute_feature_path), e.errors[0].location["line"]).rstrip("\n"),
                 uri,
             ) from e
-        gherkin_ast_data["uri"] = uri
 
-        gherkin_ast = cls.load_ast({"gherkinDocument": gherkin_ast_data})
+        gherkin_ast = cls.load_ast(gherkin_ast_data)
 
-        scenarios_data = Compiler().compile(gherkin_ast_data)
+        scenarios_data = Compiler().compile(gherkin_ast_data["gherkinDocument"])
         scenarios = cls.load_scenarios(scenarios_data)
 
         instance = cls(  # type: ignore[call-arg]

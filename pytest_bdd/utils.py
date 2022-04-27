@@ -9,7 +9,7 @@ from contextlib import suppress
 from functools import partial, reduce
 from inspect import getframeinfo, signature
 from itertools import tee
-from operator import getitem, itemgetter
+from operator import attrgetter, getitem, itemgetter
 from sys import _getframe
 from typing import TYPE_CHECKING, Callable, Collection, Mapping, cast
 
@@ -214,6 +214,11 @@ class ModelSchemaPostLoadable:
             setattr(instance, argument, value)
         return instance
 
+    def setattrs(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        return self
+
 
 def _itemgetter(*items):
     def func(obj):
@@ -225,6 +230,27 @@ def _itemgetter(*items):
             return itemgetter(*items)(obj)
 
     return func
+
+
+def deepattrgetter(*attrs, **kwargs):
+    empty = object()
+    default = kwargs.pop("default", empty)
+
+    def fn(obj):
+        def _():
+            if default is empty:
+                for attr in attrs:
+                    yield attrgetter(attr)(obj)
+            else:
+                for attr in attrs:
+                    try:
+                        yield attrgetter(attr)(obj)
+                    except AttributeError:
+                        yield default
+
+        return tuple(_())
+
+    return fn
 
 
 def make_python_name(string: str) -> str:
