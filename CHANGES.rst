@@ -3,29 +3,39 @@ Changelog
 
 Planned
 -------
-- Use official gherkin parser
 - Allow call steps from other steps
-- Move old parser to use pickles
+- Review report generation to be conform with official tools
+   - https://github.com/pytest-dev/pytest-bdd/issues/488
+- New features
+   - https://github.com/pytest-dev/pytest-bdd/issues/512
+- Support of official parser
+   - https://github.com/pytest-dev/pytest-bdd/issues/502
+
 
 Unreleased
 ----------
 
 - Default parser is switched to cfparse. Step name is compiled to cfparse
 - Step functions could get compiled instances of parse, cfparse and re.compile directly
-- Fix support of test step render by pytest parametrization dropped in release 5.0.0 adding adapter between fixtures and examples
 - Drop pytest 4
 - Drop python 3.6
-- Added tags support for Examples sections
-- Added joining by parameters between examples sections on different levels (and with fixtures)
+- Added tags support for Examples sections for original parser
+- Added joining by parameters between examples sections on different levels (and with fixtures) for original parser
 - Step could override multiple fixtures using ``target_fixtures`` parameter
 - Default step parameters injection as fixtures behavior could be changed by ``params_fixtures_mapping`` step parameter
 - Step definitions can have "yield" statements again (4.0 release broke it). They will be executed as normal fixtures: code after the yield is executed during teardown of the test. (youtux)
 - Show pass/fail status per step in Gherkin terminal reporter
-- Step definitions could be used independently from keyword
+- Step definitions could be used independently from keyword by ``step`` decorator
+   - https://github.com/pytest-dev/pytest-bdd/issues/450
 - ``pytest_bdd_apply_tag`` was removed; ``pytest_bdd_convert_tag_to_marks`` was added instead
-- Parser switched to original one
+- Parser switched to official one
+   - https://github.com/pytest-dev/pytest-bdd/issues/394
+   - https://github.com/pytest-dev/pytest-bdd/issues/511
 - Changes ``scenario`` and ``scenarios`` function/decorator feature registration order. Both could be used as decorators
 - Move scenario execution & step matching to hooks
+- Other
+   - https://github.com/pytest-dev/pytest-bdd/issues/464
+   - https://github.com/pytest-dev/pytest-bdd/issues/474
 
 5.0.0
 -----
