@@ -146,7 +146,7 @@ class Feature:
     rel_filename: str = attrib()
     name: str | None = attrib()
     tags: set = attrib()
-    examples = attrib()
+    examples: list = attrib()
     background: Background | None = attrib()
     line_number: int = attrib()
     description: str = attrib()
@@ -162,7 +162,7 @@ class Feature:
             line_number=1,
             name=None,
             tags=set(),
-            examples=Examples(),
+            examples=list(),
             background=None,
             description="",
         )
@@ -363,7 +363,7 @@ class ScenarioTemplate:
 
     tags: OrderedSet = attrib(default=Factory(OrderedSet))
     steps_storage: list[Step] = attrib(default=Factory(list))
-    examples = attrib(default=Factory(lambda *args, **kwargs: Examples(*args, **kwargs)))
+    examples: list = attrib(default=Factory(list))
 
     def add_step(self, step: Step) -> None:
         """Add step to the scenario.
@@ -377,51 +377,6 @@ class ScenarioTemplate:
     def steps(self) -> list[Step]:
         background = self.feature.background
         return (background.steps if background else []) + self.steps_storage
-
-    def render(self, context: Mapping[str, Any]) -> Scenario:
-        steps = [
-            Step(  # type: ignore[call-arg]
-                name=templated_step.render(context),
-                type=templated_step.type,
-                indent=templated_step.indent,
-                line_number=templated_step.line_number,
-                keyword=templated_step.keyword,
-            )
-            for templated_step in self.steps
-        ]
-        return Scenario(  # type: ignore[call-arg]
-            feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=set(self.tags)
-        )
-
-    @property
-    def params(self):
-        return reduce(or_, map(set, (step.params for step in self.steps)), set())
-
-    def validate(self, external_join_keys: set[str] | tuple = ()):
-        """Validate the scenario.
-
-        :raises ScenarioValidationError: when scenario is not valid
-        """
-        params = self.params
-        united_example_rows = list(self.united_example_rows)
-        example_rows_with_extra_params = [
-            row for row in united_example_rows if set(row.keys()) - params - row.join_params - external_join_keys
-        ]
-        external_defined_step_params: set[ExampleRowUnited] = reduce(
-            or_,
-            (
-                params - set(row.keys()) - external_join_keys
-                for row in united_example_rows
-                if params - set(row.keys()) - external_join_keys
-            ),
-            set(),
-        )
-
-        if example_rows_with_extra_params:
-            warn(PytestBDDScenarioExamplesExtraParamsWarning(self, example_rows_with_extra_params))
-
-        if external_defined_step_params:
-            warn(PytestBDDScenarioStepsExtraPramsWarning(self, external_defined_step_params))
 
     @property
     def example_table_combinations(self) -> Iterable[ExampleTableCombination]:
@@ -526,28 +481,6 @@ class Step:
         lines = ([self.first_name_row] if self.first_name_row else []) + [multilines_content]
         self.name = "\n".join(lines).strip()
 
-    def __str__(self) -> str:
-        """Full step name including the type."""
-        return f'{self.type.capitalize()} "{self.name}"'
-
-    @property
-    def params(self) -> tuple[str, ...]:
-        """Get step params."""
-        return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
-
-    def render(self, context: Mapping[str, Any]):
-        def replacer(m: Match):
-            varname = m.group(1)
-            try:
-                return str(context[varname])
-            except KeyError:
-                warn(
-                    PytestCollectionWarning(f'Name "{varname}" wasn\'t found between examples and fixtures, left as is')
-                )
-                return f"<{varname}>"
-
-        return STEP_PARAM_RE.sub(replacer, self.name)
-
     @attrs
     class ASTBuilder:
         model: Step = attrib()
@@ -584,12 +517,6 @@ class Background:
         """Add step to the background."""
         step.background = self
         self.steps.append(step)
-
-
-class Examples(list):
-    @property
-    def example_params(self):
-        return reduce(or_, (set(example_table.example_params) for example_table in self), set())
 
 
 @attrs
@@ -755,10 +682,6 @@ class ExampleTable:
             assert len(self.example_params) == len(example_row)
             yield ExampleRow(zip(self.example_params, example_row), example_table=self, index=index, kind=self.kind)  # type: ignore[call-arg]
 
-    def __bool__(self) -> bool:
-        """Bool comparison."""
-        return bool(self.examples)
-
 
 @attrs
 class ExampleTableColumns(ExampleTable):
@@ -819,11 +742,11 @@ class ExampleTableCombination(Collection):
             except ExampleRowUnited.BuildError:
                 pass
 
-    def __len__(self):
+    def __len__(self):  # pragma: no cover
         return len(self._list)
 
     def __iter__(self):
         return iter(self._list)
 
-    def __contains__(self, item):
+    def __contains__(self, item):  # pragma: no cover
         return item in self._list
