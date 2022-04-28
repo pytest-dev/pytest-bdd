@@ -665,7 +665,7 @@ The code will look like:
         pass
 
 
-    @given(parsers.parse("there are {start:d} cucumbers", target_fixture="start_cucumbers"))
+    @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="start_cucumbers")
     def start_cucumbers(start):
         assert isinstance(start, int)
         return dict(start=start)
