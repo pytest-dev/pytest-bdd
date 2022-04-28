@@ -1,29 +1,21 @@
 from __future__ import annotations
 
 import re
-import textwrap
 from collections import OrderedDict
-from functools import reduce
 from itertools import chain, count, product, zip_longest
-from operator import or_
-from typing import TYPE_CHECKING, Collection, Iterator, Mapping, Match, cast
-from warnings import warn
+from textwrap import dedent
+from typing import TYPE_CHECKING, Collection, Mapping, cast
 
-from _pytest.warning_types import PytestCollectionWarning
 from attr import Factory, attrib, attrs, validate
 from gherkin.parser import Parser as CucumberIOBaseParser  # type: ignore[import]
 from ordered_set import OrderedSet
 
-import pytest_bdd.steps
-from pytest_bdd import const
-
-from . import ast, exceptions
-from .ast import ASTSchema
-from .utils import SimpleMapping
-from .warning_types import PytestBDDScenarioExamplesExtraParamsWarning, PytestBDDScenarioStepsExtraPramsWarning
+from pytest_bdd import ast, const, exceptions
+from pytest_bdd.ast import ASTSchema
+from pytest_bdd.utils import SimpleMapping
 
 if TYPE_CHECKING:  # pragma: no cover
-    from typing import Any, Iterable
+    from typing import Any, Iterable, Iterator
 
 FEATURE = "feature"
 SCENARIO_OUTLINE = "scenario outline"
@@ -55,71 +47,7 @@ STEP_PREFIXES = {
 }
 
 SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
-STEP_PARAM_RE = re.compile(r"<(.+?)>")
 COMMENT_RE = re.compile(r"(^|(?<=\s))#")
-
-
-def split_line(line: str) -> list[str]:
-    """Split the given Examples line.
-
-    :param str|unicode line: Feature file Examples line.
-
-    :return: List of strings.
-    """
-    return [cell.replace("\\|", "|").strip() for cell in SPLIT_LINE_RE.split(line)[1:-1]]
-
-
-def parse_line(line: str) -> tuple[str, str]:
-    """Parse step line to get the step prefix (Scenario, Given, When, Then or And) and the actual step name.
-
-    :param line: Line of the Feature file.
-
-    :return: `tuple` in form ("<prefix>", "<Line without the prefix>").
-    """
-    for _, prefix in STEP_PREFIXES.items():
-        if line.startswith(prefix):
-            return prefix.strip(), line[len(prefix) :].strip()
-    return "", line
-
-
-def strip_comments(line: str) -> str:
-    """Remove comments.
-
-    :param str line: Line of the Feature file.
-
-    :return: Stripped line.
-    """
-    res = COMMENT_RE.search(line)
-    if res:
-        line = line[: res.start()]
-    return line.strip()
-
-
-def get_step_type(line: str) -> str | None:
-    """Detect step type by the beginning of the line.
-
-    :param str line: Line of the Feature file.
-
-    :return: SCENARIO, GIVEN, WHEN, THEN, or `None` if can't be detected.
-    """
-    for _type, prefix in STEP_PREFIXES.items():
-        if line.startswith(prefix) and _type not in CONTINUATION_STEP_TYPES:
-            return _type
-    return None
-
-
-def get_tags(line: str | None) -> OrderedSet[str]:
-    """Get tags out of the given line.
-
-    :param str line: Feature file text line.
-
-    :return: List of tags.
-    """
-    if not line or not line.strip().startswith(STEP_PREFIXES[TAG]):
-        return OrderedSet()
-    return OrderedSet(
-        [tag.lstrip(STEP_PREFIXES[TAG]) for tag in line.strip().split(f" {STEP_PREFIXES[TAG]}") if len(tag) > 1]
-    )
 
 
 class GherkinParser(CucumberIOBaseParser):
@@ -132,41 +60,16 @@ class GherkinParser(CucumberIOBaseParser):
 
 class Parser:
     def parse(self, content, uri=None):
-        feature = Feature.parse(content, uri=uri)
+        return ASTSchema().dump(Feature.ASTBuilder(self.parse_content(content, uri=uri)).build())
 
-        feature_ast = Feature.ASTBuilder(feature).build()
-        return ASTSchema().dump(feature_ast)
-
-
-@attrs
-class Feature:
-    node_kind = "Feature"
-
-    scenarios: OrderedDict = attrib()
-    rel_filename: str = attrib()
-    name: str | None = attrib()
-    tags: set = attrib()
-    examples: list = attrib()
-    background: Background | None = attrib()
-    line_number: int = attrib()
-    description: str = attrib()
-    filename: str = attrib(default=None)
-
-    @staticmethod
-    def parse(content, uri) -> Feature:
-        current_node: Feature | ScenarioTemplate
+    @classmethod
+    def parse_content(cls, content, uri) -> Feature:
+        current_node: Feature | Scenario
         current_example_table: ExampleTable
         feature = current_node = Feature(  # type: ignore[call-arg]
-            scenarios=OrderedDict(),
             rel_filename=uri,
-            line_number=1,
-            name=None,
-            tags=set(),
-            examples=list(),
-            background=None,
-            description="",
         )
-        scenario: ScenarioTemplate | None = None
+        scenario: Scenario | None = None
         mode: str | None = None
         prev_mode = None
         description: list[str] = []
@@ -186,10 +89,10 @@ class Feature:
                 step = None
                 multiline_step = False
             stripped_line = line.strip()
-            clean_line = strip_comments(line)
+            clean_line = cls.strip_comments(line)
             if not clean_line and (not prev_mode or prev_mode not in FEATURE):
                 continue
-            mode = get_step_type(clean_line) or mode
+            mode = cls.get_step_type(clean_line) or mode
 
             allowed_prev_mode: tuple[str, ...] = (BACKGROUND, GIVEN, WHEN)
 
@@ -213,11 +116,11 @@ class Feature:
                     "Tag not around Feature, Scenario or Examples ", line_number, clean_line, uri
                 )
             else:
-                current_tags = OrderedSet(current_tags | get_tags(clean_line))
+                current_tags = OrderedSet(current_tags | cls.get_tags(clean_line))
 
             if mode == FEATURE:
                 if prev_mode is None or prev_mode == TAG:
-                    _, feature.name = parse_line(clean_line)
+                    _, feature.name = cls.parse_line(clean_line)
                     feature.line_number = line_number
                     feature.tags = set(current_tags)
                     current_tags: OrderedSet = OrderedSet()  # type: ignore[no-redef]
@@ -234,9 +137,9 @@ class Feature:
             prev_mode = mode
 
             # Remove Feature, Given, When, Then, And
-            keyword, parsed_line = parse_line(clean_line)
+            keyword, parsed_line = cls.parse_line(clean_line)
             if mode in [SCENARIO, SCENARIO_OUTLINE]:
-                feature.scenarios[parsed_line] = scenario = current_node = ScenarioTemplate(  # type: ignore[call-arg]
+                feature.scenarios[parsed_line] = scenario = current_node = Scenario(  # type: ignore[call-arg]
                     feature=feature, name=parsed_line, line_number=line_number, tags=current_tags
                 )
                 current_tags = OrderedSet()
@@ -248,7 +151,7 @@ class Feature:
                     mode, ExampleTableBuilder = EXAMPLES_HEADERS, ExampleTableRows
                 else:
                     mode, ExampleTableBuilder = EXAMPLE_LINE_VERTICAL, ExampleTableColumns  # type: ignore[no-redef]
-                _, table_name = parse_line(clean_line)
+                _, table_name = cls.parse_line(clean_line)
                 current_example_table = ExampleTableBuilder(  # type: ignore[call-arg]
                     name=table_name or None, line_number=line_number, node=current_node
                 )
@@ -257,7 +160,7 @@ class Feature:
                 current_tags = OrderedSet()
             elif mode == EXAMPLES_HEADERS:
                 mode = EXAMPLE_LINE
-                current_example_table.example_params = [*split_line(parsed_line)]
+                current_example_table.example_params = [*cls.split_line(parsed_line)]
                 try:
                     validate(current_example_table)
                 except exceptions.ExamplesNotValidError as exc:
@@ -269,7 +172,7 @@ class Feature:
                     ) from exc
             elif mode == EXAMPLE_LINE:
                 try:
-                    current_example_table.examples += [[*split_line(stripped_line)]]
+                    current_example_table.examples += [[*cls.split_line(stripped_line)]]
                     validate(current_example_table)
                 except exceptions.ExamplesNotValidError as exc:
                     node_message_prefix = "Scenario" if scenario else "Feature"
@@ -277,7 +180,7 @@ class Feature:
                     raise exceptions.FeatureError(message, line_number, clean_line, uri) from exc
             elif mode == EXAMPLE_LINE_VERTICAL:
                 try:
-                    param, *examples = split_line(stripped_line)
+                    param, *examples = cls.split_line(stripped_line)
                 except ValueError:
                     pass
                 else:
@@ -296,20 +199,106 @@ class Feature:
                 step = Step(
                     name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword
                 )  # type: ignore[call-arg]
-                target: Background | ScenarioTemplate
+                target: Background | Scenario
                 if feature.background and not scenario:
                     target = feature.background
                 else:
-                    target = cast(ScenarioTemplate, scenario)
+                    target = cast(Scenario, scenario)
                 target.add_step(step)
 
         feature.description = "\n".join(description).strip()
         return feature
 
+    @staticmethod
+    def split_line(line: str) -> list[str]:
+        """Split the given Examples line.
+
+        :param str|unicode line: Feature file Examples line.
+
+        :return: List of strings.
+        """
+        return [cell.replace("\\|", "|").strip() for cell in SPLIT_LINE_RE.split(line)[1:-1]]
+
+    @staticmethod
+    def parse_line(line: str) -> tuple[str, str]:
+        """Parse step line to get the step prefix (Scenario, Given, When, Then or And) and the actual step name.
+
+        :param line: Line of the Feature file.
+
+        :return: `tuple` in form ("<prefix>", "<Line without the prefix>").
+        """
+        for _, prefix in STEP_PREFIXES.items():
+            if line.startswith(prefix):
+                return prefix.strip(), line[len(prefix) :].strip()
+        return "", line
+
+    @staticmethod
+    def strip_comments(line: str) -> str:
+        """Remove comments.
+
+        :param str line: Line of the Feature file.
+
+        :return: Stripped line.
+        """
+        res = COMMENT_RE.search(line)
+        if res:
+            line = line[: res.start()]
+        return line.strip()
+
+    @staticmethod
+    def get_step_type(line: str) -> str | None:
+        """Detect step type by the beginning of the line.
+
+        :param str line: Line of the Feature file.
+
+        :return: SCENARIO, GIVEN, WHEN, THEN, or `None` if can't be detected.
+        """
+        for _type, prefix in STEP_PREFIXES.items():
+            if line.startswith(prefix) and _type not in CONTINUATION_STEP_TYPES:
+                return _type
+        return None
+
+    @staticmethod
+    def get_tags(line: str | None) -> OrderedSet[str]:
+        """Get tags out of the given line.
+
+        :param str line: Feature file text line.
+
+        :return: List of tags.
+        """
+        if not line or not line.strip().startswith(STEP_PREFIXES[TAG]):
+            return OrderedSet()
+        return OrderedSet(
+            [tag.lstrip(STEP_PREFIXES[TAG]) for tag in line.strip().split(f" {STEP_PREFIXES[TAG]}") if len(tag) > 1]
+        )
+
+
+@attrs
+class _ASTBuilder:
+    model: Any
+    id_generator = attrib(default=Factory(count), kw_only=True)
+
+    def build(self):  # pragma: no cover
+        raise NotImplementedError
+
+
+@attrs
+class Feature:
+    node_kind = "Feature"
+
+    name: str | None = attrib(default=None)
+    description: str = attrib(default="")
+    filename: str = attrib(default=None)
+    rel_filename: str | None = attrib(default=None)
+    tags: set = attrib(default=Factory(set))
+    examples: list = attrib(default=Factory(list))
+    background: Background | None = attrib(default=None)
+    line_number: int = attrib(default=0)
+    scenarios: OrderedDict[str, Scenario] = attrib(default=Factory(OrderedDict))
+
     @attrs
-    class ASTBuilder:
+    class ASTBuilder(_ASTBuilder):
         model: Feature = attrib()
-        id_generator = attrib(default=Factory(count))
 
         def build(self):
             return ast.AST(
@@ -343,23 +332,19 @@ class Feature:
         def _build_feature_children(self):
             return [
                 ast.NodeContainerChild().setattrs(
-                    scenario=ScenarioTemplate.ASTBuilder(model=scenario, id_generator=self.id_generator).build()
+                    scenario=Scenario.ASTBuilder(model=scenario, id_generator=self.id_generator).build()
                 )
                 for scenario_name, scenario in self.model.scenarios.items()
             ]
 
 
 @attrs
-class ScenarioTemplate:
-    """A scenario template.
-
-    Created when parsing the feature file, it will then be combined with the examples to create a Scenario."""
-
+class Scenario:
     node_kind = "Scenario"
 
     feature: Feature = attrib()
-    name = attrib()
-    line_number = attrib()
+    name: str | None = attrib(default=None)
+    line_number: int = attrib(default=0)
 
     tags: OrderedSet = attrib(default=Factory(OrderedSet))
     steps_storage: list[Step] = attrib(default=Factory(list))
@@ -394,9 +379,8 @@ class ScenarioTemplate:
             yield from example_table_combination.united_example_rows
 
     @attrs
-    class ASTBuilder:
-        model: ScenarioTemplate = attrib()
-        id_generator = attrib(default=Factory(count))
+    class ASTBuilder(_ASTBuilder):
+        model: Scenario = attrib()
 
         def build(self):
             return ast.Scenario(
@@ -432,17 +416,6 @@ class ScenarioTemplate:
 
 
 @attrs
-class Scenario:
-
-    feature: Feature = attrib()
-    name: str = attrib()
-    line_number: int = attrib()
-    steps: list[Step] = attrib()
-    tags: set | None = attrib(default=Factory(set))
-    failed: bool = attrib(default=False)
-
-
-@attrs
 class Step:
     name: str = attrib()
     type: str = attrib()
@@ -453,7 +426,7 @@ class Step:
     first_name_row: str | None = attrib(default=None, init=False)
     lines: list[str] = attrib(default=Factory(list), init=False)
     failed: bool = attrib(default=False, init=False)
-    scenario: ScenarioTemplate | None = attrib(default=None, init=False)
+    scenario: Scenario | None = attrib(default=None, init=False)
     background: Background | None = attrib(default=None, init=False)
 
     def add_line(self, line: str) -> None:
@@ -468,7 +441,7 @@ class Step:
 
     def _update_name(self) -> None:
         """Get step name."""
-        multilines_content = textwrap.dedent("\n".join(self.lines)) if self.lines else ""
+        multilines_content = dedent("\n".join(self.lines)) if self.lines else ""
 
         # Remove the multiline quotes, if present.
         multilines_content = re.sub(
@@ -482,9 +455,8 @@ class Step:
         self.name = "\n".join(lines).strip()
 
     @attrs
-    class ASTBuilder:
+    class ASTBuilder(_ASTBuilder):
         model: Step = attrib()
-        id_generator = attrib(default=Factory(count))
 
         def build(self):
             return ast.Step(
@@ -602,9 +574,8 @@ class ExampleRowUnited(SimpleMapping):
         return ">>".join(map(lambda example_row: example_row.breadcrumb, self.example_rows))
 
     @attrs
-    class ASTBuilder:
+    class ASTBuilder(_ASTBuilder):
         model: ExampleRowUnited = attrib()
-        id_generator = attrib(default=Factory(count))
 
         def build(self):
             return ast.Example(
@@ -675,7 +646,7 @@ class ExampleTable:
     line_number = attrib(default=None)
     name = attrib(default=None)
     tags = attrib(default=Factory(OrderedSet), kw_only=True)
-    node: Feature | ScenarioTemplate = attrib(default=None, kw_only=True)
+    node: Feature | Scenario = attrib(default=None, kw_only=True)
 
     def __iter__(self) -> Iterator[ExampleRow]:
         for index, example_row in enumerate(self.examples):
