@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import typing
+from typing import TYPE_CHECKING
 
 import pytest
 from packaging.utils import Version
 
-if typing.TYPE_CHECKING:  # pragma: no cover
-    from _pytest.pytester import RunResult
+if TYPE_CHECKING:
+    from pytest_bdd.typing.pytest import RunResult
 
 PYTEST_VERSION = Version(pytest.__version__)
 PYTEST_6 = PYTEST_VERSION >= Version("6")

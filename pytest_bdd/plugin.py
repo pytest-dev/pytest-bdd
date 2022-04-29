@@ -2,23 +2,16 @@
 from __future__ import annotations
 
 from contextlib import suppress
-from typing import TYPE_CHECKING
+from typing import Collection
 
 import pytest
-from _pytest.mark import Mark, MarkDecorator
-from _pytest.python import Metafunc
 
-from . import cucumber_json, generation, gherkin_terminal_reporter, given, steps, then, when
-from .reporting import ScenarioReporterPlugin
-from .runner import ScenarioRunner
-from .steps import StepHandler
-from .utils import CONFIG_STACK
-
-if TYPE_CHECKING:  # pragma: no cover
-    from typing import Collection
-
-    from _pytest.config import Config, PytestPluginManager
-    from _pytest.config.argparsing import Parser
+from pytest_bdd import cucumber_json, generation, gherkin_terminal_reporter, given, steps, then, when
+from pytest_bdd.reporting import ScenarioReporterPlugin
+from pytest_bdd.runner import ScenarioRunner
+from pytest_bdd.steps import StepHandler
+from pytest_bdd.typing.pytest import Config, Mark, MarkDecorator, Metafunc, Parser, PytestPluginManager
+from pytest_bdd.utils import CONFIG_STACK
 
 
 def pytest_addhooks(pluginmanager: PytestPluginManager) -> None:

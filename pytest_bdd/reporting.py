@@ -6,20 +6,13 @@ that enriches the pytest test reporting.
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
+from typing import Any, Callable
 
 import pytest
 from attr import Factory, attrib, attrs
 
-from .model import Feature, Scenario, Step
-
-if TYPE_CHECKING:  # pragma: no cover
-    from typing import Any, Callable
-
-    from _pytest.fixtures import FixtureRequest
-    from _pytest.runner import CallInfo
-
-    from .types import Item
+from pytest_bdd.model import Feature, Scenario, Step
+from pytest_bdd.typing.pytest import CallInfo, FixtureRequest, Item
 
 
 class StepReport:

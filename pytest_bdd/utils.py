@@ -6,25 +6,21 @@ import pickle
 import re
 from collections import defaultdict
 from contextlib import suppress
-from functools import partial, reduce
+from functools import partial
 from inspect import getframeinfo, signature
 from itertools import tee
 from operator import attrgetter, getitem, itemgetter
 from sys import _getframe
-from typing import TYPE_CHECKING, Callable, Collection, Mapping, cast
+from typing import TYPE_CHECKING, Any, Callable, Collection, Mapping, cast
 
-from _pytest.fixtures import FixtureDef
 from attr import Factory, attrib, attrs
 from marshmallow import post_load
-from ordered_set import OrderedSet
 
-from pytest_bdd.const import ALPHA_REGEX, PYTHON_REPLACE_REGEX, STEP_PREFIXES, TAG
+from pytest_bdd.const import ALPHA_REGEX, PYTHON_REPLACE_REGEX
+from pytest_bdd.typing.pytest import Config, FixtureDef
 
 if TYPE_CHECKING:  # pragma: no cover
-    from typing import Any
-
-    from _pytest.config import Config
-    from _pytest.pytester import RunResult
+    from pytest_bdd.typing.pytest import RunResult
 
 CONFIG_STACK: list[Config] = []
 
@@ -173,20 +169,6 @@ def inject_fixture(request, arg, value):
     request._fixture_defs[arg] = fd
     if add_fixturename:
         request._pyfuncitem._fixtureinfo.names_closure.append(arg)
-
-
-def get_tags(line: str | None) -> OrderedSet[str]:
-    """Get tags out of the given line.
-
-    :param str line: Feature file text line.
-
-    :return: List of tags.
-    """
-    if not line or not line.strip().startswith(STEP_PREFIXES[TAG]):
-        return OrderedSet()
-    return OrderedSet(
-        [tag.lstrip(STEP_PREFIXES[TAG]) for tag in line.strip().split(f" {STEP_PREFIXES[TAG]}") if len(tag) > 1]
-    )
 
 
 class ModelSchemaPostLoadable:

@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import Iterable
 
 import pytest
-from _pytest.mark.structures import Mark
+
+from pytest_bdd.typing.pytest import Mark
 
 """Pytest-bdd pytest hooks."""
 

@@ -1,8 +1,7 @@
 import json
 from pathlib import Path
 
-from _pytest.mark import param
-from pytest import mark
+from pytest import mark, param
 
 from pytest_bdd.ast import AST, ASTSchema
 

@@ -4,7 +4,7 @@ import textwrap
 import pkg_resources
 from pytest import mark, param
 
-from pytest_bdd.utils import get_tags
+from pytest_bdd.parser import Parser
 
 
 @mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
@@ -513,6 +513,7 @@ def test_at_in_scenario(testdir, parser):
     result.stdout.fnmatch_lines(["*= 2 passed * =*"])
 
 
+@mark.deprecated
 @mark.parametrize(
     "line, expected",
     [
@@ -526,7 +527,7 @@ def test_at_in_scenario(testdir, parser):
     ],
 )
 def test_get_tags(line, expected):
-    assert get_tags(line) == expected
+    assert Parser.get_tags(line) == expected
 
 
 @mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])

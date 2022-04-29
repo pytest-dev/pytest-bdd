@@ -1,7 +1,7 @@
 import textwrap
 
-from _pytest.warning_types import PytestWarning
 from attr import attrib, attrs
+from pytest import PytestWarning
 
 
 @attrs

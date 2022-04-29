@@ -507,7 +507,7 @@ def test_steps_parameter_mapping(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from _pytest.fixtures import FixtureLookupError
+        from pytest_bdd.typing.pytest import FixtureLookupError
         from pytest import raises
         from pytest_bdd import given, then, scenario
 
@@ -547,7 +547,7 @@ def test_steps_parameter_mapping_could_redirect_to_fixture(testdir):
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from _pytest.fixtures import FixtureLookupError
+        from pytest_bdd.typing.pytest import FixtureLookupError
         from pytest import raises
         from pytest_bdd import given, then, scenario
 
@@ -589,7 +589,7 @@ def test_steps_parameter_mapping_rejection_for_all_parameters(testdir, mapping_s
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from _pytest.fixtures import FixtureLookupError
+        from pytest_bdd.typing.pytest import FixtureLookupError
         from pytest import raises
         from pytest_bdd import given, then, scenario
 
@@ -642,7 +642,7 @@ def test_steps_parameter_mapping_acceptance_for_all_parameters(testdir, mapping_
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from _pytest.fixtures import FixtureLookupError
+        from pytest_bdd.typing.pytest import FixtureLookupError
         from pytest import raises
         from pytest_bdd import given, then, scenario
 
@@ -691,7 +691,7 @@ def test_steps_parameter_mapping_acceptance_for_non_listed_parameters_by_wildcar
     testdir.makepyfile(
         textwrap.dedent(
             """\
-        from _pytest.fixtures import FixtureLookupError
+        from pytest_bdd.typing.pytest import FixtureLookupError
         from pytest import raises
         from pytest_bdd import given, then, scenario
 

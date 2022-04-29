@@ -17,19 +17,14 @@ from functools import reduce
 from operator import truediv
 from os.path import commonpath, dirname
 from pathlib import Path
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, Iterable, Sequence
 
 import pytest
-from _pytest.config import Config
-from _pytest.python import Metafunc
 from attr import Factory, attrib, attrs
 
-from .model import Feature, Scenario
-from .utils import get_caller_module_locals, get_caller_module_path, make_python_name
-
-if TYPE_CHECKING:  # pragma: no cover
-    from typing import Iterable
-
+from pytest_bdd.model import Feature, Scenario
+from pytest_bdd.typing.pytest import Config, Metafunc
+from pytest_bdd.utils import get_caller_module_locals, get_caller_module_path, make_python_name
 
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 

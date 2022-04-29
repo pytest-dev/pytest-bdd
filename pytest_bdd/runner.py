@@ -3,17 +3,12 @@ from __future__ import annotations
 from contextlib import suppress
 from itertools import zip_longest
 from operator import attrgetter
-from typing import TYPE_CHECKING
-
-from _pytest.fixtures import FixtureRequest, call_fixture_func
 
 from pytest_bdd import exceptions
 from pytest_bdd.model import Feature, Scenario
 from pytest_bdd.steps import StepHandler
+from pytest_bdd.typing.pytest import FixtureRequest, Item, call_fixture_func
 from pytest_bdd.utils import DefaultMapping, get_args, inject_fixture
-
-if TYPE_CHECKING:  # pragma: no cover
-    from pytest_bdd.types import Item
 
 
 class ScenarioRunner:

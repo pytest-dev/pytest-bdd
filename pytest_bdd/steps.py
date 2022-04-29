@@ -36,33 +36,21 @@ def given_beautiful_article(article):
 """
 from __future__ import annotations
 
-import sys
 import warnings
 from contextlib import suppress
-from typing import TYPE_CHECKING, Iterable, Iterator, Sequence
+from typing import Any, Callable, Iterable, Iterator, Sequence
 from warnings import warn
 
 import pytest
-from _pytest.config import Config
 from attr import Factory, attrib, attrs
 from ordered_set import OrderedSet
 
-from .const import STEP_TYPE, STEP_TYPES_BY_NORMALIZED_PREFIX
-from .model import Feature, Scenario, Step
-from .parsers import StepParser, get_parser
-from .utils import get_caller_module_locals
-from .warning_types import PytestBDDStepDefinitionWarning
-
-if sys.version_info >= (3, 10):
-    from typing import TypeAlias
-else:
-    from typing_extensions import TypeAlias
-
-
-if TYPE_CHECKING:  # pragma: no cover
-    from typing import Any, Callable
-
-    from _pytest.config.argparsing import Parser
+from pytest_bdd.const import STEP_TYPE, STEP_TYPES_BY_NORMALIZED_PREFIX
+from pytest_bdd.model import Feature, Scenario, Step
+from pytest_bdd.parsers import StepParser, get_parser
+from pytest_bdd.typing.pytest import Config, Parser, TypeAlias
+from pytest_bdd.utils import get_caller_module_locals
+from pytest_bdd.warning_types import PytestBDDStepDefinitionWarning
 
 
 def add_options(parser: Parser):

@@ -1,15 +1,8 @@
 from __future__ import annotations
 
-import typing
+from typing import Any
 
-from _pytest.terminal import TerminalReporter
-
-if typing.TYPE_CHECKING:  # pragma: no cover
-    from typing import Any
-
-    from _pytest.config import Config
-    from _pytest.config.argparsing import Parser
-    from _pytest.reports import TestReport
+from pytest_bdd.typing.pytest import Config, Parser, TerminalReporter, TestReport
 
 
 def add_options(parser: Parser) -> None:

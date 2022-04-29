@@ -6,31 +6,18 @@ import os.path
 from functools import reduce
 from operator import methodcaller
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import Any, cast
 
 import py
-from _pytest.config.argparsing import Parser
-from _pytest.fixtures import FixtureRequest
 from mako.lookup import TemplateLookup
 from pkg_resources import get_distribution, parse_version
+from pytest import ExitCode
 
-from .const import STEP_TYPES_BY_NORMALIZED_PREFIX
-from .model import Feature, Scenario, Step
-from .steps import StepHandler
-from .utils import make_python_name
-
-if TYPE_CHECKING:  # pragma: no cover
-    from typing import Any
-
-    from _pytest.config import Config, ExitCode
-    from _pytest.config.argparsing import Parser
-    from _pytest.main import Session
-
-    from .types import Item
-
-else:
-    from _pytest.nodes import Item
-
+from pytest_bdd.const import STEP_TYPES_BY_NORMALIZED_PREFIX
+from pytest_bdd.model import Feature, Scenario, Step
+from pytest_bdd.steps import StepHandler
+from pytest_bdd.typing.pytest import Config, FixtureRequest, Item, Parser, Session, wrap_session
+from pytest_bdd.utils import make_python_name
 
 template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
 
@@ -80,7 +67,6 @@ def generate_code(features: list[Feature], scenarios: list[Scenario], steps: lis
 
 def show_missing_code(config: Config) -> int | ExitCode:
     """Wrap pytest session to show missing code."""
-    from _pytest.main import wrap_session
 
     return wrap_session(config, _show_missing_code_main)
 

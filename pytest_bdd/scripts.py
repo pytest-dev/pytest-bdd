@@ -6,7 +6,7 @@ import os.path
 import re
 from pathlib import Path
 
-from .generation import generate_code, parse_feature_files
+from pytest_bdd.generation import generate_code, parse_feature_files
 
 MIGRATE_REGEX = re.compile(r"\s?(\w+)\s=\sscenario\((.+)\)", flags=re.MULTILINE)
 

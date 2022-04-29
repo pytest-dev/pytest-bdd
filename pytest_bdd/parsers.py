@@ -1,23 +1,15 @@
 """StepHandler parsers."""
 from __future__ import annotations
 
-import re as base_re
-import sys
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING, Any, cast
+from re import Pattern as _RePattern
+from re import compile as re_compile
+from typing import Any, cast
 
 import parse as base_parse
 import parse_type.cfparse as base_cfparse
 
-if sys.version_info >= (3, 8):
-    from typing import Protocol, runtime_checkable
-else:
-    from typing_extensions import Protocol, runtime_checkable
-
-if TYPE_CHECKING:  # pragma: no cover
-    from re import Pattern as _RePattern
-else:
-    _RePattern = base_re.Pattern if sys.version_info >= (3, 7) else type(base_re.compile(""))
+from pytest_bdd.typing import Protocol, runtime_checkable
 
 
 @runtime_checkable
@@ -74,7 +66,7 @@ class re(_CommonRe):
     def __init__(self, name: str, *args: Any, **kwargs: Any) -> None:
         """Compile regex."""
         super().__init__(name)
-        self.regex = base_re.compile(self.name, *args, **kwargs)
+        self.regex = re_compile(self.name, *args, **kwargs)
 
 
 class _CommonParse(StepParser):

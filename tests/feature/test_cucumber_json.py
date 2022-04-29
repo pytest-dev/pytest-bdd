@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, Any
 
 from pytest import mark, param
 
-if TYPE_CHECKING:  # pragma: no cover
-    from _pytest.pytester import RunResult, Testdir
+if TYPE_CHECKING:
+    from pytest_bdd.typing.pytest import RunResult, Testdir
 
 
 def runandparse(testdir: Testdir, *args: Any) -> tuple[RunResult, list[dict[str, Any]]]:

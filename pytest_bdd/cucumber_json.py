@@ -4,22 +4,15 @@ from __future__ import annotations
 import json
 import math
 import os
-import sys
 import time
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
-if sys.version_info >= (3, 8):
-    from typing import Protocol, runtime_checkable
-else:
-    from typing_extensions import Protocol, runtime_checkable
+from pytest_bdd.typing import Protocol, runtime_checkable
+from pytest_bdd.typing.pytest import Parser, TerminalReporter, TestReport
 
 if TYPE_CHECKING:  # pragma: no cover
-    from typing import Any
 
-    from _pytest.config import Config as BaseConfig
-    from _pytest.config.argparsing import Parser
-    from _pytest.reports import TestReport
-    from _pytest.terminal import TerminalReporter
+    from pytest_bdd.typing.pytest import Config as BaseConfig
 
     @runtime_checkable
     class LogBDDCucumberJSONProtocol(Protocol):
@@ -29,7 +22,7 @@ if TYPE_CHECKING:  # pragma: no cover
         pass
 
 else:
-    from _pytest.config import Config
+    from pytest_bdd.typing.pytest import Config
 
 
 def add_options(parser: Parser) -> None:

@@ -4,7 +4,7 @@ import re
 from collections import OrderedDict
 from itertools import chain, count, product, zip_longest
 from textwrap import dedent
-from typing import TYPE_CHECKING, Collection, Mapping, cast
+from typing import Any, Collection, Iterable, Iterator, Mapping, cast
 
 from attr import Factory, attrib, attrs, validate
 from gherkin.parser import Parser as CucumberIOBaseParser  # type: ignore[import]
@@ -13,9 +13,6 @@ from ordered_set import OrderedSet
 from pytest_bdd import ast, const, exceptions
 from pytest_bdd.ast import ASTSchema
 from pytest_bdd.utils import SimpleMapping
-
-if TYPE_CHECKING:  # pragma: no cover
-    from typing import Any, Iterable, Iterator
 
 FEATURE = "feature"
 SCENARIO_OUTLINE = "scenario outline"
