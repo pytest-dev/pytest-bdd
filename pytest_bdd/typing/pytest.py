@@ -4,9 +4,9 @@ Compatibility module for pytest
 from __future__ import annotations
 
 import sys
+from operator import ge
 from typing import TYPE_CHECKING
 
-import pkg_resources
 from _pytest.config import Config, PytestPluginManager
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import FixtureDef, FixtureLookupError, call_fixture_func
@@ -16,6 +16,8 @@ from _pytest.python import Metafunc
 from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
 from _pytest.terminal import TerminalReporter
+
+from pytest_bdd.packaging import compare_distribution_version
 
 assert all(
     [
@@ -43,15 +45,14 @@ else:
 assert TypeAlias
 
 # region pytest version dependent imports
-pytest_version = pkg_resources.get_distribution("pytest").parsed_version
-if pytest_version >= pkg_resources.parse_version("7.0"):
+if compare_distribution_version("pytest", "7.0", ge):
     if TYPE_CHECKING:  # pragma: no cover
         from pytest import Testdir
 else:
     if TYPE_CHECKING:  # pragma: no cover
         from _pytest.pytester import Testdir  # type: ignore[no-redef, attr-defined]
 
-if pytest_version >= pkg_resources.parse_version("6.2"):
+if compare_distribution_version("pytest", "6.2", ge):
     from pytest import FixtureRequest
 else:
     from _pytest.fixtures import FixtureRequest

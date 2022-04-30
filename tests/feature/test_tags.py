@@ -1,9 +1,10 @@
 """Test tags."""
 import textwrap
+from operator import ge
 
-import pkg_resources
 from pytest import mark, param
 
+from pytest_bdd.packaging import compare_distribution_version
 from pytest_bdd.parser import Parser
 
 
@@ -504,8 +505,7 @@ def test_at_in_scenario(testdir, parser):
 
     # Deprecate --strict after pytest 6.1
     # https://docs.org/en/stable/deprecations.html#the-strict-command-line-option
-    pytest_version = pkg_resources.get_distribution("pytest").parsed_version
-    if pytest_version >= pkg_resources.parse_version("6.2"):
+    if compare_distribution_version("pytest", "6.2", ge):
         strict_option = "--strict-markers"
     else:
         strict_option = "--strict"

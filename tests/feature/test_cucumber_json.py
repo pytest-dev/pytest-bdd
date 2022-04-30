@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from pytest import mark, param
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.typing.pytest import RunResult, Testdir
 
 

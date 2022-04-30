@@ -4,17 +4,17 @@ from __future__ import annotations
 import itertools
 import os.path
 from functools import reduce
-from operator import methodcaller
+from operator import lt, methodcaller
 from pathlib import Path
 from typing import Any, cast
 
 import py
 from mako.lookup import TemplateLookup
-from pkg_resources import get_distribution, parse_version
 from pytest import ExitCode
 
 from pytest_bdd.const import STEP_TYPES_BY_NORMALIZED_PREFIX
 from pytest_bdd.model import Feature, Scenario, Step
+from pytest_bdd.packaging import compare_distribution_version
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.typing.pytest import Config, FixtureRequest, Item, Parser, Session, wrap_session
 from pytest_bdd.utils import make_python_name
@@ -177,7 +177,7 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
 
     for item in session.items:
 
-        is_legacy_pytest = get_distribution("pytest").parsed_version < parse_version("7.0")
+        is_legacy_pytest = compare_distribution_version("pytest", "7.0", lt)
 
         method_name = "prepare" if is_legacy_pytest else "setup"
         methodcaller(method_name, item)(item.session._setupstate)

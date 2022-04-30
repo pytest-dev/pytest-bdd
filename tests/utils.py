@@ -1,15 +1,14 @@
 from __future__ import annotations
 
+from operator import ge
 from typing import TYPE_CHECKING
 
-import pytest
-from packaging.utils import Version
+from pytest_bdd.packaging import compare_distribution_version
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.typing.pytest import RunResult
 
-PYTEST_VERSION = Version(pytest.__version__)
-PYTEST_6 = PYTEST_VERSION >= Version("6")
+PYTEST_6 = compare_distribution_version("pytest", "6", ge)
 
 
 if PYTEST_6:
