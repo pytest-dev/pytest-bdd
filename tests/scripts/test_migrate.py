@@ -2,8 +2,8 @@
 
 import os
 import sys
-import textwrap
 from pathlib import Path
+from textwrap import dedent
 
 from pytest_bdd.scripts import main
 
@@ -15,13 +15,13 @@ def test_migrate(monkeypatch, capsys, testdir):
     tests = testdir.mkpydir("tests")
 
     tests.join("test_foo.py").write(
-        textwrap.dedent(
+        dedent(
             '''
-        """Foo bar tests."""
-        from pytest_bdd import scenario
+            """Foo bar tests."""
+            from pytest_bdd import scenario
 
-        test_foo = scenario('foo_bar.feature', 'Foo bar')
-    '''
+            test_foo = scenario('foo_bar.feature', 'Foo bar')
+            '''
         )
     )
 
@@ -29,19 +29,19 @@ def test_migrate(monkeypatch, capsys, testdir):
     main()
     out, err = capsys.readouterr()
     out = "\n".join(sorted(out.splitlines()))
-    expected = textwrap.dedent(
+    expected = dedent(
         f"""\
-            migrated: {Path(tests.strpath)/'test_foo.py'}
-            skipped: {Path(tests.strpath)/'__init__.py'}"""
+        migrated: {Path(tests.strpath)/'test_foo.py'}
+        skipped: {Path(tests.strpath)/'__init__.py'}"""
     )
     assert out == expected
-    assert tests.join("test_foo.py").read() == textwrap.dedent(
+    assert tests.join("test_foo.py").read() == dedent(
         '''
-    """Foo bar tests."""
-    from pytest_bdd import scenario
+        """Foo bar tests."""
+        from pytest_bdd import scenario
 
-    @scenario('foo_bar.feature', 'Foo bar')
-    def test_foo():
-        pass
-    '''
+        @scenario('foo_bar.feature', 'Foo bar')
+        def test_foo():
+            pass
+        '''
     )

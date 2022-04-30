@@ -1,22 +1,18 @@
 """Given tests."""
-import textwrap
 
 
 def test_given_injection(testdir):
     testdir.makefile(
         ".feature",
-        given=textwrap.dedent(
-            """\
+        given="""\
             Feature: Given
                 Scenario: Test given fixture injection
                     Given I have injecting given
                     Then foo should be "injected foo"
-            """
-        ),
+            """,
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         import pytest
         from pytest_bdd import given, then, scenario
 
@@ -34,7 +30,6 @@ def test_given_injection(testdir):
             assert foo == "injected foo"
 
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)

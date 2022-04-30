@@ -2,7 +2,7 @@
 
 Check the parent givens are collected and overridden in the local conftest.
 """
-import textwrap
+from textwrap import dedent
 
 
 def test_parent(testdir):
@@ -12,19 +12,16 @@ def test_parent(testdir):
     """
     testdir.makefile(
         ".feature",
-        parent=textwrap.dedent(
-            """\
+        parent="""\
             Feature: Parent
                 Scenario: Parenting is easy
                     Given I have a parent fixture
                     And I have an overridable fixture
-            """
-        ),
+            """,
     )
 
     testdir.makeconftest(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import given
 
 
@@ -36,23 +33,18 @@ def test_parent(testdir):
         @given("I have an overridable fixture", target_fixture="overridable")
         def overridable():
             return "parent"
-
         """
-        )
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import scenario
 
         @scenario("parent.feature", "Parenting is easy")
         def test_parent(request):
             assert request.getfixturevalue("parent") == "parent"
             assert request.getfixturevalue("overridable") == "parent"
-
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)
@@ -61,8 +53,7 @@ def test_parent(testdir):
 def test_child(testdir):
     """Test the child conftest overriding the fixture."""
     testdir.makeconftest(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import given
 
 
@@ -74,15 +65,13 @@ def test_child(testdir):
         @given("I have an overridable fixture", target_fixture="overridable")
         def overridable():
             return "parent"
-
         """
-        )
     )
 
     subdir = testdir.mkpydir("subdir")
 
     subdir.join("conftest.py").write(
-        textwrap.dedent(
+        dedent(
             """\
             from pytest_bdd import given
 
@@ -95,18 +84,16 @@ def test_child(testdir):
     )
 
     subdir.join("child.feature").write(
-        textwrap.dedent(
-            """\
-            Feature: Child
-                Scenario: Happy childhood
-                    Given I have a parent fixture
-                    And I have an overridable fixture
-            """
-        ),
+        """\
+        Feature: Child
+            Scenario: Happy childhood
+                Given I have a parent fixture
+                And I have an overridable fixture
+        """,
     )
 
     subdir.join("test_library.py").write(
-        textwrap.dedent(
+        dedent(
             """\
             from pytest_bdd import scenario
 
@@ -125,8 +112,7 @@ def test_child(testdir):
 def test_local(testdir):
     """Test locally overridden fixtures."""
     testdir.makeconftest(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import given
 
 
@@ -138,26 +124,22 @@ def test_local(testdir):
         @given("I have an overridable fixture", target_fixture="overridable")
         def overridable():
             return "parent"
-
         """
-        )
     )
 
     subdir = testdir.mkpydir("subdir")
 
     subdir.join("local.feature").write(
-        textwrap.dedent(
-            """\
-            Feature: Local
-                Scenario: Local override
-                    Given I have a parent fixture
-                    And I have an overridable fixture
-            """
-        ),
+        """\
+        Feature: Local
+            Scenario: Local override
+                Given I have a parent fixture
+                And I have an overridable fixture
+        """,
     )
 
     subdir.join("test_library.py").write(
-        textwrap.dedent(
+        dedent(
             """\
             from pytest_bdd import given, scenario
 
@@ -186,31 +168,27 @@ def test_local(testdir):
 def test_local_multiple_target_fixtures(testdir):
     """Test locally overridden fixtures."""
     testdir.makeconftest(
-        textwrap.dedent(
-            """\
-                from pytest_bdd import given
+        """\
+        from pytest_bdd import given
 
-                @given("I have a parent fixtures", target_fixtures=["parent", "overridable"])
-                def parent():
-                    return "parent1", "parent2"
-                """
-        )
+        @given("I have a parent fixtures", target_fixtures=["parent", "overridable"])
+        def parent():
+            return "parent1", "parent2"
+        """
     )
 
     subdir = testdir.mkpydir("subdir")
 
     subdir.join("local.feature").write(
-        textwrap.dedent(
-            """\
-                Feature: Local
-                    Scenario: Local override
-                        Given I have a parent fixture
-                """
-        ),
+        """\
+        Feature: Local
+            Scenario: Local override
+                Given I have a parent fixture
+        """,
     )
 
     subdir.join("test_library.py").write(
-        textwrap.dedent(
+        dedent(
             """\
                 from pytest_bdd import given, scenario
 
@@ -232,31 +210,27 @@ def test_local_multiple_target_fixtures(testdir):
 def test_local_both_target_fixture_and_target_fixtures(testdir):
     """Test locally overridden fixtures."""
     testdir.makeconftest(
-        textwrap.dedent(
-            """\
-                from pytest_bdd import given
+        """\
+        from pytest_bdd import given
 
-                @given("I have a parent fixtures", target_fixture="parent", target_fixtures=["overridable"])
-                def parent():
-                    return "parent1", "parent2"
-                """
-        )
+        @given("I have a parent fixtures", target_fixture="parent", target_fixtures=["overridable"])
+        def parent():
+            return "parent1", "parent2"
+        """
     )
 
     subdir = testdir.mkpydir("subdir")
 
     subdir.join("local.feature").write(
-        textwrap.dedent(
-            """\
-                Feature: Local
-                    Scenario: Local override
-                        Given I have a parent fixture
-                """
-        ),
+        """\
+        Feature: Local
+            Scenario: Local override
+                Given I have a parent fixture
+        """,
     )
 
     subdir.join("test_library.py").write(
-        textwrap.dedent(
+        dedent(
             """\
                 from pytest_bdd import given, scenario
 

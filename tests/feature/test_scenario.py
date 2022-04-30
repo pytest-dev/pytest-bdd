@@ -1,7 +1,5 @@
 """Test scenario decorator."""
 
-import textwrap
-
 from tests.utils import assert_outcomes
 
 
@@ -9,16 +7,12 @@ def test_scenario_not_found(testdir, pytest_params):
     """Test the situation when scenario is not found."""
     testdir.makefile(
         ".feature",
-        not_found=textwrap.dedent(
-            """\
+        not_found="""\
             Feature: Scenario is not found
-
-            """
-        ),
+            """,
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         import re
         import pytest
         from pytest_bdd import parsers, given, then, scenario
@@ -26,9 +20,7 @@ def test_scenario_not_found(testdir, pytest_params):
         @scenario("not_found.feature", "NOT FOUND")
         def test_not_found():
             pass
-
         """
-        )
     )
     result = testdir.runpytest_subprocess(*pytest_params)
 
@@ -39,8 +31,7 @@ def test_scenario_comments(testdir):
     """Test comments inside scenario."""
     testdir.makefile(
         ".feature",
-        comments=textwrap.dedent(
-            """\
+        comments="""\
             Feature: Comments
                 Scenario: Comments
                     # Comment
@@ -51,13 +42,11 @@ def test_scenario_comments(testdir):
                     Then this is not a#comment
                     And this is not "#acomment"
 
-            """
-        ),
+            """,
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         import re
         import pytest
         from pytest_bdd import parsers, given, then, scenario
@@ -84,9 +73,7 @@ def test_scenario_comments(testdir):
         @then(parsers.parse("this is not {acomment}"))
         def a_comment(acomment):
             assert re.search("a.*comment", acomment)
-
         """
-        )
     )
 
     result = testdir.runpytest()

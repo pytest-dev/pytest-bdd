@@ -1,4 +1,5 @@
 """Test no strict gherkin for sections."""
+
 from pytest import mark, param
 
 pytestmark = [mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])]

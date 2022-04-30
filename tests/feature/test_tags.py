@@ -1,5 +1,4 @@
 """Test tags."""
-import textwrap
 from operator import ge
 
 from pytest import mark, param
@@ -13,7 +12,7 @@ def test_tags_selector(testdir, parser):
     """Test tests selection by tags."""
     testdir.makefile(
         ".ini",
-        pytest="""
+        pytest="""\
             [pytest]
             markers =
                 feature_tag_1
@@ -26,7 +25,7 @@ def test_tags_selector(testdir, parser):
     )
     testdir.makefile(
         ".feature",
-        test="""
+        test="""\
             @feature_tag_1 @feature_tag_2
             Feature: Tags
 
@@ -41,7 +40,7 @@ def test_tags_selector(testdir, parser):
             """,
     )
     testdir.makepyfile(
-        f"""
+        f"""\
         import pytest
         from pytest_bdd import given, scenarios
         from pytest_bdd.parser import {parser} as Parser
@@ -404,7 +403,7 @@ def test_tags_after_background_issue_160(testdir, parser):
             """,
     )
     testdir.makepyfile(
-        f"""
+        f"""\
         import pytest
         from pytest_bdd import given, scenarios
         from pytest_bdd.parser import {parser} as Parser
@@ -487,7 +486,7 @@ def test_at_in_scenario(testdir, parser):
             """,
     )
     testdir.makepyfile(
-        f"""
+        f"""\
         from pytest_bdd import given, scenarios
         from pytest_bdd.parser import {parser} as Parser
 
@@ -505,10 +504,8 @@ def test_at_in_scenario(testdir, parser):
 
     # Deprecate --strict after pytest 6.1
     # https://docs.org/en/stable/deprecations.html#the-strict-command-line-option
-    if compare_distribution_version("pytest", "6.2", ge):
-        strict_option = "--strict-markers"
-    else:
-        strict_option = "--strict"
+    strict_option = "--strict-markers" if compare_distribution_version("pytest", "6.2", ge) else "--strict"
+
     result = testdir.runpytest_subprocess(strict_option)
     result.stdout.fnmatch_lines(["*= 2 passed * =*"])
 
@@ -534,16 +531,14 @@ def test_get_tags(line, expected):
 def test_invalid_tags(testdir, parser):
     features = testdir.mkdir("features")
     features.join("test.feature").write_text(
-        textwrap.dedent(
-            """\
-            Feature: Invalid tags
-                Scenario: Invalid tags
-                    @tag
-                    Given foo
-                    When bar
-                    Then baz
-            """
-        ),
+        """\
+        Feature: Invalid tags
+            Scenario: Invalid tags
+                @tag
+                Given foo
+                When bar
+                Then baz
+        """,
         "utf-8",
         ensure=True,
     )

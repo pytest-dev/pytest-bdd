@@ -1,13 +1,10 @@
-import textwrap
-
 import pytest
 
 
 def test_steps(testdir):
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
                 are not mandatory in some cases.
@@ -20,13 +17,11 @@ def test_steps(testdir):
                     And I append 3 to the list
                     Then foo should have value "foo"
                     But the list should be [1, 2, 3]
-            """
-        ),
+            """,
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import given, when, then, scenario
 
         @scenario("steps.feature", "Executed step by step")
@@ -66,9 +61,7 @@ def test_steps(testdir):
         @then("the list should be [1, 2, 3]")
         def check_results(results):
             assert results == [1, 2, 3]
-
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
@@ -78,8 +71,7 @@ def test_all_steps_can_provide_fixtures(testdir):
     """Test that given/when/then can all provide fixtures."""
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: StepHandler fixture
                 Scenario: Given steps can provide fixture
                     Given Foo is "bar"
@@ -90,13 +82,11 @@ def test_all_steps_can_provide_fixtures(testdir):
                 Scenario: Then steps can provide fixture
                     Then foo is "qux"
                     And foo should be "qux"
-            """
-        ),
+            """,
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import given, when, then, parsers, scenarios
 
         scenarios("steps.feature")
@@ -121,7 +111,6 @@ def test_all_steps_can_provide_fixtures(testdir):
             assert foo == value
 
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=3, failed=0)
@@ -130,8 +119,7 @@ def test_all_steps_can_provide_fixtures(testdir):
 def test_when_first(testdir):
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
                 are not mandatory in some cases.
@@ -139,12 +127,10 @@ def test_when_first(testdir):
                 Scenario: When step can be the first
                     When I do nothing
                     Then I make no mistakes
-            """
-        ),
+            """,
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import when, then, scenario
 
         @scenario("steps.feature", "When step can be the first")
@@ -159,9 +145,7 @@ def test_when_first(testdir):
         @then("I make no mistakes")
         def no_errors():
             assert True
-
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
@@ -170,8 +154,7 @@ def test_when_first(testdir):
 def test_then_after_given(testdir):
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
                 are not mandatory in some cases.
@@ -180,12 +163,10 @@ def test_then_after_given(testdir):
                     Given I have a foo fixture with value "foo"
                     Then foo should have value "foo"
 
-            """
-        ),
+            """,
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import given, then, scenario
 
         @scenario("steps.feature", "Then step can follow Given step")
@@ -199,9 +180,7 @@ def test_then_after_given(testdir):
         @then('foo should have value "foo"')
         def foo_is_foo(foo):
             assert foo == "foo"
-
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
@@ -210,8 +189,7 @@ def test_then_after_given(testdir):
 def test_conftest(testdir):
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
                 are not mandatory in some cases.
@@ -220,12 +198,10 @@ def test_conftest(testdir):
                     Given I have a bar
                     Then bar should have value "bar"
 
-            """
-        ),
+            """,
     )
     testdir.makeconftest(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import given, then
 
 
@@ -237,21 +213,16 @@ def test_conftest(testdir):
         @then('bar should have value "bar"')
         def bar_is_bar(bar):
             assert bar == "bar"
-
         """
-        )
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import scenario
 
         @scenario("steps.feature", "All steps are declared in the conftest")
         def test_steps():
             pass
-
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
@@ -261,20 +232,17 @@ def test_multiple_given(testdir):
     """Using the same given fixture raises an error."""
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: Steps are executed one by one
                 Scenario: Using the same given twice
                     Given foo is "foo"
                     And foo is "bar"
                     Then foo should be "bar"
 
-            """
-        ),
+            """,
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import parsers, given, then, scenario
 
 
@@ -291,9 +259,7 @@ def test_multiple_given(testdir):
         @scenario("steps.feature", "Using the same given twice")
         def test_given_twice():
             pass
-
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
@@ -303,8 +269,7 @@ def test_step_hooks(testdir):
     """When step fails."""
     testdir.makefile(
         ".feature",
-        test=textwrap.dedent(
-            """\
+        test="""\
             Feature: StepHandler hooks
                 Scenario: When step has hook on failure
                     Given I have a bar
@@ -320,11 +285,10 @@ def test_step_hooks(testdir):
                 Scenario: When step validation error happens
                     Given foo
                     And foo
-            """
-        ),
+            """,
     )
     testdir.makepyfile(
-        """
+        """\
         import pytest
         from pytest_bdd import given, when, scenario
 
@@ -493,20 +457,17 @@ def test_step_trace(testdir):
 def test_steps_parameter_mapping(testdir):
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: Steps parameters don't have to be passed as fixtures
 
                 Scenario: StepHandler parameter don't have to be injected as fixture
                     Given I have a "foo" parameter which is not injected as fixture
                     Then parameter "foo" is not visible in fixtures
 
-            """
-        ),
+            """,
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd.typing.pytest import FixtureLookupError
         from pytest import raises
         from pytest_bdd import given, then, scenario
@@ -524,7 +485,6 @@ def test_steps_parameter_mapping(testdir):
             with raises(FixtureLookupError):
                 request.getfixturevalue('foo')
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
@@ -533,20 +493,16 @@ def test_steps_parameter_mapping(testdir):
 def test_steps_parameter_mapping_could_redirect_to_fixture(testdir):
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: Steps parameters could be redirected to another fixture
 
                 Scenario: Steps parameters could be redirected to another fixture
                     Given I have a "foo" parameter which is injected as fixture "bar"
                     Then fixture "bar" has value "foo"
-
-            """
-        ),
+            """,
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd.typing.pytest import FixtureLookupError
         from pytest import raises
         from pytest_bdd import given, then, scenario
@@ -566,7 +522,6 @@ def test_steps_parameter_mapping_could_redirect_to_fixture(testdir):
                 request.getfixturevalue('foo')
             assert bar == "foo"
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
@@ -576,19 +531,16 @@ def test_steps_parameter_mapping_could_redirect_to_fixture(testdir):
 def test_steps_parameter_mapping_rejection_for_all_parameters(testdir, mapping_string):
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: Steps parameters could be rejected at all to be injected as fixtures
 
                 Scenario: Steps parameters could be rejected at all to be injected as fixtures
                     Given I have a "foo", "bar", "fizz", "buzz" parameters which are rejected by wild pattern
                     Then parameters "foo", "bar", "fizz", "buzz" are not visible in fixtures
-            """
-        ),
+            """,
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd.typing.pytest import FixtureLookupError
         from pytest import raises
         from pytest_bdd import given, then, scenario
@@ -599,8 +551,8 @@ def test_steps_parameter_mapping_rejection_for_all_parameters(testdir, mapping_s
 
         @given('I have a "{foo}", "{bar}", "{fizz}", "{buzz}" parameters which are rejected by wild pattern',
                """
-            f"""params_fixtures_mapping={mapping_string})"""
-            """
+        f"""params_fixtures_mapping={mapping_string})"""
+        """
         def foo(foo, bar, fizz, buzz):
             assert foo == "foo"
             assert bar == "bar"
@@ -619,7 +571,6 @@ def test_steps_parameter_mapping_rejection_for_all_parameters(testdir, mapping_s
             with raises(FixtureLookupError):
                 request.getfixturevalue('buzz')
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
@@ -629,19 +580,16 @@ def test_steps_parameter_mapping_rejection_for_all_parameters(testdir, mapping_s
 def test_steps_parameter_mapping_acceptance_for_all_parameters(testdir, mapping_string):
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: Steps parameters could be accepted at all to be injected as fixtures
 
                 Scenario: Steps parameters could be accepted at all to be injected as fixtures
                     Given I have a "foo", "bar", "fizz", "buzz" parameters which are accepted by wild pattern
                     Then parameters "foo", "bar", "fizz", "buzz" are visible in fixtures
-            """
-        ),
+            """,
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd.typing.pytest import FixtureLookupError
         from pytest import raises
         from pytest_bdd import given, then, scenario
@@ -652,8 +600,8 @@ def test_steps_parameter_mapping_acceptance_for_all_parameters(testdir, mapping_
 
         @given('I have a "{foo}", "{bar}", "{fizz}", "{buzz}" parameters which are accepted by wild pattern',
             """
-            f"""params_fixtures_mapping={mapping_string})"""
-            """
+        f"""params_fixtures_mapping={mapping_string})"""
+        """
         def foo(foo, bar, fizz, buzz):
             assert foo == "foo"
             assert bar == "bar"
@@ -668,7 +616,6 @@ def test_steps_parameter_mapping_acceptance_for_all_parameters(testdir, mapping_
             assert fizz == "fizz"
             assert buzz == "buzz"
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
@@ -677,20 +624,17 @@ def test_steps_parameter_mapping_acceptance_for_all_parameters(testdir, mapping_
 def test_steps_parameter_mapping_acceptance_for_non_listed_parameters_by_wildcard(testdir):
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: Steps parameters could be accepted by wildcard and by list to be injected as fixtures
 
                 Scenario: Steps parameters could be accepted by wildcard and by list to be injected as fixtures
                     Given I have a "foo", "bar", "fizz", "buzz" parameters few of which are accepted by wild pattern
                     Then parameters "fizz", "buzz" are visible in fixtures
                     Then parameters "cool_foo", "nice_bar" are visible in fixtures
-            """
-        ),
+            """,
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd.typing.pytest import FixtureLookupError
         from pytest import raises
         from pytest_bdd import given, then, scenario
@@ -720,7 +664,6 @@ def test_steps_parameter_mapping_acceptance_for_non_listed_parameters_by_wildcar
             assert cool_foo == "foo"
             assert nice_bar == "bar"
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
@@ -741,8 +684,7 @@ def test_steps_with_yield(testdir):
             """,
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         import pytest
         from pytest_bdd import given, when, then, scenarios
 
@@ -759,9 +701,7 @@ def test_steps_with_yield(testdir):
         def check_stuff(stuff):
             assert stuff == 42
             print("Asserted stuff is 42")
-
         """
-        )
     )
     result = testdir.runpytest("-s")
     result.assert_outcomes(passed=1)
@@ -777,8 +717,7 @@ def test_steps_with_yield(testdir):
 def test_liberal_step_decorator(testdir):
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
                 are not mandatory in some cases. All steps could be
@@ -791,13 +730,11 @@ def test_liberal_step_decorator(testdir):
                     But I execute buzz step
                     Then I execute nice step
                     * I execute good step
-            """
-        ),
+            """,
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import step, scenario
         from pytest import fixture
 
@@ -818,7 +755,6 @@ def test_liberal_step_decorator(testdir):
         def foo(step_values, value):
             step_values.append(value)
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
@@ -827,8 +763,7 @@ def test_liberal_step_decorator(testdir):
 def test_liberal_keyworded_step_decorator(testdir):
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
                 are not mandatory in some cases. All steps could be
@@ -841,13 +776,11 @@ def test_liberal_keyworded_step_decorator(testdir):
                     But I execute buzz step
                     Then I execute nice step
                     * I execute good step
-            """
-        ),
+            """,
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import given, scenario
         from pytest import fixture
 
@@ -868,7 +801,6 @@ def test_liberal_keyworded_step_decorator(testdir):
         def foo(step_values, value):
             step_values.append(value)
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
@@ -877,8 +809,7 @@ def test_liberal_keyworded_step_decorator(testdir):
 def test_liberal_keyworded_step_decorator_cli_option(testdir):
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
                 are not mandatory in some cases. All steps could be
@@ -891,13 +822,11 @@ def test_liberal_keyworded_step_decorator_cli_option(testdir):
                     But I execute buzz step
                     Then I execute nice step
                     * I execute good step
-            """
-        ),
+            """,
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import given, scenario
         from pytest import fixture
 
@@ -918,7 +847,6 @@ def test_liberal_keyworded_step_decorator_cli_option(testdir):
         def foo(step_values, value):
             step_values.append(value)
         """
-        )
     )
     result = testdir.runpytest("--liberal-steps")
     result.assert_outcomes(passed=1, failed=0)
@@ -927,8 +855,7 @@ def test_liberal_keyworded_step_decorator_cli_option(testdir):
 def test_liberal_keyworded_step_decorator_ini_option(testdir):
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
                 are not mandatory in some cases. All steps could be
@@ -941,20 +868,18 @@ def test_liberal_keyworded_step_decorator_ini_option(testdir):
                     But I execute buzz step
                     Then I execute nice step
                     * I execute good step
-            """
-        ),
+            """,
     )
 
     testdir.makeini(
-        """
-            [pytest]
-            liberal_steps = True
+        """\
+        [pytest]
+        liberal_steps = True
         """
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import given, scenario
         from pytest import fixture
 
@@ -975,7 +900,6 @@ def test_liberal_keyworded_step_decorator_ini_option(testdir):
         def foo(step_values, value):
             step_values.append(value)
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
@@ -984,8 +908,7 @@ def test_liberal_keyworded_step_decorator_ini_option(testdir):
 def test_strict_step_has_precedence_over_liberal_step_decorator(testdir):
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
                 are not mandatory in some cases. All steps could be
@@ -998,13 +921,11 @@ def test_strict_step_has_precedence_over_liberal_step_decorator(testdir):
                     But I execute buzz step
                     Then I execute nice step
                     * I execute good step
-            """
-        ),
+            """,
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import given, when, step, scenario
         from pytest import fixture
 
@@ -1041,7 +962,6 @@ def test_strict_step_has_precedence_over_liberal_step_decorator(testdir):
         def foo(when_step_values, value):
             when_step_values.append(value)
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
@@ -1050,8 +970,7 @@ def test_strict_step_has_precedence_over_liberal_step_decorator(testdir):
 def test_found_alternate_step_decorators_produce_warning(testdir):
     testdir.makefile(
         ".feature",
-        steps=textwrap.dedent(
-            """\
+        steps="""\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
                 are not mandatory in some cases. All steps could be
@@ -1064,13 +983,11 @@ def test_found_alternate_step_decorators_produce_warning(testdir):
                     But I execute buzz step
                     Then I execute nice step
                     * I execute good step
-            """
-        ),
+            """,
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         from pytest_bdd import when, then, scenario
         from pytest import fixture
 
@@ -1099,7 +1016,6 @@ def test_found_alternate_step_decorators_produce_warning(testdir):
         def foo(then_step_values, value):
             then_step_values.append(value)
         """
-        )
     )
     result = testdir.runpytest("-W", "ignore::pytest_bdd.PytestBDDStepDefinitionWarning")
     result.assert_outcomes(passed=1, failed=0)

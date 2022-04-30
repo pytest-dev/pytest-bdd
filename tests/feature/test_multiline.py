@@ -1,5 +1,4 @@
 """Multiline steps tests."""
-import textwrap
 
 from pytest import mark, param
 
@@ -96,9 +95,7 @@ def test_multiline_wrong_indent(testdir, parser):
 
     testdir.makefile(
         ".feature",
-        multiline=textwrap.dedent(
-            """\
-
+        multiline="""\
             Feature: Multiline
                 Scenario: Multiline step using sub indentation wrong indent
                     Given I have a step with:
@@ -107,8 +104,7 @@ def test_multiline_wrong_indent(testdir, parser):
                     Extra
                     Lines
                     Then the text should be parsed with correct indentation
-            """
-        ),
+            """,
     )
 
     testdir.makepyfile(

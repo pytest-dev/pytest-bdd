@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-import textwrap
 from typing import TYPE_CHECKING, Any
 
 from pytest import mark, param
@@ -35,49 +34,44 @@ def test_step_trace(testdir, parser):
     """Test step trace."""
     testdir.makefile(
         ".ini",
-        pytest=textwrap.dedent(
-            """
-    [pytest]
-    markers =
-        scenario-passing-tag
-        scenario-failing-tag
-        scenario-outline-passing-tag
-        feature-tag
-    """
-        ),
+        pytest="""
+        [pytest]
+        markers =
+            scenario-passing-tag
+            scenario-failing-tag
+            scenario-outline-passing-tag
+            feature-tag
+        """,
     )
     testdir.makefile(
         ".feature",
-        test=textwrap.dedent(
-            """
-    @feature-tag
-    Feature: One passing scenario, one failing scenario
+        test="""\
+        @feature-tag
+        Feature: One passing scenario, one failing scenario
 
-        @scenario-passing-tag
-        Scenario: Passing
-            Given a passing step
-            And some other passing step
+            @scenario-passing-tag
+            Scenario: Passing
+                Given a passing step
+                And some other passing step
 
-        @scenario-failing-tag
-        Scenario: Failing
-            Given a passing step
-            And a failing step
+            @scenario-failing-tag
+            Scenario: Failing
+                Given a passing step
+                And a failing step
 
-        @scenario-outline-passing-tag
-        Scenario: Passing outline
-            Given type <type> and value <value>
+            @scenario-outline-passing-tag
+            Scenario: Passing outline
+                Given type <type> and value <value>
 
-            Examples: example1
-            | type    | value  |
-            | str     | hello  |
-            | int     | 42     |
-            | float   | 1.0    |
-    """
-        ),
+                Examples: example1
+                | type    | value  |
+                | str     | hello  |
+                | int     | 42     |
+                | float   | 1.0    |
+        """,
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            f"""
+        f"""\
         import pytest
         from pytest_bdd import given, when, scenario, parsers
         from pytest_bdd.parser import {parser} as Parser
@@ -109,8 +103,7 @@ def test_step_trace(testdir, parser):
         @scenario('test.feature', 'Passing outline', _parser=Parser(),)
         def test_passing_outline():
             pass
-    """
-        )
+        """
     )
     result, jsonobject = runandparse(testdir)
     result.assert_outcomes(passed=4, failed=1)

@@ -1,6 +1,5 @@
 """Code generation and assertion tests."""
 import itertools
-import textwrap
 
 from pytest_bdd.scenario import get_python_name_generator
 from tests.utils import assert_outcomes
@@ -19,8 +18,7 @@ def test_generate_missing(testdir):
     """Test generate missing command."""
     testdir.makefile(
         ".feature",
-        generation=textwrap.dedent(
-            """\
+        generation="""\
             Feature: Missing code generation
 
                 Background:
@@ -36,13 +34,11 @@ def test_generate_missing(testdir):
 
                 Scenario: Code is generated for scenario steps which are not yet defined(implemented)
                     Given I have a custom bar
-            """
-        ),
+            """,
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         import functools
 
         from pytest_bdd import scenario, given
@@ -61,7 +57,6 @@ def test_generate_missing(testdir):
         def test_missing_steps():
             pass
         """
-        )
     )
 
     result = testdir.runpytest("--generate-missing", "--feature", "generation.feature")
@@ -87,8 +82,7 @@ def test_generate_missing_with_step_parsers(testdir):
     """Test that step parsers are correctly discovered and won't be part of the missing steps."""
     testdir.makefile(
         ".feature",
-        generation=textwrap.dedent(
-            """\
+        generation="""\
             Feature: Missing code generation with step parsers
 
                 Scenario: StepHandler parsers are correctly discovered
@@ -96,13 +90,11 @@ def test_generate_missing_with_step_parsers(testdir):
                     And I use parsers.parse with parameter 1
                     And I use parsers.re with parameter 2
                     And I use parsers.cfparse with parameter 3
-            """
-        ),
+            """,
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         import functools
 
         from pytest_bdd import scenarios, given, parsers
@@ -125,7 +117,6 @@ def test_generate_missing_with_step_parsers(testdir):
         def i_have_n_baz(param):
             return param
         """
-        )
     )
 
     result = testdir.runpytest("--generate-missing", "--feature", "generation.feature")

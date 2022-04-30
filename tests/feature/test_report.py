@@ -1,8 +1,8 @@
 """Test scenario reporting."""
+
 from __future__ import annotations
 
 import re
-import textwrap
 from pathlib import Path
 
 import execnet.gateway_base
@@ -50,48 +50,43 @@ def test_step_trace(testdir):
     """Test step trace."""
     testdir.makefile(
         ".ini",
-        pytest=textwrap.dedent(
-            """
-    [pytest]
-    markers =
-        feature-tag
-        scenario-passing-tag
-        scenario-failing-tag
-    """
-        ),
+        pytest="""\
+            [pytest]
+            markers =
+                feature-tag
+                scenario-passing-tag
+                scenario-failing-tag
+            """,
     )
     feature = testdir.makefile(
         ".feature",
-        test=textwrap.dedent(
-            """
-    @feature-tag
-    Feature: One passing scenario, one failing scenario
+        test="""\
+            @feature-tag
+            Feature: One passing scenario, one failing scenario
 
-        @scenario-passing-tag
-        Scenario: Passing
-            Given a passing step
-            And some other passing step
+                @scenario-passing-tag
+                Scenario: Passing
+                    Given a passing step
+                    And some other passing step
 
-        @scenario-failing-tag
-        Scenario: Failing
-            Given a passing step
-            And a failing step
+                @scenario-failing-tag
+                Scenario: Failing
+                    Given a passing step
+                    And a failing step
 
-        Scenario Outline: Outlined
-            Given there are <start> cucumbers
-            When I eat <eat> cucumbers
-            Then I should have <left> cucumbers
+                Scenario Outline: Outlined
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers
 
-            Examples:
-            | start | eat | left |
-            |  12   |  5  |  7   |
-            |  5    |  4  |  1   |
-    """
-        ),
+                    Examples:
+                    | start | eat | left |
+                    |  12   |  5  |  7   |
+                    |  5    |  4  |  1   |
+            """,
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            """
+        """\
         import pytest
         from pytest_bdd import given, when, then, scenarios, parsers
 
@@ -128,8 +123,7 @@ def test_step_trace(testdir):
 
 
         scenarios('test.feature')
-    """
-        )
+        """
     )
     result = testdir.inline_run("-vvl")
     assert result.ret
@@ -309,22 +303,19 @@ def test_complex_types(testdir, pytestconfig):
 
     testdir.makefile(
         ".feature",
-        test=textwrap.dedent(
-            """
-    Feature: Report serialization containing parameters of complex types
+        test="""\
+            Feature: Report serialization containing parameters of complex types
 
-    Scenario: Complex
-        Given there is a coordinate <point>
+            Scenario: Complex
+                Given there is a coordinate <point>
 
-        Examples:
-        |  point  |
-        |  10,20  |
-    """
-        ),
+                Examples:
+                |  point  |
+                |  10,20  |
+            """,
     )
     testdir.makepyfile(
-        textwrap.dedent(
-            """
+        """\
         import pytest
         from pytest_bdd import given, when, then, scenario, parsers
 
@@ -355,9 +346,7 @@ def test_complex_types(testdir, pytestconfig):
         @scenario('test.feature', 'Complex')
         def test_complex(alien):
             pass
-
-    """
-        )
+        """
     )
     result = testdir.inline_run("-vvl")
     report = matchreport(

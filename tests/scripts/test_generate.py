@@ -2,7 +2,7 @@
 
 import os
 import sys
-import textwrap
+from textwrap import dedent
 
 from pytest_bdd.scripts import main
 
@@ -15,19 +15,17 @@ def test_generate(testdir, monkeypatch, capsys):
     features = testdir.mkdir("scripts")
     feature = features.join("generate.feature")
     feature.write_text(
-        textwrap.dedent(
-            """\
-            Feature: Code generation
+        """\
+        Feature: Code generation
 
-                Scenario: Given and when using the same fixture should not evaluate it twice
-                    Given I have an empty list
-                    And 1 have a fixture (appends 1 to a list) in reuse syntax
+            Scenario: Given and when using the same fixture should not evaluate it twice
+                Given I have an empty list
+                And 1 have a fixture (appends 1 to a list) in reuse syntax
 
-                    When I use this fixture
+                When I use this fixture
 
-                    Then my list should be [1]
-            """
-        ),
+                Then my list should be [1]
+        """,
         "utf-8",
         ensure=True,
     )
@@ -35,45 +33,45 @@ def test_generate(testdir, monkeypatch, capsys):
     monkeypatch.setattr(sys, "argv", ["", "generate", feature.strpath])
     main()
     out, err = capsys.readouterr()
-    assert out == textwrap.dedent(
+    assert out == dedent(
         '''\
-    """Code generation feature tests."""
+        """Code generation feature tests."""
 
-    from pytest_bdd import (
-        scenario,
-        step,
-    )
-
-
-    @scenario('scripts/generate.feature', 'Given and when using the same fixture should not evaluate it twice')
-    def test_given_and_when_using_the_same_fixture_should_not_evaluate_it_twice():
-        """Given and when using the same fixture should not evaluate it twice."""
+        from pytest_bdd import (
+            scenario,
+            step,
+        )
 
 
-    @step('1 have a fixture (appends 1 to a list) in reuse syntax')
-    def have_a_fixture_appends_1_to_a_list_in_reuse_syntax():
-        """1 have a fixture (appends 1 to a list) in reuse syntax."""
-        raise NotImplementedError
+        @scenario('scripts/generate.feature', 'Given and when using the same fixture should not evaluate it twice')
+        def test_given_and_when_using_the_same_fixture_should_not_evaluate_it_twice():
+            """Given and when using the same fixture should not evaluate it twice."""
 
 
-    @step('I have an empty list')
-    def i_have_an_empty_list():
-        """I have an empty list."""
-        raise NotImplementedError
+        @step('1 have a fixture (appends 1 to a list) in reuse syntax')
+        def have_a_fixture_appends_1_to_a_list_in_reuse_syntax():
+            """1 have a fixture (appends 1 to a list) in reuse syntax."""
+            raise NotImplementedError
 
 
-    @step('my list should be [1]')
-    def my_list_should_be_1():
-        """my list should be [1]."""
-        raise NotImplementedError
+        @step('I have an empty list')
+        def i_have_an_empty_list():
+            """I have an empty list."""
+            raise NotImplementedError
 
 
-    @step('I use this fixture')
-    def i_use_this_fixture():
-        """I use this fixture."""
-        raise NotImplementedError
+        @step('my list should be [1]')
+        def my_list_should_be_1():
+            """my list should be [1]."""
+            raise NotImplementedError
 
-    '''
+
+        @step('I use this fixture')
+        def i_use_this_fixture():
+            """I use this fixture."""
+            raise NotImplementedError
+
+        '''
     )
 
 
@@ -81,8 +79,7 @@ def test_generate_with_quotes(testdir):
     """Test that code generation escapes quote characters properly."""
     testdir.makefile(
         ".feature",
-        generate_with_quotes=textwrap.dedent(
-            '''\
+        generate_with_quotes='''\
         Feature: Handling quotes in code generation
 
             Scenario: A step definition with quotes should be escaped as needed
@@ -94,61 +91,60 @@ def test_generate_with_quotes(testdir):
                 When I generate the code
 
                 Then The generated string should be written
-        '''
-        ),
+        ''',
     )
 
     result = testdir.run("pytest-bdd", "generate", "generate_with_quotes.feature")
-    assert result.stdout.str() == textwrap.dedent(
+    assert result.stdout.str() == dedent(
         '''\
-    """Handling quotes in code generation feature tests."""
+        """Handling quotes in code generation feature tests."""
 
-    from pytest_bdd import (
-        scenario,
-        step,
-    )
-
-
-    @scenario('generate_with_quotes.feature', 'A step definition with quotes should be escaped as needed')
-    def test_a_step_definition_with_quotes_should_be_escaped_as_needed():
-        """A step definition with quotes should be escaped as needed."""
+        from pytest_bdd import (
+            scenario,
+            step,
+        )
 
 
-    @step('I have a fixture with "double" quotes')
-    def i_have_a_fixture_with_double_quotes():
-        """I have a fixture with "double" quotes."""
-        raise NotImplementedError
+        @scenario('generate_with_quotes.feature', 'A step definition with quotes should be escaped as needed')
+        def test_a_step_definition_with_quotes_should_be_escaped_as_needed():
+            """A step definition with quotes should be escaped as needed."""
 
 
-    @step('I have a fixture with double-quote """triple""" quotes')
-    def i_have_a_fixture_with_doublequote_triple_quotes():
-        """I have a fixture with double-quote \\"\\"\\"triple\\"\\"\\" quotes."""
-        raise NotImplementedError
+        @step('I have a fixture with "double" quotes')
+        def i_have_a_fixture_with_double_quotes():
+            """I have a fixture with "double" quotes."""
+            raise NotImplementedError
 
 
-    @step('I have a fixture with single-quote \\'\\'\\'triple\\'\\'\\' quotes')
-    def i_have_a_fixture_with_singlequote_triple_quotes():
-        """I have a fixture with single-quote \'\'\'triple\'\'\' quotes."""
-        raise NotImplementedError
+        @step('I have a fixture with double-quote """triple""" quotes')
+        def i_have_a_fixture_with_doublequote_triple_quotes():
+            """I have a fixture with double-quote \\"\\"\\"triple\\"\\"\\" quotes."""
+            raise NotImplementedError
 
 
-    @step('I have a fixture with \\'single\\' quotes')
-    def i_have_a_fixture_with_single_quotes():
-        """I have a fixture with 'single' quotes."""
-        raise NotImplementedError
+        @step('I have a fixture with single-quote \\'\\'\\'triple\\'\\'\\' quotes')
+        def i_have_a_fixture_with_singlequote_triple_quotes():
+            """I have a fixture with single-quote \'\'\'triple\'\'\' quotes."""
+            raise NotImplementedError
 
 
-    @step('The generated string should be written')
-    def the_generated_string_should_be_written():
-        """The generated string should be written."""
-        raise NotImplementedError
+        @step('I have a fixture with \\'single\\' quotes')
+        def i_have_a_fixture_with_single_quotes():
+            """I have a fixture with 'single' quotes."""
+            raise NotImplementedError
 
 
-    @step('I generate the code')
-    def i_generate_the_code():
-        """I generate the code."""
-        raise NotImplementedError
-    '''
+        @step('The generated string should be written')
+        def the_generated_string_should_be_written():
+            """The generated string should be written."""
+            raise NotImplementedError
+
+
+        @step('I generate the code')
+        def i_generate_the_code():
+            """I generate the code."""
+            raise NotImplementedError
+        '''
     )
 
 
@@ -160,50 +156,48 @@ def test_unicode_characters(testdir, monkeypatch):
 
     testdir.makefile(
         ".feature",
-        unicode_characters=textwrap.dedent(
-            """\
-        Feature: Generating unicode characters
+        unicode_characters="""\
+            Feature: Generating unicode characters
 
-            Scenario: Calculating the circumference of a circle
-                Given We have a circle
-                When We want to know its circumference
-                Then We calculate 2 * ℼ * 𝑟
-        """
-        ),
+                Scenario: Calculating the circumference of a circle
+                    Given We have a circle
+                    When We want to know its circumference
+                    Then We calculate 2 * ℼ * 𝑟
+            """,
     )
 
     result = testdir.run("pytest-bdd", "generate", "unicode_characters.feature")
-    expected_output = textwrap.dedent(
+    expected_output = dedent(
         '''\
-            """Generating unicode characters feature tests."""
+        """Generating unicode characters feature tests."""
 
-            from pytest_bdd import (
-                scenario,
-                step,
-            )
-
-
-            @scenario('unicode_characters.feature', 'Calculating the circumference of a circle')
-            def test_calculating_the_circumference_of_a_circle():
-                """Calculating the circumference of a circle."""
+        from pytest_bdd import (
+            scenario,
+            step,
+        )
 
 
-            @step('We have a circle')
-            def we_have_a_circle():
-                """We have a circle."""
-                raise NotImplementedError
+        @scenario('unicode_characters.feature', 'Calculating the circumference of a circle')
+        def test_calculating_the_circumference_of_a_circle():
+            """Calculating the circumference of a circle."""
 
 
-            @step('We calculate 2 * ℼ * 𝑟')
-            def we_calculate_2__ℼ__𝑟():
-                """We calculate 2 * ℼ * 𝑟."""
-                raise NotImplementedError
+        @step('We have a circle')
+        def we_have_a_circle():
+            """We have a circle."""
+            raise NotImplementedError
 
 
-            @step('We want to know its circumference')
-            def we_want_to_know_its_circumference():
-                """We want to know its circumference."""
-                raise NotImplementedError
-            '''
+        @step('We calculate 2 * ℼ * 𝑟')
+        def we_calculate_2__ℼ__𝑟():
+            """We calculate 2 * ℼ * 𝑟."""
+            raise NotImplementedError
+
+
+        @step('We want to know its circumference')
+        def we_want_to_know_its_circumference():
+            """We want to know its circumference."""
+            raise NotImplementedError
+        '''
     )
     assert result.stdout.str() == expected_output

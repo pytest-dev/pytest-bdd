@@ -1,7 +1,5 @@
 """StepHandler arguments tests."""
 
-import textwrap
-
 from pytest import mark
 
 
@@ -24,8 +22,7 @@ def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_strin
                     Then I should have 0 Euro
                     # In my dream...
                     And I should have 999999 Euro
-
-        """,
+            """,
     )
 
     testdir.makepyfile(
@@ -57,7 +54,6 @@ def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_strin
         @then(parse("I should have {euro:d} Euro"))
         def i_should_have(euro, values):
             assert euro == values.pop(0)
-
         """
     )
 
@@ -75,26 +71,22 @@ def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_strin
 def test_argument_in_when_step_1(testdir, parser_import_string):
     testdir.makefile(
         ".feature",
-        arguments=textwrap.dedent(
-            """\
+        arguments="""\
             Feature: StepHandler arguments
                 Scenario: Argument in when
                     Given I have an argument 1
                     When I get argument 5
                     Then My argument should be 5
-            """
-        ),
+            """,
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         import pytest
         from pytest_bdd import given, when, then, scenario
         """
-            f"{parser_import_string}"
-            """
-
+        f"{parser_import_string}"
+        """
         @pytest.fixture
         def arguments():
             return dict()
@@ -120,7 +112,6 @@ def test_argument_in_when_step_1(testdir, parser_import_string):
             assert arguments["arg"] == arg
 
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)

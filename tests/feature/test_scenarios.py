@@ -1,5 +1,4 @@
 """Test scenarios shortcut."""
-import textwrap
 
 from tests.utils import assert_outcomes
 
@@ -7,13 +6,13 @@ from tests.utils import assert_outcomes
 def test_scenarios(testdir, pytest_params):
     """Test scenarios shortcut (used together with @scenario for individual test override)."""
     testdir.makeini(
-        """
-            [pytest]
-            console_output_style=classic
+        """\
+        [pytest]
+        console_output_style=classic
         """
     )
     testdir.makeconftest(
-        """
+        """\
         import pytest
         from pytest_bdd import given
 
@@ -21,43 +20,39 @@ def test_scenarios(testdir, pytest_params):
         def i_have_bar():
             print('bar!')
             return 'bar'
-    """
+        """
     )
     features = testdir.mkdir("features")
     features.join("test.feature").write_text(
-        textwrap.dedent(
-            """\
-            Feature: Test scenarios
+        """\
+        Feature: Test scenarios
 
-                Scenario: Test scenario
-                    Given I have a bar
-            """
-        ),
+            Scenario: Test scenario
+                Given I have a bar
+        """,
         "utf-8",
         ensure=True,
     )
     features.join("subfolder", "test.feature").write_text(
-        textwrap.dedent(
-            """\
-            Feature: Test scenarios
-                Scenario: Test subfolder scenario
-                    Given I have a bar
+        """\
+        Feature: Test scenarios
+            Scenario: Test subfolder scenario
+                Given I have a bar
 
-                Scenario: Test failing subfolder scenario
-                    Given I have a failing bar
+            Scenario: Test failing subfolder scenario
+                Given I have a failing bar
 
-                Scenario: Test already bound scenario
-                    Given I have a bar
+            Scenario: Test already bound scenario
+                Given I have a bar
 
-                Scenario: Test scenario
-                    Given I have a bar
-            """
-        ),
+            Scenario: Test scenario
+                Given I have a bar
+        """,
         "utf-8",
         ensure=True,
     )
     testdir.makepyfile(
-        """
+        """\
         import pytest
         from pytest_bdd import scenarios, scenario
 
@@ -85,7 +80,7 @@ def test_scenarios(testdir, pytest_params):
 def test_scenarios_none_found(testdir, pytest_params):
     """Test scenarios shortcut when no scenarios found."""
     testpath = testdir.makepyfile(
-        """
+        """\
         import pytest
         from pytest_bdd import scenarios
 

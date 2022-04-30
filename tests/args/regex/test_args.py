@@ -1,7 +1,5 @@
 """StepHandler arguments tests."""
 
-import textwrap
-
 from pytest import mark
 
 
@@ -15,8 +13,7 @@ from pytest import mark
 def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_string):
     testdir.makefile(
         ".feature",
-        arguments=textwrap.dedent(
-            """\
+        arguments="""\
             Feature: StepHandler arguments
                 Scenario: Every step takes a parameter with the same name
                     Given I have 1 Euro
@@ -24,19 +21,16 @@ def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_strin
                     And I pay 1 Euro
                     Then I should have 0 Euro
                     And I should have 999999 Euro # In my dream...
-
-            """
-        ),
+            """,
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         import pytest
         from pytest_bdd import given, when, then, scenario
         """
-            f"{parser_import_string}"
-            r"""
+        f"{parser_import_string}"
+        r"""
 
         @scenario("arguments.feature", "Every step takes a parameter with the same name")
         def test_arguments():
@@ -59,9 +53,7 @@ def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_strin
         @then(parse_re(r"I should have (?P<euro>\d+) Euro"), converters=dict(euro=int))
         def i_should_have(euro, values):
             assert euro == values.pop(0)
-
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)
@@ -77,26 +69,22 @@ def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_strin
 def test_argument_in_when(testdir, parser_import_string):
     testdir.makefile(
         ".feature",
-        arguments=textwrap.dedent(
-            """\
+        arguments="""\
             Feature: StepHandler arguments
                 Scenario: Argument in when, step 1
                     Given I have an argument 1
                     When I get argument 5
                     Then My argument should be 5
-            """
-        ),
+            """,
     )
 
     testdir.makepyfile(
-        textwrap.dedent(
-            """\
+        """\
         import pytest
         from pytest_bdd import given, when, then, scenario
         """
-            f"{parser_import_string}"
-            r"""
-
+        f"{parser_import_string}"
+        r"""
         @pytest.fixture
         def arguments():
             return dict()
@@ -119,9 +107,7 @@ def test_argument_in_when(testdir, parser_import_string):
         @then(parse_re(r"My argument should be (?P<arg>\d+)"))
         def assert_that_my_argument_is_arg(arguments, arg):
             assert arguments["arg"] == arg
-
         """
-        )
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)
