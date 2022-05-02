@@ -41,13 +41,11 @@ def test_description(testdir):
 
         def test_scenario_description():
             assert test_description.__scenario__.feature.description == textwrap.dedent(
-                \"\"\"\\
+                '''\\
                 In order to achieve something
                 I want something
                 Because it will be cool
-
-
-                Some description goes here.\"\"\"
+                Some description goes here.'''
             )
         """
         )

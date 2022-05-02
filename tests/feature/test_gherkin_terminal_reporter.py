@@ -195,9 +195,9 @@ def test_step_parameters_should_be_replaced_by_their_values(testdir):
                 When I eat <eat> cucumbers
                 Then I should have <left> cucumbers
 
-            Examples:
-            | start | eat | left |
-            |{start}|{eat}|{left}|
+                Examples:
+                | start | eat | left |
+                |{start}|{eat}|{left}|
         """.format(
                 **example
             )

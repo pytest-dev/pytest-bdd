@@ -20,3 +20,5 @@ def pytest_generate_tests(metafunc):
             "pytest_params",
             parametrizations,
         )
+    if "bdd_parser" in metafunc.fixturenames:
+        metafunc.parametrize("bdd_parser", ["legacy", "2020"])

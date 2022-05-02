@@ -5,9 +5,14 @@ import re
 import textwrap
 import typing
 from collections import OrderedDict
+from dataclasses import dataclass, field
 from typing import cast
 
-from . import exceptions, types
+from . import types
+from .exceptions import FeatureError
+
+if typing.TYPE_CHECKING:
+    from typing import Any, Iterable, Mapping, Match, Sequence
 
 SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
@@ -27,8 +32,9 @@ STEP_PREFIXES = [
     ("But ", None),
 ]
 
-if typing.TYPE_CHECKING:
-    from typing import Any, Iterable, Mapping, Match
+
+class ValidationError(Exception):
+    pass
 
 
 def split_line(line: str) -> list[str]:
@@ -130,7 +136,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
         allowed_prev_mode = (types.BACKGROUND, types.GIVEN, types.WHEN)
 
         if not scenario and prev_mode not in allowed_prev_mode and mode in types.STEP_TYPES:
-            raise exceptions.FeatureError(
+            raise FeatureError(
                 "Step definition outside of a Scenario or a Background", line_number, clean_line, filename
             )
 
@@ -142,7 +148,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
             elif prev_mode == types.FEATURE:
                 description.append(clean_line)
             else:
-                raise exceptions.FeatureError(
+                raise FeatureError(
                     "Multiple features are not allowed in a single feature file",
                     line_number,
                     clean_line,
@@ -181,48 +187,49 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
     return feature
 
 
+@dataclass
 class Feature:
     """Feature."""
 
-    def __init__(
-        self,
-        scenarios: OrderedDict,
-        filename: str,
-        rel_filename: str,
-        name: str | None,
-        tags: set,
-        background: Background | None,
-        line_number: int,
-        description: str,
-    ) -> None:
-        self.scenarios: dict[str, ScenarioTemplate] = scenarios
-        self.rel_filename: str = rel_filename
-        self.filename: str = filename
-        self.tags: set = tags
-        self.name: str | None = name
-        self.line_number: int = line_number
-        self.description: str = description
-        self.background: Background | None = background
+    scenarios: OrderedDict[str, ScenarioTemplate]
+    filename: str
+    rel_filename: str
+    name: str | None
+    tags: set[str]
+    background: Background | None
+    line_number: int
+    description: str
+
+    def validate(self):
+        for scenario_name, scenario in self.scenarios.items():
+            if scenario_name != scenario.name:
+                raise ValidationError(
+                    f"Expected scenario_name and scenario " f"to be the same: {scenario_name} != {scenario.name}"
+                )
+            scenario.validate()
+
+        if self.background is not None:
+            self.background.validate()
 
 
+@dataclass
 class ScenarioTemplate:
     """A scenario template.
 
     Created when parsing the feature file, it will then be combined with the examples to create a Scenario."""
 
-    def __init__(self, feature: Feature, name: str, line_number: int, tags=None) -> None:
-        """
+    feature: Feature
+    name: str
+    line_number: int
+    tags: set[str] = field(default_factory=set)
+    examples: Examples | None = field(default_factory=lambda: Examples())
+    _steps: list[Step] = field(init=False, default_factory=list)
 
-        :param str name: Scenario name.
-        :param int line_number: Scenario line number.
-        :param set tags: Set of tags.
-        """
-        self.feature = feature
-        self.name = name
-        self._steps: list[Step] = []
-        self.examples = Examples()
-        self.line_number = line_number
-        self.tags = tags or set()
+    def __post_init__(self):
+        if self.examples is None:
+            self.examples = Examples()
+        if self.tags is None:
+            self.tags = set()
 
     def add_step(self, step: Step) -> None:
         """Add step to the scenario.
@@ -250,49 +257,69 @@ class ScenarioTemplate:
         ]
         return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
 
+    def validate(self):
+        if self.feature is None:
+            raise ValidationError("Missing feature")
+        for step in self._steps:
+            if step.background is not None:
+                raise ValidationError(
+                    f"Step {step} is connected to a background ({step.background}), "
+                    f"but it should not since it's part of a scenario ({self})."
+                )
+            if step.scenario != self:
+                raise ValidationError(f"Step {step} is not connected to the scenario {self}")
 
+
+@dataclass
 class Scenario:
-
     """Scenario."""
 
-    def __init__(self, feature: Feature, name: str, line_number: int, steps: list[Step], tags=None) -> None:
-        """Scenario constructor.
+    feature: Feature
+    name: str
+    line_number: int
+    steps: list[Step]
+    tags: set[str] = field(default_factory=set)
 
-        :param pytest_bdd.parser.Feature feature: Feature.
-        :param str name: Scenario name.
-        :param int line_number: Scenario line number.
-        :param set tags: Set of tags.
-        """
-        self.feature = feature
-        self.name = name
-        self.steps = steps
-        self.line_number = line_number
-        self.tags = tags or set()
-        self.failed = False
+    def __post_init__(self):
+        if self.tags is None:
+            self.tags = set()
 
 
+@dataclass
 class Step:
+    type: str
+    _name: str
+    line_number: int
+    indent: int
+    keyword: str
+    docstring: str | None = None
+    datatable: list[tuple[str, ...]] | None = None
+    failed: bool = field(init=False, default=False)
+    scenario: ScenarioTemplate | None = field(init=False, default=None)
+    background: Background | None = field(init=False, default=None)
+    lines: list[str] = field(init=False, default_factory=list)
 
-    """Step."""
-
-    def __init__(self, name: str, type: str, indent: int, line_number: int, keyword: str) -> None:
-        """Step constructor.
-
-        :param str name: step name.
-        :param str type: step type.
-        :param int indent: step text indent.
-        :param int line_number: line number.
-        :param str keyword: step keyword.
-        """
-        self.name: str = name
-        self.keyword: str = keyword
-        self.lines: list[str] = []
-        self.indent: int = indent
-        self.type: str = type
-        self.line_number: int = line_number
-        self.failed: bool = False
-        self.scenario: ScenarioTemplate | None = None
-        self.background: Background | None = None
+    def __init__(
+        self,
+        type: str,
+        name: str,
+        line_number: int,
+        indent: int,
+        keyword: str,
+        docstring: str | None = None,
+        datatable: list[tuple[str, ...]] | None = None,
+    ):
+        self.type = type
+        self.name = name
+        self.line_number = line_number
+        self.indent = indent
+        self.keyword = keyword
+        self.docstring = docstring
+        self.datatable = datatable
+        self.failed = False
+        self.scenario = None
+        self.background = None
+        self.lines = []
 
     def add_line(self, line: str) -> None:
         """Add line to the multiple step.
@@ -331,7 +358,7 @@ class Step:
         """Get step params."""
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
-    def render(self, context: Mapping[str, Any]):
+    def render(self, context: Mapping[str, Any]) -> str:
         def replacer(m: Match):
             varname = m.group(1)
             return str(context[varname])
@@ -339,45 +366,47 @@ class Step:
         return STEP_PARAM_RE.sub(replacer, self.name)
 
 
+@dataclass
 class Background:
-
-    """Background."""
-
-    def __init__(self, feature: Feature, line_number: int) -> None:
-        """Background constructor.
-
-        :param pytest_bdd.parser.Feature feature: Feature.
-        :param int line_number: Line number.
-        """
-        self.feature: Feature = feature
-        self.line_number: int = line_number
-        self.steps: list[Step] = []
+    feature: Feature
+    line_number: int
+    steps: list[Step] = field(init=False, default_factory=list)
 
     def add_step(self, step: Step) -> None:
         """Add step to the background."""
         step.background = self
         self.steps.append(step)
 
+    def validate(self):
+        if self.feature is None:
+            raise ValidationError(f"Background {self} not connected to a feature.")
+        for step in self.steps:
+            if step.background != self:
+                raise ValidationError(f"Step {step} is not connected to the background {self}")
+            if step.scenario is not None:
+                raise ValidationError(
+                    f"Step {step} is connected to a scenario ({step.scenario}), "
+                    f"but it's already part of a background ({self})."
+                )
 
+
+@dataclass
 class Examples:
-
     """Example table."""
 
-    def __init__(self) -> None:
-        """Initialize examples instance."""
-        self.example_params: list[str] = []
-        self.examples: list[list[str]] = []
-        self.line_number: int | None = None
-        self.name = None
+    example_params: list[str] = field(default_factory=list)
+    examples: list[Sequence[str]] = field(default_factory=list)
+    line_number: int | None = field(default=None)
+    name: str | None = field(default=None)
 
-    def set_param_names(self, keys: list[str]) -> None:
+    def set_param_names(self, keys: Iterable[str]) -> None:
         """Set parameter names.
 
         :param names: `list` of `string` parameter names.
         """
         self.example_params = [str(key) for key in keys]
 
-    def add_example(self, values: list[str]) -> None:
+    def add_example(self, values: Sequence[str]) -> None:
         """Add example.
 
         :param values: `list` of `string` parameter values.

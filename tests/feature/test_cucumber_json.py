@@ -62,7 +62,7 @@ def test_step_trace(testdir):
             And a failing step
 
         @scenario-outline-passing-tag
-        Scenario: Passing outline
+        Scenario Outline: Passing outline
             Given type <type> and value <value>
 
             Examples: example1

@@ -1,0 +1,90 @@
+?start: gherkin_document
+
+?gherkin_document: _NL* (feature? | _INDENT feature? _DEDENT)
+
+//Feature! := FeatureHeader Background? ScenarioDefinition* Rule*
+//FeatureHeader! := #Language? Tags? #FeatureLine DescriptionHelper
+
+feature: [tag_lines] feature_line [_INDENT [description] [background] [scenarios] _DEDENT]
+
+description: (STRING _NL)+
+
+background: background_line [_INDENT givens _DEDENT]
+background_line: BACKGROUND [STRING] _NL?
+
+scenarios: scenario*
+
+feature_header: [tag_lines]
+feature_line: FEATURE STRING _NL?
+
+scenario: [tag_lines] scenario_line{SCENARIO} [_INDENT [steps] _DEDENT] -> scenario
+        | [tag_lines] scenario_line{SCENARIO_OUTLINE} [_INDENT [steps] examples _DEDENT] -> scenario_outline
+scenario_line{type}: type STRING _NL?
+
+examples: example_line table
+example_line: EXAMPLES [STRING] _NL?
+
+table: table_row+
+table_row: EXAMPLE_TABLE_ROW _NL
+
+// The idea here is to match the initial "|" and the each cell is a .* match but it cannot end with a "\" (it would
+// escape the following "|")
+EXAMPLE_TABLE_ROW: "|" /.*?(?<!\\)(\\\\)*?\|/+
+
+
+steps: givens? (whens | thens) *
+
+givens: step{GIVEN}+ (step{AND} | step{BUT})*
+whens: step{WHEN}+ (step{AND} | step{BUT})*
+thens: step{THEN}+ (step{AND} | step{BUT})*
+
+// "step_docstring" handles the newlines before it by itself, without relying on _NL, because it can disregard
+// the current indentation altogether.
+// If we relied on _NL, we would have to rewrite the TreeIndenter, which I'm not looking forward to.
+// That's why we don't require a _NL here before step_docstring.
+step{type}: type STRING [step_docstring] _NL [_INDENT table _DEDENT]
+
+tag: /@[^\s]+/
+tag_line: tag+ _NL
+tag_lines: tag_line+
+
+
+// Use low priority (-1), so that we attempt to first match other terminals with priority 0 (the default).
+// This is needed to avoid having "description" greedy matching other rules like "background" and "scenarios"
+STRING.-1: /.+/
+
+GIVEN: "Given "
+WHEN: "When "
+THEN: "Then "
+AND: "And "
+BUT: "But "
+
+SCENARIO: "Scenario:"
+SCENARIO_OUTLINE: "Scenario Outline:" | "Scenario Template:"
+BACKGROUND: "Background:"
+FEATURE: "Feature:"
+EXAMPLES: "Examples:" | "Scenarios:"
+
+// TODO: Probably the following does not need the negative lookbehind part
+//step_docstring: /"""\n.*?(?<!\\)(\\\\)*?\n\s*"""/is
+//              | /'''\n.*?(?<!\\)(\\\\)*?\n\s*'''/is
+
+// TODO: Maybe we should handle escaped docstring characters?
+STEP_DOCSTRING: /\n[ \t]*/ /"""/ STEP_DOCSTRING_INNER /"""/
+              | /\n[ \t]*/ /'''/ STEP_DOCSTRING_INNER /'''/
+STEP_DOCSTRING_INNER: /\n.*?\n[ \t]*/is
+step_docstring: STEP_DOCSTRING
+
+// %import common.ESCAPED_STRING -> string
+%import common.WS_INLINE
+%import common.LETTER
+%import common.NUMBER
+%import common.CNAME
+
+%declare _INDENT _DEDENT
+%ignore WS_INLINE
+
+COMMENT_LINE: /#.*/ _NL
+%ignore COMMENT_LINE
+
+_NL: /(\r?\n[\t ]*)+/

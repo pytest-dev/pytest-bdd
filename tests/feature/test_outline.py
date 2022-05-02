@@ -45,7 +45,8 @@ def test_outlined(testdir):
 
                     Examples:
                     | start | eat | left |
-                    |  12   |  5  |  7   | # a comment
+                    # a comment
+                    |  12   |  5  |  7   |
                     |  5    |  4  |  1   |
 
             """
@@ -171,7 +172,7 @@ def test_outline_with_escaped_pipes(testdir):
     testdir.makefile(
         ".feature",
         outline=textwrap.dedent(
-            r"""\
+            r"""
             Feature: Outline With Special characters
 
                 Scenario Outline: Outline with escaped pipe character
