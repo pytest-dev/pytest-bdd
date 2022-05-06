@@ -25,12 +25,17 @@ module = [
         "attr.*",
         "execnet.*",
         "gherkin.*",
+        "hjson",
+        "json5",
         "mako.*",
+        "marshmallow_polyfield.*",
         "ordered_set",
         "parse",
         "parse_type.*",
         "pluggy.*",
         "_pytest.*",
+        "pyhocon",
         "pytest.*",
+        "yaml.*"
     ]
 ignore_missing_imports = true

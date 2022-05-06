@@ -21,7 +21,13 @@ from pytest_bdd.ast import ASTSchema
 from pytest_bdd.exceptions import FeatureError
 from pytest_bdd.model.feature import Feature as FeatureModel
 from pytest_bdd.typing.parser import ParserProtocol
+from pytest_bdd.typing.struct_bdd import STRUCT_BDD_INSTALLED
 from pytest_bdd.utils import SimpleMapping
+
+if STRUCT_BDD_INSTALLED:  # pragma: no cover
+    from pytest_bdd.struct_bdd.parser import StructBDDParser
+
+    assert StructBDDParser
 
 FEATURE = "feature"
 SCENARIO_OUTLINE = "scenario outline"
