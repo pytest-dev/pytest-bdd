@@ -334,7 +334,10 @@ class Step:
     def render(self, context: Mapping[str, Any]):
         def replacer(m: Match):
             varname = m.group(1)
-            return str(context[varname])
+            try:
+                return str(context[varname])
+            except KeyError:
+                return f"<{varname}>"
 
         return STEP_PARAM_RE.sub(replacer, self.name)
 

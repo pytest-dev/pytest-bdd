@@ -532,3 +532,36 @@ Feature: A feature
             "*Tearing down...*",
         ]
     )
+
+
+def test_missing_substitution_steps(testdir):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Missing substitutions are left as is
+
+                Scenario: Missing substitution
+                    Given Missing <substitution>
+            """
+        ),
+    )
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, when, then, scenario
+
+        @scenario("steps.feature", "Missing substitution")
+        def test_steps():
+            pass
+
+        @given('Missing <substitution>')
+        def foo():
+            pass
+
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
