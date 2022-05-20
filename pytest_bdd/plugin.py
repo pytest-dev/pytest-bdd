@@ -11,7 +11,6 @@ from pytest_bdd.reporting import ScenarioReporterPlugin
 from pytest_bdd.runner import ScenarioRunner
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.typing.pytest import Config, Mark, MarkDecorator, Metafunc, Parser, PytestPluginManager
-from pytest_bdd.utils import CONFIG_STACK
 
 
 def pytest_addhooks(pluginmanager: PytestPluginManager) -> None:
@@ -57,7 +56,6 @@ def add_bdd_ini(parser: Parser) -> None:
 def pytest_configure(config: Config) -> None:
     """Configure all subplugins."""
     config.addinivalue_line("markers", "pytest_bdd_scenario: marker to identify pytest_bdd tests")
-    CONFIG_STACK.append(config)
     cucumber_json.configure(config)
     gherkin_terminal_reporter.configure(config)
     config.pluginmanager.register(ScenarioReporterPlugin())
@@ -66,7 +64,6 @@ def pytest_configure(config: Config) -> None:
 
 def pytest_unconfigure(config: Config) -> None:
     """Unconfigure all subplugins."""
-    CONFIG_STACK.pop()
     cucumber_json.unconfigure(config)
 
 
