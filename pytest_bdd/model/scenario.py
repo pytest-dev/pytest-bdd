@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import uuid
 from typing import TYPE_CHECKING, cast
 
-from attr import attrib, attrs
+from attr import Factory, attrib, attrs
 from marshmallow import Schema, fields, post_load
 
 from pytest_bdd.ast import Scenario as ASTScenario
@@ -250,3 +251,27 @@ class ScenarioSchema(ASTNodeIDsSchemaMixin, Schema):
         scenario = Scenario(**data)
         scenario.bind_steps()
         return scenario
+
+
+@attrs
+class UserStep:
+    text: str = attrib()
+    scenario = attrib()
+
+    id: str = attrib(default=Factory(lambda: str(uuid.uuid4())))
+    argument: Argument = attrib(default=None)
+    keyword = attrib(default="Given")
+    line_number = attrib(default=-1)
+    doc_string: DocString | None = attrib(default=None)
+    data_table: DataTable | None = attrib(default=None)
+
+    @property
+    def prefix(self):
+        return self.keyword.lower()
+
+    @property
+    def name(self):
+        return self.text
+
+    def decompose(self):
+        self.scenario = None

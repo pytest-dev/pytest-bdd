@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import deque
 from contextlib import suppress
 from itertools import zip_longest
 from operator import attrgetter
@@ -38,7 +39,7 @@ class ScenarioRunner:
                     request=self.request, feature=self.feature, scenario=self.scenario
                 )
 
-    def pytest_bdd_run_scenario(self, request, feature: Feature, scenario: Scenario):
+    def pytest_bdd_run_scenario(self, request: FixtureRequest, feature: Feature, scenario: Scenario):
         """Execute the scenarios.
 
         :param feature: Feature.
@@ -46,7 +47,10 @@ class ScenarioRunner:
         :param request: request.
         """
         previous_step = None
-        for step in scenario.steps:
+        left_steps: deque = request.getfixturevalue("steps_left")
+        left_steps.extend(scenario.steps)
+        while left_steps:
+            step = left_steps.popleft()
             self.plugin_manager.pytest_bdd_run_step(
                 request=request, feature=feature, scenario=scenario, step=step, previous_step=previous_step
             )  # type: ignore[call-arg]

@@ -1,12 +1,14 @@
 """Pytest plugin entry point. Used for any fixtures needed."""
 from __future__ import annotations
 
+from collections import deque
 from contextlib import suppress
 from typing import Collection
 
 import pytest
 
 from pytest_bdd import cucumber_json, generation, gherkin_terminal_reporter, given, steps, then, when
+from pytest_bdd.model import Step
 from pytest_bdd.reporting import ScenarioReporterPlugin
 from pytest_bdd.runner import ScenarioRunner
 from pytest_bdd.steps import StepHandler
@@ -37,6 +39,12 @@ def step_registry() -> StepHandler.Registry:
 def step_matcher(pytestconfig) -> StepHandler.Matcher:
     """Fixture containing matcher to help find step definition for selected step of scenario"""
     return StepHandler.Matcher(pytestconfig)  # type: ignore[call-arg]
+
+
+@pytest.fixture
+def steps_left() -> deque[Step]:
+    """Fixture containing steps which are left to be executed"""
+    return deque()
 
 
 def pytest_addoption(parser: Parser) -> None:

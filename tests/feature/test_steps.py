@@ -1019,3 +1019,42 @@ def test_found_alternate_step_decorators_produce_warning(testdir):
     )
     result = testdir.runpytest("-W", "ignore::pytest_bdd.PytestBDDStepDefinitionWarning")
     result.assert_outcomes(passed=1, failed=0)
+
+
+def test_extend_steps_from_step(testdir):
+    testdir.makefile(
+        ".feature",
+        steps="""\
+            Feature: Steps could be injected during run of other steps
+
+                Scenario: Inject step from other step
+                    When I inject step "Given" "I have foo"
+                    Then I have foo
+            """,
+    )
+    testdir.makepyfile(
+        """\
+        from collections import deque
+
+        from pytest_bdd.model import UserStep
+        from pytest_bdd import given, when, then, scenario
+
+        @scenario("steps.feature", "Inject step from other step")
+        def test_steps():
+            pass
+
+        @when("I inject step \\"{keyword}\\" \\"{step_text}\\"")
+        def inject_step(steps_left: deque, keyword, step_text, scenario):
+            steps_left.appendleft(UserStep(text=step_text, keyword=keyword, scenario=scenario))
+
+        @given('I have {fixture_value}', target_fixture='foo_fixture')
+        def save_fixture(fixture_value):
+            return fixture_value
+
+        @then("I have {fixture_value}")
+        def check_fixture(fixture_value, foo_fixture):
+            assert fixture_value == foo_fixture
+        """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)

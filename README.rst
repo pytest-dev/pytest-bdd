@@ -1230,11 +1230,20 @@ Fixtures
 pytest-bdd exposes several plugin fixtures to give more testing flexibility
 
 * bdd_example - The current scenario outline parametrization.
-
 * step_registry - Contains registry of all user-defined steps
-
 * step_matcher- Contains matcher to help find step definition for selected step of scenario
+* steps_left - Current scenario steps left to execute; Allow inject steps to execute:
 
+.. code-block:: python
+
+    from collections import deque
+
+    from pytest_bdd.model import UserStep
+    from pytest_bdd import when
+
+    @when("I inject step \\"{keyword}\\" \\"{step_text}\\"")
+    def inject_step(steps_left: deque, keyword, step_text, scenario):
+        steps_left.appendleft(UserStep(text=step_text, keyword=keyword, scenario=scenario))
 
 Browser testing
 ---------------

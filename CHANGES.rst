@@ -3,7 +3,6 @@ Changelog
 
 Planned
 -------
-- Allow call steps from other steps
 - Review report generation to be conform with official tools
    - https://github.com/pytest-dev/pytest-bdd/issues/488
 - New features
@@ -15,7 +14,7 @@ Planned
 Unreleased
 ----------
 
-- Default parser is switched to cfparse. Step name is compiled to cfparse
+- Default parser is switched to cfparse. String step name is compiled to cfparse
 - Step functions could get compiled instances of parse, cfparse and re.compile directly
 - Drop pytest 4
 - Drop python 3.6
@@ -33,6 +32,7 @@ Unreleased
    - https://github.com/pytest-dev/pytest-bdd/issues/511
 - Changes ``scenario`` and ``scenarios`` function/decorator feature registration order. Both could be used as decorators
 - Move scenario execution & step matching to hooks
+- Added possibility to operate steps stack via fixture
 - Other
    - https://github.com/pytest-dev/pytest-bdd/issues/464
    - https://github.com/pytest-dev/pytest-bdd/issues/474
