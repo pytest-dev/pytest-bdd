@@ -27,7 +27,7 @@ def test_step_alias(testdir, parser):
         from pytest_bdd import given, when, then, scenario
         from pytest_bdd.parser import {parser} as Parser
 
-        @scenario("alias.feature", "Multiple step aliases", _parser=Parser())
+        @scenario("alias.feature", "Multiple step aliases", parser=Parser())
         def test_alias():
             pass
 

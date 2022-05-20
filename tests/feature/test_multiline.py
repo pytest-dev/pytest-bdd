@@ -62,7 +62,7 @@ def test_multiline(testdir, feature_text, expected_text, parser):
         expected_text = '''{expected_text}'''
 
 
-        @scenario("multiline.feature", "Multiline step using sub indentation", _parser=Parser())
+        @scenario("multiline.feature", "Multiline step using sub indentation", parser=Parser())
         def test_multiline(request):
             pass
 
@@ -113,7 +113,7 @@ def test_multiline_wrong_indent(testdir, parser):
         from pytest_bdd.parser import {parser} as Parser
 
 
-        @scenario("multiline.feature", "Multiline step using sub indentation wrong indent", _parser=Parser())
+        @scenario("multiline.feature", "Multiline step using sub indentation wrong indent", parser=Parser())
         def test_multiline(request):
             pass
 

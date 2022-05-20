@@ -92,15 +92,15 @@ def test_step_trace(testdir, parser):
         def type_type_and_value_value():
             return 'pass'
 
-        @scenario('test.feature', 'Passing', _parser=Parser(),)
+        @scenario('test.feature', 'Passing', parser=Parser(),)
         def test_passing():
             pass
 
-        @scenario('test.feature', 'Failing', _parser=Parser(),)
+        @scenario('test.feature', 'Failing', parser=Parser(),)
         def test_failing():
             pass
 
-        @scenario('test.feature', 'Passing outline', _parser=Parser(),)
+        @scenario('test.feature', 'Passing outline', parser=Parser(),)
         def test_passing_outline():
             pass
         """

@@ -66,9 +66,9 @@ def prepare_testdir(testdir, ini_base_dir, parser):
         def test_not_found_by_ini(scenario_name, multiple):
             with pytest.raises(IOError) as exc:
                 if multiple:
-                    scenarios(FEATURE, _parser=Parser())
+                    scenarios(FEATURE, parser=Parser())
                 else:
-                    scenario(FEATURE, scenario_name, _parser=Parser())
+                    scenario(FEATURE, scenario_name, parser=Parser())
             assert str((Path('{ini_base_dir}') / FEATURE).resolve().as_posix()) in str(Path(str(exc.value.filename)).as_posix())
 
 
@@ -79,9 +79,9 @@ def prepare_testdir(testdir, ini_base_dir, parser):
         def test_ok_by_ini(scenario_name, multiple):
             # Shouldn't raise any exception
             if multiple:
-                scenarios(FEATURE, _parser=Parser())
+                scenarios(FEATURE, parser=Parser())
             else:
-                scenario(FEATURE, scenario_name, _parser=Parser())
+                scenario(FEATURE, scenario_name, parser=Parser())
 
 
         @pytest.mark.parametrize(

@@ -30,7 +30,7 @@ TEST = """\
         pass
 
 
-    @scenario('test.feature', 'Scenario example 1', _parser=Parser())
+    @scenario('test.feature', 'Scenario example 1', parser=Parser())
     def test_scenario_1():
         pass
 """
@@ -98,7 +98,7 @@ def test_error_message_for_missing_steps(testdir, verbosity, parser):
         from pytest_bdd import scenarios
         from pytest_bdd.parser import {parser} as Parser
 
-        scenarios('.', _parser=Parser())
+        scenarios('.', parser=Parser())
         """
     )
     result = testdir.runpytest("--gherkin-terminal-reporter", verbosity)
@@ -131,7 +131,7 @@ def test_error_message_should_be_displayed(testdir, verbosity, parser):
             raise Exception("BIGBADABOOM")
 
 
-        @scenario('test.feature', 'Scenario example 1', _parser=Parser())
+        @scenario('test.feature', 'Scenario example 1', parser=Parser())
         def test_scenario_1():
             pass
         """
@@ -165,7 +165,7 @@ def test_local_variables_should_be_displayed_when_showlocals_option_is_used(test
             raise Exception("BIGBADABOOM")
 
 
-        @scenario('test.feature', 'Scenario example 1', _parser=Parser())
+        @scenario('test.feature', 'Scenario example 1', parser=Parser())
         def test_scenario_1():
             pass
         """
@@ -211,7 +211,7 @@ def test_step_parameters_should_be_replaced_by_their_values(testdir, parser):
             def should_have_left_cucumbers(start_cucumbers, left):
                 pass
 
-            @scenario('test.feature', 'Scenario example 2', _parser=Parser())
+            @scenario('test.feature', 'Scenario example 2', parser=Parser())
             def test_scenario_2():
                 pass
             """

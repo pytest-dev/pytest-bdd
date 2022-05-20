@@ -49,7 +49,7 @@ def test_scenario_with_empty_example_values(testdir, parser):
         from pytest_bdd import scenario
         from pytest_bdd.parser import {parser} as Parser
 
-        @scenario("outline.feature", "Outlined with empty example values", _parser=Parser())
+        @scenario("outline.feature", "Outlined with empty example values", parser=Parser())
         def test_outline():
             pass
         """
@@ -85,7 +85,7 @@ def test_scenario_with_empty_example_values_vertical(testdir):
         from pytest_bdd import scenario
         from pytest_bdd.parser import Parser
 
-        @scenario("outline.feature", "Outlined with empty example values vertical", _parser=Parser())
+        @scenario("outline.feature", "Outlined with empty example values vertical", parser=Parser())
         def test_outline():
             pass
         """

@@ -49,7 +49,7 @@ def test_tags_selector(testdir, parser):
         def i_have_bar():
             return 'bar'
 
-        scenarios('test.feature', _parser=Parser())
+        scenarios('test.feature', parser=Parser())
         """
     )
     result = testdir.runpytest("-m", "scenario_tag_10 and not scenario_tag_01", "-vv")
@@ -165,7 +165,7 @@ def test_tags_selector_with_examples(testdir):
         def i_have_bar(example):
             return example
 
-        scenarios('test.feature', _parser=Parser())
+        scenarios('test.feature', parser=Parser())
         """
     )
 
@@ -248,7 +248,7 @@ def test_tags_selector_with_empty_examples(testdir):
         def i_have_bar(background_example):
             return background_example
 
-        scenarios('test.feature', _parser=Parser())
+        scenarios('test.feature', parser=Parser())
         """
     )
 
@@ -348,7 +348,7 @@ def test_tags_selector_with_inlined_tags_examples(testdir):
         def i_have_bar(example):
             return example
 
-        scenarios('test.feature', _parser=Parser())
+        scenarios('test.feature', parser=Parser())
         """
     )
 
@@ -416,7 +416,7 @@ def test_tags_after_background_issue_160(testdir, parser):
         def i_have_baz():
             return 'baz'
 
-        scenarios('test.feature', _parser=Parser())
+        scenarios('test.feature', parser=Parser())
         """
     )
     result = testdir.runpytest("-m", "tag", "-vv").parseoutcomes()
@@ -464,7 +464,7 @@ def test_tag_with_spaces(testdir):
         def i_have_bar():
             return 'bar'
 
-        scenarios('test.feature', _parser=Parser())
+        scenarios('test.feature', parser=Parser())
         """
     )
     result = testdir.runpytest_subprocess()
@@ -498,7 +498,7 @@ def test_at_in_scenario(testdir, parser):
         def i_have_baz():
             return 'baz'
 
-        scenarios('test.feature', _parser=Parser())
+        scenarios('test.feature', parser=Parser())
     """
     )
 
@@ -547,7 +547,7 @@ def test_invalid_tags(testdir, parser):
         from pytest_bdd import scenarios
         from pytest_bdd.parser import {parser} as Parser
 
-        scenarios('features', _parser=Parser())
+        scenarios('features', parser=Parser())
         """
     )
     result = testdir.runpytest()

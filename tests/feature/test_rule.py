@@ -77,7 +77,7 @@ def test_background_basic(testdir, parser):
         from pytest_bdd import scenarios
         from pytest_bdd.parser import {parser} as Parser
 
-        scenarios("rule.feature", _parser=Parser())
+        scenarios("rule.feature", parser=Parser())
         """
     )
     result = testdir.runpytest()

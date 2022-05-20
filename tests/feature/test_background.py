@@ -86,7 +86,7 @@ def test_background_basic(testdir, parser):
         from pytest_bdd import scenario
         from pytest_bdd.parser import {parser} as Parser
 
-        @scenario("background.feature", "Basic usage", _parser=Parser())
+        @scenario("background.feature", "Basic usage", parser=Parser())
         def test_background():
             pass
         """

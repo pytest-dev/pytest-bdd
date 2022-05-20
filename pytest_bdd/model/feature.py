@@ -21,8 +21,6 @@ one line.
 """
 from __future__ import annotations
 
-import linecache
-from pathlib import Path
 from textwrap import dedent
 from typing import cast
 
@@ -32,7 +30,6 @@ from gherkin.pickles.compiler import Compiler  # type: ignore[import]
 
 from pytest_bdd.ast import AST, ASTSchema
 from pytest_bdd.const import STEP_PREFIXES, TAG
-from pytest_bdd.exceptions import FeatureError
 from pytest_bdd.model.scenario import Scenario, ScenarioSchema
 
 
@@ -43,74 +40,6 @@ class Feature:
     filename: str = attrib()
 
     scenarios: list[Scenario] = attrib(default=Factory(list))
-
-    @classmethod
-    def get_from_path(
-        cls, features_base_dir: Path | str, filename: Path | str, encoding: str = "utf-8", parser=None
-    ) -> Feature:
-        if parser is None:
-            from pytest_bdd.parser import GherkinParser
-
-            parser = GherkinParser()
-        absolute_feature_path = (Path(features_base_dir) / filename).resolve()
-        _filename = Path(filename)
-        relative_posix_feature_path = (
-            _filename.relative_to(features_base_dir) if _filename.is_absolute() else _filename
-        ).as_posix()
-
-        uri = str(relative_posix_feature_path)
-
-        with absolute_feature_path.open(mode="r", encoding=encoding) as feature_file:
-            feature_file_data = feature_file.read()
-
-        try:
-            gherkin_ast_data = parser.parse(feature_file_data, uri=uri)
-        except CompositeParserException as e:
-            raise FeatureError(
-                e.args[0],
-                e.errors[0].location["line"],
-                linecache.getline(str(absolute_feature_path), e.errors[0].location["line"]).rstrip("\n"),
-                uri,
-            ) from e
-
-        gherkin_ast = cls.load_ast(gherkin_ast_data)
-
-        scenarios_data = Compiler().compile(gherkin_ast_data["gherkinDocument"])
-        scenarios = cls.load_scenarios(scenarios_data)
-
-        instance = cls(  # type: ignore[call-arg]
-            gherkin_ast=gherkin_ast,
-            uri=uri,
-            scenarios=scenarios,
-            filename=str(absolute_feature_path.as_posix()),
-        )
-
-        for scenario in scenarios:
-            scenario.bind_feature(instance)
-
-        return instance
-
-    @classmethod
-    def get_from_paths(cls, paths: list[Path], **kwargs) -> list[Feature]:
-        """Get features for given paths.
-
-        :param list paths: `list` of paths (file or dirs)
-
-        :return: `list` of `Feature` objects.
-        """
-        seen_names = set()
-        features: list[Feature] = []
-        features_base_dir = kwargs.pop("features_base_dir", Path.cwd())
-        for path in map(Path, paths):
-            if path not in seen_names:
-                seen_names.add(path)
-                if path.is_dir():
-                    _path = path if path.is_absolute() else Path(features_base_dir) / path
-                    features.extend(cls.get_from_paths(list(_path.rglob("*.feature")), **kwargs))
-                else:
-                    feature = cls.get_from_path(features_base_dir, path, **kwargs)
-                    features.append(feature)
-        return sorted(features, key=lambda feature: feature.name or feature.filename)
 
     @staticmethod
     def load_scenarios(scenarios_data) -> list[Scenario]:

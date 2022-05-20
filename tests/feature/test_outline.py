@@ -41,7 +41,7 @@ STEPS_OUTLINED = """\
     @scenario(
         "outline.feature",
         "Outlined given, when, thens",
-        _parser=Parser()
+        parser=Parser()
     )
     def test_outline():
         pass
@@ -109,7 +109,7 @@ def test_outlined(testdir, examples_header, parser):
         @scenario(
             "outline.feature",
             "Outlined given, when, thens",
-            _parser=Parser()
+            parser=Parser()
         )
         def test_outline(request):
             pass
@@ -156,7 +156,7 @@ def test_wrongly_outlined_duplicated_parameter_scenario(testdir, parser):
         from pytest_bdd import scenario
         from pytest_bdd.parser import {parser} as Parser
 
-        @scenario("outline.feature", "Outlined with wrong vertical example table", _parser=Parser())
+        @scenario("outline.feature", "Outlined with wrong vertical example table", parser=Parser())
         def test_outline(request):
             pass
         """
@@ -195,7 +195,7 @@ def test_wrongly_outlined_missing_parameter_scenario(testdir, parser):
         from pytest_bdd.parser import {parser} as Parser
 
 
-        @scenario("outline.feature", "Outlined with wrong vertical example table", _parser=Parser())
+        @scenario("outline.feature", "Outlined with wrong vertical example table", parser=Parser())
         def test_outline(request):
             pass
         """
@@ -231,7 +231,7 @@ def test_wrongly_outlined_duplicated_parameter_feature(testdir):
         from pytest_bdd import scenario
         from pytest_bdd.parser import Parser
 
-        @scenario("outline.feature", "Outlined with wrong vertical example table", _parser=Parser())
+        @scenario("outline.feature", "Outlined with wrong vertical example table", parser=Parser())
         def test_outline(request):
             pass
         """
@@ -279,7 +279,7 @@ def test_outlined_with_other_fixtures(testdir, parser):
         @scenario(
             "outline.feature",
             "Outlined given, when, thens",
-            _parser=Parser(),
+            parser=Parser(),
         )
         def test_outline(other_fixture):
             pass
@@ -326,7 +326,7 @@ def test_vertical_example(testdir, examples_header):
         @scenario(
             "outline.feature",
             "Outlined with vertical example table",
-            _parser=Parser()
+            parser=Parser()
         )
         def test_outline():
             pass
@@ -369,7 +369,7 @@ def test_wrongly_outlined_duplicated_parameter_vertical_scenario(testdir):
         from pytest_bdd import scenario
         from pytest_bdd.parser import Parser
 
-        @scenario("outline.feature", "Outlined with wrong vertical example table", _parser=Parser())
+        @scenario("outline.feature", "Outlined with wrong vertical example table", parser=Parser())
         def test_outline(request):
             pass
         """
@@ -408,7 +408,7 @@ def test_wrongly_outlined_missing_parameter_vertical_scenario(testdir):
         from pytest_bdd import scenario
         from pytest_bdd.parser import Parser
 
-        @scenario("outline.feature", "Outlined with wrong vertical example table", _parser=Parser())
+        @scenario("outline.feature", "Outlined with wrong vertical example table", parser=Parser())
         def test_outline(request):
             pass
         """
@@ -447,7 +447,7 @@ def test_wrongly_outlined_duplicated_parameter_vertical_feature(testdir):
         from pytest_bdd import scenario
         from pytest_bdd.parser import Parser
 
-        @scenario("outline.feature", "Outlined with wrong vertical example table", _parser=Parser())
+        @scenario("outline.feature", "Outlined with wrong vertical example table", parser=Parser())
         def test_outline(request):
             pass
         """
@@ -536,7 +536,7 @@ def test_outline_with_escaped_pipes(testdir, parser):
         from pytest_bdd.parser import {parser} as Parser
 
 
-        @scenario("outline.feature", "Outline with escaped pipe character", _parser=Parser())
+        @scenario("outline.feature", "Outline with escaped pipe character", parser=Parser())
         def test_outline_with_escaped_pipe_character(request):
             pass
 
@@ -592,7 +592,7 @@ def test_multi_outlined(testdir):
         @scenario(
             "outline.feature",
             "Outlined given, when, thens",
-            _parser=Parser(),
+            parser=Parser(),
         )
         def test_outline(request):
             pass

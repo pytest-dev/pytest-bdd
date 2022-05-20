@@ -17,7 +17,7 @@ def test_background_no_strict_gherkin(testdir, parser):
             @scenario(
                 "no_strict_gherkin_background.feature",
                 "Test background",
-                _parser=Parser()
+                parser=Parser()
             )
             def test_background():
                 pass
@@ -74,7 +74,7 @@ def test_scenario_no_strict_gherkin(testdir, parser):
             @scenario(
                 "no_strict_gherkin_scenario.feature",
                 "Test scenario",
-                _parser=Parser()
+                parser=Parser()
             )
             def test_scenario():
                 pass

@@ -17,27 +17,82 @@ from functools import reduce
 from operator import truediv
 from os.path import commonpath, dirname
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Sequence
+from typing import Callable, Iterable, Sequence, cast
 
 import pytest
 from attr import Factory, attrib, attrs
 
 from pytest_bdd.model import Feature, Scenario
+from pytest_bdd.parser import GherkinParser
+from pytest_bdd.typing.parser import ParserProtocol
 from pytest_bdd.typing.pytest import Config, Metafunc
 from pytest_bdd.utils import get_caller_module_locals, get_caller_module_path, make_python_name
 
+Args = collections.namedtuple("Args", ["args", "kwargs"])
 FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
 @attrs
+class FileScenarioLocator:
+    feature_paths = attrib(default=Factory(list))
+    scenario_filter = attrib(default=None)
+    encoding = attrib(default="utf-8")
+    features_base_dir = attrib(default=None)
+    parser: ParserProtocol = attrib(default=Factory(GherkinParser))
+    parse_args: Args = attrib(default=Factory(lambda: Args((), {})))
+
+    @property
+    def glob(self):
+        return self.parser.glob
+
+    def resolve(self):
+        features_base_dir = (
+            self.features_base_dir() if isinstance(self.features_base_dir, Callable) else self.features_base_dir
+        )
+        features_base_dir = (Path.cwd() / Path(features_base_dir)).resolve()
+
+        already_resolved = set()
+
+        def feature_paths_gen():
+            for feature_path in map(Path, self.feature_paths):
+                if feature_path.is_dir():
+                    yield from iter(self.glob(feature_path))
+                else:
+                    yield feature_path
+
+        for feature_path in feature_paths_gen():
+            if feature_path.is_absolute():
+                try:
+                    common_path = Path(commonpath([feature_path, features_base_dir]))
+                except ValueError:
+                    rel_feature_path = feature_path
+                else:
+                    sub_levels = len(features_base_dir.relative_to(common_path).parts)
+                    sub_path = reduce(truediv, [".."] * sub_levels, Path())
+                    rel_feature_path = sub_path / feature_path.relative_to(common_path)
+            else:
+                rel_feature_path = feature_path
+
+            uri = str(rel_feature_path.as_posix())
+            absolute_feature_path = (Path(features_base_dir) / rel_feature_path).resolve()
+
+            if absolute_feature_path not in already_resolved:
+                already_resolved.add(absolute_feature_path)
+
+                feature = self.parser.parse(
+                    absolute_feature_path,
+                    uri,
+                    *self.parse_args.args,
+                    **{**dict(encoding=self.encoding), **self.parse_args.kwargs},
+                )
+
+                for scenario in feature.scenarios:
+                    if self.scenario_filter is None or self.scenario_filter(feature, scenario):
+                        yield feature, scenario
+
+
+@attrs
 class ModuleScenarioRegistry:
-    @attrs
-    class ScenarioLocator:
-        feature_paths = attrib(default=Factory(list))
-        scenario_name = attrib(default=None)
-        encoding = attrib(default="utf-8")
-        features_base_dir = attrib(default=None)
-        parser = attrib(default=None)
 
     caller_locals = attrib()
     caller_module_path = attrib()
@@ -49,14 +104,18 @@ class ModuleScenarioRegistry:
     @classmethod
     def get(
         cls,
-        caller_locals,
-        caller_module_path,
-    ):
+        caller_locals: dict | None = None,
+        caller_module_path: str = None,
+    ) -> ModuleScenarioRegistry:
+        caller_locals = cast(dict, caller_locals if caller_locals is not None else get_caller_module_locals(depth=2))
+        caller_module_path = cast(
+            str, caller_module_path if caller_module_path is not None else get_caller_module_path(depth=2)
+        )
         if "__pytest_bdd_scenario_registry__" not in caller_locals.keys():
-            caller_locals["__pytest_bdd_scenario_registry__"] = ModuleScenarioRegistry(
+            caller_locals["__pytest_bdd_scenario_registry__"] = ModuleScenarioRegistry(  # type: ignore[call-arg]
                 caller_locals=caller_locals, caller_module_path=caller_module_path
             )
-        return caller_locals["__pytest_bdd_scenario_registry__"]
+        return cast(ModuleScenarioRegistry, caller_locals["__pytest_bdd_scenario_registry__"])
 
     def add(self, locator, test_func):
         test_func.__pytest_bdd_scenario_registry__ = self
@@ -76,46 +135,9 @@ class ModuleScenarioRegistry:
         if not self.resolved:
             self.resolved = True
             for locator, test_func in self.locator_registry:
-                for feature, scenario in self.resolve_locator(locator):
+                for feature, scenario in locator.resolve():
                     self.resolved_locator_registry[(feature.uri, scenario.id)] = test_func, feature, scenario
         return self.resolved_locator_registry
-
-    def resolve_locator(self, locator: ModuleScenarioRegistry.ScenarioLocator):
-        features_base_dir = locator.features_base_dir
-        if features_base_dir is None:
-            features_base_dir = self.features_base_dir
-        features_base_dir = (Path.cwd() / Path(features_base_dir)).resolve()
-
-        def feature_paths_gen():
-            for feature_path in map(Path, locator.feature_paths):
-                if feature_path.is_dir():
-                    yield from feature_path.rglob("*.feature")
-                else:
-                    yield feature_path
-
-        for feature_path in feature_paths_gen():
-            if feature_path.is_absolute():
-                try:
-                    common_path = Path(commonpath([feature_path, features_base_dir]))
-                except ValueError:
-                    rel_feature_path = feature_path
-                else:
-                    sub_levels = len(features_base_dir.relative_to(common_path).parts)
-                    sub_path = reduce(truediv, [".."] * sub_levels, Path())
-                    rel_feature_path = sub_path / feature_path.relative_to(common_path)
-            else:
-                rel_feature_path = feature_path
-
-            feature = Feature.get_from_path(
-                features_base_dir=features_base_dir,
-                filename=rel_feature_path,
-                encoding=locator.encoding,
-                parser=locator.parser,
-            )
-
-            for scenario in feature.scenarios:
-                if locator.scenario_name is None or locator.scenario_name == scenario.name:
-                    yield feature, scenario
 
     def parametrize(self, metafunc: Metafunc):
         test_func = metafunc.function
@@ -159,6 +181,26 @@ class ModuleScenarioRegistry:
             raise TypeError(f"Expected a string for configuration option {value!r}, got a {type(value)} instead")
         return value if value != "" else default
 
+    def build_bound_locator_test_function(self, locator):
+        @pytest.mark.pytest_bdd_scenario
+        @pytest.mark.usefixtures("feature", "scenario")
+        def test():
+            ...
+
+        test.__name__ = next(iter(test_names))
+
+        self.add(locator, test)
+
+        return test
+
+    def build_bound_locator_test_decorator(self, locator):
+        def decorator(func):
+            updated_func = pytest.mark.pytest_bdd_scenario(pytest.mark.usefixtures("feature", "scenario")(func))
+            self.update(locator, self.build_bound_locator_test_function(locator), updated_func)
+            return updated_func
+
+        return decorator
+
 
 def get_python_name_generator(name: str) -> Iterable[str]:
     """Generate a sequence of suitable python names out of given arbitrary string name."""
@@ -179,14 +221,15 @@ test_names = get_python_name_generator("")
 
 
 def scenario(
-    feature_name: Path | str,
-    scenario_name: str,
+    feature_name: Path | str = Path(),
+    scenario_name: str | None = None,
     encoding: str = "utf-8",
     features_base_dir: Path | str | None = None,
     return_test_decorator=True,
+    parser: ParserProtocol | None = None,
+    parse_args=Args((), {}),
     _caller_module_locals=None,
     _caller_module_path=None,
-    _parser=None,
 ):
     """
     Scenario decorator.
@@ -196,16 +239,19 @@ def scenario(
     :param encoding: Feature file encoding.
     :param features_base_dir: Feature base directory from where features will be searched
     :param return_test_decorator; Return test decorator or generated test
+    :param parser: Parser used to parse feature-like file
+    :param parse_args: args consumed by parser during parsing
     """
     return _scenarios(
         feature_paths=[feature_name],
-        scenario_name=scenario_name,
+        scenario_filter_or_scenario_name=scenario_name,
         encoding=encoding,
         features_base_dir=features_base_dir,
         return_test_decorator=return_test_decorator,
         _caller_module_locals=_caller_module_locals or get_caller_module_locals(depth=2),
         _caller_module_path=_caller_module_path or get_caller_module_path(depth=2),
-        _parser=_parser,
+        parser=parser,
+        parse_args=parse_args,
     )
 
 
@@ -213,10 +259,11 @@ def scenarios(
     *feature_paths: Path | str,
     encoding: str = "utf-8",
     features_base_dir: Path | str | None = None,
-    return_test_decorator=True,
+    return_test_decorator=False,
+    parser: ParserProtocol | None = None,
+    parse_args=Args((), {}),
     _caller_module_locals=None,
     _caller_module_path=None,
-    _parser=None,
 ):
     """
     Scenario decorator.
@@ -228,59 +275,56 @@ def scenarios(
     """
     return _scenarios(
         feature_paths=feature_paths,
-        scenario_name=None,
+        scenario_filter_or_scenario_name=None,
         encoding=encoding,
         features_base_dir=features_base_dir,
         return_test_decorator=return_test_decorator,
+        parser=parser,
+        parse_args=parse_args,
         _caller_module_locals=_caller_module_locals or get_caller_module_locals(depth=2),
         _caller_module_path=_caller_module_path or get_caller_module_path(depth=2),
-        _parser=_parser,
     )
 
 
 def _scenarios(
     feature_paths: Sequence[Path | str],
-    scenario_name: str | None,
+    scenario_filter_or_scenario_name: str | Callable | None,
+    return_test_decorator=True,
     encoding: str = "utf-8",
     features_base_dir: Path | str | None = None,
-    return_test_decorator=True,
+    parser: ParserProtocol | None = None,
+    parse_args=Args((), {}),
     _caller_module_locals=None,
     _caller_module_path=None,
-    _parser=None,
 ):
-    """
-    Scenario decorator.
-
-    :param feature_paths: Features file names. Absolute or relative to the configured feature base path.
-    :param scenario_name: Scenario name.
-    :param encoding: Feature file encoding.
-    :param features_base_dir: Feature base directory from where features will be searched
-    :param return_test_decorator; Return test decorator or generated test
-    """
-    scenario_locator = ModuleScenarioRegistry.ScenarioLocator(  # type: ignore[call-arg]
-        feature_paths=feature_paths,
-        scenario_name=scenario_name,
-        encoding=encoding,
-        features_base_dir=features_base_dir,
-        parser=_parser,
-    )
+    if parser is None:
+        parser = GherkinParser()
     module_scenario_registry = ModuleScenarioRegistry.get(
         caller_locals=_caller_module_locals,
         caller_module_path=_caller_module_path,
     )
 
-    @pytest.mark.pytest_bdd_scenario
-    @pytest.mark.usefixtures("feature", "scenario")
-    def test():
-        ...
+    scenario_filter_kwarg = {}
+    if isinstance(scenario_filter_or_scenario_name, str):
+        scenario_filter_kwarg = {
+            "scenario_filter": lambda feature, scenario: scenario.name == scenario_filter_or_scenario_name
+        }
+    if callable(scenario_filter_or_scenario_name):
+        scenario_filter_kwarg = {"scenario_filter": scenario_filter_or_scenario_name}
 
-    test.__name__ = next(iter(test_names))
+    scenario_locator = FileScenarioLocator(  # type: ignore[call-arg]
+        feature_paths=feature_paths,
+        **scenario_filter_kwarg,
+        encoding=encoding,
+        features_base_dir=(
+            features_base_dir if features_base_dir is not None else lambda: module_scenario_registry.features_base_dir
+        ),  # known only after start of pytest runtime
+        parser=parser,
+        parse_args=parse_args,
+    )
 
-    module_scenario_registry.add(scenario_locator, test)
-
-    def decorator(func):
-        updated_func = pytest.mark.pytest_bdd_scenario(pytest.mark.usefixtures("feature", "scenario")(func))
-        module_scenario_registry.update(scenario_locator, test, updated_func)
-        return updated_func
-
-    return decorator if return_test_decorator else test
+    return (
+        module_scenario_registry.build_bound_locator_test_decorator
+        if return_test_decorator
+        else module_scenario_registry.build_bound_locator_test_function
+    )(scenario_locator)

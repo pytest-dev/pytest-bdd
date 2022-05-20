@@ -15,6 +15,7 @@ from pytest import ExitCode
 from pytest_bdd.const import STEP_TYPES_BY_NORMALIZED_PREFIX
 from pytest_bdd.model import Feature, Scenario, Step
 from pytest_bdd.packaging import compare_distribution_version
+from pytest_bdd.parser import GherkinParser
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.typing.pytest import Config, FixtureRequest, Item, Parser, Session, wrap_session
 from pytest_bdd.utils import make_python_name
@@ -122,7 +123,7 @@ def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature],
     :return: `list` of `tuple` in form:
              (`list` of `Feature` objects, `list` of `Scenario` objects, `list` of `StepHandler` objects).
     """
-    features = Feature.get_from_paths(list(map(Path, paths)), **kwargs)
+    features = GherkinParser().get_from_paths(list(map(Path, paths)), **kwargs)
     _, scenarios = zip(
         *sorted(
             itertools.chain.from_iterable(

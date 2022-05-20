@@ -21,7 +21,7 @@ def test_no_scenarios(testdir, parser):
         from pytest_bdd import scenarios
         from pytest_bdd.parser import {parser} as Parser
 
-        scenarios('features', _parser=Parser())
+        scenarios('features', parser=Parser())
         """
     )
     result = testdir.runpytest()
