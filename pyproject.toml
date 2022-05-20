@@ -19,5 +19,18 @@ warn_return_any = true
 warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = ["attr.*", "gherkin.*", "mako.*", "ordered_set", "parse", "parse_type.*", "pluggy.*"]
+module = [
+        "allure_commons.*",
+        "allure_pytest.*",
+        "attr.*",
+        "execnet.*",
+        "gherkin.*",
+        "mako.*",
+        "ordered_set",
+        "parse",
+        "parse_type.*",
+        "pluggy.*",
+        "_pytest.*",
+        "pytest.*",
+    ]
 ignore_missing_imports = true

@@ -68,6 +68,24 @@ def pytest_configure(config: Config) -> None:
     gherkin_terminal_reporter.configure(config)
     config.pluginmanager.register(ScenarioReporterPlugin())
     config.pluginmanager.register(ScenarioRunner())
+    if config.pluginmanager.hasplugin("allure_pytest"):
+        import allure_commons
+        from allure_pytest.listener import AllureListener
+
+        from pytest_bdd.allure_logging import AllurePytestStructBDD
+
+        report_dir = config.option.allure_report_dir
+
+        if report_dir:
+            allure_commons.plugin_manager.get_plugins()
+
+            listener = next(
+                filter(lambda o: isinstance(o, AllureListener), allure_commons.plugin_manager.get_plugins())
+            )
+
+            bdd_listener = AllurePytestStructBDD(listener.allure_logger, listener._cache)
+            allure_commons.plugin_manager.register(bdd_listener)
+            config.pluginmanager.register(bdd_listener)
 
 
 def pytest_unconfigure(config: Config) -> None:
