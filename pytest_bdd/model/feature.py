@@ -70,3 +70,12 @@ class Feature:
         return sorted(
             map(lambda tag: tag.name.lstrip(STEP_PREFIXES[TAG]), self.gherkin_ast.gherkin_document.feature.tags)
         )
+
+    def decompose(self):
+        for scenario in self.scenarios:
+            scenario.decompose()
+
+    def compose(self):
+        for scenario in self.scenarios:
+            scenario.bind_feature(self)
+            scenario.bind_steps()

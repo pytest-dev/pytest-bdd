@@ -21,28 +21,24 @@ def pytest_bdd_after_scenario(request, feature, scenario):
     """Called after scenario is executed."""
 
 
+def pytest_bdd_run_step(request, feature, scenario, step, previous_step):
+    """Execution of run step protocol"""
+
+
 def pytest_bdd_before_step(request, feature, scenario, step, step_func):
     """Called before step function is set up."""
 
 
-def pytest_bdd_run_step(request, feature, scenario, step, previous_step):
-    """Execution step protocol"""
-
-
-def pytest_bdd_before_step_call(request, feature, scenario, step, step_func, step_func_args):
+def pytest_bdd_before_step_call(request, feature, scenario, step, step_func, step_func_args, step_definition):
     """Called before step function is executed."""
 
 
-def pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args):
+def pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args, step_definition):
     """Called after step function is successfully executed."""
 
 
-def pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception):
+def pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception, step_definition):
     """Called when step function failed to execute."""
-
-
-def pytest_bdd_step_validation_error(request, feature, scenario, step, step_func, step_func_args, exception):
-    """Called when step failed to validate."""
 
 
 def pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception):

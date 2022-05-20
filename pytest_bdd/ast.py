@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from attr import attrib, attrs
-from marshmallow import Schema, fields, post_load
+from marshmallow import Schema, fields
 
 from pytest_bdd.utils import ModelSchemaPostLoadable
 
@@ -25,7 +27,10 @@ class ASTSchema(Schema):
 class GherkinDocument(ModelSchemaPostLoadable):
     comments: list[Comment] = attrib()
     uri: str = attrib()
-    feature: Feature = attrib(init=False)
+
+    # Workaround because of allure integration
+    if TYPE_CHECKING:  # pragma: no cover
+        feature: Feature = attrib(init=False)
 
     postbuild_attrs = ["feature"]
 
@@ -49,10 +54,6 @@ class Identifiable:
 
 class IdentifiableSchema(Schema):
     identifier = fields.Str(data_key="id")
-
-    @staticmethod
-    def model_registrator():
-        return post_load()
 
 
 @attrs
@@ -235,9 +236,12 @@ class ScenarioSchema(NodeStepContainerProtoSchema, IdentifiableSchema, TagableSc
 
 @attrs
 class NodeContainerChild(ModelSchemaPostLoadable):
-    background: Background = attrib(init=False)
-    scenario: Scenario = attrib(init=False)
-    rule: Rule = attrib(init=False)
+
+    # Workaround because of allure integration
+    if TYPE_CHECKING:  # pragma: no cover
+        background: Background = attrib(init=False)
+        scenario: Scenario = attrib(init=False)
+        rule: Rule = attrib(init=False)
 
     postbuild_attrs = ["background", "scenario", "rule"]
 
@@ -276,7 +280,10 @@ class LocationSchema(Schema):
 class DocString(Locatable, ModelSchemaPostLoadable):
     content: str = attrib()
     delimiter: str = attrib()
-    media_type: str = attrib(init=False)
+
+    # Workaround because of allure integration
+    if TYPE_CHECKING:  # pragma: no cover
+        media_type: str = attrib(init=False)
 
     postbuild_attrs = ["media_type"]
 
@@ -292,8 +299,11 @@ class DocStringSchema(LocatableSchema, Schema):
 @attrs
 class Step(Identifiable, Keywordable, Locatable, ModelSchemaPostLoadable):
     text: str = attrib()
-    data_table: DataTable = attrib(init=False)
-    doc_string: DocString = attrib(init=False)
+
+    # Workaround because of allure integration
+    if TYPE_CHECKING:  # pragma: no cover
+        data_table: DataTable = attrib(init=False)
+        doc_string: DocString = attrib(init=False)
 
     postbuild_attrs = ["data_table", "doc_string"]
 
@@ -317,7 +327,10 @@ class StepSchema(IdentifiableSchema, KeywordableSchema, LocatableSchema, Schema)
 @attrs
 class Example(Descriptable, Identifiable, Keywordable, Locatable, Nameable, Tagable, ModelSchemaPostLoadable):
     table_body: list[TableRow] = attrib()
-    table_header: ExampleTableHeader = attrib(init=False)
+
+    # Workaround because of allure integration
+    if TYPE_CHECKING:  # pragma: no cover
+        table_header: ExampleTableHeader = attrib(init=False)
 
     postbuild_attrs = ["table_header"]
 

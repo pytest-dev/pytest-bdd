@@ -69,6 +69,7 @@ class ScenarioRunner:
             raise
         else:
             hook_kwargs["step_func"] = step_definition.func
+            hook_kwargs["step_definition"] = step_definition
 
         self.request.config.hook.pytest_bdd_before_step(**hook_kwargs)
 

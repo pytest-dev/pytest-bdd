@@ -72,7 +72,9 @@ class DataTableSchema(Schema):
 @attrs
 class DocString(ModelSchemaPostLoadable):
     content: str = attrib()
-    media_type: str = attrib(init=False)
+    # Workaround because of allure integration
+    if TYPE_CHECKING:  # pragma: no cover
+        media_type: str = attrib(init=False)
 
     postbuild_attrs = ["media_type"]
 
@@ -86,8 +88,10 @@ class DocStringSchema(Schema):
 
 @attrs
 class Argument(ModelSchemaPostLoadable):
-    data_table: DataTable = attrib(init=False)
-    doc_string: DocString = attrib(init=False)
+    # Workaround because of allure integration
+    if TYPE_CHECKING:  # pragma: no cover
+        data_table: DataTable = attrib(init=False)
+        doc_string: DocString = attrib(init=False)
 
     postbuild_attrs = ["data_table", "doc_string"]
 
@@ -103,7 +107,9 @@ class ArgumentSchema(Schema):
 class Step(ASTNodeIDsMixin, ModelSchemaPostLoadable):
     id: str = attrib()
     text: str = attrib()
-    argument: Argument = attrib(init=False)
+    # Workaround because of allure integration
+    if TYPE_CHECKING:  # pragma: no cover
+        argument: Argument = attrib(init=False)
 
     postbuild_attrs = ["argument"]
 
@@ -139,6 +145,10 @@ class Step(ASTNodeIDsMixin, ModelSchemaPostLoadable):
     def data_table(self):
         return self._ast_step.data_table
 
+    def decompose(self):
+        self.ast = None
+        self.scenario = None
+
 
 class StepSchema(ASTNodeIDsSchemaMixin, Schema):
     argument = fields.Nested(ArgumentSchema(), required=False)
@@ -152,6 +162,9 @@ class StepSchema(ASTNodeIDsSchemaMixin, Schema):
 class Tag(ASTLinkMixin, ModelSchemaPostLoadable):
     ast_node_id: str = attrib()
     name: str = attrib()
+
+    def decompose(self):
+        self.ast = None
 
 
 class TagSchema(Schema):
@@ -214,6 +227,14 @@ class Scenario(ASTNodeIDsMixin, ModelSchemaPostLoadable):
     def bind_steps(self):
         for step in self.steps:
             step.scenario = self
+
+    def decompose(self):
+        self.feature = None
+        self.ast = None
+        for step in self.steps:
+            step.decompose()
+        for tag in self.tags:
+            tag.decompose()
 
 
 class ScenarioSchema(ASTNodeIDsSchemaMixin, Schema):
