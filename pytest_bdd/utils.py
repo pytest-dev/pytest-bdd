@@ -5,7 +5,7 @@ import base64
 import pickle
 import re
 from collections import defaultdict
-from contextlib import suppress
+from contextlib import nullcontext, suppress
 from functools import partial
 from inspect import getframeinfo, signature
 from itertools import tee
@@ -217,12 +217,17 @@ def _itemgetter(*items):
 def deepattrgetter(*attrs, **kwargs):
     empty = object()
     default = kwargs.pop("default", empty)
+    skip_missing = kwargs.pop("skip_missing", False)
+    if default is not empty and skip_missing:
+        raise ValueError('Both "default" and "skip_missing" are specified')
 
     def fn(obj):
         def _():
             if default is empty:
+                context = suppress(AttributeError) if skip_missing else nullcontext()
                 for attr in attrs:
-                    yield attrgetter(attr)(obj)
+                    with context:
+                        yield attrgetter(attr)(obj)
             else:
                 for attr in attrs:
                     try:

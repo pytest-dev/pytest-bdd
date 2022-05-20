@@ -114,3 +114,45 @@ def test_get_nested_multi_attribute():
     item = Foo(foo=Bar(bar=1), boo=Boo(2))
 
     assert deepattrgetter("boo.boo", "foo.bar")(item) == (2, 1)
+
+
+def test_skip_missing_attributes():
+    @attrs
+    class Foo:
+        foo = attrib()
+        boo = attrib()
+
+    item = Foo(foo="bar", boo="baz")
+
+    assert deepattrgetter("foo", "boo", "missing", skip_missing=True)(item) == ("bar", "baz")
+
+
+def test_skip_missing_attributes_nested():
+    @attrs
+    class Foo:
+        foo = attrib()
+        boo = attrib()
+
+    @attrs
+    class Bar:
+        bar = attrib()
+
+    @attrs
+    class Boo:
+        boo = attrib()
+
+    item = Foo(foo=Bar(bar=1), boo=Boo(2))
+
+    assert deepattrgetter("boo.boo", "foo.bar", "missing.missing", skip_missing=True)(item) == (2, 1)
+
+
+def test_skip_missing_and_default_attributes():
+    @attrs
+    class Foo:
+        foo = attrib()
+        boo = attrib()
+
+    item = Foo(foo="bar", boo="baz")
+
+    with raises(ValueError):
+        deepattrgetter("foo", "boo", "missing", skip_missing=True, default=object())(item)
