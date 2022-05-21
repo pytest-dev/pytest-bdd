@@ -360,6 +360,15 @@ You can implement your own step parser. It's interface is quite simple. The code
     def start_cucumbers(start):
         return dict(start=start, eat=0)
 
+Step arguments could be defined without parsing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If you want specify some default values for parameters without parsing them, you could do
+
+.. code-block:: python
+    @given("I have default defined param", param_defaults={'default_param': 'foo'}, target_fixture='foo_fixture')
+    def save_fixture(default_param):
+        return default_param
+
 
 Step arguments are fixtures as well!
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

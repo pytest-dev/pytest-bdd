@@ -1058,3 +1058,35 @@ def test_extend_steps_from_step(testdir):
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
+
+
+def test_default_params(testdir):
+    testdir.makefile(
+        ".feature",
+        steps="""\
+            Feature: Steps with default params
+
+                Scenario: Step provides default_param
+                    Given I have default defined param
+                    Then I have foo
+            """,
+    )
+    testdir.makepyfile(
+        """\
+        from pytest_bdd import given, then, scenario
+
+        @scenario("steps.feature", "Step provides default_param")
+        def test_steps():
+            pass
+
+        @given("I have default defined param", param_defaults={'default_param': 'foo'}, target_fixture='foo_fixture')
+        def save_fixture(default_param):
+            return default_param
+
+        @then("I have {fixture_value}")
+        def check_fixture(fixture_value, foo_fixture):
+            assert fixture_value == foo_fixture
+        """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)

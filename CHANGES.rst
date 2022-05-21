@@ -5,8 +5,6 @@ Planned
 -------
 - Review report generation to be conform with official tools
    - https://github.com/pytest-dev/pytest-bdd/issues/488
-- New features
-   - https://github.com/pytest-dev/pytest-bdd/issues/512
 - Support of official parser
    - https://github.com/pytest-dev/pytest-bdd/issues/502
 
@@ -36,6 +34,7 @@ Unreleased
 - Other
    - https://github.com/pytest-dev/pytest-bdd/issues/464
    - https://github.com/pytest-dev/pytest-bdd/issues/474
+   - https://github.com/pytest-dev/pytest-bdd/issues/512
 
 5.0.0
 -----

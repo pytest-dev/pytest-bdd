@@ -77,6 +77,7 @@ def given(
     target_fixture: str | None = None,
     target_fixtures: list[str] = None,
     params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
+    param_defaults: dict | None = None,
     liberal: bool | None = None,
 ) -> Callable:
     """Given step decorator.
@@ -87,6 +88,7 @@ def given(
     :param target_fixture: Target fixture name to replace by steps definition function.
     :param target_fixtures: Target fixture names to be replaced by steps definition function.
     :param params_fixtures_mapping: StepHandler parameters would be injected as fixtures
+    :param param_defaults: Default parameters for step definition
     :param liberal: Could step definition be used with other keywords
 
     :return: Decorator function for the step.
@@ -98,6 +100,7 @@ def given(
         target_fixture=target_fixture,
         target_fixtures=target_fixtures,
         params_fixtures_mapping=params_fixtures_mapping,
+        param_defaults=param_defaults,
         liberal=liberal,
     )
 
@@ -108,6 +111,7 @@ def when(
     target_fixture: str | None = None,
     target_fixtures: list[str] = None,
     params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
+    param_defaults: dict | None = None,
     liberal: bool | None = None,
 ) -> Callable:
     """When step decorator.
@@ -118,6 +122,7 @@ def when(
     :param target_fixture: Target fixture name to replace by steps definition function.
     :param target_fixtures: Target fixture names to be replaced by steps definition function.
     :param params_fixtures_mapping: StepHandler parameters would be injected as fixtures
+    :param param_defaults: Default parameters for step definition
     :param liberal: Could step definition be used with other keywords
 
     :return: Decorator function for the step.
@@ -129,6 +134,7 @@ def when(
         target_fixture=target_fixture,
         target_fixtures=target_fixtures,
         params_fixtures_mapping=params_fixtures_mapping,
+        param_defaults=param_defaults,
         liberal=liberal,
     )
 
@@ -139,6 +145,7 @@ def then(
     target_fixture: str | None = None,
     target_fixtures: list[str] = None,
     params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
+    param_defaults: dict | None = None,
     liberal: bool | None = None,
 ) -> Callable:
     """Then step decorator.
@@ -149,6 +156,7 @@ def then(
     :param target_fixture: Target fixture name to replace by steps definition function.
     :param target_fixtures: Target fixture names to be replaced by steps definition function.
     :param params_fixtures_mapping: StepHandler parameters would be injected as fixtures
+    :param param_defaults: Default parameters for step definition
     :param liberal: Could step definition be used with other keywords
 
     :return: Decorator function for the step.
@@ -160,6 +168,7 @@ def then(
         target_fixture=target_fixture,
         target_fixtures=target_fixtures,
         params_fixtures_mapping=params_fixtures_mapping,
+        param_defaults=param_defaults,
         liberal=liberal,
     )
 
@@ -170,6 +179,7 @@ def step(
     target_fixture: str | None = None,
     target_fixtures: list[str] = None,
     params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
+    param_defaults: dict | None = None,
 ):
     """Liberal step decorator which could be used with any keyword.
 
@@ -179,6 +189,7 @@ def step(
     :param target_fixture: Target fixture name to replace by steps definition function.
     :param target_fixtures: Target fixture names to be replaced by steps definition function.
     :param params_fixtures_mapping: StepHandler parameters would be injected as fixtures
+    :param param_defaults: Default parameters for step definition
 
     :return: Decorator function for the step.
     """
@@ -189,6 +200,7 @@ def step(
         target_fixture=target_fixture,
         target_fixtures=target_fixtures,
         params_fixtures_mapping=params_fixtures_mapping,
+        param_defaults=param_defaults,
         liberal=True,
     )
 
@@ -295,12 +307,16 @@ class StepHandler:
         parser: StepParser
         converters: dict[str, Any]
         params_fixtures_mapping: dict[str, str]
+        param_defaults: dict
         target_fixtures: list[str]
         liberal: bool
 
         def get_parameters(self, step: Step):
             parsed_arguments = self.parser.parse_arguments(step.name) or {}
-            return {arg: self.converters.get(arg, lambda _: _)(value) for arg, value in parsed_arguments.items()}
+            return {
+                **self.param_defaults,
+                **{arg: self.converters.get(arg, lambda _: _)(value) for arg, value in parsed_arguments.items()},
+            }
 
     @attrs
     class Registry:
@@ -316,6 +332,7 @@ class StepHandler:
             parserlike,
             converters,
             params_fixtures_mapping,
+            param_defaults,
             target_fixtures,
             liberal,
         ):
@@ -333,6 +350,7 @@ class StepHandler:
                     parser=parser,
                     converters=converters,
                     params_fixtures_mapping=params_fixtures_mapping,
+                    param_defaults=param_defaults,
                     target_fixtures=target_fixtures,
                     liberal=liberal,
                 )
@@ -358,6 +376,7 @@ class StepHandler:
         target_fixture: str | None = None,
         target_fixtures: list[str] = None,
         params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
+        param_defaults: dict | None = None,
         liberal: bool | None = None,
     ) -> Callable:
         """StepHandler decorator for the type and the name.
@@ -368,12 +387,14 @@ class StepHandler:
         :param target_fixture: Optional fixture name to replace by step definition
         :param target_fixtures: Target fixture names to be replaced by steps definition function.
         :param params_fixtures_mapping: StepHandler parameters would be injected as fixtures
+        :param param_defaults: Default parameters for step definition
         :param liberal: Could step definition be used with other keywords
 
         :return: Decorator function for the step.
         """
 
         converters = converters or {}
+        param_defaults = param_defaults or {}
         if target_fixture is not None and target_fixtures is not None:
             warnings.warn(PytestBDDStepDefinitionWarning("Both target_fixture and target_fixtures are specified"))
         target_fixtures = list(
@@ -398,6 +419,7 @@ class StepHandler:
                 parserlike=step_parserlike,
                 converters=converters,
                 params_fixtures_mapping=params_fixtures_mapping,
+                param_defaults=param_defaults,
                 target_fixtures=target_fixtures,
                 liberal=liberal,
             )
