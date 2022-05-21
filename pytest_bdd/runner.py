@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from collections import deque
 from contextlib import suppress
+from functools import partial
 from itertools import zip_longest
 from operator import attrgetter
+
+from pytest import hookimpl
 
 from pytest_bdd import exceptions
 from pytest_bdd.model import Feature, Scenario
@@ -89,10 +92,8 @@ class ScenarioRunner:
 
             self.request.config.hook.pytest_bdd_before_step_call(**hook_kwargs)
 
-            # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
-            step_result = call_fixture_func(
-                fixturefunc=step_definition.func, request=self.request, kwargs=step_function_kwargs
-            )
+            step_caller = self.request.config.hook.pytest_bdd_get_step_caller(**hook_kwargs)
+            step_result = step_caller()
 
             self._inject_target_fixtures(step_definition, step_result)
             self.request.config.hook.pytest_bdd_after_step(**hook_kwargs)
@@ -100,6 +101,11 @@ class ScenarioRunner:
             hook_kwargs["exception"] = exception
             self.request.config.hook.pytest_bdd_step_error(**hook_kwargs)
             raise
+
+    @hookimpl(trylast=True)
+    def pytest_bdd_get_step_caller(self, request, feature, scenario, step, step_func, step_func_args, step_definition):
+        # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
+        return partial(call_fixture_func, fixturefunc=step_definition.func, request=request, kwargs=step_func_args)
 
     def _inject_step_parameters_as_fixtures(
         self, step_params: dict | None = None, params_fixtures_mapping: dict | None = None

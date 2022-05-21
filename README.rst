@@ -1209,29 +1209,21 @@ pytest-bdd exposes several `pytest hooks <http://pytest.org/latest/plugins.html#
 which might be helpful building useful reporting, visualization, etc on top of it:
 
 * pytest_bdd_before_scenario(request, feature, scenario) - Called before scenario is executed
-
 * pytest_bdd_run_scenario(request, feature, scenario) - Execution scenario protocol
-
 * pytest_bdd_after_scenario(request, feature, scenario) - Called after scenario is executed
   (even if one of steps has failed)
-
 * pytest_bdd_before_step(request, feature, scenario, step, step_func) - Called before step function
   is executed and it's arguments evaluated
-
 * pytest_bdd_run_step(request, feature, scenario, step, previous_step): - Execution step protocol
-
 * pytest_bdd_before_step_call(request, feature, scenario, step, step_func, step_func_args) - Called before step
   function is executed with evaluated arguments
-
 * pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args) - Called after step function
   is successfully executed
-
 * pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception) - Called when step
   function failed to execute
-
 * pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception) - Called when step lookup failed
-
 * pytest_bdd_match_step_definition_to_step(request, feature, scenario, step, previous_step) - Called to match step to step definition
+* pytest_bdd_get_step_caller(request, feature, scenario, step, step_func, step_func_args, step_definition) - Called to get step caller. For example could be used to make steps async
 
 Fixtures
 --------
