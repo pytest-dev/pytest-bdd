@@ -8,6 +8,7 @@ from typing import Collection
 import pytest
 
 from pytest_bdd import cucumber_json, generation, gherkin_terminal_reporter, given, steps, then, when
+from pytest_bdd.allure_logging import AllurePytestBDD
 from pytest_bdd.model import Step
 from pytest_bdd.reporting import ScenarioReporterPlugin
 from pytest_bdd.runner import ScenarioRunner
@@ -68,24 +69,7 @@ def pytest_configure(config: Config) -> None:
     gherkin_terminal_reporter.configure(config)
     config.pluginmanager.register(ScenarioReporterPlugin())
     config.pluginmanager.register(ScenarioRunner())
-    if config.pluginmanager.hasplugin("allure_pytest"):
-        import allure_commons
-        from allure_pytest.listener import AllureListener
-
-        from pytest_bdd.allure_logging import AllurePytestStructBDD
-
-        report_dir = config.option.allure_report_dir
-
-        if report_dir:
-            allure_commons.plugin_manager.get_plugins()
-
-            listener = next(
-                filter(lambda o: isinstance(o, AllureListener), allure_commons.plugin_manager.get_plugins())
-            )
-
-            bdd_listener = AllurePytestStructBDD(listener.allure_logger, listener._cache)
-            allure_commons.plugin_manager.register(bdd_listener)
-            config.pluginmanager.register(bdd_listener)
+    AllurePytestBDD.register_if_allure_accessible(config)
 
 
 def pytest_unconfigure(config: Config) -> None:
