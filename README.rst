@@ -3,10 +3,8 @@ BDD library for the pytest runner
 
 .. image:: http://img.shields.io/pypi/v/pytest-bdd-ng.svg
    :target: https://pypi.python.org/pypi/pytest-bdd-ng
-.. image:: https://codecov.io/gh/elchupanebrej/pytest-bdd-ng/branch/default/graph/badge.svg
-  :target: https://codecov.io/gh/elchupanebrej/pytest-bdd-ng
-.. image:: https://travis-ci.org/pytest-dev/pytest-bdd.svg?branch=default
-    :target: https://travis-ci.org/elchupanebrej/pytest-bdd-ng
+.. image:: https://codecov.io/gh/elchupanebrej/pytest-bdd/branch/default/graph/badge.svg
+  :target: https://codecov.io/gh/elchupanebrej/pytest-bdd
 .. image:: https://readthedocs.org/projects/pytest-bdd-ng/badge/?version=default
     :target: https://pytest-bdd-ng.readthedocs.io/en/default/?badge=default
     :alt: Documentation Status
