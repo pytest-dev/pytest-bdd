@@ -159,7 +159,7 @@ default author.
             And there's an article
 
 Liberal step decorator
----------------------
+----------------------
 Sometimes you want use same step for all types of steps without re-defining alias;
 this step could be used with any keyword:
 
@@ -365,6 +365,7 @@ Step arguments could be defined without parsing
 If you want specify some default values for parameters without parsing them, you could do
 
 .. code-block:: python
+
     @given("I have default defined param", param_defaults={'default_param': 'foo'}, target_fixture='foo_fixture')
     def save_fixture(default_param):
         return default_param
