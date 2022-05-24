@@ -7,8 +7,8 @@ BDD library for the pytest runner
   :target: https://codecov.io/gh/elchupanebrej/pytest-bdd-ng
 .. image:: https://travis-ci.org/pytest-dev/pytest-bdd.svg?branch=default
     :target: https://travis-ci.org/elchupanebrej/pytest-bdd-ng
-.. image:: https://readthedocs.org/projects/pytest-bdd-ng/badge/?version=latest
-    :target: https://pytest-bdd-ng.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/pytest-bdd-ng/badge/?version=default
+    :target: https://pytest-bdd-ng.readthedocs.io/en/default/?badge=default
     :alt: Documentation Status
 
 pytest-bdd implements a subset of the Gherkin language to enable automating project

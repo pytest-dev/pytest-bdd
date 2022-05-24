@@ -9,15 +9,15 @@ Planned
    - https://github.com/pytest-dev/pytest-bdd/issues/502
 
 
-Unreleased
-----------
+1.0.0
+-----
 
-- Default parser is switched to cfparse. String step name is compiled to cfparse
+- Default step parameter parser is switched to cfparse. String step name is compiled to cfparse
 - Step functions could get compiled instances of parse, cfparse and re.compile directly
 - Drop pytest 4
 - Drop python 3.6
 - Added tags support for Examples sections for original parser
-- Added joining by parameters between examples sections on different levels (and with fixtures) for original parser
+- Added joining by parameters between examples sections on different levels (and with fixtures) for original feature parser
 - Step could override multiple fixtures using ``target_fixtures`` parameter
 - Default step parameters injection as fixtures behavior could be changed by ``params_fixtures_mapping`` step parameter
 - Step definitions can have "yield" statements again (4.0 release broke it). They will be executed as normal fixtures: code after the yield is executed during teardown of the test. (youtux)
@@ -25,7 +25,7 @@ Unreleased
 - Step definitions could be used independently from keyword by ``step`` decorator
    - https://github.com/pytest-dev/pytest-bdd/issues/450
 - ``pytest_bdd_apply_tag`` was removed; ``pytest_bdd_convert_tag_to_marks`` was added instead
-- Parser switched to official one
+- Feature parser switched to official one
    - https://github.com/pytest-dev/pytest-bdd/issues/394
    - https://github.com/pytest-dev/pytest-bdd/issues/511
 - Changes ``scenario`` and ``scenarios`` function/decorator feature registration order. Both could be used as decorators
@@ -35,6 +35,10 @@ Unreleased
    - https://github.com/pytest-dev/pytest-bdd/issues/464
    - https://github.com/pytest-dev/pytest-bdd/issues/474
    - https://github.com/pytest-dev/pytest-bdd/issues/512
+
+
+Pre pytest-bdd-ng era
+---------------------
 
 5.0.0
 -----
