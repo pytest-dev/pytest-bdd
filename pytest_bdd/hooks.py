@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from typing import Iterable
 
+from _pytest.fixtures import FixtureRequest
 from pytest import hookspec
 
+from pytest_bdd.model import Feature, Scenario
 from pytest_bdd.typing.pytest import Mark
 
 """Pytest-bdd pytest hooks."""
@@ -63,3 +65,8 @@ def pytest_bdd_match_step_definition_to_step(request, feature, scenario, step, p
 @hookspec(firstresult=True)
 def pytest_bdd_get_step_caller(request, feature, scenario, step, step_func, step_func_args, step_definition):
     """Provide alternative approach to execute step"""
+
+
+@hookspec(firstresult=True)
+def pytest_bdd_get_step_dispatcher(request: FixtureRequest, feature: Feature, scenario: Scenario):
+    """Provide alternative approach to execute scenario steps"""

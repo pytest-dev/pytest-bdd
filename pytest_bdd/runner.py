@@ -49,15 +49,27 @@ class ScenarioRunner:
         :param scenario: Scenario.
         :param request: request.
         """
-        previous_step = None
-        left_steps: deque = request.getfixturevalue("steps_left")
-        left_steps.extend(scenario.steps)
-        while left_steps:
-            step = left_steps.popleft()
-            self.plugin_manager.pytest_bdd_run_step(
-                request=request, feature=feature, scenario=scenario, step=step, previous_step=previous_step
-            )  # type: ignore[call-arg]
-            previous_step = step
+        steps: deque = request.getfixturevalue("steps_left")
+        steps.extend(scenario.steps)
+        step_dispatcher = request.config.hook.pytest_bdd_get_step_dispatcher(
+            request=request, feature=feature, scenario=scenario
+        )
+        return step_dispatcher(steps)
+
+    @hookimpl(trylast=True)
+    def pytest_bdd_get_step_dispatcher(self, request: FixtureRequest, feature: Feature, scenario: Scenario):
+        """Provide alternative approach to execute steps"""
+
+        def dispatcher(left_steps):
+            previous_step = None
+            while left_steps:
+                step = left_steps.popleft()
+                self.plugin_manager.pytest_bdd_run_step(
+                    request=request, feature=feature, scenario=scenario, step=step, previous_step=previous_step
+                )  # type: ignore[call-arg]
+                previous_step = step
+
+        return dispatcher
 
     def pytest_bdd_run_step(self, request, feature, scenario, step, previous_step):
         hook_kwargs = dict(

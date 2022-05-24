@@ -1223,6 +1223,7 @@ which might be helpful building useful reporting, visualization, etc on top of i
 * pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception) - Called when step lookup failed
 * pytest_bdd_match_step_definition_to_step(request, feature, scenario, step, previous_step) - Called to match step to step definition
 * pytest_bdd_get_step_caller(request, feature, scenario, step, step_func, step_func_args, step_definition) - Called to get step caller. For example could be used to make steps async
+* pytest_bdd_get_step_dispatcher(request, feature, scenario) - Provide alternative approach to execute scenario steps
 
 Fixtures
 --------
