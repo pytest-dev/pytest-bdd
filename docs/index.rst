@@ -1,5 +1,5 @@
-Welcome to Pytest-BDD's documentation!
-======================================
+Welcome to Pytest-BDD-NextGeneration's documentation!
+=====================================================
 
 .. contents::
 
