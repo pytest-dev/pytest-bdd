@@ -1,14 +1,14 @@
 BDD library for the pytest runner
 =================================
 
-.. image:: http://img.shields.io/pypi/v/pytest-bdd.svg
-   :target: https://pypi.python.org/pypi/pytest-bdd
-.. image:: https://codecov.io/gh/pytest-dev/pytest-bdd/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/pytest-dev/pytest-bdd
-.. image:: https://travis-ci.org/pytest-dev/pytest-bdd.svg?branch=master
-    :target: https://travis-ci.org/pytest-dev/pytest-bdd
-.. image:: https://readthedocs.org/projects/pytest-bdd/badge/?version=stable
-    :target: https://readthedocs.org/projects/pytest-bdd/
+.. image:: http://img.shields.io/pypi/v/pytest-bdd-ng.svg
+   :target: https://pypi.python.org/pypi/pytest-bdd-ng
+.. image:: https://codecov.io/gh/elchupanebrej/pytest-bdd-ng/branch/default/graph/badge.svg
+  :target: https://codecov.io/gh/elchupanebrej/pytest-bdd-ng
+.. image:: https://travis-ci.org/pytest-dev/pytest-bdd.svg?branch=default
+    :target: https://travis-ci.org/elchupanebrej/pytest-bdd-ng
+.. image:: https://readthedocs.org/projects/pytest-bdd-ng/badge/?version=latest
+    :target: https://pytest-bdd-ng.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
 pytest-bdd implements a subset of the Gherkin language to enable automating project
@@ -27,15 +27,15 @@ containing the side effects of Gherkin imperative declarations.
 .. _behave: https://pypi.python.org/pypi/behave
 .. _pytest-splinter: https://github.com/pytest-dev/pytest-splinter
 
-Install pytest-bdd
-------------------
+Install pytest-bdd-ng
+---------------------
 
 ::
 
-    pip install pytest-bdd
+    pip install pytest-bdd-ng
 
 
-The minimum required version of pytest is 4.3.
+The minimum required version of pytest is 5.0
 
 
 Example

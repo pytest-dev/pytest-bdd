@@ -5,7 +5,7 @@ Planned
 -------
 - Review report generation to be conform with official tools
    - https://github.com/pytest-dev/pytest-bdd/issues/488
-- Support of official parser
+- Extra support of official parser
    - https://github.com/pytest-dev/pytest-bdd/issues/502
 
 

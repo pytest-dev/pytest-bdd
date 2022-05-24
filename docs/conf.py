@@ -183,7 +183,7 @@ latex_elements: dict = {
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
-latex_documents = [("index", "Pytest-BDD.tex", "Pytest-BDD Documentation", "Oleg Pidsadnyi", "manual")]
+latex_documents = [("index", "Pytest-BDD.tex", "Pytest-BDD-NG Documentation", "Konstantin Goloveshko", "manual")]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
@@ -210,7 +210,7 @@ latex_documents = [("index", "Pytest-BDD.tex", "Pytest-BDD Documentation", "Oleg
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("index", "pytest-bdd", "Pytest-BDD Documentation", ["Oleg Pidsadnyi"], 1)]
+man_pages = [("index", "pytest-bdd", "Pytest-BDD-NG Documentation", ["Konstantin Goloveshko"], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -224,11 +224,11 @@ man_pages = [("index", "pytest-bdd", "Pytest-BDD Documentation", ["Oleg Pidsadny
 texinfo_documents = [
     (
         "index",
-        "Pytest-BDD",
-        "Pytest-BDD Documentation",
-        "Oleg Pidsadnyi",
-        "Pytest-BDD",
-        "One line description of project.",
+        "Pytest-BDD-NG",
+        "Pytest-BDD-NG Documentation",
+        "Konstantin Goloveshko",
+        "Pytest-BDD-NG",
+        "Pytest plugin to execute Gherkin scenarios",
         "Miscellaneous",
     )
 ]

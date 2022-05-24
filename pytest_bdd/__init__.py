@@ -9,6 +9,6 @@ from pytest_bdd.warning_types import (
     PytestBDDStepDefinitionWarning,
 )
 
-__version__ = "5.0.0"
+__version__ = "1.0.0"
 
 __all__ = ["given", "when", "then", "scenario", "scenarios"]
