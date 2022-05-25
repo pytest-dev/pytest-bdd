@@ -8,6 +8,10 @@ Planned
 - Extra support of official parser
    - https://github.com/pytest-dev/pytest-bdd/issues/502
 
+1.1.1
+-----
+- Added hook to alter scenario steps execution protocol
+
 1.1.0
 -----
 - Added allure plugin extension for allure-pytest
