@@ -1249,12 +1249,12 @@ StructBDD
 ---------
 Gherkin itself isn't a perfect tool to describe complex Data Driven Scenarios with alternative paths to execute test.
 For example it doesn't support next things:
-- Few backgrounds per scenario
-- Alternative flows for scenario to setup same state
-- Alternative flows to describe same behavior defined by different steps
-- Usage of parameters inside Backgrounds
-- Joining of parameter tables, so full Cartesian product of parameters has to be listed in Examples
-- Example tables on different scenario levels
+* Few backgrounds per scenario
+* Alternative flows for scenario to setup same state
+* Alternative flows to describe same behavior defined by different steps
+* Usage of parameters inside Backgrounds
+* Joining of parameter tables, so full Cartesian product of parameters has to be listed in Examples
+* Example tables on different scenario levels
 
 For such scenarios StructBDD DSL was developed. It independent on underlying data format, but supports most common
 formats for DSL development: YAML, Hocon, TOML, JSON5, HJSON out the box.
@@ -1317,29 +1317,31 @@ Another option is to inject built scenario directly:
 
     from pytest_bdd.struct_bdd.model import Step, Table
 
-        step = Step(
-            name="Examples are substituted",
-            steps=[
-                Step(type='Given', action='I have <have> cucumbers'),
-                Step(type='And', action='I eat <eat> cucumbers'),
-                Step(type='Then', action='I have <left> cucumbers')
-            ],
-            examples=[
-                Table(
-                    parameters=['have', 'eat', 'left'],
-                    values=[
-                        ['12', 5, 7.0],
-                        ["8.0", 3.0, "5"]
-                    ]
-                )
-            ]
-        )
+    step = Step(
+        name="Examples are substituted",
+        steps=[
+            Step(type='Given', action='I have <have> cucumbers'),
+            Step(type='And', action='I eat <eat> cucumbers'),
+            Step(type='Then', action='I have <left> cucumbers')
+        ],
+        examples=[
+            Table(
+                parameters=['have', 'eat', 'left'],
+                values=[
+                    ['12', 5, 7.0],
+                    ["8.0", 3.0, "5"]
+                ]
+            )
+        ]
+    )
 
-        step.inject_test()
+    step.inject_test()
 
 There is also an option to build Step from dict(and use your own file format/preprocessor)
 
 .. code-block:: python
+
+    from pytest_bdd.struct_bdd.model import Step
 
     step = Step.from_dict(
             dict(
