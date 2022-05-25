@@ -1249,6 +1249,7 @@ StructBDD
 ---------
 Gherkin itself isn't a perfect tool to describe complex Data Driven Scenarios with alternative paths to execute test.
 For example it doesn't support next things:
+
 * Few backgrounds per scenario
 * Alternative flows for scenario to setup same state
 * Alternative flows to describe same behavior defined by different steps
