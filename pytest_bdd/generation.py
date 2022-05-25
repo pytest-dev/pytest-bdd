@@ -124,13 +124,17 @@ def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature],
              (`list` of `Feature` objects, `list` of `Scenario` objects, `list` of `StepHandler` objects).
     """
     features = GherkinParser().get_from_paths(list(map(Path, paths)), **kwargs)
-    _, scenarios = zip(
-        *sorted(
-            itertools.chain.from_iterable(
-                itertools.zip_longest([], feature.scenarios, fillvalue=feature) for feature in features
-            ),
-            key=lambda item: (item[0].uri, item[1].id, item[1].name),
-        )
+    scenarios = list(
+        tuple(
+            zip(
+                *sorted(
+                    itertools.chain.from_iterable(
+                        ((feature, scenario) for scenario in feature.scenarios) for feature in features
+                    ),
+                    key=lambda item: (item[0].uri, item[1].id, item[1].name),
+                )
+            )
+        )[1]
     )
 
     seen = set()
