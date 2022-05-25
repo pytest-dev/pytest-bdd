@@ -1314,6 +1314,7 @@ Scenario could be imported as usual, but with specified parser:
 Another option is to inject built scenario directly:
 
 .. code-block:: python
+
     from pytest_bdd.struct_bdd.model import Step, Table
 
         step = Step(
@@ -1370,6 +1371,7 @@ There is also an option to build Step from dict(and use your own file format/pre
 Example tables could be joined:
 
 .. code-block:: yaml
+
     Tags:
       - TopTag
     Name: StepName
@@ -1422,6 +1424,14 @@ To enable gherkin-formatted output on terminal, use
 ::
 
     pytest --gherkin-terminal-reporter
+
+Allure reporting is also in place https://docs.qameta.io/allure and based on
+`allure-pytest` https://pypi.org/project/allure-pytest/ plugin. Usage is same
+To install plugin
+
+::
+
+    pip install pytest-bdd-ng[allure]
 
 
 Test code generation helpers
