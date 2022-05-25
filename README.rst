@@ -1245,13 +1245,161 @@ pytest-bdd exposes several plugin fixtures to give more testing flexibility
     def inject_step(steps_left: deque, keyword, step_text, scenario):
         steps_left.appendleft(UserStep(text=step_text, keyword=keyword, scenario=scenario))
 
-Browser testing
----------------
+StructBDD
+---------
+Gherkin itself isn't a perfect tool to describe complex Data Driven Scenarios with alternative paths to execute test.
+For example it doesn't support next things:
+- Few backgrounds per scenario
+- Alternative flows for scenario to setup same state
+- Alternative flows to describe same behavior defined by different steps
+- Usage of parameters inside Backgrounds
+- Joining of parameter tables, so full Cartesian product of parameters has to be listed in Examples
+- Example tables on different scenario levels
 
-Tools recommended to use for browser testing:
+For such scenarios StructBDD DSL was developed. It independent on underlying data format, but supports most common
+formats for DSL development: YAML, Hocon, TOML, JSON5, HJSON out the box.
 
-* pytest-splinter_ - pytest `splinter <http://splinter.cobrateam.info/>`_ integration for the real browser testing
+Steps could be defined as usual, and scenarios have different options. Let see.
 
+steps.bdd.yaml
+
+.. code-block:: yaml
+
+    Name: Steps are executed one by one
+    Description: |
+        Steps are executed one by one. Given and When sections
+        are not mandatory in some cases.
+    Steps:
+        - Step:
+            Name: Executed step by step
+            Description: Scenario description
+            Steps:
+                - I have a foo fixture with value "foo"
+                - And: there is a list
+                - When: I append 1 to the list
+                - Step:
+                    Action: I append 2 to the list
+                    Type: And
+                - Alternative:
+                    - Step:
+                        Steps:
+                            - And: I append 3 to the list
+                            - Then: foo should have value "foo"
+                            - But: the list should be [1, 2, 3]
+                    - Step:
+                        Steps:
+                            - And: I append 4 to the list
+                            - Then: foo should have value "foo"
+                            - But: the list should be [1, 2, 4]
+
+
+Alternative steps produce separate test launches for every of flows. If alternative steps are defined on different
+levels - there would be Cartesian product of tests for every alternative step.
+
+Scenario could be imported as usual, but with specified parser:
+
+.. code-block:: python
+
+    from textwrap import dedent
+    from pytest_bdd import given, when, then, scenario
+    from pytest_bdd.parser import StructBDDParser
+
+    kind = StructBDDParser.KIND.YAML
+
+    @scenario(f"steps.bdd.{kind}", "Executed step by step", parser=StructBDDParser(kind=kind))
+    def test_steps(feature):
+        pass
+
+
+Another option is to inject built scenario directly:
+
+.. code-block:: python
+    from pytest_bdd.struct_bdd.model import Step, Table
+
+        step = Step(
+            name="Examples are substituted",
+            steps=[
+                Step(type='Given', action='I have <have> cucumbers'),
+                Step(type='And', action='I eat <eat> cucumbers'),
+                Step(type='Then', action='I have <left> cucumbers')
+            ],
+            examples=[
+                Table(
+                    parameters=['have', 'eat', 'left'],
+                    values=[
+                        ['12', 5, 7.0],
+                        ["8.0", 3.0, "5"]
+                    ]
+                )
+            ]
+        )
+
+        step.inject_test()
+
+There is also an option to build Step from dict(and use your own file format/preprocessor)
+
+.. code-block:: python
+
+    step = Step.from_dict(
+            dict(
+                Name="Examples are substituted",
+                Steps=[
+                    dict(Given='I have <have> cucumbers'),
+                    dict(And='I eat <eat> cucumbers'),
+                    dict(Then='I have <left> cucumbers')
+                ],
+                Examples=[
+                    dict(
+                        Table=dict(
+                            Parameters=['have', 'eat', 'left'],
+                            Values=[
+                                ['12', 5, 7.0],
+                                ["8.0", 3.0, "5"]
+                            ]
+                        )
+                    )
+                ]
+            )
+        )
+
+    @step.build_test_decorator()
+    def test(feature:Feature, scenario):
+        assert feature.name == "Examples are substituted"
+
+
+Example tables could be joined:
+
+.. code-block:: yaml
+    Tags:
+      - TopTag
+    Name: StepName
+    Action: "Do first <HeaderA>, <HeaderB>, <HeaderC>"
+    Examples:
+      - Join:
+        - Table:
+            Tags:
+              - ExampleTagA
+            Parameters:
+              [ HeaderA, HeaderB ]
+            Values:
+              - [ A1, B1]
+              - [ A2, B2]
+        - Table:
+            Tags:
+              - ExampleTagB
+            Parameters:
+              [ HeaderB, HeaderC ]
+            Values:
+              - [ B1, C1 ]
+              - [ B2, C2 ]
+              - [ B3, C3 ]
+    Steps: []
+
+Install StructBDD:
+
+::
+
+    pip install pytest-bdd-ng[struct_bdd]
 
 Reporting
 ---------
@@ -1417,4 +1565,4 @@ License
 
 This software is licensed under the `MIT license <http://en.wikipedia.org/wiki/MIT_License>`_.
 
-© 2013-2014 Oleg Pidsadnyi, Anatoly Bubenkov and others
+© 2013-2022 Oleg Pidsadnyi, Anatoly Bubenkov, Konstantin Goloveshko and others

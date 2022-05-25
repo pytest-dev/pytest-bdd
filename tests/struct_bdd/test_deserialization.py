@@ -120,84 +120,81 @@ def test_load_simplest_step_with_keyworded_steps():
 
 
 def test_load_step_with_single_simplest_steps():
-    doc = dedent(
-        """\
-        Steps:
-            - Step: {}
-        """
-    )
+    try:
+        doc = dedent(
+            """\
+            Steps:
+                - Step: {}
+            """
+        )
 
-    data = load(doc, Loader=FullLoader)
+        data = load(doc, Loader=FullLoader)
 
-    StepSchema().load(data)
+        StepSchema().load(data)
+    except Exception as e:
+        raise AssertionError from e
 
 
 def test_node_module_load_for_step():
-    doc = dedent(
-        """\
-        Name: StepName
-        Tags:
-          - StepTag
-          - StepTag
-        Description: |
-            Multiline
+    try:
+        doc = dedent(
+            """\
+            Name: StepName
+            Tags:
+              - StepTag
+              - StepTag
+            Description: |
+                Multiline
 
-            Step description
-        Comments:
-          - Very nice comment
-        Steps: []
-        """
-    )
+                Step description
+            Comments:
+              - Very nice comment
+            Steps: []
+            """
+        )
 
-    data = load(doc, Loader=FullLoader)
+        data = load(doc, Loader=FullLoader)
 
-    StepSchema().load(data)
+        StepSchema().load(data)
+    except Exception as e:
+        raise AssertionError from e
 
 
 def test_data_load():
-    doc = dedent(
-        """\
-        Name: StepName
-        Data:
-          - Table:
-              Tags:
-                - StepDataTableTag
-              Name: StepDataTableName
-              Description: StepDataTableDescription
-              Type: Columned
-              Parameters:
-                - StepDataTableParametersHeader1
-                - StepDataTableParametersHeader2
-              Values:
-                - [ a, b, c ]
-                - [ d, e, f ]
-        Steps: []
-        """
-    )
+    try:
+        doc = dedent(
+            """\
+            Name: StepName
+            Data:
+              - Table:
+                  Tags:
+                    - StepDataTableTag
+                  Name: StepDataTableName
+                  Description: StepDataTableDescription
+                  Type: Columned
+                  Parameters:
+                    - StepDataTableParametersHeader1
+                    - StepDataTableParametersHeader2
+                  Values:
+                    - [ a, b, c ]
+                    - [ d, e, f ]
+            Steps: []
+            """
+        )
 
-    data = load(doc, Loader=FullLoader)
+        data = load(doc, Loader=FullLoader)
 
-    StepSchema().load(data)
+        StepSchema().load(data)
+    except Exception as e:
+        raise AssertionError from e
 
 
 def test_nested_data_load():
-    doc = dedent(
-        """\
-        Name: StepName
-        Data:
-          - Table:
-              Parameters:
-                - StepDataTableParametersHeader1
-                - StepDataTableParametersHeader2
-              Values:
-                - [ a, b, c ]
-                - [ d, e, f ]
-          - Table:
-              Parameters:
-                - StepDataTableParametersHeader3
-                - StepDataTableParametersHeader4
-              Values: [ ]
-          - Join:
+    try:
+        doc = dedent(
+            """\
+            Name: StepName
+            Data:
               - Table:
                   Parameters:
                     - StepDataTableParametersHeader1
@@ -210,33 +207,36 @@ def test_nested_data_load():
                     - StepDataTableParametersHeader3
                     - StepDataTableParametersHeader4
                   Values: [ ]
-        Steps: []
-        """
-    )
+              - Join:
+                  - Table:
+                      Parameters:
+                        - StepDataTableParametersHeader1
+                        - StepDataTableParametersHeader2
+                      Values:
+                        - [ a, b, c ]
+                        - [ d, e, f ]
+                  - Table:
+                      Parameters:
+                        - StepDataTableParametersHeader3
+                        - StepDataTableParametersHeader4
+                      Values: [ ]
+            Steps: []
+            """
+        )
 
-    data = load(doc, Loader=FullLoader)
+        data = load(doc, Loader=FullLoader)
 
-    StepSchema().load(data)
+        StepSchema().load(data)
+    except Exception as e:
+        raise AssertionError from e
 
 
 def test_nested_examples_load():
-    doc = dedent(
-        """\
-        Name: StepName
-        Examples:
-          - Table:
-              Parameters:
-                - StepDataTableParametersHeader1
-                - StepDataTableParametersHeader2
-              Values:
-                - [ a, b, c ]
-                - [ d, e, f ]
-          - Table:
-              Parameters:
-                - StepDataTableParametersHeader3
-                - StepDataTableParametersHeader4
-              Values: [ ]
-          - Join:
+    try:
+        doc = dedent(
+            """\
+            Name: StepName
+            Examples:
               - Table:
                   Parameters:
                     - StepDataTableParametersHeader1
@@ -249,13 +249,28 @@ def test_nested_examples_load():
                     - StepDataTableParametersHeader3
                     - StepDataTableParametersHeader4
                   Values: [ ]
-        Steps: []
-        """
-    )
+              - Join:
+                  - Table:
+                      Parameters:
+                        - StepDataTableParametersHeader1
+                        - StepDataTableParametersHeader2
+                      Values:
+                        - [ a, b, c ]
+                        - [ d, e, f ]
+                  - Table:
+                      Parameters:
+                        - StepDataTableParametersHeader3
+                        - StepDataTableParametersHeader4
+                      Values: [ ]
+            Steps: []
+            """
+        )
 
-    data = load(doc, Loader=FullLoader)
+        data = load(doc, Loader=FullLoader)
 
-    step = StepSchema().load(data)
+        StepSchema().load(data)
+    except Exception as e:
+        raise AssertionError from e
 
 
 def test_tags_steps_examples_load():
@@ -490,26 +505,28 @@ def test_tags_steps_examples_joined_by_value_load():
 
 
 def test_load_nested_steps():
-    doc = dedent(
-        """\
-    Steps:
-      - Alternative:
+    try:
+        doc = dedent(
+            """\
+        Steps:
+          - Alternative:
+              - Given: Do something
+              - When: Do something
+              - Then: Do something
+              - And: Do something
+              - "*": Do something
           - Given: Do something
           - When: Do something
           - Then: Do something
           - And: Do something
           - "*": Do something
-      - Given: Do something
-      - When: Do something
-      - Then: Do something
-      - And: Do something
-      - "*": Do something
-      - Step:
-          Action: Do something
-    """
-    )
+          - Step:
+              Action: Do something
+        """
+        )
 
-    data = load(doc, Loader=FullLoader)
+        data = load(doc, Loader=FullLoader)
 
-    step = StepSchema().load(data)
-    pass
+        StepSchema().load(data)
+    except Exception as e:
+        raise AssertionError from e
