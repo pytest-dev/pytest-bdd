@@ -264,7 +264,7 @@ The code will look like:
 
     @when(parsers.parse("I eat {eat:d} cucumbers"))
     def eat_cucumbers(cucumbers, eat):
-        start_cucumbers["eat"] += eat
+        cucumbers["eat"] += eat
 
 
     @then(parsers.parse("I should have {left:d} cucumbers"))
