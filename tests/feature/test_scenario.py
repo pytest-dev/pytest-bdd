@@ -148,3 +148,49 @@ def test_simple(testdir, pytest_params):
     )
     result = testdir.runpytest_subprocess(*pytest_params)
     result.assert_outcomes(passed=1)
+
+
+def test_angular_brakets_are_not_parsed(testdir):
+    """Test that angular brackets are not parsed for "Scenario"s.
+
+    (They should be parsed only when used in "Scenario Outline")
+
+    """
+    testdir.makefile(
+        ".feature",
+        simple="""
+        Feature: Simple feature
+            Scenario: Simple scenario
+                Given I have a <tag>
+                Then pass
+
+            Scenario Outline: Outlined scenario
+                Given I have a templated <foo>
+                Then pass
+
+            Examples:
+                | foo |
+                | bar |
+        """,
+    )
+    testdir.makepyfile(
+        """
+        from pytest_bdd import scenarios, given, then, parsers
+
+        scenarios("simple.feature")
+
+        @given("I have a <tag>")
+        def bar():
+            return "tag"
+
+        @given(parsers.parse("I have a templated {foo}"))
+        def bar(foo):
+            return "foo"
+
+        @then("pass")
+        def bar():
+            pass
+        """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=2)
