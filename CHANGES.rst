@@ -6,15 +6,16 @@ Unreleased
 
 This release introduces breaking changes in order to be more in line with the official gherkin specification.
 
-- Cleanup of the documentation and tests related to parametrization (elchupanebrej)
-- Removed feature level examples for the gherkin compatibility (olegpidsadnyi)
-- Removed vertical examples for the gherkin compatibility (olegpidsadnyi)
-- Step arguments are no longer fixtures (olegpidsadnyi)
-- Drop support of python 3.6, pytest 4 (elchupanebrej)
-- Step definitions can have "yield" statements again (4.0 release broke it). They will be executed as normal fixtures: code after the yield is executed during teardown of the test. (youtux)
-- Scenario outlines unused example parameter validation is removed (olegpidsadnyi)
-- Add type decorations
-- ``pytest_bdd.parsers.StepParser`` now is an Abstract Base Class. Subclasses must make sure to implement the abstract methods.
+- Cleanup of the documentation and tests related to parametrization (elchupanebrej) https://github.com/pytest-dev/pytest-bdd/pull/469
+- Removed feature level examples for the gherkin compatibility (olegpidsadnyi) https://github.com/pytest-dev/pytest-bdd/pull/490
+- Removed vertical examples for the gherkin compatibility (olegpidsadnyi) https://github.com/pytest-dev/pytest-bdd/pull/492
+- Step arguments are no longer fixtures (olegpidsadnyi) https://github.com/pytest-dev/pytest-bdd/pull/493
+- Drop support of python 3.6, pytest 4 (elchupanebrej) https://github.com/pytest-dev/pytest-bdd/pull/495 https://github.com/pytest-dev/pytest-bdd/pull/504
+- Step definitions can have "yield" statements again (4.0 release broke it). They will be executed as normal fixtures: code after the yield is executed during teardown of the test. (youtux) https://github.com/pytest-dev/pytest-bdd/pull/503
+- Scenario outlines unused example parameter validation is removed (olegpidsadnyi) https://github.com/pytest-dev/pytest-bdd/pull/499
+- Add type annotations (youtux) https://github.com/pytest-dev/pytest-bdd/pull/505
+- ``pytest_bdd.parsers.StepParser`` now is an Abstract Base Class. Subclasses must make sure to implement the abstract methods. (youtux) https://github.com/pytest-dev/pytest-bdd/pull/505
+- Angular brackets in step definitions are only parsed in "Scenario Outline" (previously they were parsed also in normal "Scenario"s) (youtux) https://github.com/pytest-dev/pytest-bdd/pull/524.
 
 
 
