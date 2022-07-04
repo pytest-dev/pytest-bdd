@@ -248,28 +248,25 @@ The code will look like:
 
 .. code-block:: python
 
-    import re
-    from pytest_bdd import scenario, given, when, then, parsers
+    from pytest_bdd import scenarios, given, when, then, parsers
 
 
-    @scenario("arguments.feature", "Arguments for given, when, then")
-    def test_arguments():
-        pass
+    scenarios("scenario_outlines.feature")
 
 
     @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="cucumbers")
     def given_cucumbers(start):
-        return dict(start=start, eat=0)
+        return {"start": start, "eat": 0}
 
 
     @when(parsers.parse("I eat {eat:d} cucumbers"))
     def eat_cucumbers(cucumbers, eat):
-        start_cucumbers["eat"] += eat
+        cucumbers["eat"] += eat
 
 
     @then(parsers.parse("I should have {left:d} cucumbers"))
     def should_have_left_cucumbers(cucumbers, left):
-        assert cucumbers['start'] - cucumbers['eat'] == left
+        assert cucumbers["start"] - cucumbers["eat"] == left
 
 Example code also shows possibility to pass argument converters which may be useful if you need to postprocess step
 arguments after the parser.
@@ -390,7 +387,7 @@ Multiline steps
 ---------------
 
 As Gherkin, pytest-bdd supports multiline steps
-(aka `PyStrings <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#pystrings>`_).
+(a.k.a. `Doc Strings <https://cucumber.io/docs/gherkin/reference/#doc-strings>`_).
 But in much cleaner and powerful way:
 
 .. code-block:: gherkin
@@ -416,31 +413,20 @@ step arguments and capture lines after first line (or some subset of them) into 
 
 .. code-block:: python
 
-    import re
-
     from pytest_bdd import given, then, scenario, parsers
 
 
-    @scenario(
-        'multiline.feature',
-        'Multiline step using sub indentation',
-    )
-    def test_multiline():
-        pass
+    scenarios("multiline.feature")
 
 
-    @given(parsers.parse("I have a step with:\n{text}"), target_fixture="i_have_text")
-    def i_have_text(text):
-        return text
+    @given(parsers.parse("I have a step with:\n{content}"), target_fixture="text")
+    def given_text(content):
+        return content
 
 
     @then("the text should be parsed with correct indentation")
-    def text_should_be_correct(i_have_text, text):
-        assert i_have_text == text == 'Some\nExtra\nLines'
-
-Note that `then` step definition (`text_should_be_correct`) in this example uses `text` fixture which is provided
-by a `given` step (`i_have_text`) argument with the same name (`text`). This possibility is described in
-the `Step arguments are fixtures as well!`_ section.
+    def text_should_be_correct(text):
+        assert text == "Some\nExtra\nLines"
 
 
 Scenarios shortcut
@@ -492,14 +478,14 @@ folder will be bound automatically.
 Scenario outlines
 -----------------
 
-Scenarios can be parametrized to cover few cases. In Gherkin the variable
-templates are written using corner braces as ``<somevalue>``.
-`Gherkin scenario outlines <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#scenario-outlines>`_ are supported by pytest-bdd
-exactly as it's described in the behave_ docs.
+Scenarios can be parametrized to cover few cases. In Gherkin the variable templates are written using corner braces as ``<somevalue>``.
+`Scenario Outlines <https://cucumber.io/docs/gherkin/reference/#scenario-outline>`_ are supported by pytest-bdd.
 
 Example:
 
 .. code-block:: gherkin
+
+    # content of scenario_outlines.feature
 
     Feature: Scenario outlines
         Scenario Outline: Outlined given, when, then
@@ -510,6 +496,28 @@ Example:
             Examples:
             | start | eat | left |
             |  12   |  5  |  7   |
+
+.. code-block:: python
+
+    from pytest_bdd import scenarios, given, when, then, parsers
+
+
+    scenarios("scenario_outlines.feature")
+
+
+    @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="cucumbers")
+    def given_cucumbers(start):
+        return {"start": start, "eat": 0}
+
+
+    @when(parsers.parse("I eat {eat:d} cucumbers"))
+    def eat_cucumbers(cucumbers, eat):
+        cucumbers["eat"] += eat
+
+
+    @then(parsers.parse("I should have {left:d} cucumbers"))
+    def should_have_left_cucumbers(cucumbers, left):
+        assert cucumbers["start"] - cucumbers["eat"] == left
 
 
 Organizing your scenarios
@@ -561,9 +569,9 @@ completely different:
 
 
 For picking up tests to run we can use
-`tests selection <http://pytest.org/latest/usage.html#specifying-tests-selecting-tests>`_ technique. The problem is that
+`tests selection <https://pytest.org/en/7.1.x/how-to/usage.html#specifying-which-tests-to-run>`_ technique. The problem is that
 you have to know how your tests are organized, knowing only the feature files organization is not enough.
-`cucumber tags <https://github.com/cucumber/cucumber/wiki/Tags>`_ introduce standard way of categorizing your features
+Cucumber uses `tags <https://cucumber.io/docs/cucumber/api/#tags>`_ as a way of categorizing your features
 and scenarios, which pytest-bdd supports. For example, we could have:
 
 .. code-block:: gherkin
@@ -575,19 +583,15 @@ and scenarios, which pytest-bdd supports. For example, we could have:
       Scenario: Successful login
 
 
-pytest-bdd uses `pytest markers <http://pytest.org/latest/mark.html#mark>`_ as a `storage` of the tags for the given
+pytest-bdd uses `pytest markers <http://pytest.org/latest/mark.html>`_ as a `storage` of the tags for the given
 scenario test, so we can use standard test selection:
 
 .. code-block:: bash
 
     pytest -m "backend and login and successful"
 
-The feature and scenario markers are not different from standard pytest markers, and the ``@`` symbol is stripped out
-automatically to allow test selector expressions. If you want to have bdd-related tags to be distinguishable from the
-other test markers, use prefix like `bdd`.
-Note that if you use pytest `--strict` option, all bdd tags mentioned in the feature files should be also in the
-`markers` setting of the `pytest.ini` config. Also for tags please use names which are python-compatible variable
-names, eg starts with a non-number, underscore alphanumeric, etc. That way you can safely use tags for tests filtering.
+The feature and scenario markers are not different from standard pytest markers, and the ``@`` symbol is stripped out automatically to allow test selector expressions. If you want to have bdd-related tags to be distinguishable from the other test markers, use prefix like ``bdd``.
+Note that if you use pytest ``--strict`` option, all bdd tags mentioned in the feature files should be also in the ``markers`` setting of the ``pytest.ini`` config. Also for tags please use names which are python-compatible variable names, eg starts with a non-number, underscore alphanumeric, etc. That way you can safely use tags for tests filtering.
 
 You can customize how tags are converted to pytest marks by implementing the
 ``pytest_bdd_apply_tag`` hook and returning ``True`` from it:
@@ -686,7 +690,7 @@ Backgrounds
 
 It's often the case that to cover certain feature, you'll need multiple scenarios. And it's logical that the
 setup for those scenarios will have some common parts (if not equal). For this, there are `backgrounds`.
-pytest-bdd implements `Gherkin backgrounds <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#backgrounds>`_ for
+pytest-bdd implements `Gherkin backgrounds <https://cucumber.io/docs/gherkin/reference/#background>`_ for
 features.
 
 .. code-block:: gherkin
@@ -711,8 +715,8 @@ features.
 
 In this example, all steps from the background will be executed before all the scenario's own given
 steps, adding possibility to prepare some common setup for multiple scenarios in a single feature.
-About background best practices, please read
-`here <https://github.com/cucumber/cucumber/wiki/Background#good-practices-for-using-background>`_.
+About background best practices, please read Gherkin's
+`Tips for using Background <https://cucumber.io/docs/gherkin/reference/#tips-for-using-background>`_.
 
 .. NOTE:: There is only step "Given" should be used in "Background" section,
           steps "When" and "Then" are prohibited, because their purpose are
@@ -868,15 +872,15 @@ This will make your life much easier when defining multiple scenarios in a test 
         pass
 
 
-You can learn more about `functools.partial <http://docs.python.org/2/library/functools.html#functools.partial>`_
+You can learn more about `functools.partial <https://docs.python.org/3/library/functools.html#functools.partial>`_
 in the Python docs.
 
 
 Hooks
 -----
 
-pytest-bdd exposes several `pytest hooks <http://pytest.org/latest/plugins.html#well-specified-hooks>`_
-which might be helpful building useful reporting, visualization, etc on top of it:
+pytest-bdd exposes several `pytest hooks <https://docs.pytest.org/en/7.1.x/reference/reference.html#hooks>`_
+which might be helpful building useful reporting, visualization, etc. on top of it:
 
 * pytest_bdd_before_scenario(request, feature, scenario) - Called before scenario is executed
 
@@ -903,7 +907,7 @@ Browser testing
 
 Tools recommended to use for browser testing:
 
-* pytest-splinter_ - pytest `splinter <http://splinter.cobrateam.info/>`_ integration for the real browser testing
+* pytest-splinter_ - pytest `splinter <https://splinter.readthedocs.io/>`_ integration for the real browser testing
 
 
 Reporting
@@ -1002,8 +1006,7 @@ gherkin reference. This means deprecation of some non-standard features that wer
 
 Removal of the feature examples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The example tables on the feature level are no longer supported. The tests should be parametrized with the example tables
-on the scenario level.
+The example tables on the feature level are no longer supported. If you had examples on the feature level, you should copy them to each individual scenario.
 
 
 Removal of the vertical examples
@@ -1016,6 +1019,12 @@ Step arguments are no longer fixtures
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Step parsed arguments conflicted with the fixtures. Now they no longer define fixture.
 If the fixture has to be defined by the step the target_fixture param should be used.
+
+
+Variable templates in steps are only parsed for Scenario Outlines
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In previous versions of pytest, steps containing ``<variable>`` would be parsed both by ``Scenario`` and ``Scenario Outline``.
+Now they are only parsed within a ``Scenario Outline``.
 
 
 .. _Migration from 4.x.x:
@@ -1106,6 +1115,6 @@ Step validation handlers for the hook ``pytest_bdd_step_validation_error`` shoul
 License
 -------
 
-This software is licensed under the `MIT license <http://en.wikipedia.org/wiki/MIT_License>`_.
+This software is licensed under the `MIT License <https://opensource.org/licenses/MIT>`_.
 
-© 2013-2014 Oleg Pidsadnyi, Anatoly Bubenkov and others
+© 2013 Oleg Pidsadnyi, Anatoly Bubenkov and others
