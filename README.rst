@@ -251,7 +251,7 @@ The code will look like:
     from pytest_bdd import scenarios, given, when, then, parsers
 
 
-    scenarios("scenario_outlines.feature")
+    scenarios("arguments.feature")
 
 
     @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="cucumbers")
