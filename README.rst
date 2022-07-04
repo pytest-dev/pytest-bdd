@@ -432,11 +432,8 @@ step arguments and capture lines after first line (or some subset of them) into 
 Scenarios shortcut
 ------------------
 
-If you have relatively large set of feature files, it's boring to manually bind scenarios to the tests using the
-scenario decorator. Of course with the manual approach you get all the power to be able to additionally parametrize
-the test, give the test function a nice name, document it, etc, but in the majority of the cases you don't need that.
-Instead you want to bind `all` scenarios found in the `feature` folder(s) recursively automatically.
-For this - there's a `scenarios` helper.
+If you have relatively large set of feature files, it's boring to manually bind scenarios to the tests using the scenario decorator. Of course with the manual approach you get all the power to be able to additionally parametrize the test, give the test function a nice name, document it, etc, but in the majority of the cases you don't need that.
+Instead, you want to bind all the scenarios found in the ``features`` folder(s) recursively automatically, by using the ``scenarios`` helper.
 
 .. code-block:: python
 
@@ -445,7 +442,7 @@ For this - there's a `scenarios` helper.
     # assume 'features' subfolder is in this file's directory
     scenarios('features')
 
-That's all you need to do to bind all scenarios found in the `features` folder!
+That's all you need to do to bind all scenarios found in the ``features`` folder!
 Note that you can pass multiple paths, and those paths can be either feature files or feature folders.
 
 
@@ -457,7 +454,7 @@ Note that you can pass multiple paths, and those paths can be either feature fil
     scenarios('features', 'other_features/some.feature', 'some_other_features')
 
 But what if you need to manually bind certain scenario, leaving others to be automatically bound?
-Just write your scenario in a `normal` way, but ensure you do it `BEFORE` the call of `scenarios` helper.
+Just write your scenario in a "normal" way, but ensure you do it **before** the call of ``scenarios`` helper.
 
 
 .. code-block:: python
@@ -471,8 +468,7 @@ Just write your scenario in a `normal` way, but ensure you do it `BEFORE` the ca
     # assume 'features' subfolder is in this file's directory
     scenarios('features')
 
-In the example above `test_something` scenario binding will be kept manual, other scenarios found in the `features`
-folder will be bound automatically.
+In the example above, the ``test_something`` scenario binding will be kept manual, other scenarios found in the ``features`` folder will be bound automatically.
 
 
 Scenario outlines
