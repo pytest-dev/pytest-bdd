@@ -153,11 +153,17 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
 
         # Remove Feature, Given, When, Then, And
         keyword, parsed_line = parse_line(clean_line)
+
         if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
             tags = get_tags(prev_line)
-            feature.scenarios[parsed_line] = scenario = ScenarioTemplate(
-                feature=feature, name=parsed_line, line_number=line_number, tags=tags
+            scenario = ScenarioTemplate(
+                feature=feature,
+                name=parsed_line,
+                line_number=line_number,
+                tags=tags,
+                templated=mode == types.SCENARIO_OUTLINE,
             )
+            feature.scenarios[parsed_line] = scenario
         elif mode == types.BACKGROUND:
             feature.background = Background(feature=feature, line_number=line_number)
         elif mode == types.EXAMPLES:
@@ -210,7 +216,7 @@ class ScenarioTemplate:
 
     Created when parsing the feature file, it will then be combined with the examples to create a Scenario."""
 
-    def __init__(self, feature: Feature, name: str, line_number: int, tags=None) -> None:
+    def __init__(self, feature: Feature, name: str, line_number: int, templated: bool, tags=None) -> None:
         """
 
         :param str name: Scenario name.
@@ -223,6 +229,7 @@ class ScenarioTemplate:
         self.examples = Examples()
         self.line_number = line_number
         self.tags = tags or set()
+        self.templated = templated
 
     def add_step(self, step: Step) -> None:
         """Add step to the scenario.
@@ -238,16 +245,21 @@ class ScenarioTemplate:
         return (background.steps if background else []) + self._steps
 
     def render(self, context: Mapping[str, Any]) -> Scenario:
-        steps = [
-            Step(
-                name=templated_step.render(context),
-                type=templated_step.type,
-                indent=templated_step.indent,
-                line_number=templated_step.line_number,
-                keyword=templated_step.keyword,
-            )
-            for templated_step in self.steps
-        ]
+        background_steps = self.feature.background.steps if self.feature.background else []
+        if not self.templated:
+            scenario_steps = self._steps
+        else:
+            scenario_steps = [
+                Step(
+                    name=step.render(context),
+                    type=step.type,
+                    indent=step.indent,
+                    line_number=step.line_number,
+                    keyword=step.keyword,
+                )
+                for step in self._steps
+            ]
+        steps = background_steps + scenario_steps
         return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
 
 
@@ -255,7 +267,7 @@ class Scenario:
 
     """Scenario."""
 
-    def __init__(self, feature: Feature, name: str, line_number: int, steps: list[Step], tags=None) -> None:
+    def __init__(self, feature: Feature, name: str, line_number: int, steps: list[Step] = None, tags=None) -> None:
         """Scenario constructor.
 
         :param pytest_bdd.parser.Feature feature: Feature.
@@ -263,6 +275,8 @@ class Scenario:
         :param int line_number: Scenario line number.
         :param set tags: Set of tags.
         """
+        if steps is None:
+            steps = []
         self.feature = feature
         self.name = name
         self.steps = steps
