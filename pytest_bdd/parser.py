@@ -246,7 +246,7 @@ class ScenarioTemplate:
 
     def render(self, context: Mapping[str, Any]) -> Scenario:
         background_steps = self.feature.background.steps if self.feature.background else []
-        if self.templated:
+        if not self.templated:
             scenario_steps = self._steps
         else:
             scenario_steps = [
