@@ -429,18 +429,14 @@ step arguments and capture lines after first line (or some subset of them) into 
         pass
 
 
-    @given(parsers.parse("I have a step with:\n{text}"), target_fixture="i_have_text")
+    @given(parsers.parse("I have a step with:\n{text}"), target_fixture="text")
     def i_have_text(text):
         return text
 
 
     @then("the text should be parsed with correct indentation")
-    def text_should_be_correct(i_have_text, text):
-        assert i_have_text == text == 'Some\nExtra\nLines'
-
-Note that `then` step definition (`text_should_be_correct`) in this example uses `text` fixture which is provided
-by a `given` step (`i_have_text`) argument with the same name (`text`). This possibility is described in
-the `Step arguments are fixtures as well!`_ section.
+    def text_should_be_correct(text):
+        assert text == 'Some\nExtra\nLines'
 
 
 Scenarios shortcut
