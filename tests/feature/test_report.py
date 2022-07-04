@@ -267,7 +267,7 @@ def test_complex_types(testdir, pytestconfig):
             """
     Feature: Report serialization containing parameters of complex types
 
-    Scenario: Complex
+    Scenario Outline: Complex
         Given there is a coordinate <point>
 
         Examples:
