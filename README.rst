@@ -474,8 +474,7 @@ In the example above, the ``test_something`` scenario binding will be kept manua
 Scenario outlines
 -----------------
 
-Scenarios can be parametrized to cover few cases. In Gherkin the variable templates are written using corner braces as ``<somevalue>``.
-`Scenario Outlines <https://cucumber.io/docs/gherkin/reference/#scenario-outline>`_ are supported by pytest-bdd.
+Scenarios can be parametrized to cover few cases. These are called `Scenario Outlines <https://cucumber.io/docs/gherkin/reference/#scenario-outline>`_ in Gherkin, and the variable templates are written using angular brackets (e.g. ``<var_name>``).
 
 Example:
 
