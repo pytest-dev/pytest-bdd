@@ -74,18 +74,18 @@ def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario)
     try:
         # Simple case where no parser is used for the step
         return request.getfixturevalue(get_step_fixture_name(name, step.type))
-    except FixtureLookupError:
+    except FixtureLookupError as e:
         try:
             # Could not find a fixture with the same name, let's see if there is a parser involved
             argumented_name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager, request)
             if argumented_name:
                 return request.getfixturevalue(argumented_name)
-            raise
-        except FixtureLookupError:
+            raise e
+        except FixtureLookupError as e2:
             raise exceptions.StepDefinitionNotFoundError(
                 f"Step definition is not found: {step}. "
                 f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
-            )
+            ) from e2
 
 
 def _execute_step_function(request: FixtureRequest, scenario: Scenario, step: Step, step_func: Callable) -> None:
