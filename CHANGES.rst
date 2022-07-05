@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+6.0.0
+-----
 
 This release introduces breaking changes in order to be more in line with the official gherkin specification.
 
