@@ -43,20 +43,19 @@ def find_argumented_step_fixture_name(
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
         for fixturedef in fixturedefs:
-            parser = getattr(fixturedef.func, "parser", None)
-            if parser is None:
-                continue
-            match = parser.is_matching(name)
-            if not match:
-                continue
-
-            parser_name = get_step_fixture_name(parser.name, type_)
-            if request:
-                try:
-                    request.getfixturevalue(parser_name)
-                except FixtureLookupError:
+            parsers = getattr(fixturedef.func, "_pytest_bdd_parsers", [])
+            for parser in parsers:
+                match = parser.is_matching(name)
+                if not match:
                     continue
-            return parser_name
+
+                parser_name = get_step_fixture_name(parser.name, type_)
+                if request:
+                    try:
+                        request.getfixturevalue(parser_name)
+                    except FixtureLookupError:
+                        continue
+                return parser_name
     return None
 
 
@@ -107,12 +106,16 @@ def _execute_step_function(request: FixtureRequest, scenario: Scenario, step: St
         converters = getattr(step_func, "converters", {})
         kwargs = {}
 
-        parser = getattr(step_func, "parser", None)
-        if parser is not None:
+        parsers = getattr(step_func, "_pytest_bdd_parsers", [])
+
+        for parser in parsers:
+            if not parser.is_matching(step.name):
+                continue
             for arg, value in parser.parse_arguments(step.name).items():
                 if arg in converters:
                     value = converters[arg](value)
                 kwargs[arg] = value
+            break
 
         kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in get_args(step_func)}
         kw["step_func_args"] = kwargs

@@ -72,6 +72,58 @@ def test_steps(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
 
+def test_step_function_can_be_decorated_multiple_times(testdir):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps decoration
+
+                Scenario: Step function can be decorated multiple times
+                    Given there is a foo with value 42
+                    And there is a second foo with value 43
+                    When I do nothing
+                    And I do nothing again
+                    Then I make no mistakes
+                    And I make no mistakes again
+
+            """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, when, then, scenario, parsers
+
+        @scenario("steps.feature", "Step function can be decorated multiple times")
+        def test_steps():
+            pass
+
+
+        @given(parsers.parse("there is a foo with value {value}"), target_fixture="foo")
+        @given(parsers.parse("there is a second foo with value {value}"), target_fixture="second_foo")
+        def foo(value):
+            return value
+
+
+        @when("I do nothing")
+        @when("I do nothing again")
+        def do_nothing():
+            pass
+
+
+        @then("I make no mistakes")
+        @then("I make no mistakes again")
+        def no_errors():
+            assert True
+
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
+
+
 def test_all_steps_can_provide_fixtures(testdir):
     """Test that given/when/then can all provide fixtures."""
     testdir.makefile(
