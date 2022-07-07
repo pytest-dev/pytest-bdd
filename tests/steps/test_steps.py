@@ -28,10 +28,10 @@ def test_when_then(testdir):
 
         def test_when_then(request):
             do_stuff_ = request.getfixturevalue(get_step_fixture_name("I do stuff", WHEN))
-            assert callable(do_stuff_.func)
+            assert callable(do_stuff_)
 
             check_stuff_ = request.getfixturevalue(get_step_fixture_name("I check stuff", THEN))
-            assert callable(check_stuff_.func)
+            assert callable(check_stuff_)
 
         """
         )

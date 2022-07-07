@@ -22,7 +22,7 @@ from _pytest.fixtures import FixtureLookupError, FixtureManager, FixtureRequest,
 
 from . import exceptions
 from .feature import get_feature, get_features
-from .steps import StepFuncContext, get_step_fixture_name, inject_fixture
+from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if TYPE_CHECKING:
@@ -43,22 +43,20 @@ def find_argumented_step_fixture_name(
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
         for fixturedef in fixturedefs:
-            step_func = getattr(fixturedef.func, "_pytest_bdd_wrapped_step_func", None)
-            if step_func is None:
+            parser = getattr(fixturedef.func, "_pytest_bdd_parser", None)
+            if parser is None:
                 continue
-            # TODO: See if we can avoid this:
-            parsers = getattr(step_func, "_pytest_bdd_parsers", [])
-            for parser in parsers:
-                match = parser.is_matching(name)
-                if not match:
-                    continue
 
-                parser_name = get_step_fixture_name(parser.name, type_)
-                return parser_name
+            match = parser.is_matching(name)
+            if not match:
+                continue
+
+            parser_name = get_step_fixture_name(parser.name, type_)
+            return parser_name
     return None
 
 
-def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario) -> StepFuncContext:
+def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario) -> Callable[..., Any]:
     """Match the step defined by the regular expression pattern.
 
     :param request: PyTest request object.
@@ -87,7 +85,7 @@ def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario)
 
 
 def _execute_step_function(
-    request: FixtureRequest, scenario: Scenario, step: Step, step_func_context: StepFuncContext
+    request: FixtureRequest, scenario: Scenario, step: Step, step_func: Callable[..., Any]
 ) -> None:
     """Execute step function.
 
@@ -97,8 +95,6 @@ def _execute_step_function(
     :param function step_func: Step function.
     :param example: Example table.
     """
-    step_func = step_func_context.func
-
     kw = dict(request=request, feature=scenario.feature, scenario=scenario, step=step, step_func=step_func)
 
     request.config.hook.pytest_bdd_before_step(**kw)
@@ -108,11 +104,14 @@ def _execute_step_function(
         converters = getattr(step_func, "converters", {})
         kwargs = {}
 
-        parser = step_func_context.parser
-        for arg, value in parser.parse_arguments(step.name).items():
-            if arg in converters:
-                value = converters[arg](value)
-            kwargs[arg] = value
+        for parser in step_func._pytest_bdd_parsers:
+            if not parser.is_matching(step.name):
+                continue
+            for arg, value in parser.parse_arguments(step.name).items():
+                if arg in converters:
+                    value = converters[arg](value)
+                kwargs[arg] = value
+            break
 
         args = get_args(step_func)
         kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}

@@ -36,8 +36,7 @@ def given_beautiful_article(article):
 """
 from __future__ import annotations
 
-import typing
-from dataclasses import dataclass
+from typing import Any, Callable, TypeVar
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureRequest
@@ -46,8 +45,7 @@ from .parsers import StepParser, get_parser
 from .types import GIVEN, THEN, WHEN
 from .utils import get_caller_module_locals, setdefault
 
-if typing.TYPE_CHECKING:
-    from typing import Any, Callable
+TCallable = TypeVar("TCallable", bound=Callable[..., Any])
 
 
 def get_step_fixture_name(name: str, type_: str) -> str:
@@ -104,12 +102,6 @@ def then(name: Any, converters: dict[str, Callable] | None = None, target_fixtur
     return _step_decorator(THEN, name, converters=converters, target_fixture=target_fixture)
 
 
-@dataclass
-class StepFuncContext:
-    func: Callable[..., Any]
-    parser: StepParser
-
-
 def _step_decorator(
     step_type: str,
     step_name: Any,
@@ -126,18 +118,17 @@ def _step_decorator(
     :return: Decorator function for the step.
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: TCallable) -> TCallable:
         step_func = func
         parser_instance = get_parser(step_name)
         parsed_step_name = parser_instance.name
 
         # TODO: Try to not attach to both step_func and lazy_step_func
 
-        def lazy_step_func() -> StepFuncContext:
-            return StepFuncContext(func=step_func, parser=parser_instance)
+        def lazy_step_func() -> TCallable:
+            return step_func
 
-        lazy_step_func._pytest_bdd_wrapped_step_func = step_func
-
+        lazy_step_func._pytest_bdd_parser = parser_instance
         setdefault(step_func, "_pytest_bdd_parsers", []).append(parser_instance)
 
         if converters:
@@ -145,11 +136,10 @@ def _step_decorator(
 
         step_func.target_fixture = lazy_step_func.target_fixture = target_fixture
 
-        lazy_step_func = pytest.fixture()(lazy_step_func)
         fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
 
         caller_locals = get_caller_module_locals()
-        caller_locals[fixture_step_name] = lazy_step_func
+        caller_locals[fixture_step_name] = pytest.fixture(name=fixture_step_name)(lazy_step_func)
         return func
 
     return decorator
