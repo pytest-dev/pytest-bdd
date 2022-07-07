@@ -43,7 +43,7 @@ from _pytest.fixtures import FixtureDef, FixtureRequest
 
 from .parsers import get_parser
 from .types import GIVEN, THEN, WHEN
-from .utils import get_caller_module_locals
+from .utils import get_caller_module_locals, setdefault
 
 if typing.TYPE_CHECKING:
     from typing import Any, Callable
@@ -124,6 +124,8 @@ def _step_decorator(
         parser_instance = get_parser(step_name)
         parsed_step_name = parser_instance.name
 
+        # TODO: Try to not attach to both step_func and lazy_step_func
+
         step_func.__name__ = str(parsed_step_name)
 
         def lazy_step_func() -> Callable:
@@ -135,7 +137,9 @@ def _step_decorator(
         # Preserve the docstring
         lazy_step_func.__doc__ = func.__doc__
 
-        step_func.parser = lazy_step_func.parser = parser_instance
+        setdefault(step_func, "_pytest_bdd_parsers", []).append(parser_instance)
+        setdefault(lazy_step_func, "_pytest_bdd_parsers", []).append(parser_instance)
+
         if converters:
             step_func.converters = lazy_step_func.converters = converters
 
