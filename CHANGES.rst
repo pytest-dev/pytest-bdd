@@ -1,21 +1,26 @@
 Changelog
 =========
 
+6.0.1
+-----
+- Fix regression introduced in 6.0.0 where a step function decorated multiple using a parsers times would not be executed correctly. `#530 <https://github.com/pytest-dev/pytest-bdd/pull/530>`_ `#528 <https://github.com/pytest-dev/pytest-bdd/issues/528>`_
+
+
 6.0.0
 -----
 
 This release introduces breaking changes in order to be more in line with the official gherkin specification.
 
-- Cleanup of the documentation and tests related to parametrization (elchupanebrej) https://github.com/pytest-dev/pytest-bdd/pull/469
-- Removed feature level examples for the gherkin compatibility (olegpidsadnyi) https://github.com/pytest-dev/pytest-bdd/pull/490
-- Removed vertical examples for the gherkin compatibility (olegpidsadnyi) https://github.com/pytest-dev/pytest-bdd/pull/492
-- Step arguments are no longer fixtures (olegpidsadnyi) https://github.com/pytest-dev/pytest-bdd/pull/493
-- Drop support of python 3.6, pytest 4 (elchupanebrej) https://github.com/pytest-dev/pytest-bdd/pull/495 https://github.com/pytest-dev/pytest-bdd/pull/504
-- Step definitions can have "yield" statements again (4.0 release broke it). They will be executed as normal fixtures: code after the yield is executed during teardown of the test. (youtux) https://github.com/pytest-dev/pytest-bdd/pull/503
-- Scenario outlines unused example parameter validation is removed (olegpidsadnyi) https://github.com/pytest-dev/pytest-bdd/pull/499
-- Add type annotations (youtux) https://github.com/pytest-dev/pytest-bdd/pull/505
-- ``pytest_bdd.parsers.StepParser`` now is an Abstract Base Class. Subclasses must make sure to implement the abstract methods. (youtux) https://github.com/pytest-dev/pytest-bdd/pull/505
-- Angular brackets in step definitions are only parsed in "Scenario Outline" (previously they were parsed also in normal "Scenario"s) (youtux) https://github.com/pytest-dev/pytest-bdd/pull/524.
+- Cleanup of the documentation and tests related to parametrization (elchupanebrej) `#469 <https://github.com/pytest-dev/pytest-bdd/pull/469>`_
+- Removed feature level examples for the gherkin compatibility (olegpidsadnyi) `#490 <https://github.com/pytest-dev/pytest-bdd/pull/490>`_
+- Removed vertical examples for the gherkin compatibility (olegpidsadnyi) `#492 <https://github.com/pytest-dev/pytest-bdd/pull/492>`_
+- Step arguments are no longer fixtures (olegpidsadnyi) `#493 <https://github.com/pytest-dev/pytest-bdd/pull/493>`_
+- Drop support of python 3.6, pytest 4 (elchupanebrej) `#495 <https://github.com/pytest-dev/pytest-bdd/pull/495>`_ `#504 <https://github.com/pytest-dev/pytest-bdd/issues/504>`_
+- Step definitions can have "yield" statements again (4.0 release broke it). They will be executed as normal fixtures: code after the yield is executed during teardown of the test. (youtux) `#503 <https://github.com/pytest-dev/pytest-bdd/issues/503>`_
+- Scenario outlines unused example parameter validation is removed (olegpidsadnyi) `#499 <https://github.com/pytest-dev/pytest-bdd/pull/499>`_
+- Add type annotations (youtux) `#505 <https://github.com/pytest-dev/pytest-bdd/pull/505>`_
+- ``pytest_bdd.parsers.StepParser`` now is an Abstract Base Class. Subclasses must make sure to implement the abstract methods. (youtux) `#505 <https://github.com/pytest-dev/pytest-bdd/pull/505>`_
+- Angular brackets in step definitions are only parsed in "Scenario Outline" (previously they were parsed also in normal "Scenario"s) (youtux) `#524 <https://github.com/pytest-dev/pytest-bdd/pull/524>`_.
 
 
 
