@@ -117,6 +117,8 @@ def _step_decorator(
 
     :return: Decorator function for the step.
     """
+    if converters is None:
+        converters = {}
 
     def decorator(func: TCallable) -> TCallable:
         step_func = func
@@ -129,12 +131,10 @@ def _step_decorator(
             return step_func
 
         lazy_step_func._pytest_bdd_parser = parser_instance
+
         setdefault(step_func, "_pytest_bdd_parsers", []).append(parser_instance)
-
-        if converters:
-            step_func.converters = lazy_step_func.converters = converters
-
-        step_func.target_fixture = lazy_step_func.target_fixture = target_fixture
+        step_func._pytest_bdd_converters = converters
+        step_func._pytest_bdd_target_fixture = target_fixture
 
         fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
 

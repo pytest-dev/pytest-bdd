@@ -101,7 +101,7 @@ def _execute_step_function(
     kw["step_func_args"] = {}
     try:
         # Get the step argument values.
-        converters = getattr(step_func, "converters", {})
+        converters = step_func._pytest_bdd_converters
         kwargs = {}
 
         for parser in step_func._pytest_bdd_parsers:
@@ -118,7 +118,7 @@ def _execute_step_function(
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
-        target_fixture = getattr(step_func, "target_fixture", None)
+        target_fixture = step_func._pytest_bdd_target_fixture
 
         # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
         return_value = call_fixture_func(fixturefunc=step_func, request=request, kwargs=kwargs)
