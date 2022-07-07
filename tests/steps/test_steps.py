@@ -2,8 +2,6 @@
 
 import textwrap
 
-import pytest
-
 
 def test_when_then(testdir):
     """Test when and then steps are callable functions.
@@ -30,41 +28,12 @@ def test_when_then(testdir):
 
         def test_when_then(request):
             do_stuff_ = request.getfixturevalue(get_step_fixture_name("I do stuff", WHEN))
-            assert callable(do_stuff_)
+            assert callable(do_stuff_.func)
 
             check_stuff_ = request.getfixturevalue(get_step_fixture_name("I check stuff", THEN))
-            assert callable(check_stuff_)
+            assert callable(check_stuff_.func)
 
         """
-        )
-    )
-    result = testdir.runpytest()
-    result.assert_outcomes(passed=1)
-
-
-@pytest.mark.parametrize(
-    ("step", "keyword"),
-    [("given", "Given"), ("when", "When"), ("then", "Then")],
-)
-def test_preserve_decorator(testdir, step, keyword):
-    """Check that we preserve original function attributes after decorating it."""
-    testdir.makepyfile(
-        textwrap.dedent(
-            '''\
-            from pytest_bdd import {step}
-            from pytest_bdd.steps import get_step_fixture_name
-
-            @{step}("{keyword}")
-            def func():
-                """Doc string."""
-
-            def test_decorator():
-                assert globals()[get_step_fixture_name("{keyword}", {step}.__name__)].__doc__ == "Doc string."
-
-
-        '''.format(
-                step=step, keyword=keyword
-            )
         )
     )
     result = testdir.runpytest()

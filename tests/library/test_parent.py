@@ -219,13 +219,13 @@ def test_local(testdir):
 
                 fixture = request.getfixturevalue(
                     get_step_fixture_name("I have a parent fixture", GIVEN)
-                )
+                ).func
                 assert fixture() == "local"
 
 
                 fixture = request.getfixturevalue(
                     get_step_fixture_name("I have an overridable fixture", GIVEN)
-                )
+                ).func
                 assert fixture() == "local"
 
         """

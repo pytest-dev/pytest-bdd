@@ -37,11 +37,12 @@ def given_beautiful_article(article):
 from __future__ import annotations
 
 import typing
+from dataclasses import dataclass
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureRequest
 
-from .parsers import get_parser
+from .parsers import StepParser, get_parser
 from .types import GIVEN, THEN, WHEN
 from .utils import get_caller_module_locals, setdefault
 
@@ -103,6 +104,12 @@ def then(name: Any, converters: dict[str, Callable] | None = None, target_fixtur
     return _step_decorator(THEN, name, converters=converters, target_fixture=target_fixture)
 
 
+@dataclass
+class StepFuncContext:
+    func: Callable[..., Any]
+    parser: StepParser
+
+
 def _step_decorator(
     step_type: str,
     step_name: Any,
@@ -126,19 +133,12 @@ def _step_decorator(
 
         # TODO: Try to not attach to both step_func and lazy_step_func
 
-        step_func.__name__ = str(parsed_step_name)
+        def lazy_step_func() -> StepFuncContext:
+            return StepFuncContext(func=step_func, parser=parser_instance)
 
-        def lazy_step_func() -> Callable:
-            return step_func
-
-        step_func.step_type = step_type
-        lazy_step_func.step_type = step_type
-
-        # Preserve the docstring
-        lazy_step_func.__doc__ = func.__doc__
+        lazy_step_func._pytest_bdd_wrapped_step_func = step_func
 
         setdefault(step_func, "_pytest_bdd_parsers", []).append(parser_instance)
-        setdefault(lazy_step_func, "_pytest_bdd_parsers", []).append(parser_instance)
 
         if converters:
             step_func.converters = lazy_step_func.converters = converters
