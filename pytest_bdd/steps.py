@@ -60,7 +60,7 @@ def get_step_fixture_name(name: str, type_: str) -> str:
 
 
 def given(
-    name: Union[str, StepParser],
+    name: str | StepParser,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
 ) -> Callable:
@@ -77,7 +77,7 @@ def given(
 
 
 def when(
-    name: Union[str, StepParser], converters: dict[str, Callable] | None = None, target_fixture: str | None = None
+    name: str | StepParser, converters: dict[str, Callable] | None = None, target_fixture: str | None = None
 ) -> Callable:
     """When step decorator.
 
@@ -92,7 +92,7 @@ def when(
 
 
 def then(
-    name: Union[str, StepParser], converters: dict[str, Callable] | None = None, target_fixture: str | None = None
+    name: str | StepParser, converters: dict[str, Callable] | None = None, target_fixture: str | None = None
 ) -> Callable:
     """Then step decorator.
 
@@ -108,7 +108,7 @@ def then(
 
 def _step_decorator(
     step_type: str,
-    step_name: Union[str, StepParser],
+    step_name: str | StepParser,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
 ) -> Callable:

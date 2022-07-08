@@ -102,7 +102,7 @@ class string(StepParser):
 TStepParser = TypeVar("TStepParser", bound=StepParser)
 
 
-def get_parser(step_name: Union[str, TStepParser]) -> TStepParser:
+def get_parser(step_name: str | TStepParser) -> TStepParser:
     """Get parser by given name."""
 
     if isinstance(step_name, StepParser):
