@@ -93,7 +93,7 @@ def _execute_step_function(
     :param function step_func: Step function.
     :param example: Example table.
     """
-    kw = dict(request=request, feature=scenario.feature, scenario=scenario, step=step, step_func=step_func)
+    kw = {"request": request, "feature": scenario.feature, "scenario": scenario, "step": step, "step_func": step_func}
 
     request.config.hook.pytest_bdd_before_step(**kw)
     kw["step_func_args"] = {}
