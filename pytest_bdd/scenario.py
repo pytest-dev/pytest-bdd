@@ -36,9 +36,7 @@ PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
-def find_argumented_step_fixture_name(
-    name: str, type_: str, fixturemanager: FixtureManager, request: FixtureRequest | None = None
-) -> str | None:
+def find_argumented_step_fixture_name(name: str, type_: str, fixturemanager: FixtureManager) -> str | None:
     """Find argumented step fixture name."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
@@ -73,7 +71,7 @@ def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario)
     except FixtureLookupError as e:
         try:
             # Could not find a fixture with the same name, let's see if there is a parser involved
-            argumented_name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager, request)
+            argumented_name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager)
             if argumented_name:
                 return request.getfixturevalue(argumented_name)
             raise e
