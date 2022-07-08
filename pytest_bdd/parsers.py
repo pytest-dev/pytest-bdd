@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import abc
 import re as base_re
-from typing import Any, Dict, TypeVar, cast
+from typing import Any, Dict, TypeVar, cast, overload
 
 import parse as base_parse
 from parse_type import cfparse as base_cfparse
@@ -102,7 +102,17 @@ class string(StepParser):
 TStepParser = TypeVar("TStepParser", bound=StepParser)
 
 
-def get_parser(step_name: str | TStepParser) -> TStepParser:
+@overload
+def get_parser(step_name: str) -> string:
+    ...
+
+
+@overload
+def get_parser(step_name: TStepParser) -> TStepParser:
+    ...
+
+
+def get_parser(step_name: str | StepParser) -> StepParser:
     """Get parser by given name."""
 
     if isinstance(step_name, StepParser):
