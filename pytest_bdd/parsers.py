@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import abc
 import re as base_re
-from typing import Any, Dict, TypeVar, Union, cast
+from typing import Any, Dict, TypeVar, cast
 
 import parse as base_parse
 from parse_type import cfparse as base_cfparse
