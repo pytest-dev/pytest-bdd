@@ -125,20 +125,17 @@ def _step_decorator(
         converters = {}
 
     def decorator(func: TCallable) -> TCallable:
-        step_func = func
         parser_instance = get_parser(step_name)
         parsed_step_name = parser_instance.name
 
-        # TODO: Try to not attach to both step_func and lazy_step_func
-
         def lazy_step_func() -> TCallable:
-            return step_func
+            return func
 
         lazy_step_func._pytest_bdd_parser = parser_instance
 
-        setdefault(step_func, "_pytest_bdd_parsers", []).append(parser_instance)
-        step_func._pytest_bdd_converters = converters
-        step_func._pytest_bdd_target_fixture = target_fixture
+        setdefault(func, "_pytest_bdd_parsers", []).append(parser_instance)
+        func._pytest_bdd_converters = converters
+        func._pytest_bdd_target_fixture = target_fixture
 
         fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
 
