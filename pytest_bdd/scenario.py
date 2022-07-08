@@ -36,30 +36,25 @@ PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
-def find_argumented_step_fixture_name(
-    name: str, type_: str, fixturemanager: FixtureManager, request: FixtureRequest | None = None
-) -> str | None:
+def find_argumented_step_fixture_name(name: str, type_: str, fixturemanager: FixtureManager) -> str | None:
     """Find argumented step fixture name."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
         for fixturedef in fixturedefs:
-            parsers = getattr(fixturedef.func, "_pytest_bdd_parsers", [])
-            for parser in parsers:
-                match = parser.is_matching(name)
-                if not match:
-                    continue
+            parser = getattr(fixturedef.func, "_pytest_bdd_parser", None)
+            if parser is None:
+                continue
 
-                parser_name = get_step_fixture_name(parser.name, type_)
-                if request:
-                    try:
-                        request.getfixturevalue(parser_name)
-                    except FixtureLookupError:
-                        continue
-                return parser_name
+            match = parser.is_matching(name)
+            if not match:
+                continue
+
+            parser_name = get_step_fixture_name(parser.name, type_)
+            return parser_name
     return None
 
 
-def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario) -> Any:
+def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario) -> Callable[..., Any]:
     """Match the step defined by the regular expression pattern.
 
     :param request: PyTest request object.
@@ -76,7 +71,7 @@ def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario)
     except FixtureLookupError as e:
         try:
             # Could not find a fixture with the same name, let's see if there is a parser involved
-            argumented_name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager, request)
+            argumented_name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager)
             if argumented_name:
                 return request.getfixturevalue(argumented_name)
             raise e
@@ -87,7 +82,9 @@ def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario)
             ) from e2
 
 
-def _execute_step_function(request: FixtureRequest, scenario: Scenario, step: Step, step_func: Callable) -> None:
+def _execute_step_function(
+    request: FixtureRequest, scenario: Scenario, step: Step, step_func: Callable[..., Any]
+) -> None:
     """Execute step function.
 
     :param request: PyTest request.
@@ -96,19 +93,16 @@ def _execute_step_function(request: FixtureRequest, scenario: Scenario, step: St
     :param function step_func: Step function.
     :param example: Example table.
     """
-    kw = dict(request=request, feature=scenario.feature, scenario=scenario, step=step, step_func=step_func)
+    kw = {"request": request, "feature": scenario.feature, "scenario": scenario, "step": step, "step_func": step_func}
 
     request.config.hook.pytest_bdd_before_step(**kw)
-
     kw["step_func_args"] = {}
     try:
         # Get the step argument values.
-        converters = getattr(step_func, "converters", {})
+        converters = step_func._pytest_bdd_converters
         kwargs = {}
 
-        parsers = getattr(step_func, "_pytest_bdd_parsers", [])
-
-        for parser in parsers:
+        for parser in step_func._pytest_bdd_parsers:
             if not parser.is_matching(step.name):
                 continue
             for arg, value in parser.parse_arguments(step.name).items():
@@ -117,11 +111,12 @@ def _execute_step_function(request: FixtureRequest, scenario: Scenario, step: St
                 kwargs[arg] = value
             break
 
-        kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in get_args(step_func)}
+        args = get_args(step_func)
+        kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
-        target_fixture = getattr(step_func, "target_fixture", None)
+        target_fixture = step_func._pytest_bdd_target_fixture
 
         # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
         return_value = call_fixture_func(fixturefunc=step_func, request=request, kwargs=kwargs)

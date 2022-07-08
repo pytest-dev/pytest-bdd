@@ -36,17 +36,16 @@ def given_beautiful_article(article):
 """
 from __future__ import annotations
 
-import typing
+from typing import Any, Callable, TypeVar
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureRequest
 
-from .parsers import get_parser
+from .parsers import StepParser, get_parser
 from .types import GIVEN, THEN, WHEN
 from .utils import get_caller_module_locals, setdefault
 
-if typing.TYPE_CHECKING:
-    from typing import Any, Callable
+TCallable = TypeVar("TCallable", bound=Callable[..., Any])
 
 
 def get_step_fixture_name(name: str, type_: str) -> str:
@@ -61,7 +60,7 @@ def get_step_fixture_name(name: str, type_: str) -> str:
 
 
 def given(
-    name: Any,
+    name: str | StepParser,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
 ) -> Callable:
@@ -77,7 +76,9 @@ def given(
     return _step_decorator(GIVEN, name, converters=converters, target_fixture=target_fixture)
 
 
-def when(name: Any, converters: dict[str, Callable] | None = None, target_fixture: str | None = None) -> Callable:
+def when(
+    name: str | StepParser, converters: dict[str, Callable] | None = None, target_fixture: str | None = None
+) -> Callable:
     """When step decorator.
 
     :param name: Step name or a parser object.
@@ -90,7 +91,9 @@ def when(name: Any, converters: dict[str, Callable] | None = None, target_fixtur
     return _step_decorator(WHEN, name, converters=converters, target_fixture=target_fixture)
 
 
-def then(name: Any, converters: dict[str, Callable] | None = None, target_fixture: str | None = None) -> Callable:
+def then(
+    name: str | StepParser, converters: dict[str, Callable] | None = None, target_fixture: str | None = None
+) -> Callable:
     """Then step decorator.
 
     :param name: Step name or a parser object.
@@ -105,7 +108,7 @@ def then(name: Any, converters: dict[str, Callable] | None = None, target_fixtur
 
 def _step_decorator(
     step_type: str,
-    step_name: Any,
+    step_name: str | StepParser,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
 ) -> Callable:
@@ -118,38 +121,26 @@ def _step_decorator(
 
     :return: Decorator function for the step.
     """
+    if converters is None:
+        converters = {}
 
-    def decorator(func: Callable) -> Callable:
-        step_func = func
+    def decorator(func: TCallable) -> TCallable:
         parser_instance = get_parser(step_name)
         parsed_step_name = parser_instance.name
 
-        # TODO: Try to not attach to both step_func and lazy_step_func
+        def lazy_step_func() -> TCallable:
+            return func
 
-        step_func.__name__ = str(parsed_step_name)
+        lazy_step_func._pytest_bdd_parser = parser_instance
 
-        def lazy_step_func() -> Callable:
-            return step_func
+        setdefault(func, "_pytest_bdd_parsers", []).append(parser_instance)
+        func._pytest_bdd_converters = converters
+        func._pytest_bdd_target_fixture = target_fixture
 
-        step_func.step_type = step_type
-        lazy_step_func.step_type = step_type
-
-        # Preserve the docstring
-        lazy_step_func.__doc__ = func.__doc__
-
-        setdefault(step_func, "_pytest_bdd_parsers", []).append(parser_instance)
-        setdefault(lazy_step_func, "_pytest_bdd_parsers", []).append(parser_instance)
-
-        if converters:
-            step_func.converters = lazy_step_func.converters = converters
-
-        step_func.target_fixture = lazy_step_func.target_fixture = target_fixture
-
-        lazy_step_func = pytest.fixture()(lazy_step_func)
         fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
 
         caller_locals = get_caller_module_locals()
-        caller_locals[fixture_step_name] = lazy_step_func
+        caller_locals[fixture_step_name] = pytest.fixture(name=fixture_step_name)(lazy_step_func)
         return func
 
     return decorator
