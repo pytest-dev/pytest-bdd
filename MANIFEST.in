@@ -1,4 +1,0 @@
-include *.rst
-include *.txt
-include setup.py
-include pytest_bdd/templates/*.mak
