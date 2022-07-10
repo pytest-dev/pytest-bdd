@@ -57,13 +57,13 @@ def test_reuse_same_step_different_converters(testdir):
     assert float_value == 42.0
 
 
-def test_string_steps_dont_take_precendence(testdir):
+def test_string_steps_dont_take_precedence(testdir):
     """Test that normal steps don't take precedence over the other steps."""
     testdir.makefile(
         ".feature",
         arguments=textwrap.dedent(
             """\
-            Feature: Step precendence
+            Feature: Step precedence
                 Scenario: String steps don't take precedence over other steps
                     Given I have a foo with value 42
                     When pass
