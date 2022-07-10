@@ -15,6 +15,7 @@ from __future__ import annotations
 import collections
 import os
 import re
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable, cast
 
 import pytest
@@ -22,6 +23,7 @@ from _pytest.fixtures import FixtureLookupError, FixtureManager, FixtureRequest,
 
 from . import exceptions
 from .feature import get_feature, get_features
+from .parsers import StepParser
 from .steps import get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
@@ -36,7 +38,16 @@ PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
-def find_argumented_step_fixture_name(name: str, type_: str, fixturemanager: FixtureManager) -> str | None:
+@dataclass
+class StepFunctionContext:
+    name: str
+    parser: StepParser | None = None
+    converters: dict[str, Callable[..., Any]] | None = None
+
+
+def find_argumented_step_fixture_name(
+    name: str, type_: str, fixturemanager: FixtureManager
+) -> StepFunctionContext | None:
     """Find argumented step fixture name."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
@@ -50,11 +61,16 @@ def find_argumented_step_fixture_name(name: str, type_: str, fixturemanager: Fix
                 continue
 
             parser_name = get_step_fixture_name(parser.name, type_)
-            return parser_name
+
+            return StepFunctionContext(
+                name=parser_name,
+                parser=parser,
+                converters=fixturedef.func._pytest_bdd_converters,
+            )
     return None
 
 
-def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario) -> Callable[..., Any]:
+def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario) -> StepFunctionContext:
     """Match the step defined by the regular expression pattern.
 
     :param request: PyTest request object.
@@ -65,15 +81,18 @@ def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario)
     :rtype: function
     """
     name = step.name
-    try:
+    try:  # TODO: wrap this try only to around the part that can raise
         # Simple case where no parser is used for the step
-        return request.getfixturevalue(get_step_fixture_name(name, step.type))
+        candidate_name = get_step_fixture_name(name, step.type)
+        request.getfixturevalue(candidate_name)
+        return StepFunctionContext(name=candidate_name)
     except FixtureLookupError as e:
         try:
             # Could not find a fixture with the same name, let's see if there is a parser involved
-            argumented_name = find_argumented_step_fixture_name(name, step.type, request._fixturemanager)
-            if argumented_name:
-                return request.getfixturevalue(argumented_name)
+            step_func_context = find_argumented_step_fixture_name(name, step.type, request._fixturemanager)
+            if step_func_context:
+                request.getfixturevalue(step_func_context.name)  # TODO: This shouldn't really be necessary
+                return step_func_context
             raise e
         except FixtureLookupError as e2:
             raise exceptions.StepDefinitionNotFoundError(
@@ -83,7 +102,7 @@ def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario)
 
 
 def _execute_step_function(
-    request: FixtureRequest, scenario: Scenario, step: Step, step_func: Callable[..., Any]
+    request: FixtureRequest, scenario: Scenario, step: Step, step_func_context: StepFunctionContext
 ) -> None:
     """Execute step function.
 
@@ -93,30 +112,28 @@ def _execute_step_function(
     :param function step_func: Step function.
     :param example: Example table.
     """
+    step_func = request.getfixturevalue(step_func_context.name)
     kw = {"request": request, "feature": scenario.feature, "scenario": scenario, "step": step, "step_func": step_func}
 
     request.config.hook.pytest_bdd_before_step(**kw)
     kw["step_func_args"] = {}
-    try:
+    try:  # TODO: Move this to the places where an exception can actually be raised
         # Get the step argument values.
-        converters = step_func._pytest_bdd_converters
+        converters = step_func_context.converters
         kwargs = {}
 
-        for parser in step_func._pytest_bdd_parsers:
-            if not parser.is_matching(step.name):
-                continue
-            for arg, value in parser.parse_arguments(step.name).items():
+        if step_func_context.parser:
+            for arg, value in step_func_context.parser.parse_arguments(step.name).items():
                 if arg in converters:
                     value = converters[arg](value)
                 kwargs[arg] = value
-            break
 
-        args = get_args(step_func)
+        args = get_args(step_func)  # TODO: Add args to step_function_context?
         kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
-        target_fixture = step_func._pytest_bdd_target_fixture
+        target_fixture = step_func._pytest_bdd_target_fixture  # TODO: Add target fixture to the step function context
 
         # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
         return_value = call_fixture_func(fixturefunc=step_func, request=request, kwargs=kwargs)
@@ -143,13 +160,13 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequ
         # Execute scenario steps
         for step in scenario.steps:
             try:
-                step_func = _find_step_function(request, step, scenario)
+                step_func_context = _find_step_function(request, step, scenario)
             except exceptions.StepDefinitionNotFoundError as exception:
                 request.config.hook.pytest_bdd_step_func_lookup_error(
                     request=request, feature=feature, scenario=scenario, step=step, exception=exception
                 )
                 raise
-            _execute_step_function(request, scenario, step, step_func)
+            _execute_step_function(request, scenario, step, step_func_context)
     finally:
         request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
 

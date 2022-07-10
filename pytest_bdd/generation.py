@@ -132,9 +132,9 @@ def _find_step_fixturedef(
     if fixturedefs is not None:
         return fixturedefs
 
-    argumented_step_name = find_argumented_step_fixture_name(name, type_, fixturemanager)
-    if argumented_step_name is not None:
-        return fixturemanager.getfixturedefs(argumented_step_name, item.nodeid)
+    step_func_context = find_argumented_step_fixture_name(name, type_, fixturemanager)
+    if step_func_context is not None:
+        return fixturemanager.getfixturedefs(step_func_context.name, item.nodeid)
     return None
 
 

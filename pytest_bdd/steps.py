@@ -132,9 +132,10 @@ def _step_decorator(
             return func
 
         lazy_step_func._pytest_bdd_parser = parser_instance
+        lazy_step_func._pytest_bdd_converters = converters
 
         setdefault(func, "_pytest_bdd_parsers", []).append(parser_instance)
-        func._pytest_bdd_converters = converters
+
         func._pytest_bdd_target_fixture = target_fixture
 
         fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
