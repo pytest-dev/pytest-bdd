@@ -137,26 +137,25 @@ def _step_decorator(
         converters = {}
 
     def decorator(func: TCallable) -> TCallable:
-        parser_instance = get_parser(step_name)
-        parsed_step_name = parser_instance.name
+        parser = get_parser(step_name)
+        parsed_step_name = parser.name
 
         fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
 
-        step_func_context = StepFunctionContext(
+        def step_function_marker() -> None:
+            return None
+
+        step_function_marker._pytest_bdd_step_context = StepFunctionContext(
             name=fixture_step_name,
             type=step_type,
             step_func=func,
-            parser=parser_instance,
+            parser=parser,
             converters=converters,
             target_fixture=target_fixture,
         )
 
-        def lazy_step_func() -> TCallable:  # TODO: This should just return None. Everything should be in the context.
-            return func
-
-        lazy_step_func._pytest_bdd_step_context = step_func_context
         caller_locals = get_caller_module_locals()
-        caller_locals[fixture_step_name] = pytest.fixture(name=fixture_step_name)(lazy_step_func)
+        caller_locals[fixture_step_name] = pytest.fixture(name=fixture_step_name)(step_function_marker)
         return func
 
     return decorator
