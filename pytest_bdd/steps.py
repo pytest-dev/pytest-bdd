@@ -55,7 +55,7 @@ class StepFunctionContext:
     name: str
     type: Literal["given", "when", "then"]
     step_func: Callable[..., Any]
-    parser: StepParser | None = None
+    parser: StepParser
     converters: dict[str, Callable[..., Any]] = field(default_factory=dict)
     target_fixture: str | None = None
 
