@@ -208,12 +208,11 @@ for `cfparse` parser
     from pytest_bdd import parsers
 
     @given(
-        parsers.cfparse("there are {start:Number} cucumbers",
-        extra_types=dict(Number=int)),
+        parsers.cfparse("there are {start:Number} cucumbers", extra_types={"Number": int}),
         target_fixture="cucumbers",
     )
     def given_cucumbers(start):
-        return dict(start=start, eat=0)
+        return {"start": start, "eat": 0}
 
 for `re` parser
 
@@ -223,11 +222,11 @@ for `re` parser
 
     @given(
         parsers.re(r"there are (?P<start>\d+) cucumbers"),
-        converters=dict(start=int),
+        converters={"start": int},
         target_fixture="cucumbers",
     )
     def given_cucumbers(start):
-        return dict(start=start, eat=0)
+        return {"start": start, "eat": 0}
 
 
 Example:
@@ -301,7 +300,7 @@ You can implement your own step parser. It's interface is quite simple. The code
 
     @given(parsers.parse("there are %start% cucumbers"), target_fixture="cucumbers")
     def given_cucumbers(start):
-        return dict(start=start, eat=0)
+        return {"start": start, "eat": 0}
 
 
 Override fixtures via given steps
