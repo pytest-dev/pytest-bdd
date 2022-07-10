@@ -121,22 +121,19 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequ
     """
     request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
 
-    try:
-        # Execute scenario steps
-        for step in scenario.steps:
-            try:
-                step_func_context = _find_step_function(request, step, scenario)
-            except exceptions.StepDefinitionNotFoundError as exception:
-                request.config.hook.pytest_bdd_step_func_lookup_error(
-                    request=request, feature=feature, scenario=scenario, step=step, exception=exception
-                )
-                raise
+    for step in scenario.steps:
+        try:
+            step_func_context = _find_step_function(request, step, scenario)
+        except exceptions.StepDefinitionNotFoundError as exception:
+            request.config.hook.pytest_bdd_step_func_lookup_error(
+                request=request, feature=feature, scenario=scenario, step=step, exception=exception
+            )
+            raise
+
+        try:
             _execute_step_function(request, scenario, step, step_func_context)
-    finally:
-        request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
-
-
-FakeRequest = collections.namedtuple("FakeRequest", ["module"])
+        finally:
+            request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
 
 
 def _get_scenario_decorator(
