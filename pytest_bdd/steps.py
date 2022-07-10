@@ -36,7 +36,8 @@ def given_beautiful_article(article):
 """
 from __future__ import annotations
 
-from typing import Any, Callable, TypeVar
+from dataclasses import dataclass
+from typing import Any, Callable, Literal, TypeVar
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureRequest
@@ -46,6 +47,15 @@ from .types import GIVEN, THEN, WHEN
 from .utils import get_caller_module_locals, setdefault
 
 TCallable = TypeVar("TCallable", bound=Callable[..., Any])
+
+
+@dataclass
+class StepFunctionContext:
+    name: str
+    type: Literal["given", "when", "then"]
+    step_func: Callable[..., Any]
+    parser: StepParser | None = None
+    converters: dict[str, Callable[..., Any]] | None = None
 
 
 def get_step_fixture_name(name: str, type_: str) -> str:
@@ -107,7 +117,7 @@ def then(
 
 
 def _step_decorator(
-    step_type: str,
+    step_type: Literal["given", "when", "then"],
     step_name: str | StepParser,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
@@ -128,18 +138,22 @@ def _step_decorator(
         parser_instance = get_parser(step_name)
         parsed_step_name = parser_instance.name
 
-        def lazy_step_func() -> TCallable:
-            return func
-
-        lazy_step_func._pytest_bdd_parser = parser_instance
-        lazy_step_func._pytest_bdd_converters = converters
-
-        setdefault(func, "_pytest_bdd_parsers", []).append(parser_instance)
-
-        func._pytest_bdd_target_fixture = target_fixture
-
         fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
 
+        step_func_context = StepFunctionContext(
+            name=fixture_step_name,
+            type=step_type,
+            step_func=func,
+            parser=parser_instance,
+            converters=converters,
+        )
+
+        def lazy_step_func() -> TCallable:  # TODO: This should just return None. Everything should be in the context.
+            return func
+
+        func._pytest_bdd_target_fixture = target_fixture  # TODO: This should go in StepFunctionContext too
+
+        func._pytest_bdd_step_context = step_func_context
         caller_locals = get_caller_module_locals()
         caller_locals[fixture_step_name] = pytest.fixture(name=fixture_step_name)(lazy_step_func)
         return func

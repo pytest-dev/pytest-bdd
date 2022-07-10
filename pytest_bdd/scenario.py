@@ -15,7 +15,6 @@ from __future__ import annotations
 import collections
 import os
 import re
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable, cast
 
 import pytest
@@ -23,8 +22,7 @@ from _pytest.fixtures import FixtureLookupError, FixtureManager, FixtureRequest,
 
 from . import exceptions
 from .feature import get_feature, get_features
-from .parsers import StepParser
-from .steps import get_step_fixture_name, inject_fixture
+from .steps import StepFunctionContext, get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if TYPE_CHECKING:
@@ -38,33 +36,21 @@ PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
-@dataclass
-class StepFunctionContext:
-    name: str
-    parser: StepParser | None = None
-    converters: dict[str, Callable[..., Any]] | None = None
-
-
 def find_argumented_step_function(name: str, type_: str, fixturemanager: FixtureManager) -> StepFunctionContext | None:
     """Find argumented step fixture name."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
         for fixturedef in fixturedefs:
-            parser = getattr(fixturedef.func, "_pytest_bdd_parser", None)
-            if parser is None:
+            step_func_context = getattr(fixturedef.func, "_pytest_bdd_step_context", None)
+            if step_func_context is None:
                 continue
 
-            match = parser.is_matching(name)
+            match = step_func_context.parser.is_matching(name)
             if not match:
                 continue
-
-            parser_name = get_step_fixture_name(parser.name, type_)
-
-            return StepFunctionContext(
-                name=parser_name,
-                parser=parser,
-                converters=fixturedef.func._pytest_bdd_converters,
-            )
+            if step_func_context.type != type_:
+                continue
+            return step_func_context
     return None
 
 
@@ -79,9 +65,9 @@ def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario)
     :rtype: function
     """
     fixture_name = get_step_fixture_name(step.name, step.type)
-    try:  # TODO: wrap this try only to around the part that can raise
+    try:
         # Simple case where no parser is used for the step
-        request.getfixturevalue(fixture_name)
+        step_func = request.getfixturevalue(fixture_name)
     except FixtureLookupError as e:
         orig_error = e
         exception = exceptions.StepDefinitionNotFoundError(
@@ -89,7 +75,7 @@ def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario)
             f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
         )
     else:
-        return StepFunctionContext(name=fixture_name)
+        return StepFunctionContext(name=fixture_name, type=step.type, step_func=step_func)  # TODO: Do not instantiate
 
     # Could not find a fixture with the same name, let's see if there is a parser involved
     step_func_context = find_argumented_step_function(step.name, step.type, request._fixturemanager)

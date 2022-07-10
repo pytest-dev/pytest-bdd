@@ -14,3 +14,5 @@ THEN = "then"
 TAG = "tag"
 
 STEP_TYPES = (GIVEN, WHEN, THEN)
+
+# TODO: Make an enum for StepType
