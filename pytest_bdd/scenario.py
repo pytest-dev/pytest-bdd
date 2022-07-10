@@ -85,11 +85,10 @@ def _execute_step_function(
         converters = context.converters
         kwargs = {}
 
-        if context.parser:
-            for arg, value in context.parser.parse_arguments(step.name).items():
-                if arg in converters:
-                    value = converters[arg](value)
-                kwargs[arg] = value
+        for arg, value in context.parser.parse_arguments(step.name).items():
+            if arg in converters:
+                value = converters[arg](value)
+            kwargs[arg] = value
 
         args = get_args(context.step_func)
         kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
