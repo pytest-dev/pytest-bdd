@@ -55,3 +55,60 @@ def test_reuse_same_step_different_converters(testdir):
 
     assert type(float_value) is float
     assert float_value == 42.0
+
+
+def test_string_steps_dont_take_precendence(testdir):
+    """Test that normal steps don't take precedence over the other steps."""
+    testdir.makefile(
+        ".feature",
+        arguments=textwrap.dedent(
+            """\
+            Feature: Step precendence
+                Scenario: String steps don't take precedence over other steps
+                    Given I have a foo with value 42
+                    When pass
+                    Then pass
+            """
+        ),
+    )
+    testdir.makeconftest(
+        textwrap.dedent(
+            """
+        from pytest_bdd import given, when, then, parsers
+        from pytest_bdd.utils import dump_obj
+
+
+        @given(parsers.re(r"^I have a foo with value (?P<value>.*?)$"))
+        def _(value):
+            dump_obj("re")
+
+
+        @then("pass")
+        @when("pass")
+        def _():
+            pass
+        """
+        )
+    )
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            r"""
+        import pytest
+        from pytest_bdd import parsers, given, when, then, scenarios
+        from pytest_bdd.utils import dump_obj
+
+        scenarios("arguments.feature")
+
+        @given("I have a foo with value 42")
+        def _():
+            dump_obj("str")
+            return 42
+        """
+        )
+    )
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=1)
+
+    [which] = collect_dumped_objects(result)
+    assert which == "re"

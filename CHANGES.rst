@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Unreleased
+----------
+- Fix bug where steps parsers would override pytest' resolution order and effectively take precedence over steps with parsers. `#534 <https://github.com/pytest-dev/pytest-bdd/pull/534>`_
+
 6.0.1
 -----
 - Fix regression introduced in 6.0.0 where a step function decorated multiple using a parsers times would not be executed correctly. `#530 <https://github.com/pytest-dev/pytest-bdd/pull/530>`_ `#528 <https://github.com/pytest-dev/pytest-bdd/issues/528>`_

@@ -55,37 +55,14 @@ def find_argumented_step_function(name: str, type_: str, fixturemanager: Fixture
 
 
 def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario) -> StepFunctionContext:
-    """Match the step defined by the regular expression pattern.
-
-    :param request: PyTest request object.
-    :param step: Step.
-    :param scenario: Scenario.
-
-    :return: Function of the step.
-    :rtype: function
-    """
-    fixture_name = get_step_fixture_name(step.name, step.type)
-    try:
-        # Simple case where no parser is used for the step
-        step_func = request.getfixturevalue(fixture_name)
-    except FixtureLookupError as e:
-        orig_error = e
-        exception = exceptions.StepDefinitionNotFoundError(
-            f"Step definition is not found: {step}. "
-            f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
-        )
-    else:
-        return StepFunctionContext(name=fixture_name, type=step.type, step_func=step_func)  # TODO: Do not instantiate
-
+    """Match the step defined by the parser."""
     # Could not find a fixture with the same name, let's see if there is a parser involved
     step_func_context = find_argumented_step_function(step.name, step.type, request._fixturemanager)
     if step_func_context is None:
-        raise exception from orig_error
-
-    try:
-        request.getfixturevalue(step_func_context.name)  # TODO: This shouldn't really be necessary
-    except FixtureLookupError as e2:
-        raise exception from e2
+        raise exceptions.StepDefinitionNotFoundError(
+            f"Step definition is not found: {step}. "
+            f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
+        )
     return step_func_context
 
 
