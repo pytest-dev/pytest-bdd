@@ -45,9 +45,7 @@ class StepFunctionContext:
     converters: dict[str, Callable[..., Any]] | None = None
 
 
-def find_argumented_step_fixture_name(  # TODO: Rename this
-    name: str, type_: str, fixturemanager: FixtureManager
-) -> StepFunctionContext | None:
+def find_argumented_step_function(name: str, type_: str, fixturemanager: FixtureManager) -> StepFunctionContext | None:
     """Find argumented step fixture name."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
@@ -94,7 +92,7 @@ def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario)
         return StepFunctionContext(name=fixture_name)
 
     # Could not find a fixture with the same name, let's see if there is a parser involved
-    step_func_context = find_argumented_step_fixture_name(step.name, step.type, request._fixturemanager)
+    step_func_context = find_argumented_step_function(step.name, step.type, request._fixturemanager)
     if step_func_context is None:
         raise exception from orig_error
 
