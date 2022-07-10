@@ -37,10 +37,11 @@ def given_beautiful_article(article):
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Literal, TypeVar
+from typing import Any, Callable, TypeVar
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureRequest
+from typing_extensions import Literal
 
 from .parsers import StepParser, get_parser
 from .types import GIVEN, THEN, WHEN
