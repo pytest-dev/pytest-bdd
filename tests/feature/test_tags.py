@@ -46,7 +46,7 @@ def test_tags_selector(testdir):
         from pytest_bdd import given, scenarios
 
         @given('I have a bar')
-        def i_have_bar():
+        def _():
             return 'bar'
 
         scenarios('test.feature')
@@ -101,11 +101,11 @@ def test_tags_after_background_issue_160(testdir):
         from pytest_bdd import given, scenarios
 
         @given('I have a bar')
-        def i_have_bar():
+        def _():
             return 'bar'
 
         @given('I have a baz')
-        def i_have_baz():
+        def _():
             return 'baz'
 
         scenarios('test.feature')
@@ -151,7 +151,7 @@ def test_apply_tag_hook(testdir):
         from pytest_bdd import given, scenarios
 
         @given('I have a bar')
-        def i_have_bar():
+        def _():
             return 'bar'
 
         scenarios('test.feature')
@@ -197,7 +197,7 @@ def test_tag_with_spaces(testdir):
         from pytest_bdd import given, scenarios
 
         @given('I have a bar')
-        def i_have_bar():
+        def _():
             return 'bar'
 
         scenarios('test.feature')
@@ -225,11 +225,11 @@ def test_at_in_scenario(testdir):
         from pytest_bdd import given, scenarios
 
         @given('I have a foo@bar')
-        def i_have_at():
+        def _():
             return 'foo@bar'
 
         @given('I have a baz')
-        def i_have_baz():
+        def _():
             return 'baz'
 
         scenarios('test.feature')

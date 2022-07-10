@@ -50,7 +50,7 @@ def test_generate_missing(testdir):
         scenario = functools.partial(scenario, "generation.feature")
 
         @given("I have a bar")
-        def i_have_a_bar():
+        def _():
             return "bar"
 
         @scenario("Scenario tests which are already bound to the tests stay as is")
@@ -114,19 +114,19 @@ def test_generate_missing_with_step_parsers(testdir):
         scenarios("generation.feature")
 
         @given("I use the string parser without parameter")
-        def i_have_a_bar():
+        def _():
             return None
 
         @given(parsers.parse("I use parsers.parse with parameter {param}"))
-        def i_have_n_baz(param):
+        def _(param):
             return param
 
         @given(parsers.re(r"^I use parsers.re with parameter (?P<param>.*?)$"))
-        def i_have_n_baz(param):
+        def _(param):
             return param
 
         @given(parsers.cfparse("I use parsers.cfparse with parameter {param:d}"))
-        def i_have_n_baz(param):
+        def _(param):
             return param
         """
         )
