@@ -77,11 +77,16 @@ def _execute_step_function(
     :param function step_func: Step function.
     :param example: Example table.
     """
-    step_func = request.getfixturevalue(step_func_context.name)
-    kw = {"request": request, "feature": scenario.feature, "scenario": scenario, "step": step, "step_func": step_func}
+    kw = {
+        "request": request,
+        "feature": scenario.feature,
+        "scenario": scenario,
+        "step": step,
+        "step_func": step_func_context.step_func,
+        "step_func_args": {},
+    }
 
     request.config.hook.pytest_bdd_before_step(**kw)
-    kw["step_func_args"] = {}
     try:  # TODO: Move this to the places where an exception can actually be raised
         # Get the step argument values.
         converters = step_func_context.converters
@@ -93,15 +98,16 @@ def _execute_step_function(
                     value = converters[arg](value)
                 kwargs[arg] = value
 
-        args = get_args(step_func)  # TODO: Add args to step_function_context?
+        args = get_args(step_func_context.step_func)
         kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
-        target_fixture = step_func._pytest_bdd_target_fixture  # TODO: Add target fixture to the step function context
+        # TODO: Add target fixture to the step function context
+        target_fixture = step_func_context.step_func._pytest_bdd_target_fixture
 
         # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
-        return_value = call_fixture_func(fixturefunc=step_func, request=request, kwargs=kwargs)
+        return_value = call_fixture_func(fixturefunc=step_func_context.step_func, request=request, kwargs=kwargs)
         if target_fixture:
             inject_fixture(request, target_fixture, return_value)
 
