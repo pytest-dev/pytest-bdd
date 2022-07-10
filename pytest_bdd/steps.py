@@ -153,7 +153,7 @@ def _step_decorator(
 
         func._pytest_bdd_target_fixture = target_fixture  # TODO: This should go in StepFunctionContext too
 
-        func._pytest_bdd_step_context = step_func_context
+        lazy_step_func._pytest_bdd_step_context = step_func_context
         caller_locals = get_caller_module_locals()
         caller_locals[fixture_step_name] = pytest.fixture(name=fixture_step_name)(lazy_step_func)
         return func
