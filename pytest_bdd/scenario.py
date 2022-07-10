@@ -45,7 +45,7 @@ class StepFunctionContext:
     converters: dict[str, Callable[..., Any]] | None = None
 
 
-def find_argumented_step_fixture_name(
+def find_argumented_step_fixture_name(  # TODO: Rename this
     name: str, type_: str, fixturemanager: FixtureManager
 ) -> StepFunctionContext | None:
     """Find argumented step fixture name."""
@@ -80,25 +80,29 @@ def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario)
     :return: Function of the step.
     :rtype: function
     """
-    name = step.name
+    fixture_name = get_step_fixture_name(step.name, step.type)
     try:  # TODO: wrap this try only to around the part that can raise
         # Simple case where no parser is used for the step
-        candidate_name = get_step_fixture_name(name, step.type)
-        request.getfixturevalue(candidate_name)
-        return StepFunctionContext(name=candidate_name)
+        request.getfixturevalue(fixture_name)
     except FixtureLookupError as e:
-        try:
-            # Could not find a fixture with the same name, let's see if there is a parser involved
-            step_func_context = find_argumented_step_fixture_name(name, step.type, request._fixturemanager)
-            if step_func_context:
-                request.getfixturevalue(step_func_context.name)  # TODO: This shouldn't really be necessary
-                return step_func_context
-            raise e
-        except FixtureLookupError as e2:
-            raise exceptions.StepDefinitionNotFoundError(
-                f"Step definition is not found: {step}. "
-                f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
-            ) from e2
+        orig_error = e
+        exception = exceptions.StepDefinitionNotFoundError(
+            f"Step definition is not found: {step}. "
+            f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
+        )
+    else:
+        return StepFunctionContext(name=fixture_name)
+
+    # Could not find a fixture with the same name, let's see if there is a parser involved
+    step_func_context = find_argumented_step_fixture_name(step.name, step.type, request._fixturemanager)
+    if step_func_context is None:
+        raise exception from orig_error
+
+    try:
+        request.getfixturevalue(step_func_context.name)  # TODO: This shouldn't really be necessary
+    except FixtureLookupError as e2:
+        raise exception from e2
+    return step_func_context
 
 
 def _execute_step_function(
