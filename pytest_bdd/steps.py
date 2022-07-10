@@ -45,7 +45,7 @@ from typing_extensions import Literal
 
 from .parsers import StepParser, get_parser
 from .types import GIVEN, THEN, WHEN
-from .utils import get_caller_module_locals, setdefault
+from .utils import get_caller_module_locals
 
 TCallable = TypeVar("TCallable", bound=Callable[..., Any])
 
@@ -193,7 +193,11 @@ def inject_fixture(request: FixtureRequest, arg: str, value: Any) -> None:
     request.addfinalizer(fin)
 
     # inject fixture definition
-    request._fixturemanager._arg2fixturedefs.setdefault(arg, []).insert(0, fd)
+    # TODO: This seems wrong, since pytest treats the last elements as the highest priority ones
+    # request._fixturemanager._arg2fixturedefs.setdefault(arg, []).insert(0, fd)
+    # This seems more correct:
+    request._fixturemanager._arg2fixturedefs.setdefault(arg, []).append(fd)
+
     # inject fixture value in request cache
     request._fixture_defs[arg] = fd
     if add_fixturename:

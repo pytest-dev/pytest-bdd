@@ -40,7 +40,7 @@ def find_argumented_step_function(name: str, type_: str, fixturemanager: Fixture
     """Find argumented step fixture name."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
-        for fixturedef in fixturedefs:
+        for fixturedef in reversed(fixturedefs):
             step_func_context = getattr(fixturedef.func, "_pytest_bdd_step_context", None)
             if step_func_context is None:
                 continue
