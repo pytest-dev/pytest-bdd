@@ -96,13 +96,11 @@ def _execute_step_function(
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
-        # TODO: Add target fixture to the step function context
-        target_fixture = context.step_func._pytest_bdd_target_fixture
 
         # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
         return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
-        if target_fixture:
-            inject_fixture(request, target_fixture, return_value)
+        if context.target_fixture is not None:
+            inject_fixture(request, context.target_fixture, return_value)
 
         request.config.hook.pytest_bdd_after_step(**kw)
     except Exception as exception:

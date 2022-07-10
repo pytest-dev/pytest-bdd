@@ -36,7 +36,7 @@ def given_beautiful_article(article):
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Callable, TypeVar
 
 import pytest
@@ -56,7 +56,8 @@ class StepFunctionContext:
     type: Literal["given", "when", "then"]
     step_func: Callable[..., Any]
     parser: StepParser | None = None
-    converters: dict[str, Callable[..., Any]] | None = None
+    converters: dict[str, Callable[..., Any]] = field(default_factory=dict)
+    target_fixture: str | None = None
 
 
 def get_step_fixture_name(name: str, type_: str) -> str:
@@ -147,12 +148,11 @@ def _step_decorator(
             step_func=func,
             parser=parser_instance,
             converters=converters,
+            target_fixture=target_fixture,
         )
 
         def lazy_step_func() -> TCallable:  # TODO: This should just return None. Everything should be in the context.
             return func
-
-        func._pytest_bdd_target_fixture = target_fixture  # TODO: This should go in StepFunctionContext too
 
         lazy_step_func._pytest_bdd_step_context = step_func_context
         caller_locals = get_caller_module_locals()

@@ -3,7 +3,8 @@ Changelog
 
 Unreleased
 ----------
-- Fix bug where steps parsers would override pytest' resolution order and effectively take precedence over steps with parsers. `#534 <https://github.com/pytest-dev/pytest-bdd/pull/534>`_
+- Fix bug where steps without parsers would take precedence over steps with parsers. `#534 <https://github.com/pytest-dev/pytest-bdd/pull/534>`_
+- Step functions can now be decorated multiple times with @given, @when, @then. Previously every decorator would override ``converters`` and ``target_fixture`` every at every application. `#534 <https://github.com/pytest-dev/pytest-bdd/pull/534>`_ `#525 <https://github.com/pytest-dev/pytest-bdd/issues/525>`_
 
 6.0.1
 -----
