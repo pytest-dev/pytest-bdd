@@ -73,9 +73,10 @@ class StepToFeatureASTBuilder(_ASTBuilder):
                                 *map(
                                     lambda step: ast.Step(
                                         identifier=next(self.id_generator),
-                                        keyword=step.type or "Given",
+                                        keyword=step.type,
                                         location=ast.Location(column=0, line=0),
                                         text=step.action,
+                                        keyword_type=step.keyword_type,
                                     ).setattrs(
                                         data_table=ast.DataTable(
                                             rows=[

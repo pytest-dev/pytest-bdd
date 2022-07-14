@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import linecache
 import re
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from functools import partial
 from itertools import chain, count, filterfalse, product, zip_longest
 from operator import contains, methodcaller
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Callable, Collection, Iterable, Iterator, Mapping, cast
+from typing import Any, Callable, Collection, Iterable, Iterator, Mapping, Type, cast
 
 from attr import Factory, attrib, attrs, validate
 from gherkin.errors import CompositeParserException
@@ -46,9 +46,22 @@ AND_AND = "and_and"
 AND_BUT = "and_but"
 AND_STAR = "and_star"
 TAG = "tag"
-CONTINUATION_STEP_TYPES = (AND_AND, AND_BUT, AND_STAR)
-STEP_TYPES = (GIVEN, WHEN, THEN, *CONTINUATION_STEP_TYPES)
+CONTEXT_STEP_MODES = (AND_AND, AND_BUT)
+CONJUNCTION_STEP_MODES = (AND_STAR,)
+STEP_MODES = (GIVEN, WHEN, THEN, *CONTEXT_STEP_MODES, *CONJUNCTION_STEP_MODES)
 
+
+MODE_STEP_TYPE = defaultdict(
+    lambda: "Unknown",
+    {
+        AND_AND: "Conjunction",
+        AND_BUT: "Conjunction",
+        AND_STAR: "Unspecified",
+        GIVEN: "Context",
+        WHEN: "Action",
+        THEN: "Outcome",
+    },
+)
 
 STEP_PREFIXES = {
     **const.STEP_PREFIXES,
@@ -194,7 +207,7 @@ class Parser(ASTBuilderMixin, GlobMixin, ParserProtocol):
 
             allowed_prev_mode: tuple[str, ...] = (BACKGROUND, GIVEN, WHEN)
 
-            if not scenario and prev_mode not in allowed_prev_mode and mode in STEP_TYPES:
+            if not scenario and prev_mode not in allowed_prev_mode and mode in STEP_MODES:
                 raise exceptions.FeatureError(
                     "Step definition outside of a Scenario or a Background", line_number, clean_line, uri
                 )
@@ -205,7 +218,7 @@ class Parser(ASTBuilderMixin, GlobMixin, ParserProtocol):
                 EXAMPLE_LINE,
                 EXAMPLE_LINE_VERTICAL,
                 TAG,
-                *STEP_TYPES,
+                *STEP_MODES,
                 FEATURE,
             )
 
@@ -295,7 +308,11 @@ class Parser(ASTBuilderMixin, GlobMixin, ParserProtocol):
                         ) from exc
             elif mode and mode not in (FEATURE, TAG):
                 step = Step(
-                    name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword
+                    name=parsed_line,
+                    type=MODE_STEP_TYPE[mode],
+                    indent=line_indent,
+                    line_number=line_number,
+                    keyword=keyword,
                 )  # type: ignore[call-arg]
                 target: Background | Scenario
                 if feature.background and not scenario:
@@ -352,7 +369,7 @@ class Parser(ASTBuilderMixin, GlobMixin, ParserProtocol):
         :return: SCENARIO, GIVEN, WHEN, THEN, or `None` if can't be detected.
         """
         for _type, prefix in STEP_PREFIXES.items():
-            if line.startswith(prefix) and _type not in CONTINUATION_STEP_TYPES:
+            if line.startswith(prefix) and _type not in CONTEXT_STEP_MODES and _type not in CONJUNCTION_STEP_MODES:
                 return _type
         return None
 
@@ -562,6 +579,7 @@ class Step:
                 location=ast.Location(column=-1, line=self.model.line_number),
                 keyword=self.model.keyword,
                 text=self.model.name,
+                keyword_type=self.model.type,
             ).setattrs(
                 **(
                     {

@@ -227,7 +227,7 @@ def test_steps(testdir, kind, file_content):
     testdir.makepyfile(
         """\
         from textwrap import dedent
-        from pytest_bdd import given, when, then, scenario
+        from pytest_bdd import given, when, then, scenario, step
         from pytest_bdd.parser import StructBDDParser
 
         @scenario("steps.bdd.{kind}", "Executed step by step", parser=StructBDDParser(kind="{kind}"))
@@ -238,12 +238,12 @@ def test_steps(testdir, kind, file_content):
                 '''
             )
 
-        @given('I have a foo fixture with value "foo"', target_fixture="foo")
+        @step('I have a foo fixture with value "foo"', target_fixture="foo", liberal=True)
         def foo():
             return "foo"
 
 
-        @given("there is a list", target_fixture="results")
+        @given("there is a list", target_fixture="results", liberal=True)
         def results():
             return []
 
@@ -640,7 +640,7 @@ def test_dsl_alternative_steps(testdir):
         def foo(count, cucumbers):
             return cucumbers - count
 
-        @step('I corrupt {count:g} cucumbers', target_fixture="cucumbers")
+        @step('I corrupt {count:g} cucumbers', target_fixture="cucumbers", liberal=True)
         def foo(count, cucumbers):
             return cucumbers - count
 
@@ -706,7 +706,7 @@ def test_dsl_joined_tables(testdir):
         def foo(count, cucumbers):
             return cucumbers - count
 
-        @step('I corrupt {count:g} cucumbers', target_fixture="cucumbers")
+        @step('I corrupt {count:g} cucumbers', target_fixture="cucumbers", liberal = True)
         def foo(count, cucumbers):
             return cucumbers - count
 

@@ -45,7 +45,8 @@ def test_load_simplest_step_with_text_steps():
     data = load(doc, Loader=FullLoader)
 
     step: Step = StepSchema().load(data)
-    assert step.steps[0].type is None
+    assert step.steps[0].type == "*"
+    assert step.steps[0].keyword_type == "Unspecified"
     assert step.steps[0].action == "Do something"
 
     routes = list(step.routes)
@@ -68,7 +69,8 @@ def test_load_actioned_step_with_text_steps():
     data = load(doc, Loader=FullLoader)
 
     step: Step = StepSchema().load(data)
-    assert step.steps[0].type is None
+    assert step.steps[0].type == "*"
+    assert step.steps[0].keyword_type == "Unspecified"
     assert step.steps[0].action == "Do something"
 
     routes = list(step.routes)

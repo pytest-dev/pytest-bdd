@@ -33,7 +33,7 @@ Install pytest-bdd-ng
     pip install pytest-bdd-ng
 
 
-The minimum required version of pytest is 5.0
+The minimum required version of `pytest` is 5.0
 
 
 Example
@@ -165,7 +165,7 @@ this step could be used with any keyword:
 
     from pytest_bdd import step
 
-    @step("I'm an author user")
+    @step("I'm an author user", liberal=True)
     def author_user(auth, author):
         auth['user'] = author.user
 
@@ -181,6 +181,35 @@ Other steps also could be used as wildcard steps without aliases:
 
 
 This behavior could be set globally by defining `--liberal-steps` cli option or by `liberal_steps` pytest.ini option
+
+Steps without keyword
+---------------------
+
+For the next feature:
+
+
+.. code-block:: gherkin
+
+    Feature: Resource owner
+        Scenario: I'm the author
+            * I'm an author
+            * I have an article
+
+Next step definitions have to be used (or just use liberal steps):
+
+.. code-block:: python
+
+    from pytest_bdd import step
+
+    @step("I'm an author")
+    def author_user(auth, author):
+        auth['user'] = author.user
+
+    @step("I have an article")
+    def author_user(auth, article):
+        auth['article'] = article
+
+
 
 Step arguments
 --------------

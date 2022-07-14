@@ -186,6 +186,41 @@ def test_then_after_given(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
 
+def test_unknown_first(testdir):
+    testdir.makefile(
+        ".feature",
+        steps="""\
+            Feature: Steps are executed one by one
+                Steps are executed one by one. Given and When sections
+                are not mandatory in some cases.
+
+                Scenario: Then step can follow Given step
+                    * I have a foo fixture with value "foo"
+                    Then foo should have value "foo"
+
+            """,
+    )
+    testdir.makepyfile(
+        """\
+        from pytest_bdd import step, then, scenario
+
+        @scenario("steps.feature", "Then step can follow Given step")
+        def test_steps():
+            pass
+
+        @step('I have a foo fixture with value "foo"', target_fixture="foo")
+        def foo():
+            return "foo"
+
+        @then('foo should have value "foo"')
+        def foo_is_foo(foo):
+            assert foo == "foo"
+        """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
+
+
 def test_conftest(testdir):
     testdir.makefile(
         ".feature",
@@ -751,7 +786,7 @@ def test_liberal_step_decorator(testdir):
             assert "nice" in step_values
             assert "good" in step_values
 
-        @step('I execute {value} step')
+        @step('I execute {value} step', liberal=True)
         def foo(step_values, value):
             step_values.append(value)
         """
@@ -954,7 +989,7 @@ def test_strict_step_has_precedence_over_liberal_step_decorator(testdir):
         def foo(given_step_values, value):
             given_step_values.append(value)
 
-        @step('I execute {value} step')
+        @step('I execute {value} step', liberal=True)
         def foo(liberal_step_values, value):
             liberal_step_values.append(value)
 

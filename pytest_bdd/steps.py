@@ -45,7 +45,7 @@ import pytest
 from attr import Factory, attrib, attrs
 from ordered_set import OrderedSet
 
-from pytest_bdd.const import STEP_TYPE, STEP_TYPES_BY_NORMALIZED_PREFIX
+from pytest_bdd.const import STEP_TYPE_BY_NORMALIZED_PREFIX, StepType
 from pytest_bdd.model import Feature, Scenario, Step
 from pytest_bdd.parsers import StepParser, get_parser
 from pytest_bdd.typing.pytest import Config, Parser, TypeAlias
@@ -94,7 +94,7 @@ def given(
     :return: Decorator function for the step.
     """
     return StepHandler.decorator_builder(
-        STEP_TYPE.GIVEN,
+        StepType.CONTEXT,
         parserlike,
         converters=converters,
         target_fixture=target_fixture,
@@ -128,7 +128,7 @@ def when(
     :return: Decorator function for the step.
     """
     return StepHandler.decorator_builder(
-        STEP_TYPE.WHEN,
+        StepType.ACTION,
         parserlike,
         converters=converters,
         target_fixture=target_fixture,
@@ -162,7 +162,7 @@ def then(
     :return: Decorator function for the step.
     """
     return StepHandler.decorator_builder(
-        STEP_TYPE.THEN,
+        StepType.OUTCOME,
         parserlike,
         converters=converters,
         target_fixture=target_fixture,
@@ -180,6 +180,7 @@ def step(
     target_fixtures: list[str] = None,
     params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
     param_defaults: dict | None = None,
+    liberal: bool | None = None,
 ):
     """Liberal step decorator which could be used with any keyword.
 
@@ -190,18 +191,19 @@ def step(
     :param target_fixtures: Target fixture names to be replaced by steps definition function.
     :param params_fixtures_mapping: StepHandler parameters would be injected as fixtures
     :param param_defaults: Default parameters for step definition
+    :param liberal: Could step definition be used with other keywords
 
     :return: Decorator function for the step.
     """
     return StepHandler.decorator_builder(
-        None,
+        StepType.UNSPECIFIED if liberal else StepType.UNKNOWN,
         parserlike,
         converters=converters,
         target_fixture=target_fixture,
         target_fixtures=target_fixtures,
         params_fixtures_mapping=params_fixtures_mapping,
         param_defaults=param_defaults,
-        liberal=True,
+        liberal=liberal,
     )
 
 
@@ -235,17 +237,17 @@ class StepHandler:
             self.previous_step = previous_step
             self.step_registry = step_registry
 
-            step_type = STEP_TYPES_BY_NORMALIZED_PREFIX[self.step.prefix]
-
             self.step_type_context = (
                 self.step_type_context
-                if step_type in (STEP_TYPE.AND, STEP_TYPE.OTHER) and self.step_type_context is not None
-                else step_type
+                if self.step.type in (StepType.CONJUNCTION, StepType.UNKNOWN) and self.step_type_context is not None
+                else self.step.type
             )
+            if self.step_type_context == StepType.CONJUNCTION:
+                self.step_type_context = StepType.UNKNOWN
 
             step_definitions = list(
                 self.find_step_definition_matches(
-                    self.step_registry, (self.strict_matcher, self.liberal_matcher, self.alternate_matcher)
+                    self.step_registry, (self.strict_matcher, self.unspecified_matcher, self.liberal_matcher)
                 )
             )
 
@@ -256,16 +258,16 @@ class StepHandler:
             raise self.MatchNotFoundError
 
         def strict_matcher(self, step_definition):
-            return (
-                step_definition.type_ is not None
-                and step_definition.type_ == self.step_type_context
-                and step_definition.parser.is_matching(self.step.text)
+            return step_definition.type_ == self.step_type_context and step_definition.parser.is_matching(
+                self.step.text
+            )
+
+        def unspecified_matcher(self, step_definition):
+            return (step_definition.type_ == StepType.UNSPECIFIED) and step_definition.parser.is_matching(
+                self.step.text
             )
 
         def liberal_matcher(self, step_definition):
-            return (step_definition.type_ is None) and step_definition.parser.is_matching(self.step.text)
-
-        def alternate_matcher(self, step_definition):
             if step_definition.liberal is None:
                 # TODO Move to plugin
                 if self.config.option.liberal_steps is not None:
@@ -279,6 +281,7 @@ class StepHandler:
                 (
                     is_step_definition_liberal,
                     step_definition.type_ != self.step_type_context,
+                    step_definition.type_ != StepType.UNSPECIFIED,
                     step_definition.parser.is_matching(self.step.text),
                 )
             )
@@ -381,7 +384,7 @@ class StepHandler:
     ) -> Callable:
         """StepHandler decorator for the type and the name.
 
-        :param step_type: StepHandler type (GIVEN, WHEN or THEN).
+        :param step_type: StepHandler type (CONTEXT, ACTION or OUTCOME).
         :param step_parserlike: StepHandler name as in the feature file.
         :param converters: Optional step arguments converters mapping
         :param target_fixture: Optional fixture name to replace by step definition

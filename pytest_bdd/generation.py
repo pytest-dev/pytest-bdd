@@ -12,7 +12,7 @@ import py
 from mako.lookup import TemplateLookup
 from pytest import ExitCode
 
-from pytest_bdd.const import STEP_TYPES_BY_NORMALIZED_PREFIX
+from pytest_bdd.const import STEP_TYPE_BY_NORMALIZED_PREFIX
 from pytest_bdd.model import Feature, Scenario, Step
 from pytest_bdd.packaging import compare_distribution_version
 from pytest_bdd.parser import GherkinParser
@@ -151,13 +151,13 @@ def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature],
 
 def group_steps(steps: list[Step]) -> list[Step]:
     """Group steps by type."""
-    steps = sorted(steps, key=lambda step: STEP_TYPES_BY_NORMALIZED_PREFIX[step.prefix])
+    steps = sorted(steps, key=lambda step: STEP_TYPE_BY_NORMALIZED_PREFIX[step.prefix])
     seen_steps = set()
     grouped_steps: list[Step] = []
     for step in itertools.chain.from_iterable(
         sorted(group, key=lambda step: step.name)  # type: ignore[no-any-return]  # https://github.com/python/typing/issues/760
         for _, group in itertools.groupby(
-            steps, lambda step: sorted(steps, key=lambda step: STEP_TYPES_BY_NORMALIZED_PREFIX[step.prefix])
+            steps, lambda step: sorted(steps, key=lambda step: STEP_TYPE_BY_NORMALIZED_PREFIX[step.prefix])
         )
     ):
         if step.name not in seen_steps:

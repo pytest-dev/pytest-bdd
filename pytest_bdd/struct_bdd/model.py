@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from functools import partial
 from itertools import chain, product, starmap, zip_longest
 from operator import attrgetter, eq, is_not
@@ -13,6 +13,7 @@ from marshmallow import Schema, fields, post_load, pre_load
 from marshmallow_polyfield import PolyField
 
 from pytest_bdd.ast import ASTSchema
+from pytest_bdd.const import TYPE_KEYWORD_TYPE
 from pytest_bdd.model import Feature
 from pytest_bdd.utils import ModelSchemaPostLoadable, deepattrgetter, get_caller_module_locals, get_caller_module_path
 
@@ -52,7 +53,7 @@ class NodeSchema(Schema):
 class Step(Node, ModelSchemaPostLoadable):
     steps: list[Step] = attrib(default=Factory(list))
     action: str | None = attrib(default=None)
-    type: str | None = attrib(default=None)
+    type: str | None = attrib(default="*")
 
     data: list[Table | Join] = attrib(default=Factory(list))
     examples: list[Table | Join] = attrib(default=Factory(list))
@@ -89,6 +90,10 @@ class Step(Node, ModelSchemaPostLoadable):
                     steps,
                     example_table,
                 )
+
+    @property
+    def keyword_type(self):
+        return TYPE_KEYWORD_TYPE[self.type]
 
     def build_feature(self, filename, uri):
         from pytest_bdd.struct_bdd.ast_builder import DocumentASTBuilder
@@ -178,7 +183,14 @@ class Do(Step):
         return Step(*args, action=action, **kwargs)
 
 
-And = But = Do
+class And(Step):
+    def __new__(cls, action, *args, **kwargs):
+        return Step(*args, type="And", action=action, **kwargs)
+
+
+class But(Step):
+    def __new__(cls, action, *args, **kwargs):
+        return Step(*args, type="But", action=action, **kwargs)
 
 
 KEYWORDS = ["given", "when", "then", "and", "but", "*"]

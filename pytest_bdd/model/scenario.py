@@ -9,7 +9,7 @@ from marshmallow import Schema, fields, post_load
 from pytest_bdd.ast import Scenario as ASTScenario
 from pytest_bdd.ast import Step as ASTStep
 from pytest_bdd.ast import TableRow as ASTTableRow
-from pytest_bdd.const import STEP_PREFIXES, TAG
+from pytest_bdd.const import STEP_PREFIXES, TAG, TYPE_KEYWORD_TYPE
 from pytest_bdd.utils import ModelSchemaPostLoadable, _itemgetter, deepattrgetter
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -108,6 +108,7 @@ class ArgumentSchema(Schema):
 class Step(ASTNodeIDsMixin, ModelSchemaPostLoadable):
     id: str = attrib()
     text: str = attrib()
+    type: str = attrib()
     # Workaround because of allure integration
     if TYPE_CHECKING:  # pragma: no cover
         argument: Argument = attrib(init=False)
@@ -155,6 +156,7 @@ class StepSchema(ASTNodeIDsSchemaMixin, Schema):
     argument = fields.Nested(ArgumentSchema(), required=False)
     id = fields.Str()
     text = fields.Str()
+    type = fields.Str()
 
     build_step = Step.schema_post_loader()
 
@@ -275,3 +277,7 @@ class UserStep:
 
     def decompose(self):
         self.scenario = None
+
+    @property
+    def type(self):
+        return TYPE_KEYWORD_TYPE[self.keyword]

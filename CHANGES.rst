@@ -8,6 +8,16 @@ Planned
 - Extra support of official parser
    - https://github.com/pytest-dev/pytest-bdd/issues/502
 
+1.2.0
+-----
+- Make liberal step definitions conform with
+   - `Change messages and Gherkin parser/pickle compiler to retain step keyword (#1741) <https://github.com/cucumber/common/pull/1741>`_
+   - `Proposal: Unambiguous Keywords (#768) <https://github.com/cucumber/common/issues/768>`_
+
+1.1.2
+-----
+- Fixups
+
 1.1.1
 -----
 - Added hook to alter scenario steps execution protocol

@@ -299,6 +299,7 @@ class DocStringSchema(LocatableSchema, Schema):
 @attrs
 class Step(Identifiable, Keywordable, Locatable, ModelSchemaPostLoadable):
     text: str = attrib()
+    keyword_type: str = attrib()
 
     # Workaround because of allure integration
     if TYPE_CHECKING:  # pragma: no cover
@@ -318,6 +319,7 @@ class Step(Identifiable, Keywordable, Locatable, ModelSchemaPostLoadable):
 
 class StepSchema(IdentifiableSchema, KeywordableSchema, LocatableSchema, Schema):
     text = fields.Str()
+    keyword_type = fields.Str(data_key="keywordType", required=False, default="Unspecified")
     data_table = fields.Nested(lambda: DataTableSchema(), data_key="dataTable", required=False)
     doc_string = fields.Nested(lambda: DocStringSchema(), data_key="docString", required=False)
 

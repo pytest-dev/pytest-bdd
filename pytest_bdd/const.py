@@ -12,14 +12,18 @@ BACKGROUND = "background"
 EXAMPLES_HEADERS = "example headers"
 EXAMPLE_LINE = "example line"
 EXAMPLE_LINE_VERTICAL = "example line vertical"
+GIVEN = "given"
+WHEN = "when"
+THEN = "then"
 
 
-class STEP_TYPE:
-    GIVEN = "given"
-    WHEN = "when"
-    THEN = "then"
-    AND = "and"
-    OTHER = "other"
+class StepType:
+    CONTEXT = "Context"
+    ACTION = "Action"
+    OUTCOME = "Outcome"
+    CONJUNCTION = "Conjunction"
+    UNSPECIFIED = "Unspecified"
+    UNKNOWN = "Unknown"
 
 
 STEP_PREFIXES = {
@@ -29,21 +33,33 @@ STEP_PREFIXES = {
     EXAMPLES: "Examples:",
     SCENARIO: "Scenario: ",
     BACKGROUND: "Background:",
-    STEP_TYPE.GIVEN: "Given ",
-    STEP_TYPE.WHEN: "When ",
-    STEP_TYPE.THEN: "Then ",
+    GIVEN: "Given ",
+    WHEN: "When ",
+    THEN: "Then ",
     TAG: "@",
 }
-STEP_TYPES_BY_NORMALIZED_PREFIX = defaultdict(
-    lambda: STEP_TYPE.OTHER,
+STEP_TYPE_BY_NORMALIZED_PREFIX = defaultdict(
+    lambda: StepType.UNKNOWN,
     {
-        "given": STEP_TYPE.GIVEN,
-        "when": STEP_TYPE.WHEN,
-        "then": STEP_TYPE.THEN,
-        "and": STEP_TYPE.AND,
-        "but": STEP_TYPE.AND,
-        "*": STEP_TYPE.AND,
+        "given": StepType.CONTEXT,
+        "when": StepType.ACTION,
+        "then": StepType.OUTCOME,
+        "and": StepType.CONJUNCTION,
+        "but": StepType.CONJUNCTION,
+        "*": StepType.CONJUNCTION,
     },
 )
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
+
+TYPE_KEYWORD_TYPE = defaultdict(
+    lambda: StepType.UNKNOWN,
+    {
+        "And": StepType.CONJUNCTION,
+        "But": StepType.CONJUNCTION,
+        "*": StepType.UNSPECIFIED,
+        "Given": StepType.CONTEXT,
+        "When": StepType.ACTION,
+        "Then": StepType.OUTCOME,
+    },
+)
