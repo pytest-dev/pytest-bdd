@@ -17,7 +17,7 @@ from attr import Factory, attrib, attrs
 from marshmallow import post_load
 
 from pytest_bdd.const import ALPHA_REGEX, PYTHON_REPLACE_REGEX
-from pytest_bdd.typing.pytest import Config, FixtureDef
+from pytest_bdd.typing.pytest import FixtureDef
 
 if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.typing.pytest import RunResult
@@ -212,26 +212,27 @@ def _itemgetter(*items):
     return func
 
 
+class _NoneException(Exception):
+    ...
+
+
 def deepattrgetter(*attrs, **kwargs):
     empty = object()
     default = kwargs.pop("default", empty)
+    default_exception_type = AttributeError if default is not empty else _NoneException
     skip_missing = kwargs.pop("skip_missing", False)
+    skip_missing_context = suppress(AttributeError) if skip_missing else nullcontext()
     if default is not empty and skip_missing:
         raise ValueError('Both "default" and "skip_missing" are specified')
 
     def fn(obj):
         def _():
-            if default is empty:
-                context = suppress(AttributeError) if skip_missing else nullcontext()
-                for attr in attrs:
-                    with context:
+            for attr in attrs:
+                try:
+                    with skip_missing_context:
                         yield attrgetter(attr)(obj)
-            else:
-                for attr in attrs:
-                    try:
-                        yield attrgetter(attr)(obj)
-                    except AttributeError:
-                        yield default
+                except default_exception_type:
+                    yield default
 
         return tuple(_())
 
