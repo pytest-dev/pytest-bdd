@@ -186,16 +186,24 @@ def test_then_after_given(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_unknown_first(testdir):
+@pytest.mark.parametrize(
+    "keyword",
+    (
+        "*",
+        "And",
+        "But",
+    ),
+)
+def test_unknown_first(testdir, keyword):
     testdir.makefile(
         ".feature",
-        steps="""\
+        steps=f"""\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
                 are not mandatory in some cases.
 
                 Scenario: Then step can follow Given step
-                    * I have a foo fixture with value "foo"
+                    {keyword} I have a foo fixture with value "foo"
                     Then foo should have value "foo"
 
             """,
