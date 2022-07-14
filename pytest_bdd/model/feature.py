@@ -27,6 +27,7 @@ from typing import cast
 from attr import Factory, attrib, attrs
 from gherkin.errors import CompositeParserException  # type: ignore[import]
 from gherkin.pickles.compiler import Compiler  # type: ignore[import]
+from marshmallow.utils import RAISE
 
 from pytest_bdd.ast import AST, ASTSchema
 from pytest_bdd.const import STEP_PREFIXES, TAG
@@ -43,11 +44,11 @@ class Feature:
 
     @staticmethod
     def load_scenarios(scenarios_data) -> list[Scenario]:
-        return [ScenarioSchema().load(data=scenario_datum, unknown="RAISE") for scenario_datum in scenarios_data]
+        return [ScenarioSchema().load(data=scenario_datum, unknown=RAISE) for scenario_datum in scenarios_data]
 
     @staticmethod
     def load_ast(ast_data) -> AST:
-        return cast(AST, ASTSchema().load(data=ast_data, unknown="RAISE"))
+        return cast(AST, ASTSchema().load(data=ast_data, unknown=RAISE))
 
     @property
     def name(self) -> str:

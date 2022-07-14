@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from marshmallow.utils import RAISE
 from pytest import mark, param
 
 from pytest_bdd.ast import AST, ASTSchema
@@ -20,7 +21,7 @@ def test_simple_load_ast(ast_path: Path):
     with ast_path.open(mode="r") as ast_file:
         for ast_line in ast_file:
             ast_datum = json.loads(ast_line)
-            ast = ASTSchema().load(data=ast_datum, unknown="RAISE")
+            ast = ASTSchema().load(data=ast_datum, unknown=RAISE)
             assert isinstance(ast, AST)
 
             dumped_ast_datum = ASTSchema().dump(ast)
