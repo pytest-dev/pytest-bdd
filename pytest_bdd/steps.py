@@ -45,7 +45,7 @@ import pytest
 from attr import Factory, attrib, attrs
 from ordered_set import OrderedSet
 
-from pytest_bdd.const import STEP_TYPE_BY_NORMALIZED_PREFIX, StepType
+from pytest_bdd.const import StepType
 from pytest_bdd.model import Feature, Scenario, Step
 from pytest_bdd.parsers import StepParser, get_parser
 from pytest_bdd.typing.pytest import Config, Parser, TypeAlias

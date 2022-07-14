@@ -8,7 +8,7 @@ from itertools import chain, count, filterfalse, product, zip_longest
 from operator import contains, methodcaller
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, Callable, Collection, Iterable, Iterator, Mapping, Type, cast
+from typing import Any, Callable, Collection, Iterable, Iterator, Mapping, cast
 
 from attr import Factory, attrib, attrs, validate
 from gherkin.errors import CompositeParserException
@@ -18,6 +18,7 @@ from ordered_set import OrderedSet
 
 from pytest_bdd import ast, const, exceptions
 from pytest_bdd.ast import ASTSchema
+from pytest_bdd.const import StepType
 from pytest_bdd.exceptions import FeatureError
 from pytest_bdd.model.feature import Feature as FeatureModel
 from pytest_bdd.typing.parser import ParserProtocol
@@ -52,14 +53,14 @@ STEP_MODES = (GIVEN, WHEN, THEN, *CONTEXT_STEP_MODES, *CONJUNCTION_STEP_MODES)
 
 
 MODE_STEP_TYPE = defaultdict(
-    lambda: "Unknown",
+    lambda: StepType.UNKNOWN,
     {
-        AND_AND: "Conjunction",
-        AND_BUT: "Conjunction",
-        AND_STAR: "Unspecified",
-        GIVEN: "Context",
-        WHEN: "Action",
-        THEN: "Outcome",
+        AND_AND: StepType.CONJUNCTION,
+        AND_BUT: StepType.CONJUNCTION,
+        AND_STAR: StepType.UNSPECIFIED,
+        GIVEN: StepType.CONTEXT,
+        WHEN: StepType.ACTION,
+        THEN: StepType.OUTCOME,
     },
 )
 

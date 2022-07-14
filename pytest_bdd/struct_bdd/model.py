@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from functools import partial
 from itertools import chain, product, starmap, zip_longest
 from operator import attrgetter, eq, is_not
