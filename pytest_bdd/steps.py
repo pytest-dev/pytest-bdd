@@ -263,13 +263,12 @@ class StepHandler:
             )
 
         def unspecified_matcher(self, step_definition):
-            return (step_definition.type_ == StepType.UNSPECIFIED) and step_definition.parser.is_matching(
-                self.step.text
-            )
+            return (
+                self.step_type_context == StepType.UNSPECIFIED or step_definition.type_ == StepType.UNSPECIFIED
+            ) and step_definition.parser.is_matching(self.step.text)
 
         def liberal_matcher(self, step_definition):
             if step_definition.liberal is None:
-                # TODO Move to plugin
                 if self.config.option.liberal_steps is not None:
                     is_step_definition_liberal = self.config.option.liberal_steps
                 else:
@@ -279,9 +278,9 @@ class StepHandler:
 
             return all(
                 (
+                    not self.unspecified_matcher(step_definition),
                     is_step_definition_liberal,
                     step_definition.type_ != self.step_type_context,
-                    step_definition.type_ != StepType.UNSPECIFIED,
                     step_definition.parser.is_matching(self.step.text),
                 )
             )
