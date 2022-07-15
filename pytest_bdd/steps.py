@@ -75,6 +75,7 @@ def given(
     name: str | StepParser,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
+    caller_locals: dict[str, object] | None = None,
 ) -> Callable:
     """Given step decorator.
 
@@ -85,11 +86,18 @@ def given(
 
     :return: Decorator function for the step.
     """
-    return _step_decorator(GIVEN, name, converters=converters, target_fixture=target_fixture)
+    if caller_locals is None:
+        caller_locals = get_caller_module_locals()
+    return _step_decorator(
+        GIVEN, name, converters=converters, target_fixture=target_fixture, caller_locals=caller_locals
+    )
 
 
 def when(
-    name: str | StepParser, converters: dict[str, Callable] | None = None, target_fixture: str | None = None
+    name: str | StepParser,
+    converters: dict[str, Callable] | None = None,
+    target_fixture: str | None = None,
+    caller_locals: dict[str, object] | None = None,
 ) -> Callable:
     """When step decorator.
 
@@ -100,11 +108,18 @@ def when(
 
     :return: Decorator function for the step.
     """
-    return _step_decorator(WHEN, name, converters=converters, target_fixture=target_fixture)
+    if caller_locals is None:
+        caller_locals = get_caller_module_locals()
+    return _step_decorator(
+        WHEN, name, converters=converters, target_fixture=target_fixture, caller_locals=caller_locals
+    )
 
 
 def then(
-    name: str | StepParser, converters: dict[str, Callable] | None = None, target_fixture: str | None = None
+    name: str | StepParser,
+    converters: dict[str, Callable] | None = None,
+    target_fixture: str | None = None,
+    caller_locals: dict[str, object] | None = None,
 ) -> Callable:
     """Then step decorator.
 
@@ -115,12 +130,17 @@ def then(
 
     :return: Decorator function for the step.
     """
-    return _step_decorator(THEN, name, converters=converters, target_fixture=target_fixture)
+    if caller_locals is None:
+        caller_locals = get_caller_module_locals()
+    return _step_decorator(
+        THEN, name, converters=converters, target_fixture=target_fixture, caller_locals=caller_locals
+    )
 
 
 def _step_decorator(
     step_type: Literal["given", "when", "then"],
     step_name: str | StepParser,
+    caller_locals: dict[str, object],
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
 ) -> Callable:
@@ -135,6 +155,9 @@ def _step_decorator(
     """
     if converters is None:
         converters = {}
+
+    if caller_locals is None:
+        caller_locals = get_caller_module_locals()
 
     def decorator(func: TCallable) -> TCallable:
         parser = get_parser(step_name)
@@ -154,7 +177,6 @@ def _step_decorator(
             target_fixture=target_fixture,
         )
 
-        caller_locals = get_caller_module_locals()
         caller_locals[fixture_step_name] = pytest.fixture(name=fixture_step_name)(step_function_marker)
         return func
 

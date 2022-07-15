@@ -263,12 +263,13 @@ def get_python_name_generator(name: str) -> Iterable[str]:
         suffix = f"_{index}"
 
 
-def scenarios(*feature_paths: str, **kwargs: Any) -> None:
+def scenarios(*feature_paths: str, caller_locals: dict[str, object] | None = None, **kwargs: Any) -> None:
     """Parse features from the paths and put all found scenarios in the caller module.
 
     :param *feature_paths: feature file paths to use for scenarios
     """
-    caller_locals = get_caller_module_locals()
+    if caller_locals is None:
+        caller_locals = get_caller_module_locals()
     caller_path = get_caller_module_path()
 
     features_base_dir = kwargs.get("features_base_dir")

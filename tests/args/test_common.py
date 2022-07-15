@@ -27,7 +27,6 @@ def test_reuse_same_step_different_converters(testdir):
         from pytest_bdd.utils import dump_obj
 
         scenarios("arguments.feature")
-
         @given(parsers.re(r"^I have a foo with int value (?P<value>.*?)$"), converters={"value": int})
         @given(parsers.re(r"^I have a foo with str value (?P<value>.*?)$"), converters={"value": str})
         @given(parsers.re(r"^I have a foo with float value (?P<value>.*?)$"), converters={"value": float})
