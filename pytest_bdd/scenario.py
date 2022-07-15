@@ -12,17 +12,16 @@ test_publish_article = scenario(
 """
 from __future__ import annotations
 
-import collections
 import os
 import re
 from typing import TYPE_CHECKING, Callable, cast
 
 import pytest
-from _pytest.fixtures import FixtureLookupError, FixtureManager, FixtureRequest, call_fixture_func
+from _pytest.fixtures import FixtureManager, FixtureRequest, call_fixture_func
 
 from . import exceptions
 from .feature import get_feature, get_features
-from .steps import StepFunctionContext, get_step_fixture_name, inject_fixture
+from .steps import StepFunctionContext, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if TYPE_CHECKING:
@@ -45,25 +44,15 @@ def find_argumented_step_function(name: str, type_: str, fixturemanager: Fixture
             if step_func_context is None:
                 continue
 
+            if step_func_context.type != type_:
+                continue
+
             match = step_func_context.parser.is_matching(name)
             if not match:
                 continue
-            if step_func_context.type != type_:
-                continue
+
             return step_func_context
     return None
-
-
-def _find_step_function(request: FixtureRequest, step: Step, scenario: Scenario) -> StepFunctionContext:
-    """Match the step defined by the parser."""
-    # Could not find a fixture with the same name, let's see if there is a parser involved
-    step_func_context = find_argumented_step_function(step.name, step.type, request._fixturemanager)
-    if step_func_context is None:
-        raise exceptions.StepDefinitionNotFoundError(
-            f"Step definition is not found: {step}. "
-            f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
-        )
-    return step_func_context
 
 
 def _execute_step_function(
@@ -80,31 +69,32 @@ def _execute_step_function(
     }
 
     request.config.hook.pytest_bdd_before_step(**kw)
-    try:  # TODO: Move this to the places where an exception can actually be raised
-        # Get the step argument values.
-        converters = context.converters
-        kwargs = {}
 
+    # Get the step argument values.
+    converters = context.converters
+    kwargs = {}
+    args = get_args(context.step_func)
+
+    try:
         for arg, value in context.parser.parse_arguments(step.name).items():
             if arg in converters:
                 value = converters[arg](value)
             kwargs[arg] = value
 
-        args = get_args(context.step_func)
         kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
-
         # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
         return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
-        if context.target_fixture is not None:
-            inject_fixture(request, context.target_fixture, return_value)
-
-        request.config.hook.pytest_bdd_after_step(**kw)
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
         raise
+
+    if context.target_fixture is not None:
+        inject_fixture(request, context.target_fixture, return_value)
+
+    request.config.hook.pytest_bdd_after_step(**kw)
 
 
 def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequest) -> None:
@@ -118,13 +108,17 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequ
     request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
 
     for step in scenario.steps:
-        try:
-            step_func_context = _find_step_function(request, step, scenario)
-        except exceptions.StepDefinitionNotFoundError as exception:
-            request.config.hook.pytest_bdd_step_func_lookup_error(
-                request=request, feature=feature, scenario=scenario, step=step, exception=exception
+        context = find_argumented_step_function(step.name, step.type, request._fixturemanager)
+        if context is None:
+            exc = exceptions.StepDefinitionNotFoundError(
+                f"Step definition is not found: {step}. "
+                f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
             )
-            raise
+            request.config.hook.pytest_bdd_step_func_lookup_error(
+                request=request, feature=feature, scenario=scenario, step=step, exception=exc
+            )
+            raise exc
+        step_func_context = context
 
         try:
             _execute_step_function(request, scenario, step, step_func_context)
