@@ -25,12 +25,12 @@ def test_given_injection(testdir):
             pass
 
         @given("I have injecting given", target_fixture="foo")
-        def injecting_given():
+        def _():
             return "injected foo"
 
 
         @then('foo should be "injected foo"')
-        def foo_is_injected_foo(foo):
+        def _(foo):
             assert foo == "injected foo"
 
         """

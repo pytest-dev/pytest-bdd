@@ -3,17 +3,17 @@
 Example:
 
 @given("I have an article", target_fixture="article")
-def given_article(author):
+def _(author):
     return create_test_article(author=author)
 
 
 @when("I go to the article page")
-def go_to_the_article_page(browser, article):
+def _(browser, article):
     browser.visit(urljoin(browser.url, "/articles/{0}/".format(article.id)))
 
 
 @then("I should not see the error message")
-def no_error_message(browser):
+def _(browser):
     with pytest.raises(ElementDoesNotExist):
         browser.find_by_css(".message.error").first
 
@@ -22,7 +22,7 @@ Multiple names for the steps:
 
 @given("I have an article")
 @given("there is an article")
-def article(author):
+def _(author):
     return create_test_article(author=author)
 
 
@@ -30,7 +30,7 @@ Reusing existing fixtures for a different step name:
 
 
 @given("I have a beautiful article")
-def given_beautiful_article(article):
+def _(article):
     pass
 
 """

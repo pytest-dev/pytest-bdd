@@ -80,19 +80,19 @@ def test_step_trace(testdir):
         from pytest_bdd import given, when, scenario, parsers
 
         @given('a passing step')
-        def a_passing_step():
+        def _():
             return 'pass'
 
         @given('some other passing step')
-        def some_other_passing_step():
+        def _():
             return 'pass'
 
         @given('a failing step')
-        def a_failing_step():
+        def _():
             raise Exception('Error')
 
         @given(parsers.parse('type {type} and value {value}'))
-        def type_type_and_value_value():
+        def _():
             return 'pass'
 
         @scenario('test.feature', 'Passing')

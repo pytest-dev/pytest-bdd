@@ -31,12 +31,12 @@ def test_parent(testdir):
 
 
         @given("I have a parent fixture", target_fixture="parent")
-        def parent():
+        def _():
             return "parent"
 
 
         @given("I have an overridable fixture", target_fixture="overridable")
-        def overridable():
+        def _():
             return "parent"
 
         """
@@ -113,12 +113,12 @@ def test_child(testdir):
 
 
         @given("I have a parent fixture", target_fixture="parent")
-        def parent():
+        def _():
             return "parent"
 
 
         @given("I have an overridable fixture", target_fixture="overridable")
-        def overridable():
+        def _():
             return "parent"
 
         """
@@ -133,7 +133,7 @@ def test_child(testdir):
             from pytest_bdd import given
 
             @given("I have an overridable fixture", target_fixture="overridable")
-            def overridable():
+            def _():
                 return "child"
 
             """
@@ -178,12 +178,12 @@ def test_local(testdir):
 
 
         @given("I have a parent fixture", target_fixture="parent")
-        def parent():
+        def _():
             return "parent"
 
 
         @given("I have an overridable fixture", target_fixture="overridable")
-        def overridable():
+        def _():
             return "parent"
 
         """
@@ -210,12 +210,12 @@ def test_local(testdir):
 
 
             @given("I have an overridable fixture", target_fixture="overridable")
-            def overridable():
+            def _():
                 return "local"
 
 
             @given("I have a parent fixture", target_fixture="parent")
-            def parent():
+            def _():
                 return "local"
 
 

@@ -24,7 +24,7 @@ def test_when_function_name_same_as_step_name(testdir):
             pass
 
         @when("something")
-        def something():
+        def _():
             return "something"
         """
         )
