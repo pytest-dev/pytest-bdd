@@ -73,19 +73,18 @@ def _execute_step_function(
     # Get the step argument values.
     converters = context.converters
     kwargs = {}
-
-    for arg, value in context.parser.parse_arguments(step.name).items():
-        if arg in converters:
-            value = converters[arg](value)
-        kwargs[arg] = value
-
     args = get_args(context.step_func)
-    kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
-    kw["step_func_args"] = kwargs
-
-    request.config.hook.pytest_bdd_before_step_call(**kw)
 
     try:
+        for arg, value in context.parser.parse_arguments(step.name).items():
+            if arg in converters:
+                value = converters[arg](value)
+            kwargs[arg] = value
+
+        kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
+        kw["step_func_args"] = kwargs
+
+        request.config.hook.pytest_bdd_before_step_call(**kw)
         # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
         return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
     except Exception as exception:
