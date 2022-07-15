@@ -1230,6 +1230,12 @@ You can learn more about `functools.partial <http://docs.python.org/2/library/fu
 in the Python docs.
 
 
+Localization
+------------
+
+pytest-bdd supports all localizations which Gherkin `does <https://cucumber.io/docs/gherkin/languages/>`_
+
+
 Hooks
 -----
 
