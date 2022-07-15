@@ -80,31 +80,33 @@ def _execute_step_function(
     }
 
     request.config.hook.pytest_bdd_before_step(**kw)
-    try:  # TODO: Move this to the places where an exception can actually be raised
-        # Get the step argument values.
-        converters = context.converters
-        kwargs = {}
 
-        for arg, value in context.parser.parse_arguments(step.name).items():
-            if arg in converters:
-                value = converters[arg](value)
-            kwargs[arg] = value
+    # Get the step argument values.
+    converters = context.converters
+    kwargs = {}
 
-        args = get_args(context.step_func)
-        kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
-        kw["step_func_args"] = kwargs
+    for arg, value in context.parser.parse_arguments(step.name).items():
+        if arg in converters:
+            value = converters[arg](value)
+        kwargs[arg] = value
 
-        request.config.hook.pytest_bdd_before_step_call(**kw)
+    args = get_args(context.step_func)
+    kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
+    kw["step_func_args"] = kwargs
 
+    request.config.hook.pytest_bdd_before_step_call(**kw)
+
+    try:
         # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
         return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
-        if context.target_fixture is not None:
-            inject_fixture(request, context.target_fixture, return_value)
-
-        request.config.hook.pytest_bdd_after_step(**kw)
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
         raise
+
+    if context.target_fixture is not None:
+        inject_fixture(request, context.target_fixture, return_value)
+
+    request.config.hook.pytest_bdd_after_step(**kw)
 
 
 def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequest) -> None:
