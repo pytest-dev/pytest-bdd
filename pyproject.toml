@@ -40,11 +40,13 @@ Mako = "*"
 parse = "*"
 parse-type = "*"
 pytest = ">=5.0"
+typing-extensions = "*"
 
 [tool.poetry.dev-dependencies]
 tox = "^3.25.1"
 mypy = "^0.961"
 types-setuptools = "^57.4.18"
+pytest-xdist = "^2.5.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -36,16 +36,28 @@ def given_beautiful_article(article):
 """
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import Any, Callable, TypeVar
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureRequest
+from typing_extensions import Literal
 
 from .parsers import StepParser, get_parser
 from .types import GIVEN, THEN, WHEN
-from .utils import get_caller_module_locals, setdefault
+from .utils import get_caller_module_locals
 
 TCallable = TypeVar("TCallable", bound=Callable[..., Any])
+
+
+@dataclass
+class StepFunctionContext:
+    name: str
+    type: Literal["given", "when", "then"]
+    step_func: Callable[..., Any]
+    parser: StepParser
+    converters: dict[str, Callable[..., Any]] = field(default_factory=dict)
+    target_fixture: str | None = None
 
 
 def get_step_fixture_name(name: str, type_: str) -> str:
@@ -107,7 +119,7 @@ def then(
 
 
 def _step_decorator(
-    step_type: str,
+    step_type: Literal["given", "when", "then"],
     step_name: str | StepParser,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
@@ -125,22 +137,25 @@ def _step_decorator(
         converters = {}
 
     def decorator(func: TCallable) -> TCallable:
-        parser_instance = get_parser(step_name)
-        parsed_step_name = parser_instance.name
-
-        def lazy_step_func() -> TCallable:
-            return func
-
-        lazy_step_func._pytest_bdd_parser = parser_instance
-
-        setdefault(func, "_pytest_bdd_parsers", []).append(parser_instance)
-        func._pytest_bdd_converters = converters
-        func._pytest_bdd_target_fixture = target_fixture
+        parser = get_parser(step_name)
+        parsed_step_name = parser.name
 
         fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
 
+        def step_function_marker() -> None:
+            return None
+
+        step_function_marker._pytest_bdd_step_context = StepFunctionContext(
+            name=fixture_step_name,
+            type=step_type,
+            step_func=func,
+            parser=parser,
+            converters=converters,
+            target_fixture=target_fixture,
+        )
+
         caller_locals = get_caller_module_locals()
-        caller_locals[fixture_step_name] = pytest.fixture(name=fixture_step_name)(lazy_step_func)
+        caller_locals[fixture_step_name] = pytest.fixture(name=fixture_step_name)(step_function_marker)
         return func
 
     return decorator
@@ -177,7 +192,8 @@ def inject_fixture(request: FixtureRequest, arg: str, value: Any) -> None:
     request.addfinalizer(fin)
 
     # inject fixture definition
-    request._fixturemanager._arg2fixturedefs.setdefault(arg, []).insert(0, fd)
+    request._fixturemanager._arg2fixturedefs.setdefault(arg, []).append(fd)
+
     # inject fixture value in request cache
     request._fixture_defs[arg] = fd
     if add_fixturename:

@@ -4,6 +4,8 @@ Check the parent givens are collected and overridden in the local conftest.
 """
 import textwrap
 
+from pytest_bdd.utils import collect_dumped_objects
+
 
 def test_parent(testdir):
     """Test parent given is collected.
@@ -58,41 +60,48 @@ def test_parent(testdir):
     result.assert_outcomes(passed=1)
 
 
-def test_global_when_step(testdir, request):
+def test_global_when_step(testdir):
     """Test when step defined in the parent conftest."""
+
+    testdir.makefile(
+        ".feature",
+        global_when=textwrap.dedent(
+            """\
+            Feature: Global when
+                Scenario: Global when step defined in parent conftest
+                    When I use a when step from the parent conftest
+            """
+        ),
+    )
 
     testdir.makeconftest(
         textwrap.dedent(
             """\
         from pytest_bdd import when
-
+        from pytest_bdd.utils import dump_obj
 
         @when("I use a when step from the parent conftest")
-        def global_when():
-            pass
-
+        def _():
+            dump_obj("global when step")
         """
         )
     )
 
-    subdir = testdir.mkpydir("subdir")
-
-    subdir.join("test_library.py").write(
+    testdir.mkpydir("subdir").join("test_global_when.py").write(
         textwrap.dedent(
             """\
-            from pytest_bdd.steps import get_step_fixture_name, WHEN
+            from pytest_bdd import scenarios
 
-            def test_global_when_step(request):
-                assert request.getfixturevalue(
-                    get_step_fixture_name("I use a when step from the parent conftest",
-                    WHEN,
-                )
-            )
-        """
+            scenarios("../global_when.feature")
+            """
         )
     )
-    result = testdir.runpytest()
+
+    result = testdir.runpytest("-s")
     result.assert_outcomes(passed=1)
+
+    [collected_object] = collect_dumped_objects(result)
+    assert collected_object == "global when step"
 
 
 def test_child(testdir):
@@ -198,7 +207,6 @@ def test_local(testdir):
         textwrap.dedent(
             """\
             from pytest_bdd import given, scenario
-            from pytest_bdd.steps import get_step_fixture_name, GIVEN
 
 
             @given("I have an overridable fixture", target_fixture="overridable")
@@ -215,19 +223,6 @@ def test_local(testdir):
             def test_local(request):
                 assert request.getfixturevalue("parent") == "local"
                 assert request.getfixturevalue("overridable") == "local"
-
-
-                fixture = request.getfixturevalue(
-                    get_step_fixture_name("I have a parent fixture", GIVEN)
-                )
-                assert fixture() == "local"
-
-
-                fixture = request.getfixturevalue(
-                    get_step_fixture_name("I have an overridable fixture", GIVEN)
-                )
-                assert fixture() == "local"
-
         """
         )
     )

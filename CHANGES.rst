@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+- Fix bug where steps without parsers would take precedence over steps with parsers. `#534 <https://github.com/pytest-dev/pytest-bdd/pull/534>`_
+- Step functions can now be decorated multiple times with @given, @when, @then. Previously every decorator would override ``converters`` and ``target_fixture`` every at every application. `#534 <https://github.com/pytest-dev/pytest-bdd/pull/534>`_ `#525 <https://github.com/pytest-dev/pytest-bdd/issues/525>`_
+
 6.0.1
 -----
 - Fix regression introduced in 6.0.0 where a step function decorated multiple using a parsers times would not be executed correctly. `#530 <https://github.com/pytest-dev/pytest-bdd/pull/530>`_ `#528 <https://github.com/pytest-dev/pytest-bdd/issues/528>`_
