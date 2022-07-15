@@ -44,11 +44,13 @@ def find_argumented_step_function(name: str, type_: str, fixturemanager: Fixture
             if step_func_context is None:
                 continue
 
+            if step_func_context.type != type_:
+                continue
+
             match = step_func_context.parser.is_matching(name)
             if not match:
                 continue
-            if step_func_context.type != type_:
-                continue
+
             return step_func_context
     return None
 
