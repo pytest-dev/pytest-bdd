@@ -192,9 +192,6 @@ def inject_fixture(request: FixtureRequest, arg: str, value: Any) -> None:
     request.addfinalizer(fin)
 
     # inject fixture definition
-    # TODO: This seems wrong, since pytest treats the last elements as the highest priority ones
-    # request._fixturemanager._arg2fixturedefs.setdefault(arg, []).insert(0, fd)
-    # This seems more correct:
     request._fixturemanager._arg2fixturedefs.setdefault(arg, []).append(fd)
 
     # inject fixture value in request cache
