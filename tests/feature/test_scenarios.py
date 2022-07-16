@@ -1,6 +1,7 @@
 """Test scenarios shortcut."""
 import textwrap
 
+from pytest_bdd.utils import collect_dumped_objects
 from tests.utils import assert_outcomes
 
 
@@ -88,3 +89,57 @@ def test_scenarios_none_found(testdir, pytest_params):
     result = testdir.runpytest_subprocess(testpath, *pytest_params)
     assert_outcomes(result, errors=1)
     result.stdout.fnmatch_lines(["*NoScenariosFound*"])
+
+
+def test_scenarios_override_caller_locals(testdir):
+    testdir.makefile(
+        ".feature",
+        override_caller_locals=textwrap.dedent(
+            """\
+            Feature: @scenarios(...) decorator allow overriding caller_locals
+                Scenario: I make my own scenario decorator that extends the original one
+                    Given pass
+                    When I dump the content of my_features_registry
+                    Then pass
+            """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        import sys
+
+        import pytest
+        from pytest_bdd import given, when, then, scenarios, parsers
+        from pytest_bdd.utils import dump_obj
+
+        my_features_registry = []
+
+
+        def my_scenarios(*feature_paths: str, **kwargs) -> None:
+            my_features_registry.extend(feature_paths)
+
+            scenarios(*feature_paths, **kwargs, caller_locals=sys._getframe(1).f_locals)
+
+
+        my_scenarios("override_caller_locals.feature")
+
+
+        @given("pass")
+        @then("pass")
+        def _():
+            pass
+
+
+        @when("I dump the content of my_features_registry")
+        def _():
+            dump_obj(my_features_registry)
+
+        """
+        )
+    )
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=1)
+
+    [my_features_registry] = collect_dumped_objects(result)
+    assert my_features_registry == ["override_caller_locals.feature"]
