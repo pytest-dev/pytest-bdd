@@ -156,9 +156,6 @@ def _step_decorator(
     if converters is None:
         converters = {}
 
-    if caller_locals is None:
-        caller_locals = get_caller_module_locals()
-
     def decorator(func: TCallable) -> TCallable:
         parser = get_parser(step_name)
         parsed_step_name = parser.name
