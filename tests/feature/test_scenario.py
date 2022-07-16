@@ -73,17 +73,17 @@ def test_scenario_comments(testdir):
 
 
         @given("I have a bar")
-        def bar():
+        def _():
             return "bar"
 
 
         @given("comments should be at the start of words")
-        def comments():
+        def _():
             pass
 
 
         @then(parsers.parse("this is not {acomment}"))
-        def a_comment(acomment):
+        def _(acomment):
             assert re.search("a.*comment", acomment)
 
         """
@@ -138,11 +138,11 @@ def test_simple(testdir, pytest_params):
             pass
 
         @given("I have a bar")
-        def bar():
+        def _():
             return "bar"
 
         @then("pass")
-        def bar():
+        def _():
             pass
         """
     )
@@ -180,15 +180,15 @@ def test_angular_brakets_are_not_parsed(testdir):
         scenarios("simple.feature")
 
         @given("I have a <tag>")
-        def bar():
+        def _():
             return "tag"
 
         @given(parsers.parse("I have a templated {foo}"))
-        def bar(foo):
+        def _(foo):
             return "foo"
 
         @then("pass")
-        def bar():
+        def _():
             pass
         """
     )

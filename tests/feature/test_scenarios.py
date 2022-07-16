@@ -19,7 +19,7 @@ def test_scenarios(testdir, pytest_params):
         from pytest_bdd import given
 
         @given('I have a bar')
-        def i_have_bar():
+        def _():
             print('bar!')
             return 'bar'
     """

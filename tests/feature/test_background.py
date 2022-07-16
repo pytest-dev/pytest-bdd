@@ -34,40 +34,40 @@ def foo():
 
 
 @given(parsers.re(r"a background step with multiple lines:\n(?P<data>.+)", flags=re.DOTALL))
-def multi_line(foo, data):
+def _(foo, data):
     assert data == "one\ntwo"
 
 
 @given('foo has a value "bar"')
-def bar(foo):
+def _(foo):
     foo["bar"] = "bar"
     return foo["bar"]
 
 
 @given('foo has a value "dummy"')
-def dummy(foo):
+def _(foo):
     foo["dummy"] = "dummy"
     return foo["dummy"]
 
 
 @given('foo has no value "bar"')
-def no_bar(foo):
+def _(foo):
     assert foo["bar"]
     del foo["bar"]
 
 
 @then('foo should have value "bar"')
-def foo_has_bar(foo):
+def _(foo):
     assert foo["bar"] == "bar"
 
 
 @then('foo should have value "dummy"')
-def foo_has_dummy(foo):
+def _(foo):
     assert foo["dummy"] == "dummy"
 
 
 @then('foo should not have value "bar"')
-def foo_has_no_bar(foo):
+def _(foo):
     assert "bar" not in foo
 
 """

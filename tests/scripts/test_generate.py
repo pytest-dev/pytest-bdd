@@ -53,25 +53,25 @@ def test_generate(testdir, monkeypatch, capsys):
 
 
     @given('1 have a fixture (appends 1 to a list) in reuse syntax')
-    def have_a_fixture_appends_1_to_a_list_in_reuse_syntax():
+    def _():
         """1 have a fixture (appends 1 to a list) in reuse syntax."""
         raise NotImplementedError
 
 
     @given('I have an empty list')
-    def i_have_an_empty_list():
+    def _():
         """I have an empty list."""
         raise NotImplementedError
 
 
     @when('I use this fixture')
-    def i_use_this_fixture():
+    def _():
         """I use this fixture."""
         raise NotImplementedError
 
 
     @then('my list should be [1]')
-    def my_list_should_be_1():
+    def _():
         """my list should be [1]."""
         raise NotImplementedError
 
@@ -119,37 +119,37 @@ def test_generate_with_quotes(testdir):
 
 
     @given('I have a fixture with "double" quotes')
-    def i_have_a_fixture_with_double_quotes():
+    def _():
         """I have a fixture with "double" quotes."""
         raise NotImplementedError
 
 
     @given('I have a fixture with \\'single\\' quotes')
-    def i_have_a_fixture_with_single_quotes():
+    def _():
         """I have a fixture with 'single' quotes."""
         raise NotImplementedError
 
 
     @given('I have a fixture with double-quote """triple""" quotes')
-    def i_have_a_fixture_with_doublequote_triple_quotes():
+    def _():
         """I have a fixture with double-quote \\"\\"\\"triple\\"\\"\\" quotes."""
         raise NotImplementedError
 
 
     @given('I have a fixture with single-quote \\'\\'\\'triple\\'\\'\\' quotes')
-    def i_have_a_fixture_with_singlequote_triple_quotes():
+    def _():
         """I have a fixture with single-quote \'\'\'triple\'\'\' quotes."""
         raise NotImplementedError
 
 
     @when('I generate the code')
-    def i_generate_the_code():
+    def _():
         """I generate the code."""
         raise NotImplementedError
 
 
     @then('The generated string should be written')
-    def the_generated_string_should_be_written():
+    def _():
         """The generated string should be written."""
         raise NotImplementedError
     '''
@@ -195,19 +195,19 @@ def test_unicode_characters(testdir, monkeypatch):
 
 
             @given('We have a circle')
-            def we_have_a_circle():
+            def _():
                 """We have a circle."""
                 raise NotImplementedError
 
 
             @when('We want to know its circumference')
-            def we_want_to_know_its_circumference():
+            def _():
                 """We want to know its circumference."""
                 raise NotImplementedError
 
 
             @then('We calculate 2 * ℼ * 𝑟')
-            def we_calculate_2__ℼ__𝑟():
+            def _():
                 """We calculate 2 * ℼ * 𝑟."""
                 raise NotImplementedError
             '''

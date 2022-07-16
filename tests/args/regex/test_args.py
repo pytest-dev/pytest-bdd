@@ -35,17 +35,17 @@ def test_every_steps_takes_param_with_the_same_name(testdir):
             return [1, 2, 1, 0, 999999]
 
         @given(parsers.re(r"I have (?P<euro>\d+) Euro"), converters=dict(euro=int))
-        def i_have(euro, values):
+        def _(euro, values):
             assert euro == values.pop(0)
 
 
         @when(parsers.re(r"I pay (?P<euro>\d+) Euro"), converters=dict(euro=int))
-        def i_pay(euro, values, request):
+        def _(euro, values, request):
             assert euro == values.pop(0)
 
 
         @then(parsers.re(r"I should have (?P<euro>\d+) Euro"), converters=dict(euro=int))
-        def i_should_have(euro, values):
+        def _(euro, values):
             assert euro == values.pop(0)
 
         """
@@ -139,17 +139,17 @@ def test_argument_in_when(testdir):
             pass
 
         @given(parsers.re(r"I have an argument (?P<arg>\d+)"))
-        def argument(arguments, arg):
+        def _(arguments, arg):
             arguments["arg"] = arg
 
 
         @when(parsers.re(r"I get argument (?P<arg>\d+)"))
-        def get_argument(arguments, arg):
+        def _(arguments, arg):
             arguments["arg"] = arg
 
 
         @then(parsers.re(r"My argument should be (?P<arg>\d+)"))
-        def assert_that_my_argument_is_arg(arguments, arg):
+        def _(arguments, arg):
             assert arguments["arg"] == arg
 
         """

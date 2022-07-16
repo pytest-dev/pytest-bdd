@@ -37,17 +37,17 @@ def test_every_step_takes_param_with_the_same_name(testdir):
 
 
         @given(parsers.cfparse("I have {euro:d} Euro"))
-        def i_have(euro, values):
+        def _(euro, values):
             assert euro == values.pop(0)
 
 
         @when(parsers.cfparse("I pay {euro:d} Euro"))
-        def i_pay(euro, values, request):
+        def _(euro, values, request):
             assert euro == values.pop(0)
 
 
         @then(parsers.cfparse("I should have {euro:d} Euro"))
-        def i_should_have(euro, values):
+        def _(euro, values):
             assert euro == values.pop(0)
 
         """
@@ -89,17 +89,17 @@ def test_argument_in_when(testdir):
 
 
         @given(parsers.cfparse("I have an argument {arg:Number}", extra_types=dict(Number=int)))
-        def argument(arguments, arg):
+        def _(arguments, arg):
             arguments["arg"] = arg
 
 
         @when(parsers.cfparse("I get argument {arg:d}"))
-        def get_argument(arguments, arg):
+        def _(arguments, arg):
             arguments["arg"] = arg
 
 
         @then(parsers.cfparse("My argument should be {arg:d}"))
-        def assert_that_my_argument_is_arg(arguments, arg):
+        def _(arguments, arg):
             assert arguments["arg"] == arg
 
         """
