@@ -49,3 +49,62 @@ def test_step_function_multiple_target_fixtures(testdir):
     [foo, bar] = collect_dumped_objects(result)
     assert foo == "test foo"
     assert bar == "test bar"
+
+
+def test_step_override_caller_locals(testdir):
+    testdir.makefile(
+        ".feature",
+        override_caller_locals=textwrap.dedent(
+            """\
+            Feature: Step decorators allow overriding caller_locals
+                Scenario: I make my own step decorator that provides given, when, then steps
+                    Given some data is loaded in the system
+                    When some data is loaded in the system
+                    Then some data is loaded in the system
+            """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        import sys
+
+        import pytest
+        from pytest_bdd import given, when, then, scenarios, parsers
+        from pytest_bdd.utils import dump_obj
+
+        scenarios("override_caller_locals.feature")
+
+        global_counter = 0
+
+        def step(*step_args, **step_kwargs):
+            caller_locals = sys._getframe(1).f_locals
+            def decorator(fn):
+                @given(*step_args, **step_kwargs, caller_locals=caller_locals)
+                @when(*step_args, **step_kwargs, caller_locals=caller_locals)
+                @then(*step_args, **step_kwargs, caller_locals=caller_locals)
+                def wrapper(*args, **kwargs):
+                    return fn(*args, **kwargs)
+                return wrapper
+            return decorator
+
+        @step("some data is loaded in the system", target_fixture="data")
+        def _():
+            global global_counter
+            res = {"foo": global_counter}
+            dump_obj(res)
+            global_counter += 1
+            return res
+
+        """
+        )
+    )
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=1)
+
+    dumped_objects = collect_dumped_objects(result)
+    assert dumped_objects == [
+        {"foo": 0},
+        {"foo": 1},
+        {"foo": 2},
+    ]
