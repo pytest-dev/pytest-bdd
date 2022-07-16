@@ -75,33 +75,33 @@ Note that only one feature is allowed per feature file.
 
 
     @given("I'm an author user")
-    def author_user(auth, author):
+    def _(auth, author):
         auth['user'] = author.user
 
 
     @given("I have an article", target_fixture="article")
-    def article(author):
+    def _(author):
         return create_test_article(author=author)
 
 
     @when("I go to the article page")
-    def go_to_article(article, browser):
+    def _(article, browser):
         browser.visit(urljoin(browser.url, '/manage/articles/{0}/'.format(article.id)))
 
 
     @when("I press the publish button")
-    def publish_article(browser):
+    def _(browser):
         browser.find_by_css('button[name=publish]').first.click()
 
 
     @then("I should not see the error message")
-    def no_error_message(browser):
+    def _(browser):
         with pytest.raises(ElementDoesNotExist):
             browser.find_by_css('.message.error').first
 
 
     @then("the article should be published")
-    def article_is_published(article):
+    def _(article):
         article.refresh()  # Refresh the object in the SQLAlchemy session
         assert article.is_published
 
@@ -136,7 +136,7 @@ function with multiple step names simply decorate it multiple times:
 
     @given("I have an article")
     @given("there's an article")
-    def article(author, target_fixture="article"):
+    def _(author, target_fixture="article"):
         return create_test_article(author=author)
 
 Note that the given step aliases are independent and will be executed
@@ -254,17 +254,17 @@ The code will look like:
 
 
     @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="cucumbers")
-    def given_cucumbers(start):
+    def _(start):
         return {"start": start, "eat": 0}
 
 
     @when(parsers.parse("I eat {eat:d} cucumbers"))
-    def eat_cucumbers(cucumbers, eat):
+    def _(cucumbers, eat):
         cucumbers["eat"] += eat
 
 
     @then(parsers.parse("I should have {left:d} cucumbers"))
-    def should_have_left_cucumbers(cucumbers, left):
+    def _(cucumbers, left):
         assert cucumbers["start"] - cucumbers["eat"] == left
 
 Example code also shows possibility to pass argument converters which may be useful if you need to postprocess step
@@ -299,7 +299,7 @@ You can implement your own step parser. It's interface is quite simple. The code
 
 
     @given(parsers.parse("there are %start% cucumbers"), target_fixture="cucumbers")
-    def given_cucumbers(start):
+    def _(start):
         return {"start": start, "eat": 0}
 
 
@@ -320,12 +320,12 @@ it will stay untouched. To allow this, special parameter `target_fixture` exists
 
 
     @given("I have injecting given", target_fixture="foo")
-    def injecting_given():
+    def _():
         return "injected foo"
 
 
     @then('foo should be "injected foo"')
-    def foo_is_foo(foo):
+    def _(foo):
         assert foo == 'injected foo'
 
 
@@ -355,17 +355,17 @@ A common use case is when we have to assert the outcome of an HTTP request:
 
 
     @given("there is an article", target_fixture="article")
-    def there_is_an_article():
+    def _():
         return Article()
 
 
     @when("I request the deletion of the article", target_fixture="request_result")
-    def there_should_be_a_new_article(article, http_client):
+    def _(article, http_client):
         return http_client.delete(f"/articles/{article.uid}")
 
 
     @then("the request should be successful")
-    def article_is_published(request_result):
+    def _(request_result):
         assert request_result.status_code == 200
 
 
@@ -419,12 +419,12 @@ step arguments and capture lines after first line (or some subset of them) into 
 
 
     @given(parsers.parse("I have a step with:\n{content}"), target_fixture="text")
-    def given_text(content):
+    def _(content):
         return content
 
 
     @then("the text should be parsed with correct indentation")
-    def text_should_be_correct(text):
+    def _(text):
         assert text == "Some\nExtra\nLines"
 
 
@@ -500,17 +500,17 @@ Example:
 
 
     @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="cucumbers")
-    def given_cucumbers(start):
+    def _(start):
         return {"start": start, "eat": 0}
 
 
     @when(parsers.parse("I eat {eat:d} cucumbers"))
-    def eat_cucumbers(cucumbers, eat):
+    def _(cucumbers, eat):
         cucumbers["eat"] += eat
 
 
     @then(parsers.parse("I should have {left:d} cucumbers"))
-    def should_have_left_cucumbers(cucumbers, left):
+    def _(cucumbers, left):
         assert cucumbers["start"] - cucumbers["eat"] == left
 
 
@@ -612,7 +612,7 @@ and makes the setup more declarative style.
 .. code-block:: python
 
     @given("I have a beautiful article", target_fixture="article")
-    def article():
+    def _():
         return Article(is_beautiful=True)
 
 The target PyTest fixture "article" gets the return value and any other step can depend on it.
@@ -629,7 +629,7 @@ When step is referring the article to publish it.
 .. code-block:: python
 
     @when("I publish this article")
-    def publish_article(article):
+    def _(article):
         article.publish()
 
 
@@ -662,12 +662,12 @@ them by applying the side effects.
 
 
     @given("I have a beautiful article")
-    def i_have_a_beautiful_article(article):
+    def _(article):
         pass
 
 
     @given("my article is published")
-    def published_article(article):
+    def _(article):
         article.publish()
         return article
 
@@ -742,7 +742,7 @@ Then this fixture can be reused with other names using given():
 .. code-block:: python
 
     @given('I have beautiful article')
-    def i_have_an_article(article):
+    def _(article):
        """I have an article."""
 
 
@@ -768,12 +768,12 @@ simply expect them in the child test file.
 
 
     @given("I have a bar", target_fixture="bar")
-    def bar():
+    def _():
         return "bar"
 
 
     @then('bar should have value "bar"')
-    def bar_is_bar(bar):
+    def _(bar):
         assert bar == "bar"
 
 .. code-block:: python
@@ -979,7 +979,7 @@ The output will be like:
 
 
     @given("I have a custom bar")
-    def I_have_a_custom_bar():
+    def _():
         """I have a custom bar."""
 
 As as side effect, the tool will validate the files for format errors, also some of the logic bugs, for example the
@@ -1034,13 +1034,13 @@ Templated steps (e.g. ``@given("there are <start> cucumbers")``) should now the 
 
     # Old step definition:
     @given("there are <start> cucumbers")
-    def given_cucumbers(start):
+    def _(start):
         pass
 
 
     # New step definition:
     @given(parsers.parse("there are {start} cucumbers"))
-    def given_cucumbers(start):
+    def _(start):
         pass
 
 
@@ -1050,7 +1050,7 @@ Scenario `example_converters` are removed in favor of the converters provided on
 
     # Old code:
     @given("there are <start> cucumbers")
-    def given_cucumbers(start):
+    def _(start):
         return {"start": start}
 
     @scenario("outline.feature", "Outlined", example_converters={"start": float})
@@ -1060,7 +1060,7 @@ Scenario `example_converters` are removed in favor of the converters provided on
 
     # New code:
     @given(parsers.parse("there are {start} cucumbers"), converters={"start": float})
-    def given_cucumbers(start):
+    def _(start):
         return {"start": start}
 
     @scenario("outline.feature", "Outlined")
@@ -1087,7 +1087,7 @@ the target_fixture parameter should be used.
 .. code-block:: python
 
     @given("there's an article", target_fixture="article")
-    def there_is_an_article():
+    def _():
         return Article()
 
 
@@ -1097,7 +1097,7 @@ Just normal step declaration with the dependency injection should be used.
 .. code-block:: python
 
     @given("there's an article")
-    def there_is_an_article(article):
+    def _(article):
         pass
 
 
