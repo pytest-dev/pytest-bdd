@@ -256,9 +256,17 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
             from pytest_bdd.utils import dump_obj
             import pytest
 
+            @given(parsers.re("(?P<thing>.*)"))
+            def root_conftest_catchall(thing):
+                dump_obj(thing + " (catchall) root_conftest")
+
             @given(parsers.parse("I have a {thing} thing"))
             def root_conftest(thing):
                 dump_obj(thing + " root_conftest")
+
+            @given("I have a specific thing")
+            def root_conftest_specific():
+                dump_obj("specific" + "(specific) root_conftest")
 
             @then("pass")
             def _():
@@ -281,8 +289,8 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
             dump_obj(thing + " (catchall) test_a")
 
         @given(parsers.parse("I have a specific thing"))
-        def in_root_test_a_specific(thing):
-            dump_obj(thing + " (specific) test_a")
+        def in_root_test_a_specific():
+            dump_obj("specific" + " (specific) test_a")
 
         @given(parsers.parse("I have a {thing} thing"))
         def in_root_test_a(thing):
@@ -299,8 +307,8 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
             dump_obj(thing + " (catchall) test_c")
 
         @given(parsers.parse("I have a specific thing"))
-        def in_root_test_c_specific(thing):
-            dump_obj(thing + " (specific) test_c")
+        def in_root_test_c_specific():
+            dump_obj("specific" + " (specific) test_c")
 
         @given(parsers.parse("I have a {thing} thing"))
         def in_root_test_c(thing):
@@ -322,8 +330,8 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
                 dump_obj(thing + " (catchall) test_b_test_a")
 
             @given(parsers.parse("I have a specific thing"))
-            def in_test_b_test_a_specific(thing):
-                dump_obj(thing + " (specific) test_b_test_a")
+            def in_test_b_test_a_specific():
+                dump_obj("specific" + " (specific) test_b_test_a")
 
             @given(parsers.parse("I have a {thing} thing"))
             def in_test_b_test_a(thing):
@@ -343,8 +351,8 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
                 dump_obj(thing + " (catchall) test_b_test_c")
 
             @given(parsers.parse("I have a specific thing"))
-            def in_test_b_test_c_specific(thing):
-                dump_obj(thing + " (specific) test_a_test_c")
+            def in_test_b_test_c_specific():
+                dump_obj("specific" + " (specific) test_a_test_c")
 
             @given(parsers.parse("I have a {thing} thing"))
             def in_test_b_test_c(thing):
@@ -365,18 +373,34 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
             scenarios("../specific.feature")
 
 
-            # Important here to have the parse argument different from the others,
-            # otherwise test would succeed even if the wrong step was used.
+            @given(parsers.parse("I have a {thing} thing"))
+            def in_test_b_test_b(thing):
+                dump_obj(f"{thing} test_b_test_b")
+            """
+        )
+    )
+
+    test_b_folder.join("test_b_alternative.py").write(
+        textwrap.dedent(
+            """\
+            from pytest_bdd import scenarios, given, parsers
+            from pytest_bdd.utils import dump_obj
+
+
+            scenarios("../specific.feature")
+
+
+            # Here we try to use an argument different from the others,
+            # to make sure it doesn't matter if a new step parser string is encountered.
             @given(parsers.parse("I have a {t} thing"))
             def in_test_b_test_b(t):
                 dump_obj(f"{t} test_b_test_b")
-
             """
         )
     )
 
     result = testdir.runpytest("-s")
-    result.assert_outcomes(passed=1)
+    result.assert_outcomes(passed=2)
 
-    [thing] = collect_dumped_objects(result)
-    assert thing == "specific test_b_test_b"
+    [thing1, thing2] = collect_dumped_objects(result)
+    assert thing1 == thing2 == "specific test_b_test_b"

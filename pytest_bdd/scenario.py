@@ -12,16 +12,18 @@ test_publish_article = scenario(
 """
 from __future__ import annotations
 
+import logging
 import os
 import re
+from pprint import pformat
 from typing import TYPE_CHECKING, Callable, cast
 
 import pytest
-from _pytest.fixtures import FixtureManager, FixtureRequest, call_fixture_func
+from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
 
 from . import exceptions
 from .feature import get_feature, get_features
-from .steps import StepFunctionContext, inject_fixture
+from .steps import StepFunctionContext, get_parsed_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if TYPE_CHECKING:
@@ -31,15 +33,22 @@ if TYPE_CHECKING:
 
     from .parser import Feature, Scenario, ScenarioTemplate, Step
 
+
+logger = logging.getLogger(__name__)
+
+
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
-def find_argumented_step_function(name: str, type_: str, fixturemanager: FixtureManager) -> StepFunctionContext | None:
-    """Find argumented step fixture name."""
+def iter_argumented_step_function(
+    name: str, type_: str, fixturemanager: FixtureManager
+) -> Iterable[tuple[str, FixtureDef[Any], StepFunctionContext, int]]:
+    """Iterate over argumented step functions."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
-    for fixturename, fixturedefs in list(fixturemanager._arg2fixturedefs.items()):
-        for fixturedef in reversed(fixturedefs):
+    fixture_def_by_name = list(fixturemanager._arg2fixturedefs.items())
+    for i, (fixturename, fixturedefs) in enumerate(reversed(fixture_def_by_name)):
+        for pos, fixturedef in enumerate(fixturedefs):
             step_func_context = getattr(fixturedef.func, "_pytest_bdd_step_context", None)
             if step_func_context is None:
                 continue
@@ -51,8 +60,42 @@ def find_argumented_step_function(name: str, type_: str, fixturemanager: Fixture
             if not match:
                 continue
 
-            return step_func_context
-    return None
+            yield fixturename, fixturedef, step_func_context, pos
+
+
+def rewrite_argumented_step_functions(name: str, type_, fixturemanager) -> None:
+    bdd_name = get_parsed_step_fixture_name(name, type_)
+
+    l = list(iter_argumented_step_function(name=name, type_=type_, fixturemanager=fixturemanager))
+    l = [f for _, f, _, _ in l]
+    # TODO: quick n dirty way to give the right priority to the fixtures, but we should be more sophisticated than this.
+    resorted = sorted(l, key=lambda x: x.baseid)
+    # l are all the fixture names that parse the current step
+    added = {}
+    # TODO: Remove all the injected bdd_name we did here after the execution of the step
+    # or maybe not, it could be used as a cache? would it poison steps for other scenarios?
+    for fixturedef in resorted:
+        existing_defs = fixturemanager._arg2fixturedefs.setdefault(bdd_name, [])
+        if fixturedef not in existing_defs:
+            existing_defs.append(fixturedef)
+            added.setdefault(bdd_name, []).append(fixturedef)
+        else:
+            logger.warning("%r already added to bdd name %r, SKIPING", fixturedef, bdd_name)
+            pass
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(f"Added the following fixtures:\n{pformat(added)}")
+
+
+def find_argumented_step_function(
+    request, name: str, type_: str, fixturemanager: FixtureManager
+) -> StepFunctionContext | None:
+    """Find argumented step fixture name."""
+    rewrite_argumented_step_functions(name=name, type_=type_, fixturemanager=fixturemanager)
+    bdd_name = get_parsed_step_fixture_name(name, type_)
+    try:
+        return request.getfixturevalue(bdd_name)
+    except pytest.FixtureLookupError:
+        return None
 
 
 def _execute_step_function(
@@ -108,7 +151,7 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequ
     request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
 
     for step in scenario.steps:
-        context = find_argumented_step_function(step.name, step.type, request._fixturemanager)
+        context = find_argumented_step_function(request, step.name, step.type, request._fixturemanager)
         if context is None:
             exc = exceptions.StepDefinitionNotFoundError(
                 f"Step definition is not found: {step}. "

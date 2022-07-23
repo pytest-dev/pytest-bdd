@@ -71,6 +71,17 @@ def get_step_fixture_name(name: str, type_: str) -> str:
     return f"pytestbdd_{type_}_{name}"
 
 
+def get_parsed_step_fixture_name(name: str, type_: str) -> str:
+    """Get step fixture name.
+
+    :param name: string
+    :param type: step type
+    :return: step fixture name
+    :rtype: string
+    """
+    return f"pytestbdd_parsed_{type_}_{name}"
+
+
 def given(
     name: str | StepParser,
     converters: dict[str, Callable] | None = None,
@@ -142,10 +153,7 @@ def _step_decorator(
 
         fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
 
-        def step_function_marker() -> None:
-            return None
-
-        step_function_marker._pytest_bdd_step_context = StepFunctionContext(
+        context = StepFunctionContext(
             name=fixture_step_name,
             type=step_type,
             step_func=func,
@@ -153,6 +161,12 @@ def _step_decorator(
             converters=converters,
             target_fixture=target_fixture,
         )
+
+        # TODO: Probably we can keep on returning None here instead
+        def step_function_marker() -> StepFunctionContext:
+            return context
+
+        step_function_marker._pytest_bdd_step_context = context
 
         caller_locals = get_caller_module_locals()
         caller_locals[fixture_step_name] = pytest.fixture(name=fixture_step_name)(step_function_marker)
