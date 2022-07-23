@@ -118,7 +118,7 @@ def test_child(testdir):
 
 
         @given("I have an overridable fixture", target_fixture="overridable")
-        def _():
+        def main_conftest():
             return "parent"
 
         """
@@ -133,7 +133,7 @@ def test_child(testdir):
             from pytest_bdd import given
 
             @given("I have an overridable fixture", target_fixture="overridable")
-            def _():
+            def subdir_conftest():
                 return "child"
 
             """
@@ -228,3 +228,96 @@ def test_local(testdir):
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)
+
+
+def test_specific_step_overrides_parent_step(testdir):
+    testdir.makefile(
+        ".feature",
+        specific=textwrap.dedent(
+            """\
+            Feature: Specificity of steps
+                Scenario: Overlapping steps 1
+                    When I have a specific thing
+                    Then the value should be specific test_a
+
+                Scenario: Overlapping steps 2
+                    When I have a generic thing
+                    Then the value should be generic
+            """
+        ),
+    )
+
+    testdir.makeconftest(
+        textwrap.dedent(
+            """\
+            from pytest_bdd import parsers, when, then
+            import pytest
+
+
+            @pytest.fixture
+            def value():
+                return []
+
+
+            @when(parsers.parse("I have a {thing} thing"))
+            def in_conftest(thing, value):
+                value.append(thing)
+
+
+            @then(parsers.parse("The value should be {thing}"))
+            def check(thing, value):
+                assert value == [thing]
+        """
+        )
+    )
+
+    testdir.makepyfile(
+        test_a=textwrap.dedent(
+            """\
+            from pytest_bdd import scenarios, when, parsers
+
+
+            scenarios("specific.feature")
+
+
+            @when(parsers.parse("I have a specific thing"))
+            def in_test_a(value):
+                value.append("specific test_a")
+
+            """
+        )
+    )
+
+    # Adding a file that will be collected after test_a and that defines the same step name,
+    # but it should not be taken into account.
+    testdir.makepyfile(
+        test_b=textwrap.dedent(
+            """\
+            from pytest_bdd import when, parsers
+
+            @when(parsers.parse("I have a {thing} thing"))
+            def in_test_b(value, thing):
+                value.append(thing + " test_b")
+
+            """
+        )
+    )
+
+    # Adding a file in a subdir that will be collected after test_a and that defines the same step name,
+    # but it should not be taken into account.
+    # We place it in a subdir so that we are sure that it's collected after test_a, otherwise it may just depend
+    # on the filesystem default ordering.
+    testdir.mkpydir("zzsubdir").join("test_unrelated.py").write(
+        textwrap.dedent(
+            """\
+            from pytest_bdd import when, parsers
+
+            @when(parsers.parse("I have a {thing} thing"))
+            def in_zzsubdir_testunrelated(value, thing):
+                value.append(thing + " zzsubdir/test_unrelated")
+
+            """
+        )
+    )
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=2)
