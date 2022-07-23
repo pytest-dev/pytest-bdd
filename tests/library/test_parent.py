@@ -230,19 +230,21 @@ def test_local(testdir):
     result.assert_outcomes(passed=1)
 
 
-def test_specific_step_overrides_parent_step(testdir):
+def test_uses_correct_step_in_the_hierarchy(testdir):
+    """
+    Test regression found in issue #524, where we couldn't find the correct step implemntation in the
+    hierarchy of files/folder as expected.
+    This test uses many files and folders that act as decoy, while the real step implementation is defined
+    in the last file (test_b/test_b.py).
+    """
     testdir.makefile(
         ".feature",
         specific=textwrap.dedent(
             """\
             Feature: Specificity of steps
-                Scenario: Overlapping steps 1
-                    When I have a specific thing
-                    Then the value should be specific test_a
-
-                Scenario: Overlapping steps 2
-                    When I have a generic thing
-                    Then the value should be generic
+                Scenario: Overlapping steps
+                    Given I have a specific thing
+                    Then pass
             """
         ),
     )
@@ -250,74 +252,131 @@ def test_specific_step_overrides_parent_step(testdir):
     testdir.makeconftest(
         textwrap.dedent(
             """\
-            from pytest_bdd import parsers, when, then
+            from pytest_bdd import parsers, given, then
+            from pytest_bdd.utils import dump_obj
             import pytest
 
+            @given(parsers.parse("I have a {thing} thing"))
+            def root_conftest(thing):
+                dump_obj(thing + " root_conftest")
 
-            @pytest.fixture
-            def value():
-                return []
-
-
-            @when(parsers.parse("I have a {thing} thing"))
-            def in_conftest(thing, value):
-                value.append(thing)
-
-
-            @then(parsers.parse("The value should be {thing}"))
-            def check(thing, value):
-                assert value == [thing]
+            @then("pass")
+            def _():
+                pass
         """
         )
     )
 
+    # Adding deceiving @when steps around the real test, so that we can check if the right one is used
+    # the right one is the one in test_b/test_b.py
+    # We purposefully use test_a and test_c as decoys (while test_b/test_b is "good one"), so that we can test that
+    # we pick the right one.
     testdir.makepyfile(
-        test_a=textwrap.dedent(
-            """\
-            from pytest_bdd import scenarios, when, parsers
+        test_a="""\
+        from pytest_bdd import given, parsers
+        from pytest_bdd.utils import dump_obj
 
+        @given(parsers.re("(?P<thing>.*)"))
+        def in_root_test_a_catch_all(thing):
+            dump_obj(thing + " (catchall) test_a")
 
-            scenarios("specific.feature")
+        @given(parsers.parse("I have a specific thing"))
+        def in_root_test_a_specific(thing):
+            dump_obj(thing + " (specific) test_a")
 
+        @given(parsers.parse("I have a {thing} thing"))
+        def in_root_test_a(thing):
+            dump_obj(thing + " root_test_a")
+        """
+    )
+    testdir.makepyfile(
+        test_c="""\
+        from pytest_bdd import given, parsers
+        from pytest_bdd.utils import dump_obj
 
-            @when(parsers.parse("I have a specific thing"))
-            def in_test_a(value):
-                value.append("specific test_a")
+        @given(parsers.re("(?P<thing>.*)"))
+        def in_root_test_c_catch_all(thing):
+            dump_obj(thing + " (catchall) test_c")
 
-            """
-        )
+        @given(parsers.parse("I have a specific thing"))
+        def in_root_test_c_specific(thing):
+            dump_obj(thing + " (specific) test_c")
+
+        @given(parsers.parse("I have a {thing} thing"))
+        def in_root_test_c(thing):
+            dump_obj(thing + " root_test_b")
+        """
     )
 
-    # Adding a file that will be collected after test_a and that defines the same step name,
-    # but it should not be taken into account.
-    testdir.makepyfile(
-        test_b=textwrap.dedent(
-            """\
-            from pytest_bdd import when, parsers
+    test_b_folder = testdir.mkpydir("test_b")
 
-            @when(parsers.parse("I have a {thing} thing"))
-            def in_test_b(value, thing):
-                value.append(thing + " test_b")
-
-            """
-        )
-    )
-
-    # Adding a file in a subdir that will be collected after test_a and that defines the same step name,
-    # but it should not be taken into account.
-    # We place it in a subdir so that we are sure that it's collected after test_a, otherwise it may just depend
-    # on the filesystem default ordering.
-    testdir.mkpydir("zzsubdir").join("test_unrelated.py").write(
+    # More decoys: test_b/test_a.py and test_b/test_c.py
+    test_b_folder.join("test_a.py").write(
         textwrap.dedent(
             """\
-            from pytest_bdd import when, parsers
+            from pytest_bdd import given, parsers
+            from pytest_bdd.utils import dump_obj
 
-            @when(parsers.parse("I have a {thing} thing"))
-            def in_zzsubdir_testunrelated(value, thing):
-                value.append(thing + " zzsubdir/test_unrelated")
+            @given(parsers.re("(?P<thing>.*)"))
+            def in_root_test_b_test_a_catch_all(thing):
+                dump_obj(thing + " (catchall) test_b_test_a")
+
+            @given(parsers.parse("I have a specific thing"))
+            def in_test_b_test_a_specific(thing):
+                dump_obj(thing + " (specific) test_b_test_a")
+
+            @given(parsers.parse("I have a {thing} thing"))
+            def in_test_b_test_a(thing):
+                dump_obj(thing + " test_b_test_a")
 
             """
         )
     )
+    test_b_folder.join("test_c.py").write(
+        textwrap.dedent(
+            """\
+            from pytest_bdd import given, parsers
+            from pytest_bdd.utils import dump_obj
+
+            @given(parsers.re("(?P<thing>.*)"))
+            def in_root_test_b_test_c_catch_all(thing):
+                dump_obj(thing + " (catchall) test_b_test_c")
+
+            @given(parsers.parse("I have a specific thing"))
+            def in_test_b_test_c_specific(thing):
+                dump_obj(thing + " (specific) test_a_test_c")
+
+            @given(parsers.parse("I have a {thing} thing"))
+            def in_test_b_test_c(thing):
+                dump_obj(thing + " test_c_test_a")
+
+            """
+        )
+    )
+
+    # Finally, the file with the actual step definition that should be used
+    test_b_folder.join("test_b.py").write(
+        textwrap.dedent(
+            """\
+            from pytest_bdd import scenarios, given, parsers
+            from pytest_bdd.utils import dump_obj
+
+
+            scenarios("../specific.feature")
+
+
+            # Important here to have the parse argument different from the others,
+            # otherwise test would succeed even if the wrong step was used.
+            @given(parsers.parse("I have a {t} thing"))
+            def in_test_b_test_b(t):
+                dump_obj(f"{t} test_b_test_b")
+
+            """
+        )
+    )
+
     result = testdir.runpytest("-s")
-    result.assert_outcomes(passed=2)
+    result.assert_outcomes(passed=1)
+
+    [thing] = collect_dumped_objects(result)
+    assert thing == "specific test_b_test_b"
