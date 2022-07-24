@@ -245,14 +245,15 @@ class EMPTY(Enum):
     EMPTY = 1
 
 
-def setdefaultattr(obj, key, value: Literal[EMPTY.EMPTY] | Any = EMPTY, value_factory: None | Callable = None):
-    if value is not EMPTY and value_factory is not None:
+def setdefaultattr(obj, key, value: Literal[EMPTY.EMPTY] | Any = EMPTY.EMPTY, value_factory: None | Callable = None):
+    if value is not EMPTY.EMPTY and value_factory is not None:
         raise ValueError("Both 'value' and 'value_factory' were specified")
-    if not hasattr(obj, key):
-        if value_factory is not None:
-            value = value_factory()
-        setattr(obj, key, value)
-    return getattr(obj, key, value)
+    with suppress(AttributeError):
+        return getattr(obj, key)
+    if value_factory is not None:
+        value = value_factory()
+    setattr(obj, key, value)
+    return value
 
 
 def make_python_name(string: str) -> str:
