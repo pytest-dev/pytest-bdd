@@ -80,7 +80,7 @@ def rewrite_argumented_step_functions(name: str, type_, fixturemanager) -> None:
             existing_defs.append(fixturedef)
             added.setdefault(bdd_name, []).append(fixturedef)
         else:
-            logger.warning("%r already added to bdd name %r, SKIPING", fixturedef, bdd_name)
+            logger.warning("%r already added to bdd name %r, SKIPPING", fixturedef, bdd_name)
             pass
     if logger.isEnabledFor(logging.DEBUG):
         logger.debug(f"Added the following fixtures:\n{pformat(added)}")
