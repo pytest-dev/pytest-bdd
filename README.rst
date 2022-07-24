@@ -156,6 +156,30 @@ default author.
             Given I'm the admin
             And there's an article
 
+
+Importing steps
+---------------
+Just import steps into test module or `conftest.py` is not enough to be found by pytest-bdd. To use steps from other
+module there are few possibilities:
+
+- Register steps from module:
+
+.. code-block:: python
+
+    import module_with_steps
+
+    step.from_module(module_with_steps)
+
+- Import steps and register them from locals:
+
+.. code-block:: python
+
+    from module_with_steps import given_a, when_b, then_c
+
+    step.from_locals()
+
+- Build step_registry fixture and register imported steps there
+
 Liberal step decorator
 ----------------------
 Sometimes you want use same step for all types of steps without re-defining alias;

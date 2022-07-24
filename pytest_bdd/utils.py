@@ -6,6 +6,7 @@ import pickle
 import re
 from collections import defaultdict
 from contextlib import nullcontext, suppress
+from enum import Enum
 from functools import partial
 from inspect import getframeinfo, signature
 from itertools import tee
@@ -17,6 +18,7 @@ from attr import Factory, attrib, attrs
 from marshmallow import post_load
 
 from pytest_bdd.const import ALPHA_REGEX, PYTHON_REPLACE_REGEX
+from pytest_bdd.typing import Literal
 from pytest_bdd.typing.pytest import FixtureDef
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -237,6 +239,20 @@ def deepattrgetter(*attrs, **kwargs):
         return tuple(_())
 
     return fn
+
+
+class EMPTY(Enum):
+    EMPTY = 1
+
+
+def setdefaultattr(obj, key, value: Literal[EMPTY.EMPTY] | Any = EMPTY, value_factory: None | Callable = None):
+    if value is not EMPTY and value_factory is not None:
+        raise ValueError("Both 'value' and 'value_factory' were specified")
+    if not hasattr(obj, key):
+        if value_factory is not None:
+            value = value_factory()
+        setattr(obj, key, value)
+    return getattr(obj, key, value)
 
 
 def make_python_name(string: str) -> str:

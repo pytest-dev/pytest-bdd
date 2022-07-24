@@ -1,7 +1,8 @@
+import pytest
 from attr import attrib, attrs
 from pytest import raises
 
-from pytest_bdd.utils import deepattrgetter
+from pytest_bdd.utils import deepattrgetter, setdefaultattr
 
 
 def test_get_attribute():
@@ -156,3 +157,53 @@ def test_skip_missing_and_default_attributes():
 
     with raises(ValueError):
         deepattrgetter("foo", "boo", "missing", skip_missing=True, default=object())(item)
+
+
+def test_setdefaultattr_set_nonexisting_attr_value():
+    class Dumb:
+        ...
+
+    dumb = Dumb()
+    setdefaultattr(dumb, "foo", value=10)
+
+    assert dumb.foo == 10
+
+
+def test_setdefaultattr_set_nonexisting_attr_value_factory():
+    class Dumb:
+        ...
+
+    dumb = Dumb()
+    setdefaultattr(dumb, "foo", value_factory=lambda: 10)
+
+    assert dumb.foo == 10
+
+
+def test_setdefaultattr_not_set_existing_attr_value():
+    class Dumb:
+        ...
+
+    dumb = Dumb()
+    dumb.foo = 20
+    setdefaultattr(dumb, "foo", value=10)
+
+    assert dumb.foo == 20
+
+
+def test_setdefaultattr_not_set_existing_attr_value_factory():
+    class Dumb:
+        ...
+
+    dumb = Dumb()
+    dumb.foo = 20
+    setdefaultattr(dumb, "foo", value_factory=lambda: 10)
+
+    assert dumb.foo == 20
+
+
+def test_setdefaultattr_for_both_factory_and_value():
+    class Dumb:
+        ...
+
+    with pytest.raises(ValueError):
+        setdefaultattr(Dumb(), "a", value=10, value_factory=lambda: 20)

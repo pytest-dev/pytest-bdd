@@ -1,4 +1,8 @@
+import textwrap
+
 import pytest
+
+from pytest_bdd.utils import collect_dumped_objects
 
 
 def test_steps(testdir):
@@ -27,6 +31,160 @@ def test_steps(testdir):
         @scenario("steps.feature", "Executed step by step")
         def test_steps():
             pass
+
+        @given('I have a foo fixture with value "foo"', target_fixture="foo")
+        def foo():
+            return "foo"
+
+
+        @given("there is a list", target_fixture="results")
+        def results():
+            return []
+
+
+        @when("I append 1 to the list")
+        def append_1(results):
+            results.append(1)
+
+
+        @when("I append 2 to the list")
+        def append_2(results):
+            results.append(2)
+
+
+        @when("I append 3 to the list")
+        def append_3(results):
+            results.append(3)
+
+
+        @then('foo should have value "foo"')
+        def foo_is_foo(foo):
+            assert foo == "foo"
+
+
+        @then("the list should be [1, 2, 3]")
+        def check_results(results):
+            assert results == [1, 2, 3]
+        """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
+
+
+def test_imported_steps_registering(testdir):
+    testdir.makefile(
+        ".feature",
+        steps="""\
+            Feature: Steps are executed one by one
+                Steps are executed one by one. Given and When sections
+                are not mandatory in some cases.
+
+                Scenario: Executed step by step
+                    Given I have a foo fixture with value "foo"
+                    And there is a list
+                    When I append 1 to the list
+                    And I append 2 to the list
+                    And I append 3 to the list
+                    Then foo should have value "foo"
+                    But the list should be [1, 2, 3]
+            """,
+    )
+
+    testdir.makepyfile(__init__="")
+
+    testdir.makepyfile(
+        test_steps="""\
+        from pytest_bdd import step, scenario
+
+        from .importable_steps import foo, results, append_1, append_2, append_3, foo_is_foo, check_results
+
+        step.from_locals()
+
+        @scenario("steps.feature", "Executed step by step")
+        def test_steps():
+            pass
+        """
+    )
+    testdir.makepyfile(
+        importable_steps="""\
+        from pytest_bdd import given, when, then, scenario
+
+        @given('I have a foo fixture with value "foo"', target_fixture="foo")
+        def foo():
+            return "foo"
+
+
+        @given("there is a list", target_fixture="results")
+        def results():
+            return []
+
+
+        @when("I append 1 to the list")
+        def append_1(results):
+            results.append(1)
+
+
+        @when("I append 2 to the list")
+        def append_2(results):
+            results.append(2)
+
+
+        @when("I append 3 to the list")
+        def append_3(results):
+            results.append(3)
+
+
+        @then('foo should have value "foo"')
+        def foo_is_foo(foo):
+            assert foo == "foo"
+
+
+        @then("the list should be [1, 2, 3]")
+        def check_results(results):
+            assert results == [1, 2, 3]
+        """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
+
+
+def test_imported_module_steps_registering(testdir):
+    testdir.makefile(
+        ".feature",
+        steps="""\
+            Feature: Steps are executed one by one
+                Steps are executed one by one. Given and When sections
+                are not mandatory in some cases.
+
+                Scenario: Executed step by step
+                    Given I have a foo fixture with value "foo"
+                    And there is a list
+                    When I append 1 to the list
+                    And I append 2 to the list
+                    And I append 3 to the list
+                    Then foo should have value "foo"
+                    But the list should be [1, 2, 3]
+            """,
+    )
+
+    testdir.makepyfile(__init__="")
+
+    testdir.makepyfile(
+        test_steps="""\
+        from pytest_bdd import step, scenario
+
+        from . import importable_steps
+
+        step.from_module(importable_steps)
+
+        @scenario("steps.feature", "Executed step by step")
+        def test_steps():
+            pass
+        """
+    )
+    testdir.makepyfile(
+        importable_steps="""\
+        from pytest_bdd import given, when, then, scenario
 
         @given('I have a foo fixture with value "foo"', target_fixture="foo")
         def foo():
@@ -1133,3 +1291,153 @@ def test_default_params(testdir):
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
+
+
+def test_uses_correct_step_in_the_hierarchy(testdir):
+    """
+    Test regression found in issue #524, where we couldn't find the correct step implemntation in the
+    hierarchy of files/folder as expected.
+    This test uses many files and folders that act as decoy, while the real step implementation is defined
+    in the last file (test_b/test_b.py).
+    """
+    testdir.makefile(
+        ".feature",
+        specific=textwrap.dedent(
+            """\
+            Feature: Specificity of steps
+                Scenario: Overlapping steps
+                    Given I have a specific thing
+                    Then pass
+            """
+        ),
+    )
+
+    testdir.makeconftest(
+        textwrap.dedent(
+            """\
+            from pytest_bdd import parsers, given, then
+            from pytest_bdd.utils import dump_obj
+            import pytest
+            @given(parsers.re("(?P<thing>.*)"))
+            def root_conftest_catchall(thing):
+                dump_obj(thing + " (catchall) root_conftest")
+            @given(parsers.parse("I have a {thing} thing"))
+            def root_conftest(thing):
+                dump_obj(thing + " root_conftest")
+            @given("I have a specific thing")
+            def root_conftest_specific():
+                dump_obj("specific" + "(specific) root_conftest")
+            @then("pass")
+            def _():
+                pass
+        """
+        )
+    )
+
+    # Adding deceiving @when steps around the real test, so that we can check if the right one is used
+    # the right one is the one in test_b/test_b.py
+    # We purposefully use test_a and test_c as decoys (while test_b/test_b is "good one"), so that we can test that
+    # we pick the right one.
+    testdir.makepyfile(
+        test_a="""\
+        from pytest_bdd import given, parsers
+        from pytest_bdd.utils import dump_obj
+        @given(parsers.re("(?P<thing>.*)"))
+        def in_root_test_a_catch_all(thing):
+            dump_obj(thing + " (catchall) test_a")
+        @given(parsers.parse("I have a specific thing"))
+        def in_root_test_a_specific():
+            dump_obj("specific" + " (specific) test_a")
+        @given(parsers.parse("I have a {thing} thing"))
+        def in_root_test_a(thing):
+            dump_obj(thing + " root_test_a")
+        """
+    )
+    testdir.makepyfile(
+        test_c="""\
+        from pytest_bdd import given, parsers
+        from pytest_bdd.utils import dump_obj
+        @given(parsers.re("(?P<thing>.*)"))
+        def in_root_test_c_catch_all(thing):
+            dump_obj(thing + " (catchall) test_c")
+        @given(parsers.parse("I have a specific thing"))
+        def in_root_test_c_specific():
+            dump_obj("specific" + " (specific) test_c")
+        @given(parsers.parse("I have a {thing} thing"))
+        def in_root_test_c(thing):
+            dump_obj(thing + " root_test_b")
+        """
+    )
+
+    test_b_folder = testdir.mkpydir("test_b")
+
+    # More decoys: test_b/test_a.py and test_b/test_c.py
+    test_b_folder.join("test_a.py").write(
+        textwrap.dedent(
+            """\
+            from pytest_bdd import given, parsers
+            from pytest_bdd.utils import dump_obj
+            @given(parsers.re("(?P<thing>.*)"))
+            def in_root_test_b_test_a_catch_all(thing):
+                dump_obj(thing + " (catchall) test_b_test_a")
+            @given(parsers.parse("I have a specific thing"))
+            def in_test_b_test_a_specific():
+                dump_obj("specific" + " (specific) test_b_test_a")
+            @given(parsers.parse("I have a {thing} thing"))
+            def in_test_b_test_a(thing):
+                dump_obj(thing + " test_b_test_a")
+            """
+        )
+    )
+    test_b_folder.join("test_c.py").write(
+        textwrap.dedent(
+            """\
+            from pytest_bdd import given, parsers
+            from pytest_bdd.utils import dump_obj
+            @given(parsers.re("(?P<thing>.*)"))
+            def in_root_test_b_test_c_catch_all(thing):
+                dump_obj(thing + " (catchall) test_b_test_c")
+            @given(parsers.parse("I have a specific thing"))
+            def in_test_b_test_c_specific():
+                dump_obj("specific" + " (specific) test_a_test_c")
+            @given(parsers.parse("I have a {thing} thing"))
+            def in_test_b_test_c(thing):
+                dump_obj(thing + " test_c_test_a")
+            """
+        )
+    )
+
+    # Finally, the file with the actual step definition that should be used
+    test_b_folder.join("test_b.py").write(
+        textwrap.dedent(
+            """\
+            from pytest_bdd import scenarios, given, parsers
+            from pytest_bdd.utils import dump_obj
+            scenarios("../specific.feature")
+            @given(parsers.parse("I have a {thing} thing"))
+            def in_test_b_test_b(thing):
+                dump_obj(f"{thing} test_b_test_b")
+            """
+        )
+    )
+
+    test_b_folder.join("test_b_alternative.py").write(
+        textwrap.dedent(
+            """\
+            from pytest_bdd import scenarios, given, parsers
+            from pytest_bdd.utils import dump_obj
+            scenarios("../specific.feature")
+            # Here we try to use an argument different from the others,
+            # to make sure it doesn't matter if a new step parser string is encountered.
+            @given(parsers.parse("I have a {t} thing"))
+            def in_test_b_test_b(t):
+                dump_obj(f"{t} test_b_test_b")
+            """
+        )
+    )
+
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=2)
+
+    [thing1, thing2] = collect_dumped_objects(result)
+    assert thing1 == thing2 == "specific test_b_test_b"

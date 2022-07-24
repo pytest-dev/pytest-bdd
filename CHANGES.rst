@@ -8,6 +8,10 @@ Planned
 - Extra support of official parser
    - https://github.com/pytest-dev/pytest-bdd/issues/502
 
+1.2.2
+-----
+- Add possibility to register imported steps
+
 1.2.0
 -----
 - Make liberal step definitions conform with
