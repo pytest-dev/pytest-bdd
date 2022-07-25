@@ -132,7 +132,7 @@ def test_generate_missing_with_step_parsers(testdir):
     )
 
     result = testdir.runpytest("--generate-missing", "--feature", "generation.feature")
-    result.assert_outcomes(result, passed=0, failed=0, errors=0)
+    result.assert_outcomes(passed=0, failed=0, errors=0)
     assert not result.stderr.str()
     assert result.ret == 0
 
