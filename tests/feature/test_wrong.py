@@ -2,8 +2,6 @@
 
 import textwrap
 
-from tests.utils import assert_outcomes
-
 
 def test_multiple_features_single_file(testdir):
     """Test validation error when multiple features are placed in a single file."""
@@ -51,5 +49,5 @@ def test_multiple_features_single_file(testdir):
         )
     )
     result = testdir.runpytest()
-    assert_outcomes(result, errors=1)
+    result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines("*FeatureError: Multiple features are not allowed in a single feature file.*")
