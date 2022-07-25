@@ -39,7 +39,7 @@ glob2 = "*"
 Mako = "*"
 parse = "*"
 parse-type = "*"
-pytest = ">=5.0"
+pytest = ">=6.2.0"
 typing-extensions = "*"
 
 [tool.poetry.dev-dependencies]
