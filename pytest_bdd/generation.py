@@ -9,8 +9,8 @@ import py
 from mako.lookup import TemplateLookup
 
 from .feature import get_features
-from .scenario import find_argumented_step_function, make_python_docstring, make_python_name, make_string_literal
-from .steps import get_step_fixture_name
+from .scenario import make_python_docstring, make_python_name, make_string_literal, patch_argumented_step_functions
+from .steps import get_parsed_step_fixture_name, get_step_fixture_name
 from .types import STEP_TYPES
 
 if TYPE_CHECKING:
@@ -131,10 +131,11 @@ def _find_step_fixturedef(
     fixturedefs = fixturemanager.getfixturedefs(step_fixture_name, item.nodeid)
     if fixturedefs is not None:
         return fixturedefs
-
-    step_func_context = find_argumented_step_function(name, type_, fixturemanager)
-    if step_func_context is not None:
-        return fixturemanager.getfixturedefs(step_func_context.name, item.nodeid)
+    with patch_argumented_step_functions(name=name, type_=type_, fixturemanager=fixturemanager, nodeid=item.nodeid):
+        bdd_name = get_parsed_step_fixture_name(name, type_)
+        fixturedefs = fixturemanager.getfixturedefs(bdd_name, item.nodeid)
+        if fixturedefs is not None:
+            return fixturedefs
     return None
 
 
