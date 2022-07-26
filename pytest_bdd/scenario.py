@@ -79,6 +79,9 @@ def patch_argumented_step_functions(name: str, type_, fixturemanager, nodeid: st
     # respect the fixture scope
     fixture_defs_by_path = [(tuple(iterparentnodeids(x.baseid)), x) for x in fixturedefs]
     resorted = sorted(fixture_defs_by_path, key=lambda x: x[0])
+    if not resorted:
+        yield
+        return
 
     bdd_step_defs = fixturemanager._arg2fixturedefs[bdd_name] = []
     for fixture_path, fixturedef in resorted:

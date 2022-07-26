@@ -127,16 +127,9 @@ def _find_step_fixturedef(
     fixturemanager: FixtureManager, item: Function, name: str, type_: str
 ) -> Sequence[FixtureDef[Any]] | None:
     """Find step fixturedef."""
-    step_fixture_name = get_step_fixture_name(name, type_)
-    fixturedefs = fixturemanager.getfixturedefs(step_fixture_name, item.nodeid)
-    if fixturedefs is not None:
-        return fixturedefs
     with patch_argumented_step_functions(name=name, type_=type_, fixturemanager=fixturemanager, nodeid=item.nodeid):
         bdd_name = get_parsed_step_fixture_name(name, type_)
-        fixturedefs = fixturemanager.getfixturedefs(bdd_name, item.nodeid)
-        if fixturedefs is not None:
-            return fixturedefs
-    return None
+        return fixturemanager.getfixturedefs(bdd_name, item.nodeid)
 
 
 def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature], list[ScenarioTemplate], list[Step]]:
