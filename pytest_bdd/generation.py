@@ -10,7 +10,7 @@ from mako.lookup import TemplateLookup
 
 from .feature import get_features
 from .scenario import make_python_docstring, make_python_name, make_string_literal, patch_argumented_step_functions
-from .steps import get_parsed_step_fixture_name, get_step_fixture_name
+from .steps import get_parsed_step_fixture_name
 from .types import STEP_TYPES
 
 if TYPE_CHECKING:
