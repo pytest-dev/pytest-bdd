@@ -39,7 +39,7 @@ glob2 = "*"
 Mako = "*"
 parse = "*"
 parse-type = "*"
-pytest = ">=5.0"
+pytest = ">=6.2.0"
 typing-extensions = "*"
 
 [tool.poetry.dev-dependencies]
@@ -47,6 +47,7 @@ tox = "^3.25.1"
 mypy = "^0.961"
 types-setuptools = "^57.4.18"
 pytest-xdist = "^2.5.0"
+coverage = {extras = ["toml"], version = "^6.4.2"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -60,6 +61,19 @@ target-version = ["py37", "py38", "py39", "py310"]
 profile = "black"
 line_length = 120
 multi_line_output = 3
+
+[tool.coverage.report]
+exclude_lines = [
+    "if TYPE_CHECKING:",
+    "if typing\\.TYPE_CHECKING:",
+]
+[tool.coverage.run]
+branch = true
+include =[
+    "pytest_bdd/*",
+    "tests/*",
+]
+
 
 [tool.mypy]
 python_version = "3.7"
