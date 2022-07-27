@@ -42,8 +42,8 @@ PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
-def iter_argumented_step_function(step: Step, fixturemanager: FixtureManager, nodeid: str) -> Iterable[FixtureDef[Any]]:
-    """Iterate over argumented step functions."""
+def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, nodeid: str) -> Iterable[FixtureDef[Any]]:
+    """Find the fixture defs that can parse a step."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     fixture_def_by_name = list(fixturemanager._arg2fixturedefs.items())
     for i, (fixturename, fixturedefs) in enumerate(fixture_def_by_name):
@@ -66,10 +66,18 @@ def iter_argumented_step_function(step: Step, fixturemanager: FixtureManager, no
 
 
 @contextlib.contextmanager
-def patch_argumented_step_functions(step: Step, fixturemanager: FixtureManager, nodeid: str) -> Iterator[None]:
+def inject_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, nodeid: str) -> Iterator[None]:
+    """Inject fixture definitions that can parse a step.
+
+    We fist iterate over all the fixturedefs that can parse the step.
+
+    Then we sort them by their "path" (list of parent IDs) so that we respect the fixture scoping rules.
+
+    Finally, we inject them into the request.
+    """
     bdd_name = get_step_fixture_name(step=step)
 
-    fixturedefs = list(iter_argumented_step_function(step=step, fixturemanager=fixturemanager, nodeid=nodeid))
+    fixturedefs = list(find_fixturedefs_for_step(step=step, fixturemanager=fixturemanager, nodeid=nodeid))
 
     # Sort the fixture definitions by their "path", so that the `bdd_name` fixture will
     # respect the fixture scope
@@ -92,11 +100,19 @@ def patch_argumented_step_functions(step: Step, fixturemanager: FixtureManager, 
         del fixturemanager._arg2fixturedefs[bdd_name]
 
 
-def get_argumented_step_function(request, step: Step) -> StepFunctionContext | None:
-    """Find argumented step fixture name."""
+def get_step_function(request, step: Step) -> StepFunctionContext | None:
+    """Get the step function (context) for the given step.
+
+    We first figure out what's the step fixture name that we have to inject.
+
+    Then we let `patch_argumented_step_functions` find out what step definition fixtures can parse the current step,
+    and it will inject them for the step fixture name.
+
+    Finally we let request.getfixturevalue(...) fetch the step definition fixture.
+    """
     bdd_name = get_step_fixture_name(step=step)
 
-    with patch_argumented_step_functions(step=step, fixturemanager=request._fixturemanager, nodeid=request.node.nodeid):
+    with inject_fixturedefs_for_step(step=step, fixturemanager=request._fixturemanager, nodeid=request.node.nodeid):
         try:
             return cast(StepFunctionContext, request.getfixturevalue(bdd_name))
         except pytest.FixtureLookupError:
@@ -160,7 +176,7 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequ
     request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
 
     for step in scenario.steps:
-        context = get_argumented_step_function(request=request, step=step)
+        context = get_step_function(request=request, step=step)
         if context is None:
             exc = exceptions.StepDefinitionNotFoundError(
                 f"Step definition is not found: {step}. "
