@@ -96,13 +96,17 @@ def patch_argumented_step_functions(name: str, type_, fixturemanager, nodeid: st
         del fixturemanager._arg2fixturedefs[bdd_name]
 
 
-def get_argumented_step_function(request, name: str, type_: str) -> StepFunctionContext | None:
+def get_argumented_step_function(request, step: Step) -> StepFunctionContext | None:
     """Find argumented step fixture name."""
-    bdd_name = get_step_fixture_name(name, type_)
-    try:
-        return request.getfixturevalue(bdd_name)
-    except pytest.FixtureLookupError:
-        return None
+    bdd_name = get_step_fixture_name(name=step.name, type_=step.type)
+
+    with patch_argumented_step_functions(
+        name=step.name, type_=step.type, fixturemanager=request._fixturemanager, nodeid=request.node.nodeid
+    ):
+        try:
+            return request.getfixturevalue(bdd_name)
+        except pytest.FixtureLookupError:
+            return None
 
 
 def _execute_step_function(
@@ -158,10 +162,7 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequ
     request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
 
     for step in scenario.steps:
-        with patch_argumented_step_functions(
-            name=step.name, type_=step.type, fixturemanager=request._fixturemanager, nodeid=request.node.nodeid
-        ):
-            context = get_argumented_step_function(request, step.name, step.type)
+        context = get_argumented_step_function(request=request, step=step)
         if context is None:
             exc = exceptions.StepDefinitionNotFoundError(
                 f"Step definition is not found: {step}. "

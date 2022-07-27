@@ -124,11 +124,13 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
 
 
 def _find_step_fixturedef(
-    fixturemanager: FixtureManager, item: Function, name: str, type_: str
+    fixturemanager: FixtureManager, item: Function, step: Step
 ) -> Sequence[FixtureDef[Any]] | None:
     """Find step fixturedef."""
-    with patch_argumented_step_functions(name=name, type_=type_, fixturemanager=fixturemanager, nodeid=item.nodeid):
-        bdd_name = get_step_fixture_name(name, type_)
+    with patch_argumented_step_functions(
+        name=step.name, type_=step.type, fixturemanager=fixturemanager, nodeid=item.nodeid
+    ):
+        bdd_name = get_step_fixture_name(name=step.name, type_=step.type)
         return fixturemanager.getfixturedefs(bdd_name, item.nodeid)
 
 
@@ -186,7 +188,7 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
             if scenario in scenarios:
                 scenarios.remove(scenario)
             for step in scenario.steps:
-                fixturedefs = _find_step_fixturedef(fm, item, step.name, step.type)
+                fixturedefs = _find_step_fixturedef(fm, item, step=step)
                 if fixturedefs:
                     try:
                         steps.remove(step)
