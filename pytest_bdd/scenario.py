@@ -48,7 +48,7 @@ def iter_argumented_step_function(
     """Iterate over argumented step functions."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     fixture_def_by_name = list(fixturemanager._arg2fixturedefs.items())
-    for i, (fixturename, fixturedefs) in enumerate(reversed(fixture_def_by_name)):
+    for i, (fixturename, fixturedefs) in enumerate(fixture_def_by_name):
         for pos, fixturedef in enumerate(fixturedefs):
             step_func_context = getattr(fixturedef.func, "_pytest_bdd_step_context", None)
             if step_func_context is None:

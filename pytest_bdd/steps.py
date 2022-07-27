@@ -37,7 +37,8 @@ def _(article):
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, TypeVar
+from itertools import count
+from typing import Any, Callable, Iterable, TypeVar
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureRequest
@@ -52,23 +53,11 @@ TCallable = TypeVar("TCallable", bound=Callable[..., Any])
 
 @dataclass
 class StepFunctionContext:
-    name: str
     type: Literal["given", "when", "then"]
     step_func: Callable[..., Any]
     parser: StepParser
     converters: dict[str, Callable[..., Any]] = field(default_factory=dict)
     target_fixture: str | None = None
-
-
-def get_step_fixture_name(name: str, type_: str) -> str:
-    """Get step fixture name.
-
-    :param name: string
-    :param type: step type
-    :return: step fixture name
-    :rtype: string
-    """
-    return f"pytestbdd_{type_}_{name}"
 
 
 def get_parsed_step_fixture_name(name: str, type_: str) -> str:
@@ -129,6 +118,23 @@ def then(
     return _step_decorator(THEN, name, converters=converters, target_fixture=target_fixture)
 
 
+def find_unique_name(name: str, seen: Iterable[str]) -> str:
+    """Find unique name.
+
+    :param name: string
+    :param seen: iterable of strings
+    :return: unique string
+    """
+    seen = set(seen)
+    if name not in seen:
+        return name
+
+    for i in count(1):
+        new_name = f"{name}_{i}"
+        if new_name not in seen:
+            return new_name
+
+
 def _step_decorator(
     step_type: Literal["given", "when", "then"],
     step_name: str | StepParser,
@@ -149,12 +155,8 @@ def _step_decorator(
 
     def decorator(func: TCallable) -> TCallable:
         parser = get_parser(step_name)
-        parsed_step_name = parser.name
-
-        fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
 
         context = StepFunctionContext(
-            name=fixture_step_name,
             type=step_type,
             step_func=func,
             parser=parser,
@@ -162,13 +164,13 @@ def _step_decorator(
             target_fixture=target_fixture,
         )
 
-        # TODO: Probably we can keep on returning None here instead
         def step_function_marker() -> StepFunctionContext:
             return context
 
         step_function_marker._pytest_bdd_step_context = context
 
         caller_locals = get_caller_module_locals()
+        fixture_step_name = find_unique_name(f"pytestbdd_stepdef_{step_type}_{parser.name}", seen=caller_locals.keys())
         caller_locals[fixture_step_name] = pytest.fixture(name=fixture_step_name)(step_function_marker)
         return func
 
