@@ -24,7 +24,7 @@ from _pytest.nodes import iterparentnodeids
 
 from . import exceptions
 from .feature import get_feature, get_features
-from .steps import StepFunctionContext, get_parsed_step_fixture_name, inject_fixture
+from .steps import StepFunctionContext, get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if TYPE_CHECKING:
@@ -43,7 +43,7 @@ ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
 def iter_argumented_step_function(
-    name: str, type_: str, fixturemanager: FixtureManager, nodeid: str | None = None
+    name: str, type_: str, fixturemanager: FixtureManager, nodeid: str
 ) -> Iterable[FixtureDef[Any]]:
     """Iterate over argumented step functions."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
@@ -61,35 +61,35 @@ def iter_argumented_step_function(
             if not match:
                 continue
 
-            if nodeid is not None:
-                if fixturedef not in fixturemanager.getfixturedefs(fixturename, nodeid):
-                    continue
+            if fixturedef not in fixturemanager.getfixturedefs(fixturename, nodeid):
+                continue
 
             yield fixturedef
 
 
 @contextlib.contextmanager
 def patch_argumented_step_functions(name: str, type_, fixturemanager, nodeid: str | None = None) -> None:
-    bdd_name = get_parsed_step_fixture_name(name, type_)
+    bdd_name = get_step_fixture_name(name, type_)
 
     fixturedefs = list(
         iter_argumented_step_function(name=name, type_=type_, fixturemanager=fixturemanager, nodeid=nodeid)
     )
-    # Sort the fixture definitions by their "path", so that the "pytestbdd_parsed_" fixturedef will
+
+    # Sort the fixture definitions by their "path", so that the `bdd_name` fixture will
     # respect the fixture scope
-    fixture_defs_by_path = [(tuple(iterparentnodeids(x.baseid)), x) for x in fixturedefs]
-    resorted = sorted(fixture_defs_by_path, key=lambda x: x[0])
-    if not resorted:
+
+    def get_fixture_path(fixture_def: FixtureDef) -> list[str]:
+        return list(iterparentnodeids(fixture_def.baseid))
+
+    fixturedefs.sort(key=lambda x: get_fixture_path(x))
+
+    if not fixturedefs:
         yield
         return
 
-    bdd_step_defs = fixturemanager._arg2fixturedefs[bdd_name] = []
-    for fixture_path, fixturedef in resorted:
-        if fixturedef not in bdd_step_defs:
-            logger.debug("Adding provider for fixture %r}: %s", bdd_name, fixturedef)
-            bdd_step_defs.append(fixturedef)
-        else:
-            logger.warning("%r already added to bdd name %r, SKIPPING", fixturedef, bdd_name)
+    logger.debug("Adding providers for fixture %r: %r", bdd_name, fixturedefs)
+    fixturemanager._arg2fixturedefs[bdd_name] = fixturedefs
+
     try:
         yield
     finally:
@@ -98,7 +98,7 @@ def patch_argumented_step_functions(name: str, type_, fixturemanager, nodeid: st
 
 def get_argumented_step_function(request, name: str, type_: str) -> StepFunctionContext | None:
     """Find argumented step fixture name."""
-    bdd_name = get_parsed_step_fixture_name(name, type_)
+    bdd_name = get_step_fixture_name(name, type_)
     try:
         return request.getfixturevalue(bdd_name)
     except pytest.FixtureLookupError:

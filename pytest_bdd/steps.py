@@ -36,6 +36,7 @@ def _(article):
 """
 from __future__ import annotations
 
+import enum
 from dataclasses import dataclass, field
 from itertools import count
 from typing import Any, Callable, Iterable, TypeVar
@@ -51,6 +52,12 @@ from .utils import get_caller_module_locals
 TCallable = TypeVar("TCallable", bound=Callable[..., Any])
 
 
+@enum.unique
+class StepNamePrefix(enum.Enum):
+    step_def = "pytestbdd_stepdef"
+    step_impl = "pytestbdd_stepimpl"
+
+
 @dataclass
 class StepFunctionContext:
     type: Literal["given", "when", "then"]
@@ -60,7 +67,7 @@ class StepFunctionContext:
     target_fixture: str | None = None
 
 
-def get_parsed_step_fixture_name(name: str, type_: str) -> str:
+def get_step_fixture_name(name: str, type_: str) -> str:
     """Get step fixture name.
 
     :param name: string
@@ -68,7 +75,7 @@ def get_parsed_step_fixture_name(name: str, type_: str) -> str:
     :return: step fixture name
     :rtype: string
     """
-    return f"pytestbdd_parsed_{type_}_{name}"
+    return f"{StepNamePrefix.step_impl}_{type_}_{name}"
 
 
 def given(
@@ -170,7 +177,9 @@ def _step_decorator(
         step_function_marker._pytest_bdd_step_context = context
 
         caller_locals = get_caller_module_locals()
-        fixture_step_name = find_unique_name(f"pytestbdd_stepdef_{step_type}_{parser.name}", seen=caller_locals.keys())
+        fixture_step_name = find_unique_name(
+            f"{StepNamePrefix.step_def}_{step_type}_{parser.name}", seen=caller_locals.keys()
+        )
         caller_locals[fixture_step_name] = pytest.fixture(name=fixture_step_name)(step_function_marker)
         return func
 
