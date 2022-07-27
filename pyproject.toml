@@ -62,6 +62,19 @@ profile = "black"
 line_length = 120
 multi_line_output = 3
 
+[tool.coverage.report]
+exclude_lines = [
+    "if TYPE_CHECKING:",
+    "if typing\\.TYPE_CHECKING:",
+]
+[tool.coverage.run]
+branch = true
+include =[
+    "pytest_bdd/*",
+    "tests/*",
+]
+
+
 [tool.mypy]
 python_version = "3.7"
 warn_return_any = true
