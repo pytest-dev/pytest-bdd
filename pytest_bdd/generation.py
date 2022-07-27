@@ -127,10 +127,8 @@ def _find_step_fixturedef(
     fixturemanager: FixtureManager, item: Function, step: Step
 ) -> Sequence[FixtureDef[Any]] | None:
     """Find step fixturedef."""
-    with patch_argumented_step_functions(
-        name=step.name, type_=step.type, fixturemanager=fixturemanager, nodeid=item.nodeid
-    ):
-        bdd_name = get_step_fixture_name(name=step.name, type_=step.type)
+    with patch_argumented_step_functions(step=step, fixturemanager=fixturemanager, nodeid=item.nodeid):
+        bdd_name = get_step_fixture_name(step=step)
         return fixturemanager.getfixturedefs(bdd_name, item.nodeid)
 
 

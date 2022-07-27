@@ -45,6 +45,7 @@ import pytest
 from _pytest.fixtures import FixtureDef, FixtureRequest
 from typing_extensions import Literal
 
+from .parser import Step
 from .parsers import StepParser, get_parser
 from .types import GIVEN, THEN, WHEN
 from .utils import get_caller_module_locals
@@ -67,15 +68,9 @@ class StepFunctionContext:
     target_fixture: str | None = None
 
 
-def get_step_fixture_name(name: str, type_: str) -> str:
-    """Get step fixture name.
-
-    :param name: string
-    :param type: step type
-    :return: step fixture name
-    :rtype: string
-    """
-    return f"{StepNamePrefix.step_impl}_{type_}_{name}"
+def get_step_fixture_name(step: Step) -> str:
+    """Get step fixture name"""
+    return f"{StepNamePrefix.step_impl}_{step.type}_{step.name}"
 
 
 def given(
@@ -149,7 +144,7 @@ def _step_decorator(
     step_name: str | StepParser,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
-) -> Callable:
+) -> Callable[[TCallable], TCallable]:
     """Step decorator for the type and the name.
 
     :param str step_type: Step type (GIVEN, WHEN or THEN).
@@ -211,7 +206,9 @@ def inject_fixture(request: FixtureRequest, arg: str, value: Any) -> None:
 
     def fin() -> None:
         request._fixturemanager._arg2fixturedefs[arg].remove(fd)
-        request._fixture_defs[arg] = old_fd
+
+        if old_fd is not None:
+            request._fixture_defs[arg] = old_fd
 
         if add_fixturename:
             request._pyfuncitem._fixtureinfo.names_closure.remove(arg)

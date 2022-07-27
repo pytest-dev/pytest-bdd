@@ -16,7 +16,7 @@ import contextlib
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Callable, cast
+from typing import TYPE_CHECKING, Callable, Iterator, cast
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
@@ -42,9 +42,7 @@ PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
-def iter_argumented_step_function(
-    name: str, type_: str, fixturemanager: FixtureManager, nodeid: str
-) -> Iterable[FixtureDef[Any]]:
+def iter_argumented_step_function(step: Step, fixturemanager: FixtureManager, nodeid: str) -> Iterable[FixtureDef[Any]]:
     """Iterate over argumented step functions."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     fixture_def_by_name = list(fixturemanager._arg2fixturedefs.items())
@@ -54,26 +52,24 @@ def iter_argumented_step_function(
             if step_func_context is None:
                 continue
 
-            if step_func_context.type != type_:
+            if step_func_context.type != step.type:
                 continue
 
-            match = step_func_context.parser.is_matching(name)
+            match = step_func_context.parser.is_matching(step.name)
             if not match:
                 continue
 
-            if fixturedef not in fixturemanager.getfixturedefs(fixturename, nodeid):
+            if fixturedef not in (fixturemanager.getfixturedefs(fixturename, nodeid) or []):
                 continue
 
             yield fixturedef
 
 
 @contextlib.contextmanager
-def patch_argumented_step_functions(name: str, type_, fixturemanager, nodeid: str | None = None) -> None:
-    bdd_name = get_step_fixture_name(name, type_)
+def patch_argumented_step_functions(step: Step, fixturemanager: FixtureManager, nodeid: str) -> Iterator[None]:
+    bdd_name = get_step_fixture_name(step=step)
 
-    fixturedefs = list(
-        iter_argumented_step_function(name=name, type_=type_, fixturemanager=fixturemanager, nodeid=nodeid)
-    )
+    fixturedefs = list(iter_argumented_step_function(step=step, fixturemanager=fixturemanager, nodeid=nodeid))
 
     # Sort the fixture definitions by their "path", so that the `bdd_name` fixture will
     # respect the fixture scope
@@ -98,13 +94,11 @@ def patch_argumented_step_functions(name: str, type_, fixturemanager, nodeid: st
 
 def get_argumented_step_function(request, step: Step) -> StepFunctionContext | None:
     """Find argumented step fixture name."""
-    bdd_name = get_step_fixture_name(name=step.name, type_=step.type)
+    bdd_name = get_step_fixture_name(step=step)
 
-    with patch_argumented_step_functions(
-        name=step.name, type_=step.type, fixturemanager=request._fixturemanager, nodeid=request.node.nodeid
-    ):
+    with patch_argumented_step_functions(step=step, fixturemanager=request._fixturemanager, nodeid=request.node.nodeid):
         try:
-            return request.getfixturevalue(bdd_name)
+            return cast(StepFunctionContext, request.getfixturevalue(bdd_name))
         except pytest.FixtureLookupError:
             return None
 
@@ -130,7 +124,11 @@ def _execute_step_function(
     args = get_args(context.step_func)
 
     try:
-        for arg, value in context.parser.parse_arguments(step.name).items():
+        parsed_args = context.parser.parse_arguments(step.name)
+        assert parsed_args is not None, (
+            f"Unexpected `NoneType` returned from " f"parse_arguments(...) in parser: {context.parser!r}"
+        )
+        for arg, value in parsed_args.items():
             if arg in converters:
                 value = converters[arg](value)
             kwargs[arg] = value
