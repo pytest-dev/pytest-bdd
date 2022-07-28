@@ -2,7 +2,6 @@
 import textwrap
 
 from pytest_bdd.utils import collect_dumped_objects
-from tests.utils import assert_outcomes
 
 STEPS = """\
 from pytest_bdd import parsers, given, when, then
@@ -114,7 +113,7 @@ def test_unused_params(testdir):
         )
     )
     result = testdir.runpytest()
-    assert_outcomes(result, passed=1)
+    result.assert_outcomes(passed=1)
 
 
 def test_outlined_with_other_fixtures(testdir):

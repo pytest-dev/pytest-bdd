@@ -1,5 +1,0 @@
-[run]
-branch = true
-include =
-    pytest_bdd/*
-    tests/*

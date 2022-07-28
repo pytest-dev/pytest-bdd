@@ -49,3 +49,51 @@ def test_step_function_multiple_target_fixtures(testdir):
     [foo, bar] = collect_dumped_objects(result)
     assert foo == "test foo"
     assert bar == "test bar"
+
+
+def test_step_functions_same_parser(testdir):
+    testdir.makefile(
+        ".feature",
+        target_fixture=textwrap.dedent(
+            """\
+            Feature: A feature
+                Scenario: A scenario
+                    Given there is a foo with value "(?P<value>\\w+)"
+                    And there is a foo with value "testfoo"
+                    When pass
+                    Then pass
+            """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        import pytest
+        from pytest_bdd import given, when, then, scenarios, parsers
+        from pytest_bdd.utils import dump_obj
+
+        scenarios("target_fixture.feature")
+
+        STEP = 'there is a foo with value "(?P<value>\\w+)"'
+
+        @given(STEP)
+        def _():
+            dump_obj(('str',))
+
+        @given(parsers.re(STEP))
+        def _(value):
+            dump_obj(('re', value))
+
+        @when("pass")
+        @then("pass")
+        def _():
+            pass
+        """
+        )
+    )
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=1)
+
+    [first_given, second_given] = collect_dumped_objects(result)
+    assert first_given == ("str",)
+    assert second_given == ("re", "testfoo")

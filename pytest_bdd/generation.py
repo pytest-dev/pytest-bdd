@@ -9,7 +9,7 @@ import py
 from mako.lookup import TemplateLookup
 
 from .feature import get_features
-from .scenario import find_argumented_step_function, make_python_docstring, make_python_name, make_string_literal
+from .scenario import inject_fixturedefs_for_step, make_python_docstring, make_python_name, make_string_literal
 from .steps import get_step_fixture_name
 from .types import STEP_TYPES
 
@@ -124,18 +124,12 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
 
 
 def _find_step_fixturedef(
-    fixturemanager: FixtureManager, item: Function, name: str, type_: str
+    fixturemanager: FixtureManager, item: Function, step: Step
 ) -> Sequence[FixtureDef[Any]] | None:
     """Find step fixturedef."""
-    step_fixture_name = get_step_fixture_name(name, type_)
-    fixturedefs = fixturemanager.getfixturedefs(step_fixture_name, item.nodeid)
-    if fixturedefs is not None:
-        return fixturedefs
-
-    step_func_context = find_argumented_step_function(name, type_, fixturemanager)
-    if step_func_context is not None:
-        return fixturemanager.getfixturedefs(step_func_context.name, item.nodeid)
-    return None
+    with inject_fixturedefs_for_step(step=step, fixturemanager=fixturemanager, nodeid=item.nodeid):
+        bdd_name = get_step_fixture_name(step=step)
+        return fixturemanager.getfixturedefs(bdd_name, item.nodeid)
 
 
 def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature], list[ScenarioTemplate], list[Step]]:
@@ -192,7 +186,7 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
             if scenario in scenarios:
                 scenarios.remove(scenario)
             for step in scenario.steps:
-                fixturedefs = _find_step_fixturedef(fm, item, step.name, step.type)
+                fixturedefs = _find_step_fixturedef(fm, item, step=step)
                 if fixturedefs:
                     try:
                         steps.remove(step)

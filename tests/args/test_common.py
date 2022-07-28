@@ -78,9 +78,10 @@ def test_string_steps_dont_take_precedence(testdir):
         from pytest_bdd.utils import dump_obj
 
 
-        @given(parsers.re(r"^I have a foo with value (?P<value>.*?)$"))
-        def _(value):
-            dump_obj("re")
+        @given("I have a foo with value 42")
+        def _():
+            dump_obj("str")
+            return 42
 
 
         @then("pass")
@@ -100,10 +101,11 @@ def test_string_steps_dont_take_precedence(testdir):
 
         scenarios("arguments.feature")
 
-        @given("I have a foo with value 42")
-        def _():
-            dump_obj("str")
+        @given(parsers.re(r"^I have a foo with value (?P<value>.*?)$"))
+        def _(value):
+            dump_obj("re")
             return 42
+
         """
         )
     )
