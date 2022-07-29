@@ -87,7 +87,7 @@ def given(
 
     :return: Decorator function for the step.
     """
-    return _step_decorator(GIVEN, name, converters=converters, target_fixture=target_fixture)
+    return step(name, GIVEN, converters=converters, target_fixture=target_fixture)
 
 
 def when(
@@ -102,7 +102,7 @@ def when(
 
     :return: Decorator function for the step.
     """
-    return _step_decorator(WHEN, name, converters=converters, target_fixture=target_fixture)
+    return step(name, WHEN, converters=converters, target_fixture=target_fixture)
 
 
 def then(
@@ -117,7 +117,7 @@ def then(
 
     :return: Decorator function for the step.
     """
-    return _step_decorator(THEN, name, converters=converters, target_fixture=target_fixture)
+    return step(name, THEN, converters=converters, target_fixture=target_fixture)
 
 
 def find_unique_name(name: str, seen: Iterable[str]) -> str:
@@ -139,16 +139,17 @@ def find_unique_name(name: str, seen: Iterable[str]) -> str:
             return new_name
 
 
-def _step_decorator(
-    step_type: Literal["given", "when", "then"],
-    step_name: str | StepParser,
+# TODO: Create tests for this function
+def step(
+    name: str | StepParser,
+    type_: Literal["given", "when", "then"],
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
 ) -> Callable[[TCallable], TCallable]:
     """Step decorator for the type and the name.
 
-    :param str step_type: Step type (GIVEN, WHEN or THEN).
-    :param str step_name: Step name as in the feature file.
+    :param str name: Step name as in the feature file.
+    :param str type_: Step type (GIVEN, WHEN or THEN).
     :param dict converters: Optional step arguments converters mapping
     :param target_fixture: Optional fixture name to replace by step definition
 
@@ -158,10 +159,10 @@ def _step_decorator(
         converters = {}
 
     def decorator(func: TCallable) -> TCallable:
-        parser = get_parser(step_name)
+        parser = get_parser(name)
 
         context = StepFunctionContext(
-            type=step_type,
+            type=type_,
             step_func=func,
             parser=parser,
             converters=converters,
@@ -175,7 +176,7 @@ def _step_decorator(
 
         caller_locals = get_caller_module_locals()
         fixture_step_name = find_unique_name(
-            f"{StepNamePrefix.step_def}_{step_type}_{parser.name}", seen=caller_locals.keys()
+            f"{StepNamePrefix.step_def}_{type_}_{parser.name}", seen=caller_locals.keys()
         )
         caller_locals[fixture_step_name] = pytest.fixture(name=fixture_step_name)(step_function_marker)
         return func
