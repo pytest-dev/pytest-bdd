@@ -142,18 +142,23 @@ def find_unique_name(name: str, seen: Iterable[str]) -> str:
 # TODO: Create tests for this function
 def step(
     name: str | StepParser,
-    type_: Literal["given", "when", "then"],
+    type_: Literal["given", "when", "then"] | None = None,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
 ) -> Callable[[TCallable], TCallable]:
-    """Step decorator for the type and the name.
+    """Generic step decorator.
 
     :param str name: Step name as in the feature file.
-    :param str type_: Step type (GIVEN, WHEN or THEN).
+    :param str type_: Step type ("given", "when" or "then"). If None, this step will work for all the types.
     :param dict converters: Optional step arguments converters mapping
     :param target_fixture: Optional fixture name to replace by step definition
-
     :return: Decorator function for the step.
+
+    Example:
+    >>> @step("there is an wallet", target_fixture="wallet")
+    >>> def _() -> dict[str, int]:
+    >>>     return {"eur": 0, "usd": 0}
+
     """
     if converters is None:
         converters = {}
@@ -176,7 +181,7 @@ def step(
 
         caller_locals = get_caller_module_locals()
         fixture_step_name = find_unique_name(
-            f"{StepNamePrefix.step_def}_{type_}_{parser.name}", seen=caller_locals.keys()
+            f"{StepNamePrefix.step_def}_{type_ or '*'}_{parser.name}", seen=caller_locals.keys()
         )
         caller_locals[fixture_step_name] = pytest.fixture(name=fixture_step_name)(step_function_marker)
         return func
