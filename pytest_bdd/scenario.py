@@ -52,7 +52,7 @@ def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, nodeid
             if step_func_context is None:
                 continue
 
-            if step_func_context.type != step.type:
+            if step_func_context.type is not None and step_func_context.type != step.type:
                 continue
 
             match = step_func_context.parser.is_matching(step.name)
@@ -331,6 +331,7 @@ def get_python_name_generator(name: str) -> Iterable[str]:
         suffix = f"_{index}"
 
 
+# TODO: add stacklevel and test it
 def scenarios(*feature_paths: str, **kwargs: Any) -> None:
     """Parse features from the paths and put all found scenarios in the caller module.
 

@@ -70,13 +70,14 @@ class StepFunctionContext:
 
 def get_step_fixture_name(step: Step) -> str:
     """Get step fixture name"""
-    return f"{StepNamePrefix.step_impl}_{step.type}_{step.name}"
+    return f"{StepNamePrefix.step_impl.value}_{step.type}_{step.name}"
 
 
 def given(
     name: str | StepParser,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
+    stacklevel: int = 1,  # TODO: Add it to the docstring
 ) -> Callable:
     """Given step decorator.
 
@@ -87,11 +88,14 @@ def given(
 
     :return: Decorator function for the step.
     """
-    return step(name, GIVEN, converters=converters, target_fixture=target_fixture)
+    return step(name, GIVEN, converters=converters, target_fixture=target_fixture, stacklevel=stacklevel)
 
 
 def when(
-    name: str | StepParser, converters: dict[str, Callable] | None = None, target_fixture: str | None = None
+    name: str | StepParser,
+    converters: dict[str, Callable] | None = None,
+    target_fixture: str | None = None,
+    stacklevel: int = 1,  # TODO: Add it to the docstring
 ) -> Callable:
     """When step decorator.
 
@@ -102,11 +106,14 @@ def when(
 
     :return: Decorator function for the step.
     """
-    return step(name, WHEN, converters=converters, target_fixture=target_fixture)
+    return step(name, WHEN, converters=converters, target_fixture=target_fixture, stacklevel=stacklevel)
 
 
 def then(
-    name: str | StepParser, converters: dict[str, Callable] | None = None, target_fixture: str | None = None
+    name: str | StepParser,
+    converters: dict[str, Callable] | None = None,
+    target_fixture: str | None = None,
+    stacklevel: int = 1,  # TODO: Add it to the docstring
 ) -> Callable:
     """Then step decorator.
 
@@ -117,7 +124,7 @@ def then(
 
     :return: Decorator function for the step.
     """
-    return step(name, THEN, converters=converters, target_fixture=target_fixture)
+    return step(name, THEN, converters=converters, target_fixture=target_fixture, stacklevel=stacklevel)
 
 
 def find_unique_name(name: str, seen: Iterable[str]) -> str:
@@ -145,6 +152,7 @@ def step(
     type_: Literal["given", "when", "then"] | None = None,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
+    stacklevel: int = 1,  # TODO: Add it to the docstring
 ) -> Callable[[TCallable], TCallable]:
     """Generic step decorator.
 
@@ -179,9 +187,9 @@ def step(
 
         step_function_marker._pytest_bdd_step_context = context
 
-        caller_locals = get_caller_module_locals()
+        caller_locals = get_caller_module_locals(stacklevel=stacklevel)
         fixture_step_name = find_unique_name(
-            f"{StepNamePrefix.step_def}_{type_ or '*'}_{parser.name}", seen=caller_locals.keys()
+            f"{StepNamePrefix.step_def.value}_{type_ or '*'}_{parser.name}", seen=caller_locals.keys()
         )
         caller_locals[fixture_step_name] = pytest.fixture(name=fixture_step_name)(step_function_marker)
         return func

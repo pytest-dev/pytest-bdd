@@ -28,16 +28,18 @@ def get_args(func: Callable) -> list[str]:
     :rtype: list
     """
     params = signature(func).parameters.values()
-    return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
+    return [
+        param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD and param.default is param.empty
+    ]
 
 
-def get_caller_module_locals(depth: int = 2) -> dict[str, Any]:
+def get_caller_module_locals(stacklevel: int = 1) -> dict[str, Any]:
     """Get the caller module locals dictionary.
 
     We use sys._getframe instead of inspect.stack(0) because the latter is way slower, since it iterates over
     all the frames in the stack.
     """
-    return _getframe(depth).f_locals
+    return _getframe(stacklevel + 1).f_locals
 
 
 def get_caller_module_path(depth: int = 2) -> str:
