@@ -9,35 +9,25 @@ from pytest_bdd.utils import collect_dumped_objects
 
 
 @pytest.mark.parametrize("step_fn, step_type", [(given, "given"), (when, "when"), (then, "then")])
-@pytest.mark.parametrize(
-    "params",
-    [
-        pytest.param({"name": "foo"}, id="simple"),
-        pytest.param(
-            {
-                "name": parsers.re(r"foo (?P<n>\d+)"),
-                "converters": {"n": int},
-                "target_fixture": "foo_n",
-                "stacklevel": 3,
-            },
-            id="advanced",
-        ),
-    ],
-)
-def test_given_when_then_delegate_to_step(step_fn: Callable[..., Any], step_type: str, params: dict[str, Any]):
+def test_given_when_then_delegate_to_step(step_fn: Callable[..., Any], step_type: str) -> None:
     """Test that @given, @when, @then just delegate the work to @step(...).
     This way we don't have to repeat integration tests for each step decorator.
     """
-    default_params = {
-        "converters": None,
-        "target_fixture": None,
-        "stacklevel": 1,
-    }
-    with mock.patch("pytest_bdd.steps.step", autospec=True) as step_mock:
-        step_fn(**params)
 
-    all_params = {**default_params, **params}
-    step_mock.assert_called_once_with(**all_params, type_=step_type)
+    # Simple usage, just the step name
+    with mock.patch("pytest_bdd.steps.step", autospec=True) as step_mock:
+        step_fn("foo")
+
+    step_mock.assert_called_once_with("foo", type_=step_type, converters=None, target_fixture=None, stacklevel=1)
+
+    # Advanced usage: step parser, converters, target_fixture, ...
+    with mock.patch("pytest_bdd.steps.step", autospec=True) as step_mock:
+        parser = parsers.re(r"foo (?P<n>\d+)")
+        step_fn(parser, converters={"n": int}, target_fixture="foo_n", stacklevel=3)
+
+    step_mock.assert_called_once_with(
+        name=parser, type_=step_type, converters={"n": int}, target_fixture="foo_n", stacklevel=3
+    )
 
 
 def test_step_function_multiple_target_fixtures(testdir):

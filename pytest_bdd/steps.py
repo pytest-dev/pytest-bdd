@@ -146,7 +146,6 @@ def find_unique_name(name: str, seen: Iterable[str]) -> str:
             return new_name
 
 
-# TODO: Create tests for this function
 def step(
     name: str | StepParser,
     type_: Literal["given", "when", "then"] | None = None,
