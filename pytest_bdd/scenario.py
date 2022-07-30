@@ -331,7 +331,6 @@ def get_python_name_generator(name: str) -> Iterable[str]:
         suffix = f"_{index}"
 
 
-# TODO: add stacklevel and test it
 def scenarios(*feature_paths: str, **kwargs: Any) -> None:
     """Parse features from the paths and put all found scenarios in the caller module.
 
