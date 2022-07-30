@@ -100,6 +100,7 @@ def test_step_functions_same_parser(testdir):
 
 
 def test_user_implements_a_step_generator(testdir):
+    """Test advanced use cases, like the implementation of custom step generators."""
     testdir.makefile(
         ".feature",
         user_step_generator=textwrap.dedent(
