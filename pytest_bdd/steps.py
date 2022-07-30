@@ -155,9 +155,9 @@ def step(
 ) -> Callable[[TCallable], TCallable]:
     """Generic step decorator.
 
-    :param str name: Step name as in the feature file.
-    :param str type_: Step type ("given", "when" or "then"). If None, this step will work for all the types.
-    :param dict converters: Optional step arguments converters mapping
+    :param name: Step name as in the feature file.
+    :param type_: Step type ("given", "when" or "then"). If None, this step will work for all the types.
+    :param converters: Optional step arguments converters mapping
     :param target_fixture: Optional fixture name to replace by step definition
     :return: Decorator function for the step.
 
