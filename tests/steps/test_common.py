@@ -245,3 +245,46 @@ def test_user_implements_a_step_generator(testdir):
     assert given == "given 10 EUR"
     assert pay == "pay 1 EUR"
     assert assert_ == "assert 9 EUR"
+
+
+def test_step_catches_all(testdir):
+    """Test that the @step(...) decorator works for all kind of steps."""
+    testdir.makefile(
+        ".feature",
+        step_catches_all=textwrap.dedent(
+            """\
+            Feature: A feature
+                Scenario: A scenario
+                    Given foo
+                    And foo parametrized 1
+                    When foo
+                    And foo parametrized 2
+                    Then foo
+                    And foo parametrized 3
+            """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        import pytest
+        from pytest_bdd import step, scenarios, parsers
+        from pytest_bdd.utils import dump_obj
+
+        scenarios("step_catches_all.feature")
+
+        @step("foo")
+        def _():
+            dump_obj("foo")
+
+        @step(parsers.parse("foo parametrized {n:d}"))
+        def _(n):
+            dump_obj(("foo parametrized", n))
+        """
+        )
+    )
+    result = testdir.runpytest("-s")
+    result.assert_outcomes(passed=1)
+
+    objects = collect_dumped_objects(result)
+    assert objects == ["foo", ("foo parametrized", 1), "foo", ("foo parametrized", 2), "foo", ("foo parametrized", 3)]
