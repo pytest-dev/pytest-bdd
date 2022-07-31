@@ -367,9 +367,54 @@ def scenarios(*feature_paths: str, **kwargs: Any) -> None:
 
                 for test_name in get_python_name_generator(scenario_name):
                     if test_name not in caller_locals:
-                        # found an unique test name
+                        # found a unique test name
                         caller_locals[test_name] = _scenario
                         break
             found = True
     if not found:
         raise exceptions.NoScenariosFound(abs_feature_paths)
+
+
+# TODO: Test this
+def to_camel_case(string: str) -> str:
+    """Convert a string to camelCase."""
+    words = [word.strip() for word in re.split(r"([A-Z][a-z]+)", string)]
+    return "".join(word.capitalize() for word in words if word.isalpha())
+
+
+def scenario_class(feature_path: str, cls_name: str | None = None, **kwargs: Any) -> type[object]:
+    caller_path = get_caller_module_path()
+
+    features_base_dir = kwargs.get("features_base_dir")
+    if features_base_dir is None:
+        features_base_dir = get_features_base_dir(caller_path)
+
+    if not os.path.isabs(feature_path):
+        feature_path = os.path.abspath(os.path.join(features_base_dir, feature_path))
+
+    base, name = os.path.split(feature_path)
+    feature = get_feature(base, name, **kwargs)
+
+    if cls_name is None:
+        cls_name = to_camel_case(feature.name)
+
+    cls = type(cls_name, (), {})
+
+    seen_test_names = set()
+
+    for scenario_name, _ in feature.scenarios.items():
+
+        @staticmethod  # TODO: We should not require this.
+        @scenario(feature.filename, scenario_name, **kwargs)
+        def _test_scenario() -> None:
+            pass  # pragma: no cover
+
+        for test_name in get_python_name_generator(scenario_name):
+            # add it to the test class
+            if test_name in seen_test_names:
+                continue
+            _test_scenario.__name__ = test_name
+            setattr(cls, test_name, _test_scenario)
+            break
+
+    return cls
