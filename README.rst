@@ -867,6 +867,140 @@ You can learn more about `functools.partial <https://docs.python.org/3/library/f
 in the Python docs.
 
 
+Programmatic step generation
+----------------------------
+Most of the times you can have step definitions that would be easier to automate than to write from scratch every time.
+This is common for example when using libraries like pytest-factoryboy that automatically creates fixtures.
+Writing step definitions for every model can become a tedious task.
+For this reason, pytest-bdd provides a way to generate step definitions automatically.
+
+Let's look at a concrete example; let's say you have a class ``Wallet`` that has some amount for each currency:
+
+.. code-block:: python
+
+    # contents of wallet.py
+
+    import dataclass
+
+    @dataclass
+    class Wallet:
+        verified: bool
+
+        amount_eur: int
+        amount_usd: int
+        amount_gbp: int
+        amount_jpy: int
+
+
+You can use pytest-factoryboy to automatically create model fixtures for this class:
+
+.. code-block:: python
+
+    # contents of wallet_factory.py
+
+    from wallet import Wallet
+
+    import factory
+    from pytest_factoryboy import register
+
+    class WalletFactory(factory.Factory):
+        class Meta:
+            model = Wallet
+
+        amount_eur = 0
+        amount_usd = 0
+        amount_gbp = 0
+        amount_jpy = 0
+
+    register(Wallet)  # creates the "wallet" fixture
+    register(Wallet, "second_wallet")  # creates the "second_wallet" fixture
+
+
+Now we can define a function `generate_wallet_steps()` that creates the steps for any wallet fixture (in our case, it will be "wallet" and "second_wallet"):
+
+.. code-block:: python
+
+    # contents of wallet_steps.py
+
+    import re
+    from dataclasses import fields
+
+    import factory
+    import pytest
+    from pytest_bdd import given, when, then, scenarios, parsers
+
+
+    def generate_wallet_steps(model_name="wallet", stacklevel=1):
+        stacklevel += 1
+
+        human_name = model_name.replace("_", " ")  # "second_wallet" -> "second wallet"
+
+        @given(f"I have a {human_name}", target_fixture=model_name, stacklevel=stacklevel)
+        def _(request):
+            return request.getfixturevalue(model_name)
+
+        # Generate steps for currency fields:
+        for field in fields(Wallet):
+            match = re.fullmatch(r"amount_(?P<currency>[a-z]{3})", field.name)
+            if not match:
+                continue
+            currency = match["currency"]
+
+            @given(
+                parsers.parse(f"I have {{value:d}} {currency.upper()} in my {human_name}"),
+                target_fixture=f"{model_name}__amount_{currency}",
+                stacklevel=stacklevel,
+            )
+            def _(value: int) -> int:
+                return value
+
+            @then(
+                parsers.parse(f"I should have {{value:d}} {currency.upper()} in my {human_name}"),
+                stacklevel=stacklevel,
+            )
+            def _(value: int, _currency=currency, _model_name=model_name) -> None:
+                wallet = request.getfixturevalue(_model_name)
+                assert getattr(wallet, f"amount_{_currency}") == value
+
+    # Inject the steps into the current module
+    generate_wallet_steps("wallet")
+    generate_wallet_steps("second_wallet")
+
+
+This last file, ``wallet_steps.py``, now contains all the step definitions for our "wallet" and "second_wallet" fixtures.
+
+We can now define a scenario like this:
+
+.. code-block:: gherkin
+
+    # contents of wallet.feature
+    Feature: A feature
+
+        Scenario: Wallet EUR amount stays constant
+            Given I have 10 EUR in my wallet
+            And I have a wallet
+            Then I should have 10 EUR in my wallet
+
+        Scenario: Second wallet JPY amount stays constant
+            Given I have 100 JPY in my second wallet
+            And I have a second wallet
+            Then I should have 100 JPY in my second wallet
+
+
+and finally a test file that puts it all together and run the scenarios:
+
+.. code-block:: python
+
+    # contents of test_wallet.py
+
+    from pytest_factoryboy import scenarios
+
+    from wallet_factory import *  # import the registered fixtures "wallet" and "second_wallet"
+    from wallet_steps import *  # import all the step definitions into this test file
+
+    scenarios("wallet.feature")
+
+
 Hooks
 -----
 
