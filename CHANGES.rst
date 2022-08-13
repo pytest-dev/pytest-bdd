@@ -8,6 +8,8 @@ Unreleased
 - ``parsers.re`` now does a `fullmatch <https://docs.python.org/3/library/re.html#re.fullmatch>`_ instead of a partial match. This is to make it work just like the other parsers, since they don't ignore non-matching characters at the end of the string. `#539 <https://github.com/pytest-dev/pytest-bdd/pull/539>`_
 - Require pytest>=6.2 `#534 <https://github.com/pytest-dev/pytest-bdd/pull/534>`_
 - Using modern way to specify hook options to avoid deprecation warnings with pytest >=7.2.
+- Add generic ``step`` decorator that will be used for all kind of steps `#548 <https://github.com/pytest-dev/pytest-bdd/pull/548>`_
+- Add ``stacklevel`` param to ``given``, ``when``, ``then``, ``step`` decorators. This allows for programmatic step generation `#548 <https://github.com/pytest-dev/pytest-bdd/pull/548>`_
 
 6.0.1
 -----
