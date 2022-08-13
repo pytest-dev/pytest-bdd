@@ -212,8 +212,9 @@ def test_user_implements_a_step_generator(testdir):
                 )
 
 
-            def wallet_steps_generator(model_name="wallet"):
-                @given("I have a wallet", target_fixture=model_name, stacklevel=2)
+            def generate_wallet_steps(model_name="wallet", stacklevel=1):
+                stacklevel += 1
+                @given("I have a wallet", target_fixture=model_name, stacklevel=stacklevel)
                 def _(wallet):
                     return wallet
 
@@ -259,7 +260,7 @@ def test_user_implements_a_step_generator(testdir):
                         dump_obj(f"assert {value} {_currency.upper()}")
                         assert getattr(wallet, f"amount_{_currency}") == value
 
-            wallet_steps_generator()
+            generate_wallet_steps()
 
             scenarios("user_step_generator.feature")
         """
