@@ -62,7 +62,7 @@ def add_bdd_ini(parser: Parser) -> None:
     parser.addini("bdd_features_base_dir", "Base features directory.")
 
 
-@pytest.mark.trylast
+@pytest.hookimpl(trylast=True)
 def pytest_configure(config: Config) -> None:
     """Configure all subplugins."""
     CONFIG_STACK.append(config)
@@ -76,18 +76,18 @@ def pytest_unconfigure(config: Config) -> None:
     cucumber_json.unconfigure(config)
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item: Item, call: CallInfo) -> Generator[None, _Result, None]:
     outcome = yield
     reporting.runtest_makereport(item, call, outcome.get_result())
 
 
-@pytest.mark.tryfirst
+@pytest.hookimpl(tryfirst=True)
 def pytest_bdd_before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
     reporting.before_scenario(request, feature, scenario)
 
 
-@pytest.mark.tryfirst
+@pytest.hookimpl(tryfirst=True)
 def pytest_bdd_step_error(
     request: FixtureRequest,
     feature: Feature,
@@ -100,14 +100,14 @@ def pytest_bdd_step_error(
     reporting.step_error(request, feature, scenario, step, step_func, step_func_args, exception)
 
 
-@pytest.mark.tryfirst
+@pytest.hookimpl(tryfirst=True)
 def pytest_bdd_before_step(
     request: FixtureRequest, feature: Feature, scenario: Scenario, step: Step, step_func: Callable
 ) -> None:
     reporting.before_step(request, feature, scenario, step, step_func)
 
 
-@pytest.mark.tryfirst
+@pytest.hookimpl(tryfirst=True)
 def pytest_bdd_after_step(
     request: FixtureRequest,
     feature: Feature,
