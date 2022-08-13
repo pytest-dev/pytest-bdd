@@ -874,6 +874,8 @@ This is common for example when using libraries like pytest-factoryboy that auto
 Writing step definitions for every model can become a tedious task.
 For this reason, pytest-bdd provides a way to generate step definitions automatically.
 
+The trick is to pass the ``stacklevel`` parameter to the ``given``, ``when``, ``then``, ``step`` decorators. This will instruct them to inject the step fixtures in the appropriate module, rather than just injecting them in the caller frame.
+
 Let's look at a concrete example; let's say you have a class ``Wallet`` that has some amount for each currency:
 
 .. code-block:: python
