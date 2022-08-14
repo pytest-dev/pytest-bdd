@@ -869,9 +869,10 @@ in the Python docs.
 
 Programmatic step generation
 ----------------------------
-Most of the times you can have step definitions that would be easier to automate than to write from scratch every time.
-This is common for example when using libraries like pytest-factoryboy that automatically creates fixtures.
+Sometimes you have step definitions that would be much easier to automate rather than writing manually over and over again.
+This is common, for example, when using libraries like `pytest-factoryboy <https://pytest-factoryboy.readthedocs.io/>`_ that automatically creates fixtures.
 Writing step definitions for every model can become a tedious task.
+
 For this reason, pytest-bdd provides a way to generate step definitions automatically.
 
 The trick is to pass the ``stacklevel`` parameter to the ``given``, ``when``, ``then``, ``step`` decorators. This will instruct them to inject the step fixtures in the appropriate module, rather than just injecting them in the caller frame.
@@ -918,7 +919,7 @@ You can use pytest-factoryboy to automatically create model fixtures for this cl
     register(Wallet, "second_wallet")  # creates the "second_wallet" fixture
 
 
-Now we can define a function `generate_wallet_steps()` that creates the steps for any wallet fixture (in our case, it will be "wallet" and "second_wallet"):
+Now we can define a function ``generate_wallet_steps(...)`` that creates the steps for any wallet fixture (in our case, it will be ``wallet`` and ``second_wallet``):
 
 .. code-block:: python
 
