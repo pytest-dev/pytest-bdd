@@ -52,7 +52,7 @@ def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, nodeid
             if step_func_context is None:
                 continue
 
-            if step_func_context.type != step.type:
+            if step_func_context.type is not None and step_func_context.type != step.type:
                 continue
 
             match = step_func_context.parser.is_matching(step.name)
@@ -176,8 +176,8 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequ
     request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
 
     for step in scenario.steps:
-        context = get_step_function(request=request, step=step)
-        if context is None:
+        step_func_context = get_step_function(request=request, step=step)
+        if step_func_context is None:
             exc = exceptions.StepDefinitionNotFoundError(
                 f"Step definition is not found: {step}. "
                 f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
@@ -186,7 +186,6 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequ
                 request=request, feature=feature, scenario=scenario, step=step, exception=exc
             )
             raise exc
-        step_func_context = context
 
         try:
             _execute_step_function(request, scenario, step, step_func_context)
