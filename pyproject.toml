@@ -71,7 +71,7 @@ exclude_lines = [
 [tool.coverage.run]
 branch = true
 include =[
-    "pytest_bdd/*",
+    "src/pytest_bdd/*",
     "tests/*",
 ]
 
