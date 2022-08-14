@@ -61,7 +61,7 @@ class StepNamePrefix(enum.Enum):
 
 @dataclass
 class StepFunctionContext:
-    type: Literal["given", "when", "then"]
+    type: Literal["given", "when", "then"] | None
     step_func: Callable[..., Any]
     parser: StepParser
     converters: dict[str, Callable[..., Any]] = field(default_factory=dict)
