@@ -52,7 +52,7 @@ copyright = "2013, Oleg Pidsadnyi"
 # built documents.
 #
 # The short X.Y version.
-version = metadata.version("pytest-factoryboy")
+version = metadata.version("pytest-bdd")
 # The full version, including alpha/beta/rc tags.
 release = version
 
