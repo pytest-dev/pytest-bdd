@@ -77,7 +77,7 @@ def given(
     name: str | StepParser,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
-    stacklevel: int = 1,  # TODO: Add it to the docstring
+    stacklevel: int = 1,
 ) -> Callable:
     """Given step decorator.
 
@@ -85,6 +85,7 @@ def given(
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
+    :param stacklevel: Stack level to find the caller frame. This is used when injecting the step definition fixture.
 
     :return: Decorator function for the step.
     """
@@ -95,7 +96,7 @@ def when(
     name: str | StepParser,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
-    stacklevel: int = 1,  # TODO: Add it to the docstring
+    stacklevel: int = 1,
 ) -> Callable:
     """When step decorator.
 
@@ -103,6 +104,7 @@ def when(
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
+    :param stacklevel: Stack level to find the caller frame. This is used when injecting the step definition fixture.
 
     :return: Decorator function for the step.
     """
@@ -113,7 +115,7 @@ def then(
     name: str | StepParser,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
-    stacklevel: int = 1,  # TODO: Add it to the docstring
+    stacklevel: int = 1,
 ) -> Callable:
     """Then step decorator.
 
@@ -121,6 +123,7 @@ def then(
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
+    :param stacklevel: Stack level to find the caller frame. This is used when injecting the step definition fixture.
 
     :return: Decorator function for the step.
     """
@@ -132,14 +135,16 @@ def step(
     type_: Literal["given", "when", "then"] | None = None,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
-    stacklevel: int = 1,  # TODO: Add it to the docstring
+    stacklevel: int = 1,
 ) -> Callable[[TCallable], TCallable]:
     """Generic step decorator.
 
     :param name: Step name as in the feature file.
     :param type_: Step type ("given", "when" or "then"). If None, this step will work for all the types.
-    :param converters: Optional step arguments converters mapping
-    :param target_fixture: Optional fixture name to replace by step definition
+    :param converters: Optional step arguments converters mapping.
+    :param target_fixture: Optional fixture name to replace by step definition.
+    :param stacklevel: Stack level to find the caller frame. This is used when injecting the step definition fixture.
+
     :return: Decorator function for the step.
 
     Example:
