@@ -57,10 +57,6 @@ def get_feature(base_path: str, filename: str, encoding: str = "utf-8") -> Featu
         parser = get_from_ini("bdd_parser", "legacy")
         if parser == "legacy":
             feature = parse_feature(base_path, filename, encoding=encoding)
-        elif parser == "2020":
-            from . import new_parser
-
-            feature = new_parser.parse_feature(base_path, filename)
         elif parser == "tatsu":
             from . import tatsu_parser
 

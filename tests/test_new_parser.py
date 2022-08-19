@@ -10,7 +10,6 @@ from pytest_bdd.new_parser import (
     GherkinMissingFeatureName,
     GherkinMultipleFeatures,
     GherkinUnexpectedInput,
-    parse,
 )
 from pytest_bdd.parser import Feature, Step
 from pytest_bdd.tatsu_parser import parse
