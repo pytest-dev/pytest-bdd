@@ -2,7 +2,6 @@
 import textwrap
 
 from pytest_bdd.utils import collect_dumped_objects
-from tests.utils import assert_outcomes
 
 STEPS = """\
 from pytest_bdd import parsers, given, when, then
@@ -10,21 +9,21 @@ from pytest_bdd.utils import dump_obj
 
 
 @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="cucumbers")
-def given_cucumbers(start):
+def _(start):
     assert isinstance(start, int)
     dump_obj(start)
     return {"start": start}
 
 
 @when(parsers.parse("I eat {eat:g} cucumbers"))
-def eat_cucumbers(cucumbers, eat):
+def _(cucumbers, eat):
     assert isinstance(eat, float)
     dump_obj(eat)
     cucumbers["eat"] = eat
 
 
 @then(parsers.parse("I should have {left} cucumbers"))
-def should_have_left_cucumbers(cucumbers, left):
+def _(cucumbers, left):
     assert isinstance(left, str)
     dump_obj(left)
     assert cucumbers["start"] - cucumbers["eat"] == int(left)
@@ -115,7 +114,7 @@ def test_unused_params(testdir):
         )
     )
     result = testdir.runpytest()
-    assert_outcomes(result, passed=1)
+    result.assert_outcomes(passed=1)
 
 
 def test_outlined_with_other_fixtures(testdir):
@@ -205,7 +204,7 @@ def test_outline_with_escaped_pipes(testdir):
 
 
             @given(parsers.parse("I print the {string}"))
-            def i_print_the_string(string):
+            def _(string):
                 dump_obj(string)
             """
         )

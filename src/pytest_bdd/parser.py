@@ -9,8 +9,7 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import cast
 
-from . import types
-from .exceptions import FeatureError
+from . import exceptions, types
 
 if typing.TYPE_CHECKING:
     from typing import Any, Iterable, Mapping, Match, Sequence
@@ -137,7 +136,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
         allowed_prev_mode = (types.BACKGROUND, types.GIVEN, types.WHEN)
 
         if not scenario and prev_mode not in allowed_prev_mode and mode in types.STEP_TYPES:
-            raise FeatureError(
+            raise exceptions.FeatureError(
                 "Step definition outside of a Scenario or a Background", line_number, clean_line, filename
             )
 
@@ -149,7 +148,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
             elif prev_mode == types.FEATURE:
                 description.append(clean_line)
             else:
-                raise FeatureError(
+                raise exceptions.FeatureError(
                     "Multiple features are not allowed in a single feature file",
                     line_number,
                     clean_line,
@@ -160,11 +159,17 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
 
         # Remove Feature, Given, When, Then, And
         keyword, parsed_line = parse_line(clean_line)
+
         if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
             tags = get_tags(prev_line)
-            feature.scenarios[parsed_line] = scenario = ScenarioTemplate(
-                feature=feature, name=parsed_line, line_number=line_number, tags=tags
+            scenario = ScenarioTemplate(
+                feature=feature,
+                name=parsed_line,
+                line_number=line_number,
+                tags=tags,
+                templated=mode == types.SCENARIO_OUTLINE,
             )
+            feature.scenarios[parsed_line] = scenario
         elif mode == types.BACKGROUND:
             feature.background = Background(feature=feature, line_number=line_number)
         elif mode == types.EXAMPLES:
@@ -222,6 +227,7 @@ class ScenarioTemplate:
     feature: Feature
     name: str
     line_number: int
+    templated: bool
     tags: set[str] = field(default_factory=set)
     examples: Examples | None = field(default_factory=lambda: Examples())
     _steps: list[Step] = field(init=False, default_factory=list)
@@ -246,16 +252,21 @@ class ScenarioTemplate:
         return (background.steps if background else []) + self._steps
 
     def render(self, context: Mapping[str, Any]) -> Scenario:
-        steps = [
-            Step(
-                name=templated_step.render(context),
-                type=templated_step.type,
-                indent=templated_step.indent,
-                line_number=templated_step.line_number,
-                keyword=templated_step.keyword,
-            )
-            for templated_step in self.steps
-        ]
+        background_steps = self.feature.background.steps if self.feature.background else []
+        if not self.templated:
+            scenario_steps = self._steps
+        else:
+            scenario_steps = [
+                Step(
+                    name=step.render(context),
+                    type=step.type,
+                    indent=step.indent,
+                    line_number=step.line_number,
+                    keyword=step.keyword,
+                )
+                for step in self._steps
+            ]
+        steps = background_steps + scenario_steps
         return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags)
 
     def validate(self):
@@ -311,13 +322,10 @@ class Step:
         datatable: list[tuple[str, ...]] | None = None,
     ):
         self.type = type
-        self.name = name
-        self.line_number = line_number
         self.indent = indent
         self.keyword = keyword
         self.docstring = docstring
         self.datatable = datatable
-        self.failed = False
         self.scenario = None
         self.background = None
         self.lines = []

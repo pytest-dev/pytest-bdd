@@ -1,7 +1,0 @@
-include *.rst
-include *.txt
-include setup.py
-include src/pytest_bdd/templates/*.mak
-include src/pytest_bdd/parser_data/*
-include src/pytest_bdd/gherkin.tatsu
-include src/build_parser.py

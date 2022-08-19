@@ -1,2 +1,0 @@
-packaging
-more-itertools

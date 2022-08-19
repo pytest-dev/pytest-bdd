@@ -32,38 +32,90 @@ def test_steps(testdir):
             pass
 
         @given('I have a foo fixture with value "foo"', target_fixture="foo")
-        def foo():
+        def _():
             return "foo"
 
 
         @given("there is a list", target_fixture="results")
-        def results():
+        def _():
             return []
 
 
         @when("I append 1 to the list")
-        def append_1(results):
+        def _(results):
             results.append(1)
 
 
         @when("I append 2 to the list")
-        def append_2(results):
+        def _(results):
             results.append(2)
 
 
         @when("I append 3 to the list")
-        def append_3(results):
+        def _(results):
             results.append(3)
 
 
         @then('foo should have value "foo"')
-        def foo_is_foo(foo):
+        def _(foo):
             assert foo == "foo"
 
 
         @then("the list should be [1, 2, 3]")
-        def check_results(results):
+        def _(results):
             assert results == [1, 2, 3]
+
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
+
+
+def test_step_function_can_be_decorated_multiple_times(testdir):
+    testdir.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Steps decoration
+
+                Scenario: Step function can be decorated multiple times
+                    Given there is a foo with value 42
+                    And there is a second foo with value 43
+                    When I do nothing
+                    And I do nothing again
+                    Then I make no mistakes
+                    And I make no mistakes again
+
+            """
+        ),
+    )
+    testdir.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, when, then, scenario, parsers
+
+        @scenario("steps.feature", "Step function can be decorated multiple times")
+        def test_steps():
+            pass
+
+
+        @given(parsers.parse("there is a foo with value {value}"), target_fixture="foo")
+        @given(parsers.parse("there is a second foo with value {value}"), target_fixture="second_foo")
+        def _(value):
+            return value
+
+
+        @when("I do nothing")
+        @when("I do nothing again")
+        def _():
+            pass
+
+
+        @then("I make no mistakes")
+        @then("I make no mistakes again")
+        def _():
+            assert True
 
         """
         )
@@ -100,22 +152,22 @@ def test_all_steps_can_provide_fixtures(testdir):
         scenarios("steps.feature")
 
         @given(parsers.parse('Foo is "{value}"'), target_fixture="foo")
-        def given_foo_is_value(value):
+        def _(value):
             return value
 
 
         @when(parsers.parse('Foo is "{value}"'), target_fixture="foo")
-        def when_foo_is_value(value):
+        def _(value):
             return value
 
 
         @then(parsers.parse('Foo is "{value}"'), target_fixture="foo")
-        def then_foo_is_value(value):
+        def _(value):
             return value
 
 
         @then(parsers.parse('foo should be "{value}"'))
-        def foo_is_foo(foo, value):
+        def _(foo, value):
             assert foo == value
 
         """
@@ -150,12 +202,12 @@ def test_when_first(testdir):
             pass
 
         @when("I do nothing")
-        def do_nothing():
+        def _():
             pass
 
 
         @then("I make no mistakes")
-        def no_errors():
+        def _():
             assert True
 
         """
@@ -191,11 +243,11 @@ def test_then_after_given(testdir):
             pass
 
         @given('I have a foo fixture with value "foo"', target_fixture="foo")
-        def foo():
+        def _():
             return "foo"
 
         @then('foo should have value "foo"')
-        def foo_is_foo(foo):
+        def _(foo):
             assert foo == "foo"
 
         """
@@ -228,12 +280,12 @@ def test_conftest(testdir):
 
 
         @given("I have a bar", target_fixture="bar")
-        def bar():
+        def _():
             return "bar"
 
 
         @then('bar should have value "bar"')
-        def bar_is_bar(bar):
+        def _(bar):
             assert bar == "bar"
 
         """
@@ -277,12 +329,12 @@ def test_multiple_given(testdir):
 
 
         @given(parsers.parse("foo is {value}"), target_fixture="foo")
-        def foo(value):
+        def _(value):
             return value
 
 
         @then(parsers.parse("foo should be {value}"))
-        def foo_should_be(foo, value):
+        def _(foo, value):
             assert foo == value
 
 
@@ -325,15 +377,15 @@ def test_step_hooks(testdir):
         from pytest_bdd import given, when, scenario
 
         @given('I have a bar')
-        def i_have_bar():
+        def _():
             return 'bar'
 
         @when('it fails')
-        def when_it_fails():
+        def _():
             raise Exception('when fails')
 
         @given('I have a bar')
-        def i_have_bar():
+        def _():
             return 'bar'
 
         @pytest.fixture
@@ -341,7 +393,7 @@ def test_step_hooks(testdir):
             raise Exception('dependency fails')
 
         @when("it's dependency fails")
-        def when_dependency_fails(dependency):
+        def _(dependency):
             pass
 
         @scenario('test.feature', "When step's dependency a has failure")
@@ -357,7 +409,7 @@ def test_step_hooks(testdir):
             pass
 
         @when('foo')
-        def foo():
+        def _():
             return 'foo'
 
         @scenario('test.feature', 'When step validation error happens')
@@ -439,11 +491,11 @@ def test_step_trace(testdir):
         from pytest_bdd import given, when, scenario
 
         @given('I have a bar')
-        def i_have_bar():
+        def _():
             return 'bar'
 
         @when('it fails')
-        def when_it_fails():
+        def _():
             raise Exception('when fails')
 
         @scenario('test.feature', 'When step has failure')
@@ -459,7 +511,7 @@ def test_step_trace(testdir):
             pass
 
         @when('foo')
-        def foo():
+        def _():
             return 'foo'
 
         @scenario('test.feature', 'When step validation error happens')
@@ -511,14 +563,14 @@ Feature: A feature
         scenarios("a.feature")
 
         @when("I setup stuff", target_fixture="stuff")
-        def stuff():
+        def _():
             print("Setting up...")
             yield 42
             print("Tearing down...")
 
 
         @then("stuff should be 42")
-        def check_stuff(stuff):
+        def _(stuff):
             assert stuff == 42
             print("Asserted stuff is 42")
 

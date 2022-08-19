@@ -36,7 +36,7 @@ def test_description(testdir):
 
 
         @given("I have a bar")
-        def bar():
+        def _():
             return "bar"
 
         def test_scenario_description():

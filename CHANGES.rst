@@ -3,18 +3,34 @@ Changelog
 
 Unreleased
 ----------
+- Fix bug where steps without parsers would take precedence over steps with parsers. `#534 <https://github.com/pytest-dev/pytest-bdd/pull/534>`_
+- Step functions can now be decorated multiple times with @given, @when, @then. Previously every decorator would override ``converters`` and ``target_fixture`` every at every application. `#534 <https://github.com/pytest-dev/pytest-bdd/pull/534>`_ `#544 <https://github.com/pytest-dev/pytest-bdd/pull/544>`_ `#525 <https://github.com/pytest-dev/pytest-bdd/issues/525>`_
+- ``parsers.re`` now does a `fullmatch <https://docs.python.org/3/library/re.html#re.fullmatch>`_ instead of a partial match. This is to make it work just like the other parsers, since they don't ignore non-matching characters at the end of the string. `#539 <https://github.com/pytest-dev/pytest-bdd/pull/539>`_
+- Require pytest>=6.2 `#534 <https://github.com/pytest-dev/pytest-bdd/pull/534>`_
+- Using modern way to specify hook options to avoid deprecation warnings with pytest >=7.2.
+- Add generic ``step`` decorator that will be used for all kind of steps `#548 <https://github.com/pytest-dev/pytest-bdd/pull/548>`_
+- Add ``stacklevel`` param to ``given``, ``when``, ``then``, ``step`` decorators. This allows for programmatic step generation `#548 <https://github.com/pytest-dev/pytest-bdd/pull/548>`_
+
+6.0.1
+-----
+- Fix regression introduced in 6.0.0 where a step function decorated multiple using a parsers times would not be executed correctly. `#530 <https://github.com/pytest-dev/pytest-bdd/pull/530>`_ `#528 <https://github.com/pytest-dev/pytest-bdd/issues/528>`_
+
+
+6.0.0
+-----
 
 This release introduces breaking changes in order to be more in line with the official gherkin specification.
 
-- Cleanup of the documentation and tests related to parametrization (elchupanebrej)
-- Removed feature level examples for the gherkin compatibility (olegpidsadnyi)
-- Removed vertical examples for the gherkin compatibility (olegpidsadnyi)
-- Step arguments are no longer fixtures (olegpidsadnyi)
-- Drop support of python 3.6, pytest 4 (elchupanebrej)
-- Step definitions can have "yield" statements again (4.0 release broke it). They will be executed as normal fixtures: code after the yield is executed during teardown of the test. (youtux)
-- Scenario outlines unused example parameter validation is removed (olegpidsadnyi)
-- Add type decorations
-- ``pytest_bdd.parsers.StepParser`` now is an Abstract Base Class. Subclasses must make sure to implement the abstract methods.
+- Cleanup of the documentation and tests related to parametrization (elchupanebrej) `#469 <https://github.com/pytest-dev/pytest-bdd/pull/469>`_
+- Removed feature level examples for the gherkin compatibility (olegpidsadnyi) `#490 <https://github.com/pytest-dev/pytest-bdd/pull/490>`_
+- Removed vertical examples for the gherkin compatibility (olegpidsadnyi) `#492 <https://github.com/pytest-dev/pytest-bdd/pull/492>`_
+- Step arguments are no longer fixtures (olegpidsadnyi) `#493 <https://github.com/pytest-dev/pytest-bdd/pull/493>`_
+- Drop support of python 3.6, pytest 4 (elchupanebrej) `#495 <https://github.com/pytest-dev/pytest-bdd/pull/495>`_ `#504 <https://github.com/pytest-dev/pytest-bdd/issues/504>`_
+- Step definitions can have "yield" statements again (4.0 release broke it). They will be executed as normal fixtures: code after the yield is executed during teardown of the test. (youtux) `#503 <https://github.com/pytest-dev/pytest-bdd/issues/503>`_
+- Scenario outlines unused example parameter validation is removed (olegpidsadnyi) `#499 <https://github.com/pytest-dev/pytest-bdd/pull/499>`_
+- Add type annotations (youtux) `#505 <https://github.com/pytest-dev/pytest-bdd/pull/505>`_
+- ``pytest_bdd.parsers.StepParser`` now is an Abstract Base Class. Subclasses must make sure to implement the abstract methods. (youtux) `#505 <https://github.com/pytest-dev/pytest-bdd/pull/505>`_
+- Angular brackets in step definitions are only parsed in "Scenario Outline" (previously they were parsed also in normal "Scenario"s) (youtux) `#524 <https://github.com/pytest-dev/pytest-bdd/pull/524>`_.
 
 
 

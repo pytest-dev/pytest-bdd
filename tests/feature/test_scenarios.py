@@ -1,8 +1,6 @@
 """Test scenarios shortcut."""
 import textwrap
 
-from tests.utils import assert_outcomes
-
 
 def test_scenarios(testdir, pytest_params, bdd_parser):
     """Test scenarios shortcut (used together with @scenario for individual test override)."""
@@ -21,7 +19,7 @@ def test_scenarios(testdir, pytest_params, bdd_parser):
         from pytest_bdd import given
 
         @given('I have a bar')
-        def i_have_bar():
+        def _():
             print('bar!')
             return 'bar'
     """
@@ -71,7 +69,7 @@ def test_scenarios(testdir, pytest_params, bdd_parser):
     """
     )
     result = testdir.runpytest_subprocess("-v", "-s", *pytest_params)
-    assert_outcomes(result, passed=4, failed=1)
+    result.assert_outcomes(passed=4, failed=1)
     result.stdout.fnmatch_lines(["*collected 5 items"])
     result.stdout.fnmatch_lines(["*test_test_subfolder_scenario *bar!", "PASSED"])
     result.stdout.fnmatch_lines(["*test_test_scenario *bar!", "PASSED"])
@@ -91,5 +89,5 @@ def test_scenarios_none_found(testdir, pytest_params):
     """
     )
     result = testdir.runpytest_subprocess(testpath, *pytest_params)
-    assert_outcomes(result, errors=1)
+    result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(["*NoScenariosFound*"])

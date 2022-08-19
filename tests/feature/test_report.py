@@ -65,31 +65,31 @@ def test_step_trace(testdir):
         from pytest_bdd import given, when, then, scenarios, parsers
 
         @given('a passing step')
-        def a_passing_step():
+        def _():
             return 'pass'
 
         @given('some other passing step')
-        def some_other_passing_step():
+        def _():
             return 'pass'
 
         @given('a failing step')
-        def a_failing_step():
+        def _():
             raise Exception('Error')
 
         @given(parsers.parse('there are {start:d} cucumbers'), target_fixture="cucumbers")
-        def given_cucumbers(start):
+        def _(start):
             assert isinstance(start, int)
             return {"start": start}
 
 
         @when(parsers.parse('I eat {eat:g} cucumbers'))
-        def eat_cucumbers(cucumbers, eat):
+        def _(cucumbers, eat):
             assert isinstance(eat, float)
             cucumbers['eat'] = eat
 
 
         @then(parsers.parse('I should have {left} cucumbers'))
-        def should_have_left_cucumbers(cucumbers, left):
+        def _(cucumbers, left):
             assert isinstance(left, str)
             assert cucumbers['start'] - cucumbers['eat'] == int(left)
 
@@ -267,7 +267,7 @@ def test_complex_types(testdir, pytestconfig):
             """
     Feature: Report serialization containing parameters of complex types
 
-    Scenario: Complex
+    Scenario Outline: Complex
         Given there is a coordinate <point>
 
         Examples:

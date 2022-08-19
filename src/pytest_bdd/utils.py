@@ -5,15 +5,17 @@ import base64
 import pickle
 import pkgutil
 import re
-import typing
 from inspect import getframeinfo, signature
 from sys import _getframe
+from typing import TYPE_CHECKING, TypeVar
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from typing import Any, Callable
 
     from _pytest.config import Config
     from _pytest.pytester import RunResult
+
+T = TypeVar("T")
 
 CONFIG_STACK: list[Config] = []
 
@@ -27,16 +29,18 @@ def get_args(func: Callable) -> list[str]:
     :rtype: list
     """
     params = signature(func).parameters.values()
-    return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
+    return [
+        param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD and param.default is param.empty
+    ]
 
 
-def get_caller_module_locals(depth: int = 2) -> dict[str, Any]:
+def get_caller_module_locals(stacklevel: int = 1) -> dict[str, Any]:
     """Get the caller module locals dictionary.
 
     We use sys._getframe instead of inspect.stack(0) because the latter is way slower, since it iterates over
     all the frames in the stack.
     """
-    return _getframe(depth).f_locals
+    return _getframe(stacklevel + 1).f_locals
 
 
 def get_caller_module_path(depth: int = 2) -> str:
@@ -70,6 +74,15 @@ def collect_dumped_objects(result: RunResult) -> list:
     stdout = result.stdout.str()  # pytest < 6.2, otherwise we could just do str(result.stdout)
     payloads = re.findall(rf"{_DUMP_START}(.*?){_DUMP_END}", stdout)
     return [pickle.loads(base64.b64decode(payload)) for payload in payloads]
+
+
+def setdefault(obj: object, name: str, default: T) -> T:
+    """Just like dict.setdefault, but for objects."""
+    try:
+        return getattr(obj, name)
+    except AttributeError:
+        setattr(obj, name, default)
+        return default
 
 
 # TODO: Remove this dev junk

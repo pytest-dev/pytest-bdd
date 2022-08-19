@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import abc
 import re as base_re
-from typing import Any, Dict, cast
+from typing import Any, Dict, TypeVar, cast, overload
 
 import parse as base_parse
 from parse_type import cfparse as base_cfparse
@@ -42,14 +42,14 @@ class re(StepParser):
 
         :return: `dict` of step arguments
         """
-        match = self.regex.match(name)
+        match = self.regex.fullmatch(name)
         if match is None:
             return None
         return match.groupdict()
 
     def is_matching(self, name: str) -> bool:
         """Match given name with the step name."""
-        return bool(self.regex.match(name))
+        return bool(self.regex.fullmatch(name))
 
 
 class parse(StepParser):
@@ -99,7 +99,20 @@ class string(StepParser):
         return self.name == name
 
 
-def get_parser(step_name: Any) -> StepParser:
+TStepParser = TypeVar("TStepParser", bound=StepParser)
+
+
+@overload
+def get_parser(step_name: str) -> string:
+    ...
+
+
+@overload
+def get_parser(step_name: TStepParser) -> TStepParser:
+    ...
+
+
+def get_parser(step_name: str | StepParser) -> StepParser:
     """Get parser by given name."""
 
     if isinstance(step_name, StepParser):

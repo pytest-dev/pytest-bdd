@@ -35,18 +35,15 @@ Install pytest-bdd
     pip install pytest-bdd
 
 
-The minimum required version of pytest is 4.3.
-
-
 Example
 -------
 
 An example test for a blog hosting software could look like this.
 Note that pytest-splinter_ is used to get the browser fixture.
 
-publish_article.feature:
-
 .. code-block:: gherkin
+
+    # content of publish_article.feature
 
     Feature: Blog
         A site where you can publish your articles.
@@ -63,9 +60,9 @@ publish_article.feature:
 
 Note that only one feature is allowed per feature file.
 
-test_publish_article.py:
-
 .. code-block:: python
+
+    # content of test_publish_article.py
 
     from pytest_bdd import scenario, given, when, then
 
@@ -208,12 +205,11 @@ for `cfparse` parser
     from pytest_bdd import parsers
 
     @given(
-        parsers.cfparse("there are {start:Number} cucumbers",
-        extra_types=dict(Number=int)),
+        parsers.cfparse("there are {start:Number} cucumbers", extra_types={"Number": int}),
         target_fixture="cucumbers",
     )
     def given_cucumbers(start):
-        return dict(start=start, eat=0)
+        return {"start": start, "eat": 0}
 
 for `re` parser
 
@@ -223,11 +219,11 @@ for `re` parser
 
     @given(
         parsers.re(r"there are (?P<start>\d+) cucumbers"),
-        converters=dict(start=int),
+        converters={"start": int},
         target_fixture="cucumbers",
     )
     def given_cucumbers(start):
-        return dict(start=start, eat=0)
+        return {"start": start, "eat": 0}
 
 
 Example:
@@ -248,28 +244,25 @@ The code will look like:
 
 .. code-block:: python
 
-    import re
-    from pytest_bdd import scenario, given, when, then, parsers
+    from pytest_bdd import scenarios, given, when, then, parsers
 
 
-    @scenario("arguments.feature", "Arguments for given, when, then")
-    def test_arguments():
-        pass
+    scenarios("arguments.feature")
 
 
     @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="cucumbers")
     def given_cucumbers(start):
-        return dict(start=start, eat=0)
+        return {"start": start, "eat": 0}
 
 
     @when(parsers.parse("I eat {eat:d} cucumbers"))
     def eat_cucumbers(cucumbers, eat):
-        start_cucumbers["eat"] += eat
+        cucumbers["eat"] += eat
 
 
     @then(parsers.parse("I should have {left:d} cucumbers"))
     def should_have_left_cucumbers(cucumbers, left):
-        assert cucumbers['start'] - cucumbers['eat'] == left
+        assert cucumbers["start"] - cucumbers["eat"] == left
 
 Example code also shows possibility to pass argument converters which may be useful if you need to postprocess step
 arguments after the parser.
@@ -304,7 +297,7 @@ You can implement your own step parser. It's interface is quite simple. The code
 
     @given(parsers.parse("there are %start% cucumbers"), target_fixture="cucumbers")
     def given_cucumbers(start):
-        return dict(start=start, eat=0)
+        return {"start": start, "eat": 0}
 
 
 Override fixtures via given steps
@@ -349,7 +342,7 @@ A common use case is when we have to assert the outcome of an HTTP request:
 
 .. code-block:: python
 
-    # test_blog.py
+    # content of test_blog.py
 
     from pytest_bdd import scenarios, given, when, then
 
@@ -375,7 +368,7 @@ A common use case is when we have to assert the outcome of an HTTP request:
 
 .. code-block:: gherkin
 
-    # blog.feature
+    # content of blog.feature
 
     Feature: Blog
         Scenario: Deleting the article
@@ -390,7 +383,7 @@ Multiline steps
 ---------------
 
 As Gherkin, pytest-bdd supports multiline steps
-(aka `PyStrings <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#pystrings>`_).
+(a.k.a. `Doc Strings <https://cucumber.io/docs/gherkin/reference/#doc-strings>`_).
 But in much cleaner and powerful way:
 
 .. code-block:: gherkin
@@ -416,41 +409,27 @@ step arguments and capture lines after first line (or some subset of them) into 
 
 .. code-block:: python
 
-    import re
-
     from pytest_bdd import given, then, scenario, parsers
 
 
-    @scenario(
-        'multiline.feature',
-        'Multiline step using sub indentation',
-    )
-    def test_multiline():
-        pass
+    scenarios("multiline.feature")
 
 
-    @given(parsers.parse("I have a step with:\n{text}"), target_fixture="i_have_text")
-    def i_have_text(text):
-        return text
+    @given(parsers.parse("I have a step with:\n{content}"), target_fixture="text")
+    def given_text(content):
+        return content
 
 
     @then("the text should be parsed with correct indentation")
-    def text_should_be_correct(i_have_text, text):
-        assert i_have_text == text == 'Some\nExtra\nLines'
-
-Note that `then` step definition (`text_should_be_correct`) in this example uses `text` fixture which is provided
-by a `given` step (`i_have_text`) argument with the same name (`text`). This possibility is described in
-the `Step arguments are fixtures as well!`_ section.
+    def text_should_be_correct(text):
+        assert text == "Some\nExtra\nLines"
 
 
 Scenarios shortcut
 ------------------
 
-If you have relatively large set of feature files, it's boring to manually bind scenarios to the tests using the
-scenario decorator. Of course with the manual approach you get all the power to be able to additionally parametrize
-the test, give the test function a nice name, document it, etc, but in the majority of the cases you don't need that.
-Instead you want to bind `all` scenarios found in the `feature` folder(s) recursively automatically.
-For this - there's a `scenarios` helper.
+If you have relatively large set of feature files, it's boring to manually bind scenarios to the tests using the scenario decorator. Of course with the manual approach you get all the power to be able to additionally parametrize the test, give the test function a nice name, document it, etc, but in the majority of the cases you don't need that.
+Instead, you want to bind all the scenarios found in the ``features`` folder(s) recursively automatically, by using the ``scenarios`` helper.
 
 .. code-block:: python
 
@@ -459,7 +438,7 @@ For this - there's a `scenarios` helper.
     # assume 'features' subfolder is in this file's directory
     scenarios('features')
 
-That's all you need to do to bind all scenarios found in the `features` folder!
+That's all you need to do to bind all scenarios found in the ``features`` folder!
 Note that you can pass multiple paths, and those paths can be either feature files or feature folders.
 
 
@@ -471,7 +450,7 @@ Note that you can pass multiple paths, and those paths can be either feature fil
     scenarios('features', 'other_features/some.feature', 'some_other_features')
 
 But what if you need to manually bind certain scenario, leaving others to be automatically bound?
-Just write your scenario in a `normal` way, but ensure you do it `BEFORE` the call of `scenarios` helper.
+Just write your scenario in a "normal" way, but ensure you do it **before** the call of ``scenarios`` helper.
 
 
 .. code-block:: python
@@ -485,21 +464,19 @@ Just write your scenario in a `normal` way, but ensure you do it `BEFORE` the ca
     # assume 'features' subfolder is in this file's directory
     scenarios('features')
 
-In the example above `test_something` scenario binding will be kept manual, other scenarios found in the `features`
-folder will be bound automatically.
+In the example above, the ``test_something`` scenario binding will be kept manual, other scenarios found in the ``features`` folder will be bound automatically.
 
 
 Scenario outlines
 -----------------
 
-Scenarios can be parametrized to cover few cases. In Gherkin the variable
-templates are written using corner braces as ``<somevalue>``.
-`Gherkin scenario outlines <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#scenario-outlines>`_ are supported by pytest-bdd
-exactly as it's described in the behave_ docs.
+Scenarios can be parametrized to cover few cases. These are called `Scenario Outlines <https://cucumber.io/docs/gherkin/reference/#scenario-outline>`_ in Gherkin, and the variable templates are written using angular brackets (e.g. ``<var_name>``).
 
 Example:
 
 .. code-block:: gherkin
+
+    # content of scenario_outlines.feature
 
     Feature: Scenario outlines
         Scenario Outline: Outlined given, when, then
@@ -510,6 +487,28 @@ Example:
             Examples:
             | start | eat | left |
             |  12   |  5  |  7   |
+
+.. code-block:: python
+
+    from pytest_bdd import scenarios, given, when, then, parsers
+
+
+    scenarios("scenario_outlines.feature")
+
+
+    @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="cucumbers")
+    def given_cucumbers(start):
+        return {"start": start, "eat": 0}
+
+
+    @when(parsers.parse("I eat {eat:d} cucumbers"))
+    def eat_cucumbers(cucumbers, eat):
+        cucumbers["eat"] += eat
+
+
+    @then(parsers.parse("I should have {left:d} cucumbers"))
+    def should_have_left_cucumbers(cucumbers, left):
+        assert cucumbers["start"] - cucumbers["eat"] == left
 
 
 Organizing your scenarios
@@ -561,9 +560,9 @@ completely different:
 
 
 For picking up tests to run we can use
-`tests selection <http://pytest.org/latest/usage.html#specifying-tests-selecting-tests>`_ technique. The problem is that
+`tests selection <https://pytest.org/en/7.1.x/how-to/usage.html#specifying-which-tests-to-run>`_ technique. The problem is that
 you have to know how your tests are organized, knowing only the feature files organization is not enough.
-`cucumber tags <https://github.com/cucumber/cucumber/wiki/Tags>`_ introduce standard way of categorizing your features
+Cucumber uses `tags <https://cucumber.io/docs/cucumber/api/#tags>`_ as a way of categorizing your features
 and scenarios, which pytest-bdd supports. For example, we could have:
 
 .. code-block:: gherkin
@@ -575,19 +574,15 @@ and scenarios, which pytest-bdd supports. For example, we could have:
       Scenario: Successful login
 
 
-pytest-bdd uses `pytest markers <http://pytest.org/latest/mark.html#mark>`_ as a `storage` of the tags for the given
+pytest-bdd uses `pytest markers <http://pytest.org/latest/mark.html>`_ as a `storage` of the tags for the given
 scenario test, so we can use standard test selection:
 
 .. code-block:: bash
 
     pytest -m "backend and login and successful"
 
-The feature and scenario markers are not different from standard pytest markers, and the ``@`` symbol is stripped out
-automatically to allow test selector expressions. If you want to have bdd-related tags to be distinguishable from the
-other test markers, use prefix like `bdd`.
-Note that if you use pytest `--strict` option, all bdd tags mentioned in the feature files should be also in the
-`markers` setting of the `pytest.ini` config. Also for tags please use names which are python-compatible variable
-names, eg starts with a non-number, underscore alphanumeric, etc. That way you can safely use tags for tests filtering.
+The feature and scenario markers are not different from standard pytest markers, and the ``@`` symbol is stripped out automatically to allow test selector expressions. If you want to have bdd-related tags to be distinguishable from the other test markers, use prefix like ``bdd``.
+Note that if you use pytest ``--strict`` option, all bdd tags mentioned in the feature files should be also in the ``markers`` setting of the ``pytest.ini`` config. Also for tags please use names which are python-compatible variable names, eg starts with a non-number, underscore alphanumeric, etc. That way you can safely use tags for tests filtering.
 
 You can customize how tags are converted to pytest marks by implementing the
 ``pytest_bdd_apply_tag`` hook and returning ``True`` from it:
@@ -686,7 +681,7 @@ Backgrounds
 
 It's often the case that to cover certain feature, you'll need multiple scenarios. And it's logical that the
 setup for those scenarios will have some common parts (if not equal). For this, there are `backgrounds`.
-pytest-bdd implements `Gherkin backgrounds <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#backgrounds>`_ for
+pytest-bdd implements `Gherkin backgrounds <https://cucumber.io/docs/gherkin/reference/#background>`_ for
 features.
 
 .. code-block:: gherkin
@@ -711,8 +706,8 @@ features.
 
 In this example, all steps from the background will be executed before all the scenario's own given
 steps, adding possibility to prepare some common setup for multiple scenarios in a single feature.
-About background best practices, please read
-`here <https://github.com/cucumber/cucumber/wiki/Background#good-practices-for-using-background>`_.
+About background best practices, please read Gherkin's
+`Tips for using Background <https://cucumber.io/docs/gherkin/reference/#tips-for-using-background>`_.
 
 .. NOTE:: There is only step "Given" should be used in "Background" section,
           steps "When" and "Then" are prohibited, because their purpose are
@@ -754,17 +749,17 @@ Reusing steps
 It is possible to define some common steps in the parent conftest.py and
 simply expect them in the child test file.
 
-common_steps.feature:
-
 .. code-block:: gherkin
+
+    # content of common_steps.feature
 
     Scenario: All steps are declared in the conftest
         Given I have a bar
         Then bar should have value "bar"
 
-conftest.py:
-
 .. code-block:: python
+
+    # content of conftest.py
 
     from pytest_bdd import given, then
 
@@ -778,9 +773,9 @@ conftest.py:
     def bar_is_bar(bar):
         assert bar == "bar"
 
-test_common.py:
-
 .. code-block:: python
+
+    # content of test_common.py
 
     @scenario("common_steps.feature", "All steps are declared in the conftest")
     def test_conftest():
@@ -846,9 +841,9 @@ Avoid retyping the feature file name
 If you want to avoid retyping the feature file name when defining your scenarios in a test file, use ``functools.partial``.
 This will make your life much easier when defining multiple scenarios in a test file. For example:
 
-test_publish_article.py:
-
 .. code-block:: python
+
+    # content of test_publish_article.py
 
     from functools import partial
 
@@ -868,15 +863,152 @@ test_publish_article.py:
         pass
 
 
-You can learn more about `functools.partial <http://docs.python.org/2/library/functools.html#functools.partial>`_
+You can learn more about `functools.partial <https://docs.python.org/3/library/functools.html#functools.partial>`_
 in the Python docs.
+
+
+Programmatic step generation
+----------------------------
+Sometimes you have step definitions that would be much easier to automate rather than writing manually over and over again.
+This is common, for example, when using libraries like `pytest-factoryboy <https://pytest-factoryboy.readthedocs.io/>`_ that automatically creates fixtures.
+Writing step definitions for every model can become a tedious task.
+
+For this reason, pytest-bdd provides a way to generate step definitions automatically.
+
+The trick is to pass the ``stacklevel`` parameter to the ``given``, ``when``, ``then``, ``step`` decorators. This will instruct them to inject the step fixtures in the appropriate module, rather than just injecting them in the caller frame.
+
+Let's look at a concrete example; let's say you have a class ``Wallet`` that has some amount for each currency:
+
+.. code-block:: python
+
+    # contents of wallet.py
+
+    import dataclass
+
+    @dataclass
+    class Wallet:
+        verified: bool
+
+        amount_eur: int
+        amount_usd: int
+        amount_gbp: int
+        amount_jpy: int
+
+
+You can use pytest-factoryboy to automatically create model fixtures for this class:
+
+.. code-block:: python
+
+    # contents of wallet_factory.py
+
+    from wallet import Wallet
+
+    import factory
+    from pytest_factoryboy import register
+
+    class WalletFactory(factory.Factory):
+        class Meta:
+            model = Wallet
+
+        amount_eur = 0
+        amount_usd = 0
+        amount_gbp = 0
+        amount_jpy = 0
+
+    register(Wallet)  # creates the "wallet" fixture
+    register(Wallet, "second_wallet")  # creates the "second_wallet" fixture
+
+
+Now we can define a function ``generate_wallet_steps(...)`` that creates the steps for any wallet fixture (in our case, it will be ``wallet`` and ``second_wallet``):
+
+.. code-block:: python
+
+    # contents of wallet_steps.py
+
+    import re
+    from dataclasses import fields
+
+    import factory
+    import pytest
+    from pytest_bdd import given, when, then, scenarios, parsers
+
+
+    def generate_wallet_steps(model_name="wallet", stacklevel=1):
+        stacklevel += 1
+
+        human_name = model_name.replace("_", " ")  # "second_wallet" -> "second wallet"
+
+        @given(f"I have a {human_name}", target_fixture=model_name, stacklevel=stacklevel)
+        def _(request):
+            return request.getfixturevalue(model_name)
+
+        # Generate steps for currency fields:
+        for field in fields(Wallet):
+            match = re.fullmatch(r"amount_(?P<currency>[a-z]{3})", field.name)
+            if not match:
+                continue
+            currency = match["currency"]
+
+            @given(
+                parsers.parse(f"I have {{value:d}} {currency.upper()} in my {human_name}"),
+                target_fixture=f"{model_name}__amount_{currency}",
+                stacklevel=stacklevel,
+            )
+            def _(value: int) -> int:
+                return value
+
+            @then(
+                parsers.parse(f"I should have {{value:d}} {currency.upper()} in my {human_name}"),
+                stacklevel=stacklevel,
+            )
+            def _(value: int, _currency=currency, _model_name=model_name) -> None:
+                wallet = request.getfixturevalue(_model_name)
+                assert getattr(wallet, f"amount_{_currency}") == value
+
+    # Inject the steps into the current module
+    generate_wallet_steps("wallet")
+    generate_wallet_steps("second_wallet")
+
+
+This last file, ``wallet_steps.py``, now contains all the step definitions for our "wallet" and "second_wallet" fixtures.
+
+We can now define a scenario like this:
+
+.. code-block:: gherkin
+
+    # contents of wallet.feature
+    Feature: A feature
+
+        Scenario: Wallet EUR amount stays constant
+            Given I have 10 EUR in my wallet
+            And I have a wallet
+            Then I should have 10 EUR in my wallet
+
+        Scenario: Second wallet JPY amount stays constant
+            Given I have 100 JPY in my second wallet
+            And I have a second wallet
+            Then I should have 100 JPY in my second wallet
+
+
+and finally a test file that puts it all together and run the scenarios:
+
+.. code-block:: python
+
+    # contents of test_wallet.py
+
+    from pytest_factoryboy import scenarios
+
+    from wallet_factory import *  # import the registered fixtures "wallet" and "second_wallet"
+    from wallet_steps import *  # import all the step definitions into this test file
+
+    scenarios("wallet.feature")
 
 
 Hooks
 -----
 
-pytest-bdd exposes several `pytest hooks <http://pytest.org/latest/plugins.html#well-specified-hooks>`_
-which might be helpful building useful reporting, visualization, etc on top of it:
+pytest-bdd exposes several `pytest hooks <https://docs.pytest.org/en/7.1.x/reference/reference.html#hooks>`_
+which might be helpful building useful reporting, visualization, etc. on top of it:
 
 * pytest_bdd_before_scenario(request, feature, scenario) - Called before scenario is executed
 
@@ -903,7 +1035,7 @@ Browser testing
 
 Tools recommended to use for browser testing:
 
-* pytest-splinter_ - pytest `splinter <http://splinter.cobrateam.info/>`_ integration for the real browser testing
+* pytest-splinter_ - pytest `splinter <https://splinter.readthedocs.io/>`_ integration for the real browser testing
 
 
 Reporting
@@ -1002,8 +1134,7 @@ gherkin reference. This means deprecation of some non-standard features that wer
 
 Removal of the feature examples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The example tables on the feature level are no longer supported. The tests should be parametrized with the example tables
-on the scenario level.
+The example tables on the feature level are no longer supported. If you had examples on the feature level, you should copy them to each individual scenario.
 
 
 Removal of the vertical examples
@@ -1016,6 +1147,12 @@ Step arguments are no longer fixtures
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Step parsed arguments conflicted with the fixtures. Now they no longer define fixture.
 If the fixture has to be defined by the step the target_fixture param should be used.
+
+
+Variable templates in steps are only parsed for Scenario Outlines
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In previous versions of pytest, steps containing ``<variable>`` would be parsed both by ``Scenario`` and ``Scenario Outline``.
+Now they are only parsed within a ``Scenario Outline``.
 
 
 .. _Migration from 4.x.x:
@@ -1106,6 +1243,6 @@ Step validation handlers for the hook ``pytest_bdd_step_validation_error`` shoul
 License
 -------
 
-This software is licensed under the `MIT license <http://en.wikipedia.org/wiki/MIT_License>`_.
+This software is licensed under the `MIT License <https://opensource.org/licenses/MIT>`_.
 
-© 2013-2014 Oleg Pidsadnyi, Anatoly Bubenkov and others
+© 2013 Oleg Pidsadnyi, Anatoly Bubenkov and others

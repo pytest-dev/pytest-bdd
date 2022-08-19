@@ -1,6 +1,58 @@
+[tool.poetry]
+name = "pytest-bdd"
+version = "6.0.1"
+description = "BDD for pytest"
+authors = ["Oleg Pidsadnyi <oleg.pidsadnyi@gmail.com>", "Anatoly Bubenkov <bubenkoff@gmail.com>"]
+maintainers = ["Alessio Bogon <778703+youtux@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.rst"
+homepage = "https://pytest-bdd.readthedocs.io/"
+documentation = "https://pytest-bdd.readthedocs.io/"
+repository = "https://github.com/pytest-dev/pytest-bdd"
+classifiers = [
+    "Development Status :: 6 - Mature",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS :: MacOS X",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Utilities",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+[tool.poetry.plugins."pytest11"]
+"pytest-bdd" = "pytest_bdd.plugin"
+
+[tool.poetry.scripts]
+"pytest-bdd" = "pytest_bdd.scripts:main"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+glob2 = "*"
+Mako = "*"
+parse = "*"
+parse-type = "*"
+pytest = ">=6.2.0"
+typing-extensions = "*"
+
+[tool.poetry.dev-dependencies]
+tox = "^3.25.1"
+mypy = "^0.971"
+types-setuptools = "^64.0.1"
+pytest-xdist = "^2.5.0"
+coverage = {extras = ["toml"], version = "^6.4.3"}
+Pygments = "^2.12.0"  # for code-block highlighting
+
 [build-system]
-requires = ["setuptools>=58", "wheel", "tatsu"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 120
@@ -11,11 +63,24 @@ profile = "black"
 line_length = 120
 multi_line_output = 3
 
+[tool.coverage.report]
+exclude_lines = [
+    "if TYPE_CHECKING:",
+    "if typing\\.TYPE_CHECKING:",
+]
+[tool.coverage.run]
+branch = true
+include =[
+    "src/pytest_bdd/*",
+    "tests/*",
+]
+
+
 [tool.mypy]
 python_version = "3.7"
 warn_return_any = true
 warn_unused_configs = true
-files = "pytest_bdd/**/*.py"
+files = "src/pytest_bdd/**/*.py"
 
 [[tool.mypy.overrides]]
 module = ["parse", "parse_type", "glob2"]

@@ -17,16 +17,16 @@ from pytest_bdd import given, when, then, scenario
 
 
 @given('there is a bar')
-def a_bar():
+def _():
     return 'bar'
 
 @when('the bar is accessed')
-def the_bar_is_accessed():
+def _():
     pass
 
 
 @then('world explodes')
-def world_explodes():
+def _():
     pass
 
 
@@ -123,16 +123,16 @@ def test_error_message_should_be_displayed(testdir, verbosity):
 
 
         @given('there is a bar')
-        def a_bar():
+        def _():
             return 'bar'
 
         @when('the bar is accessed')
-        def the_bar_is_accessed():
+        def _():
             pass
 
 
         @then('world explodes')
-        def world_explodes():
+        def _():
             raise Exception("BIGBADABOOM")
 
 
@@ -157,16 +157,16 @@ def test_local_variables_should_be_displayed_when_showlocals_option_is_used(test
 
 
         @given('there is a bar')
-        def a_bar():
+        def _():
             return 'bar'
 
         @when('the bar is accessed')
-        def the_bar_is_accessed():
+        def _():
             pass
 
 
         @then('world explodes')
-        def world_explodes():
+        def _():
             local_var = "MULTIPASS"
             raise Exception("BIGBADABOOM")
 
@@ -209,15 +209,15 @@ def test_step_parameters_should_be_replaced_by_their_values(testdir):
             from pytest_bdd import given, when, scenario, then, parsers
 
             @given(parsers.parse('there are {start} cucumbers'), target_fixture="start_cucumbers")
-            def start_cucumbers(start):
+            def _(start):
                 return start
 
             @when(parsers.parse('I eat {eat} cucumbers'))
-            def eat_cucumbers(start_cucumbers, eat):
+            def _(start_cucumbers, eat):
                 pass
 
             @then(parsers.parse('I should have {left} cucumbers'))
-            def should_have_left_cucumbers(start_cucumbers, left):
+            def _(start_cucumbers, left):
                 pass
 
             @scenario('test.feature', 'Scenario example 2')

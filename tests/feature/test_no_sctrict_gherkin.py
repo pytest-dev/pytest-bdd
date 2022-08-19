@@ -22,18 +22,18 @@ def test_background_no_strict_gherkin(testdir):
             return {}
 
         @when('foo has a value "bar"')
-        def bar(foo):
+        def _(foo):
             foo["bar"] = "bar"
             return foo["bar"]
 
 
         @when('foo is not boolean')
-        def not_boolean(foo):
+        def _(foo):
             assert foo is not bool
 
 
         @when('foo has not a value "baz"')
-        def has_not_baz(foo):
+        def _(foo):
             assert "baz" not in foo
     """
     )
@@ -78,18 +78,18 @@ def test_scenario_no_strict_gherkin(testdir):
             return {}
 
         @when('foo has a value "bar"')
-        def bar(foo):
+        def _(foo):
             foo["bar"] = "bar"
             return foo["bar"]
 
 
         @when('foo is not boolean')
-        def not_boolean(foo):
+        def _(foo):
             assert foo is not bool
 
 
         @when('foo has not a value "baz"')
-        def has_not_baz(foo):
+        def _(foo):
             assert "baz" not in foo
     """
     )

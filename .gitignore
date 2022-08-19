@@ -48,10 +48,3 @@ nosetests.xml
 
 #PyCharm
 /.idea
-
-# virtualenv
-/.Python
-/lib
-/include
-/share
-/local

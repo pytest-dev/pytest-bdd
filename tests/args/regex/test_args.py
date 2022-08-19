@@ -14,7 +14,7 @@ def test_every_steps_takes_param_with_the_same_name(testdir):
                     When I pay 2 Euro
                     And I pay 1 Euro
                     Then I should have 0 Euro
-                    And I should have 999999 Euro # In my dream...
+                    And I should have 999999 Euro
 
             """
         ),
@@ -35,17 +35,17 @@ def test_every_steps_takes_param_with_the_same_name(testdir):
             return [1, 2, 1, 0, 999999]
 
         @given(parsers.re(r"I have (?P<euro>\d+) Euro"), converters=dict(euro=int))
-        def i_have(euro, values):
+        def _(euro, values):
             assert euro == values.pop(0)
 
 
         @when(parsers.re(r"I pay (?P<euro>\d+) Euro"), converters=dict(euro=int))
-        def i_pay(euro, values, request):
+        def _(euro, values, request):
             assert euro == values.pop(0)
 
 
         @then(parsers.re(r"I should have (?P<euro>\d+) Euro"), converters=dict(euro=int))
-        def i_should_have(euro, values):
+        def _(euro, values):
             assert euro == values.pop(0)
 
         """
@@ -53,6 +53,59 @@ def test_every_steps_takes_param_with_the_same_name(testdir):
     )
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)
+
+
+def test_exact_match(testdir):
+    """Test that parsers.re does an exact match (fullmatch) of the whole string.
+
+    This tests exists because in the past we only used re.match, which only finds a match at the beginning
+    of the string, so if there were any more characters not matching at the end, they were ignored"""
+
+    testdir.makefile(
+        ".feature",
+        arguments=textwrap.dedent(
+            """\
+            Feature: Step arguments
+                Scenario: Every step takes a parameter with the same name
+                    Given I have 2 Euro
+                    # Step that should not be found:
+                    When I pay 1 Euro by mistake
+                    Then I should have 1 Euro left
+            """
+        ),
+    )
+
+    testdir.makepyfile(
+        textwrap.dedent(
+            r"""
+        import pytest
+        from pytest_bdd import parsers, given, when, then, scenarios
+
+        scenarios("arguments.feature")
+
+        @given(parsers.re(r"I have (?P<amount>\d+) Euro"), converters={"amount": int}, target_fixture="wallet")
+        def _(amount):
+            return {"EUR": amount}
+
+
+        # Purposefully using a re that will not match the step "When I pay 1 Euro and 50 cents"
+        @when(parsers.re(r"I pay (?P<amount>\d+) Euro"), converters={"amount": int})
+        def _(amount, wallet):
+            wallet["EUR"] -= amount
+
+
+        @then(parsers.re(r"I should have (?P<amount>\d+) Euro left"), converters={"amount": int})
+        def _(amount, wallet):
+            assert wallet["EUR"] == amount
+
+        """
+        )
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(failed=1)
+    result.stdout.fnmatch_lines(
+        '*StepDefinitionNotFoundError: Step definition is not found: When "I pay 1 Euro by mistake"*'
+    )
 
 
 def test_argument_in_when(testdir):
@@ -86,17 +139,17 @@ def test_argument_in_when(testdir):
             pass
 
         @given(parsers.re(r"I have an argument (?P<arg>\d+)"))
-        def argument(arguments, arg):
+        def _(arguments, arg):
             arguments["arg"] = arg
 
 
         @when(parsers.re(r"I get argument (?P<arg>\d+)"))
-        def get_argument(arguments, arg):
+        def _(arguments, arg):
             arguments["arg"] = arg
 
 
         @then(parsers.re(r"My argument should be (?P<arg>\d+)"))
-        def assert_that_my_argument_is_arg(arguments, arg):
+        def _(arguments, arg):
             assert arguments["arg"] == arg
 
         """
