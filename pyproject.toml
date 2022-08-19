@@ -44,6 +44,7 @@ parse-type = "*"
 pytest = ">=6.2.0"
 typing-extensions = "*"
 TatSu = "^5.8.3"  # TODO: Find lowest version we can work with.
+more-itertools = "^8.14.0"  # TODO: Find lowest version we can work with.
 
 [tool.poetry.dev-dependencies]
 tox = "^3.25.1"
