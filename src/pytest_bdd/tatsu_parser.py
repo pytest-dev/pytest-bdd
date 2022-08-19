@@ -11,6 +11,8 @@ from tatsu.ast import AST
 
 from pytest_bdd import types as bdd_types
 
+from .parser import Background, Docstring, Examples, Feature, ScenarioTemplate, Step, ValidationError, split_line
+
 try:
     # TODO: remove this complication. Go for one or the other approach
     from . import _gherkin
@@ -20,8 +22,6 @@ except ImportError:
     parser = tatsu.compile(grammar=(pathlib.Path(__file__).parent / "gherkin.tatsu").read_text())
 else:
     parser = _gherkin.GherkinParser()
-
-from .parser import Background, Docstring, Examples, Feature, ScenarioTemplate, Step, ValidationError, split_line
 
 
 def get_column(node: AST) -> int:
