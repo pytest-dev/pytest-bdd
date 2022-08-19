@@ -71,7 +71,7 @@ exclude_lines = [
 [tool.coverage.run]
 branch = true
 include =[
-    "pytest_bdd/*",
+    "src/pytest_bdd/*",
     "tests/*",
 ]
 
@@ -80,7 +80,7 @@ include =[
 python_version = "3.7"
 warn_return_any = true
 warn_unused_configs = true
-files = "pytest_bdd/**/*.py"
+files = "src/pytest_bdd/**/*.py"
 
 [[tool.mypy.overrides]]
 module = ["parse", "parse_type", "glob2"]
