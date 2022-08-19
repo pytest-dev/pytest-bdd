@@ -23,6 +23,9 @@ except ImportError:
 else:
     parser = _gherkin.GherkinParser()
 
+# TODO: Try pyparsing instead of tatsu. Pyparsing seem to have way more downloads and to always support
+#  active python versions
+
 
 def get_column(node: AST) -> int:
     parseinfo = node.parseinfo
