@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import os.path
+import pathlib
 import re
 import textwrap
 from collections import OrderedDict
@@ -10,11 +11,17 @@ from tatsu.ast import AST
 
 from pytest_bdd import types as bdd_types
 
-from ._gherkin import GherkinParser
-from ._gherkin import GherkinSemantics as _GherkinSemantics
-from .parser import Background, Docstring, Examples, Feature, ScenarioTemplate, Step, ValidationError, split_line
+try:
+    # TODO: remove this complication. Go for one or the other approach
+    from . import _gherkin
+except ImportError:
+    import tatsu
 
-parser = GherkinParser()
+    parser = tatsu.compile(grammar=(pathlib.Path(__file__).parent / "gherkin.tatsu").read_text())
+else:
+    parser = _gherkin.GherkinParser()
+
+from .parser import Background, Docstring, Examples, Feature, ScenarioTemplate, Step, ValidationError, split_line
 
 
 def get_column(node: AST) -> int:
@@ -25,7 +32,7 @@ def get_column(node: AST) -> int:
     return line_info.col
 
 
-class GherkinSemantics(_GherkinSemantics):
+class GherkinSemantics:
     def feature(self, ast):
         feature_line = ast["feature_line"]
         tags = ast["tags"]
