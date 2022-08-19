@@ -34,13 +34,16 @@ classifiers = [
 "pytest-bdd" = "pytest_bdd.scripts:main"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+# TODO: We should still support 3.7, but currently tatsu supports only >=3.8.
+#  See https://github.com/neogeny/TatSu/issues/291
+python = "^3.8"
 glob2 = "*"
 Mako = "*"
 parse = "*"
 parse-type = "*"
 pytest = ">=6.2.0"
 typing-extensions = "*"
+TatSu = "^5.8.3"  # TODO: Find lowest version we can work with.
 
 [tool.poetry.dev-dependencies]
 tox = "^3.25.1"
