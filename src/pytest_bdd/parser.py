@@ -204,7 +204,8 @@ class Feature:
 class ScenarioTemplate:
     """A scenario template.
 
-    Created when parsing the feature file, it will then be combined with the examples to create a Scenario."""
+    Created when parsing the feature file, it will then be combined with the examples to create a Scenario.
+    """
 
     feature: Feature
     name: str
@@ -215,10 +216,6 @@ class ScenarioTemplate:
     _steps: list[Step] = field(init=False, default_factory=list)
 
     def add_step(self, step: Step) -> None:
-        """Add step to the scenario.
-
-        :param pytest_bdd.parser.Step step: Step.
-        """
         step.scenario = self
         self._steps.append(step)
 
@@ -288,7 +285,6 @@ class Step:
 
     @property
     def name(self) -> str:
-        """Get step name."""
         multilines_content = textwrap.dedent("\n".join(self.lines)) if self.lines else ""
 
         # Remove the multiline quotes, if present.
@@ -304,7 +300,6 @@ class Step:
 
     @name.setter
     def name(self, value: str) -> None:
-        """Set step name."""
         self._name = value
 
     def __str__(self) -> str:
@@ -313,7 +308,6 @@ class Step:
 
     @property
     def params(self) -> tuple[str, ...]:
-        """Get step params."""
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
     def render(self, context: Mapping[str, Any]) -> str:
@@ -347,17 +341,9 @@ class Examples:
     examples: list[Sequence[str]] = field(init=False, default_factory=list)
 
     def set_param_names(self, keys: Iterable[str]) -> None:
-        """Set parameter names.
-
-        :param names: `list` of `string` parameter names.
-        """
         self.example_params = [str(key) for key in keys]
 
     def add_example(self, values: Sequence[str]) -> None:
-        """Add example.
-
-        :param values: `list` of `string` parameter values.
-        """
         self.examples.append(values)
 
     def as_contexts(self) -> Iterable[dict[str, Any]]:
@@ -371,7 +357,6 @@ class Examples:
             yield dict(zip(header, row))
 
     def __bool__(self) -> bool:
-        """Bool comparison."""
         return bool(self.examples)
 
 
