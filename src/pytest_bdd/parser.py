@@ -195,8 +195,6 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
 
 @dataclass
 class Feature:
-    """Feature."""
-
     scenarios: OrderedDict[str, ScenarioTemplate]
     filename: str
     rel_filename: str
@@ -222,7 +220,8 @@ class Feature:
 class ScenarioTemplate:
     """A scenario template.
 
-    Created when parsing the feature file, it will then be combined with the examples to create a Scenario."""
+    Created when parsing the feature file, it will then be combined with the examples to create a Scenario.
+    """
 
     feature: Feature
     name: str
@@ -232,17 +231,7 @@ class ScenarioTemplate:
     examples: Examples | None = field(default_factory=lambda: Examples())
     _steps: list[Step] = field(init=False, default_factory=list)
 
-    def __post_init__(self):
-        if self.examples is None:
-            self.examples = Examples()
-        if self.tags is None:
-            self.tags = set()
-
     def add_step(self, step: Step) -> None:
-        """Add step to the scenario.
-
-        :param pytest_bdd.parser.Step step: Step.
-        """
         step.scenario = self
         self._steps.append(step)
 
@@ -284,17 +273,11 @@ class ScenarioTemplate:
 
 @dataclass
 class Scenario:
-    """Scenario."""
-
     feature: Feature
     name: str
     line_number: int
     steps: list[Step]
     tags: set[str] = field(default_factory=set)
-
-    def __post_init__(self):
-        if self.tags is None:
-            self.tags = set()
 
 
 @dataclass
@@ -313,19 +296,23 @@ class Step:
 
     def __init__(
         self,
-        type: str,
         name: str,
-        line_number: int,
+        type: str,
         indent: int,
+        line_number: int,
         keyword: str,
-        docstring: str | None = None,
+        docstring: Docstring | None = None,
         datatable: list[tuple[str, ...]] | None = None,
-    ):
+    ) -> None:
+        self.name = name
         self.type = type
         self.indent = indent
+        self.line_number = line_number
         self.keyword = keyword
         self.docstring = docstring
         self.datatable = datatable
+
+        self.failed = False  # TODO: unused?
         self.scenario = None
         self.background = None
         self.lines = []
@@ -339,7 +326,6 @@ class Step:
 
     @property
     def name(self) -> str:
-        """Get step name."""
         multilines_content = textwrap.dedent("\n".join(self.lines)) if self.lines else ""
 
         # Remove the multiline quotes, if present.
@@ -355,7 +341,6 @@ class Step:
 
     @name.setter
     def name(self, value: str) -> None:
-        """Set step name."""
         self._name = value
 
     def __str__(self) -> str:
@@ -364,7 +349,6 @@ class Step:
 
     @property
     def params(self) -> tuple[str, ...]:
-        """Get step params."""
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
     def render(self, context: Mapping[str, Any]) -> str:
@@ -409,23 +393,16 @@ class Background:
 class Examples:
     """Example table."""
 
-    example_params: list[str] = field(default_factory=list)
-    examples: list[Sequence[str]] = field(default_factory=list)
     line_number: int | None = field(default=None)
     name: str | None = field(default=None)
 
-    def set_param_names(self, keys: Iterable[str]) -> None:
-        """Set parameter names.
+    example_params: list[str] = field(init=False, default_factory=list)
+    examples: list[Sequence[str]] = field(init=False, default_factory=list)
 
-        :param names: `list` of `string` parameter names.
-        """
+    def set_param_names(self, keys: Iterable[str]) -> None:
         self.example_params = [str(key) for key in keys]
 
     def add_example(self, values: Sequence[str]) -> None:
-        """Add example.
-
-        :param values: `list` of `string` parameter values.
-        """
         self.examples.append(values)
 
     def as_contexts(self) -> Iterable[dict[str, Any]]:
@@ -439,7 +416,6 @@ class Examples:
             yield dict(zip(header, row))
 
     def __bool__(self) -> bool:
-        """Bool comparison."""
         return bool(self.examples)
 
 

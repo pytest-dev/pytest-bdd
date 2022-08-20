@@ -145,10 +145,7 @@ def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature],
         itertools.chain.from_iterable(feature.scenarios.values() for feature in features),
         key=lambda scenario: (scenario.feature.name or scenario.feature.filename, scenario.name),
     )
-    steps = sorted(
-        (step for scenario in scenarios for step in scenario.steps),
-        key=lambda step: step.name,
-    )
+    steps = sorted((step for scenario in scenarios for step in scenario.steps), key=lambda step: step.name)
     return features, scenarios, steps
 
 
