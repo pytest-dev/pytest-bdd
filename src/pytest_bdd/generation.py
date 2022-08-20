@@ -117,7 +117,7 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
     tw.line()
 
     features = sorted(
-        {scenario.feature for scenario in scenarios}, key=lambda feature: feature.name or feature.filename
+        (scenario.feature for scenario in scenarios), key=lambda feature: feature.name or feature.filename
     )
     code = generate_code(features, scenarios, steps)
     tw.write(code)
@@ -145,9 +145,7 @@ def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature],
         itertools.chain.from_iterable(feature.scenarios.values() for feature in features),
         key=lambda scenario: (scenario.feature.name or scenario.feature.filename, scenario.name),
     )
-    steps = sorted(
-        set(itertools.chain.from_iterable(scenario.steps for scenario in scenarios)), key=lambda step: step.name
-    )
+    steps = sorted((step for scenario in scenarios for step in scenario.steps), key=lambda step: step.name)
     return features, scenarios, steps
 
 
