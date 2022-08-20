@@ -90,6 +90,20 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "jinja2"
+version = "3.1.2"
+description = "A very fast and expressive template engine."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+MarkupSafe = ">=2.0"
+
+[package.extras]
+i18n = ["Babel (>=2.7)"]
+
+[[package]]
 name = "mako"
 version = "1.2.1"
 description = "A super-fast templating language that borrows the best ideas from the existing templating languages."
@@ -233,6 +247,10 @@ category = "main"
 optional = false
 python-versions = ">=3.6.8"
 
+[package.dependencies]
+jinja2 = {version = "*", optional = true, markers = "extra == \"diagrams\""}
+railroad-diagrams = {version = "*", optional = true, markers = "extra == \"diagrams\""}
+
 [package.extras]
 diagrams = ["railroad-diagrams", "jinja2"]
 
@@ -286,6 +304,14 @@ pytest-forked = "*"
 psutil = ["psutil (>=3.0)"]
 setproctitle = ["setproctitle"]
 testing = ["filelock"]
+
+[[package]]
+name = "railroad-diagrams"
+version = "2.0.4"
+description = "Generate SVG railroad syntax diagrams, like on JSON.org."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
 
 [[package]]
 name = "six"
@@ -380,7 +406,7 @@ testing = ["coverage (>=6.2)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "e82156a2ff38a1f6f6276d73eb262f79b943c1f9e21b33bc2f19640f373717cc"
+content-hash = "51381b2b649ef593ff81738a8afbdd753930f518f6e04ca3d748a4841d3032b0"
 
 [metadata.files]
 atomicwrites = [
@@ -464,6 +490,10 @@ glob2 = [
 iniconfig = [
     {file = "iniconfig-1.1.1-py2.py3-none-any.whl", hash = "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3"},
     {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
+]
+jinja2 = [
+    {file = "Jinja2-3.1.2-py3-none-any.whl", hash = "sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61"},
+    {file = "Jinja2-3.1.2.tar.gz", hash = "sha256:31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852"},
 ]
 mako = [
     {file = "Mako-1.2.1-py3-none-any.whl", hash = "sha256:df3921c3081b013c8a2d5ff03c18375651684921ae83fd12e64800b7da923257"},
@@ -586,6 +616,10 @@ pytest-forked = [
 pytest-xdist = [
     {file = "pytest-xdist-2.5.0.tar.gz", hash = "sha256:4580deca3ff04ddb2ac53eba39d76cb5dd5edeac050cb6fbc768b0dd712b4edf"},
     {file = "pytest_xdist-2.5.0-py3-none-any.whl", hash = "sha256:6fe5c74fec98906deb8f2d2b616b5c782022744978e7bd4695d39c8f42d0ce65"},
+]
+railroad-diagrams = [
+    {file = "railroad-diagrams-2.0.4.tar.gz", hash = "sha256:7413ffa194583bd510efc3e4668f61d5a38beeca186bb7c36eea6d0d6f03fb45"},
+    {file = "railroad_diagrams-2.0.4-py3-none-any.whl", hash = "sha256:769c9aba83fd42361b8ce471953ae8224ed92c66b9c470caefefbb36ff9d991c"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},

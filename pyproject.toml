@@ -45,6 +45,7 @@ pytest = ">=6.2.0"
 typing-extensions = "*"
 TatSu = "^5.8.3"  # TODO: Find lowest version we can work with.
 more-itertools = "^8.14.0"  # TODO: Find lowest version we can work with.
+pyparsing = "^3.0.9"
 
 [tool.poetry.dev-dependencies]
 tox = "^3.25.1"
@@ -53,6 +54,7 @@ types-setuptools = "^64.0.1"
 pytest-xdist = "^2.5.0"
 coverage = {extras = ["toml"], version = "^6.4.3"}
 Pygments = "^2.12.0"  # for code-block highlighting
+pyparsing = {extras = ["diagrams"], version = "^3.0.9"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
