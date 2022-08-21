@@ -6,22 +6,24 @@ from pytest_bdd.parser import Feature, ScenarioTemplate, Step
 
 pp.enable_all_warnings()
 
+
+GIVEN = pp.Literal("Given")
+WHEN = pp.Literal("When")
+THEN = pp.Literal("Then")
+
+SCENARIO = pp.Literal("Scenario")
+
 any_char = pp.Regex(r"[^\n]+").set_name("any_char")
 
-given_kw = pp.Literal("Given")
-when_kw = pp.Literal("When")
-then_kw = pp.Literal("Then")
+step_kw = GIVEN | WHEN | THEN
 
-step_kw = given_kw | when_kw | then_kw
-
-scenario_kw = pp.Literal("Scenario")
 
 step = pp.Group(step_kw("keyword") + any_char("name") + pp.LineEnd())
 step.set_name("step")
 
 steps = pp.Group(step[1, ...])("steps")
 
-scenario = pp.Group(scenario_kw + ":" + any_char("name") + pp.LineEnd() + steps)
+scenario = pp.Group(SCENARIO + ":" + any_char("name") + pp.LineEnd() + steps)
 scenario.set_name("scenario")
 
 
@@ -30,7 +32,7 @@ scenarios = pp.Group(scenario("scenario")[1, ...])("scenarios")
 start = scenarios
 start.set_name("start")
 
-start.create_diagram("/tmp/gherkin.html")
+start.create_diagram("/tmp/gherkin.html", show_results_names=True)
 
 start.set_default_whitespace_chars(" \t")
 
