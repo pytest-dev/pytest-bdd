@@ -48,7 +48,7 @@ def get_feature(base_path: str, filename: str, encoding: str = "utf-8") -> Featu
            stored in the global variable cache to improve the performance
            when multiple scenarios are referencing the same file.
     """
-
+    __tracebackhide__ = True
     full_name = os.path.abspath(os.path.join(base_path, filename))
     feature = features.get(full_name)
     if not feature:
