@@ -10,6 +10,7 @@ Unreleased
 - Using modern way to specify hook options to avoid deprecation warnings with pytest >=7.2.
 - Add generic ``step`` decorator that will be used for all kind of steps `#548 <https://github.com/pytest-dev/pytest-bdd/pull/548>`_
 - Add ``stacklevel`` param to ``given``, ``when``, ``then``, ``step`` decorators. This allows for programmatic step generation `#548 <https://github.com/pytest-dev/pytest-bdd/pull/548>`_
+- Hide pytest-bdd internal method in user tracebacks `#557 <https://github.com/pytest-dev/pytest-bdd/pull/557>`_.
 
 6.0.1
 -----
@@ -31,7 +32,6 @@ This release introduces breaking changes in order to be more in line with the of
 - Add type annotations (youtux) `#505 <https://github.com/pytest-dev/pytest-bdd/pull/505>`_
 - ``pytest_bdd.parsers.StepParser`` now is an Abstract Base Class. Subclasses must make sure to implement the abstract methods. (youtux) `#505 <https://github.com/pytest-dev/pytest-bdd/pull/505>`_
 - Angular brackets in step definitions are only parsed in "Scenario Outline" (previously they were parsed also in normal "Scenario"s) (youtux) `#524 <https://github.com/pytest-dev/pytest-bdd/pull/524>`_.
-- Hide pytest-bdd internal method in user tracebacks `#557 <https://github.com/pytest-dev/pytest-bdd/pull/557>`_.
 
 
 
