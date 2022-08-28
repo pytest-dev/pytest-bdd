@@ -12,7 +12,9 @@ from pytest_bdd.new_parser import (
     GherkinUnexpectedInput,
 )
 from pytest_bdd.parser import Feature, Step
-from pytest_bdd.tatsu_parser import parse
+
+# from pytest_bdd.tatsu_parser import parse
+from pytest_bdd.pyparsing_parser import parse
 from pytest_bdd.types import GIVEN, THEN, WHEN
 
 # TODO: Changes to document
@@ -26,7 +28,7 @@ from pytest_bdd.types import GIVEN, THEN, WHEN
 #  - Multiline steps are removed
 
 
-def test_feature():
+def test_feature_tags():
     feature = parse(
         """\
 @atag @another_tag

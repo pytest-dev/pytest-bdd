@@ -61,6 +61,10 @@ def get_feature(base_path: str, filename: str, encoding: str = "utf-8") -> Featu
             from . import tatsu_parser
 
             feature = tatsu_parser.parse_feature(base_path, filename)
+        elif parser == "pyparsing":
+            from . import pyparsing_parser
+
+            feature = pyparsing_parser.parse_feature(base_path, filename)
         features[full_name] = feature
     return feature
 

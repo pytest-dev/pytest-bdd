@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import collections
 import enum
+import os
 from dataclasses import dataclass
 from itertools import dropwhile
 from typing import Callable, cast
@@ -10,6 +11,8 @@ import pyparsing as pp
 from typing_extensions import Self
 
 import pytest_bdd.parser
+
+from .parser import ValidationError
 
 pp.enable_all_warnings()
 
@@ -159,7 +162,7 @@ feature.set_parse_action(PFeature.from_tokens)
 gherkin_document = pp.And([pp.Group(feature)("feature")])
 gherkin_document.set_parse_action(PGherkinDocument.from_tokens)
 
-start = pp.And([gherkin_document("gherkin_document")])
+start = pp.And([pp.Group(gherkin_document)("gherkin_document")])
 
 start.set_name("start")
 
@@ -184,7 +187,7 @@ print(parsed)
 def transform(tokens: pp.ParseResults):
     res = tokens.as_dict()
 
-    p_gherkin_doc = cast(PGherkinDocument, res["gherkin_document"])
+    [p_gherkin_doc] = cast(PGherkinDocument, res["gherkin_document"])
     p_feature = p_gherkin_doc.feature
     print(res)
 
@@ -216,6 +219,37 @@ def transform(tokens: pp.ParseResults):
                 keyword=p_step.keyword.strip(),
             )
             scenario.add_step(step)
+    return feature
+
+
+def parse(content: str):
+    tokens = start.parse_string(content, parse_all=True)
+    feature = transform(tokens)
+    return feature
+
+
+def parse_feature(basedir: str, filename: str, encoding="utf-8"):
+    """Parse the feature file.
+
+    :param str basedir: Feature files base directory.
+    :param str filename: Relative path to the feature file.
+    :param str encoding: Feature file encoding (utf-8 by default).
+    """
+    abs_filename = os.path.abspath(os.path.join(basedir, filename))
+    rel_filename = os.path.join(os.path.basename(basedir), filename)
+
+    with open(abs_filename, encoding=encoding) as f:
+        content = f.read()
+
+    feature = parse(content)
+    feature.filename = abs_filename
+    feature.rel_filename = rel_filename
+
+    if feature.filename is None:
+        raise ValidationError("Missing filename")
+    if feature.rel_filename is None:
+        raise ValidationError("Missing rel_filename")
+
     return feature
 
 
