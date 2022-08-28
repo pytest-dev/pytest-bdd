@@ -110,6 +110,7 @@ def get_step_function(request, step: Step) -> StepFunctionContext | None:
 
     Finally we let request.getfixturevalue(...) fetch the step definition fixture.
     """
+    __tracebackhide__ = True
     bdd_name = get_step_fixture_name(step=step)
 
     with inject_fixturedefs_for_step(step=step, fixturemanager=request._fixturemanager, nodeid=request.node.nodeid):
@@ -123,6 +124,7 @@ def _execute_step_function(
     request: FixtureRequest, scenario: Scenario, step: Step, context: StepFunctionContext
 ) -> None:
     """Execute step function."""
+    __tracebackhide__ = True
     kw = {
         "request": request,
         "feature": scenario.feature,
@@ -173,6 +175,7 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequ
     :param request: request.
     :param encoding: Encoding.
     """
+    __tracebackhide__ = True
     request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
 
     for step in scenario.steps:
@@ -214,6 +217,7 @@ def _get_scenario_decorator(
         # otherwise indirect fixtures would not work.
         @pytest.mark.usefixtures(*func_args)
         def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> Any:
+            __tracebackhide__ = True
             scenario = templated_scenario.render(_pytest_bdd_example)
             _execute_scenario(feature, scenario, request)
             fixture_values = [request.getfixturevalue(arg) for arg in func_args]
@@ -259,7 +263,7 @@ def scenario(
     :param str scenario_name: Scenario name.
     :param str encoding: Feature file encoding.
     """
-
+    __tracebackhide__ = True
     scenario_name = str(scenario_name)
     caller_module_path = get_caller_module_path()
 

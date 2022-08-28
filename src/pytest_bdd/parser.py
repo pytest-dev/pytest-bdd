@@ -88,6 +88,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
     :param str filename: Relative path to the feature file.
     :param str encoding: Feature file encoding (utf-8 by default).
     """
+    __tracebackhide__ = True
     abs_filename = os.path.abspath(os.path.join(basedir, filename))
     rel_filename = os.path.join(os.path.basename(basedir), filename)
     feature = Feature(
