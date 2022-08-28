@@ -31,6 +31,7 @@ This release introduces breaking changes in order to be more in line with the of
 - Add type annotations (youtux) `#505 <https://github.com/pytest-dev/pytest-bdd/pull/505>`_
 - ``pytest_bdd.parsers.StepParser`` now is an Abstract Base Class. Subclasses must make sure to implement the abstract methods. (youtux) `#505 <https://github.com/pytest-dev/pytest-bdd/pull/505>`_
 - Angular brackets in step definitions are only parsed in "Scenario Outline" (previously they were parsed also in normal "Scenario"s) (youtux) `#524 <https://github.com/pytest-dev/pytest-bdd/pull/524>`_.
+- Hide pytest-bdd internal method in user tracebacks `#557 <https://github.com/pytest-dev/pytest-bdd/pull/557>`_.
 
 
 
