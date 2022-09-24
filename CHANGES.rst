@@ -11,6 +11,8 @@ Unreleased
 - Add generic ``step`` decorator that will be used for all kind of steps `#548 <https://github.com/pytest-dev/pytest-bdd/pull/548>`_
 - Add ``stacklevel`` param to ``given``, ``when``, ``then``, ``step`` decorators. This allows for programmatic step generation `#548 <https://github.com/pytest-dev/pytest-bdd/pull/548>`_
 - Hide pytest-bdd internal method in user tracebacks `#557 <https://github.com/pytest-dev/pytest-bdd/pull/557>`_.
+- Make the package PEP 561-compatible `#559 <https://github.com/pytest-dev/pytest-bdd/issues/559>`_ `#563 <https://github.com/pytest-dev/pytest-bdd/pull/563>`_.
+
 
 6.0.1
 -----
