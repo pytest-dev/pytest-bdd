@@ -9,8 +9,9 @@ Planned
    - https://github.com/pytest-dev/pytest-bdd/issues/502
 - Rework code generation
 
-Unreleased
+1.2.3
 ----------
+- Features could be autoloaded by --feature-autoload cli option
 - Remove possibility to manually register imported steps; They are registered automatically
 
 

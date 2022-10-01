@@ -2,26 +2,24 @@ BDD library for the pytest runner
 =================================
 
 .. image:: http://img.shields.io/pypi/v/pytest-bdd-ng.svg
-   :target: https://pypi.python.org/pypi/pytest-bdd-ng
+    :target: https://pypi.python.org/pypi/pytest-bdd-ng
 .. image:: https://codecov.io/gh/elchupanebrej/pytest-bdd-ng/branch/default/graph/badge.svg
-   :target: https://app.codecov.io/gh/elchupanebrej/pytest-bdd-ng
+    :target: https://app.codecov.io/gh/elchupanebrej/pytest-bdd-ng
 .. image:: https://readthedocs.org/projects/pytest-bdd-ng/badge/?version=default
     :target: https://pytest-bdd-ng.readthedocs.io/en/default/?badge=default
     :alt: Documentation Status
 .. image:: https://badgen.net/badge/stand%20with/UKRAINE/?color=0057B8&labelColor=FFD700
-  :target: https://savelife.in.ua/en/
+    :target: https://savelife.in.ua/en/
 
-pytest-bdd implements a subset of the Gherkin language to enable automating project
-requirements testing and to facilitate behavioral driven development.
-
-Unlike many other BDD tools, it does not require a separate runner and benefits from
-the power and flexibility of pytest. It enables unifying unit and functional
+**pytest-bdd-ng** combine descriptive clarity of `Gherkin <https://cucumber.io/docs/gherkin/reference/>`_ language
+with power and fullness of `pytest <https://docs.pytest.org/>`_ infrastructure
+It enables unifying unit and functional
 tests, reduces the burden of continuous integration server configuration and allows the reuse of
 test setups.
 
 Pytest fixtures written for unit tests can be reused for setup and actions
 mentioned in feature steps with dependency injection. This allows a true BDD
-just-enough specification of the requirements without maintaining any context object
+just-enough specification of the requirements without obligatory maintaining any context object
 containing the side effects of Gherkin imperative declarations.
 
 .. _behave: https://pypi.python.org/pypi/behave
@@ -33,9 +31,6 @@ Install pytest-bdd-ng
 ::
 
     pip install pytest-bdd-ng
-
-
-The minimum required version of `pytest` is 5.0
 
 
 Example
@@ -537,7 +532,9 @@ Also it's possible to override multiple fixtures in one step using `target_fixtu
 Multiline steps
 ---------------
 
-As Gherkin, pytest-bdd supports multiline steps
+**Note!** This possibility not a part of Gherkin standard and is supported for legacy parser. Let use Gherkin docstrings and custom step matcher.
+
+As Gherkin, pytest-bdd-ng supports multiline steps
 (aka `PyStrings <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#pystrings>`_).
 But in much cleaner and powerful way:
 
@@ -591,14 +588,18 @@ by a `given` step (`i_have_text`) argument with the same name (`text`). This pos
 the `Step arguments are fixtures as well!`_ section.
 
 
-Scenarios shortcut
-------------------
+Loading whole feature files
+---------------------------
 
 If you have relatively large set of feature files, it's boring to manually bind scenarios to the tests using the
 scenario decorator. Of course with the manual approach you get all the power to be able to additionally parametrize
 the test, give the test function a nice name, document it, etc, but in the majority of the cases you don't need that.
 Instead you want to bind `all` scenarios found in the `feature` folder(s) recursively automatically.
-For this - there's a `scenarios` helper.
+
+Scenarios shortcut
+^^^^^^^^^^^^^^^^^^
+
+First option is `scenarios` helper.
 
 .. code-block:: python
 
@@ -648,6 +649,69 @@ Both `scenario` or `scenarios` could be used as decorators or as operator calls.
     test_features = scenarios('features', return_test_decorator=False)
 
     test_specific_scenario = scenario('features/some.feature', 'Test something', return_test_decorator=False)
+
+
+Features autoload
+^^^^^^^^^^^^^^^^^
+
+Another possibility to load features is usage of `--feature-autoload` cli option or `feature_autoload` ini option.
+In this case feature files (\*.gherkin or \*.feature) have to be stored in same structure as origin pytest tests.
+Steps from lower directory layers overriding higher ones if step parsing collision occurs.
+
+Test project layout part could be (pay attention to symlinks):
+
+::
+
+    features/
+        User login.feature
+        User creates order.feature
+    steps/
+        user/
+            given.py
+            when.py
+            then.py
+        order/
+            given.py
+            when.py
+            then.py
+        browser/
+            given.py
+            when.py
+            then.py
+        .../
+    tests/
+        conftest.py
+        integration/
+            conftest.py
+            User login.feature           # -> ../../features/User login.feature
+            User creates order.feature   # -> ../../features/User creates order.feature
+            ...
+        unit/
+            ...
+
+tests/conftest.py:
+
+.. code-block:: python
+
+    from steps.users.given import *
+    from steps.users.when import *
+    from steps.users.then import *
+
+    from steps.order.given import *
+    from steps.order.when import *
+    from steps.order.then import *
+
+    from steps.browser.given import *
+    from steps.browser.when import *
+    from steps.browser.then import *
+
+
+tests/integration/conftest.py:
+
+.. code-block:: python
+
+    # Other steps specific only for integration scenarios
+    ...
 
 Scenario outlines
 -----------------
@@ -731,6 +795,8 @@ different than strings.
 Feature examples
 ^^^^^^^^^^^^^^^^
 
+**Note!** This possibility not a part of Gherkin standard and is supported for legacy parser.
+
 It's possible to declare example table once for the whole feature, and it will be shared
 among all the scenarios of that feature:
 
@@ -812,68 +878,6 @@ To not repeat steps as in example above you could want store your data in sequen
             | food       |
             | carrots    |
             | tomatoes   |
-
-
-Combine scenario outline and pytest parametrization
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-It's also possible to parametrize the scenario on the python side.
-The reason for this is that it is sometimes not needed to mention example table for every scenario.
-
-The code will look like:
-
-.. code-block:: python
-
-    import pytest
-    from pytest_bdd import scenario, given, when, then, parsers
-
-
-    # Here we use pytest to parametrize the test with the parameters table
-    @pytest.mark.parametrize(
-        ["start", "eat", "left"],
-        [(12, 5, 7)],
-    )
-    @scenario(
-        "parametrized.feature",
-        "Parametrized given, when, then",
-        # Also could be a set, if names of examples and fixtures are same
-        examples_fixtures_mapping={'start':'start', 'eat':'eat', 'left':'left'}
-    )
-    # Note that we should take the same arguments in the test function that we use
-    # for the test parametrization either directly or indirectly (fixtures depend on them).
-    def test_parametrized(start, eat, left):
-        """We don't need to do anything here, everything will be managed by the scenario decorator."""
-
-
-    @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="start_cucumbers")
-    def start_cucumbers(start):
-        return dict(start=start)
-
-
-    @when(parsers.parse("I eat {eat:d} cucumbers"))
-    def eat_cucumbers(start_cucumbers, start, eat):
-        start_cucumbers["eat"] = eat
-
-
-    @then(parsers.parse("I should have {left:d} cucumbers"))
-    def should_have_left_cucumbers(start_cucumbers, start, eat, left):
-        assert start - eat == left
-        assert start_cucumbers["start"] == start
-        assert start_cucumbers["eat"] == eat
-
-
-With a parametrized.feature file:
-
-.. code-block:: gherkin
-
-    Feature: parametrized
-        Scenario: Parametrized given, when, then
-            Given there are <start> cucumbers
-            When I eat <eat> cucumbers
-            Then I should have <left> cucumbers
-
-
-The significant downside of this approach is inability to see the test table from the feature file.
 
 
 Organizing your scenarios
@@ -1534,83 +1538,6 @@ The output will be like:
 As as side effect, the tool will validate the files for format errors, also some of the logic bugs, for example the
 ordering of the types of the steps.
 
-
-.. _Migration from 4.x.x:
-
-Migration of your tests from versions 4.x.x
--------------------------------------------
-
-Templated steps (e.g. ``@given("there are <start> cucumbers")``) should now the use step argument parsers in order to match the scenario outlines and get the values from the example tables. The values from the example tables are no longer passed as fixtures, although if you define your step to use a parser, the parameters will be still provided as fixtures.
-
-.. code-block:: python
-
-    # Old step definition:
-    @given("there are <start> cucumbers")
-    def given_cucumbers(start):
-        pass
-
-
-    # New step definition:
-    @given(parsers.parse("there are {start} cucumbers"))
-    def given_cucumbers(start):
-        pass
-
-
-Scenario `example_converters` are removed in favor of the converters provided on the step level:
-
-.. code-block:: python
-
-    # Old code:
-    @given("there are <start> cucumbers")
-    def given_cucumbers(start):
-        return {"start": start}
-
-    @scenario("outline.feature", "Outlined", example_converters={"start": float})
-    def test_outline():
-        pass
-
-
-    # New code:
-    @given(parsers.parse("there are {start} cucumbers"), converters={"start": float})
-    def given_cucumbers(start):
-        return {"start": start}
-
-    @scenario("outline.feature", "Outlined")
-    def test_outline():
-        pass
-
-
-.. _Migration from 3.x.x:
-
-Migration of your tests from versions 3.x.x
--------------------------------------------
-
-
-Given steps are no longer fixtures. In case it is needed to make given step setup a fixture
-the target_fixture parameter should be used.
-
-
-.. code-block:: python
-
-    @given("there's an article", target_fixture="article")
-    def there_is_an_article():
-        return Article()
-
-
-Given steps no longer have fixture parameter. In fact the step may depend on multiple fixtures.
-Just normal step declaration with the dependency injection should be used.
-
-.. code-block:: python
-
-    @given("there's an article")
-    def there_is_an_article(article):
-        pass
-
-
-Strict gherkin option is removed, so the ``strict_gherkin`` parameter can be removed from the scenario decorators
-as well as ``bdd_strict_gherkin`` from the ini files.
-
-Step validation handlers for the hook ``pytest_bdd_step_validation_error`` should be removed.
 
 License
 -------
