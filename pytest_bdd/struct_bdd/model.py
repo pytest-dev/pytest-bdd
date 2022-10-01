@@ -132,8 +132,8 @@ class Step(Node, ModelSchemaPostLoadable):
     ):
         from pytest_bdd.scenario import ModuleScenarioRegistry
 
-        caller_locals = caller_module_locals or get_caller_module_locals(depth=3)
-        caller_module_path = caller_module_path or get_caller_module_path(depth=3)
+        caller_locals = caller_module_locals or get_caller_module_locals(stacklevel=3)
+        caller_module_path = caller_module_path or get_caller_module_path(stacklevel=3)
 
         method = getattr(
             ModuleScenarioRegistry.get(caller_locals=caller_locals, caller_module_path=caller_module_path), algorithm

@@ -106,9 +106,11 @@ class ModuleScenarioRegistry:
         caller_locals: dict | None = None,
         caller_module_path: str = None,
     ) -> ModuleScenarioRegistry:
-        caller_locals = cast(dict, caller_locals if caller_locals is not None else get_caller_module_locals(depth=2))
+        caller_locals = cast(
+            dict, caller_locals if caller_locals is not None else get_caller_module_locals(stacklevel=2)
+        )
         caller_module_path = cast(
-            str, caller_module_path if caller_module_path is not None else get_caller_module_path(depth=2)
+            str, caller_module_path if caller_module_path is not None else get_caller_module_path(stacklevel=2)
         )
         if "__pytest_bdd_scenario_registry__" not in caller_locals.keys():
             caller_locals["__pytest_bdd_scenario_registry__"] = ModuleScenarioRegistry(  # type: ignore[call-arg]
@@ -247,8 +249,8 @@ def scenario(
         encoding=encoding,
         features_base_dir=features_base_dir,
         return_test_decorator=return_test_decorator,
-        _caller_module_locals=_caller_module_locals or get_caller_module_locals(depth=2),
-        _caller_module_path=_caller_module_path or get_caller_module_path(depth=2),
+        _caller_module_locals=_caller_module_locals or get_caller_module_locals(stacklevel=2),
+        _caller_module_path=_caller_module_path or get_caller_module_path(stacklevel=2),
         parser=parser,
         parse_args=parse_args,
     )
@@ -280,8 +282,8 @@ def scenarios(
         return_test_decorator=return_test_decorator,
         parser=parser,
         parse_args=parse_args,
-        _caller_module_locals=_caller_module_locals or get_caller_module_locals(depth=2),
-        _caller_module_path=_caller_module_path or get_caller_module_path(depth=2),
+        _caller_module_locals=_caller_module_locals or get_caller_module_locals(stacklevel=2),
+        _caller_module_path=_caller_module_path or get_caller_module_path(stacklevel=2),
     )
 
 

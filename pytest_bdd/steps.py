@@ -432,7 +432,7 @@ class StepHandler:
 
             # Allow step function have same names, so injecting same steps with generated names into module scope
             converted_name = convert_str_to_python_name(f'step_{step_type or ""}_{step_parserlike}')
-            get_caller_module_locals(depth=stacklevel)[converted_name] = step_func
+            get_caller_module_locals(stacklevel=stacklevel)[converted_name] = step_func
 
             return step_func
 
