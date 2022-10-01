@@ -39,6 +39,7 @@ from __future__ import annotations
 import warnings
 from contextlib import suppress
 from typing import Any, Callable, Iterable, Iterator, Sequence, cast
+from uuid import uuid4
 from warnings import warn
 
 import pytest
@@ -431,7 +432,7 @@ class StepHandler:
             setdefaultattr(step_func, "__pytest_bdd_step_definitions__", value_factory=set).add(step_definition)
 
             # Allow step function have same names, so injecting same steps with generated names into module scope
-            converted_name = convert_str_to_python_name(f'step_{step_type or ""}_{step_parserlike}')
+            converted_name = convert_str_to_python_name(f'step_{step_type or ""}_{step_parserlike}_{uuid4()}')
             get_caller_module_locals(stacklevel=stacklevel)[converted_name] = step_func
 
             return step_func

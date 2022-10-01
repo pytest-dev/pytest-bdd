@@ -3,18 +3,22 @@ from __future__ import annotations
 
 from collections import deque
 from contextlib import suppress
+from pathlib import Path
 from types import ModuleType
 from typing import Collection
 from unittest.mock import patch
 
+import py
 import pytest
 
 from pytest_bdd import cucumber_json, generation, gherkin_terminal_reporter, given, steps, then, when
 from pytest_bdd.allure_logging import AllurePytestBDD
-from pytest_bdd.collector import Module
+from pytest_bdd.collector import FeatureFileModule as FeatureFileCollector
+from pytest_bdd.collector import Module as ModuleCollector
 from pytest_bdd.model import Step
 from pytest_bdd.reporting import ScenarioReporterPlugin
 from pytest_bdd.runner import ScenarioRunner
+from pytest_bdd.scenario import add_options as scenario_add_options
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.typing.pytest import Config, Mark, MarkDecorator, Metafunc, Parser, PytestPluginManager
 
@@ -62,6 +66,7 @@ def pytest_addoption(parser: Parser) -> None:
     """Add pytest-bdd options."""
     add_bdd_ini(parser)
     steps.add_options(parser)
+    scenario_add_options(parser)
     cucumber_json.add_options(parser)
     generation.add_options(parser)
     gherkin_terminal_reporter.add_options(parser)
@@ -84,11 +89,8 @@ def pytest_configure(config: Config) -> None:
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_pycollect_makemodule(path, parent, module_path=None):
-    with patch("_pytest.python.Module", new=Module):
+    with patch("_pytest.python.Module", new=ModuleCollector):
         yield
-
-
-# @pytest.hookimpl(hookwrapper=True)
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -109,6 +111,19 @@ def pytest_generate_tests(metafunc: Metafunc):
 
 def pytest_cmdline_main(config: Config) -> int | None:
     return generation.cmdline_main(config)
+
+
+def pytest_collect_file(parent, path, file_path=None):
+    file_path = file_path or Path(path)
+    config = parent.session.config
+    is_enabled_feature_autoload = config.getoption("feature_autoload")
+    if is_enabled_feature_autoload is None:
+        is_enabled_feature_autoload = config.getini("feature_autoload")
+    if file_path.suffix in {".gherkin", ".feature"} and is_enabled_feature_autoload:
+        if hasattr(FeatureFileCollector, "from_parent"):
+            return FeatureFileCollector.from_parent(parent, fspath=py.path.local(file_path))
+        else:
+            return FeatureFileCollector(parent=parent, fspath=py.path.local(file_path))
 
 
 @pytest.mark.trylast

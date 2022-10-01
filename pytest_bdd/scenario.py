@@ -25,10 +25,28 @@ from attr import Factory, attrib, attrs
 from pytest_bdd.model import Feature, Scenario
 from pytest_bdd.parser import GherkinParser
 from pytest_bdd.typing.parser import ParserProtocol
-from pytest_bdd.typing.pytest import Config, Metafunc
+from pytest_bdd.typing.pytest import Config, Metafunc, Parser
 from pytest_bdd.utils import get_caller_module_locals, get_caller_module_path, make_python_name
 
 Args = collections.namedtuple("Args", ["args", "kwargs"])
+
+
+def add_options(parser: Parser):
+    """Add pytest-bdd options."""
+    group = parser.getgroup("bdd", "Scenario")
+    group.addoption(
+        "--feature-autoload",
+        action="store_true",
+        dest="feature_autoload",
+        default=None,
+        help="Turn on feature files autoload",
+    )
+    parser.addini(
+        "feature_autoload",
+        default=False,
+        type="bool",
+        help="Turn on feature files autoload",
+    )
 
 
 @attrs
