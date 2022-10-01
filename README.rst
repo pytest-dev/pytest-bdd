@@ -3,11 +3,13 @@ BDD library for the pytest runner
 
 .. image:: http://img.shields.io/pypi/v/pytest-bdd-ng.svg
    :target: https://pypi.python.org/pypi/pytest-bdd-ng
-.. image:: https://codecov.io/gh/elchupanebrej/pytest-bdd/branch/default/graph/badge.svg
-  :target: https://codecov.io/gh/elchupanebrej/pytest-bdd
+.. image:: https://codecov.io/gh/elchupanebrej/pytest-bdd-ng/branch/default/graph/badge.svg
+   :target: https://app.codecov.io/gh/elchupanebrej/pytest-bdd-ng
 .. image:: https://readthedocs.org/projects/pytest-bdd-ng/badge/?version=default
     :target: https://pytest-bdd-ng.readthedocs.io/en/default/?badge=default
     :alt: Documentation Status
+.. image:: https://badgen.net/badge/stand%20with/UKRAINE/?color=0057B8&labelColor=FFD700
+  :target: https://savelife.in.ua/en/
 
 pytest-bdd implements a subset of the Gherkin language to enable automating project
 requirements testing and to facilitate behavioral driven development.
@@ -156,29 +158,6 @@ default author.
             Given I'm the admin
             And there's an article
 
-
-Importing steps
----------------
-Just import steps into test module or `conftest.py` is not enough to be found by pytest-bdd. To use steps from other
-module there are few possibilities:
-
-- Register steps from module:
-
-.. code-block:: python
-
-    import module_with_steps
-
-    step.from_module(module_with_steps)
-
-- Import steps and register them from locals:
-
-.. code-block:: python
-
-    from module_with_steps import given_a, when_b, then_c
-
-    step.from_locals()
-
-- Build step_registry fixture and register imported steps there
 
 Liberal step decorator
 ----------------------

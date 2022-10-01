@@ -7,6 +7,12 @@ Planned
    - https://github.com/pytest-dev/pytest-bdd/issues/488
 - Extra support of official parser
    - https://github.com/pytest-dev/pytest-bdd/issues/502
+- Rework code generation
+
+Unreleased
+----------
+- Remove possibility to manually register imported steps; They are registered automatically
+
 
 1.2.2
 -----
