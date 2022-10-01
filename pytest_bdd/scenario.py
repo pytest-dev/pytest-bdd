@@ -29,7 +29,6 @@ from pytest_bdd.typing.pytest import Config, Metafunc
 from pytest_bdd.utils import get_caller_module_locals, get_caller_module_path, make_python_name
 
 Args = collections.namedtuple("Args", ["args", "kwargs"])
-FakeRequest = collections.namedtuple("FakeRequest", ["module"])
 
 
 @attrs

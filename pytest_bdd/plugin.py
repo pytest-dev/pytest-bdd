@@ -3,12 +3,15 @@ from __future__ import annotations
 
 from collections import deque
 from contextlib import suppress
+from types import ModuleType
 from typing import Collection
+from unittest.mock import patch
 
 import pytest
 
 from pytest_bdd import cucumber_json, generation, gherkin_terminal_reporter, given, steps, then, when
 from pytest_bdd.allure_logging import AllurePytestBDD
+from pytest_bdd.collector import Module
 from pytest_bdd.model import Step
 from pytest_bdd.reporting import ScenarioReporterPlugin
 from pytest_bdd.runner import ScenarioRunner
@@ -31,9 +34,16 @@ def trace() -> None:
     pytest.set_trace()
 
 
+__registry = StepHandler.Registry()
+
+
 @pytest.fixture
 def step_registry() -> StepHandler.Registry:
     """Fixture containing registry of all user-defined steps"""
+    return __registry
+
+
+step_registry.__registry__ = __registry  # type: ignore[attr-defined]
 
 
 @pytest.fixture
@@ -70,6 +80,21 @@ def pytest_configure(config: Config) -> None:
     config.pluginmanager.register(ScenarioReporterPlugin())
     config.pluginmanager.register(ScenarioRunner())
     AllurePytestBDD.register_if_allure_accessible(config)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_pycollect_makemodule(path, parent, module_path=None):
+    with patch("_pytest.python.Module", new=Module):
+        yield
+
+
+# @pytest.hookimpl(hookwrapper=True)
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_plugin_registered(plugin, manager):
+    if hasattr(plugin, "__file__") and isinstance(plugin, (type, ModuleType)):
+        StepHandler.Registry.inject_registry_fixture_and_register_steps(plugin)
 
 
 def pytest_unconfigure(config: Config) -> None:

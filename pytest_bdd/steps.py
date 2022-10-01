@@ -49,7 +49,7 @@ from pytest_bdd.const import StepType
 from pytest_bdd.model import Feature, Scenario, Step
 from pytest_bdd.parsers import StepParser, get_parser
 from pytest_bdd.typing.pytest import Config, Parser, TypeAlias
-from pytest_bdd.utils import deepattrgetter, get_caller_module_locals, setdefaultattr
+from pytest_bdd.utils import convert_str_to_python_name, get_caller_module_locals, setdefaultattr
 from pytest_bdd.warning_types import PytestBDDStepDefinitionWarning
 
 
@@ -79,6 +79,7 @@ def given(
     params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
     param_defaults: dict | None = None,
     liberal: bool | None = None,
+    stacklevel=1,
 ) -> Callable:
     """Given step decorator.
 
@@ -90,6 +91,8 @@ def given(
     :param params_fixtures_mapping: StepHandler parameters would be injected as fixtures
     :param param_defaults: Default parameters for step definition
     :param liberal: Could step definition be used with other keywords
+    :param stacklevel: Stack level to find the caller frame. This is used when injecting the step definition fixture.
+
 
     :return: Decorator function for the step.
     """
@@ -102,6 +105,7 @@ def given(
         params_fixtures_mapping=params_fixtures_mapping,
         param_defaults=param_defaults,
         liberal=liberal,
+        stacklevel=stacklevel + 1,
     )
 
 
@@ -113,6 +117,7 @@ def when(
     params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
     param_defaults: dict | None = None,
     liberal: bool | None = None,
+    stacklevel=1,
 ) -> Callable:
     """When step decorator.
 
@@ -124,6 +129,7 @@ def when(
     :param params_fixtures_mapping: StepHandler parameters would be injected as fixtures
     :param param_defaults: Default parameters for step definition
     :param liberal: Could step definition be used with other keywords
+    :param stacklevel: Stack level to find the caller frame. This is used when injecting the step definition fixture.
 
     :return: Decorator function for the step.
     """
@@ -136,6 +142,7 @@ def when(
         params_fixtures_mapping=params_fixtures_mapping,
         param_defaults=param_defaults,
         liberal=liberal,
+        stacklevel=stacklevel + 1,
     )
 
 
@@ -147,6 +154,7 @@ def then(
     params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
     param_defaults: dict | None = None,
     liberal: bool | None = None,
+    stacklevel=1,
 ) -> Callable:
     """Then step decorator.
 
@@ -158,6 +166,7 @@ def then(
     :param params_fixtures_mapping: StepHandler parameters would be injected as fixtures
     :param param_defaults: Default parameters for step definition
     :param liberal: Could step definition be used with other keywords
+    :param stacklevel: Stack level to find the caller frame. This is used when injecting the step definition fixture.
 
     :return: Decorator function for the step.
     """
@@ -170,6 +179,7 @@ def then(
         params_fixtures_mapping=params_fixtures_mapping,
         param_defaults=param_defaults,
         liberal=liberal,
+        stacklevel=stacklevel + 1,
     )
 
 
@@ -181,6 +191,7 @@ def step(
     params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
     param_defaults: dict | None = None,
     liberal: bool | None = None,
+    stacklevel=1,
 ):
     """Liberal step decorator which could be used with any keyword.
 
@@ -192,6 +203,7 @@ def step(
     :param params_fixtures_mapping: StepHandler parameters would be injected as fixtures
     :param param_defaults: Default parameters for step definition
     :param liberal: Could step definition be used with other keywords
+    :param stacklevel: Stack level to find the caller frame. This is used when injecting the step definition fixture.
 
     :return: Decorator function for the step.
     """
@@ -204,6 +216,7 @@ def step(
         params_fixtures_mapping=params_fixtures_mapping,
         param_defaults=param_defaults,
         liberal=liberal,
+        stacklevel=stacklevel + 1,
     )
 
 
@@ -326,57 +339,23 @@ class StepHandler:
         parent: StepHandler.Registry = attrib(default=None, init=False)
 
         @classmethod
-        def setdefault_step_registry_fixture(cls, caller_locals: dict):
-            if "step_registry" not in caller_locals.keys():
-                built_registry = cls()
-                caller_locals["step_registry"] = built_registry.fixture
-            return caller_locals["step_registry"]
+        def inject_registry_fixture_and_register_steps(cls, obj):
+            steps = [
+                step_candidate
+                for step_candidate in obj.__dict__.values()
+                if hasattr(step_candidate, "__pytest_bdd_step_definitions__")
+            ]
+            if steps:
+                setdefaultattr(obj, "step_registry", value_factory=lambda: StepHandler.Registry().fixture)
+                obj.step_registry.__registry__.register_steps(steps)
 
-        @classmethod
-        def register_step_definition(cls, step_definition, caller_locals: dict):
-            fixture = cls.setdefault_step_registry_fixture(caller_locals=caller_locals)
-            fixture.__registry__.registry.add(step_definition)
+        def register_step_definition(self, step_definition):
+            self.registry.add(step_definition)
 
-        @classmethod
-        def register_steps(cls, *step_funcs, caller_locals: dict):
+        def register_steps(self, step_funcs):
             for step_func in step_funcs:
                 for step_definition in step_func.__pytest_bdd_step_definitions__:
-                    cls.register_step_definition(step_definition, caller_locals=caller_locals)
-
-        @classmethod
-        def register_steps_from_locals(cls, caller_locals=None, steps=None):
-            if caller_locals is None:
-                caller_locals = get_caller_module_locals(depth=2)
-
-            def registrable_steps():
-                for name, obj in caller_locals.items():
-                    if hasattr(obj, "__pytest_bdd_step_definitions__") and (
-                        steps is None or any((name in steps, obj in steps))
-                    ):
-                        yield obj
-
-            cls.register_steps(*registrable_steps(), caller_locals=caller_locals)
-
-        @classmethod
-        def register_steps_from_module(cls, module, caller_locals=None, steps=None):
-            if caller_locals is None:
-                caller_locals = get_caller_module_locals(depth=2)
-
-            def registrable_steps():
-                # module items
-                for name, obj in module.__dict__.items():
-                    if hasattr(obj, "__pytest_bdd_step_definitions__") and (
-                        steps is None or any((name in steps, obj in steps))
-                    ):
-                        yield obj
-                # module registry items
-                for obj in deepattrgetter("__registry__.registry", default=None)(module.__dict__.get("step_registry"))[
-                    0
-                ]:
-                    if steps is None or obj.func in steps:
-                        yield obj.func
-
-            cls.register_steps(*set(registrable_steps()), caller_locals=caller_locals)
+                    self.register_step_definition(step_definition)
 
         @property
         def fixture(self):
@@ -401,6 +380,7 @@ class StepHandler:
         params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
         param_defaults: dict | None = None,
         liberal: Any | None = None,
+        stacklevel=2,
     ) -> Callable:
         """StepHandler decorator for the type and the name.
 
@@ -412,6 +392,7 @@ class StepHandler:
         :param params_fixtures_mapping: StepHandler parameters would be injected as fixtures
         :param param_defaults: Default parameters for step definition
         :param liberal: Could step definition be used with other keywords
+        :param stacklevel: Stack level to find the caller frame. This is used when injecting the step definition fixture
 
         :return: Decorator function for the step.
         """
@@ -436,7 +417,7 @@ class StepHandler:
             :param function step_func: StepHandler definition function
             """
 
-            step_definiton = StepHandler.Definition(  # type: ignore[call-arg]
+            step_definition = StepHandler.Definition(  # type: ignore[call-arg]
                 func=step_func,
                 type_=step_type,
                 parser=get_parser(step_parserlike),
@@ -447,17 +428,12 @@ class StepHandler:
                 liberal=liberal,
             )
 
-            setdefaultattr(step_func, "__pytest_bdd_step_definitions__", value_factory=set).add(step_definiton)
+            setdefaultattr(step_func, "__pytest_bdd_step_definitions__", value_factory=set).add(step_definition)
 
-            StepHandler.Registry.register_step_definition(
-                step_definition=step_definiton,
-                caller_locals=get_caller_module_locals(depth=2),
-            )
+            # Allow step function have same names, so injecting same steps with generated names into module scope
+            converted_name = convert_str_to_python_name(f'step_{step_type or ""}_{step_parserlike}')
+            get_caller_module_locals(depth=stacklevel)[converted_name] = step_func
 
             return step_func
 
         return decorator
-
-
-step.from_locals = StepHandler.Registry.register_steps_from_locals  # type: ignore[attr-defined]
-step.from_module = StepHandler.Registry.register_steps_from_module  # type: ignore[attr-defined]

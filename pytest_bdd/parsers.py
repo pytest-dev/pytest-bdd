@@ -17,10 +17,13 @@ class StepParserProtocol(Protocol):
     name: Any
 
     def parse_arguments(self, name: str) -> dict[str, Any] | None:
-        ...
+        ...  # pragma: no cover
 
     def is_matching(self, name: str) -> bool:
-        ...
+        ...  # pragma: no cover
+
+    def __str__(self) -> str:
+        ...  # pragma: no cover
 
 
 class StepParser(StepParserProtocol, metaclass=ABCMeta):
@@ -42,6 +45,11 @@ class StepParser(StepParserProtocol, metaclass=ABCMeta):
         """Match given name with the step name."""
         raise NotImplementedError()  # pragma: no cover
 
+    @abstractmethod
+    def __str__(self) -> str:
+        """Match given name with the step name."""
+        raise NotImplementedError()  # pragma: no cover
+
 
 class _CommonRe(StepParser):
     regex: _RePattern
@@ -51,6 +59,9 @@ class _CommonRe(StepParser):
 
     def is_matching(self, name):
         return bool(self.regex.match(name))
+
+    def __str__(self):
+        return str(self.name)
 
 
 class _re(_CommonRe):
@@ -80,6 +91,9 @@ class _CommonParse(StepParser):
             return bool(self.parser.parse(name))
         except ValueError:
             return False
+
+    def __str__(self):
+        return str(self.name)
 
 
 class _parse(_CommonParse):

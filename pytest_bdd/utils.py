@@ -56,6 +56,18 @@ def get_caller_module_path(depth: int = 1) -> str:
     return getframeinfo(frame, context=0).filename
 
 
+def convert_str_to_python_name(s: Any) -> str:
+    s1: str = str(s)
+    s2 = re.sub(r"[^.a-zA-Z0-9]", "_", s1)
+    s3 = re.sub(r"_+", "_", s2)
+    s4 = s3.strip("_")
+    if re.match(r"\d.*", s4):
+        result_s = f"_{s4}"
+    else:
+        result_s = s4
+    return result_s
+
+
 _DUMP_START = "_pytest_bdd_>>>"
 _DUMP_END = "<<<_pytest_bdd_"
 
