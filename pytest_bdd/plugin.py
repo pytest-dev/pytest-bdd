@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from collections import deque
 from contextlib import suppress
+from functools import partial
+from operator import attrgetter, contains, methodcaller
 from pathlib import Path
 from types import ModuleType
 from typing import Collection
@@ -21,6 +23,7 @@ from pytest_bdd.runner import ScenarioRunner
 from pytest_bdd.scenario import add_options as scenario_add_options
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.typing.pytest import Config, Mark, MarkDecorator, Metafunc, Parser, PytestPluginManager
+from pytest_bdd.typing.struct_bdd import STRUCT_BDD_INSTALLED
 
 
 def pytest_addhooks(pluginmanager: PytestPluginManager) -> None:
@@ -119,11 +122,29 @@ def pytest_collect_file(parent, path, file_path=None):
     is_enabled_feature_autoload = config.getoption("feature_autoload")
     if is_enabled_feature_autoload is None:
         is_enabled_feature_autoload = config.getini("feature_autoload")
-    if file_path.suffix in {".gherkin", ".feature"} and is_enabled_feature_autoload:
+    if not is_enabled_feature_autoload:
+        return
+    if any(map(partial(contains, {".gherkin", ".feature"}), file_path.suffixes)):
         if hasattr(FeatureFileCollector, "from_parent"):
-            return FeatureFileCollector.from_parent(parent, fspath=py.path.local(file_path))
+            collector = FeatureFileCollector.from_parent(parent, fspath=py.path.local(file_path))
         else:
-            return FeatureFileCollector(parent=parent, fspath=py.path.local(file_path))
+            collector = FeatureFileCollector(parent=parent, fspath=py.path.local(file_path))
+
+        if STRUCT_BDD_INSTALLED:
+            from pytest_bdd.struct_bdd.parser import StructBDDParser
+
+            struct_bdd_parser_kind = next(
+                filter(
+                    partial(contains, list(map(methodcaller("strip", "."), file_path.suffixes))),
+                    list(map(attrgetter("value"), StructBDDParser.KIND)),
+                ),
+                None,
+            )
+
+            if struct_bdd_parser_kind is not None:
+                collector.parser = StructBDDParser(kind=struct_bdd_parser_kind)
+
+        return collector
 
 
 @pytest.mark.trylast

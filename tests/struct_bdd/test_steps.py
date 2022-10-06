@@ -9,7 +9,7 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
     "kind,file_content",
     [
         partial(param, id="plain-yaml")(
-            StructBDDParser.KIND.YAML,
+            StructBDDParser.KIND.YAML.value,
             """\
             Name: Steps are executed one by one
             Description: |
@@ -30,7 +30,7 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
             """,
         ),
         partial(param, id="plain-hocon")(
-            StructBDDParser.KIND.HOCON,
+            StructBDDParser.KIND.HOCON.value,
             r"""
               Name = Steps are executed one by one
               Description: "Steps are executed one by one. Given and When sections\nare not mandatory in some cases.\n",
@@ -54,7 +54,7 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
             """,
         ),
         partial(param, id="plain-json")(
-            StructBDDParser.KIND.JSON,
+            StructBDDParser.KIND.JSON.value,
             r"""{
               "Name": "Steps are executed one by one",
               "Description": "Steps are executed one by one. Given and When sections\nare not mandatory in some cases.\n",
@@ -79,7 +79,7 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
             """,
         ),
         partial(param, id="plain-hjson")(
-            StructBDDParser.KIND.HJSON,
+            StructBDDParser.KIND.HJSON.value,
             r"""{
               Name: Steps are executed one by one
               Description:
@@ -111,7 +111,7 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
             """,
         ),
         partial(param, id="plain-json5")(
-            StructBDDParser.KIND.JSON5,
+            StructBDDParser.KIND.JSON5.value,
             r"""{
               Name: 'Steps are executed one by one',
               Description: 'Steps are executed one by one. Given and When sections\nare not mandatory in some cases.\n',
@@ -136,7 +136,7 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
             """,
         ),
         partial(param, id="plain-toml")(
-            StructBDDParser.KIND.TOML,
+            StructBDDParser.KIND.TOML.value,
             """\
             Name = "Steps are executed one by one"
             Description='''
@@ -159,7 +159,7 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
             """,
         ),
         partial(param, id="complex-yaml")(
-            StructBDDParser.KIND.YAML,
+            StructBDDParser.KIND.YAML.value,
             """\
             Name: Steps are executed one by one
             Description: |
@@ -185,7 +185,7 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
             """,
         ),
         partial(param, id="complex-toml")(
-            StructBDDParser.KIND.TOML,
+            StructBDDParser.KIND.TOML.value,
             """\
             Name = "Steps are executed one by one"
             Description='''
@@ -283,7 +283,7 @@ def test_steps(testdir, kind, file_content):
     "kind,file_content",
     [
         partial(param, id="plain-yaml")(
-            StructBDDParser.KIND.YAML,
+            StructBDDParser.KIND.YAML.value,
             """\
             Name: Steps are executed one by one
             Description: |
@@ -363,6 +363,84 @@ def test_default_loader(testdir, kind, file_content):
         )
     )
     result = testdir.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
+
+
+@mark.parametrize(
+    "kind,file_content",
+    [
+        partial(param, id="plain-yaml")(
+            StructBDDParser.KIND.YAML.value,
+            """\
+            Name: Steps are executed one by one
+            Description: |
+                Steps are executed one by one. Given and When sections
+                are not mandatory in some cases.
+            Steps:
+                - Step:
+                    Name: Executed step by step
+                    Description: Scenario description
+                    Steps:
+                        - Given: I have a foo fixture with value "foo"
+                        - And: there is a list
+                        - When: I append 1 to the list
+                        - And: I append 2 to the list
+                        - And: I append 3 to the list
+                        - Then: foo should have value "foo"
+                        - But: the list should be [1, 2, 3]
+            """,
+        ),
+    ],
+)
+def test_autoload_feature_yaml(testdir, kind, file_content):
+    testdir.makefile(
+        f".bdd.feature.{kind}",
+        steps=file_content,
+    )
+
+    testdir.makeconftest(
+        """\
+        from textwrap import dedent
+        from pytest_bdd import given, when, then, scenario
+        from pytest_bdd.parser import StructBDDParser
+
+
+        @given('I have a foo fixture with value "foo"', target_fixture="foo")
+        def foo():
+            return "foo"
+
+
+        @given("there is a list", target_fixture="results")
+        def results():
+            return []
+
+
+        @when("I append 1 to the list")
+        def append_1(results):
+            results.append(1)
+
+
+        @when("I append 2 to the list")
+        def append_2(results):
+            results.append(2)
+
+
+        @when("I append 3 to the list")
+        def append_3(results):
+            results.append(3)
+
+
+        @then('foo should have value "foo"')
+        def foo_is_foo(foo):
+            assert foo == "foo"
+
+
+        @then("the list should be [1, 2, 3]")
+        def check_results(results):
+            assert results == [1, 2, 3]
+        """
+    )
+    result = testdir.runpytest("--feature-autoload")
     result.assert_outcomes(passed=1, failed=0)
 
 

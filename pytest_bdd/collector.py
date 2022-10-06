@@ -3,6 +3,7 @@ from importlib.util import module_from_spec
 from pathlib import Path
 from uuid import uuid4
 
+from attr import attrib, attrs
 from pytest import Module as PytestModule
 
 from pytest_bdd.scenario import _scenarios
@@ -30,6 +31,7 @@ class FeatureFileModule(PytestModule):
             feature_paths=[self.fspath],
             scenario_filter_or_scenario_name=None,
             return_test_decorator=False,
+            parser=getattr(self, "parser", None),
             _caller_module_locals=module.__dict__,
             _caller_module_path=self.fspath,
         )

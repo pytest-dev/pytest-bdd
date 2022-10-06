@@ -1,3 +1,4 @@
+from enum import Enum
 from functools import partial
 from operator import methodcaller
 from pathlib import Path
@@ -11,7 +12,7 @@ from pytest_bdd.typing.parser import ParserProtocol
 
 @attrs
 class StructBDDParser(ParserProtocol):
-    class KIND:
+    class KIND(Enum):
         HOCON = "hocon"
         HJSON = "hjson"
         JSON = "json"
@@ -25,7 +26,7 @@ class StructBDDParser(ParserProtocol):
 
     @kind.default
     def kind_default(self):
-        return self.KIND.YAML if getattr(self, "loader", None) is None else None
+        return self.KIND.YAML.value if getattr(self, "loader", None) is None else None
 
     @glob.default
     def glob_default(self):
@@ -46,28 +47,28 @@ class StructBDDParser(ParserProtocol):
         )
 
     def build_loader(self):
-        if self.kind == self.KIND.YAML:
+        if self.kind == self.KIND.YAML.value:
             from yaml import FullLoader
             from yaml import load as load_yaml
 
             return partial(load_yaml, Loader=FullLoader)
-        elif self.kind == self.KIND.TOML:
+        elif self.kind == self.KIND.TOML.value:
             from tomli import loads as load_toml
 
             return load_toml
-        elif self.kind == self.KIND.JSON:
+        elif self.kind == self.KIND.JSON.value:
             from json import loads as load_json
 
             return load_json
-        elif self.kind == self.KIND.JSON5:
+        elif self.kind == self.KIND.JSON5.value:
             from json5 import loads as load_json5
 
             return load_json5
-        elif self.kind == self.KIND.HJSON:
+        elif self.kind == self.KIND.HJSON.value:
             from hjson import loads as load_hjson
 
             return load_hjson
-        elif self.kind == self.KIND.HOCON:
+        elif self.kind == self.KIND.HOCON.value:
             from json import loads
 
             from pyhocon import ConfigFactory, HOCONConverter
