@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from operator import attrgetter
+from functools import partial
+from itertools import filterfalse, starmap
+from operator import attrgetter, contains
 from re import Match
 from re import Pattern as _RePattern
 from re import compile as re_compile
@@ -50,13 +52,40 @@ class StepParser(StepParserProtocol, metaclass=ABCMeta):
         """Match given name with the step name."""
         raise NotImplementedError()  # pragma: no cover
 
+    @classmethod
+    def build(cls, parserlike: str | bytes | StepParser | StepParserProtocol) -> StepParser:
+
+        """Get parser by given name.
+
+        :param parserlike: name of the step to parse
+
+        :return: step parser object
+        :rtype: StepParser
+        """
+
+        if isinstance(parserlike, StepParserProtocol):
+            parser = cast(StepParser, parserlike)
+        elif isinstance(parserlike, _RePattern):
+            parser = re(parserlike)
+        elif isinstance(parserlike, base_parse.Parser):
+            parser = parse(parserlike)
+        elif isinstance(parserlike, CucumberExpression):
+            parser = cucumber_expression(parserlike)
+        else:
+            try:
+                parser = cfparse(parserlike)
+            except Exception:
+                parser = string(parserlike)
+
+        return parser
+
 
 class re(StepParser):
     """Regex step parser."""
 
     @singledispatchmethod
     def __init__(self, *args, **kwargs):
-        raise NotImplementedError
+        raise NotImplementedError()  # pragma: no cover
 
     @__init__.register
     def _(self, pattern: str, *args: Any, **kwargs: Any) -> None:
@@ -78,16 +107,17 @@ class re(StepParser):
         match = cast(Match, self.regex.match(name))  # Can't be None because is already matched
         group_dict = match.groupdict()
         if anonymous_group_names is not None:
-            groups_count = len(match.groups())
-            named_group_spans = [*map(match.span, group_dict.keys())]
             group_dict.update(
-                {
-                    anonymous_group_name: name[slice(*anonymous_group_span)]
-                    for anonymous_group_name, anonymous_group_span in zip(
-                        anonymous_group_names,
-                        filter(lambda span: span not in named_group_spans, map(match.span, range(1, groups_count + 1))),
-                    )
-                }
+                zip(
+                    anonymous_group_names,
+                    map(
+                        lambda span: name[slice(*span)],  # type: ignore[no-any-return] # https://github.com/python/mypy/issues/9590
+                        filterfalse(
+                            partial(contains, [*map(match.span, group_dict.keys())]),
+                            map(match.span, range(1, len(match.groups()) + 1)),
+                        ),
+                    ),
+                )
             )
 
         return group_dict
@@ -104,7 +134,7 @@ class parse(StepParser):
 
     @singledispatchmethod
     def __init__(self, *args, **kwargs):
-        raise NotImplementedError
+        raise NotImplementedError()  # pragma: no cover
 
     @__init__.register
     def _(self, format: str, *args: Any, builder=base_parse.compile, **kwargs: Any) -> None:
@@ -160,11 +190,14 @@ class string(StepParser):
         """Match given name with the step name."""
         return bool(self.name == name)
 
+    def __str__(self):
+        return self.name
+
 
 class cucumber_expression(StepParser):
     @singledispatchmethod
     def __init__(self, *args, **kwargs):
-        raise NotImplementedError
+        raise NotImplementedError()  # pragma: no cover
 
     @__init__.register
     def _(self, expression: str, parameter_type_registry: ParameterTypeRegistry = ParameterTypeRegistry()):
@@ -184,26 +217,3 @@ class cucumber_expression(StepParser):
 
     def __str__(self):
         return str(self.pattern)
-
-
-def get_parser(parserlike: str | StepParser | StepParserProtocol) -> StepParser:
-    """Get parser by given name.
-
-    :param parserlike: name of the step to parse
-
-    :return: step parser object
-    :rtype: StepParser
-    """
-
-    if isinstance(parserlike, StepParserProtocol):
-        parser = cast(StepParser, parserlike)
-    elif isinstance(parserlike, _RePattern):
-        parser = re(parserlike)
-    elif isinstance(parserlike, base_parse.Parser):
-        parser = parse(parserlike)
-    elif isinstance(parserlike, CucumberExpression):
-        parser = cucumber_expression(parserlike)
-    else:
-        parser = cfparse(parserlike)
-
-    return parser

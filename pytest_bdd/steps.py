@@ -48,7 +48,7 @@ from ordered_set import OrderedSet
 
 from pytest_bdd.const import StepType
 from pytest_bdd.model import Feature, Scenario, Step
-from pytest_bdd.parsers import StepParser, get_parser
+from pytest_bdd.parsers import StepParser
 from pytest_bdd.typing.pytest import Config, Parser, TypeAlias
 from pytest_bdd.utils import convert_str_to_python_name, get_caller_module_locals, setdefaultattr
 from pytest_bdd.warning_types import PytestBDDStepDefinitionWarning
@@ -438,7 +438,7 @@ class StepHandler:
             step_definition = StepHandler.Definition(  # type: ignore[call-arg]
                 func=step_func,
                 type_=step_type,
-                parser=get_parser(step_parserlike),
+                parser=StepParser.build(step_parserlike),
                 anonymous_group_names=anonymous_group_names,
                 converters=cast(dict, converters),
                 params_fixtures_mapping=params_fixtures_mapping,

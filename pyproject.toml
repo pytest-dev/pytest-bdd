@@ -24,7 +24,6 @@ module = [
         "allure_pytest.*",
         "attr.*",
         "cucumber_expressions.*",
-        "singledispatchmethod.*",
         "execnet.*",
         "gherkin.*",
         "hjson",
@@ -38,6 +37,7 @@ module = [
         "_pytest.*",
         "pyhocon",
         "pytest.*",
+        "singledispatchmethod.*",
         "yaml.*"
     ]
 ignore_missing_imports = true
