@@ -23,6 +23,8 @@ module = [
         "allure_commons.*",
         "allure_pytest.*",
         "attr.*",
+        "cucumber_expressions.*",
+        "singledispatchmethod.*",
         "execnet.*",
         "gherkin.*",
         "hjson",
