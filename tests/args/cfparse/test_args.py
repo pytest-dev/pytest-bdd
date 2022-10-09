@@ -47,7 +47,7 @@ def test_every_step_takes_param_with_the_same_name(testdir, parser_import_string
             assert euro == values.pop(0)
 
 
-        @when(cfparse("I pay {euro:d} Euro"))
+        @when(cfparse("I pay {} Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
         def i_pay(euro, values, request):
             assert euro == values.pop(0)
 

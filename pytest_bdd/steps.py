@@ -74,6 +74,7 @@ def add_options(parser: Parser):
 
 def given(
     parserlike: Any,
+    anonymous_group_names: Iterable[str] | None = None,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
     target_fixtures: list[str] = None,
@@ -85,6 +86,7 @@ def given(
     """Given step decorator.
 
     :param parserlike: StepHandler name or a parser object.
+    :param anonymous_group_names: Grant names for anonymous groups of parserlike
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
@@ -100,6 +102,7 @@ def given(
     return StepHandler.decorator_builder(
         StepType.CONTEXT,
         parserlike,
+        anonymous_group_names=anonymous_group_names,
         converters=converters,
         target_fixture=target_fixture,
         target_fixtures=target_fixtures,
@@ -112,6 +115,7 @@ def given(
 
 def when(
     parserlike: Any,
+    anonymous_group_names: Iterable[str] | None = None,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
     target_fixtures: list[str] = None,
@@ -123,6 +127,7 @@ def when(
     """When step decorator.
 
     :param parserlike: StepHandler name or a parser object.
+    :param anonymous_group_names: Grant names for anonymous groups of parserlike
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
@@ -137,6 +142,7 @@ def when(
     return StepHandler.decorator_builder(
         StepType.ACTION,
         parserlike,
+        anonymous_group_names=anonymous_group_names,
         converters=converters,
         target_fixture=target_fixture,
         target_fixtures=target_fixtures,
@@ -149,6 +155,7 @@ def when(
 
 def then(
     parserlike: Any,
+    anonymous_group_names: Iterable[str] | None = None,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
     target_fixtures: list[str] = None,
@@ -160,6 +167,7 @@ def then(
     """Then step decorator.
 
     :param parserlike: StepHandler name or a parser object.
+    :param anonymous_group_names: Grant names for anonymous groups of parserlike
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
@@ -174,6 +182,7 @@ def then(
     return StepHandler.decorator_builder(
         StepType.OUTCOME,
         parserlike,
+        anonymous_group_names=anonymous_group_names,
         converters=converters,
         target_fixture=target_fixture,
         target_fixtures=target_fixtures,
@@ -186,6 +195,7 @@ def then(
 
 def step(
     parserlike: Any,
+    anonymous_group_names: Iterable[str] | None = None,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
     target_fixtures: list[str] = None,
@@ -197,6 +207,7 @@ def step(
     """Liberal step decorator which could be used with any keyword.
 
     :param parserlike: StepHandler name or a parser object.
+    :param anonymous_group_names: Grant names for anonymous groups of parserlike
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
@@ -211,6 +222,7 @@ def step(
     return StepHandler.decorator_builder(
         StepType.UNSPECIFIED if liberal else StepType.UNKNOWN,
         parserlike,
+        anonymous_group_names=anonymous_group_names,
         converters=converters,
         target_fixture=target_fixture,
         target_fixtures=target_fixtures,
@@ -321,6 +333,7 @@ class StepHandler:
         func: Callable
         type_: str | None
         parser: StepParser
+        anonymous_group_names: Iterable[str] | None
         converters: dict[str, Callable]
         params_fixtures_mapping: set[str] | dict[str, str] | Any
         param_defaults: dict
@@ -328,7 +341,9 @@ class StepHandler:
         liberal: Any | None
 
         def get_parameters(self, step: Step):
-            parsed_arguments = self.parser.parse_arguments(step.name) or {}
+            parsed_arguments = (
+                self.parser.parse_arguments(step.name, anonymous_group_names=self.anonymous_group_names) or {}
+            )
             return {
                 **self.param_defaults,
                 **{arg: self.converters.get(arg, lambda _: _)(value) for arg, value in parsed_arguments.items()},
@@ -375,6 +390,7 @@ class StepHandler:
     def decorator_builder(
         step_type: str | None,
         step_parserlike: Any,
+        anonymous_group_names: Iterable[str] | None = None,
         converters: dict[str, Callable] | None = None,
         target_fixture: str | None = None,
         target_fixtures: list[str] | None = None,
@@ -387,6 +403,7 @@ class StepHandler:
 
         :param step_type: StepHandler type (CONTEXT, ACTION or OUTCOME).
         :param step_parserlike: StepHandler name as in the feature file.
+        :param anonymous_group_names: Grant names for anonymous groups of parserlike
         :param converters: Optional step arguments converters mapping
         :param target_fixture: Optional fixture name to replace by step definition
         :param target_fixtures: Target fixture names to be replaced by steps definition function.
@@ -422,6 +439,7 @@ class StepHandler:
                 func=step_func,
                 type_=step_type,
                 parser=get_parser(step_parserlike),
+                anonymous_group_names=anonymous_group_names,
                 converters=cast(dict, converters),
                 params_fixtures_mapping=params_fixtures_mapping,
                 param_defaults=cast(dict, param_defaults),

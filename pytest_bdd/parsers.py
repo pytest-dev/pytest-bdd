@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
+from re import Match
 from re import Pattern as _RePattern
 from re import compile as re_compile
-from typing import Any, cast
+from typing import Any, Iterable, cast
 
 import parse as base_parse
 import parse_type.cfparse as base_cfparse
@@ -16,7 +17,7 @@ from pytest_bdd.typing import Protocol, runtime_checkable
 class StepParserProtocol(Protocol):
     name: Any
 
-    def parse_arguments(self, name: str) -> dict[str, Any] | None:
+    def parse_arguments(self, name: str, anonymous_group_names: Iterable[str] | None = None) -> dict[str, Any] | None:
         ...  # pragma: no cover
 
     def is_matching(self, name: str) -> bool:
@@ -33,7 +34,7 @@ class StepParser(StepParserProtocol, metaclass=ABCMeta):
         self.name = name
 
     @abstractmethod
-    def parse_arguments(self, name: str) -> dict[str, Any] | None:
+    def parse_arguments(self, name: str, anonymous_group_names: Iterable[str] | None = None) -> dict[str, Any] | None:
         """Get step arguments from the given step name.
 
         :return: `dict` of step arguments
@@ -54,8 +55,27 @@ class StepParser(StepParserProtocol, metaclass=ABCMeta):
 class _CommonRe(StepParser):
     regex: _RePattern
 
-    def parse_arguments(self, name):
-        return self.regex.match(name).groupdict()
+    def parse_arguments(
+        self,
+        name,
+        anonymous_group_names: Iterable[str] | None = None,
+    ):
+        match = cast(Match, self.regex.match(name))  # Can't be None because is already matched
+        group_dict = match.groupdict()
+        if anonymous_group_names is not None:
+            groups_count = len(match.groups())
+            named_group_spans = [*map(match.span, group_dict.keys())]
+            group_dict.update(
+                {
+                    anonymous_group_name: name[slice(*anonymous_group_span)]
+                    for anonymous_group_name, anonymous_group_span in zip(
+                        anonymous_group_names,
+                        filter(lambda span: span not in named_group_spans, map(match.span, range(1, groups_count + 1))),
+                    )
+                }
+            )
+
+        return group_dict
 
     def is_matching(self, name):
         return bool(self.regex.match(name))
@@ -83,8 +103,12 @@ class re(_CommonRe):
 class _CommonParse(StepParser):
     parser: base_parse.Parser
 
-    def parse_arguments(self, name: str) -> dict[str, Any] | None:
-        return cast(dict, self.parser.parse(name).named)
+    def parse_arguments(self, name: str, anonymous_group_names: Iterable[str] | None = None) -> dict[str, Any] | None:
+        match = self.parser.parse(name)
+        group_dict = cast(dict, match.named)
+        if anonymous_group_names is not None:
+            group_dict.update(dict(zip(anonymous_group_names, match.fixed)))
+        return group_dict
 
     def is_matching(self, name):
         try:
@@ -130,7 +154,7 @@ class string(StepParser):
         name = str(name, **({"encoding": "utf-8"} if isinstance(name, bytes) else {}))
         super().__init__(name)
 
-    def parse_arguments(self, name: str) -> dict[str, Any]:
+    def parse_arguments(self, name: str, anonymous_group_names: Iterable[str] | None = None) -> dict[str, Any]:
         """No parameters are available for simple string step.
 
         :return: `dict` of step arguments
@@ -148,7 +172,7 @@ def get_parser(parserlike: str | StepParser | StepParserProtocol) -> StepParser:
     :param parserlike: name of the step to parse
 
     :return: step parser object
-    :rtype: StepArgumentParser
+    :rtype: StepParser
     """
 
     if isinstance(parserlike, StepParserProtocol):
