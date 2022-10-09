@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
+from operator import attrgetter
 from re import Match
 from re import Pattern as _RePattern
 from re import compile as re_compile
@@ -9,14 +10,15 @@ from typing import Any, Iterable, cast
 
 import parse as base_parse
 import parse_type.cfparse as base_cfparse
+from cucumber_expressions.expression import CucumberExpression
+from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
 
 from pytest_bdd.typing import Protocol, runtime_checkable
+from pytest_bdd.utils import singledispatchmethod, stringify
 
 
 @runtime_checkable
 class StepParserProtocol(Protocol):
-    name: Any
-
     def parse_arguments(self, name: str, anonymous_group_names: Iterable[str] | None = None) -> dict[str, Any] | None:
         ...  # pragma: no cover
 
@@ -29,9 +31,6 @@ class StepParserProtocol(Protocol):
 
 class StepParser(StepParserProtocol, metaclass=ABCMeta):
     """Parser of the individual step."""
-
-    def __init__(self, name: Any) -> None:
-        self.name = name
 
     @abstractmethod
     def parse_arguments(self, name: str, anonymous_group_names: Iterable[str] | None = None) -> dict[str, Any] | None:
@@ -52,8 +51,24 @@ class StepParser(StepParserProtocol, metaclass=ABCMeta):
         raise NotImplementedError()  # pragma: no cover
 
 
-class _CommonRe(StepParser):
-    regex: _RePattern
+class re(StepParser):
+    """Regex step parser."""
+
+    @singledispatchmethod
+    def __init__(self, *args, **kwargs):
+        raise NotImplementedError
+
+    @__init__.register
+    def _(self, pattern: str, *args: Any, **kwargs: Any) -> None:
+        """Compile regex."""
+        self.pattern = pattern
+        self.regex = re_compile(self.pattern, *args, **kwargs)
+
+    @__init__.register
+    def _(self, pattern: _RePattern):
+        """Compile regex."""
+        self.pattern = pattern.pattern
+        self.regex = pattern
 
     def parse_arguments(
         self,
@@ -81,27 +96,31 @@ class _CommonRe(StepParser):
         return bool(self.regex.match(name))
 
     def __str__(self):
-        return str(self.name)
+        return stringify(self.pattern)
 
 
-class _re(_CommonRe):
-    def __init__(self, name):
-        """Compile regex."""
-        super().__init__(name.pattern)
-        self.regex = name
+class parse(StepParser):
+    """parse step parser."""
 
+    @singledispatchmethod
+    def __init__(self, *args, **kwargs):
+        raise NotImplementedError
 
-class re(_CommonRe):
-    """Regex step parser."""
+    @__init__.register
+    def _(self, format: str, *args: Any, builder=base_parse.compile, **kwargs: Any) -> None:
+        """Compile parse expression."""
+        self.format = format
+        self.parser = builder(self.format, *args, **kwargs)
 
-    def __init__(self, name: str, *args: Any, **kwargs: Any) -> None:
-        """Compile regex."""
-        super().__init__(name)
-        self.regex = re_compile(self.name, *args, **kwargs)
+    @__init__.register
+    def _(self, format: base_parse.Parser):
+        self.format = format._format
+        self.parser = format
 
-
-class _CommonParse(StepParser):
-    parser: base_parse.Parser
+    @classmethod
+    def cfparse(cls, *args, **kwargs):
+        kwargs.setdefault("builder", base_cfparse.Parser)
+        return cls(*args, **kwargs)
 
     def parse_arguments(self, name: str, anonymous_group_names: Iterable[str] | None = None) -> dict[str, Any] | None:
         match = self.parser.parse(name)
@@ -117,33 +136,10 @@ class _CommonParse(StepParser):
             return False
 
     def __str__(self):
-        return str(self.name)
+        return str(self.format)
 
 
-class _parse(_CommonParse):
-    def __init__(self, name: base_parse.Parser):
-        super().__init__(name._format)
-        self.parser = name
-
-
-class parse(_CommonParse):
-    """parse step parser."""
-
-    def __init__(self, name: str, *args: Any, **kwargs: Any) -> None:
-        """Compile parse expression."""
-        super().__init__(name)
-        self.parser = base_parse.compile(self.name, *args, **kwargs)
-
-
-class cfparse(_CommonParse):
-    """cfparse step parser."""
-
-    def __init__(self, name, *args, **kwargs):
-        """Stringify"""
-        name = str(name, **({"encoding": "utf-8"} if isinstance(name, bytes) else {}))
-        super().__init__(name)
-        """Compile parse expression."""
-        self.parser = base_cfparse.Parser(self.name, *args, **kwargs)
+cfparse = parse.cfparse
 
 
 class string(StepParser):
@@ -151,8 +147,7 @@ class string(StepParser):
 
     def __init__(self, name: str | bytes) -> None:
         """Stringify"""
-        name = str(name, **({"encoding": "utf-8"} if isinstance(name, bytes) else {}))
-        super().__init__(name)
+        self.name = stringify(name)
 
     def parse_arguments(self, name: str, anonymous_group_names: Iterable[str] | None = None) -> dict[str, Any]:
         """No parameters are available for simple string step.
@@ -166,6 +161,31 @@ class string(StepParser):
         return bool(self.name == name)
 
 
+class cucumber_expression(StepParser):
+    @singledispatchmethod
+    def __init__(self, *args, **kwargs):
+        raise NotImplementedError
+
+    @__init__.register
+    def _(self, expression: str, parameter_type_registry: ParameterTypeRegistry = ParameterTypeRegistry()):
+        self.pattern = expression
+        self.expression = CucumberExpression(expression, parameter_type_registry=parameter_type_registry)
+
+    @__init__.register
+    def _(self, expression: CucumberExpression):
+        self.pattern = expression.expression
+        self.expression = expression
+
+    def is_matching(self, name: str) -> bool:
+        return bool(self.expression.match(name))
+
+    def parse_arguments(self, name: str, anonymous_group_names: Iterable[str] | None = None) -> dict[str, Any] | None:
+        return dict(zip(anonymous_group_names or [], map(attrgetter("value"), self.expression.match(name))))
+
+    def __str__(self):
+        return str(self.pattern)
+
+
 def get_parser(parserlike: str | StepParser | StepParserProtocol) -> StepParser:
     """Get parser by given name.
 
@@ -176,10 +196,14 @@ def get_parser(parserlike: str | StepParser | StepParserProtocol) -> StepParser:
     """
 
     if isinstance(parserlike, StepParserProtocol):
-        return cast(StepParser, parserlike)
+        parser = cast(StepParser, parserlike)
     elif isinstance(parserlike, _RePattern):
-        return _re(parserlike)
+        parser = re(parserlike)
     elif isinstance(parserlike, base_parse.Parser):
-        return _parse(parserlike)
+        parser = parse(parserlike)
+    elif isinstance(parserlike, CucumberExpression):
+        parser = cucumber_expression(parserlike)
     else:
-        return cfparse(parserlike)
+        parser = cfparse(parserlike)
+
+    return parser

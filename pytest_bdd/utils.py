@@ -4,6 +4,7 @@ from __future__ import annotations
 import base64
 import pickle
 import re
+import sys
 from collections import defaultdict
 from contextlib import nullcontext, suppress
 from enum import Enum
@@ -20,6 +21,14 @@ from marshmallow import post_load
 from pytest_bdd.const import ALPHA_REGEX, PYTHON_REPLACE_REGEX
 from pytest_bdd.typing import Literal
 from pytest_bdd.typing.pytest import FixtureDef
+
+if sys.version_info < (3, 8):
+    from singledispatchmethod import singledispatchmethod
+else:
+    from functools import singledispatchmethod
+
+assert singledispatchmethod
+
 
 if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.typing.pytest import RunResult
@@ -272,3 +281,7 @@ def make_python_name(string: str) -> str:
     """Make python attribute name out of a given string."""
     string = re.sub(PYTHON_REPLACE_REGEX, "", string.replace(" ", "_"))
     return re.sub(ALPHA_REGEX, "", string).lower()
+
+
+def stringify(value: str | bytes) -> str:
+    return str(value, **({"encoding": "utf-8"} if isinstance(value, bytes) else {}))
