@@ -19,7 +19,7 @@ from attr import Factory, attrib, attrs
 from marshmallow import post_load
 
 from pytest_bdd.const import ALPHA_REGEX, PYTHON_REPLACE_REGEX
-from pytest_bdd.typing import Literal
+from pytest_bdd.typing import Literal, Protocol, runtime_checkable
 from pytest_bdd.typing.pytest import FixtureDef
 
 if sys.version_info < (3, 8):
@@ -283,5 +283,11 @@ def make_python_name(string: str) -> str:
     return re.sub(ALPHA_REGEX, "", string).lower()
 
 
-def stringify(value: str | bytes) -> str:
+@runtime_checkable
+class StringableProtocol(Protocol):
+    def __str__(self) -> str:
+        ...  # pragma: no cover
+
+
+def stringify(value: StringableProtocol | str | bytes) -> str:
     return str(value, **({"encoding": "utf-8"} if isinstance(value, bytes) else {}))

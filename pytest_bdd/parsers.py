@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from functools import partial
-from itertools import filterfalse, starmap
+from itertools import filterfalse
 from operator import attrgetter, contains
 from re import Match
 from re import Pattern as _RePattern
@@ -18,7 +18,11 @@ from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
 from cucumber_expressions.regular_expression import RegularExpression as CucumberRegularExpression
 
 from pytest_bdd.typing import Protocol, runtime_checkable
-from pytest_bdd.utils import singledispatchmethod, stringify
+from pytest_bdd.utils import StringableProtocol, singledispatchmethod, stringify
+
+
+class ParserBuildValueError(ValueError):
+    ...
 
 
 @runtime_checkable
@@ -78,8 +82,8 @@ class StepParser(StepParserProtocol, metaclass=ABCMeta):
         else:
             try:
                 parser = cfparse(parserlike)
-            except Exception:
-                parser = string(parserlike)
+            except Exception as e:
+                raise ParserBuildValueError from e
 
         return parser
 
@@ -137,13 +141,16 @@ class parse(StepParser):
     """parse step parser."""
 
     @singledispatchmethod
-    def __init__(self, *args, **kwargs):
-        raise NotImplementedError()  # pragma: no cover
+    def __init__(self, format, *args, **kwargs):
+        if isinstance(format, (StringableProtocol, str, bytes)):
+            self.__init_stringable__(format, *args, **kwargs)
+        else:
+            raise ParserBuildValueError(f"Unable build parser for format {format}")  # pragma: no cover
 
-    @__init__.register
-    def _(self, format: str, *args: Any, builder=base_parse.compile, **kwargs: Any) -> None:
-        """Compile parse expression."""
-        self.format = format
+    def __init_stringable__(
+        self, format: StringableProtocol | str | bytes, *args: Any, builder=base_parse.compile, **kwargs: Any
+    ) -> None:
+        self.format = stringify(format)
         self.parser = builder(self.format, *args, **kwargs)
 
     @__init__.register
@@ -179,8 +186,7 @@ cfparse = parse.cfparse
 class string(StepParser):
     """Exact string step parser."""
 
-    def __init__(self, name: str | bytes) -> None:
-        """Stringify"""
+    def __init__(self, name: StringableProtocol | str | bytes) -> None:
         self.name = stringify(name)
 
     def parse_arguments(self, name: str, anonymous_group_names: Iterable[str] | None = None) -> dict[str, Any]:
