@@ -12,8 +12,10 @@ from typing import Any, Iterable, cast
 
 import parse as base_parse
 import parse_type.cfparse as base_cfparse
+from cucumber_expressions.argument import Argument as CucumberExpressionArgument
 from cucumber_expressions.expression import CucumberExpression
 from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
+from cucumber_expressions.regular_expression import RegularExpression as CucumberRegularExpression
 
 from pytest_bdd.typing import Protocol, runtime_checkable
 from pytest_bdd.utils import singledispatchmethod, stringify
@@ -71,6 +73,8 @@ class StepParser(StepParserProtocol, metaclass=ABCMeta):
             parser = parse(parserlike)
         elif isinstance(parserlike, CucumberExpression):
             parser = cucumber_expression(parserlike)
+        elif isinstance(parserlike, CucumberRegularExpression):
+            parser = cucumber_regular_expression(parserlike)
         else:
             try:
                 parser = cfparse(parserlike)
@@ -194,7 +198,27 @@ class string(StepParser):
         return self.name
 
 
-class cucumber_expression(StepParser):
+@runtime_checkable
+class _CucumberExpressionProtocol(Protocol):
+    def match(self, text: str) -> list[CucumberExpressionArgument] | None:
+        ...  # pragma: no cover
+
+
+class _CucumberExpression(StepParser):
+    pattern: str
+    expression: _CucumberExpressionProtocol
+
+    def is_matching(self, name: str) -> bool:
+        return bool(self.expression.match(name))
+
+    def parse_arguments(self, name: str, anonymous_group_names: Iterable[str] | None = None) -> dict[str, Any] | None:
+        return dict(zip(anonymous_group_names or [], map(attrgetter("value"), self.expression.match(name) or [])))
+
+    def __str__(self):
+        return str(self.pattern)
+
+
+class cucumber_expression(_CucumberExpression):
     @singledispatchmethod
     def __init__(self, *args, **kwargs):
         raise NotImplementedError()  # pragma: no cover
@@ -209,11 +233,18 @@ class cucumber_expression(StepParser):
         self.pattern = expression.expression
         self.expression = expression
 
-    def is_matching(self, name: str) -> bool:
-        return bool(self.expression.match(name))
 
-    def parse_arguments(self, name: str, anonymous_group_names: Iterable[str] | None = None) -> dict[str, Any] | None:
-        return dict(zip(anonymous_group_names or [], map(attrgetter("value"), self.expression.match(name))))
+class cucumber_regular_expression(_CucumberExpression):
+    @singledispatchmethod
+    def __init__(self, *args, **kwargs):
+        raise NotImplementedError()  # pragma: no cover
 
-    def __str__(self):
-        return str(self.pattern)
+    @__init__.register
+    def _(self, expression: str, parameter_type_registry: ParameterTypeRegistry = ParameterTypeRegistry()):
+        self.pattern = expression
+        self.expression = CucumberRegularExpression(expression, parameter_type_registry=parameter_type_registry)
+
+    @__init__.register
+    def _(self, expression: CucumberRegularExpression):
+        self.pattern = expression.expression_regexp.pattern
+        self.expression = expression
