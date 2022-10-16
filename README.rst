@@ -12,7 +12,7 @@ BDD library for the pytest runner
     :target: https://savelife.in.ua/en/
 
 **pytest-bdd-ng** combine descriptive clarity of `Gherkin <https://cucumber.io/docs/gherkin/reference/>`_ language
-with power and fullness of `pytest <https://docs.pytest.org/>`_ infrastructure
+with power and fullness of `pytest <https://docs.pytest.org/>`_ infrastructure.
 It enables unifying unit and functional
 tests, reduces the burden of continuous integration server configuration and allows the reuse of
 test setups.
@@ -209,8 +209,8 @@ Next step definitions have to be used (or just use liberal steps):
 
 
 
-Step arguments
---------------
+Step parameters
+---------------
 
 Often it's possible to reuse steps giving them a parameter(s).
 This allows to have single implementation and multiple use, so less code.
@@ -220,10 +220,8 @@ And even more, there are several types of step parameter parsers at your disposa
 
 .. _pypi_parse: http://pypi.python.org/pypi/parse
 .. _pypi_parse_type: http://pypi.python.org/pypi/parse_type
+.. _pypi_cucumber_expressions: http://pypi.python.org/pypi/cucumber-expressions
 
-**string** (the default)
-    This is the default and can be considered as a `null` or `exact` parser. It parses no parameters
-    and matches the step name by equality of strings.
 **parse** (based on: pypi_parse_)
     Provides a simple parser that replaces regular expressions for
     step parameters with a readable syntax like ``{param:Type}``.
@@ -233,7 +231,7 @@ And even more, there are several types of step parameter parsers at your disposa
     in step definitions. The named fields are extracted,
     optionally type converted and then used as step function arguments.
     Supports type conversions by using type converters passed via `extra_types`
-**cfparse** (extends: pypi_parse_, based on: pypi_parse_type_)
+**cfparse** (the default; extends: pypi_parse_, based on: pypi_parse_type_)
     Provides an extended parser with "Cardinality Field" (CF) support.
     Automatically creates missing type converters for related cardinality
     as long as a type converter for cardinality=1 is provided.
@@ -247,8 +245,14 @@ And even more, there are several types of step parameter parsers at your disposa
     need to use named groups "(?P<name>...)" to define the variables pulled
     from the text and passed to your ``step()`` function.
     Type conversion can only be done via `converters` step decorator argument (see example below).
+**string**
+    This can be considered as a `null` or `exact` parser. It parses no parameters
+    and matches the step name by equality of strings.
+**cucumber_expression** (based on: pypi_cucumber_expressions_)
+    `Cucumber Expressions <https://github.com/cucumber/cucumber-expressions>`_ is an alternative to Regular Expressions with a more intuitive syntax.
+**cucumber_regular_expression** (based on: pypi_cucumber_expressions_)
+    Alternative regular expression step parser
 
-The default parser is `string`, so just plain one-to-one match to the keyword definition.
 Parsers except `string`, as well as their optional arguments are specified like:
 
 for `cfparse` parser:
@@ -258,22 +262,26 @@ for `cfparse` parser:
     from pytest_bdd import parsers
 
     @given(
-        parsers.cfparse("there are {start:Number} cucumbers",
-        extra_types=dict(Number=int)),
+        parsers.cfparse(
+            "there are {start:Number} cucumbers",
+            extra_types=dict(Number=int)
+        ),
         target_fixture="start_cucumbers",
     )
     def start_cucumbers(start):
         return dict(start=start, eat=0)
 
-or the same:
+or using `cfparse` Parser (or `parse`) directly:
 
 .. code-block:: python
 
     from parse_type.cfparse import Parser as cfparse
 
     @given(
-        cfparse("there are {start:Number} cucumbers",
-        extra_types=dict(Number=int)),
+        cfparse(
+            "there are {start:Number} cucumbers",
+            extra_types=dict(Number=int)
+        ),
         target_fixture="start_cucumbers",
     )
     def start_cucumbers(start):
@@ -293,19 +301,50 @@ for `re` parser
     def start_cucumbers(start):
         return dict(start=start, eat=0)
 
-or the same:
+or using compiled regular expression directly:
 
 .. code-block:: python
 
-    from re import compile as parse_re
+    import re
 
     @given(
-        parse_re(r"there are (?P<start>\d+) cucumbers"),
+        re.compile(r"there are (?P<start>\d+) cucumbers"),
         converters=dict(start=int),
         target_fixture="start_cucumbers",
     )
     def start_cucumbers(start):
         return dict(start=start, eat=0)
+
+for `cucumber_expression`:
+
+.. code-block:: python
+
+    from pytest_bdd import parsers
+
+    @given(
+        parsers.cucumber_expression("there are {int} cucumbers"),
+        anonymous_group_names=('start',),
+        target_fixture="start_cucumbers",
+    )
+    def start_cucumbers(start):
+        return dict(start=start, eat=0)
+
+or using CucumberExpression directly:
+
+.. code-block:: python
+
+    from cucumber_expressions.expression import CucumberExpression
+    from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
+
+    @given(
+        CucumberExpression("there are {int} cucumbers", parameter_type_registry=ParameterTypeRegistry()),
+        anonymous_group_names=('start',),
+        target_fixture="start_cucumbers",
+    )
+    def start_cucumbers(start):
+        return dict(start=start, eat=0)
+
+.. NOTE:: `anonymous_group_names` step parameter is used to give names for non-named cucumber/regular expression groups.
 
 Example:
 
@@ -396,34 +435,39 @@ If you want specify some default values for parameters without parsing them, you
         return default_param
 
 
-Step arguments are fixtures as well!
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Step arguments are injected into step context
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Step arguments are injected into pytest `request` context as normal fixtures with the names equal to the names of the
-arguments by default. This opens a number of possibilities:
+Step arguments are injected into step context and could be used as normal fixtures with the names equal to the names of the arguments by default. This opens a number of possibilities:
 
 * you can access step's argument as a fixture in other step function just by mentioning it as an argument (just like any other pytest fixture)
+
 * if the name of the step argument clashes with existing fixture, it will be overridden by step's argument value; this way you can set/override the value for some fixture deeply inside of the fixture tree in a ad-hoc way by just choosing the proper name for the step argument.
 
 This behavior is same to:
 
 .. code-block:: python
 
-    @given('I have a "{foo}", "{bar}", "{fizz}", "{buzz}" parameters few of which are accepted by wild pattern',
-        params_fixtures_mapping={...: ...})
+    @given(
+        'I have a "{foo}", "{bar}", "{fizz}", "{buzz}" parameters few of which are accepted by wild pattern',
+        params_fixtures_mapping={...: ...}
+    )
     def step(foo, bar, fizz, buzz):
         ...
 
-But this behavior could be changed; For example you want to rename some parameters and left other as-is
+But this behavior could be changed; For example you want to rename some parameters and left other as-is.
+`Ellipsis <https://docs.python.org/dev/library/constants.html#Ellipsis>`_ instance means all present attributes, but not listed directly.
 
 .. code-block:: python
 
-    @given('I have a "{foo}", "{bar}", "{fizz}", "{buzz}" parameters few of which are accepted by wild pattern',
-               params_fixtures_mapping={'foo': 'cool_foo', 'bar': 'nice_bar', ...: ...})
+    @given(
+        'I have a "{foo}", "{bar}", "{fizz}", "{buzz}" parameters few of which are accepted by wild pattern',
+        params_fixtures_mapping={'foo': 'cool_foo', 'bar': 'nice_bar', ...: ...}
+    )
     def step(cool_foo, nice_bar, fizz, buzz):
         ...
 
-Or don't inject parameters at all
+Or don't inject parameters as fixtures at all:
 
 .. code-block:: python
 
@@ -532,7 +576,7 @@ Also it's possible to override multiple fixtures in one step using `target_fixtu
 Multiline steps
 ---------------
 
-**Note!** This possibility not a part of Gherkin standard and is supported for legacy parser. Let use Gherkin docstrings and custom step matcher.
+.. NOTE:: This possibility not a part of Gherkin standard and is supported for legacy parser. Let use Gherkin docstrings and custom step matcher.
 
 As Gherkin, pytest-bdd-ng supports multiline steps
 (aka `PyStrings <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#pystrings>`_).
@@ -585,7 +629,7 @@ step arguments and capture lines after first line (or some subset of them) into 
 
 Note that `then` step definition (`text_should_be_correct`) in this example uses `text` fixture which is provided
 by a `given` step (`i_have_text`) argument with the same name (`text`). This possibility is described in
-the `Step arguments are fixtures as well!`_ section.
+the `Step arguments are injected into step context`_ section.
 
 
 Loading whole feature files
@@ -795,7 +839,7 @@ different than strings.
 Feature examples
 ^^^^^^^^^^^^^^^^
 
-**Note!** This possibility not a part of Gherkin standard and is supported for legacy parser.
+.. NOTE:: This possibility not a part of Gherkin standard and is supported for legacy parser.
 
 It's possible to declare example table once for the whole feature, and it will be shared
 among all the scenarios of that feature:

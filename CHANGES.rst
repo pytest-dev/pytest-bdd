@@ -9,6 +9,11 @@ Planned
    - https://github.com/pytest-dev/pytest-bdd/issues/502
 - Rework code generation
 
+Unreleased
+----------
+- Added support of cucumber expressions https://github.com/cucumber/cucumber-expressions#readme
+- It possible to name anonymous groups during step parsing
+
 1.2.3
 ----------
 - Features could be autoloaded by --feature-autoload cli option
