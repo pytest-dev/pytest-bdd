@@ -1,7 +1,10 @@
 """Scenario Outline tests."""
+from operator import lt
+from textwrap import dedent
 
 from pytest import mark, param
 
+from pytest_bdd.packaging import compare_distribution_version
 from pytest_bdd.utils import collect_dumped_objects
 from tests.utils import assert_outcomes
 
@@ -503,14 +506,20 @@ def test_outlined_feature(testdir):
     "parser,",
     [
         param("Parser", marks=[mark.deprecated]),
-        param("GherkinParser", marks=[mark.xfail(reason="https://github.com/cucumber/common/issues/1954")]),
+        param(
+            "GherkinParser",
+            marks=[mark.xfail(reason="https://github.com/cucumber/common/issues/1954")]
+            if compare_distribution_version("gherkin-official", "24.1", lt)
+            else [],
+        ),
     ],
 )
 def test_outline_with_escaped_pipes(testdir, parser):
     """Test parametrized feature example table with escaped pipe characters in input."""
     testdir.makefile(
         ".feature",
-        outline=r"""\
+        outline=dedent(
+            r"""
             Feature: Outline With Special characters
 
                 Scenario Outline: Outline with escaped pipe character
@@ -526,7 +535,8 @@ def test_outline_with_escaped_pipes(testdir, parser):
                     | \|           |
                     | bork      \\ |
                     | bork    \\\| |
-            """,
+            """
+        ),
     )
 
     testdir.makepyfile(

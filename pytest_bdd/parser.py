@@ -5,7 +5,7 @@ import re
 from collections import OrderedDict, defaultdict
 from functools import partial
 from itertools import chain, count, filterfalse, product, zip_longest
-from operator import contains, methodcaller
+from operator import contains, lt, methodcaller
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, Callable, Collection, Iterable, Iterator, Mapping, cast
@@ -21,6 +21,7 @@ from pytest_bdd.ast import ASTSchema
 from pytest_bdd.const import StepType
 from pytest_bdd.exceptions import FeatureError
 from pytest_bdd.model.feature import Feature as FeatureModel
+from pytest_bdd.packaging import compare_distribution_version
 from pytest_bdd.typing.parser import ParserProtocol
 from pytest_bdd.typing.struct_bdd import STRUCT_BDD_INSTALLED
 from pytest_bdd.utils import SimpleMapping
@@ -333,7 +334,12 @@ class Parser(ASTBuilderMixin, GlobMixin, ParserProtocol):
 
         :return: List of strings.
         """
-        return [cell.replace("\\|", "|").strip() for cell in SPLIT_LINE_RE.split(line)[1:-1]]
+
+        cells = SPLIT_LINE_RE.split(line)[1:-1]
+        if compare_distribution_version("gherkin-official", "24.1", lt):
+            return [cell.replace("\\|", "|").strip() for cell in cells]
+        else:
+            return [re.sub(r"\\([|]|\\)", lambda match: match.group()[1:], cell).strip() for cell in cells]
 
     @staticmethod
     def parse_line(line: str) -> tuple[str, str]:
