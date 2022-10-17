@@ -1,7 +1,5 @@
 """Test feature background."""
 
-from pytest import mark, param
-
 FEATURE = '''\
     Feature: Background support
 
@@ -74,8 +72,7 @@ def foo_has_no_bar(foo):
 """
 
 
-@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated, mark.deficient, mark.skip]), "GherkinParser"])
-def test_background_basic(testdir, parser):
+def test_background_basic(testdir):
     """Test feature background."""
     testdir.makefile(".feature", background=FEATURE)
 
@@ -84,7 +81,7 @@ def test_background_basic(testdir, parser):
     testdir.makepyfile(
         f"""\
         from pytest_bdd import scenario
-        from pytest_bdd.parser import {parser} as Parser
+        from pytest_bdd.parser import GherkinParser as Parser
 
         @scenario("background.feature", "Basic usage", parser=Parser())
         def test_background():
@@ -95,8 +92,7 @@ def test_background_basic(testdir, parser):
     result.assert_outcomes(passed=1)
 
 
-@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
-def test_background_check_order(testdir, parser):
+def test_background_check_order(testdir):
     """Test feature background to ensure that background steps are executed first."""
 
     testdir.makefile(".feature", background=FEATURE)
@@ -106,7 +102,7 @@ def test_background_check_order(testdir, parser):
     testdir.makepyfile(
         f"""\
         from pytest_bdd import scenario
-        from pytest_bdd.parser import {parser} as Parser
+        from pytest_bdd.parser import GherkinParser as Parser
 
         @scenario("background.feature", "Background steps are executed first")
         def test_background():

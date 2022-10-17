@@ -576,65 +576,6 @@ Also it's possible to override multiple fixtures in one step using `target_fixtu
         return "fixture_a_value", "fixture_b_value"
 
 
-Multiline steps
----------------
-
-.. NOTE:: This possibility not a part of Gherkin standard and is supported for legacy parser. Let use Gherkin docstrings and custom step matcher.
-
-As Gherkin, pytest-bdd-ng supports multiline steps
-(aka `PyStrings <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#pystrings>`_).
-But in much cleaner and powerful way:
-
-.. code-block:: gherkin
-
-    Feature: Multiline steps
-        Scenario: Multiline step using sub indentation
-            Given I have a step with:
-                Some
-                Extra
-                Lines
-            Then the text should be parsed with correct indentation
-
-Step is considered as multiline one, if the **next** line(s) after it's first line, is indented relatively
-to the first line. The step name is then simply extended by adding further lines with newlines.
-In the example above, the Given step name will be:
-
-.. code-block:: python
-
-    'I have a step with:\nSome\nExtra\nLines'
-
-You can of course register step using full name (including the newlines), but it seems more practical to use
-step arguments and capture lines after first line (or some subset of them) into the argument:
-
-.. code-block:: python
-
-    import re
-
-    from pytest_bdd import given, then, scenario, parsers
-
-
-    @scenario(
-        'multiline.feature',
-        'Multiline step using sub indentation',
-    )
-    def test_multiline():
-        pass
-
-
-    @given(parsers.parse("I have a step with:\n{text}"), target_fixture="i_have_text")
-    def i_have_text(text):
-        return text
-
-
-    @then("the text should be parsed with correct indentation")
-    def text_should_be_correct(i_have_text, text):
-        assert i_have_text == text == 'Some\nExtra\nLines'
-
-Note that `then` step definition (`text_should_be_correct`) in this example uses `text` fixture which is provided
-by a `given` step (`i_have_text`) argument with the same name (`text`). This possibility is described in
-the `Step arguments are injected into step context`_ section.
-
-
 Loading whole feature files
 ---------------------------
 
@@ -782,25 +723,6 @@ Example:
             | start | eat | left |
             |  12   |  5  |  7   |
 
-pytest-bdd feature file format also supports example tables in different way:
-
-
-.. code-block:: gherkin
-
-    Feature: Scenario outlines
-        Scenario Outline: Outlined given, when, then
-            Given there are <start> cucumbers
-            When I eat <eat> cucumbers
-            Then I should have <left> cucumbers
-
-            Examples: Vertical
-            | start | 12 | 2 |
-            | eat   | 5  | 1 |
-            | left  | 7  | 1 |
-
-This form allows to have tables with lots of columns keeping the maximum text width predictable without significant
-readability change.
-
 The code will look like:
 
 .. code-block:: python
@@ -837,94 +759,6 @@ The code will look like:
 
 Example code also shows possibility to pass example converters which may be useful if you need parameter types
 different than strings.
-
-
-Feature examples
-^^^^^^^^^^^^^^^^
-
-.. NOTE:: This possibility not a part of Gherkin standard and is supported for legacy parser.
-
-It's possible to declare example table once for the whole feature, and it will be shared
-among all the scenarios of that feature:
-
-.. code-block:: gherkin
-
-    Feature: Outline
-
-        Examples:
-        | start | eat | left |
-        |  12   |  5  |  7   |
-        |  5    |  4  |  1   |
-
-        Scenario Outline: Eat cucumbers
-            Given there are <start> cucumbers
-            When I eat <eat> cucumbers
-            Then I should have <left> cucumbers
-
-        Scenario Outline: Eat apples
-            Given there are <start> apples
-            When I eat <eat> apples
-            Then I should have <left> apples
-
-For some more complex case, you might want to parametrize on both levels: feature and scenario.
-This is allowed as long as parameter names do not clash:
-
-
-.. code-block:: gherkin
-
-    Feature: Outline
-
-        Examples:
-        | start | eat | left |
-        |  12   |  5  |  7   |
-        |  5    |  4  |  1   |
-
-        Scenario Outline: Eat fruits
-            Given there are <start> <fruits>
-            When I eat <eat> <fruits>
-            Then I should have <left> <fruits>
-
-            Examples:
-            | fruits  |
-            | oranges |
-            | apples  |
-
-        Scenario Outline: Eat vegetables
-            Given there are <start> <vegetables>
-            When I eat <eat> <vegetables>
-            Then I should have <left> <vegetables>
-
-            Examples:
-            | vegetables |
-            | carrots    |
-            | tomatoes   |
-
-To not repeat steps as in example above you could want store your data in sequent Examples sections:
-
-
-.. code-block:: gherkin
-
-    Feature: Outline
-
-        Examples:
-        | start | eat | left |
-        |  12   |  5  |  7   |
-        |  5    |  4  |  1   |
-
-        Scenario Outline: Eat food
-            Given there are <start> <food>
-            When I eat <eat> <food>
-            Then I should have <left> <food>
-
-            Examples: Fruits
-            | food    |
-            | oranges |
-            | apples  |
-
-            Examples: Vegetables
-            | food       |
-            | carrots    |
-            | tomatoes   |
 
 
 Organizing your scenarios

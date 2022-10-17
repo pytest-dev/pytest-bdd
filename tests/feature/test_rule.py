@@ -1,7 +1,5 @@
 """Test feature background."""
 
-from pytest import mark, param
-
 FEATURE = '''\
     Feature: Some rules
         """
@@ -65,8 +63,7 @@ STEPS = """\
 """
 
 
-@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated, mark.deficient, mark.skip]), "GherkinParser"])
-def test_background_basic(testdir, parser):
+def test_background_basic(testdir):
     """Test feature background."""
     testdir.makefile(".feature", rule=FEATURE)
 
@@ -75,7 +72,7 @@ def test_background_basic(testdir, parser):
     testdir.makepyfile(
         f"""\
         from pytest_bdd import scenarios
-        from pytest_bdd.parser import {parser} as Parser
+        from pytest_bdd.parser import GherkinParser as Parser
 
         scenarios("rule.feature", parser=Parser())
         """

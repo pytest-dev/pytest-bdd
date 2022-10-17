@@ -15,7 +15,6 @@ from operator import attrgetter, getitem, itemgetter
 from sys import _getframe
 from typing import TYPE_CHECKING, Any, Callable, Collection, Mapping, cast
 
-from attr import Factory, attrib, attrs
 from marshmallow import post_load
 
 from pytest_bdd.const import ALPHA_REGEX, PYTHON_REPLACE_REGEX
@@ -98,20 +97,6 @@ def collect_dumped_objects(result: RunResult):
     stdout = result.stdout.str()  # pytest < 6.2, otherwise we could just do str(result.stdout)
     payloads = re.findall(rf"{_DUMP_START}(.*?){_DUMP_END}", stdout)
     return [pickle.loads(base64.b64decode(payload)) for payload in payloads]
-
-
-@attrs
-class SimpleMapping(Mapping):
-    _dict: dict = attrib(default=Factory(dict), kw_only=True)
-
-    def __getitem__(self, item):
-        return self._dict[item]
-
-    def __iter__(self):
-        return iter(self._dict)
-
-    def __len__(self):
-        return len(self._dict)
 
 
 class DefaultMapping(defaultdict):

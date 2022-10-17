@@ -1,10 +1,7 @@
 """Function name same as step name."""
 
-from pytest import mark, param
 
-
-@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
-def test_when_function_name_same_as_step_name(testdir, parser):
+def test_when_function_name_same_as_step_name(testdir):
     testdir.makefile(
         ".feature",
         same_name="""\
@@ -16,7 +13,7 @@ def test_when_function_name_same_as_step_name(testdir, parser):
     testdir.makepyfile(
         f"""\
         from pytest_bdd import when, scenario
-        from pytest_bdd.parser import {parser} as Parser
+        from pytest_bdd.parser import GherkinParser as Parser
 
         @scenario("same_name.feature", "When function name same as step name", parser=Parser())
         def test_same_name():

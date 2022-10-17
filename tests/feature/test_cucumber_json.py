@@ -4,8 +4,6 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any
 
-from pytest import mark, param
-
 if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.typing.pytest import RunResult, Testdir
 
@@ -29,8 +27,7 @@ class OfType:
         return isinstance(other, self.type) if self.type else True
 
 
-@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated, mark.deficient, mark.skip]), "GherkinParser"])
-def test_step_trace(testdir, parser):
+def test_step_trace(testdir):
     """Test step trace."""
     testdir.makefile(
         ".ini",
@@ -74,7 +71,7 @@ def test_step_trace(testdir, parser):
         f"""\
         import pytest
         from pytest_bdd import given, when, scenario, parsers
-        from pytest_bdd.parser import {parser} as Parser
+        from pytest_bdd.parser import GherkinParser as Parser
 
         @given('a passing step')
         def a_passing_step():

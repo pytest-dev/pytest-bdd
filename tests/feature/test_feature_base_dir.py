@@ -1,31 +1,28 @@
 """Test feature base dir."""
 import pytest
-from pytest import mark, param
 
 NOT_EXISTING_FEATURE_PATHS = [".", "/does/not/exist/"]
 
 
-@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
-def test_feature_path_ok(testdir, parser):
+def test_feature_path_ok(testdir):
     base_dir = "features"
-    prepare_testdir(testdir, base_dir, parser)
+    prepare_testdir(testdir, base_dir)
 
     result = testdir.runpytest("-k", "test_ok_by_ini")
     result.assert_outcomes(passed=2)
 
 
-@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
 @pytest.mark.parametrize("base_dir", NOT_EXISTING_FEATURE_PATHS)
-def test_feature_path_by_param_ok(testdir, base_dir, parser):
+def test_feature_path_by_param_ok(testdir, base_dir):
     """If ini config is incorrect but param path is fine it should be able
     to find features"""
-    prepare_testdir(testdir, base_dir, parser)
+    prepare_testdir(testdir, base_dir)
 
     result = testdir.runpytest("-k", "test_ok_by_param")
     result.assert_outcomes(passed=2)
 
 
-def prepare_testdir(testdir, ini_base_dir, parser):
+def prepare_testdir(testdir, ini_base_dir):
     testdir.makeini(
         f"""
         [pytest]
@@ -46,7 +43,7 @@ def prepare_testdir(testdir, ini_base_dir, parser):
         f"""\
         import pytest
         from pathlib import Path
-        from pytest_bdd.parser import {parser} as Parser
+        from pytest_bdd.parser import GherkinParser as Parser
 
         from pytest_bdd import scenario, scenarios
 

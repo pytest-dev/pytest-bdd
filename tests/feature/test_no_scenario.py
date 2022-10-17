@@ -1,10 +1,7 @@
 """Test no scenarios defined in the feature file."""
 
-from pytest import mark, param
 
-
-@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
-def test_no_scenarios(testdir, parser):
+def test_no_scenarios(testdir):
     """Test no scenarios defined in the feature file."""
     features = testdir.mkdir("features")
     features.join("test.feature").write_text(
@@ -19,7 +16,7 @@ def test_no_scenarios(testdir, parser):
     testdir.makepyfile(
         f"""\
         from pytest_bdd import scenarios
-        from pytest_bdd.parser import {parser} as Parser
+        from pytest_bdd.parser import GherkinParser as Parser
 
         scenarios('features', parser=Parser())
         """

@@ -1,10 +1,7 @@
 """Test step alias when decorated multiple times."""
 
-from pytest import mark, param
 
-
-@mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])
-def test_step_alias(testdir, parser):
+def test_step_alias(testdir):
     testdir.makefile(
         ".feature",
         alias="""\
@@ -25,7 +22,7 @@ def test_step_alias(testdir, parser):
         f"""\
         import pytest
         from pytest_bdd import given, when, then, scenario
-        from pytest_bdd.parser import {parser} as Parser
+        from pytest_bdd.parser import GherkinParser as Parser
 
         @scenario("alias.feature", "Multiple step aliases", parser=Parser())
         def test_alias():

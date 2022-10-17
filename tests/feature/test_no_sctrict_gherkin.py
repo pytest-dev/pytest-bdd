@@ -1,18 +1,14 @@
 """Test no strict gherkin for sections."""
 
-from pytest import mark, param
 
-pytestmark = [mark.parametrize("parser,", [param("Parser", marks=[mark.deprecated]), "GherkinParser"])]
-
-
-def test_background_no_strict_gherkin(testdir, parser):
+def test_background_no_strict_gherkin(testdir):
     """Test background no strict gherkin."""
     testdir.makepyfile(
         test_gherkin=f"""\
             import pytest
 
             from pytest_bdd import when, scenario
-            from pytest_bdd.parser import {parser} as Parser
+            from pytest_bdd.parser import GherkinParser as Parser
 
             @scenario(
                 "no_strict_gherkin_background.feature",
@@ -62,14 +58,14 @@ def test_background_no_strict_gherkin(testdir, parser):
     result.assert_outcomes(passed=1)
 
 
-def test_scenario_no_strict_gherkin(testdir, parser):
+def test_scenario_no_strict_gherkin(testdir):
     """Test scenario no strict gherkin."""
     testdir.makepyfile(
         test_gherkin=f"""\
             import pytest
 
             from pytest_bdd import when, scenario
-            from pytest_bdd.parser import {parser} as Parser
+            from pytest_bdd.parser import GherkinParser as Parser
 
             @scenario(
                 "no_strict_gherkin_scenario.feature",
