@@ -222,6 +222,9 @@ And even more, there are several types of step parameter parsers at your disposa
 .. _pypi_parse_type: http://pypi.python.org/pypi/parse_type
 .. _pypi_cucumber_expressions: http://pypi.python.org/pypi/cucumber-expressions
 
+**heuristic** (default)
+    Tries to select right parser between string, cucumber_expression, cfparse and re. Any object that supports `__str__`
+    interface and does not support parser interface will be wrapped with this parser
 **parse** (based on: pypi_parse_)
     Provides a simple parser that replaces regular expressions for
     step parameters with a readable syntax like ``{param:Type}``.
@@ -231,7 +234,7 @@ And even more, there are several types of step parameter parsers at your disposa
     in step definitions. The named fields are extracted,
     optionally type converted and then used as step function arguments.
     Supports type conversions by using type converters passed via `extra_types`
-**cfparse** (the default; extends: pypi_parse_, based on: pypi_parse_type_)
+**cfparse** (extends: pypi_parse_, based on: pypi_parse_type_)
     Provides an extended parser with "Cardinality Field" (CF) support.
     Automatically creates missing type converters for related cardinality
     as long as a type converter for cardinality=1 is provided.

@@ -20,7 +20,7 @@ def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_strin
                     When I pay 2 Euro
                     And I pay 1 Euro
                     Then I should have 0 Euro
-                    And I should have 999999 Euro # In my dream...
+                    And I should have 999999 Euro
             """,
     )
 

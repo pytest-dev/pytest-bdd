@@ -34,7 +34,7 @@ def foo():
     return {}
 
 
-@given(parsers.re(r"a background step"))
+@given(parsers.re(r"a background step .*"))
 def multi_line(foo, step):
     assert step.doc_string.content == "one\ntwo"
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from functools import partial
 from itertools import filterfalse
-from operator import attrgetter, contains
+from operator import attrgetter, contains, methodcaller
 from re import Match
 from re import Pattern as _RePattern
 from re import compile as re_compile
@@ -80,10 +80,7 @@ class StepParser(StepParserProtocol, metaclass=ABCMeta):
         elif isinstance(parserlike, CucumberRegularExpression):
             parser = cucumber_regular_expression(parserlike)
         else:
-            try:
-                parser = cfparse(parserlike)
-            except Exception as e:
-                raise ParserBuildValueError from e
+            parser = heuristic(parserlike)
 
         return parser
 
@@ -131,7 +128,7 @@ class re(StepParser):
         return group_dict
 
     def is_matching(self, name):
-        return bool(self.regex.match(name))
+        return bool(self.regex.fullmatch(name))
 
     def __str__(self):
         return stringify(self.pattern)
@@ -254,3 +251,58 @@ class cucumber_regular_expression(_CucumberExpression):
     def _(self, expression: CucumberRegularExpression):
         self.pattern = expression.expression_regexp.pattern
         self.expression = expression
+
+
+class heuristic(StepParser):
+    def __init__(self, format):
+        if isinstance(format, (StringableProtocol, str, bytes)):
+            format = stringify(format)
+        self.format = format
+
+        # Rework to exception groups after python 3.10 end of support
+        e_cause = None
+        try:
+            self.string_parser = string(format)
+        except Exception as e:
+            e_cause = e
+            self.string_parser = None
+
+        try:
+            self.cucumber_expression_parser = cucumber_expression(format)
+        except Exception as e:
+            e.__cause__, e_cause = e_cause, e
+            self.cucumber_expression_parser = None
+
+        try:
+            self.cfparse_parser = cfparse(format)
+        except Exception as e:
+            e.__cause__, e_cause = e_cause, e
+            self.cfparse_parser = None
+
+        try:
+            self.re_parser = re(format)
+        except Exception as e:
+            e.__cause__, e_cause = e_cause, e
+            self.re_parser = None
+
+        if not any(self.parser_by_priorities):
+            raise ParserBuildValueError(f"Unable build parser for format {format}") from e_cause  # pragma: no cover
+
+    @property
+    def parser_by_priorities(self) -> list[StepParser]:
+        return [self.string_parser, self.cucumber_expression_parser, self.cfparse_parser, self.re_parser]
+
+    def is_matching(self, name: str) -> bool:
+        return any(map(methodcaller("is_matching", name), filter(bool, self.parser_by_priorities)))
+
+    def parse_arguments(self, name: str, anonymous_group_names: Iterable[str] | None = None) -> dict[str, Any] | None:
+        for parser in self.parser_by_priorities:
+            if parser is not None and parser.is_matching(name):
+                arguments = parser.parse_arguments(name, anonymous_group_names=anonymous_group_names)
+                break
+        else:
+            arguments = None
+        return arguments
+
+    def __str__(self):
+        return self.format
