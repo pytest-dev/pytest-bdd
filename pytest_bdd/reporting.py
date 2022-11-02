@@ -130,7 +130,7 @@ class ScenarioReporterPlugin:
     def __init__(self):
         self.current_report = None
 
-    @pytest.mark.hookwrapper
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_makereport(self, item: Item, call: CallInfo):
         outcome = yield
         if call.when != "setup":
@@ -142,12 +142,12 @@ class ScenarioReporterPlugin:
                 rep.scenario = scenario_report.serialize()
                 rep.item = {"name": item.name}
 
-    @pytest.mark.tryfirst
+    @pytest.hookimpl(tryfirst=True)
     def pytest_bdd_before_scenario(self, request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
         """Create scenario report for the item."""
         self.current_report = ScenarioReport(feature=feature, scenario=scenario)  # type: ignore[call-arg]
 
-    @pytest.mark.tryfirst
+    @pytest.hookimpl(tryfirst=True)
     def pytest_bdd_step_error(
         self,
         request: FixtureRequest,
@@ -161,14 +161,14 @@ class ScenarioReporterPlugin:
         """Finalize the step report as failed."""
         self.current_report.fail()
 
-    @pytest.mark.tryfirst
+    @pytest.hookimpl(tryfirst=True)
     def pytest_bdd_before_step(
         self, request: FixtureRequest, feature: Feature, scenario: Scenario, step: Step, step_func: Callable
     ) -> None:
         """Store step start time."""
         self.current_report.add_step_report(StepReport(step=step))
 
-    @pytest.mark.tryfirst
+    @pytest.hookimpl(tryfirst=True)
     def pytest_bdd_after_step(
         self,
         request: FixtureRequest,
