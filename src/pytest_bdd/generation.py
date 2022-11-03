@@ -5,7 +5,7 @@ import itertools
 import os.path
 from typing import TYPE_CHECKING, cast
 
-import py
+from _pytest._io import TerminalWriter
 from mako.lookup import TemplateLookup
 
 from .feature import get_features
@@ -79,7 +79,7 @@ def show_missing_code(config: Config) -> int:
 
 def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> None:
     """Print missing code with TerminalWriter."""
-    tw = py.io.TerminalWriter()
+    tw = TerminalWriter()
     scenario = step = None
 
     for scenario in scenarios:
@@ -166,7 +166,7 @@ def group_steps(steps: list[Step]) -> list[Step]:
 
 def _show_missing_code_main(config: Config, session: Session) -> None:
     """Preparing fixture duplicates for output."""
-    tw = py.io.TerminalWriter()
+    tw = TerminalWriter()
     session.perform_collect()
 
     fm = session._fixturemanager
