@@ -2,10 +2,9 @@
 from __future__ import annotations
 
 import argparse
+import glob
 import os.path
 import re
-
-import glob2
 
 from .generation import generate_code, parse_feature_files
 
@@ -15,7 +14,7 @@ MIGRATE_REGEX = re.compile(r"\s?(\w+)\s=\sscenario\((.+)\)", flags=re.MULTILINE)
 def migrate_tests(args: argparse.Namespace) -> None:
     """Migrate outdated tests to the most recent form."""
     path = args.path
-    for file_path in glob2.iglob(os.path.join(os.path.abspath(path), "**", "*.py")):
+    for file_path in glob.iglob(os.path.join(os.path.abspath(path), "**", "*.py"), recursive=True):
         migrate_tests_in_file(file_path)
 
 
