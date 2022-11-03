@@ -35,7 +35,6 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.7"
-glob2 = "*"
 Mako = "*"
 parse = "*"
 parse-type = "*"
@@ -83,5 +82,5 @@ warn_unused_configs = true
 files = "src/pytest_bdd/**/*.py"
 
 [[tool.mypy.overrides]]
-module = ["parse", "parse_type", "glob2"]
+module = ["parse", "parse_type"]
 ignore_missing_imports = true

@@ -25,9 +25,8 @@ one line.
 """
 from __future__ import annotations
 
+import glob
 import os.path
-
-import glob2
 
 from .parser import Feature, parse_feature
 
@@ -70,7 +69,9 @@ def get_features(paths: list[str], **kwargs) -> list[Feature]:
         if path not in seen_names:
             seen_names.add(path)
             if os.path.isdir(path):
-                features.extend(get_features(glob2.iglob(os.path.join(path, "**", "*.feature")), **kwargs))
+                features.extend(
+                    get_features(glob.iglob(os.path.join(path, "**", "*.feature"), recursive=True), **kwargs)
+                )
             else:
                 base, name = os.path.split(path)
                 feature = get_feature(base, name, **kwargs)
