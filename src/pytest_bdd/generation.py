@@ -5,12 +5,8 @@ import itertools
 import os.path
 from typing import TYPE_CHECKING, cast
 
+from _pytest._io import TerminalWriter
 from mako.lookup import TemplateLookup
-
-try:
-    from _pytest._io import TerminalWriter
-except ImportError:
-    from py.io import TerminalWriter
 
 from .feature import get_features
 from .scenario import inject_fixturedefs_for_step, make_python_docstring, make_python_name, make_string_literal
