@@ -801,7 +801,7 @@ then
 Feature file paths
 ------------------
 
-By default, pytest-bdd will use current module's path as base path for finding feature files, but this behaviour can be changed in the pytest configuration file (i.e. `pytest.ini`, `tox.ini` or `setup.cfg`) by declaring the new base path in the `bdd_features_base_dir` key. The path is interpreted as relative to the working directory when starting pytest.
+By default, pytest-bdd will use current module's path as base path for finding feature files, but this behaviour can be changed in the pytest configuration file (i.e. `pytest.ini`, `tox.ini` or `setup.cfg`) by declaring the new base path in the `bdd_features_base_dir` key. The path is interpreted as relative to the `pytest root directory <https://docs.pytest.org/en/latest/reference/customize.html#rootdir>`__.
 You can also override features base path on a per-scenario basis, in order to override the path for specific tests.
 
 pytest.ini:

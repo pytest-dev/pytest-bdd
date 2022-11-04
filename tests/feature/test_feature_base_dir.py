@@ -1,4 +1,6 @@
 """Test feature base dir."""
+import os
+
 import pytest
 
 NOT_EXISTING_FEATURE_PATHS = [".", "/does/not/exist/"]
@@ -19,6 +21,19 @@ def test_feature_path_ok(pytester):
 
     result = pytester.runpytest("-k", "test_ok_by_ini")
     result.assert_outcomes(passed=2)
+
+
+def test_feature_path_ok_running_outside_rootdir(pytester):
+    base_dir = "features"
+    prepare_testdir(pytester, base_dir)
+
+    old_dir = os.getcwd()
+    os.chdir("/")
+    try:
+        result = pytester.runpytest(pytester.path, "-k", "test_ok_by_ini")
+        result.assert_outcomes(passed=2)
+    finally:
+        os.chdir(old_dir)
 
 
 def test_feature_path_by_param_not_found(pytester):
