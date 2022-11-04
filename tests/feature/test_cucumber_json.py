@@ -7,7 +7,7 @@ import textwrap
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from _pytest.pytester import RunResult, Testdir
+    from _pytest.pytester import Pytester, RunResult
 
 
 def runandparse(pytester: Pytester, *args: Any) -> tuple[RunResult, list[dict[str, Any]]]:
