@@ -3,8 +3,8 @@
 import textwrap
 
 
-def test_steps_in_feature_file_have_unicode(testdir):
-    testdir.makefile(
+def test_steps_in_feature_file_have_unicode(pytester):
+    pytester.makefile(
         ".feature",
         unicode=textwrap.dedent(
             """\
@@ -21,7 +21,7 @@ def test_steps_in_feature_file_have_unicode(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import sys
@@ -51,12 +51,12 @@ def test_steps_in_feature_file_have_unicode(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
 
-def test_steps_in_py_file_have_unicode(testdir):
-    testdir.makefile(
+def test_steps_in_py_file_have_unicode(pytester):
+    pytester.makefile(
         ".feature",
         unicode=textwrap.dedent(
             """\
@@ -69,7 +69,7 @@ def test_steps_in_py_file_have_unicode(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import pytest
@@ -95,5 +95,5 @@ def test_steps_in_py_file_have_unicode(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)

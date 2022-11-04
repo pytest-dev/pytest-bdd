@@ -7,12 +7,12 @@ import textwrap
 from pytest_bdd.utils import collect_dumped_objects
 
 
-def test_parent(testdir):
+def test_parent(pytester):
     """Test parent given is collected.
 
     Both fixtures come from the parent conftest.
     """
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         parent=textwrap.dedent(
             """\
@@ -24,7 +24,7 @@ def test_parent(testdir):
         ),
     )
 
-    testdir.makeconftest(
+    pytester.makeconftest(
         textwrap.dedent(
             """\
         from pytest_bdd import given
@@ -43,7 +43,7 @@ def test_parent(testdir):
         )
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         from pytest_bdd import scenario
@@ -56,14 +56,14 @@ def test_parent(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
 
-def test_global_when_step(testdir):
+def test_global_when_step(pytester):
     """Test when step defined in the parent conftest."""
 
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         global_when=textwrap.dedent(
             """\
@@ -74,7 +74,7 @@ def test_global_when_step(testdir):
         ),
     )
 
-    testdir.makeconftest(
+    pytester.makeconftest(
         textwrap.dedent(
             """\
         from pytest_bdd import when
@@ -87,7 +87,7 @@ def test_global_when_step(testdir):
         )
     )
 
-    testdir.mkpydir("subdir").join("test_global_when.py").write(
+    pytester.mkpydir("subdir").joinpath("test_global_when.py").write_text(
         textwrap.dedent(
             """\
             from pytest_bdd import scenarios
@@ -97,16 +97,16 @@ def test_global_when_step(testdir):
         )
     )
 
-    result = testdir.runpytest("-s")
+    result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
 
     [collected_object] = collect_dumped_objects(result)
     assert collected_object == "global when step"
 
 
-def test_child(testdir):
+def test_child(pytester):
     """Test the child conftest overriding the fixture."""
-    testdir.makeconftest(
+    pytester.makeconftest(
         textwrap.dedent(
             """\
         from pytest_bdd import given
@@ -125,9 +125,9 @@ def test_child(testdir):
         )
     )
 
-    subdir = testdir.mkpydir("subdir")
+    subdir = pytester.mkpydir("subdir")
 
-    subdir.join("conftest.py").write(
+    subdir.joinpath("conftest.py").write_text(
         textwrap.dedent(
             """\
             from pytest_bdd import given
@@ -140,7 +140,7 @@ def test_child(testdir):
         )
     )
 
-    subdir.join("child.feature").write(
+    subdir.joinpath("child.feature").write_text(
         textwrap.dedent(
             """\
             Feature: Child
@@ -151,7 +151,7 @@ def test_child(testdir):
         ),
     )
 
-    subdir.join("test_library.py").write(
+    subdir.joinpath("test_library.py").write_text(
         textwrap.dedent(
             """\
             from pytest_bdd import scenario
@@ -165,13 +165,13 @@ def test_child(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
 
-def test_local(testdir):
+def test_local(pytester):
     """Test locally overridden fixtures."""
-    testdir.makeconftest(
+    pytester.makeconftest(
         textwrap.dedent(
             """\
         from pytest_bdd import given
@@ -190,9 +190,9 @@ def test_local(testdir):
         )
     )
 
-    subdir = testdir.mkpydir("subdir")
+    subdir = pytester.mkpydir("subdir")
 
-    subdir.join("local.feature").write(
+    subdir.joinpath("local.feature").write_text(
         textwrap.dedent(
             """\
             Feature: Local
@@ -203,7 +203,7 @@ def test_local(testdir):
         ),
     )
 
-    subdir.join("test_library.py").write(
+    subdir.joinpath("test_library.py").write_text(
         textwrap.dedent(
             """\
             from pytest_bdd import given, scenario
@@ -226,18 +226,18 @@ def test_local(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
 
-def test_uses_correct_step_in_the_hierarchy(testdir):
+def test_uses_correct_step_in_the_hierarchy(pytester):
     """
     Test regression found in issue #524, where we couldn't find the correct step implemntation in the
     hierarchy of files/folder as expected.
     This test uses many files and folders that act as decoy, while the real step implementation is defined
     in the last file (test_b/test_b.py).
     """
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         specific=textwrap.dedent(
             """\
@@ -249,7 +249,7 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
         ),
     )
 
-    testdir.makeconftest(
+    pytester.makeconftest(
         textwrap.dedent(
             """\
             from pytest_bdd import parsers, given, then
@@ -279,7 +279,7 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
     # the right one is the one in test_b/test_b.py
     # We purposefully use test_a and test_c as decoys (while test_b/test_b is "good one"), so that we can test that
     # we pick the right one.
-    testdir.makepyfile(
+    pytester.makepyfile(
         test_a="""\
         from pytest_bdd import given, parsers
         from pytest_bdd.utils import dump_obj
@@ -297,7 +297,7 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
             dump_obj(thing + " root_test_a")
         """
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         test_c="""\
         from pytest_bdd import given, parsers
         from pytest_bdd.utils import dump_obj
@@ -316,10 +316,10 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
         """
     )
 
-    test_b_folder = testdir.mkpydir("test_b")
+    test_b_folder = pytester.mkpydir("test_b")
 
     # More decoys: test_b/test_a.py and test_b/test_c.py
-    test_b_folder.join("test_a.py").write(
+    test_b_folder.joinpath("test_a.py").write_text(
         textwrap.dedent(
             """\
             from pytest_bdd import given, parsers
@@ -340,7 +340,7 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
             """
         )
     )
-    test_b_folder.join("test_c.py").write(
+    test_b_folder.joinpath("test_c.py").write_text(
         textwrap.dedent(
             """\
             from pytest_bdd import given, parsers
@@ -363,7 +363,7 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
     )
 
     # Finally, the file with the actual step definition that should be used
-    test_b_folder.join("test_b.py").write(
+    test_b_folder.joinpath("test_b.py").write_text(
         textwrap.dedent(
             """\
             from pytest_bdd import scenarios, given, parsers
@@ -380,7 +380,7 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
         )
     )
 
-    test_b_folder.join("test_b_alternative.py").write(
+    test_b_folder.joinpath("test_b_alternative.py").write_text(
         textwrap.dedent(
             """\
             from pytest_bdd import scenarios, given, parsers
@@ -399,7 +399,7 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
         )
     )
 
-    result = testdir.runpytest("-s")
+    result = pytester.runpytest("-s")
     result.assert_outcomes(passed=2)
 
     [thing1, thing2] = collect_dumped_objects(result)

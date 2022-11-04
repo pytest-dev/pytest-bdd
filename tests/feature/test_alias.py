@@ -3,8 +3,8 @@
 import textwrap
 
 
-def test_step_alias(testdir):
-    testdir.makefile(
+def test_step_alias(pytester):
+    pytester.makefile(
         ".feature",
         alias=textwrap.dedent(
             """\
@@ -22,7 +22,7 @@ def test_step_alias(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import pytest
@@ -56,5 +56,5 @@ def test_step_alias(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)

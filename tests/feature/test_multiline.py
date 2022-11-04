@@ -71,10 +71,10 @@ import pytest
         ),
     ],
 )
-def test_multiline(testdir, feature_text, expected_text):
-    testdir.makefile(".feature", multiline=feature_text)
+def test_multiline(pytester, feature_text, expected_text):
+    pytester.makefile(".feature", multiline=feature_text)
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
             from pytest_bdd import parsers, given, then, scenario
@@ -101,14 +101,14 @@ def test_multiline(testdir, feature_text, expected_text):
             )
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
 
-def test_multiline_wrong_indent(testdir):
+def test_multiline_wrong_indent(pytester):
     """Multiline step using sub indentation wrong indent."""
 
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         multiline=textwrap.dedent(
             """\
@@ -126,7 +126,7 @@ def test_multiline_wrong_indent(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
             from pytest_bdd import parsers, given, then, scenario
@@ -149,6 +149,6 @@ def test_multiline_wrong_indent(testdir):
             """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines("*StepDefinitionNotFoundError: Step definition is not found:*")

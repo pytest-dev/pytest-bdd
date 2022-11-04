@@ -1,11 +1,11 @@
 import textwrap
 
 
-def test_hooks(testdir):
-    testdir.makeconftest("")
+def test_hooks(pytester):
+    pytester.makeconftest("")
 
-    subdir = testdir.mkpydir("subdir")
-    subdir.join("conftest.py").write(
+    subdir = pytester.mkpydir("subdir")
+    subdir.joinpath("conftest.py").write_text(
         textwrap.dedent(
             r"""
         def pytest_pyfunc_call(pyfuncitem):
@@ -17,7 +17,7 @@ def test_hooks(testdir):
         )
     )
 
-    subdir.join("test_foo.py").write(
+    subdir.joinpath("test_foo.py").write_text(
         textwrap.dedent(
             r"""
         from pytest_bdd import scenario
@@ -29,7 +29,7 @@ def test_hooks(testdir):
         )
     )
 
-    subdir.join("foo.feature").write(
+    subdir.joinpath("foo.feature").write_text(
         textwrap.dedent(
             r"""
         Feature: The feature
@@ -38,15 +38,15 @@ def test_hooks(testdir):
         )
     )
 
-    result = testdir.runpytest("-s")
+    result = pytester.runpytest("-s")
 
     assert result.stdout.lines.count("pytest_pyfunc_call hook") == 1
     assert result.stdout.lines.count("pytest_generate_tests hook") == 1
 
 
-def test_item_collection_does_not_break_on_non_function_items(testdir):
+def test_item_collection_does_not_break_on_non_function_items(pytester):
     """Regression test for https://github.com/pytest-dev/pytest-bdd/issues/317"""
-    testdir.makeconftest(
+    pytester.makeconftest(
         """
     import pytest
 
@@ -65,12 +65,12 @@ def test_item_collection_does_not_break_on_non_function_items(testdir):
     """
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         """
     def test_convert_me_to_custom_item_and_assert_true():
         assert False
     """
     )
 
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)

@@ -3,8 +3,8 @@
 import textwrap
 
 
-def test_every_steps_takes_param_with_the_same_name(testdir):
-    testdir.makefile(
+def test_every_steps_takes_param_with_the_same_name(pytester):
+    pytester.makefile(
         ".feature",
         arguments=textwrap.dedent(
             """\
@@ -20,7 +20,7 @@ def test_every_steps_takes_param_with_the_same_name(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             r"""
         import pytest
@@ -51,17 +51,17 @@ def test_every_steps_takes_param_with_the_same_name(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
 
-def test_exact_match(testdir):
+def test_exact_match(pytester):
     """Test that parsers.re does an exact match (fullmatch) of the whole string.
 
     This tests exists because in the past we only used re.match, which only finds a match at the beginning
     of the string, so if there were any more characters not matching at the end, they were ignored"""
 
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         arguments=textwrap.dedent(
             """\
@@ -75,7 +75,7 @@ def test_exact_match(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             r"""
         import pytest
@@ -101,15 +101,15 @@ def test_exact_match(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(
         '*StepDefinitionNotFoundError: Step definition is not found: When "I pay 1 Euro by mistake"*'
     )
 
 
-def test_argument_in_when(testdir):
-    testdir.makefile(
+def test_argument_in_when(pytester):
+    pytester.makefile(
         ".feature",
         arguments=textwrap.dedent(
             """\
@@ -122,7 +122,7 @@ def test_argument_in_when(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             r"""
         import pytest
@@ -155,5 +155,5 @@ def test_argument_in_when(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)

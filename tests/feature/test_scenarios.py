@@ -2,15 +2,15 @@
 import textwrap
 
 
-def test_scenarios(testdir, pytest_params):
+def test_scenarios(pytester, pytest_params):
     """Test scenarios shortcut (used together with @scenario for individual test override)."""
-    testdir.makeini(
+    pytester.makeini(
         """
             [pytest]
             console_output_style=classic
         """
     )
-    testdir.makeconftest(
+    pytester.makeconftest(
         """
         import pytest
         from pytest_bdd import given
@@ -21,8 +21,8 @@ def test_scenarios(testdir, pytest_params):
             return 'bar'
     """
     )
-    features = testdir.mkdir("features")
-    features.join("test.feature").write_text(
+    features = pytester.mkdir("features")
+    features.joinpath("test.feature").write_text(
         textwrap.dedent(
             """
     Scenario: Test scenario
@@ -30,9 +30,10 @@ def test_scenarios(testdir, pytest_params):
     """
         ),
         "utf-8",
-        ensure=True,
     )
-    features.join("subfolder", "test.feature").write_text(
+    subfolder = features.joinpath("subfolder")
+    subfolder.mkdir()
+    subfolder.joinpath("test.feature").write_text(
         textwrap.dedent(
             """
     Scenario: Test subfolder scenario
@@ -49,9 +50,8 @@ def test_scenarios(testdir, pytest_params):
     """
         ),
         "utf-8",
-        ensure=True,
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         """
         import pytest
         from pytest_bdd import scenarios, scenario
@@ -63,7 +63,7 @@ def test_scenarios(testdir, pytest_params):
         scenarios('features')
     """
     )
-    result = testdir.runpytest_subprocess("-v", "-s", *pytest_params)
+    result = pytester.runpytest_subprocess("-v", "-s", *pytest_params)
     result.assert_outcomes(passed=4, failed=1)
     result.stdout.fnmatch_lines(["*collected 5 items"])
     result.stdout.fnmatch_lines(["*test_test_subfolder_scenario *bar!", "PASSED"])
@@ -73,9 +73,9 @@ def test_scenarios(testdir, pytest_params):
     result.stdout.fnmatch_lines(["*test_test_scenario_1 *bar!", "PASSED"])
 
 
-def test_scenarios_none_found(testdir, pytest_params):
+def test_scenarios_none_found(pytester, pytest_params):
     """Test scenarios shortcut when no scenarios found."""
-    testpath = testdir.makepyfile(
+    testpath = pytester.makepyfile(
         """
         import pytest
         from pytest_bdd import scenarios
@@ -83,6 +83,6 @@ def test_scenarios_none_found(testdir, pytest_params):
         scenarios('.')
     """
     )
-    result = testdir.runpytest_subprocess(testpath, *pytest_params)
+    result = pytester.runpytest_subprocess(testpath, *pytest_params)
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines(["*NoScenariosFound*"])

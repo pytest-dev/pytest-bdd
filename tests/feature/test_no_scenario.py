@@ -3,10 +3,10 @@
 import textwrap
 
 
-def test_no_scenarios(testdir):
+def test_no_scenarios(pytester):
     """Test no scenarios defined in the feature file."""
-    features = testdir.mkdir("features")
-    features.join("test.feature").write_text(
+    features = pytester.mkdir("features")
+    features.joinpath("test.feature").write_text(
         textwrap.dedent(
             """
         Given foo
@@ -14,10 +14,9 @@ def test_no_scenarios(testdir):
         Then baz
     """
         ),
-        "utf-8",
-        ensure=True,
+        encoding="utf-8",
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """
 
@@ -27,5 +26,5 @@ def test_no_scenarios(testdir):
     """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.stdout.fnmatch_lines(["*FeatureError: Step definition outside of a Scenario or a Background.*"])

@@ -3,9 +3,9 @@
 import textwrap
 
 
-def test_every_step_takes_param_with_the_same_name(testdir):
+def test_every_step_takes_param_with_the_same_name(pytester):
     """Test every step takes param with the same name."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         arguments=textwrap.dedent(
             """\
@@ -21,7 +21,7 @@ def test_every_step_takes_param_with_the_same_name(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import pytest
@@ -53,13 +53,13 @@ def test_every_step_takes_param_with_the_same_name(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
 
-def test_argument_in_when(testdir):
+def test_argument_in_when(pytester):
     """Test step arguments in when steps."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         arguments=textwrap.dedent(
             """\
@@ -72,7 +72,7 @@ def test_argument_in_when(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import pytest
@@ -105,5 +105,5 @@ def test_argument_in_when(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)

@@ -3,8 +3,8 @@ import textwrap
 from pytest_bdd.utils import collect_dumped_objects
 
 
-def test_reuse_same_step_different_converters(testdir):
-    testdir.makefile(
+def test_reuse_same_step_different_converters(pytester):
+    pytester.makefile(
         ".feature",
         arguments=textwrap.dedent(
             """\
@@ -19,7 +19,7 @@ def test_reuse_same_step_different_converters(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             r"""
         import pytest
@@ -43,7 +43,7 @@ def test_reuse_same_step_different_converters(testdir):
         """
         )
     )
-    result = testdir.runpytest("-s")
+    result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
 
     [int_value, str_value, float_value] = collect_dumped_objects(result)
@@ -57,9 +57,9 @@ def test_reuse_same_step_different_converters(testdir):
     assert float_value == 42.0
 
 
-def test_string_steps_dont_take_precedence(testdir):
+def test_string_steps_dont_take_precedence(pytester):
     """Test that normal steps don't take precedence over the other steps."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         arguments=textwrap.dedent(
             """\
@@ -71,7 +71,7 @@ def test_string_steps_dont_take_precedence(testdir):
             """
         ),
     )
-    testdir.makeconftest(
+    pytester.makeconftest(
         textwrap.dedent(
             """
         from pytest_bdd import given, when, then, parsers
@@ -92,7 +92,7 @@ def test_string_steps_dont_take_precedence(testdir):
         )
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             r"""
         import pytest
@@ -109,7 +109,7 @@ def test_string_steps_dont_take_precedence(testdir):
         """
         )
     )
-    result = testdir.runpytest("-s")
+    result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
 
     [which] = collect_dumped_objects(result)

@@ -1,8 +1,8 @@
 import textwrap
 
 
-def test_steps(testdir):
-    testdir.makefile(
+def test_steps(pytester):
+    pytester.makefile(
         ".feature",
         steps=textwrap.dedent(
             """\
@@ -22,7 +22,7 @@ def test_steps(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         from pytest_bdd import given, when, then, scenario
@@ -68,12 +68,12 @@ def test_steps(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_step_function_can_be_decorated_multiple_times(testdir):
-    testdir.makefile(
+def test_step_function_can_be_decorated_multiple_times(pytester):
+    pytester.makefile(
         ".feature",
         steps=textwrap.dedent(
             """\
@@ -90,7 +90,7 @@ def test_step_function_can_be_decorated_multiple_times(testdir):
             """
         ),
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         from pytest_bdd import given, when, then, scenario, parsers
@@ -120,13 +120,13 @@ def test_step_function_can_be_decorated_multiple_times(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_all_steps_can_provide_fixtures(testdir):
+def test_all_steps_can_provide_fixtures(pytester):
     """Test that given/when/then can all provide fixtures."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         steps=textwrap.dedent(
             """\
@@ -144,7 +144,7 @@ def test_all_steps_can_provide_fixtures(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         from pytest_bdd import given, when, then, parsers, scenarios
@@ -173,12 +173,12 @@ def test_all_steps_can_provide_fixtures(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=3, failed=0)
 
 
-def test_when_first(testdir):
-    testdir.makefile(
+def test_when_first(pytester):
+    pytester.makefile(
         ".feature",
         steps=textwrap.dedent(
             """\
@@ -192,7 +192,7 @@ def test_when_first(testdir):
             """
         ),
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         from pytest_bdd import when, then, scenario
@@ -213,12 +213,12 @@ def test_when_first(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_then_after_given(testdir):
-    testdir.makefile(
+def test_then_after_given(pytester):
+    pytester.makefile(
         ".feature",
         steps=textwrap.dedent(
             """\
@@ -233,7 +233,7 @@ def test_then_after_given(testdir):
             """
         ),
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         from pytest_bdd import given, then, scenario
@@ -253,12 +253,12 @@ def test_then_after_given(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_conftest(testdir):
-    testdir.makefile(
+def test_conftest(pytester):
+    pytester.makefile(
         ".feature",
         steps=textwrap.dedent(
             """\
@@ -273,7 +273,7 @@ def test_conftest(testdir):
             """
         ),
     )
-    testdir.makeconftest(
+    pytester.makeconftest(
         textwrap.dedent(
             """\
         from pytest_bdd import given, then
@@ -291,7 +291,7 @@ def test_conftest(testdir):
         """
         )
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         from pytest_bdd import scenario
@@ -303,13 +303,13 @@ def test_conftest(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_multiple_given(testdir):
+def test_multiple_given(pytester):
     """Using the same given fixture raises an error."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         steps=textwrap.dedent(
             """\
@@ -322,7 +322,7 @@ def test_multiple_given(testdir):
             """
         ),
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         from pytest_bdd import parsers, given, then, scenario
@@ -345,13 +345,13 @@ def test_multiple_given(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_step_hooks(testdir):
+def test_step_hooks(pytester):
     """When step fails."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         test="""
     Scenario: When step has hook on failure
@@ -370,7 +370,7 @@ def test_step_hooks(testdir):
         And foo
     """,
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         """
         import pytest
         from pytest_bdd import given, when, scenario
@@ -416,7 +416,7 @@ def test_step_hooks(testdir):
             pass
     """
     )
-    reprec = testdir.inline_run("-k test_when_fails")
+    reprec = pytester.inline_run("-k test_when_fails")
     reprec.assertoutcome(failed=1)
 
     calls = reprec.getcalls("pytest_bdd_before_scenario")
@@ -437,16 +437,16 @@ def test_step_hooks(testdir):
     calls = reprec.getcalls("pytest_bdd_step_error")
     assert calls[0].request
 
-    reprec = testdir.inline_run("-k test_when_not_found")
+    reprec = pytester.inline_run("-k test_when_not_found")
     reprec.assertoutcome(failed=1)
 
     calls = reprec.getcalls("pytest_bdd_step_func_lookup_error")
     assert calls[0].request
 
-    reprec = testdir.inline_run("-k test_when_step_validation_error")
+    reprec = pytester.inline_run("-k test_when_step_validation_error")
     reprec.assertoutcome(failed=1)
 
-    reprec = testdir.inline_run("-k test_when_dependency_fails", "-vv")
+    reprec = pytester.inline_run("-k test_when_dependency_fails", "-vv")
     reprec.assertoutcome(failed=1)
 
     calls = reprec.getcalls("pytest_bdd_before_step")
@@ -459,16 +459,16 @@ def test_step_hooks(testdir):
     assert calls[0].request
 
 
-def test_step_trace(testdir):
+def test_step_trace(pytester):
     """Test step trace."""
-    testdir.makeini(
+    pytester.makeini(
         """
         [pytest]
         console_output_style=classic
     """
     )
 
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         test="""
     Scenario: When step has failure
@@ -483,7 +483,7 @@ def test_step_trace(testdir):
         And foo
     """,
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         """
         import pytest
         from pytest_bdd import given, when, scenario
@@ -517,32 +517,32 @@ def test_step_trace(testdir):
             pass
     """
     )
-    result = testdir.runpytest("-k test_when_fails_inline", "-vv")
+    result = pytester.runpytest("-k test_when_fails_inline", "-vv")
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["*test_when_fails_inline*FAILED"])
     assert "INTERNALERROR" not in result.stdout.str()
 
-    result = testdir.runpytest("-k test_when_fails_decorated", "-vv")
+    result = pytester.runpytest("-k test_when_fails_decorated", "-vv")
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["*test_when_fails_decorated*FAILED"])
     assert "INTERNALERROR" not in result.stdout.str()
 
-    result = testdir.runpytest("-k test_when_not_found", "-vv")
+    result = pytester.runpytest("-k test_when_not_found", "-vv")
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["*test_when_not_found*FAILED"])
     assert "INTERNALERROR" not in result.stdout.str()
 
-    result = testdir.runpytest("-k test_when_step_validation_error", "-vv")
+    result = pytester.runpytest("-k test_when_step_validation_error", "-vv")
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["*test_when_step_validation_error*FAILED"])
     assert "INTERNALERROR" not in result.stdout.str()
 
 
-def test_steps_with_yield(testdir):
+def test_steps_with_yield(pytester):
     """Test that steps definition containing a yield statement work the same way as
     pytest fixture do, that is the code after the yield is executed during teardown."""
 
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         a="""\
 Feature: A feature
@@ -552,7 +552,7 @@ Feature: A feature
         Then stuff should be 42
 """,
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import pytest
@@ -575,7 +575,7 @@ Feature: A feature
         """
         )
     )
-    result = testdir.runpytest("-s")
+    result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
     result.stdout.fnmatch_lines(
         [
