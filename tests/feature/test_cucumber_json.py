@@ -10,10 +10,10 @@ if TYPE_CHECKING:
     from _pytest.pytester import RunResult, Testdir
 
 
-def runandparse(testdir: Testdir, *args: Any) -> tuple[RunResult, list[dict[str, Any]]]:
+def runandparse(pytester: Pytester, *args: Any) -> tuple[RunResult, list[dict[str, Any]]]:
     """Run tests in testdir and parse json output."""
-    resultpath = testdir.tmpdir.join("cucumber.json")
-    result = testdir.runpytest(f"--cucumberjson={resultpath}", "-s", *args)
+    resultpath = pytester.path.joinpath("cucumber.json")
+    result = pytester.runpytest(f"--cucumberjson={resultpath}", "-s", *args)
     with resultpath.open() as f:
         jsonobject = json.load(f)
     return result, jsonobject
@@ -29,9 +29,9 @@ class OfType:
         return isinstance(other, self.type) if self.type else True
 
 
-def test_step_trace(testdir):
+def test_step_trace(pytester):
     """Test step trace."""
-    testdir.makefile(
+    pytester.makefile(
         ".ini",
         pytest=textwrap.dedent(
             """
@@ -44,7 +44,7 @@ def test_step_trace(testdir):
     """
         ),
     )
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         test=textwrap.dedent(
             """
@@ -73,7 +73,7 @@ def test_step_trace(testdir):
     """
         ),
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """
         import pytest
@@ -109,7 +109,7 @@ def test_step_trace(testdir):
     """
         )
     )
-    result, jsonobject = runandparse(testdir)
+    result, jsonobject = runandparse(pytester)
     result.assert_outcomes(passed=4, failed=1)
 
     assert result.ret
@@ -227,7 +227,7 @@ def test_step_trace(testdir):
             "line": 2,
             "name": "One passing scenario, one failing scenario",
             "tags": [{"name": "feature-tag", "line": 1}],
-            "uri": os.path.join(testdir.tmpdir.basename, "test.feature"),
+            "uri": os.path.join(pytester.path.name, "test.feature"),
         }
     ]
 

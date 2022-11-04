@@ -3,9 +3,9 @@
 import textwrap
 
 
-def test_scenario_not_found(testdir, pytest_params):
+def test_scenario_not_found(pytester, pytest_params):
     """Test the situation when scenario is not found."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         not_found=textwrap.dedent(
             """\
@@ -14,7 +14,7 @@ def test_scenario_not_found(testdir, pytest_params):
             """
         ),
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import re
@@ -28,15 +28,15 @@ def test_scenario_not_found(testdir, pytest_params):
         """
         )
     )
-    result = testdir.runpytest_subprocess(*pytest_params)
+    result = pytester.runpytest_subprocess(*pytest_params)
 
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines('*Scenario "NOT FOUND" in feature "Scenario is not found" in*')
 
 
-def test_scenario_comments(testdir):
+def test_scenario_comments(pytester):
     """Test comments inside scenario."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         comments=textwrap.dedent(
             """\
@@ -54,7 +54,7 @@ def test_scenario_comments(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import re
@@ -88,14 +88,14 @@ def test_scenario_comments(testdir):
         )
     )
 
-    result = testdir.runpytest()
+    result = pytester.runpytest()
 
     result.assert_outcomes(passed=2)
 
 
-def test_scenario_not_decorator(testdir, pytest_params):
+def test_scenario_not_decorator(pytester, pytest_params):
     """Test scenario function is used not as decorator."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         foo="""
         Feature: Test function is not a decorator
@@ -103,7 +103,7 @@ def test_scenario_not_decorator(testdir, pytest_params):
                 Given I have a bar
         """,
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         """
         from pytest_bdd import scenario
 
@@ -111,15 +111,15 @@ def test_scenario_not_decorator(testdir, pytest_params):
         """
     )
 
-    result = testdir.runpytest_subprocess(*pytest_params)
+    result = pytester.runpytest_subprocess(*pytest_params)
 
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines("*ScenarioIsDecoratorOnly: scenario function can only be used as a decorator*")
 
 
-def test_simple(testdir, pytest_params):
+def test_simple(pytester, pytest_params):
     """Test scenario decorator with a standard usage."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         simple="""
         Feature: Simple feature
@@ -127,7 +127,7 @@ def test_simple(testdir, pytest_params):
                 Given I have a bar
         """,
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         """
         from pytest_bdd import scenario, given, then
 
@@ -144,17 +144,17 @@ def test_simple(testdir, pytest_params):
             pass
         """
     )
-    result = testdir.runpytest_subprocess(*pytest_params)
+    result = pytester.runpytest_subprocess(*pytest_params)
     result.assert_outcomes(passed=1)
 
 
-def test_angular_brakets_are_not_parsed(testdir):
+def test_angular_brakets_are_not_parsed(pytester):
     """Test that angular brackets are not parsed for "Scenario"s.
 
     (They should be parsed only when used in "Scenario Outline")
 
     """
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         simple="""
         Feature: Simple feature
@@ -171,7 +171,7 @@ def test_angular_brakets_are_not_parsed(testdir):
                 | bar |
         """,
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         """
         from pytest_bdd import scenarios, given, then, parsers
 
@@ -190,5 +190,5 @@ def test_angular_brakets_are_not_parsed(testdir):
             pass
         """
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=2)

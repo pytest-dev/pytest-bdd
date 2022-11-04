@@ -3,9 +3,9 @@
 import textwrap
 
 
-def test_multiple_features_single_file(testdir):
+def test_multiple_features_single_file(pytester):
     """Test validation error when multiple features are placed in a single file."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         wrong=textwrap.dedent(
             """\
@@ -35,7 +35,7 @@ def test_multiple_features_single_file(testdir):
         """
         ),
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import pytest
@@ -48,6 +48,6 @@ def test_multiple_features_single_file(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines("*FeatureError: Multiple features are not allowed in a single feature file.*")

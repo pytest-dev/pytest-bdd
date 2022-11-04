@@ -73,13 +73,13 @@ def _(foo):
 """
 
 
-def test_background_basic(testdir):
+def test_background_basic(pytester):
     """Test feature background."""
-    testdir.makefile(".feature", background=textwrap.dedent(FEATURE))
+    pytester.makefile(".feature", background=textwrap.dedent(FEATURE))
 
-    testdir.makeconftest(textwrap.dedent(STEPS))
+    pytester.makeconftest(textwrap.dedent(STEPS))
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         from pytest_bdd import scenario
@@ -91,18 +91,18 @@ def test_background_basic(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
 
-def test_background_check_order(testdir):
+def test_background_check_order(pytester):
     """Test feature background to ensure that background steps are executed first."""
 
-    testdir.makefile(".feature", background=textwrap.dedent(FEATURE))
+    pytester.makefile(".feature", background=textwrap.dedent(FEATURE))
 
-    testdir.makeconftest(textwrap.dedent(STEPS))
+    pytester.makeconftest(textwrap.dedent(STEPS))
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         from pytest_bdd import scenario
@@ -114,5 +114,5 @@ def test_background_check_order(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)

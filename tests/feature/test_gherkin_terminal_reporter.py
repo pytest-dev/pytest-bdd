@@ -37,11 +37,11 @@ def test_scenario_1():
 """
 
 
-def test_default_output_should_be_the_same_as_regular_terminal_reporter(testdir):
-    testdir.makefile(".feature", test=FEATURE)
-    testdir.makepyfile(TEST)
-    regular = testdir.runpytest()
-    gherkin = testdir.runpytest("--gherkin-terminal-reporter")
+def test_default_output_should_be_the_same_as_regular_terminal_reporter(pytester):
+    pytester.makefile(".feature", test=FEATURE)
+    pytester.makepyfile(TEST)
+    regular = pytester.runpytest()
+    gherkin = pytester.runpytest("--gherkin-terminal-reporter")
     regular.assert_outcomes(passed=1, failed=0)
     gherkin.assert_outcomes(passed=1, failed=0)
 
@@ -51,17 +51,17 @@ def test_default_output_should_be_the_same_as_regular_terminal_reporter(testdir)
     assert all(l1 == l2 for l1, l2 in zip(parse_lines(regular.stdout.lines), parse_lines(gherkin.stdout.lines)))
 
 
-def test_verbose_mode_should_display_feature_and_scenario_names_instead_of_test_names_in_a_single_line(testdir):
-    testdir.makefile(".feature", test=FEATURE)
-    testdir.makepyfile(TEST)
-    result = testdir.runpytest("--gherkin-terminal-reporter", "-v")
+def test_verbose_mode_should_display_feature_and_scenario_names_instead_of_test_names_in_a_single_line(pytester):
+    pytester.makefile(".feature", test=FEATURE)
+    pytester.makepyfile(TEST)
+    result = pytester.runpytest("--gherkin-terminal-reporter", "-v")
     result.assert_outcomes(passed=1, failed=0)
     result.stdout.fnmatch_lines("Feature: Gherkin terminal output feature")
     result.stdout.fnmatch_lines("*Scenario: Scenario example 1 PASSED")
 
 
-def test_verbose_mode_should_preserve_displaying_regular_tests_as_usual(testdir):
-    testdir.makepyfile(
+def test_verbose_mode_should_preserve_displaying_regular_tests_as_usual(pytester):
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         def test_1():
@@ -69,8 +69,8 @@ def test_verbose_mode_should_preserve_displaying_regular_tests_as_usual(testdir)
         """
         )
     )
-    regular = testdir.runpytest()
-    gherkin = testdir.runpytest("--gherkin-terminal-reporter", "-v")
+    regular = pytester.runpytest()
+    gherkin = pytester.runpytest("--gherkin-terminal-reporter", "-v")
     regular.assert_outcomes(passed=1, failed=0)
     gherkin.assert_outcomes(passed=1, failed=0)
 
@@ -80,10 +80,10 @@ def test_verbose_mode_should_preserve_displaying_regular_tests_as_usual(testdir)
     )
 
 
-def test_double_verbose_mode_should_display_full_scenario_description(testdir):
-    testdir.makefile(".feature", test=FEATURE)
-    testdir.makepyfile(TEST)
-    result = testdir.runpytest("--gherkin-terminal-reporter", "-vv")
+def test_double_verbose_mode_should_display_full_scenario_description(pytester):
+    pytester.makefile(".feature", test=FEATURE)
+    pytester.makepyfile(TEST)
+    result = pytester.runpytest("--gherkin-terminal-reporter", "-vv")
     result.assert_outcomes(passed=1, failed=0)
 
     result.stdout.fnmatch_lines("*Scenario: Scenario example 1")
@@ -94,9 +94,9 @@ def test_double_verbose_mode_should_display_full_scenario_description(testdir):
 
 
 @pytest.mark.parametrize("verbosity", ["", "-v", "-vv"])
-def test_error_message_for_missing_steps(testdir, verbosity):
-    testdir.makefile(".feature", test=FEATURE)
-    testdir.makepyfile(
+def test_error_message_for_missing_steps(pytester, verbosity):
+    pytester.makefile(".feature", test=FEATURE)
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         from pytest_bdd import scenarios
@@ -105,7 +105,7 @@ def test_error_message_for_missing_steps(testdir, verbosity):
         """
         )
     )
-    result = testdir.runpytest("--gherkin-terminal-reporter", verbosity)
+    result = pytester.runpytest("--gherkin-terminal-reporter", verbosity)
     result.assert_outcomes(passed=0, failed=1)
     result.stdout.fnmatch_lines(
         """*StepDefinitionNotFoundError: Step definition is not found: Given "there is a bar". """
@@ -114,9 +114,9 @@ def test_error_message_for_missing_steps(testdir, verbosity):
 
 
 @pytest.mark.parametrize("verbosity", ["", "-v", "-vv"])
-def test_error_message_should_be_displayed(testdir, verbosity):
-    testdir.makefile(".feature", test=FEATURE)
-    testdir.makepyfile(
+def test_error_message_should_be_displayed(pytester, verbosity):
+    pytester.makefile(".feature", test=FEATURE)
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         from pytest_bdd import given, when, then, scenario
@@ -142,15 +142,15 @@ def test_error_message_should_be_displayed(testdir, verbosity):
         """
         )
     )
-    result = testdir.runpytest("--gherkin-terminal-reporter", verbosity)
+    result = pytester.runpytest("--gherkin-terminal-reporter", verbosity)
     result.assert_outcomes(passed=0, failed=1)
     result.stdout.fnmatch_lines("E       Exception: BIGBADABOOM")
     result.stdout.fnmatch_lines("test_error_message_should_be_displayed.py:15: Exception")
 
 
-def test_local_variables_should_be_displayed_when_showlocals_option_is_used(testdir):
-    testdir.makefile(".feature", test=FEATURE)
-    testdir.makepyfile(
+def test_local_variables_should_be_displayed_when_showlocals_option_is_used(pytester):
+    pytester.makefile(".feature", test=FEATURE)
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         from pytest_bdd import given, when, then, scenario
@@ -177,15 +177,15 @@ def test_local_variables_should_be_displayed_when_showlocals_option_is_used(test
         """
         )
     )
-    result = testdir.runpytest("--gherkin-terminal-reporter", "--showlocals")
+    result = pytester.runpytest("--gherkin-terminal-reporter", "--showlocals")
     result.assert_outcomes(passed=0, failed=1)
     result.stdout.fnmatch_lines("""request*=*<FixtureRequest for *""")
     result.stdout.fnmatch_lines("""local_var*=*MULTIPASS*""")
 
 
-def test_step_parameters_should_be_replaced_by_their_values(testdir):
+def test_step_parameters_should_be_replaced_by_their_values(pytester):
     example = {"start": 10, "eat": 3, "left": 7}
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         test=textwrap.dedent(
             """\
@@ -203,7 +203,7 @@ def test_step_parameters_should_be_replaced_by_their_values(testdir):
             )
         ),
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         test_gherkin=textwrap.dedent(
             """\
             from pytest_bdd import given, when, scenario, then, parsers
@@ -227,7 +227,7 @@ def test_step_parameters_should_be_replaced_by_their_values(testdir):
         )
     )
 
-    result = testdir.runpytest("--gherkin-terminal-reporter", "-vv")
+    result = pytester.runpytest("--gherkin-terminal-reporter", "-vv")
     result.assert_outcomes(passed=1, failed=0)
     result.stdout.fnmatch_lines("*Scenario: Scenario example 2")
     result.stdout.fnmatch_lines("*Given there are {start} cucumbers".format(**example))

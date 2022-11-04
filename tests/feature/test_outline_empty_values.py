@@ -26,8 +26,8 @@ def _(left):
 """
 
 
-def test_scenario_with_empty_example_values(testdir):
-    testdir.makefile(
+def test_scenario_with_empty_example_values(pytester):
+    pytester.makefile(
         ".feature",
         outline=textwrap.dedent(
             """\
@@ -43,9 +43,9 @@ def test_scenario_with_empty_example_values(testdir):
             """
         ),
     )
-    testdir.makeconftest(textwrap.dedent(STEPS))
+    pytester.makeconftest(textwrap.dedent(STEPS))
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         from pytest_bdd.utils import dump_obj
@@ -58,6 +58,6 @@ def test_scenario_with_empty_example_values(testdir):
         """
         )
     )
-    result = testdir.runpytest("-s")
+    result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
     assert collect_dumped_objects(result) == ["#", "", ""]

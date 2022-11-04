@@ -68,7 +68,7 @@ def collect_dumped_objects(result: RunResult) -> list:
     """Parse all the objects dumped with `dump_object` from the result.
 
     Note: You must run the result with output to stdout enabled.
-    For example, using ``testdir.runpytest("-s")``.
+    For example, using ``pytester.runpytest("-s")``.
     """
     stdout = result.stdout.str()  # pytest < 6.2, otherwise we could just do str(result.stdout)
     payloads = re.findall(rf"{_DUMP_START}(.*?){_DUMP_END}", stdout)

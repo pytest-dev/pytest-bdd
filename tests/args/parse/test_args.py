@@ -3,8 +3,8 @@
 import textwrap
 
 
-def test_every_steps_takes_param_with_the_same_name(testdir):
-    testdir.makefile(
+def test_every_steps_takes_param_with_the_same_name(pytester):
+    pytester.makefile(
         ".feature",
         arguments=textwrap.dedent(
             """\
@@ -20,7 +20,7 @@ def test_every_steps_takes_param_with_the_same_name(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import pytest
@@ -52,12 +52,12 @@ def test_every_steps_takes_param_with_the_same_name(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
 
-def test_argument_in_when_step_1(testdir):
-    testdir.makefile(
+def test_argument_in_when_step_1(pytester):
+    pytester.makefile(
         ".feature",
         arguments=textwrap.dedent(
             """\
@@ -70,7 +70,7 @@ def test_argument_in_when_step_1(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import pytest
@@ -103,5 +103,5 @@ def test_argument_in_when_step_1(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)

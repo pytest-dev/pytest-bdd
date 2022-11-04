@@ -14,9 +14,9 @@ def test_python_name_generator():
     ]
 
 
-def test_generate_missing(testdir):
+def test_generate_missing(pytester):
     """Test generate missing command."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         generation=textwrap.dedent(
             """\
@@ -39,7 +39,7 @@ def test_generate_missing(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import functools
@@ -63,7 +63,7 @@ def test_generate_missing(testdir):
         )
     )
 
-    result = testdir.runpytest("--generate-missing", "--feature", "generation.feature")
+    result = pytester.runpytest("--generate-missing", "--feature", "generation.feature")
     result.assert_outcomes(passed=0, failed=0, errors=0)
     assert not result.stderr.str()
     assert result.ret == 0
@@ -86,9 +86,9 @@ def test_generate_missing(testdir):
     result.stdout.fnmatch_lines(["Please place the code above to the test file(s):"])
 
 
-def test_generate_missing_with_step_parsers(testdir):
+def test_generate_missing_with_step_parsers(pytester):
     """Test that step parsers are correctly discovered and won't be part of the missing steps."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         generation=textwrap.dedent(
             """\
@@ -103,7 +103,7 @@ def test_generate_missing_with_step_parsers(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import functools
@@ -131,7 +131,7 @@ def test_generate_missing_with_step_parsers(testdir):
         )
     )
 
-    result = testdir.runpytest("--generate-missing", "--feature", "generation.feature")
+    result = pytester.runpytest("--generate-missing", "--feature", "generation.feature")
     result.assert_outcomes(passed=0, failed=0, errors=0)
     assert not result.stderr.str()
     assert result.ret == 0

@@ -1,9 +1,9 @@
 """Test no strict gherkin for sections."""
 
 
-def test_background_no_strict_gherkin(testdir):
+def test_background_no_strict_gherkin(pytester):
     """Test background no strict gherkin."""
-    testdir.makepyfile(
+    pytester.makepyfile(
         test_gherkin="""
         import pytest
 
@@ -38,7 +38,7 @@ def test_background_no_strict_gherkin(testdir):
     """
     )
 
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         no_strict_gherkin_background="""
     Feature: No strict Gherkin Background support
@@ -53,13 +53,13 @@ def test_background_no_strict_gherkin(testdir):
     """,
     )
 
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
 
-def test_scenario_no_strict_gherkin(testdir):
+def test_scenario_no_strict_gherkin(pytester):
     """Test scenario no strict gherkin."""
-    testdir.makepyfile(
+    pytester.makepyfile(
         test_gherkin="""
         import pytest
 
@@ -94,7 +94,7 @@ def test_scenario_no_strict_gherkin(testdir):
     """
     )
 
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         no_strict_gherkin_scenario="""
     Feature: No strict Gherkin Scenario support
@@ -107,5 +107,5 @@ def test_scenario_no_strict_gherkin(testdir):
     """,
     )
 
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)
