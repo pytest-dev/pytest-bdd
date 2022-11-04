@@ -287,8 +287,11 @@ def scenario(
 
 
 def get_features_base_dir(caller_module_path: str) -> str:
-    default_base_dir = os.path.dirname(caller_module_path)
-    return get_from_ini("bdd_features_base_dir", default_base_dir)
+    d = get_from_ini("bdd_features_base_dir", None)
+    if d is None:
+        return os.path.dirname(caller_module_path)
+    rootdir = CONFIG_STACK[-1].rootpath
+    return os.path.join(rootdir, d)
 
 
 def get_from_ini(key: str, default: str) -> str:
