@@ -67,12 +67,16 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "if typing\\.TYPE_CHECKING:",
 ]
+[tool.coverage.html]
+show_contexts = true
+
 [tool.coverage.run]
 branch = true
 include =[
     "src/pytest_bdd/*",
     "tests/*",
 ]
+dynamic_context = "test_function"
 
 
 [tool.mypy]
