@@ -29,9 +29,11 @@ jobs:
       run: |
         tox -e mypy
     - name: Test with tox
+      env:
+        TOX_PARALLEL_NO_SPINNER: 1
       run: |
         coverage erase
-        tox
+        tox --parallel
         coverage combine
         coverage xml
     - uses: codecov/codecov-action@v3
