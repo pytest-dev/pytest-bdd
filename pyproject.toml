@@ -41,7 +41,7 @@ parse-type = "*"
 pytest = ">=6.2.0"
 typing-extensions = "*"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 tox = "^3.25.1"
 mypy = "^0.971"
 types-setuptools = "^64.0.1"
