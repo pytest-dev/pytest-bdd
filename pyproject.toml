@@ -42,12 +42,12 @@ pytest = ">=6.2.0"
 typing-extensions = "*"
 
 [tool.poetry.group.dev.dependencies]
-tox = "^3.25.1"
-mypy = "^0.971"
-types-setuptools = "^64.0.1"
-pytest-xdist = "^2.5.0"
-coverage = {extras = ["toml"], version = "^6.4.3"}
-Pygments = "^2.12.0"  # for code-block highlighting
+tox = "^3.27.0"
+mypy = "^0.982"
+types-setuptools = "^65.5.0.2"
+pytest-xdist = "^3.0.2"
+coverage = {extras = ["toml"], version = "^6.5.0"}
+Pygments = "^2.13.0"  # for code-block highlighting
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
