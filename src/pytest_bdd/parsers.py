@@ -42,14 +42,14 @@ class re(StepParser):
 
         :return: `dict` of step arguments
         """
-        match = self.regex.match(name)
+        match = self.regex.fullmatch(name)
         if match is None:
             return None
         return match.groupdict()
 
     def is_matching(self, name: str) -> bool:
         """Match given name with the step name."""
-        return bool(self.regex.match(name))
+        return bool(self.regex.fullmatch(name))
 
 
 class parse(StepParser):
