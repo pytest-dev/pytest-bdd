@@ -30,8 +30,8 @@ def test_given_when_then_delegate_to_step(step_fn: Callable[..., Any], step_type
     )
 
 
-def test_step_function_multiple_target_fixtures(testdir):
-    testdir.makefile(
+def test_step_function_multiple_target_fixtures(pytester):
+    pytester.makefile(
         ".feature",
         target_fixture=textwrap.dedent(
             """\
@@ -44,7 +44,7 @@ def test_step_function_multiple_target_fixtures(testdir):
             """
         ),
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import pytest
@@ -70,7 +70,7 @@ def test_step_function_multiple_target_fixtures(testdir):
         """
         )
     )
-    result = testdir.runpytest("-s")
+    result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
 
     [foo, bar] = collect_dumped_objects(result)
@@ -78,8 +78,8 @@ def test_step_function_multiple_target_fixtures(testdir):
     assert bar == "test bar"
 
 
-def test_step_functions_same_parser(testdir):
-    testdir.makefile(
+def test_step_functions_same_parser(pytester):
+    pytester.makefile(
         ".feature",
         target_fixture=textwrap.dedent(
             """\
@@ -92,7 +92,7 @@ def test_step_functions_same_parser(testdir):
             """
         ),
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import pytest
@@ -118,7 +118,7 @@ def test_step_functions_same_parser(testdir):
         """
         )
     )
-    result = testdir.runpytest("-s")
+    result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
 
     [first_given, second_given] = collect_dumped_objects(result)
@@ -126,9 +126,9 @@ def test_step_functions_same_parser(testdir):
     assert second_given == ("re", "testfoo")
 
 
-def test_user_implements_a_step_generator(testdir):
+def test_user_implements_a_step_generator(pytester):
     """Test advanced use cases, like the implementation of custom step generators."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         user_step_generator=textwrap.dedent(
             """\
@@ -142,7 +142,7 @@ def test_user_implements_a_step_generator(testdir):
             """
         ),
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
             import re
@@ -266,7 +266,7 @@ def test_user_implements_a_step_generator(testdir):
         """
         )
     )
-    result = testdir.runpytest("-s")
+    result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
 
     [given, pay, assert_] = collect_dumped_objects(result)
@@ -275,9 +275,9 @@ def test_user_implements_a_step_generator(testdir):
     assert assert_ == "assert 9 EUR"
 
 
-def test_step_catches_all(testdir):
+def test_step_catches_all(pytester):
     """Test that the @step(...) decorator works for all kind of steps."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         step_catches_all=textwrap.dedent(
             """\
@@ -292,7 +292,7 @@ def test_step_catches_all(testdir):
             """
         ),
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import pytest
@@ -311,7 +311,7 @@ def test_step_catches_all(testdir):
         """
         )
     )
-    result = testdir.runpytest("-s")
+    result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
 
     objects = collect_dumped_objects(result)

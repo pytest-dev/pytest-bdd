@@ -14,9 +14,9 @@ class OfType:
         return isinstance(other, self.type) if self.type else True
 
 
-def test_step_trace(testdir):
+def test_step_trace(pytester):
     """Test step trace."""
-    testdir.makefile(
+    pytester.makefile(
         ".ini",
         pytest=textwrap.dedent(
             """
@@ -28,7 +28,7 @@ def test_step_trace(testdir):
     """
         ),
     )
-    feature = testdir.makefile(
+    feature = pytester.makefile(
         ".feature",
         test=textwrap.dedent(
             """
@@ -57,8 +57,8 @@ def test_step_trace(testdir):
     """
         ),
     )
-    relpath = feature.relto(testdir.tmpdir.dirname)
-    testdir.makepyfile(
+    relpath = feature.relative_to(pytester.path.parent)
+    pytester.makepyfile(
         textwrap.dedent(
             """
         import pytest
@@ -98,16 +98,16 @@ def test_step_trace(testdir):
     """
         )
     )
-    result = testdir.inline_run("-vvl")
+    result = pytester.inline_run("-vvl")
     assert result.ret
     report = result.matchreport("test_passing", when="call").scenario
     expected = {
         "feature": {
             "description": "",
-            "filename": feature.strpath,
+            "filename": str(feature),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
-            "rel_filename": relpath,
+            "rel_filename": str(relpath),
             "tags": ["feature-tag"],
         },
         "line_number": 5,
@@ -139,10 +139,10 @@ def test_step_trace(testdir):
     expected = {
         "feature": {
             "description": "",
-            "filename": feature.strpath,
+            "filename": str(feature),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
-            "rel_filename": relpath,
+            "rel_filename": str(relpath),
             "tags": ["feature-tag"],
         },
         "line_number": 10,
@@ -173,10 +173,10 @@ def test_step_trace(testdir):
     expected = {
         "feature": {
             "description": "",
-            "filename": feature.strpath,
+            "filename": str(feature),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
-            "rel_filename": relpath,
+            "rel_filename": str(relpath),
             "tags": ["feature-tag"],
         },
         "line_number": 14,
@@ -215,10 +215,10 @@ def test_step_trace(testdir):
     expected = {
         "feature": {
             "description": "",
-            "filename": feature.strpath,
+            "filename": str(feature),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
-            "rel_filename": relpath,
+            "rel_filename": str(relpath),
             "tags": ["feature-tag"],
         },
         "line_number": 14,
@@ -254,14 +254,14 @@ def test_step_trace(testdir):
     assert report == expected
 
 
-def test_complex_types(testdir, pytestconfig):
+def test_complex_types(pytester, pytestconfig):
     """Test serialization of the complex types."""
     if not pytestconfig.pluginmanager.has_plugin("xdist"):
         pytest.skip("Execnet not installed")
 
     import execnet.gateway_base
 
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         test=textwrap.dedent(
             """
@@ -276,7 +276,7 @@ def test_complex_types(testdir, pytestconfig):
     """
         ),
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """
         import pytest
@@ -313,7 +313,7 @@ def test_complex_types(testdir, pytestconfig):
     """
         )
     )
-    result = testdir.inline_run("-vvl")
+    result = pytester.inline_run("-vvl")
     report = result.matchreport("test_complex[10,20-alien0]", when="call")
     assert report.passed
     assert execnet.gateway_base.dumps(report.item)

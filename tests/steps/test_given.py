@@ -2,8 +2,8 @@
 import textwrap
 
 
-def test_given_injection(testdir):
-    testdir.makefile(
+def test_given_injection(pytester):
+    pytester.makefile(
         ".feature",
         given=textwrap.dedent(
             """\
@@ -14,7 +14,7 @@ def test_given_injection(testdir):
             """
         ),
     )
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import pytest
@@ -36,5 +36,5 @@ def test_given_injection(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)

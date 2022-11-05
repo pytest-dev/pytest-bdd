@@ -1,48 +1,63 @@
 """Test feature base dir."""
+import os
+
 import pytest
 
 NOT_EXISTING_FEATURE_PATHS = [".", "/does/not/exist/"]
 
 
 @pytest.mark.parametrize("base_dir", NOT_EXISTING_FEATURE_PATHS)
-def test_feature_path_not_found(testdir, base_dir):
+def test_feature_path_not_found(pytester, base_dir):
     """Test feature base dir."""
-    prepare_testdir(testdir, base_dir)
+    prepare_testdir(pytester, base_dir)
 
-    result = testdir.runpytest("-k", "test_not_found_by_ini")
+    result = pytester.runpytest("-k", "test_not_found_by_ini")
     result.assert_outcomes(passed=2)
 
 
-def test_feature_path_ok(testdir):
+def test_feature_path_ok(pytester):
     base_dir = "features"
-    prepare_testdir(testdir, base_dir)
+    prepare_testdir(pytester, base_dir)
 
-    result = testdir.runpytest("-k", "test_ok_by_ini")
+    result = pytester.runpytest("-k", "test_ok_by_ini")
     result.assert_outcomes(passed=2)
 
 
-def test_feature_path_by_param_not_found(testdir):
+def test_feature_path_ok_running_outside_rootdir(pytester):
+    base_dir = "features"
+    prepare_testdir(pytester, base_dir)
+
+    old_dir = os.getcwd()
+    os.chdir("/")
+    try:
+        result = pytester.runpytest(pytester.path, "-k", "test_ok_by_ini")
+        result.assert_outcomes(passed=2)
+    finally:
+        os.chdir(old_dir)
+
+
+def test_feature_path_by_param_not_found(pytester):
     """As param takes precedence even if ini config is correct it should fail
     if passed param is incorrect"""
     base_dir = "features"
-    prepare_testdir(testdir, base_dir)
+    prepare_testdir(pytester, base_dir)
 
-    result = testdir.runpytest("-k", "test_not_found_by_param")
+    result = pytester.runpytest("-k", "test_not_found_by_param")
     result.assert_outcomes(passed=4)
 
 
 @pytest.mark.parametrize("base_dir", NOT_EXISTING_FEATURE_PATHS)
-def test_feature_path_by_param_ok(testdir, base_dir):
+def test_feature_path_by_param_ok(pytester, base_dir):
     """If ini config is incorrect but param path is fine it should be able
     to find features"""
-    prepare_testdir(testdir, base_dir)
+    prepare_testdir(pytester, base_dir)
 
-    result = testdir.runpytest("-k", "test_ok_by_param")
+    result = pytester.runpytest("-k", "test_ok_by_param")
     result.assert_outcomes(passed=2)
 
 
-def prepare_testdir(testdir, ini_base_dir):
-    testdir.makeini(
+def prepare_testdir(pytester, ini_base_dir):
+    pytester.makeini(
         """
             [pytest]
             bdd_features_base_dir={}
@@ -51,8 +66,8 @@ def prepare_testdir(testdir, ini_base_dir):
         )
     )
 
-    feature_file = testdir.mkdir("features").join("steps.feature")
-    feature_file.write(
+    feature_file = pytester.mkdir("features").joinpath("steps.feature")
+    feature_file.write_text(
         """
         Feature: Feature path
             Scenario: When scenario found
@@ -60,7 +75,7 @@ def prepare_testdir(testdir, ini_base_dir):
     """
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         """
     import os.path
 

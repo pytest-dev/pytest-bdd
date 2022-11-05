@@ -31,8 +31,8 @@ def _(cucumbers, left):
 """
 
 
-def test_outlined(testdir):
-    testdir.makefile(
+def test_outlined(pytester):
+    pytester.makefile(
         ".feature",
         outline=textwrap.dedent(
             """\
@@ -51,9 +51,9 @@ def test_outlined(testdir):
         ),
     )
 
-    testdir.makeconftest(textwrap.dedent(STEPS))
+    pytester.makeconftest(textwrap.dedent(STEPS))
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         from pytest_bdd import scenario
@@ -68,7 +68,7 @@ def test_outlined(testdir):
         """
         )
     )
-    result = testdir.runpytest("-s")
+    result = pytester.runpytest("-s")
     result.assert_outcomes(passed=2)
     # fmt: off
     assert collect_dumped_objects(result) == [
@@ -78,10 +78,10 @@ def test_outlined(testdir):
     # fmt: on
 
 
-def test_unused_params(testdir):
+def test_unused_params(pytester):
     """Test parametrized scenario when the test function lacks parameters."""
 
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         outline=textwrap.dedent(
             """\
@@ -99,9 +99,9 @@ def test_unused_params(testdir):
             """
         ),
     )
-    testdir.makeconftest(textwrap.dedent(STEPS))
+    pytester.makeconftest(textwrap.dedent(STEPS))
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         from pytest_bdd import scenario
@@ -112,13 +112,13 @@ def test_unused_params(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=1)
 
 
-def test_outlined_with_other_fixtures(testdir):
+def test_outlined_with_other_fixtures(pytester):
     """Test outlined scenario also using other parametrized fixture."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         outline=textwrap.dedent(
             """\
@@ -137,9 +137,9 @@ def test_outlined_with_other_fixtures(testdir):
         ),
     )
 
-    testdir.makeconftest(textwrap.dedent(STEPS))
+    pytester.makeconftest(textwrap.dedent(STEPS))
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import pytest
@@ -161,13 +161,13 @@ def test_outlined_with_other_fixtures(testdir):
         """
         )
     )
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=6)
 
 
-def test_outline_with_escaped_pipes(testdir):
+def test_outline_with_escaped_pipes(pytester):
     """Test parametrized feature example table with escaped pipe characters in input."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         outline=textwrap.dedent(
             r"""\
@@ -190,7 +190,7 @@ def test_outline_with_escaped_pipes(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
             from pytest_bdd import scenario, given, parsers
@@ -208,7 +208,7 @@ def test_outline_with_escaped_pipes(testdir):
             """
         )
     )
-    result = testdir.runpytest("-s")
+    result = pytester.runpytest("-s")
     result.assert_outcomes(passed=7)
     assert collect_dumped_objects(result) == [
         r"bork",

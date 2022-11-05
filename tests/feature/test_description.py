@@ -3,9 +3,9 @@
 import textwrap
 
 
-def test_description(testdir):
+def test_description(pytester):
     """Test description for the feature."""
-    testdir.makefile(
+    pytester.makefile(
         ".feature",
         description=textwrap.dedent(
             """\
@@ -24,7 +24,7 @@ def test_description(testdir):
         ),
     )
 
-    testdir.makepyfile(
+    pytester.makepyfile(
         textwrap.dedent(
             """\
         import textwrap
@@ -53,5 +53,5 @@ def test_description(testdir):
         )
     )
 
-    result = testdir.runpytest()
+    result = pytester.runpytest()
     result.assert_outcomes(passed=2)
