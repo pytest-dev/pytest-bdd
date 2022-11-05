@@ -14,7 +14,22 @@ import pytest_bdd.parser
 
 from .parser import ValidationError
 
+
+def ungroup(expr: pp.ParserElement) -> pp.ParserElement:
+    """Helper to undo pyparsing's default grouping of And expressions,
+    even if all but one are non-empty.
+    """
+
+    def extractor(t: pp.ParseResults):
+        [ex] = t
+        return ex
+
+    return pp.TokenConverter(expr).add_parse_action(extractor)
+
+
 pp.enable_all_warnings()
+# todo: make a context manager for this. both for grammar definition time and for parsing time
+pp.ParserElement.set_default_whitespace_chars(" \t")
 
 
 class ParseError(Exception):
@@ -99,12 +114,14 @@ class PScenarios:
 class PFeature:
     name: str
     scenarios: PScenarios
+    tags: list[str]
 
     @classmethod
     def from_tokens(cls, tokens: pp.ParseResults) -> Self:
         d = tokens.as_dict()
         [scenarios] = d["scenarios"]
-        return cls(name=d["name"], scenarios=scenarios)
+        [tags] = d["tag_group"]
+        return cls(name=d["name"], scenarios=scenarios, tags=tags["tag_lines_g"])
 
 
 @dataclass
@@ -154,11 +171,52 @@ scenario.set_parse_action(PScenario.from_tokens)
 scenarios = scenario[0, ...]
 scenarios.set_parse_action(PScenarios.from_tokens)
 
+tag = pp.Combine("@" + pp.Word(pp.printables)("tag"))
 
-feature = FEATURE + ":" + any_char("name") + pp.LineEnd() + pp.Group(scenarios)("scenarios")
+
+@tag.set_parse_action
+def _(tokens: pp.ParseResults) -> str:
+    d = tokens.as_dict()
+    return d["tag"]
+
+
+# @dataclass()
+# class TagLine:
+#     tags: list[str]
+
+tag_line = pp.LineStart() + pp.Group(tag[1, ...])("tags_g") + pp.LineEnd()
+
+
+@tag_line.set_parse_action
+def _(tokens: pp.ParseResults) -> list[str]:
+    d = tokens.as_dict()
+    # return d["tags_g"]
+    return {"tags": d["tags_g"]}
+
+
+tag_lines = pp.Group(tag_line[1, ...])("tag_lines_g")
+
+
+@tag_lines.set_parse_action
+def _(tokens: pp.ParseResults) -> list[str]:
+    d = tokens.as_dict()
+    v = {"tags": [tag for tag_line in d["tag_lines_g"] for tag in tag_line["tags"]]}
+    return v
+
+
+feature = (
+    pp.Group(tag_lines)("tag_group*")
+    + FEATURE
+    + ":"
+    + any_char("name")
+    + pp.LineEnd()
+    + pp.Group(scenarios)("scenarios")
+)
+
 feature.set_parse_action(PFeature.from_tokens)
 
 
+# TODO: try to use ungroup(expr) and pp.Group instad of pp.And
 gherkin_document = pp.And([pp.Group(feature)("feature")])
 gherkin_document.set_parse_action(PGherkinDocument.from_tokens)
 
@@ -179,9 +237,9 @@ Feature: My feature
         Then I should see something else
 """
 
-parsed = start.parse_string(input, parse_all=True)
+# parsed = start.parse_string(input, parse_all=True)
 
-print(parsed)
+# print(parsed)
 
 
 def transform(tokens: pp.ParseResults):
@@ -196,7 +254,7 @@ def transform(tokens: pp.ParseResults):
         filename="",
         rel_filename="",
         name=None,
-        tags=set(),
+        tags=set(p_feature.tags),
         line_number=0,
         description="",
         background=None,
@@ -253,21 +311,21 @@ def parse_feature(basedir: str, filename: str, encoding="utf-8"):
     return feature
 
 
-document = transform(parsed)
-
-print(document)
-
-
-input = """
-Feature: lol
-Scenario: My first scenario
-    Given I have a step
-    When I do something
-    Then I should see something else
-Scenario: My second scenario
-    Given foo
-"""
-
-parsed = start.parse_string(input, parse_all=True)
-
-print(parsed.as_dict())
+# document = transform(parsed)
+#
+# print(document)
+#
+#
+# input = """
+# Feature: lol
+# Scenario: My first scenario
+#     Given I have a step
+#     When I do something
+#     Then I should see something else
+# Scenario: My second scenario
+#     Given foo
+# """
+#
+# parsed = start.parse_string(input, parse_all=True)
+#
+# print(parsed.as_dict())
