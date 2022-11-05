@@ -31,7 +31,7 @@ jobs:
     - name: Test with tox
       run: |
         coverage erase
-        tox
+        tox --parallel
         coverage combine
         coverage xml
     - uses: codecov/codecov-action@v3
