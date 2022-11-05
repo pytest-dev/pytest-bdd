@@ -55,59 +55,6 @@ def test_every_steps_takes_param_with_the_same_name(pytester):
     result.assert_outcomes(passed=1)
 
 
-def test_exact_match(pytester):
-    """Test that parsers.re does an exact match (fullmatch) of the whole string.
-
-    This tests exists because in the past we only used re.match, which only finds a match at the beginning
-    of the string, so if there were any more characters not matching at the end, they were ignored"""
-
-    pytester.makefile(
-        ".feature",
-        arguments=textwrap.dedent(
-            """\
-            Feature: Step arguments
-                Scenario: Every step takes a parameter with the same name
-                    Given I have 2 Euro
-                    # Step that should not be found:
-                    When I pay 1 Euro by mistake
-                    Then I should have 1 Euro left
-            """
-        ),
-    )
-
-    pytester.makepyfile(
-        textwrap.dedent(
-            r"""
-        import pytest
-        from pytest_bdd import parsers, given, when, then, scenarios
-
-        scenarios("arguments.feature")
-
-        @given(parsers.re(r"I have (?P<amount>\d+) Euro"), converters={"amount": int}, target_fixture="wallet")
-        def _(amount):
-            return {"EUR": amount}
-
-
-        # Purposefully using a re that will not match the step "When I pay 1 Euro and 50 cents"
-        @when(parsers.re(r"I pay (?P<amount>\d+) Euro"), converters={"amount": int})
-        def _(amount, wallet):
-            wallet["EUR"] -= amount
-
-
-        @then(parsers.re(r"I should have (?P<amount>\d+) Euro left"), converters={"amount": int})
-        def _(amount, wallet):
-            assert wallet["EUR"] == amount
-
-        """
-        )
-    )
-    result = pytester.runpytest()
-    result.assert_outcomes(failed=1)
-    result.stdout.fnmatch_lines(
-        '*StepDefinitionNotFoundError: Step definition is not found: When "I pay 1 Euro by mistake"*'
-    )
-
-
 def test_argument_in_when(pytester):
     pytester.makefile(
         ".feature",
