@@ -72,11 +72,18 @@ show_contexts = true
 
 [tool.coverage.run]
 branch = true
-include =[
-    "src/pytest_bdd/*",
-    "tests/*",
-]
+# `parallel` will cause each tox env to put data into a different file, so that we can combine them later
+parallel = true
+source = ["pytest_bdd", "tests"]
 dynamic_context = "test_function"
+
+[tool.coverage.paths]
+# treat these directories as the same when combining
+# the first item is going to be the canonical dir
+source = [
+    "src/pytest_bdd",
+    ".tox/*/lib/python*/site-packages/pytest_bdd",
+]
 
 
 [tool.mypy]
