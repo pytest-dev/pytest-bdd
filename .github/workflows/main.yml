@@ -29,7 +29,9 @@ jobs:
       run: |
         tox -e mypy
     - name: Test with tox
-      run: tox
+      run: |
+        tox
+        coverage xml
     - uses: codecov/codecov-action@v3
       with:
         fail_ci_if_error: true
