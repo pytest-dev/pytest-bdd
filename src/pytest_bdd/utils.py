@@ -82,3 +82,9 @@ def setdefault(obj: object, name: str, default: T) -> T:
     except AttributeError:
         setattr(obj, name, default)
         return default
+
+
+def some_uncovereded_code():
+    a = 42
+    while True:
+        raise NotImplementedError
