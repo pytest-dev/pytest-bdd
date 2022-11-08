@@ -4,6 +4,10 @@ Changelog
 Unreleased
 ----------
 
+6.1.1
+-----
+- Fix regression introduced in version 6.1.0 where the ``pytest_bdd_after_scenario`` hook would be called after every step instead of after the scenario. `#577 <https://github.com/pytest-dev/pytest-bdd/pull/577>`_
+
 6.1.0
 -----
 - Fix bug where steps without parsers would take precedence over steps with parsers. `#534 <https://github.com/pytest-dev/pytest-bdd/pull/534>`_
