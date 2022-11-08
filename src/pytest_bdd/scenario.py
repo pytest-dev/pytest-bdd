@@ -178,22 +178,21 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequ
     __tracebackhide__ = True
     request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
 
-    for step in scenario.steps:
-        step_func_context = get_step_function(request=request, step=step)
-        if step_func_context is None:
-            exc = exceptions.StepDefinitionNotFoundError(
-                f"Step definition is not found: {step}. "
-                f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
-            )
-            request.config.hook.pytest_bdd_step_func_lookup_error(
-                request=request, feature=feature, scenario=scenario, step=step, exception=exc
-            )
-            raise exc
-
-        try:
+    try:
+        for step in scenario.steps:
+            step_func_context = get_step_function(request=request, step=step)
+            if step_func_context is None:
+                exc = exceptions.StepDefinitionNotFoundError(
+                    f"Step definition is not found: {step}. "
+                    f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
+                )
+                request.config.hook.pytest_bdd_step_func_lookup_error(
+                    request=request, feature=feature, scenario=scenario, step=step, exception=exc
+                )
+                raise exc
             _execute_step_function(request, scenario, step, step_func_context)
-        finally:
-            request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
+    finally:
+        request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
 
 
 def _get_scenario_decorator(
