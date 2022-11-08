@@ -1,7 +1,10 @@
 import textwrap
 
+from pytest_bdd.utils import collect_dumped_objects
 
-def test_hooks(pytester):
+
+def test_conftest_module_evaluated_twice(pytester):
+    """Regression test for https://github.com/pytest-dev/pytest-bdd/issues/62"""
     pytester.makeconftest("")
 
     subdir = pytester.mkpydir("subdir")
@@ -74,3 +77,61 @@ def test_item_collection_does_not_break_on_non_function_items(pytester):
 
     result = pytester.runpytest()
     result.assert_outcomes(passed=1)
+
+
+def test_pytest_bdd_after_scenario_called_after_scenario(pytester):
+    """Regression test for https://github.com/pytest-dev/pytest-bdd/pull/577"""
+
+    pytester.makefile(
+        ".feature",
+        foo=textwrap.dedent(
+            """\
+            Feature: A feature
+                Scenario: Scenario 1
+                    Given foo
+                    When bar
+                    Then baz
+
+                Scenario: Scenario 2
+                    When bar
+                    Then baz
+            """
+        ),
+    )
+
+    pytester.makepyfile(
+        """
+    import pytest
+    from pytest_bdd import given, when, then, scenarios
+
+
+    scenarios("foo.feature")
+
+
+    @given("foo")
+    @when("bar")
+    @then("baz")
+    def _():
+        pass
+    """
+    )
+
+    pytester.makeconftest(
+        """
+    from pytest_bdd.utils import dump_obj
+
+    def pytest_bdd_after_scenario(request, feature, scenario):
+        dump_obj([feature, scenario])
+    """
+    )
+
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=2)
+
+    hook_calls = collect_dumped_objects(result)
+    assert len(hook_calls) == 2
+    [(feature, scenario_1), (feature_2, scenario_2)] = hook_calls
+    assert feature.name == feature_2.name == "A feature"
+
+    assert scenario_1.name == "Scenario 1"
+    assert scenario_2.name == "Scenario 2"
