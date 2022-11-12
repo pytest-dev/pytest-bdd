@@ -1,7 +1,6 @@
 """Test tags."""
 import textwrap
 
-import pkg_resources
 import pytest
 
 from pytest_bdd.parser import get_tags
@@ -235,14 +234,7 @@ def test_at_in_scenario(pytester):
         scenarios('test.feature')
     """
     )
-
-    # Deprecate --strict after pytest 6.1
-    # https://docs.pytest.org/en/stable/deprecations.html#the-strict-command-line-option
-    pytest_version = pkg_resources.get_distribution("pytest").parsed_version
-    if pytest_version >= pkg_resources.parse_version("6.2"):
-        strict_option = "--strict-markers"
-    else:
-        strict_option = "--strict"
+    strict_option = "--strict-markers"
     result = pytester.runpytest_subprocess(strict_option)
     result.stdout.fnmatch_lines(["*= 2 passed * =*"])
 
