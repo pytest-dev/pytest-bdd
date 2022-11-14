@@ -171,6 +171,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
         elif mode == types.EXAMPLES:
             mode = types.EXAMPLES_HEADERS
             scenario.examples.line_number = line_number
+            scenario.examples.tags = get_tags(prev_line)
         elif mode == types.EXAMPLES_HEADERS:
             scenario.examples.set_param_names([l for l in split_line(parsed_line) if l])
             mode = types.EXAMPLE_LINE
@@ -337,8 +338,10 @@ class Examples:
 
     line_number: int | None = field(default=None)
     name: str | None = field(default=None)
+    tags: set[str] = field(default_factory=set)
 
     example_params: list[str] = field(init=False, default_factory=list)
+    example_tags: list[str] = field(init=False, default_factory=list)
     examples: list[Sequence[str]] = field(init=False, default_factory=list)
 
     def set_param_names(self, keys: Iterable[str]) -> None:
@@ -346,16 +349,16 @@ class Examples:
 
     def add_example(self, values: Sequence[str]) -> None:
         self.examples.append(values)
+        self.example_tags.append(self.tags)
 
-    def as_contexts(self) -> Iterable[dict[str, Any]]:
+    def as_contexts(self) -> Iterable[dict[str, Any], list[str]]:
         if not self.examples:
             return
+        header, rows, tags = self.example_params, self.examples, self.example_tags
 
-        header, rows = self.example_params, self.examples
-
-        for row in rows:
+        for index, row in enumerate(rows):
             assert len(header) == len(row)
-            yield dict(zip(header, row))
+            yield dict(zip(header, row)), tags[index]
 
     def __bool__(self) -> bool:
         return bool(self.examples)

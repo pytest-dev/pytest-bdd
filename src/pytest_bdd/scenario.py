@@ -243,14 +243,17 @@ def _get_scenario_decorator(
 
 def collect_example_parametrizations(
     templated_scenario: ScenarioTemplate,
-) -> list[ParameterSet] | None:
+) -> tuple[list[ParameterSet], set[str]] | None:
     # We need to evaluate these iterators and store them as lists, otherwise
     # we won't be able to do the cartesian product later (the second iterator will be consumed)
     contexts = list(templated_scenario.examples.as_contexts())
     if not contexts:
         return None
+    return [pytest.param(context[0], id="-".join(context[0].values()), marks=_register_tags_as_marks(context[1])) for context in contexts]
 
-    return [pytest.param(context, id="-".join(context.values())) for context in contexts]
+
+def _register_tags_as_marks(tags) -> list[pytest.mark]:
+    return [getattr(pytest.mark, marks) for marks in tags]
 
 
 def scenario(
