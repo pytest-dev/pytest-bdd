@@ -141,7 +141,6 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
                 _, feature.name = parse_line(clean_line)
                 feature.line_number = line_number
                 feature.tags = get_tags(all_lines, line_number)
-
             elif prev_mode == types.FEATURE:
                 description.append(clean_line)
             else:
@@ -364,19 +363,25 @@ class Examples:
         return bool(self.examples)
 
 
-def get_tags(all_lines: list[str] | None, line_number: int) -> set[str]:
+def get_tags(all_lines: list[str] | str | None, line_number: int = 0) -> set[str]:
     """Get tags out of the given line.
 
     :param str line: Feature file text line.
+    :param int line_number: Starting line.
 
     :return: List of tags.
     """
+    if isinstance(all_lines, str) or not all_lines:
+        if not all_lines or not all_lines.strip().startswith("@"):
+            return set()
+        return {tag.lstrip("@") for tag in all_lines.strip().split(" @") if len(tag) > 1}
+
     total_tags = set[str]
-   
-    if not all_lines[line_number-2] or not all_lines[line_number-2].strip().startswith("@"):
+    line_offset = 2  # Used to denote the line containing the tags, above the current line
+    if not all_lines[line_number-line_offset] or not all_lines[line_number-line_offset].strip().startswith("@"):
         return set()
     else:
-        while (line_number - 1) > 0 and all_lines[line_number-2].strip().startswith("@"):
+        while (line_number - 1) > 0 and all_lines[line_number-line_offset].strip().startswith("@"):
             line_tags = {tag.lstrip("@") for tag in all_lines[line_number-2].strip().split(" @") if len(tag) > 1}
             total_tags = total_tags.union(line_tags)
             line_number -= 1

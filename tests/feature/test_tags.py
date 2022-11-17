@@ -66,6 +66,177 @@ def test_tags_selector(pytester):
     result = pytester.runpytest("-m", "feature_tag_10", "-vv").parseoutcomes()
     assert result["deselected"] == 2
 
+def test_multiline_tags(pytester):
+    """Test tests selection by multiline tags."""
+    pytester.makefile(
+        ".ini",
+        pytest=textwrap.dedent(
+            """
+    [pytest]
+    markers =
+        feature_tag_1
+        feature_tag_2
+        scenario_tag_01
+        scenario_tag_02
+        scenario_tag_10
+        scenario_tag_20
+        scenario_tag_30
+    """
+        ),
+    )
+    pytester.makefile(
+        ".feature",
+        test="""
+    @feature_tag_1 
+    @feature_tag_2
+    Feature: Tags
+
+    @scenario_tag_01 @scenario_tag_02
+    Scenario: Tags
+        Given I have a bar
+
+    @scenario_tag_10 
+    @scenario_tag_20
+    @scenario_tag_30
+    Scenario: Tags 2
+        Given I have a bar
+
+    """,
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+        from pytest_bdd import given, scenarios
+
+        @given('I have a bar')
+        def _():
+            return 'bar'
+
+        scenarios('test.feature')
+    """
+    )
+    result = pytester.runpytest("-m", "scenario_tag_10 and not scenario_tag_01", "-vv")
+    outcomes = result.parseoutcomes()
+    assert outcomes["passed"] == 1
+    assert outcomes["deselected"] == 1
+
+    result = pytester.runpytest("-m", "scenario_tag_01 and not scenario_tag_10", "-vv").parseoutcomes()
+    assert result["passed"] == 1
+    assert result["deselected"] == 1
+
+    result = pytester.runpytest("-m", "feature_tag_1", "-vv").parseoutcomes()
+    assert result["passed"] == 2
+
+    result = pytester.runpytest("-m", "feature_tag_10", "-vv").parseoutcomes()
+    assert result["deselected"] == 2
+
+    result = pytester.runpytest("-m", " scenario_tag_02", "-vv").parseoutcomes()
+    assert result["passed"] == 1
+
+    result = pytester.runpytest("-m", " scenario_tag_10", "-vv").parseoutcomes()
+    assert result["passed"] == 1
+
+    result = pytester.runpytest("-m", " scenario_tag_20", "-vv").parseoutcomes()
+    assert result["passed"] == 1
+
+    result = pytester.runpytest("-m", " scenario_tag_30", "-vv").parseoutcomes()
+    assert result["passed"] == 1
+
+
+def test_example_tags(pytester):
+    """Test example selection by tags."""
+    pytester.makefile(
+        ".ini",
+        pytest=textwrap.dedent(
+            """
+    [pytest]
+    markers =
+        feature_tag_1
+        scenario_tag_01
+        example_tag_01
+        example_tag_02
+        example_tag_03
+    """
+        ),
+    )
+    pytester.makefile(
+        ".feature",
+        test="""
+    @feature_tag_1
+    Feature: Tags
+        @scenario_tag_01
+        Scenario Outline: Outlined with empty example values
+            Given there are <start> cucumbers
+            When I eat <eat> cucumbers
+            Then I should have <left> cucumbers
+
+            @example_tag_01
+            Examples:
+                | start | eat | left |
+                | 1     | 1   | 0    |
+
+            @example_tag_02
+            @example_tag_03
+            Examples:
+                | start | eat | left |
+                | 3     | 2   | 1    |
+
+    """,
+    )
+    pytester.makepyfile(
+        """
+        import pytest
+        from pytest_bdd import given, when, then, scenario
+        from pytest_bdd.parsers import parse
+
+        @scenario("test.feature", "Outlined with empty example values")
+        def test_outline():
+            pass
+
+        @given(parse('there are {start} cucumbers'))
+        def _():
+            pass
+
+        @when(parse('I eat {eat} cucumbers'))
+        def _():
+            pass
+
+        @then(parse('I should have {left} cucumbers'))
+        def _():
+            pass
+    """
+    )
+    result = pytester.runpytest("-m", "example_tag_01", "-vv").parseoutcomes()
+    assert result["passed"] == 1
+
+    result = pytester.runpytest("-m", "example_tag_02", "-vv").parseoutcomes()
+    assert result["passed"] == 1
+
+    result = pytester.runpytest("-m", "example_tag_01 or example_tag_02", "-vv").parseoutcomes()
+    assert result["passed"] == 2
+
+    result = pytester.runpytest("-m", "example_tag_01 and example_tag_02", "-vv").parseoutcomes()
+    assert result["deselected"] == 2
+
+    result = pytester.runpytest("-m", "scenario_tag_01 and example_tag_03", "-vv").parseoutcomes()
+    assert result["passed"] == 1
+    assert result["deselected"] == 1
+
+    result = pytester.runpytest("-m", "scenario_tag_01 and example_tag_02", "-vv").parseoutcomes()
+    assert result["passed"] == 1
+    assert result["deselected"] == 1
+
+    result = pytester.runpytest("-m", "feature_tag_1", "-vv").parseoutcomes()
+    assert result["passed"] == 2
+    
+    result = pytester.runpytest("-m", "feature_tag_1 and not example_tag_02", "-vv").parseoutcomes()
+    assert result["passed"] == 1
+    assert result["deselected"] == 1
+
+    result = pytester.runpytest("-m", "scenario_tag_01 and not example_tag_01", "-vv").parseoutcomes()
+    assert result["passed"] == 1
+    assert result["deselected"] == 1
+
 
 def test_tags_after_background_issue_160(pytester):
     """Make sure using a tag after background works."""
