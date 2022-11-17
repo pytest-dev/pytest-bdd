@@ -249,7 +249,10 @@ def collect_example_parametrizations(
     contexts = list(templated_scenario.examples.as_contexts())
     if not contexts:
         return None
-    return [pytest.param(context[0], id="-".join(context[0].values()), marks=_register_tags_as_marks(context[1])) for context in contexts]
+    return [
+        pytest.param(context[0], id="-".join(context[0].values()), marks=_register_tags_as_marks(context[1]))
+        for context in contexts
+    ]
 
 
 def _register_tags_as_marks(tags) -> list[pytest.mark]:
