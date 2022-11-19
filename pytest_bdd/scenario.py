@@ -122,7 +122,7 @@ class ModuleScenarioRegistry:
     def get(
         cls,
         caller_locals: dict | None = None,
-        caller_module_path: str = None,
+        caller_module_path: str | None = None,
     ) -> ModuleScenarioRegistry:
         caller_locals = cast(
             dict, caller_locals if caller_locals is not None else get_caller_module_locals(stacklevel=2)

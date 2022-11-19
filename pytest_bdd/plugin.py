@@ -87,13 +87,13 @@ def pytest_configure(config: Config) -> None:
     gherkin_terminal_reporter.configure(config)
     config.pluginmanager.register(ScenarioReporterPlugin())
     config.pluginmanager.register(ScenarioRunner())
-    config.__allure_plugin__ = AllurePytestBDD.register_if_allure_accessible(config)
+    config.__allure_plugin__ = AllurePytestBDD.register_if_allure_accessible(config)  # type: ignore[attr-defined]
 
 
 @pytest.mark.tryfirst
 def pytest_unconfigure(config: Config) -> None:
-    if config.__allure_plugin__ is not None:
-        config.__allure_plugin__.unregister(config)
+    if config.__allure_plugin__ is not None:  # type: ignore[attr-defined]
+        config.__allure_plugin__.unregister(config)  # type: ignore[attr-defined]
     cucumber_json.unconfigure(config)
 
 

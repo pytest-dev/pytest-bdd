@@ -19,30 +19,10 @@ from _pytest.terminal import TerminalReporter
 
 from pytest_bdd.packaging import compare_distribution_version
 
-assert all(
-    [
-        CallInfo,
-        call_fixture_func,
-        Config,
-        FixtureDef,
-        FixtureLookupError,
-        Mark,
-        MarkDecorator,
-        Metafunc,
-        Parser,
-        PytestPluginManager,
-        Session,
-        TerminalReporter,
-        TestReport,
-        wrap_session,
-    ]
-)
-
 if sys.version_info >= (3, 10):
     from typing import TypeAlias
 else:
     from typing_extensions import TypeAlias
-assert TypeAlias
 
 # region pytest version dependent imports
 if compare_distribution_version("pytest", "7.0", ge):
@@ -56,7 +36,6 @@ if compare_distribution_version("pytest", "6.2", ge):
     from pytest import FixtureRequest
 else:
     from _pytest.fixtures import FixtureRequest
-assert FixtureRequest
 
 # endregion
 
@@ -64,14 +43,31 @@ if TYPE_CHECKING:  # pragma: no cover
     from _pytest.nodes import Item as BaseItem
     from _pytest.pytester import RunResult
 
-    assert RunResult
-    assert Testdir
-
     class Item(BaseItem):
         _request: FixtureRequest
 
 else:
     from _pytest.nodes import Item
 
-    assert Item
-assert Item
+
+__all__ = [
+    "FixtureRequest",
+    "Item",
+    "RunResult",
+    "Testdir",
+    "TypeAlias",
+    "CallInfo",
+    "call_fixture_func",
+    "Config",
+    "FixtureDef",
+    "FixtureLookupError",
+    "Mark",
+    "MarkDecorator",
+    "Metafunc",
+    "Parser",
+    "PytestPluginManager",
+    "Session",
+    "TerminalReporter",
+    "TestReport",
+    "wrap_session",
+]

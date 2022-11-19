@@ -20,7 +20,7 @@ from pytest_bdd.typing.struct_bdd import STRUCT_BDD_INSTALLED
 if STRUCT_BDD_INSTALLED:  # pragma: no cover
     from pytest_bdd.struct_bdd.parser import StructBDDParser
 
-    assert StructBDDParser
+    assert StructBDDParser  # type: ignore[truthy-function]
 
 
 @attrs

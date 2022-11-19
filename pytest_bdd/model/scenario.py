@@ -13,7 +13,7 @@ from pytest_bdd.const import TAG_PREFIX, TYPE_KEYWORD_TYPE
 from pytest_bdd.utils import ModelSchemaPostLoadable, _itemgetter, deepattrgetter
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pytest_bdd.model.feature import Feature
+    from pytest_bdd.model import Feature
 
 
 @attrs

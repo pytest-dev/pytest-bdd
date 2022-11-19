@@ -52,7 +52,7 @@ def cmdline_main(config: Config) -> int | None:
 
 
 def generate_code(
-    features: list[Feature], feature_pickles: list[Pickle], feature_pickle_steps: list[PickleStep]
+    features: list[Feature], feature_pickles: list[tuple[Feature, Pickle]], feature_pickle_steps: list[PickleStep]
 ) -> str:
     """Generate test code for the given filenames."""
     template = template_lookup.get_template("test.py.mak")
@@ -76,7 +76,7 @@ def show_missing_code(config: Config) -> int | ExitCode:
 
 def print_missing_code(
     features,
-    feature_pickles: list[Pickle],
+    feature_pickles: list[tuple[Feature, Pickle]],
     feature_pickle_steps: list[tuple[tuple[Feature, Pickle], PickleStep]],
     unique_steps,
 ) -> None:
@@ -188,7 +188,7 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
 
     print_missing_code(
         non_seen_features,
-        non_seen_feature_pickles,
+        non_seen_feature_pickles,  # type: ignore[arg-type]
         non_matched_feature_pickle_steps,
         unique_non_matched_feature_pickle_steps,
     )

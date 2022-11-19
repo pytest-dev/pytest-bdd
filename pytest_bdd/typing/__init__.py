@@ -8,6 +8,4 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal, Protocol, runtime_checkable
 
-assert Literal
-assert Protocol
-assert runtime_checkable
+__all__ = ["Literal", "Protocol", "runtime_checkable"]

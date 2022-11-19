@@ -79,7 +79,7 @@ def given(
     anonymous_group_names: Iterable[str] | None = None,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
-    target_fixtures: list[str] = None,
+    target_fixtures: list[str] | None = None,
     params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
     param_defaults: dict | None = None,
     liberal: bool | None = None,
@@ -120,7 +120,7 @@ def when(
     anonymous_group_names: Iterable[str] | None = None,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
-    target_fixtures: list[str] = None,
+    target_fixtures: list[str] | None = None,
     params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
     param_defaults: dict | None = None,
     liberal: bool | None = None,
@@ -160,7 +160,7 @@ def then(
     anonymous_group_names: Iterable[str] | None = None,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
-    target_fixtures: list[str] = None,
+    target_fixtures: list[str] | None = None,
     params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
     param_defaults: dict | None = None,
     liberal: bool | None = None,
@@ -200,7 +200,7 @@ def step(
     anonymous_group_names: Iterable[str] | None = None,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
-    target_fixtures: list[str] = None,
+    target_fixtures: list[str] | None = None,
     params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
     param_defaults: dict | None = None,
     liberal: bool | None = None,
@@ -331,7 +331,7 @@ class StepHandler:
     @attrs(auto_attribs=True, eq=False)
     class Definition:
         func: Callable
-        type_: str | None
+        type_: str | StepType | None
         parser: StepParser
         anonymous_group_names: Iterable[str] | None
         converters: dict[str, Callable]

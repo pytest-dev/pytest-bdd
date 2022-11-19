@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Callable
 from pytest_bdd.typing import Protocol, runtime_checkable
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pytest_bdd.model.feature import Feature
+    from pytest_bdd.model import Feature
 
 
 @runtime_checkable

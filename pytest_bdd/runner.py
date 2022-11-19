@@ -6,6 +6,7 @@ from functools import partial
 from itertools import zip_longest
 from operator import attrgetter
 
+from pluggy import PluginManager
 from pytest import hookimpl
 
 from pytest_bdd import exceptions
@@ -18,11 +19,11 @@ from pytest_bdd.utils import DefaultMapping, get_args, inject_fixture
 
 
 class ScenarioRunner:
-    def __init__(self):
+    def __init__(self) -> None:
         self.request: FixtureRequest | None = None
         self.feature: Feature | None = None
         self.scenario = None
-        self.plugin_manager = None
+        self.plugin_manager: PluginManager | None = None
 
     def pytest_runtest_call(self, item: Item):
         if "pytest_bdd_scenario" in list(map(attrgetter("name"), item.iter_markers())):
