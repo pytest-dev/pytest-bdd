@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-from itertools import count
+from itertools import count, filterfalse
 from operator import attrgetter
 from typing import Any
 
 from attr import Factory, attrib, attrs
 
 import pytest_bdd.ast as ast
+from pytest_bdd.model.messages import KeywordType
 from pytest_bdd.struct_bdd.model import Join, Step, Table
+
+# TODO rework to use pydantic models instead
 
 
 @attrs
@@ -20,14 +23,12 @@ class _ASTBuilder:
 
 
 @attrs
-class DocumentASTBuilder(_ASTBuilder):
+class GherkinDocumentBuilder(_ASTBuilder):
     model: Step = attrib()
 
     def build(self):
-        return ast.AST(
-            gherkin_document=ast.GherkinDocument(comments=[], uri=None).setattrs(
-                feature=StepToFeatureASTBuilder(self.model, id_generator=self.id_generator).build()
-            )
+        return ast.GherkinDocument(comments=[], uri=None).setattrs(
+            feature=StepToFeatureASTBuilder(self.model, id_generator=self.id_generator).build()
         )
 
 
@@ -49,6 +50,80 @@ class StepToFeatureASTBuilder(_ASTBuilder):
         def _():
             for route in self.model.routes:
                 if route.steps:
+
+                    def steps_gen(steps):
+                        previous_step_keyword_type = None
+                        for step in steps:
+                            step_keyword_type = (
+                                previous_step_keyword_type
+                                if step.keyword_type is KeywordType.conjunction
+                                else step.keyword_type
+                            )
+                            yield ast.Step(
+                                identifier=next(self.id_generator),
+                                keyword=step.type,
+                                location=ast.Location(column=0, line=0),
+                                text=step.action,
+                                keyword_type=step_keyword_type.value,
+                            ).setattrs(
+                                **(
+                                    (
+                                        lambda rows: dict(
+                                            data_table=ast.DataTable(
+                                                rows=rows,
+                                                location=ast.Location(column=0, line=0),  # type: ignore[call-arg]
+                                            )  # type: ignore[call-arg]
+                                        )
+                                        if rows
+                                        else {}
+                                    )(
+                                        [
+                                            *filterfalse(
+                                                lambda row: row is None,
+                                                map(
+                                                    lambda row_values: (
+                                                        (
+                                                            lambda cells: ast.TableRow(
+                                                                identifier=next(self.id_generator),
+                                                                location=ast.Location(column=0, line=0),  # type: ignore[call-arg]
+                                                                cells=cells,
+                                                            )  # type: ignore[call-arg]
+                                                            if cells
+                                                            else None
+                                                        )(
+                                                            [
+                                                                *map(
+                                                                    lambda parameter: ast.TableCell(
+                                                                        location=ast.Location(column=0, line=0),
+                                                                        value=parameter,
+                                                                    ),
+                                                                    row_values,
+                                                                )
+                                                            ]
+                                                        )
+                                                    ),
+                                                    Join(tables=step.data).rowed_values,
+                                                ),
+                                            )
+                                        ]
+                                    )
+                                ),
+                                **(
+                                    dict(
+                                        doc_string=ast.DocString(
+                                            content=step.description,
+                                            delimiter="\n",
+                                            location=ast.Location(column=0, line=0),
+                                        )
+                                    )
+                                    if step.description
+                                    else dict()
+                                ),
+                            )
+                            previous_step_keyword_type = step_keyword_type
+
+                    steps = [*steps_gen(filter(lambda step: step.action is not None, route.steps))]
+
                     yield ast.NodeContainerChild().setattrs(
                         scenario=ast.Scenario(
                             description=route.steps[0].description or "",
@@ -69,51 +144,7 @@ class StepToFeatureASTBuilder(_ASTBuilder):
                                     route.tags,
                                 )
                             ],
-                            steps=[
-                                *map(
-                                    lambda step: ast.Step(
-                                        identifier=next(self.id_generator),
-                                        keyword=step.type,
-                                        location=ast.Location(column=0, line=0),
-                                        text=step.action,
-                                        keyword_type=step.keyword_type,
-                                    ).setattrs(
-                                        data_table=ast.DataTable(
-                                            rows=[
-                                                *map(
-                                                    lambda row_values: ast.TableRow(
-                                                        identifier=next(self.id_generator),
-                                                        location=ast.Location(column=0, line=0),
-                                                        cells=[
-                                                            *map(
-                                                                lambda parameter: ast.TableCell(
-                                                                    location=ast.Location(column=0, line=0),
-                                                                    value=parameter,
-                                                                ),
-                                                                row_values,
-                                                            )
-                                                        ],
-                                                    ),
-                                                    Join(tables=step.data).rowed_values,
-                                                )
-                                            ],
-                                            location=ast.Location(column=0, line=0),
-                                        ),
-                                        **(
-                                            {
-                                                "doc_string": ast.DocString(
-                                                    content=step.description,
-                                                    delimiter="\n",
-                                                    location=ast.Location(column=0, line=0),
-                                                )
-                                            }
-                                            if step.description
-                                            else {}
-                                        ),
-                                    ),
-                                    filter(lambda step: step.action is not None, route.steps),
-                                )
-                            ],
+                            steps=steps,
                         )
                     )
 

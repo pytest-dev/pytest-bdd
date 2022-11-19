@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import json
 import os
+from unittest.mock import patch
 
 import pytest
 from attr import asdict
+from attr.exceptions import NotAnAttrsClassError
 from pluggy import HookimplMarker
+from pydantic import BaseModel as PydanticBaseModel
 
-from pytest_bdd.model import Feature, Scenario, Step, Tag
 from pytest_bdd.typing.allure import ALLURE_INSTALLED
 
 if ALLURE_INSTALLED:
@@ -26,6 +29,9 @@ class AllurePytestBDD:
         self.allure_logger = allure_logger
         self._cache = allure_cache
 
+        self.allure_plugin_name = None
+        self.pytest_plugin_name = None
+
     @classmethod
     def register_if_allure_accessible(cls, config):
         pluginmanager = config.pluginmanager
@@ -38,31 +44,49 @@ class AllurePytestBDD:
             )
 
             bdd_listener = cls(listener.allure_logger, listener._cache)
-            allure_plugin_manager.register(bdd_listener)
-            pluginmanager.register(bdd_listener)
+            bdd_listener.allure_plugin_name = allure_plugin_manager.register(bdd_listener)
+            bdd_listener.pytest_plugin_name = pluginmanager.register(bdd_listener)
+            return bdd_listener
 
     @hookimpl(hookwrapper=True)
     def report_result(self, result):
-        recomposable_features = []
+        def patched_asdict(*args, recurse=True, value_serializer=None, **kwargs):
+            def patched_value_serializer(instance, field, value):
+                if isinstance(value, PydanticBaseModel):
+                    # Maybe possible to speedup; Some values are not serialized when used value.dict()
+                    return json.loads(value.json())
+                elif value_serializer is not patched_value_serializer:
+                    return value_serializer(instance, field, value)
+                else:
+                    if recurse:
+                        try:
+                            return patched_asdict(
+                                value, *args[1:], recurse=True, value_serializer=patched_value_serializer, **kwargs
+                            )
+                        except NotAnAttrsClassError:
+                            return value
+                    else:
+                        return value
 
-        def decompose_scenario_or_feature(attr, value):
-            if isinstance(value, (Tag, Step, Scenario, Feature)):
-                if isinstance(value, Feature):
-                    recomposable_features.append(value)
-                value.decompose()
-            return True
+            if value_serializer is None:
+                value_serializer = patched_value_serializer
 
-        asdict(result, filter=decompose_scenario_or_feature)
+            return asdict(*args, value_serializer=patched_value_serializer, **kwargs)
 
-        yield
+        with patch("allure_commons.logger.asdict", new=patched_asdict):
+            yield
 
-        while recomposable_features:
-            recomposable_features.pop().compose()
+    def unregister(self, config):
+        pluginmanager = config.pluginmanager
+        allure_accessible = pluginmanager.hasplugin("allure_pytest") and config.option.allure_report_dir
+        if allure_accessible:
+            allure_plugin_manager.unregister(name=self.allure_plugin_name)
+            pluginmanager.register(name=self.pytest_plugin_name)
 
     @pytest.hookimpl
     def pytest_bdd_before_step_call(self, request, feature, scenario, step, step_func, step_func_args, step_definition):
         """Called before step function is set up."""
-        step_definition.func = StepContext(f"{step.keyword} {step.name}", step_func_args)(step_func)
+        step_definition.func = StepContext(f"{step.keyword} {step.text}", step_func_args)(step_func)
 
     @pytest.hookimpl
     def pytest_bdd_before_scenario(self, request, feature, scenario):

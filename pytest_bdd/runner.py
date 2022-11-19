@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import deque
-from contextlib import suppress
+from contextlib import contextmanager, suppress
 from functools import partial
 from itertools import zip_longest
 from operator import attrgetter
@@ -9,7 +9,9 @@ from operator import attrgetter
 from pytest import hookimpl
 
 from pytest_bdd import exceptions
-from pytest_bdd.model import Feature, Scenario
+from pytest_bdd.model import Feature
+from pytest_bdd.model import Pickle as Scenario
+from pytest_bdd.model.messages import PickleStep
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.typing.pytest import FixtureRequest, Item, call_fixture_func
 from pytest_bdd.utils import DefaultMapping, get_args, inject_fixture
@@ -18,7 +20,7 @@ from pytest_bdd.utils import DefaultMapping, get_args, inject_fixture
 class ScenarioRunner:
     def __init__(self):
         self.request: FixtureRequest | None = None
-        self.feature = None
+        self.feature: Feature | None = None
         self.scenario = None
         self.plugin_manager = None
 
@@ -71,48 +73,66 @@ class ScenarioRunner:
 
         return dispatcher
 
-    def pytest_bdd_run_step(self, request, feature, scenario, step, previous_step):
-        hook_kwargs = dict(
-            request=request,
-            feature=feature,
-            scenario=scenario,
-            step=step,
-            previous_step=previous_step,
-        )
-
-        try:
-            step_definition = self._match_to_step(step, previous_step)
-        except exceptions.StepDefinitionNotFoundError as exception:
-            hook_kwargs["exception"] = exception
-            self.request.config.hook.pytest_bdd_step_func_lookup_error(**hook_kwargs)
-            raise
+    @contextmanager
+    def extended_step_context(self, feature: Feature, scenario, step):
+        if isinstance(step, PickleStep):
+            try:
+                step.__dict__["doc_string"] = feature._get_step_doc_string(step)
+                step.__dict__["data_table"] = feature._get_step_data_table(step)
+                step.__dict__["keyword"] = feature._get_step_keyword(step)
+                step.__dict__["line_number"] = feature._get_step_line_number(step)
+                yield
+            finally:
+                step.__dict__.pop("doc_string", None)
+                step.__dict__.pop("data_table", None)
+                step.__dict__.pop("keyword", None)
+                step.__dict__.pop("line_number", None)
         else:
-            hook_kwargs["step_func"] = step_definition.func
-            hook_kwargs["step_definition"] = step_definition
+            yield
 
-        self.request.config.hook.pytest_bdd_before_step(**hook_kwargs)
-
-        hook_kwargs["step_func_args"] = {}
-        step_params = step_definition.get_parameters(step)
-        try:
-            self._inject_step_parameters_as_fixtures(
-                step_params=step_params, params_fixtures_mapping=step_definition.params_fixtures_mapping
+    def pytest_bdd_run_step(self, request, feature: Feature, scenario, step, previous_step):
+        with self.extended_step_context(feature, scenario, step):
+            hook_kwargs = dict(
+                request=request,
+                feature=feature,
+                scenario=scenario,
+                step=step,
+                previous_step=previous_step,
             )
 
-            step_function_kwargs = dict(self._get_step_function_kwargs(step, step_definition, step_params))
-            hook_kwargs["step_func_args"] = step_function_kwargs
+            try:
+                step_definition = self._match_to_step(step, previous_step)
+            except exceptions.StepDefinitionNotFoundError as exception:
+                hook_kwargs["exception"] = exception
+                request.config.hook.pytest_bdd_step_func_lookup_error(**hook_kwargs)
+                raise
+            else:
+                hook_kwargs["step_func"] = step_definition.func
+                hook_kwargs["step_definition"] = step_definition
 
-            self.request.config.hook.pytest_bdd_before_step_call(**hook_kwargs)
+            request.config.hook.pytest_bdd_before_step(**hook_kwargs)
 
-            step_caller = self.request.config.hook.pytest_bdd_get_step_caller(**hook_kwargs)
-            step_result = step_caller()
+            hook_kwargs["step_func_args"] = {}
+            step_params = step_definition.get_parameters(step)
+            try:
+                self._inject_step_parameters_as_fixtures(
+                    step_params=step_params, params_fixtures_mapping=step_definition.params_fixtures_mapping
+                )
 
-            self._inject_target_fixtures(step_definition, step_result)
-            self.request.config.hook.pytest_bdd_after_step(**hook_kwargs)
-        except Exception as exception:
-            hook_kwargs["exception"] = exception
-            self.request.config.hook.pytest_bdd_step_error(**hook_kwargs)
-            raise
+                step_function_kwargs = dict(self._get_step_function_kwargs(step, step_definition, step_params))
+                hook_kwargs["step_func_args"] = step_function_kwargs
+
+                request.config.hook.pytest_bdd_before_step_call(**hook_kwargs)
+
+                step_caller = request.config.hook.pytest_bdd_get_step_caller(**hook_kwargs)
+                step_result = step_caller()
+
+                self._inject_target_fixtures(step_definition, step_result)
+                request.config.hook.pytest_bdd_after_step(**hook_kwargs)
+            except Exception as exception:
+                hook_kwargs["exception"] = exception
+                request.config.hook.pytest_bdd_step_error(**hook_kwargs)
+                raise
 
     @hookimpl(trylast=True)
     def pytest_bdd_get_step_caller(self, request, feature, scenario, step, step_func, step_func_args, step_definition):
@@ -167,7 +187,7 @@ class ScenarioRunner:
             )
         except StepHandler.Matcher.MatchNotFoundError as e:
             raise exceptions.StepDefinitionNotFoundError(
-                f'Step definition is not found: "{step.name}". '
+                f'Step definition is not found: "{step.text}". '
                 f'Step keyword: "{step.keyword}". '
                 f"Line {step.line_number} "
                 f'in scenario "{self.scenario.name}" '

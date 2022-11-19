@@ -6,6 +6,7 @@ from gherkin.pickles.compiler import Compiler
 from yaml import FullLoader, load
 
 from pytest_bdd import ast
+from pytest_bdd.const import StepType
 from pytest_bdd.struct_bdd import ast_builder
 from pytest_bdd.struct_bdd.model import Step, StepSchema
 
@@ -46,7 +47,7 @@ def test_load_simplest_step_with_text_steps():
 
     step: Step = StepSchema().load(data)
     assert step.steps[0].type == "*"
-    assert step.steps[0].keyword_type == "Unspecified"
+    assert step.steps[0].keyword_type == StepType.unknown
     assert step.steps[0].action == "Do something"
 
     routes = list(step.routes)
@@ -70,7 +71,7 @@ def test_load_actioned_step_with_text_steps():
 
     step: Step = StepSchema().load(data)
     assert step.steps[0].type == "*"
-    assert step.steps[0].keyword_type == "Unspecified"
+    assert step.steps[0].keyword_type == StepType.unknown
     assert step.steps[0].action == "Do something"
 
     routes = list(step.routes)
@@ -327,11 +328,11 @@ def test_tags_steps_examples_load():
     )
     assert len(route.example_table.values) == 4
 
-    document_ast = ast_builder.DocumentASTBuilder(step).build()
-    document_ast.gherkin_document.uri = "uri"
+    document_ast = ast_builder.GherkinDocumentBuilder(step).build()
+    document_ast.uri = "uri"
 
-    row_document_ast = ast.ASTSchema().dump(document_ast)
-    pickles = Compiler().compile(row_document_ast["gherkinDocument"])
+    row_document_ast = ast.GherkinDocumentSchema().dump(document_ast)
+    pickles = Compiler().compile(row_document_ast)
     assert len(pickles) == 4
 
 

@@ -47,7 +47,9 @@ from attr import Factory, attrib, attrs
 from ordered_set import OrderedSet
 
 from pytest_bdd.const import StepType
-from pytest_bdd.model import Feature, Scenario, Step
+from pytest_bdd.model import Feature
+from pytest_bdd.model.messages import Pickle
+from pytest_bdd.model.messages import PickleStep as Step
 from pytest_bdd.parsers import StepParser
 from pytest_bdd.typing.pytest import Config, Parser, TypeAlias
 from pytest_bdd.utils import convert_str_to_python_name, get_caller_module_locals, setdefaultattr
@@ -100,7 +102,7 @@ def given(
     :return: Decorator function for the step.
     """
     return StepHandler.decorator_builder(
-        StepType.CONTEXT,
+        StepType.context,
         parserlike,
         anonymous_group_names=anonymous_group_names,
         converters=converters,
@@ -140,7 +142,7 @@ def when(
     :return: Decorator function for the step.
     """
     return StepHandler.decorator_builder(
-        StepType.ACTION,
+        StepType.action,
         parserlike,
         anonymous_group_names=anonymous_group_names,
         converters=converters,
@@ -180,7 +182,7 @@ def then(
     :return: Decorator function for the step.
     """
     return StepHandler.decorator_builder(
-        StepType.OUTCOME,
+        StepType.outcome,
         parserlike,
         anonymous_group_names=anonymous_group_names,
         converters=converters,
@@ -220,7 +222,7 @@ def step(
     :return: Decorator function for the step.
     """
     return StepHandler.decorator_builder(
-        StepType.UNSPECIFIED if liberal else StepType.UNKNOWN,
+        StepType.unknown,
         parserlike,
         anonymous_group_names=anonymous_group_names,
         converters=converters,
@@ -240,7 +242,7 @@ class StepHandler:
     class Matcher:
         config: Config = attrib()
         feature: Feature = attrib(init=False)
-        pickle: Scenario = attrib(init=False)
+        pickle: Pickle = attrib(init=False)
         step: Step = attrib(init=False)
         previous_step: Step | None = attrib(init=False)
         step_registry: StepHandler.Registry = attrib(init=False)
@@ -252,7 +254,7 @@ class StepHandler:
         def __call__(
             self,
             feature: Feature,
-            pickle: Scenario,
+            pickle: Pickle,
             step: Step,
             previous_step: Step | None,
             step_registry: StepHandler.Registry,
@@ -265,11 +267,9 @@ class StepHandler:
 
             self.step_type_context = (
                 self.step_type_context
-                if self.step.type in (StepType.CONJUNCTION, StepType.UNKNOWN) and self.step_type_context is not None
+                if self.step.type is StepType.unknown and self.step_type_context is not None
                 else self.step.type
             )
-            if self.step_type_context == StepType.CONJUNCTION:
-                self.step_type_context = StepType.UNKNOWN
 
             step_definitions = list(
                 self.find_step_definition_matches(
@@ -290,7 +290,7 @@ class StepHandler:
 
         def unspecified_matcher(self, step_definition):
             return (
-                self.step_type_context == StepType.UNSPECIFIED or step_definition.type_ == StepType.UNSPECIFIED
+                self.step_type_context == StepType.unknown or step_definition.type_ == StepType.unknown
             ) and step_definition.parser.is_matching(self.step.text)
 
         def liberal_matcher(self, step_definition):
@@ -342,7 +342,7 @@ class StepHandler:
 
         def get_parameters(self, step: Step):
             parsed_arguments = (
-                self.parser.parse_arguments(step.name, anonymous_group_names=self.anonymous_group_names) or {}
+                self.parser.parse_arguments(step.text, anonymous_group_names=self.anonymous_group_names) or {}
             )
             return {
                 **self.param_defaults,
@@ -388,7 +388,7 @@ class StepHandler:
 
     @staticmethod
     def decorator_builder(
-        step_type: str | None,
+        step_type: str | StepType | None,
         step_parserlike: Any,
         anonymous_group_names: Iterable[str] | None = None,
         converters: dict[str, Callable] | None = None,

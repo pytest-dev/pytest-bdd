@@ -9,7 +9,7 @@ from marshmallow import Schema, fields, post_load
 from pytest_bdd.ast import Scenario as ASTScenario
 from pytest_bdd.ast import Step as ASTStep
 from pytest_bdd.ast import TableRow as ASTTableRow
-from pytest_bdd.const import STEP_PREFIXES, TAG, TYPE_KEYWORD_TYPE
+from pytest_bdd.const import TAG_PREFIX, TYPE_KEYWORD_TYPE
 from pytest_bdd.utils import ModelSchemaPostLoadable, _itemgetter, deepattrgetter
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -116,7 +116,7 @@ class Step(ASTNodeIDsMixin, ModelSchemaPostLoadable):
     postbuild_attrs = ["argument"]
 
     # region Indirectly loadable
-    scenario = attrib(init=False)
+    pickle = attrib(init=False)
     # endregion
 
     @property
@@ -149,7 +149,7 @@ class Step(ASTNodeIDsMixin, ModelSchemaPostLoadable):
 
     def decompose(self):
         self.ast = None
-        self.scenario = None
+        self.pickle = None
 
 
 class StepSchema(ASTNodeIDsSchemaMixin, Schema):
@@ -178,7 +178,7 @@ class TagSchema(Schema):
 
 
 @attrs
-class Scenario(ASTNodeIDsMixin, ModelSchemaPostLoadable):
+class Pickle(ASTNodeIDsMixin, ModelSchemaPostLoadable):
     id: str = attrib()
     name: str = attrib()
     language: str = attrib()
@@ -211,7 +211,7 @@ class Scenario(ASTNodeIDsMixin, ModelSchemaPostLoadable):
 
     @property
     def tag_names(self):
-        return sorted(map(lambda tag: tag.name.lstrip(STEP_PREFIXES[TAG]), self.tags))
+        return sorted(map(lambda tag: tag.name.lstrip(TAG_PREFIX), self.tags))
 
     def bind_ast(self, ast):
         self.ast = ast
@@ -225,11 +225,11 @@ class Scenario(ASTNodeIDsMixin, ModelSchemaPostLoadable):
     def bind_feature(self, feature: Feature):
         self.feature = feature
 
-        self.bind_ast(feature.gherkin_ast)
+        self.bind_ast(feature.gherkin_document)
 
     def bind_steps(self):
         for step in self.steps:
-            step.scenario = self
+            step.pickle = self
 
     def decompose(self):
         self.feature = None
@@ -240,7 +240,7 @@ class Scenario(ASTNodeIDsMixin, ModelSchemaPostLoadable):
             tag.decompose()
 
 
-class ScenarioSchema(ASTNodeIDsSchemaMixin, Schema):
+class PickleSchema(ASTNodeIDsSchemaMixin, Schema):
     id = fields.Str()
     name = fields.Str()
     language = fields.Str()
@@ -249,10 +249,10 @@ class ScenarioSchema(ASTNodeIDsSchemaMixin, Schema):
     uri = fields.Str()
 
     @post_load
-    def build_scenario(self, data, many, **kwargs):
-        scenario = Scenario(**data)
-        scenario.bind_steps()
-        return scenario
+    def build_pickle(self, data, many, **kwargs):
+        pickle = Pickle(**data)
+        pickle.bind_steps()
+        return pickle
 
 
 @attrs

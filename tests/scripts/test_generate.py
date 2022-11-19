@@ -39,6 +39,9 @@ def test_generate(testdir, monkeypatch, capsys):
 
         from pytest_bdd import (
             scenario,
+            given,
+            when,
+            then,
             step,
         )
 
@@ -48,27 +51,27 @@ def test_generate(testdir, monkeypatch, capsys):
             """Given and when using the same fixture should not evaluate it twice."""
 
 
-        @step('1 have a fixture (appends 1 to a list) in reuse syntax')
+        @given('1 have a fixture (appends 1 to a list) in reuse syntax')
         def have_a_fixture_appends_1_to_a_list_in_reuse_syntax():
             """1 have a fixture (appends 1 to a list) in reuse syntax."""
             raise NotImplementedError
 
 
-        @step('I have an empty list')
+        @given('I have an empty list')
         def i_have_an_empty_list():
             """I have an empty list."""
             raise NotImplementedError
 
 
-        @step('my list should be [1]')
-        def my_list_should_be_1():
-            """my list should be [1]."""
+        @when('I use this fixture')
+        def i_use_this_fixture():
+            """I use this fixture."""
             raise NotImplementedError
 
 
-        @step('I use this fixture')
-        def i_use_this_fixture():
-            """I use this fixture."""
+        @then('my list should be [1]')
+        def my_list_should_be_1():
+            """my list should be [1]."""
             raise NotImplementedError
 
         '''
@@ -101,6 +104,9 @@ def test_generate_with_quotes(testdir):
 
         from pytest_bdd import (
             scenario,
+            given,
+            when,
+            then,
             step,
         )
 
@@ -110,39 +116,39 @@ def test_generate_with_quotes(testdir):
             """A step definition with quotes should be escaped as needed."""
 
 
-        @step('I have a fixture with "double" quotes')
+        @when('I generate the code')
+        def i_generate_the_code():
+            """I generate the code."""
+            raise NotImplementedError
+
+
+        @given('I have a fixture with "double" quotes')
         def i_have_a_fixture_with_double_quotes():
             """I have a fixture with "double" quotes."""
             raise NotImplementedError
 
 
-        @step('I have a fixture with double-quote """triple""" quotes')
-        def i_have_a_fixture_with_doublequote_triple_quotes():
-            """I have a fixture with double-quote \\"\\"\\"triple\\"\\"\\" quotes."""
-            raise NotImplementedError
-
-
-        @step('I have a fixture with single-quote \\'\\'\\'triple\\'\\'\\' quotes')
-        def i_have_a_fixture_with_singlequote_triple_quotes():
-            """I have a fixture with single-quote \'\'\'triple\'\'\' quotes."""
-            raise NotImplementedError
-
-
-        @step('I have a fixture with \\'single\\' quotes')
+        @given('I have a fixture with \\'single\\' quotes')
         def i_have_a_fixture_with_single_quotes():
             """I have a fixture with 'single' quotes."""
             raise NotImplementedError
 
 
-        @step('The generated string should be written')
-        def the_generated_string_should_be_written():
-            """The generated string should be written."""
+        @given('I have a fixture with double-quote """triple""" quotes')
+        def i_have_a_fixture_with_doublequote_triple_quotes():
+            """I have a fixture with double-quote \\"\\"\\"triple\\"\\"\\" quotes."""
             raise NotImplementedError
 
 
-        @step('I generate the code')
-        def i_generate_the_code():
-            """I generate the code."""
+        @given('I have a fixture with single-quote \\'\\'\\'triple\\'\\'\\' quotes')
+        def i_have_a_fixture_with_singlequote_triple_quotes():
+            """I have a fixture with single-quote \'\'\'triple\'\'\' quotes."""
+            raise NotImplementedError
+
+
+        @then('The generated string should be written')
+        def the_generated_string_should_be_written():
+            """The generated string should be written."""
             raise NotImplementedError
         '''
     )
@@ -173,6 +179,9 @@ def test_unicode_characters(testdir, monkeypatch):
 
         from pytest_bdd import (
             scenario,
+            given,
+            when,
+            then,
             step,
         )
 
@@ -182,19 +191,19 @@ def test_unicode_characters(testdir, monkeypatch):
             """Calculating the circumference of a circle."""
 
 
-        @step('We have a circle')
-        def we_have_a_circle():
-            """We have a circle."""
-            raise NotImplementedError
-
-
-        @step('We calculate 2 * ℼ * 𝑟')
+        @then('We calculate 2 * ℼ * 𝑟')
         def we_calculate_2__ℼ__𝑟():
             """We calculate 2 * ℼ * 𝑟."""
             raise NotImplementedError
 
 
-        @step('We want to know its circumference')
+        @given('We have a circle')
+        def we_have_a_circle():
+            """We have a circle."""
+            raise NotImplementedError
+
+
+        @when('We want to know its circumference')
         def we_want_to_know_its_circumference():
             """We want to know its circumference."""
             raise NotImplementedError

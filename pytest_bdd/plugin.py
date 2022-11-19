@@ -17,7 +17,7 @@ from pytest_bdd import cucumber_json, generation, gherkin_terminal_reporter, giv
 from pytest_bdd.allure_logging import AllurePytestBDD
 from pytest_bdd.collector import FeatureFileModule as FeatureFileCollector
 from pytest_bdd.collector import Module as ModuleCollector
-from pytest_bdd.model import Step
+from pytest_bdd.model.messages import PickleStep as Step
 from pytest_bdd.reporting import ScenarioReporterPlugin
 from pytest_bdd.runner import ScenarioRunner
 from pytest_bdd.scenario import add_options as scenario_add_options
@@ -87,7 +87,14 @@ def pytest_configure(config: Config) -> None:
     gherkin_terminal_reporter.configure(config)
     config.pluginmanager.register(ScenarioReporterPlugin())
     config.pluginmanager.register(ScenarioRunner())
-    AllurePytestBDD.register_if_allure_accessible(config)
+    config.__allure_plugin__ = AllurePytestBDD.register_if_allure_accessible(config)
+
+
+@pytest.mark.tryfirst
+def pytest_unconfigure(config: Config) -> None:
+    if config.__allure_plugin__ is not None:
+        config.__allure_plugin__.unregister(config)
+    cucumber_json.unconfigure(config)
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -100,11 +107,6 @@ def pytest_pycollect_makemodule(path, parent, module_path=None):
 def pytest_plugin_registered(plugin, manager):
     if hasattr(plugin, "__file__") and isinstance(plugin, (type, ModuleType)):
         StepHandler.Registry.inject_registry_fixture_and_register_steps(plugin)
-
-
-def pytest_unconfigure(config: Config) -> None:
-    """Unconfigure all subplugins."""
-    cucumber_json.unconfigure(config)
 
 
 def pytest_generate_tests(metafunc: Metafunc):

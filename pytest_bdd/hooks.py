@@ -5,7 +5,8 @@ from typing import Iterable
 from _pytest.fixtures import FixtureRequest
 from pytest import hookspec
 
-from pytest_bdd.model import Feature, Scenario
+from pytest_bdd.model import Feature
+from pytest_bdd.model.messages import Pickle
 from pytest_bdd.typing.pytest import Mark
 
 """Pytest-bdd pytest hooks."""
@@ -68,5 +69,5 @@ def pytest_bdd_get_step_caller(request, feature, scenario, step, step_func, step
 
 
 @hookspec(firstresult=True)
-def pytest_bdd_get_step_dispatcher(request: FixtureRequest, feature: Feature, scenario: Scenario):
+def pytest_bdd_get_step_dispatcher(request: FixtureRequest, feature: Feature, scenario: Pickle):
     """Provide alternative approach to execute scenario steps"""

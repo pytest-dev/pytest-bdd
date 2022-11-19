@@ -11,7 +11,8 @@ from typing import Any, Callable
 import pytest
 from attr import Factory, attrib, attrs
 
-from pytest_bdd.model import Feature, Scenario, Step
+from pytest_bdd.model import Feature
+from pytest_bdd.model.messages import Pickle, PickleStep
 from pytest_bdd.typing.pytest import CallInfo, FixtureRequest, Item
 
 
@@ -21,7 +22,7 @@ class StepReport:
     failed = False
     stopped = None
 
-    def __init__(self, step: Step) -> None:
+    def __init__(self, step: PickleStep) -> None:
         """StepHandler report constructor.
 
         :param StepHandler step: StepHandler.
@@ -29,17 +30,17 @@ class StepReport:
         self.step = step
         self.started = time.perf_counter()
 
-    def serialize(self) -> dict[str, Any]:
+    def serialize(self, feature: Feature) -> dict[str, Any]:
         """Serialize the step execution report.
 
         :return: Serialized step execution report.
         :rtype: dict
         """
         return {
-            "name": self.step.name,
-            "type": self.step.prefix,
-            "keyword": self.step.keyword,
-            "line_number": self.step.line_number,
+            "name": self.step.text,
+            "type": feature._get_step_prefix(self.step),
+            "keyword": feature._get_step_keyword(self.step),
+            "line_number": feature._get_step_line_number(self.step),
             "failed": self.failed,
             "duration": self.duration,
         }
@@ -67,10 +68,10 @@ class StepReport:
 
 @attrs
 class ScenarioReport:
-    """Scenario execution report."""
+    """Pickle execution report."""
 
     feature: Feature = attrib()
-    scenario: Scenario = attrib()
+    scenario: Pickle = attrib()
     step_reports: list[StepReport] = attrib(default=Factory(list))
 
     @property
@@ -97,13 +98,13 @@ class ScenarioReport:
         :rtype: dict
         """
         pickle = self.scenario
-        feature = self.feature
+        feature: Feature = self.feature
 
         return {
-            "steps": [step_report.serialize() for step_report in self.step_reports],
+            "steps": [step_report.serialize(self.feature) for step_report in self.step_reports],
             "name": pickle.name,
-            "line_number": pickle.line_number,
-            "tags": sorted(set(pickle.tag_names).difference(feature.tag_names)),
+            "line_number": feature._get_pickle_line_number(pickle),
+            "tags": sorted(set(feature._get_pickle_tag_names(pickle)).difference(feature.tag_names)),
             "feature": {
                 "name": feature.name,
                 "filename": feature.filename,
@@ -143,7 +144,7 @@ class ScenarioReporterPlugin:
                 rep.item = {"name": item.name}
 
     @pytest.hookimpl(tryfirst=True)
-    def pytest_bdd_before_scenario(self, request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
+    def pytest_bdd_before_scenario(self, request: FixtureRequest, feature: Feature, scenario: Pickle) -> None:
         """Create scenario report for the item."""
         self.current_report = ScenarioReport(feature=feature, scenario=scenario)  # type: ignore[call-arg]
 
@@ -152,8 +153,8 @@ class ScenarioReporterPlugin:
         self,
         request: FixtureRequest,
         feature: Feature,
-        scenario: Scenario,
-        step: Step,
+        scenario: Pickle,
+        step: PickleStep,
         step_func: Callable,
         step_func_args: dict,
         exception: Exception,
@@ -163,7 +164,7 @@ class ScenarioReporterPlugin:
 
     @pytest.hookimpl(tryfirst=True)
     def pytest_bdd_before_step(
-        self, request: FixtureRequest, feature: Feature, scenario: Scenario, step: Step, step_func: Callable
+        self, request: FixtureRequest, feature: Feature, scenario: Pickle, step: PickleStep, step_func: Callable
     ) -> None:
         """Store step start time."""
         self.current_report.add_step_report(StepReport(step=step))
@@ -173,8 +174,8 @@ class ScenarioReporterPlugin:
         self,
         request: FixtureRequest,
         feature: Feature,
-        scenario: Scenario,
-        step: Step,
+        scenario: Pickle,
+        step: PickleStep,
         step_func: Callable,
         step_func_args: dict,
     ) -> None:

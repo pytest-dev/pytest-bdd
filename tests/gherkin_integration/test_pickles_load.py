@@ -4,7 +4,7 @@ from pathlib import Path
 from marshmallow.utils import RAISE
 from pytest import mark, param
 
-from pytest_bdd.model.scenario import Scenario, ScenarioSchema
+from pytest_bdd.model.scenario import Pickle, PickleSchema
 
 resources = Path(__file__).parent / "resources"
 test_data = resources / "testdata"
@@ -21,9 +21,9 @@ def test_simple_load_pickle(pickle_path: Path):
     with pickle_path.open(mode="r") as pickle_file:
         for pickle_line in pickle_file:
             pickle_data = json.loads(pickle_line)["pickle"]
-            pickle = ScenarioSchema().load(data=pickle_data, unknown=RAISE)
-            assert isinstance(pickle, Scenario)
+            pickle = PickleSchema().load(data=pickle_data, unknown=RAISE)
+            assert isinstance(pickle, Pickle)
 
-            dumped_pickle_data = ScenarioSchema().dump(pickle)
+            dumped_pickle_data = PickleSchema().dump(pickle)
 
             assert pickle_data == dumped_pickle_data

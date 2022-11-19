@@ -10,10 +10,10 @@ from typing import Callable
 from attr import attrib, attrs
 from gherkin.errors import CompositeParserException
 from gherkin.parser import Parser as CucumberIOBaseParser  # type: ignore[import]
-from gherkin.pickles.compiler import Compiler
+from gherkin.pickles.compiler import Compiler as PicklesCompiler
 
 from pytest_bdd.exceptions import FeatureError
-from pytest_bdd.model.feature import Feature as FeatureModel
+from pytest_bdd.model import Feature
 from pytest_bdd.typing.parser import ParserProtocol
 from pytest_bdd.typing.struct_bdd import STRUCT_BDD_INSTALLED
 
@@ -29,23 +29,23 @@ class GlobMixin:
 
 
 class ASTBuilderMixin:
-    def build_feature(self, gherkin_ast_data, filename: str) -> FeatureModel:
-        gherkin_ast = FeatureModel.load_ast(gherkin_ast_data)
+    def build_feature(self, gherkin_document_ast_data, filename: str) -> Feature:
+        gherkin_ast = Feature.load_ast(gherkin_document_ast_data)
 
-        scenarios_data = Compiler().compile(gherkin_ast_data["gherkinDocument"])
-        scenarios = FeatureModel.load_scenarios(scenarios_data)
+        scenarios_data = PicklesCompiler().compile(gherkin_document_ast_data)
+        pickles = Feature.load_pickles(scenarios_data)
 
-        instance = FeatureModel(  # type: ignore[call-arg]
-            gherkin_ast=gherkin_ast,
-            uri=gherkin_ast.gherkin_document.uri,
-            scenarios=scenarios,
+        feature = Feature(  # type: ignore[call-arg]
+            gherkin_document=gherkin_ast,
+            uri=gherkin_ast.uri,
+            pickles=pickles,
             filename=filename,
         )
 
-        for scenario in scenarios:
-            scenario.bind_feature(instance)
+        # TODO maybe move to class itself
+        feature.fill_registry()
 
-        return instance
+        return feature
 
 
 @attrs
@@ -55,12 +55,14 @@ class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProt
     def __attrs_post_init__(self):
         CucumberIOBaseParser.__init__(self, ast_builder=self.ast_builder)
 
-    def parse(self, path: Path, uri: str, *args, **kwargs) -> FeatureModel:
+    def parse(self, path: Path, uri: str, *args, **kwargs) -> Feature:
         encoding = kwargs.pop("encoding", "utf-8")
         with path.open(mode="r", encoding=encoding) as feature_file:
             feature_file_data = feature_file.read()
         try:
-            ast_data = CucumberIOBaseParser.parse(self, token_scanner_or_str=feature_file_data, *args, **kwargs)
+            gherkin_document_ast_data = CucumberIOBaseParser.parse(
+                self, token_scanner_or_str=feature_file_data, *args, **kwargs
+            )
         except CompositeParserException as e:
             raise FeatureError(
                 e.args[0],
@@ -69,12 +71,11 @@ class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProt
                 uri,
             ) from e
 
-        ast_data["uri"] = uri
-        document_ast_data = {"gherkinDocument": ast_data}
+        gherkin_document_ast_data["uri"] = uri
 
-        return self.build_feature(document_ast_data, filename=str(path.as_posix()))
+        return self.build_feature(gherkin_document_ast_data, filename=str(path.as_posix()))
 
-    def get_from_paths(self, paths: list[Path], **kwargs) -> list[FeatureModel]:
+    def get_from_paths(self, paths: list[Path], **kwargs) -> list[Feature]:
         """Get features for given paths.
 
         :param list paths: `list` of paths (file or dirs)
@@ -82,7 +83,7 @@ class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProt
         :return: `list` of `Feature` objects.
         """
         seen_names: set[Path] = set()
-        features: list[FeatureModel] = []
+        features: list[Feature] = []
         features_base_dir = kwargs.pop("features_base_dir", Path.cwd())
         if not features_base_dir.is_absolute():
             features_base_dir = Path.cwd() / features_base_dir

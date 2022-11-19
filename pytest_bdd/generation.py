@@ -1,19 +1,19 @@
 """pytest-bdd missing test code generation."""
 from __future__ import annotations
 
-import itertools
 import os.path
-from functools import reduce
+from itertools import chain, filterfalse, zip_longest
 from operator import lt, methodcaller
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 
 import py
 from mako.lookup import TemplateLookup
 from pytest import ExitCode
 
-from pytest_bdd.const import STEP_TYPE_BY_NORMALIZED_PREFIX
-from pytest_bdd.model import Feature, Scenario, Step
+from pytest_bdd.const import STEP_TYPE_TO_STEP_METHOD_NAME, STEP_TYPE_TO_STEP_PREFIX, StepType
+from pytest_bdd.model import Feature
+from pytest_bdd.model.messages import Pickle, PickleStep
 from pytest_bdd.packaging import compare_distribution_version
 from pytest_bdd.parser import GherkinParser
 from pytest_bdd.steps import StepHandler
@@ -51,17 +51,19 @@ def cmdline_main(config: Config) -> int | None:
     return None  # Make mypy happy
 
 
-def generate_code(features: list[Feature], scenarios: list[Scenario], steps: list[Step]) -> str:
+def generate_code(
+    features: list[Feature], feature_pickles: list[Pickle], feature_pickle_steps: list[PickleStep]
+) -> str:
     """Generate test code for the given filenames."""
-    grouped_steps = group_steps(steps)
     template = template_lookup.get_template("test.py.mak")
     code = template.render(
         features=features,
-        scenarios=scenarios,
-        steps=grouped_steps,
+        feature_pickles=feature_pickles,
+        feature_pickle_steps=feature_pickle_steps,
         make_python_name=make_python_name,
         make_python_docstring=make_python_docstring,
         make_string_literal=make_string_literal,
+        step_type_to_method_name=STEP_TYPE_TO_STEP_METHOD_NAME,
     )
     return cast(str, code)
 
@@ -72,28 +74,34 @@ def show_missing_code(config: Config) -> int | ExitCode:
     return wrap_session(config, _show_missing_code_main)
 
 
-def print_missing_code(scenarios: list[Scenario], steps: list[Step]) -> None:
+def print_missing_code(
+    features,
+    feature_pickles: list[Pickle],
+    feature_pickle_steps: list[tuple[tuple[Feature, Pickle], PickleStep]],
+    unique_steps,
+) -> None:
     """Print missing code with TerminalWriter."""
     tw = py.io.TerminalWriter()
     scenario = step = None
 
-    for scenario in scenarios:
+    for feature, pickle in feature_pickles:
         tw.line()
         tw.line(
-            f'Scenario "{scenario.name}" is not bound to any test in the feature "{scenario.feature.name}"'
-            f" in the file {scenario.feature.filename}:{scenario.line_number}",
+            f'Scenario "{pickle.name}" is not bound to any test in the feature "{feature.name}"'
+            f" in the file {feature.filename}:{feature._get_pickle_line_number(pickle)}",
             red=True,
         )
 
     if scenario:
         tw.sep("-", red=True)
 
-    for step in steps:
+    for (feature, pickle), step in feature_pickle_steps:
         tw.line()
+        step_type = STEP_TYPE_TO_STEP_PREFIX[step.type if step.type is not None else StepType.unknown]
         tw.line(
-            f"""StepHandler {step.keyword} "{step.name}" is not defined in the scenario "{step.scenario.name}" in the feature"""
-            f""" "{step.scenario.feature.name}" in the file"""
-            f""" {step.scenario.feature.filename}:{step.line_number}""",
+            f"""StepHandler {step_type} "{step.text}" is not defined in the scenario "{pickle.name}" in the feature"""
+            f""" "{feature.name}" in the file"""
+            f""" {feature.filename}:{feature._get_step_line_number(step)}""",
             red=True,
         )
 
@@ -103,68 +111,8 @@ def print_missing_code(scenarios: list[Scenario], steps: list[Step]) -> None:
     tw.line("Please place the code above to the test file(s):")
     tw.line()
 
-    features: list[Feature] = sorted(
-        reduce(
-            lambda list_, item: cast(list, list_) + [item] if item not in list_ else list_,
-            [scenario.feature for scenario in scenarios],
-            [],
-        ),
-        key=lambda feature: feature.uri,  # type: ignore[no-any-return]  # https://github.com/python/typing/issues/760
-    )
-    code = generate_code(features, scenarios, steps)
+    code = generate_code(features, feature_pickles, unique_steps)
     tw.write(code)
-
-
-def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature], list[Scenario], list[Step]]:
-    """Parse feature files of given paths.
-
-    :param paths: `list` of paths (file or dirs)
-
-    :return: `list` of `tuple` in form:
-             (`list` of `Feature` objects, `list` of `Scenario` objects, `list` of `StepHandler` objects).
-    """
-    features = GherkinParser().get_from_paths(list(map(Path, paths)), **kwargs)
-    scenarios = list(
-        tuple(
-            zip(
-                *sorted(
-                    itertools.chain.from_iterable(
-                        ((feature, scenario) for scenario in feature.scenarios) for feature in features
-                    ),
-                    key=lambda item: (item[0].uri, item[1].id, item[1].name),
-                )
-            )
-        )[1]
-    )
-
-    seen = set()
-    steps: list[Step] = sorted(
-        (
-            seen.add(step.name) or step  # type: ignore[func-returns-value]
-            for step in itertools.chain.from_iterable(scenario.steps for scenario in scenarios)
-            if step.name not in seen
-        ),
-        key=lambda step: step.name,  # type: ignore[no-any-return]  # https://github.com/python/typing/issues/760
-    )
-    return features, scenarios, steps
-
-
-def group_steps(steps: list[Step]) -> list[Step]:
-    """Group steps by type."""
-    steps = sorted(steps, key=lambda step: STEP_TYPE_BY_NORMALIZED_PREFIX[step.prefix])
-    seen_steps = set()
-    grouped_steps: list[Step] = []
-    for step in itertools.chain.from_iterable(
-        sorted(group, key=lambda step: step.name)  # type: ignore[no-any-return]  # https://github.com/python/typing/issues/760
-        for _, group in itertools.groupby(
-            steps, lambda step: sorted(steps, key=lambda step: STEP_TYPE_BY_NORMALIZED_PREFIX[step.prefix])
-        )
-    ):
-        if step.name not in seen_steps:
-            grouped_steps.append(step)
-            seen_steps.add(step.name)
-    grouped_steps.sort(key=lambda step: step.prefix)  # type: ignore[no-any-return]  # https://github.com/python/typing/issues/760
-    return grouped_steps
 
 
 def _show_missing_code_main(config: Config, session: Session) -> None:
@@ -177,8 +125,8 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
         session.exitstatus = 100
         return
 
-    features, scenarios, steps = parse_feature_files(config.option.features)
-    scenarios = list(scenarios)
+    seen_feature_pickles_ids = set()
+    non_matched_feature_pickle_steps = []
 
     for item in session.items:
 
@@ -189,33 +137,63 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
 
         item = cast(Item, item)
         item_request: FixtureRequest = item._request
-        scenario: Scenario = item_request.getfixturevalue("scenario")
-        feature: Feature = scenario.feature
+        pickle: Pickle = item_request.getfixturevalue("scenario")
+        feature: Feature = item_request.getfixturevalue("feature")
 
-        for i, s in enumerate(scenarios):
-            if s.id == scenario.id and s.uri == scenario.uri:
-                scenarios.remove(s)
-                break
+        seen_feature_pickles_ids.add((feature.uri, pickle.name))
 
         previous_step = None
-        for step in scenario.steps:
+        for step in pickle.steps:
             try:
                 item_request.config.hook.pytest_bdd_match_step_definition_to_step(
-                    request=item_request, feature=feature, scenario=scenario, step=step, previous_step=previous_step
+                    request=item_request, feature=feature, scenario=pickle, step=step, previous_step=previous_step
                 )
             except StepHandler.Matcher.MatchNotFoundError:
-                pass
-            else:
-                steps = [non_found_steps for non_found_steps in steps if non_found_steps.name != step.name]
+                non_matched_feature_pickle_steps.append(((feature, pickle), step))
             finally:
                 previous_step = step
 
         item.session._setupstate.teardown_exact(*((item,) if is_legacy_pytest else ()), None)  # type: ignore[call-arg]
 
-    grouped_steps = group_steps(steps)
-    print_missing_code(scenarios, grouped_steps)
+    features = GherkinParser().get_from_paths(list(map(Path, config.option.features)))
 
-    if scenarios or steps:
+    seen_features_uris = set()
+    for feature_uri, pickle_name in seen_feature_pickles_ids:
+        if feature_uri not in seen_features_uris:
+            seen_features_uris.add(feature_uri)
+
+    non_seen_features = list(filterfalse(lambda feature: feature.uri in seen_features_uris, features))
+
+    non_seen_feature_pickles = list(
+        filter(
+            lambda feature_pickle: (feature_pickle[0].uri, feature_pickle[1].name) not in seen_feature_pickles_ids,
+            chain.from_iterable(map(lambda feature: zip_longest((), feature.pickles, fillvalue=feature), features)),
+        )
+    )
+
+    unique_step_defs_ids = {(step.type, step.text) for _, step in non_matched_feature_pickle_steps}
+    unique_non_matched_feature_pickle_steps = list(
+        map(
+            lambda step_def_id: next(
+                filter(
+                    lambda feature_pickle_step: (
+                        feature_pickle_step[1].type == step_def_id[0] and feature_pickle_step[1].text == step_def_id[1]
+                    ),
+                    non_matched_feature_pickle_steps,
+                )
+            ),
+            unique_step_defs_ids,
+        )
+    )
+
+    print_missing_code(
+        non_seen_features,
+        non_seen_feature_pickles,
+        non_matched_feature_pickle_steps,
+        unique_non_matched_feature_pickle_steps,
+    )
+
+    if non_seen_feature_pickles or non_matched_feature_pickle_steps:
         session.exitstatus = 100
 
 

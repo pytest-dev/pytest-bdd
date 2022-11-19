@@ -26,7 +26,7 @@ class ASTSchema(Schema):
 @attrs
 class GherkinDocument(ModelSchemaPostLoadable):
     comments: list[Comment] = attrib()
-    uri: str = attrib()
+    uri: str | None = attrib()
 
     # Workaround because of allure integration
     if TYPE_CHECKING:  # pragma: no cover

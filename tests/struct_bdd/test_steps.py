@@ -542,7 +542,7 @@ def test_dsl_decorator(testdir):
         """\
         from pytest_bdd import given, then
         from pytest_bdd.struct_bdd.model import Step, Table
-        from pytest_bdd.model.feature import Feature
+        from pytest_bdd.model import Feature
 
         step = Step(
             name="Examples are substituted",

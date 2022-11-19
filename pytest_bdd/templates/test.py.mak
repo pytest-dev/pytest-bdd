@@ -3,22 +3,25 @@
 
 from pytest_bdd import (
     scenario,
+    given,
+    when,
+    then,
     step,
 )
 
 
 % endif
-% for scenario in sorted(scenarios, key=lambda scenario: scenario.name):
-@scenario('${scenario.feature.rel_filename}', ${ make_string_literal(scenario.name)})
-def test_${ make_python_name(scenario.name)}():
-    ${make_python_docstring(scenario.name)}
+% for feature, pickle in feature_pickles :
+@scenario('${feature.rel_filename}', ${ make_string_literal(pickle.name)})
+def test_${ make_python_name(pickle.name)}():
+    ${make_python_docstring(pickle.name)}
 
 
 % endfor
-% for step in steps:
-@step(${ make_string_literal(step.name)})
-def ${ make_python_name(step.name)}():
-    ${make_python_docstring(step.name)}
+% for feature_pickle, step in feature_pickle_steps:
+@${step_type_to_method_name[step.type]}(${ make_string_literal(step.text)})
+def ${ make_python_name(step.text)}():
+    ${make_python_docstring(step.text)}
     raise NotImplementedError
 % if not loop.last:
 

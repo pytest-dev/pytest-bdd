@@ -12,7 +12,7 @@ from gherkin.pickles.compiler import Compiler
 from marshmallow import Schema, fields, post_load, pre_load
 from marshmallow_polyfield import PolyField
 
-from pytest_bdd.ast import ASTSchema
+from pytest_bdd.ast import GherkinDocumentSchema
 from pytest_bdd.const import TYPE_KEYWORD_TYPE
 from pytest_bdd.model import Feature
 from pytest_bdd.utils import ModelSchemaPostLoadable, deepattrgetter, get_caller_module_locals, get_caller_module_path
@@ -96,26 +96,26 @@ class Step(Node, ModelSchemaPostLoadable):
         return TYPE_KEYWORD_TYPE[self.type]
 
     def build_feature(self, filename, uri):
-        from pytest_bdd.struct_bdd.ast_builder import DocumentASTBuilder
+        from pytest_bdd.struct_bdd.ast_builder import GherkinDocumentBuilder
 
-        gherkin_ast = DocumentASTBuilder(self).build()
-        gherkin_ast.gherkin_document.uri = uri
-        gherkin_ast_data = ASTSchema().dump(gherkin_ast)
+        gherkin_ast = GherkinDocumentBuilder(self).build()
+        gherkin_ast.uri = uri
+        gherkin_ast_data = GherkinDocumentSchema().dump(gherkin_ast)
+        gherkin_document_ast = Feature.load_ast(gherkin_ast_data)
 
-        scenarios_data = Compiler().compile(gherkin_ast_data["gherkinDocument"])
-        scenarios = Feature.load_scenarios(scenarios_data)
+        scenarios_data = Compiler().compile(gherkin_ast_data)
+        pickles = Feature.load_pickles(scenarios_data)
 
-        instance = Feature(  # type: ignore[call-arg]
-            gherkin_ast=gherkin_ast,
+        feature = Feature(  # type: ignore[call-arg]
+            gherkin_document=gherkin_document_ast,
             uri=uri,
-            scenarios=scenarios,
+            pickles=pickles,
             filename=filename,
         )
 
-        for scenario in scenarios:
-            scenario.bind_feature(instance)
+        feature.fill_registry()
 
-        return instance
+        return feature
 
     def build_resolver(self, filename, uri):
         feature = self.build_feature(filename=filename, uri=uri)
@@ -123,7 +123,7 @@ class Step(Node, ModelSchemaPostLoadable):
         class Resolver:
             @staticmethod
             def resolve():
-                return zip_longest((), feature.scenarios, fillvalue=feature)
+                return zip_longest((), feature.pickles, fillvalue=feature)
 
         return Resolver
 

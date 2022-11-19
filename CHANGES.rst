@@ -5,6 +5,9 @@ Planned
 -------
 - Review report generation to be conform with official tools
    - https://github.com/pytest-dev/pytest-bdd/issues/488
+- Examples of data tables & docstrings usage
+- Check nested Rules support
+- Check load/autoload of \*.md files
 
 Unreleased
 ----------

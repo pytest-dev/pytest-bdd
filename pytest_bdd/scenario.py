@@ -22,7 +22,8 @@ from typing import Callable, Iterable, Sequence, cast
 import pytest
 from attr import Factory, attrib, attrs
 
-from pytest_bdd.model import Feature, Scenario
+from pytest_bdd.model import Feature
+from pytest_bdd.model.messages import Pickle
 from pytest_bdd.parser import GherkinParser
 from pytest_bdd.typing.parser import ParserProtocol
 from pytest_bdd.typing.pytest import Config, Metafunc, Parser
@@ -63,9 +64,8 @@ class FileScenarioLocator:
         return self.parser.glob
 
     def resolve(self):
-        features_base_dir = (
-            self.features_base_dir() if isinstance(self.features_base_dir, Callable) else self.features_base_dir
-        )
+        is_features_base_dir_callable = callable(self.features_base_dir)
+        features_base_dir = self.features_base_dir() if is_features_base_dir_callable else self.features_base_dir
         features_base_dir = (Path.cwd() / Path(features_base_dir)).resolve()
 
         already_resolved = set()
@@ -103,7 +103,7 @@ class FileScenarioLocator:
                     **{**dict(encoding=self.encoding), **self.parse_args.kwargs},
                 )
 
-                for scenario in feature.scenarios:
+                for scenario in feature.pickles:
                     if self.scenario_filter is None or self.scenario_filter(feature, scenario):
                         yield feature, scenario
 
@@ -154,8 +154,8 @@ class ModuleScenarioRegistry:
         if not self.resolved:
             self.resolved = True
             for locator, test_func in self.locator_registry:
-                for feature, scenario in locator.resolve():
-                    self.resolved_locator_registry[(feature.uri, scenario.id)] = test_func, feature, scenario
+                for feature, pickle in locator.resolve():
+                    self.resolved_locator_registry[(feature.uri, pickle.id)] = test_func, feature, pickle
         return self.resolved_locator_registry
 
     def parametrize(self, metafunc: Metafunc):
@@ -163,37 +163,39 @@ class ModuleScenarioRegistry:
         self.config = metafunc.config
 
         parametrizations = [
-            (feature, scenario) for _, (func, feature, scenario) in self.resolved_locators.items() if func is test_func
+            (feature, pickle) for _, (func, feature, pickle) in self.resolved_locators.items() if func is test_func
         ]
 
         metafunc.parametrize(
             "feature, scenario",
-            [self._build_scenario_param(feature, scenario, self.config) for feature, scenario in parametrizations],
+            [self._build_scenario_param(feature, pickle, self.config) for feature, pickle in parametrizations],
         )
 
     @staticmethod
-    def _build_scenario_param(feature: Feature, scenario: Scenario, config: Config):
+    def _build_scenario_param(feature: Feature, pickle: Pickle, config: Config):
         marks = []
-        for tag in scenario.tag_names:
-            tag_marks = config.hook.pytest_bdd_convert_tag_to_marks(feature=feature, scenario=scenario, tag=tag)
+        for tag in feature._get_pickle_tag_names(pickle):
+            tag_marks = config.hook.pytest_bdd_convert_tag_to_marks(feature=feature, scenario=pickle, tag=tag)
             if tag_marks is not None:
                 marks.extend(tag_marks)
         return pytest.param(
             feature,
-            scenario,
-            id=f"{feature.uri}-{feature.name}-{scenario.name}{scenario.table_rows_breadcrumb}",
+            pickle,
+            id=f"{feature.uri}-{feature.name}-{pickle.name}{feature.build_pickle_table_rows_breadcrumb(pickle)}",
             marks=marks,
         )
 
     @property
     def features_base_dir(self) -> Path:
+        print(f"caller_module_path: {self.caller_module_path}")
         default_base_dir = dirname(self.caller_module_path)
+        print(f"default_base_dir: {default_base_dir}")
         return Path(self.get_from_config_ini("bdd_features_base_dir", default_base_dir))
 
     def get_from_config_ini(self, key: str, default: str) -> str:
         """Get value from ini config. Return default if value has not been set.
 
-        Use if the default value is dynamic. Otherwise set default on addini call.
+        Use if the default value is dynamic. Otherwise, set default on addini call.
         """
         value = self.config.getini(key)
         if not isinstance(value, str):
