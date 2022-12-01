@@ -470,7 +470,7 @@ In the example above, the ``test_something`` scenario binding will be kept manua
 Scenario outlines
 -----------------
 
-Scenarios can be parametrized to cover few cases. These are called `Scenario Outlines <https://cucumber.io/docs/gherkin/reference/#scenario-outline>`_ in Gherkin, and the variable templates are written using angular brackets (e.g. ``<var_name>``).
+Scenarios can be parametrized to cover multiple cases. These are called `Scenario Outlines <https://cucumber.io/docs/gherkin/reference/#scenario-outline>`_ in Gherkin, and the variable templates are written using angular brackets (e.g. ``<var_name>``).
 
 Example:
 
@@ -582,7 +582,7 @@ scenario test, so we can use standard test selection:
     pytest -m "backend and login and successful"
 
 The feature and scenario markers are not different from standard pytest markers, and the ``@`` symbol is stripped out automatically to allow test selector expressions. If you want to have bdd-related tags to be distinguishable from the other test markers, use a prefix like ``bdd``.
-Note that if you use pytest ``--strict`` option, all bdd tags mentioned in the feature files should be also in the ``markers`` setting of the ``pytest.ini`` config. Also for tags please use names which are python-compatible variable names, eg starts with a non-number, underscore alphanumeric, etc. That way you can safely use tags for tests filtering.
+Note that if you use pytest with the ``--strict`` option, all bdd tags mentioned in the feature files should be also in the ``markers`` setting of the ``pytest.ini`` config. Also for tags please use names which are python-compatible variable names, i.e. start with a non-number, only underscores or alphanumeric characters, etc. That way you can safely use tags for tests filtering.
 
 You can customize how tags are converted to pytest marks by implementing the
 ``pytest_bdd_apply_tag`` hook and returning ``True`` from it:
