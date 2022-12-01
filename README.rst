@@ -788,7 +788,7 @@ collected from the parent conftest.py.
 Default steps
 -------------
 
-Here is the list of steps that are implemented inside of pytest-bdd:
+Here is the list of steps that are implemented inside pytest-bdd:
 
 given
     * trace - enters the `pdb` debugger via `pytest.set_trace()`
