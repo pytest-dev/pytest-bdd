@@ -621,7 +621,7 @@ The target PyTest fixture "article" gets the return value and any other step can
             Given I have a beautiful article
             When I publish this article
 
-When step is referring the article to publish it.
+The When step is referencing the ``article`` to publish it.
 
 .. code-block:: python
 
@@ -673,7 +673,7 @@ This way side-effects were applied to our article and PyTest makes sure that all
 steps that require the "article" fixture will receive the same object. The value
 of the "published_article" and the "article" fixtures is the same object.
 
-Fixtures are evaluated only once within the PyTest scope and their values are cached.
+Fixtures are evaluated **only once** within the PyTest scope and their values are cached.
 
 
 Backgrounds
@@ -746,7 +746,7 @@ Then this fixture can be reused with other names using given():
 Reusing steps
 -------------
 
-It is possible to define some common steps in the parent conftest.py and
+It is possible to define some common steps in the parent ``conftest.py`` and
 simply expect them in the child test file.
 
 .. code-block:: gherkin
@@ -1010,24 +1010,24 @@ Hooks
 pytest-bdd exposes several `pytest hooks <https://docs.pytest.org/en/7.1.x/reference/reference.html#hooks>`_
 which might be helpful building useful reporting, visualization, etc. on top of it:
 
-* pytest_bdd_before_scenario(request, feature, scenario) - Called before scenario is executed
+* `pytest_bdd_before_scenario(request, feature, scenario)` - Called before scenario is executed
 
-* pytest_bdd_after_scenario(request, feature, scenario) - Called after scenario is executed
+* `pytest_bdd_after_scenario(request, feature, scenario)` - Called after scenario is executed
   (even if one of steps has failed)
 
-* pytest_bdd_before_step(request, feature, scenario, step, step_func) - Called before step function
+* `pytest_bdd_before_step(request, feature, scenario, step, step_func)` - Called before step function
   is executed and it's arguments evaluated
 
-* pytest_bdd_before_step_call(request, feature, scenario, step, step_func, step_func_args) - Called before step
+* `pytest_bdd_before_step_call(request, feature, scenario, step, step_func, step_func_args)` - Called before step
   function is executed with evaluated arguments
 
-* pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args) - Called after step function
+* `pytest_bdd_after_step(request, feature, scenario, step, step_func, step_func_args)` - Called after step function
   is successfully executed
 
-* pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception) - Called when step
+* `pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func_args, exception)` - Called when step
   function failed to execute
 
-* pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception) - Called when step lookup failed
+* `pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception)` - Called when step lookup failed
 
 
 Browser testing
