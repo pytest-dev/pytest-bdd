@@ -180,9 +180,16 @@ class PickleTag(BaseModel):
     )
 
 
-class Type1(Enum):
+class ExpressionType(Enum):
     cucumber_expression = "CUCUMBER_EXPRESSION"
     regular_expression = "REGULAR_EXPRESSION"
+
+    pytest_bdd_heuristic_expression = "PYTEST_BDD_HEURISTIC_EXPRESSION"
+    pytest_bdd_string_expression = "PYTEST_BDD_STRING_EXPRESSION"
+    pytest_bdd_regular_expression = "PYTEST_BDD_REGULAR_EXPRESSION"
+    pytest_bdd_parse_expression = "PYTEST_BDD_PARSE_EXPRESSION"
+    pytest_bdd_cfparse_expression = "PYTEST_BDD_CFPARSE_EXPRESSION"
+    pytest_bdd_other_expression = "PYTEST_BDD_OTHER_EXPRESSION"
 
 
 class StepDefinitionPattern(BaseModel):
@@ -190,7 +197,7 @@ class StepDefinitionPattern(BaseModel):
         extra = Extra.forbid
 
     source: str
-    type: Type1
+    type: ExpressionType
 
 
 class Group(BaseModel):
@@ -669,7 +676,7 @@ class GherkinDocument(BaseModel):
     comments: List[Comment] = Field(..., description="All the comments in the Gherkin document")
 
 
-class Model(BaseModel):
+class Message(BaseModel):
     class Config:
         extra = Extra.forbid
 

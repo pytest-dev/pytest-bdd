@@ -9,6 +9,7 @@ from pytest_bdd import ast
 from pytest_bdd.const import StepType
 from pytest_bdd.struct_bdd import ast_builder
 from pytest_bdd.struct_bdd.model import Step, StepSchema
+from pytest_bdd.utils import IdGenerator
 
 
 def test_load_simplest_step():
@@ -328,7 +329,7 @@ def test_tags_steps_examples_load():
     )
     assert len(route.example_table.values) == 4
 
-    document_ast = ast_builder.GherkinDocumentBuilder(step).build()
+    document_ast = ast_builder.GherkinDocumentBuilder(step).build(id_generator=IdGenerator())
     document_ast.uri = "uri"
 
     row_document_ast = ast.GherkinDocumentSchema().dump(document_ast)

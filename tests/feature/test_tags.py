@@ -39,13 +39,12 @@ def test_tags_selector(testdir):
         f"""\
         import pytest
         from pytest_bdd import given, scenarios
-        from pytest_bdd.parser import GherkinParser as Parser
 
         @given('I have a bar')
         def i_have_bar():
             return 'bar'
 
-        scenarios('test.feature', parser=Parser())
+        scenarios('test.feature')
         """
     )
     result = testdir.runpytest("-m", "scenario_tag_10 and not scenario_tag_01", "-vv")
@@ -93,7 +92,6 @@ def test_tags_after_background_issue_160(testdir):
         f"""\
         import pytest
         from pytest_bdd import given, scenarios
-        from pytest_bdd.parser import GherkinParser as Parser
 
         @given('I have a bar')
         def i_have_bar():
@@ -103,7 +101,7 @@ def test_tags_after_background_issue_160(testdir):
         def i_have_baz():
             return 'baz'
 
-        scenarios('test.feature', parser=Parser())
+        scenarios('test.feature')
         """
     )
     result = testdir.runpytest("-m", "tag", "-vv").parseoutcomes()
@@ -127,7 +125,6 @@ def test_at_in_scenario(testdir):
     testdir.makepyfile(
         f"""\
         from pytest_bdd import given, scenarios
-        from pytest_bdd.parser import GherkinParser as Parser
 
         @given('I have a foo@bar')
         def i_have_at():
@@ -137,7 +134,7 @@ def test_at_in_scenario(testdir):
         def i_have_baz():
             return 'baz'
 
-        scenarios('test.feature', parser=Parser())
+        scenarios('test.feature')
     """
     )
 
@@ -166,9 +163,8 @@ def test_invalid_tags(testdir):
     testdir.makepyfile(
         f"""\
         from pytest_bdd import scenarios
-        from pytest_bdd.parser import GherkinParser as Parser
 
-        scenarios('features', parser=Parser())
+        scenarios('features')
         """
     )
     result = testdir.runpytest()

@@ -17,6 +17,7 @@ from pytest_bdd import cucumber_json, generation, gherkin_terminal_reporter, giv
 from pytest_bdd.allure_logging import AllurePytestBDD
 from pytest_bdd.collector import FeatureFileModule as FeatureFileCollector
 from pytest_bdd.collector import Module as ModuleCollector
+from pytest_bdd.message_plugin import MessagePlugin
 from pytest_bdd.model.messages import PickleStep as Step
 from pytest_bdd.reporting import ScenarioReporterPlugin
 from pytest_bdd.runner import ScenarioRunner
@@ -24,6 +25,7 @@ from pytest_bdd.scenario import add_options as scenario_add_options
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.typing.pytest import Config, Mark, MarkDecorator, Metafunc, Parser, PytestPluginManager
 from pytest_bdd.typing.struct_bdd import STRUCT_BDD_INSTALLED
+from pytest_bdd.utils import IdGenerator, setdefaultattr
 
 
 def pytest_addhooks(pluginmanager: PytestPluginManager) -> None:
@@ -73,6 +75,7 @@ def pytest_addoption(parser: Parser) -> None:
     cucumber_json.add_options(parser)
     generation.add_options(parser)
     gherkin_terminal_reporter.add_options(parser)
+    MessagePlugin.add_options(parser)
 
 
 def add_bdd_ini(parser: Parser) -> None:
@@ -87,12 +90,15 @@ def pytest_configure(config: Config) -> None:
     gherkin_terminal_reporter.configure(config)
     config.pluginmanager.register(ScenarioReporterPlugin())
     config.pluginmanager.register(ScenarioRunner())
+    config.pluginmanager.register(MessagePlugin(config=config), name="pytest_bdd_messages")  # type: ignore[call-arg]
     config.__allure_plugin__ = AllurePytestBDD.register_if_allure_accessible(config)  # type: ignore[attr-defined]
+    setdefaultattr(config, "pytest_bdd_id_generator", value_factory=IdGenerator)
 
 
 @pytest.mark.tryfirst
 def pytest_unconfigure(config: Config) -> None:
-    if config.__allure_plugin__ is not None:  # type: ignore[attr-defined]
+    config.pluginmanager.unregister(name="pytest_bdd_messages")
+    with suppress(AttributeError):
         config.__allure_plugin__.unregister(config)  # type: ignore[attr-defined]
     cucumber_json.unconfigure(config)
 
@@ -144,7 +150,7 @@ def pytest_collect_file(parent, path, file_path=None):
             )
 
             if struct_bdd_parser_kind is not None:
-                collector.parser = StructBDDParser(kind=struct_bdd_parser_kind)
+                collector.parser_type = partial(StructBDDParser, kind=struct_bdd_parser_kind)
 
         return collector
 

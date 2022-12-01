@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 from functools import partial
 from operator import methodcaller
@@ -8,6 +10,7 @@ from attr import attrib, attrs
 
 from pytest_bdd.struct_bdd.model import Step, StepSchema
 from pytest_bdd.typing.parser import ParserProtocol
+from pytest_bdd.typing.pytest import Config
 
 
 @attrs
@@ -20,6 +23,7 @@ class StructBDDParser(ParserProtocol):
         TOML = "toml"
         YAML = "yaml"
 
+    id_generator = attrib()
     kind = attrib(kw_only=True)
     glob = attrib(kw_only=True)
     loader = attrib(kw_only=True)
@@ -36,14 +40,14 @@ class StructBDDParser(ParserProtocol):
     def loader_default(self):
         return self.build_loader()
 
-    def parse(self, path: Path, uri: str, *args, **kwargs):
+    def parse(self, config: Config | None, path: Path, uri: str, *args, **kwargs):
         encoding = kwargs.pop("encoding", "utf-8")
         mode = kwargs.pop("mode", "r")
         with path.open(mode=mode, encoding=encoding) as feature_file:
             content = feature_file.read()
 
         return cast(Step, StepSchema().load(self.loader(content, *args, **kwargs))).build_feature(
-            filename=str(path.as_posix()), uri=uri
+            filename=str(path.as_posix()), uri=uri, id_generator=self.id_generator
         )
 
     def build_loader(self):

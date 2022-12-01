@@ -56,24 +56,22 @@ class FileScenarioLocator:
     scenario_filter = attrib(default=None)
     encoding = attrib(default="utf-8")
     features_base_dir = attrib(default=None)
-    parser: ParserProtocol = attrib(default=Factory(GherkinParser))
+    parser_type: type[ParserProtocol] = attrib(default=GherkinParser)
     parse_args: Args = attrib(default=Factory(lambda: Args((), {})))
 
-    @property
-    def glob(self):
-        return self.parser.glob
-
-    def resolve(self):
+    def resolve(self, config):
         is_features_base_dir_callable = callable(self.features_base_dir)
         features_base_dir = self.features_base_dir() if is_features_base_dir_callable else self.features_base_dir
         features_base_dir = (Path.cwd() / Path(features_base_dir)).resolve()
 
         already_resolved = set()
 
+        parser = self.parser_type(id_generator=config.pytest_bdd_id_generator)
+
         def feature_paths_gen():
             for feature_path in map(Path, self.feature_paths):
                 if feature_path.is_dir():
-                    yield from iter(self.glob(feature_path))
+                    yield from iter(parser.glob(feature_path))
                 else:
                     yield feature_path
 
@@ -96,16 +94,17 @@ class FileScenarioLocator:
             if absolute_feature_path not in already_resolved:
                 already_resolved.add(absolute_feature_path)
 
-                feature = self.parser.parse(
+                feature = parser.parse(
+                    config,
                     absolute_feature_path,
                     uri,
                     *self.parse_args.args,
                     **{**dict(encoding=self.encoding), **self.parse_args.kwargs},
                 )
 
-                for scenario in feature.pickles:
-                    if self.scenario_filter is None or self.scenario_filter(feature, scenario):
-                        yield feature, scenario
+                for pickle in feature.pickles:
+                    if self.scenario_filter is None or self.scenario_filter(feature, pickle):
+                        yield feature, pickle
 
 
 @attrs
@@ -116,7 +115,7 @@ class ModuleScenarioRegistry:
     locator_registry: list[tuple] = attrib(default=Factory(list))
     resolved_locator_registry: dict = attrib(default=Factory(dict))
     resolved = attrib(default=False)
-    config = attrib(default=None)
+    config: Config = attrib(default=None)
 
     @classmethod
     def get(
@@ -154,7 +153,7 @@ class ModuleScenarioRegistry:
         if not self.resolved:
             self.resolved = True
             for locator, test_func in self.locator_registry:
-                for feature, pickle in locator.resolve():
+                for feature, pickle in locator.resolve(self.config):
                     self.resolved_locator_registry[(feature.uri, pickle.id)] = test_func, feature, pickle
         return self.resolved_locator_registry
 
@@ -187,10 +186,7 @@ class ModuleScenarioRegistry:
 
     @property
     def features_base_dir(self) -> Path:
-        print(f"caller_module_path: {self.caller_module_path}")
-        default_base_dir = dirname(self.caller_module_path)
-        print(f"default_base_dir: {default_base_dir}")
-        return Path(self.get_from_config_ini("bdd_features_base_dir", default_base_dir))
+        return Path(self.get_from_config_ini("bdd_features_base_dir", dirname(self.caller_module_path)))
 
     def get_from_config_ini(self, key: str, default: str) -> str:
         """Get value from ini config. Return default if value has not been set.
@@ -247,7 +243,7 @@ def scenario(
     encoding: str = "utf-8",
     features_base_dir: Path | str | None = None,
     return_test_decorator=True,
-    parser: ParserProtocol | None = None,
+    parser: type[ParserProtocol] | None = None,
     parse_args=Args((), {}),
     _caller_module_locals=None,
     _caller_module_path=None,
@@ -271,7 +267,7 @@ def scenario(
         return_test_decorator=return_test_decorator,
         _caller_module_locals=_caller_module_locals or get_caller_module_locals(stacklevel=2),
         _caller_module_path=_caller_module_path or get_caller_module_path(stacklevel=2),
-        parser=parser,
+        parser_type=parser,
         parse_args=parse_args,
     )
 
@@ -281,7 +277,7 @@ def scenarios(
     encoding: str = "utf-8",
     features_base_dir: Path | str | None = None,
     return_test_decorator=False,
-    parser: ParserProtocol | None = None,
+    parser: type[ParserProtocol] | None = None,
     parse_args=Args((), {}),
     _caller_module_locals=None,
     _caller_module_path=None,
@@ -300,7 +296,7 @@ def scenarios(
         encoding=encoding,
         features_base_dir=features_base_dir,
         return_test_decorator=return_test_decorator,
-        parser=parser,
+        parser_type=parser,
         parse_args=parse_args,
         _caller_module_locals=_caller_module_locals or get_caller_module_locals(stacklevel=2),
         _caller_module_path=_caller_module_path or get_caller_module_path(stacklevel=2),
@@ -313,13 +309,13 @@ def _scenarios(
     return_test_decorator=True,
     encoding: str = "utf-8",
     features_base_dir: Path | str | None = None,
-    parser: ParserProtocol | None = None,
+    parser_type: type[ParserProtocol] | None = None,
     parse_args=Args((), {}),
     _caller_module_locals=None,
     _caller_module_path=None,
 ):
-    if parser is None:
-        parser = GherkinParser()
+    if parser_type is None:
+        parser_type = GherkinParser
     module_scenario_registry = ModuleScenarioRegistry.get(
         caller_locals=_caller_module_locals,
         caller_module_path=_caller_module_path,
@@ -340,7 +336,7 @@ def _scenarios(
         features_base_dir=(
             features_base_dir if features_base_dir is not None else lambda: module_scenario_registry.features_base_dir
         ),  # known only after start of pytest runtime
-        parser=parser,
+        parser_type=parser_type,
         parse_args=parse_args,
     )
 

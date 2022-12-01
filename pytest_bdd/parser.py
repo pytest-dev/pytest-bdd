@@ -8,14 +8,19 @@ from pathlib import Path
 from typing import Callable
 
 from attr import attrib, attrs
+from attr._make import Factory
+from gherkin.ast_builder import AstBuilder
 from gherkin.errors import CompositeParserException
 from gherkin.parser import Parser as CucumberIOBaseParser  # type: ignore[import]
 from gherkin.pickles.compiler import Compiler as PicklesCompiler
 
 from pytest_bdd.exceptions import FeatureError
 from pytest_bdd.model import Feature
+from pytest_bdd.model.messages import MediaType, Message, Source
 from pytest_bdd.typing.parser import ParserProtocol
+from pytest_bdd.typing.pytest import Config
 from pytest_bdd.typing.struct_bdd import STRUCT_BDD_INSTALLED
+from pytest_bdd.utils import IdGenerator
 
 if STRUCT_BDD_INSTALLED:  # pragma: no cover
     from pytest_bdd.struct_bdd.parser import StructBDDParser
@@ -29,39 +34,49 @@ class GlobMixin:
 
 
 class ASTBuilderMixin:
-    def build_feature(self, gherkin_document_ast_data, filename: str) -> Feature:
-        gherkin_ast = Feature.load_ast(gherkin_document_ast_data)
+    def build_feature(self, gherkin_document_raw_dict, filename: str, id_generator) -> Feature:
+        gherkin_document = Feature.load_gherkin_document(gherkin_document_raw_dict)
 
-        scenarios_data = PicklesCompiler().compile(gherkin_document_ast_data)
-        pickles = Feature.load_pickles(scenarios_data)
+        pickles_data = PicklesCompiler(id_generator=id_generator).compile(gherkin_document_raw_dict)
+        pickles = Feature.load_pickles(pickles_data)
 
         feature = Feature(  # type: ignore[call-arg]
-            gherkin_document=gherkin_ast,
-            uri=gherkin_ast.uri,
+            gherkin_document=gherkin_document,
+            uri=gherkin_document.uri,
             pickles=pickles,
             filename=filename,
         )
-
-        # TODO maybe move to class itself
-        feature.fill_registry()
 
         return feature
 
 
 @attrs
 class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProtocol):
-    ast_builder = attrib(default=None)
+    id_generator = attrib(default=Factory(IdGenerator))
 
     def __attrs_post_init__(self):
-        CucumberIOBaseParser.__init__(self, ast_builder=self.ast_builder)
+        CucumberIOBaseParser.__init__(self, ast_builder=AstBuilder(id_generator=self.id_generator))
 
-    def parse(self, path: Path, uri: str, *args, **kwargs) -> Feature:
+    @classmethod
+    def parse(cls, config: Config | None, path: Path, uri: str, *args, **kwargs) -> Feature:
+        parser = cls(id_generator=config.pytest_bdd_id_generator if config is not None else IdGenerator())
         encoding = kwargs.pop("encoding", "utf-8")
         with path.open(mode="r", encoding=encoding) as feature_file:
             feature_file_data = feature_file.read()
+
+        if ".md" in path.suffixes:
+            media_type = MediaType.text_x_cucumber_gherkin_markdown
+        else:
+            media_type = MediaType.text_x_cucumber_gherkin_plain
+
+        if config is not None:
+            config.hook.pytest_bdd_message(
+                config=config, message=Message(source=Source(uri=uri, data=feature_file_data, mediaType=media_type))
+            )
+
         try:
-            gherkin_document_ast_data = CucumberIOBaseParser.parse(
-                self, token_scanner_or_str=feature_file_data, *args, **kwargs
+            gherkin_document_raw_dict = CucumberIOBaseParser.parse(
+                parser, token_scanner_or_str=feature_file_data, *args, **kwargs
             )
         except CompositeParserException as e:
             raise FeatureError(
@@ -71,17 +86,23 @@ class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProt
                 uri,
             ) from e
 
-        gherkin_document_ast_data["uri"] = uri
+        gherkin_document_raw_dict["uri"] = uri
 
-        return self.build_feature(gherkin_document_ast_data, filename=str(path.as_posix()))
+        feature = parser.build_feature(
+            gherkin_document_raw_dict,
+            filename=str(path.as_posix()),
+            id_generator=getattr(config, "pytest_bdd_id_generator", IdGenerator()),
+        )
 
-    def get_from_paths(self, paths: list[Path], **kwargs) -> list[Feature]:
-        """Get features for given paths.
+        if config is not None:
+            config.hook.pytest_bdd_message(config=config, message=Message(gherkinDocument=feature.gherkin_document))
+            for pickle in feature.pickles:
+                config.hook.pytest_bdd_message(config=config, message=Message(pickle=pickle))
 
-        :param list paths: `list` of paths (file or dirs)
+        return feature
 
-        :return: `list` of `Feature` objects.
-        """
+    def get_from_paths(self, config: Config | None, paths: list[Path], **kwargs) -> list[Feature]:
+        """Get features for given paths."""
         seen_names: set[Path] = set()
         features: list[Feature] = []
         features_base_dir = kwargs.pop("features_base_dir", Path.cwd())
@@ -95,7 +116,9 @@ class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProt
 
             features.extend(
                 map(
-                    lambda path: self.parse(path, str(path.relative_to(features_base_dir).as_posix()), **kwargs),
+                    lambda path: self.parse(
+                        config, path, str(path.relative_to(features_base_dir).as_posix()), **kwargs
+                    ),
                     filterfalse(partial(contains, seen_names), file_paths),
                 )
             )

@@ -22,9 +22,8 @@ def test_step_alias(testdir):
         f"""\
         import pytest
         from pytest_bdd import given, when, then, scenario
-        from pytest_bdd.parser import GherkinParser as Parser
 
-        @scenario("alias.feature", "Multiple step aliases", parser=Parser())
+        @scenario("alias.feature", "Multiple step aliases")
         def test_alias():
             pass
 

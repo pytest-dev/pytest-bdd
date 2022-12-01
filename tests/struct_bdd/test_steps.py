@@ -229,8 +229,9 @@ def test_steps(testdir, kind, file_content):
         from textwrap import dedent
         from pytest_bdd import given, when, then, scenario, step
         from pytest_bdd.parser import StructBDDParser
+        from functools import partial
 
-        @scenario("steps.bdd.{kind}", "Executed step by step", parser=StructBDDParser(kind="{kind}"))
+        @scenario("steps.bdd.{kind}", "Executed step by step", parser=partial(StructBDDParser, kind="{kind}"))
         def test_steps(feature):
             assert feature.description == dedent('''\\
                 Steps are executed one by one. Given and When sections
@@ -316,8 +317,10 @@ def test_default_loader(testdir, kind, file_content):
         from textwrap import dedent
         from pytest_bdd import given, when, then, scenario
         from pytest_bdd.parser import StructBDDParser
+        from functools import partial
 
-        @scenario("steps.bdd.{kind}", "Executed step by step", parser=StructBDDParser())
+
+        @scenario("steps.bdd.{kind}", "Executed step by step", parser=StructBDDParser)
         def test_steps(feature):
             assert feature.description == dedent('''\\
                 Steps are executed one by one. Given and When sections
@@ -475,7 +478,7 @@ def test_examples(testdir, file_content):
         from pytest_bdd import given, then, scenarios
         from pytest_bdd.parser import StructBDDParser
 
-        scenarios("steps.bdd.yaml", parser=StructBDDParser())
+        scenarios("steps.bdd.yaml", parser=StructBDDParser)
 
         @given('I have {count:g} cucumbers', target_fixture="cucumbers")
         def foo(count):

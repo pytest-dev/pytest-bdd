@@ -95,13 +95,13 @@ class Step(Node, ModelSchemaPostLoadable):
     def keyword_type(self):
         return TYPE_KEYWORD_TYPE[self.type]
 
-    def build_feature(self, filename, uri):
+    def build_feature(self, filename, uri, id_generator):
         from pytest_bdd.struct_bdd.ast_builder import GherkinDocumentBuilder
 
-        gherkin_ast = GherkinDocumentBuilder(self).build()
+        gherkin_ast = GherkinDocumentBuilder(self).build(id_generator=id_generator)
         gherkin_ast.uri = uri
         gherkin_ast_data = GherkinDocumentSchema().dump(gherkin_ast)
-        gherkin_document_ast = Feature.load_ast(gherkin_ast_data)
+        gherkin_document_ast = Feature.load_gherkin_document(gherkin_ast_data)
 
         scenarios_data = Compiler().compile(gherkin_ast_data)
         pickles = Feature.load_pickles(scenarios_data)
@@ -118,11 +118,10 @@ class Step(Node, ModelSchemaPostLoadable):
         return feature
 
     def build_resolver(self, filename, uri):
-        feature = self.build_feature(filename=filename, uri=uri)
-
         class Resolver:
             @staticmethod
-            def resolve():
+            def resolve(config):
+                feature = self.build_feature(filename=filename, uri=uri, id_generator=config.pytest_bdd_id_generator)
                 return zip_longest((), feature.pickles, fillvalue=feature)
 
         return Resolver

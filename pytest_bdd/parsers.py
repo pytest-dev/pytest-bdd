@@ -17,6 +17,7 @@ from cucumber_expressions.expression import CucumberExpression
 from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
 from cucumber_expressions.regular_expression import RegularExpression as CucumberRegularExpression
 
+from pytest_bdd.model.messages import ExpressionType
 from pytest_bdd.typing import Protocol, runtime_checkable
 from pytest_bdd.utils import StringableProtocol, singledispatchmethod, stringify
 
@@ -27,6 +28,8 @@ class ParserBuildValueError(ValueError):
 
 @runtime_checkable
 class StepParserProtocol(Protocol):
+    type: ExpressionType = ExpressionType.pytest_bdd_other_expression
+
     def parse_arguments(self, name: str, anonymous_group_names: Iterable[str] | None = None) -> dict[str, Any] | None:
         ...  # pragma: no cover
 
@@ -88,6 +91,8 @@ class StepParser(StepParserProtocol, metaclass=ABCMeta):
 class re(StepParser):
     """Regex step parser."""
 
+    type = ExpressionType.pytest_bdd_regular_expression
+
     @singledispatchmethod
     def __init__(self, *args, **kwargs):
         raise NotImplementedError()  # pragma: no cover
@@ -137,6 +142,8 @@ class re(StepParser):
 class parse(StepParser):
     """parse step parser."""
 
+    type = ExpressionType.pytest_bdd_parse_expression
+
     @singledispatchmethod
     def __init__(self, format, *args, **kwargs):
         if isinstance(format, (StringableProtocol, str, bytes)):
@@ -177,11 +184,20 @@ class parse(StepParser):
         return str(self.format)
 
 
-cfparse = parse.cfparse
+class cfparse(parse):
+    """cfparse step parser."""
+
+    type = ExpressionType.pytest_bdd_cfparse_expression
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("builder", base_cfparse.Parser)
+        super().__init__(*args, **kwargs)
 
 
 class string(StepParser):
     """Exact string step parser."""
+
+    type = ExpressionType.pytest_bdd_string_expression
 
     def __init__(self, name: StringableProtocol | str | bytes) -> None:
         self.name = stringify(name)
@@ -222,6 +238,8 @@ class _CucumberExpression(StepParser):
 
 
 class cucumber_expression(_CucumberExpression):
+    type = ExpressionType.cucumber_expression
+
     @singledispatchmethod
     def __init__(self, *args, **kwargs):
         raise NotImplementedError()  # pragma: no cover
@@ -238,6 +256,8 @@ class cucumber_expression(_CucumberExpression):
 
 
 class cucumber_regular_expression(_CucumberExpression):
+    type = ExpressionType.regular_expression
+
     @singledispatchmethod
     def __init__(self, *args, **kwargs):
         raise NotImplementedError()  # pragma: no cover
@@ -254,6 +274,8 @@ class cucumber_regular_expression(_CucumberExpression):
 
 
 class heuristic(StepParser):
+    type = ExpressionType.pytest_bdd_heuristic_expression
+
     def __init__(self, format):
         if isinstance(format, (StringableProtocol, str, bytes)):
             format = stringify(format)

@@ -71,7 +71,6 @@ def test_step_trace(testdir):
         f"""\
         import pytest
         from pytest_bdd import given, when, scenario, parsers
-        from pytest_bdd.parser import GherkinParser as Parser
 
         @given('a passing step')
         def a_passing_step():
@@ -89,15 +88,15 @@ def test_step_trace(testdir):
         def type_type_and_value_value():
             return 'pass'
 
-        @scenario('test.feature', 'Passing', parser=Parser(),)
+        @scenario('test.feature', 'Passing')
         def test_passing():
             pass
 
-        @scenario('test.feature', 'Failing', parser=Parser(),)
+        @scenario('test.feature', 'Failing')
         def test_failing():
             pass
 
-        @scenario('test.feature', 'Passing outline', parser=Parser(),)
+        @scenario('test.feature', 'Passing outline')
         def test_passing_outline():
             pass
         """

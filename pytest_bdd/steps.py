@@ -36,8 +36,10 @@ def given_beautiful_article(article):
 """
 from __future__ import annotations
 
+import os
 import warnings
 from contextlib import suppress
+from inspect import getfile, getsourcelines
 from typing import Any, Callable, Iterable, Iterator, Sequence, cast
 from uuid import uuid4
 from warnings import warn
@@ -48,8 +50,9 @@ from ordered_set import OrderedSet
 
 from pytest_bdd.const import StepType
 from pytest_bdd.model import Feature
-from pytest_bdd.model.messages import Pickle
+from pytest_bdd.model.messages import Location, Pickle
 from pytest_bdd.model.messages import PickleStep as Step
+from pytest_bdd.model.messages import SourceReference, StepDefinition, StepDefinitionPattern
 from pytest_bdd.parsers import StepParser
 from pytest_bdd.typing.pytest import Config, Parser, TypeAlias
 from pytest_bdd.utils import convert_str_to_python_name, get_caller_module_locals, setdefaultattr
@@ -328,17 +331,36 @@ class StepHandler:
                     with suppress(AttributeError):
                         yield from StepHandler.Matcher.find_step_definition_matches(registry.parent, matchers)
 
-    @attrs(auto_attribs=True, eq=False)
+    @attrs(eq=False)
     class Definition:
-        func: Callable
-        type_: str | StepType | None
-        parser: StepParser
-        anonymous_group_names: Iterable[str] | None
-        converters: dict[str, Callable]
-        params_fixtures_mapping: set[str] | dict[str, str] | Any
-        param_defaults: dict
-        target_fixtures: list[str]
-        liberal: Any | None
+        func: Callable = attrib()
+        type_: str | StepType | None = attrib()
+        parser: StepParser = attrib()
+        anonymous_group_names: Iterable[str] | None = attrib()
+        converters: dict[str, Callable] = attrib()
+        params_fixtures_mapping: set[str] | dict[str, str] | Any = attrib()
+        param_defaults: dict = attrib()
+        target_fixtures: list[str] = attrib()
+        liberal: Any | None = attrib()
+
+        id = attrib(init=False)
+        __cached_message = attrib(init=False)
+
+        def as_message(self, config: Config):
+            try:
+                message = self.__cached_message
+            except AttributeError:
+                self.id = config.pytest_bdd_id_generator.get_next_id()
+                self.__cached_message = StepDefinition(
+                    id=self.id,
+                    pattern=StepDefinitionPattern(source=str(self.parser), type=self.parser.type),
+                    sourceReference=SourceReference(
+                        uri=os.path.relpath(getfile(self.func), config.rootpath),
+                        location=Location(line=getsourcelines(self.func)[1]),
+                    ),
+                )
+                message = self.__cached_message
+            return message
 
         def get_parameters(self, step: Step):
             parsed_arguments = (

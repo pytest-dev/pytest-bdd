@@ -4,7 +4,7 @@ from tests.utils import assert_outcomes
 
 
 def test_scenarios(testdir, pytest_params):
-    """Test scenarios shortcut (used together with @scenario for individual test override)."""
+    """Test scenarios shortcut used together with @scenario"""
     testdir.makeini(
         """\
         [pytest]
@@ -64,8 +64,8 @@ def test_scenarios(testdir, pytest_params):
     """
     )
     result = testdir.runpytest("-v", "-s", *pytest_params)
-    assert_outcomes(result, passed=4, failed=1)
-    result.stdout.fnmatch_lines(["*collected 5 items"])
+    assert_outcomes(result, passed=5, failed=1)
+    result.stdout.fnmatch_lines(["*collected 6 items"])
     result.stdout.fnmatch_lines(
         ["*test*features/subfolder/test.feature-Test scenarios-Test subfolder scenario* bar!", "PASSED"]
     )

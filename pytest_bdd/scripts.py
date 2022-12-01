@@ -19,7 +19,7 @@ def check_existense(file_name):
 
 def print_generated_code(args):
     """Print generated test code for the given filenames."""
-    features = GherkinParser().get_from_paths(list(map(Path, args.files)))
+    features = GherkinParser().get_from_paths(None, list(map(Path, args.files)))
 
     feature_pickles = list(
         chain.from_iterable(map(lambda feature: zip_longest((), feature.pickles, fillvalue=feature), features))

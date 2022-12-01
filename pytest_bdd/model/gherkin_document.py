@@ -30,31 +30,24 @@ from gherkin.errors import CompositeParserException  # type: ignore[import]
 from gherkin.pickles.compiler import Compiler  # type: ignore[import]
 
 from pytest_bdd.const import TAG_PREFIX
-from pytest_bdd.model.messages import (
-    Background,
-    Examples,
-    Feature,
-    GherkinDocument,
-    Pickle,
-    PickleStep,
-    Rule,
-    Scenario,
-    Step,
-    TableRow,
-    Tag,
-)
+from pytest_bdd.model.messages import Background, Examples
+from pytest_bdd.model.messages import Feature as FeatureMessage
+from pytest_bdd.model.messages import GherkinDocument, Pickle, PickleStep, Rule, Scenario, Step, TableRow, Tag
 from pytest_bdd.model.scenario import UserStep
 from pytest_bdd.utils import _itemgetter, deepattrgetter, singledispatchmethod
 
 
 @attrs
-class GherkinDocumentMediator:
+class Feature:
     gherkin_document: GherkinDocument = attrib()
     uri = attrib()
     filename: str = attrib()
 
     registry: dict = attrib(default=Factory(dict))
     pickles: list[Pickle] = attrib(default=Factory(list))
+
+    def __attrs_post_init__(self):
+        self.fill_registry()
 
     @staticmethod
     def load_pickles(scenarios_data) -> list[Pickle]:
@@ -65,7 +58,7 @@ class GherkinDocumentMediator:
 
     @classmethod
     def get_child_ids_gen(cls, obj):
-        if isinstance(obj, Feature):
+        if isinstance(obj, FeatureMessage):
             yield from chain.from_iterable(
                 map(
                     cls.get_child_ids_gen,
@@ -130,7 +123,7 @@ class GherkinDocumentMediator:
         elif isinstance(obj, Step):
             yield obj.id, obj
 
-    load_ast = staticmethod(GherkinDocument.parse_obj)
+    load_gherkin_document = staticmethod(GherkinDocument.parse_obj)
 
     @property
     def name(self) -> str | None:

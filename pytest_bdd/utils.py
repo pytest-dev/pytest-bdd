@@ -276,3 +276,16 @@ class StringableProtocol(Protocol):
 
 def stringify(value: StringableProtocol | str | bytes) -> str:
     return str(value, **({"encoding": "utf-8"} if isinstance(value, bytes) else {}))
+
+
+class IdGenerator:
+    def __init__(self):
+        self._id_counter = 0
+
+    def __next__(self):
+        try:
+            return str(self._id_counter)
+        finally:
+            self._id_counter += 1
+
+    get_next_id = __next__

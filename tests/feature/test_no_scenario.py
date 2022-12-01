@@ -16,9 +16,8 @@ def test_no_scenarios(testdir):
     testdir.makepyfile(
         f"""\
         from pytest_bdd import scenarios
-        from pytest_bdd.parser import GherkinParser as Parser
 
-        scenarios('features', parser=Parser())
+        scenarios('features')
         """
     )
     result = testdir.runpytest()

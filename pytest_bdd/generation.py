@@ -155,7 +155,7 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
 
         item.session._setupstate.teardown_exact(*((item,) if is_legacy_pytest else ()), None)  # type: ignore[call-arg]
 
-    features = GherkinParser().get_from_paths(list(map(Path, config.option.features)))
+    features = GherkinParser().get_from_paths(config, list(map(Path, config.option.features)))
 
     seen_features_uris = set()
     for feature_uri, pickle_name in seen_feature_pickles_ids:

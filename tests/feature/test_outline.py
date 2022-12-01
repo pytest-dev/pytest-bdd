@@ -39,7 +39,6 @@ STEPS = """\
 STEPS_OUTLINED = """\
     from pytest_bdd import given, when, then, scenario, parsers
     from pytest_bdd.utils import dump_obj
-    from pytest_bdd.parser import Parser
 
     @scenario(
         "outline.feature",
@@ -106,12 +105,10 @@ def test_outlined(testdir, examples_header):
     testdir.makepyfile(
         f"""\
         from pytest_bdd import scenario
-        from pytest_bdd.parser import GherkinParser as Parser
 
         @scenario(
             "outline.feature",
             "Outlined given, when, thens",
-            parser=Parser()
         )
         def test_outline(request):
             pass
@@ -150,9 +147,8 @@ def test_wrongly_outlined_duplicated_parameter_scenario(testdir):
     testdir.makepyfile(
         f"""\
         from pytest_bdd import scenario
-        from pytest_bdd.parser import GherkinParser as Parser
 
-        @scenario("outline.feature", "Outlined with wrong vertical example table", parser=Parser())
+        @scenario("outline.feature", "Outlined with wrong vertical example table")
         def test_outline(request):
             pass
         """
@@ -187,10 +183,8 @@ def test_wrongly_outlined_missing_parameter_scenario(testdir):
     testdir.makepyfile(
         f"""\
         from pytest_bdd import scenario
-        from pytest_bdd.parser import GherkinParser as Parser
 
-
-        @scenario("outline.feature", "Outlined with wrong vertical example table", parser=Parser())
+        @scenario("outline.feature", "Outlined with wrong vertical example table")
         def test_outline(request):
             pass
         """
@@ -224,7 +218,6 @@ def test_outlined_with_other_fixtures(testdir):
         f"""\
         from pytest import fixture
         from pytest_bdd import scenario
-        from pytest_bdd.parser import GherkinParser as Parser
 
         @fixture(params=[1, 2, 3])
         def other_fixture(request):
@@ -234,7 +227,6 @@ def test_outlined_with_other_fixtures(testdir):
         @scenario(
             "outline.feature",
             "Outlined given, when, thens",
-            parser=Parser(),
         )
         def test_outline(other_fixture):
             pass
@@ -284,10 +276,8 @@ def test_outline_with_escaped_pipes(testdir, parser):
         f"""\
         from pytest_bdd import scenario, given, parsers
         from pytest_bdd.utils import dump_obj
-        from pytest_bdd.parser import GherkinParser as Parser
 
-
-        @scenario("outline.feature", "Outline with escaped pipe character", parser=Parser())
+        @scenario("outline.feature", "Outline with escaped pipe character")
         def test_outline_with_escaped_pipe_character(request):
             pass
 

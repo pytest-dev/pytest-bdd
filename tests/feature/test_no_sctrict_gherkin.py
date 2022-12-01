@@ -8,12 +8,10 @@ def test_background_no_strict_gherkin(testdir):
             import pytest
 
             from pytest_bdd import when, scenario
-            from pytest_bdd.parser import GherkinParser as Parser
 
             @scenario(
                 "no_strict_gherkin_background.feature",
                 "Test background",
-                parser=Parser()
             )
             def test_background():
                 pass
@@ -65,12 +63,10 @@ def test_scenario_no_strict_gherkin(testdir):
             import pytest
 
             from pytest_bdd import when, scenario
-            from pytest_bdd.parser import GherkinParser as Parser
 
             @scenario(
                 "no_strict_gherkin_scenario.feature",
                 "Test scenario",
-                parser=Parser()
             )
             def test_scenario():
                 pass

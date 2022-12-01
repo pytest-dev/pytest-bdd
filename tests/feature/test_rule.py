@@ -72,10 +72,11 @@ def test_background_basic(testdir):
     testdir.makepyfile(
         f"""\
         from pytest_bdd import scenarios
-        from pytest_bdd.parser import GherkinParser as Parser
 
-        scenarios("rule.feature", parser=Parser())
+        scenarios("rule.feature")
         """
     )
+    # TODO remove debug
+    # result = testdir.runpytest("--messagesndjson", fr"{testdir}\cool.ndjson")
     result = testdir.runpytest()
     result.assert_outcomes(passed=8)

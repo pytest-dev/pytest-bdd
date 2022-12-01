@@ -12,7 +12,6 @@ Feature: Gherkin terminal output feature
 
 TEST = """\
     from pytest_bdd import given, when, then, scenario
-    from pytest_bdd.parser import GherkinParser as Parser
 
     @given('there is a bar')
     def a_bar():
@@ -28,7 +27,7 @@ TEST = """\
         pass
 
 
-    @scenario('test.feature', 'Scenario example 1', parser=Parser())
+    @scenario('test.feature', 'Scenario example 1')
     def test_scenario_1():
         pass
 """
@@ -96,9 +95,8 @@ def test_error_message_for_missing_steps(testdir, verbosity):
     testdir.makepyfile(
         f"""\
         from pytest_bdd import scenarios
-        from pytest_bdd.parser import GherkinParser as Parser
 
-        scenarios('.', parser=Parser())
+        scenarios('.')
         """
     )
     result = testdir.runpytest("--gherkin-terminal-reporter", verbosity)
@@ -115,7 +113,7 @@ def test_error_message_should_be_displayed(testdir, verbosity):
     testdir.makepyfile(
         f"""\
         from pytest_bdd import given, when, then, scenario
-        from pytest_bdd.parser import GherkinParser as Parser
+
 
         @given('there is a bar')
         def a_bar():
@@ -131,7 +129,7 @@ def test_error_message_should_be_displayed(testdir, verbosity):
             raise Exception("BIGBADABOOM")
 
 
-        @scenario('test.feature', 'Scenario example 1', parser=Parser())
+        @scenario('test.feature', 'Scenario example 1')
         def test_scenario_1():
             pass
         """
@@ -147,8 +145,6 @@ def test_local_variables_should_be_displayed_when_showlocals_option_is_used(test
     testdir.makepyfile(
         f"""\
         from pytest_bdd import given, when, then, scenario
-        from pytest_bdd.parser import GherkinParser as Parser
-
 
         @given('there is a bar')
         def a_bar():
@@ -165,7 +161,7 @@ def test_local_variables_should_be_displayed_when_showlocals_option_is_used(test
             raise Exception("BIGBADABOOM")
 
 
-        @scenario('test.feature', 'Scenario example 1', parser=Parser())
+        @scenario('test.feature', 'Scenario example 1')
         def test_scenario_1():
             pass
         """
@@ -197,7 +193,6 @@ def test_step_parameters_should_be_replaced_by_their_values(testdir):
     testdir.makepyfile(
         test_gherkin=f"""\
             from pytest_bdd import given, when, scenario, then, parsers
-            from pytest_bdd.parser import GherkinParser as Parser
 
             @given(parsers.parse('there are {{start}} cucumbers'), target_fixture="start_cucumbers")
             def start_cucumbers(start):
@@ -211,7 +206,7 @@ def test_step_parameters_should_be_replaced_by_their_values(testdir):
             def should_have_left_cucumbers(start_cucumbers, left):
                 pass
 
-            @scenario('test.feature', 'Scenario example 2', parser=Parser())
+            @scenario('test.feature', 'Scenario example 2')
             def test_scenario_2():
                 pass
             """

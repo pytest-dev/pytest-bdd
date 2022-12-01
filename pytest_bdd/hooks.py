@@ -6,8 +6,8 @@ from _pytest.fixtures import FixtureRequest
 from pytest import hookspec
 
 from pytest_bdd.model import Feature
-from pytest_bdd.model.messages import Pickle
-from pytest_bdd.typing.pytest import Mark
+from pytest_bdd.model.messages import Message, Pickle
+from pytest_bdd.typing.pytest import Config, Mark
 
 """Pytest-bdd pytest hooks."""
 
@@ -71,3 +71,7 @@ def pytest_bdd_get_step_caller(request, feature, scenario, step, step_func, step
 @hookspec(firstresult=True)
 def pytest_bdd_get_step_dispatcher(request: FixtureRequest, feature: Feature, scenario: Pickle):
     """Provide alternative approach to execute scenario steps"""
+
+
+def pytest_bdd_message(config: Config, message: Message):
+    """Implement cucumber message protocol https://github.com/cucumber/messages"""

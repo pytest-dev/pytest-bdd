@@ -16,7 +16,6 @@ from pytest_bdd.struct_bdd.model import Join, Step, Table
 @attrs
 class _ASTBuilder:
     model: Any
-    id_generator = attrib(default=Factory(lambda: map(str, count())), kw_only=True)
 
     def build(self, *args, **kwargs):  # pragma: no cover
         raise NotImplementedError
@@ -26,9 +25,9 @@ class _ASTBuilder:
 class GherkinDocumentBuilder(_ASTBuilder):
     model: Step = attrib()
 
-    def build(self):
+    def build(self, id_generator):
         return ast.GherkinDocument(comments=[], uri=None).setattrs(
-            feature=StepToFeatureASTBuilder(self.model, id_generator=self.id_generator).build()
+            feature=StepToFeatureASTBuilder(self.model).build(id_generator=id_generator)
         )
 
 
@@ -36,9 +35,9 @@ class GherkinDocumentBuilder(_ASTBuilder):
 class StepToFeatureASTBuilder(_ASTBuilder):
     model: Step = attrib()
 
-    def build(self):
+    def build(self, id_generator):
         return ast.Feature(
-            children=self._build_children(),
+            children=self._build_children(id_generator=id_generator),
             description=self.model.description or "",
             language="EN",
             location=ast.Location(column=0, line=0),
@@ -46,7 +45,7 @@ class StepToFeatureASTBuilder(_ASTBuilder):
             name=self.model.name or "",
         ).setattrs(keyword="Feature")
 
-    def _build_children(self):
+    def _build_children(self, id_generator):
         def _():
             for route in self.model.routes:
                 if route.steps:
@@ -60,7 +59,7 @@ class StepToFeatureASTBuilder(_ASTBuilder):
                                 else step.keyword_type
                             )
                             yield ast.Step(
-                                identifier=next(self.id_generator),
+                                identifier=next(id_generator),
                                 keyword=step.type,
                                 location=ast.Location(column=0, line=0),
                                 text=step.action,
@@ -84,7 +83,7 @@ class StepToFeatureASTBuilder(_ASTBuilder):
                                                     lambda row_values: (
                                                         (
                                                             lambda cells: ast.TableRow(
-                                                                identifier=next(self.id_generator),
+                                                                identifier=next(id_generator),
                                                                 location=ast.Location(column=0, line=0),  # type: ignore[call-arg]
                                                                 cells=cells,
                                                             )  # type: ignore[call-arg]
@@ -127,17 +126,17 @@ class StepToFeatureASTBuilder(_ASTBuilder):
                     yield ast.NodeContainerChild().setattrs(
                         scenario=ast.Scenario(
                             description=route.steps[0].description or "",
-                            examples=[ExampleASTBuilder(route.example_table, id_generator=self.id_generator).build()]
+                            examples=[ExampleASTBuilder(route.example_table).build(id_generator=id_generator)]
                             if route.example_table.values
                             else [],
-                            identifier=next(self.id_generator),
+                            identifier=next(id_generator),
                             keyword="Scenario",
                             location=ast.Location(column=0, line=0),
                             name=next(filter(bool, map(attrgetter("name"), reversed(route.steps))), ""),
                             tags=[
                                 *map(
                                     lambda tag_name: ast.Tag(
-                                        identifier=next(self.id_generator),
+                                        identifier=next(id_generator),
                                         location=ast.Location(column=0, line=0),
                                         name=tag_name,
                                     ),
@@ -155,17 +154,17 @@ class StepToFeatureASTBuilder(_ASTBuilder):
 class ExampleASTBuilder(_ASTBuilder):
     model: Table | Join = attrib()
 
-    def build(self):
+    def build(self, id_generator):
         return ast.Example(
             description=self.model.description,
-            identifier=next(self.id_generator),
+            identifier=next(id_generator),
             keyword="Examples",
             location=ast.Location(column=0, line=0),
             name=self.model.name,
             table_body=[
                 *map(
                     lambda row_values: ast.TableRow(
-                        identifier=next(self.id_generator),
+                        identifier=next(id_generator),
                         location=ast.Location(column=0, line=0),
                         cells=[
                             *map(
@@ -183,7 +182,7 @@ class ExampleASTBuilder(_ASTBuilder):
             tags=[
                 *map(
                     lambda tag_name: ast.Tag(
-                        identifier=next(self.id_generator),
+                        identifier=next(id_generator),
                         location=ast.Location(column=0, line=0),
                         name=tag_name,
                     ),
@@ -192,7 +191,7 @@ class ExampleASTBuilder(_ASTBuilder):
             ],
         ).setattrs(
             table_header=ast.ExampleTableHeader(
-                identifier=next(self.id_generator),
+                identifier=next(id_generator),
                 location=ast.Location(column=0, line=0),
                 cells=[
                     *map(

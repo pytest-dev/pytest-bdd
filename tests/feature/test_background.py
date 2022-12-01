@@ -81,9 +81,8 @@ def test_background_basic(testdir):
     testdir.makepyfile(
         f"""\
         from pytest_bdd import scenario
-        from pytest_bdd.parser import GherkinParser as Parser
 
-        @scenario("background.feature", "Basic usage", parser=Parser())
+        @scenario("background.feature", "Basic usage")
         def test_background():
             pass
         """

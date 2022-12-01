@@ -8,9 +8,12 @@ Planned
 - Examples of data tables & docstrings usage
 - Check nested Rules support
 - Check load/autoload of \*.md files
+- Tests for messages and integrations
 
 Unreleased
 ----------
+- "scenario" no more override collected scenarios; They have to be registered independently
+- Added support of messages
 - Added support of cucumber expressions https://github.com/cucumber/cucumber-expressions#readme
 - It possible to name anonymous groups during step parsing
 - Remove legacy feature parser (and surplus features of it)

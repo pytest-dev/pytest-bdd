@@ -44,9 +44,8 @@ def test_scenario_with_empty_example_values(testdir):
     testdir.makepyfile(
         f"""\
         from pytest_bdd import scenario
-        from pytest_bdd.parser import GherkinParser as Parser
 
-        @scenario("outline.feature", "Outlined with empty example values", parser=Parser())
+        @scenario("outline.feature", "Outlined with empty example values")
         def test_outline():
             pass
         """
