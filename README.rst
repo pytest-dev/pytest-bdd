@@ -267,7 +267,7 @@ The code will look like:
 Example code also shows possibility to pass argument converters which may be useful if you need to postprocess step
 arguments after the parser.
 
-You can implement your own step parser. It's interface is quite simple. The code can looks like:
+You can implement your own step parser. It's interface is quite simple. The code can look like:
 
 .. code-block:: python
 
@@ -334,10 +334,10 @@ it will stay untouched. To allow this, special parameter `target_fixture` exists
             Then foo should be "injected foo"
 
 
-In this example existing fixture `foo` will be overridden by given step `I have injecting given` only for scenario it's
+In this example, the existing fixture `foo` will be overridden by given step `I have injecting given` only for the scenario it's
 used in.
 
-Sometimes it is also useful to let `when` and `then` steps to provide a fixture as well.
+Sometimes it is also useful to let `when` and `then` steps provide a fixture as well.
 A common use case is when we have to assert the outcome of an HTTP request:
 
 .. code-block:: python
@@ -396,7 +396,7 @@ But in much cleaner and powerful way:
                 Lines
             Then the text should be parsed with correct indentation
 
-Step is considered as multiline one, if the **next** line(s) after it's first line, is indented relatively
+A step is considered as a multiline one, if the **next** line(s) after it's first line is indented relatively
 to the first line. The step name is then simply extended by adding further lines with newlines.
 In the example above, the Given step name will be:
 
@@ -404,7 +404,7 @@ In the example above, the Given step name will be:
 
     'I have a step with:\nSome\nExtra\nLines'
 
-You can of course register step using full name (including the newlines), but it seems more practical to use
+You can of course register a step using the full name (including the newlines), but it seems more practical to use
 step arguments and capture lines after first line (or some subset of them) into the argument:
 
 .. code-block:: python
@@ -428,7 +428,7 @@ step arguments and capture lines after first line (or some subset of them) into 
 Scenarios shortcut
 ------------------
 
-If you have relatively large set of feature files, it's boring to manually bind scenarios to the tests using the scenario decorator. Of course with the manual approach you get all the power to be able to additionally parametrize the test, give the test function a nice name, document it, etc, but in the majority of the cases you don't need that.
+If you have a relatively large set of feature files, it's boring to manually bind scenarios to the tests using the scenario decorator. Of course with the manual approach you get all the power to be able to additionally parametrize the test, give the test function a nice name, document it, etc, but in the majority of the cases you don't need that.
 Instead, you want to bind all the scenarios found in the ``features`` folder(s) recursively automatically, by using the ``scenarios`` helper.
 
 .. code-block:: python
@@ -449,7 +449,7 @@ Note that you can pass multiple paths, and those paths can be either feature fil
     # pass multiple paths/files
     scenarios('features', 'other_features/some.feature', 'some_other_features')
 
-But what if you need to manually bind certain scenario, leaving others to be automatically bound?
+But what if you need to manually bind a certain scenario, leaving others to be automatically bound?
 Just write your scenario in a "normal" way, but ensure you do it **before** the call of ``scenarios`` helper.
 
 
@@ -514,7 +514,7 @@ Example:
 Organizing your scenarios
 -------------------------
 
-The more features and scenarios you have, the more important becomes the question about their organization.
+The more features and scenarios you have, the more important the question of their organization becomes.
 The things you can do (and that is also a recommended way):
 
 * organize your feature files in the folders by semantic groups:
@@ -534,7 +534,7 @@ The things you can do (and that is also a recommended way):
           │
           └──login.feature
 
-This looks fine, but how do you run tests only for certain feature?
+This looks fine, but how do you run tests only for a certain feature?
 As pytest-bdd uses pytest, and bdd scenarios are actually normal tests. But test files
 are separate from the feature files, the mapping is up to developers, so the test files structure can look
 completely different:
@@ -559,7 +559,7 @@ completely different:
                 pass
 
 
-For picking up tests to run we can use
+For picking up tests to run we can use the
 `tests selection <https://pytest.org/en/7.1.x/how-to/usage.html#specifying-which-tests-to-run>`_ technique. The problem is that
 you have to know how your tests are organized, knowing only the feature files organization is not enough.
 Cucumber uses `tags <https://cucumber.io/docs/cucumber/api/#tags>`_ as a way of categorizing your features
@@ -581,7 +581,7 @@ scenario test, so we can use standard test selection:
 
     pytest -m "backend and login and successful"
 
-The feature and scenario markers are not different from standard pytest markers, and the ``@`` symbol is stripped out automatically to allow test selector expressions. If you want to have bdd-related tags to be distinguishable from the other test markers, use prefix like ``bdd``.
+The feature and scenario markers are not different from standard pytest markers, and the ``@`` symbol is stripped out automatically to allow test selector expressions. If you want to have bdd-related tags to be distinguishable from the other test markers, use a prefix like ``bdd``.
 Note that if you use pytest ``--strict`` option, all bdd tags mentioned in the feature files should be also in the ``markers`` setting of the ``pytest.ini`` config. Also for tags please use names which are python-compatible variable names, eg starts with a non-number, underscore alphanumeric, etc. That way you can safely use tags for tests filtering.
 
 You can customize how tags are converted to pytest marks by implementing the
@@ -630,10 +630,10 @@ When step is referring the article to publish it.
         article.publish()
 
 
-Many other BDD toolkits operate a global context and put the side effects there.
+Many other BDD toolkits operate on a global context and put the side effects there.
 This makes it very difficult to implement the steps, because the dependencies
-appear only as the side-effects in the run-time and not declared in the code.
-The publish article step has to trust that the article is already in the context,
+appear only as the side-effects during run-time and not declared in the code.
+The "publish article" step has to trust that the article is already in the context,
 has to know the name of the attribute it is stored there, the type etc.
 
 In pytest-bdd you just declare an argument of the step function that it depends on
@@ -705,24 +705,24 @@ features.
         Then I should see "Your article was published."
 
 In this example, all steps from the background will be executed before all the scenario's own given
-steps, adding possibility to prepare some common setup for multiple scenarios in a single feature.
-About background best practices, please read Gherkin's
+steps, adding a possibility to prepare some common setup for multiple scenarios in a single feature.
+About best practices for Background, please read Gherkin's
 `Tips for using Background <https://cucumber.io/docs/gherkin/reference/#tips-for-using-background>`_.
 
-.. NOTE:: There is only step "Given" should be used in "Background" section,
-          steps "When" and "Then" are prohibited, because their purpose are
-          related to actions and consuming outcomes, that is conflict with
-          "Background" aim - prepare system for tests or "put the system
+.. NOTE:: Only "Given" steps should be used in "Background" section.
+          Steps "When" and "Then" are prohibited, because their purposes are
+          related to actions and consuming outcomes; that is in conflict with the
+          aim of "Background" - to prepare the system for tests or "put the system
           in a known state" as "Given" does it.
-          The statement above is applied for strict Gherkin mode, which is
+          The statement above applies to strict Gherkin mode, which is
           enabled by default.
 
 
 Reusing fixtures
 ----------------
 
-Sometimes scenarios define new names for the existing fixture that can be
-inherited (reused). For example, if we have pytest fixture:
+Sometimes scenarios define new names for an existing fixture that can be
+inherited (reused). For example, if we have the pytest fixture:
 
 
 .. code-block:: python
@@ -738,7 +738,7 @@ Then this fixture can be reused with other names using given():
 
 .. code-block:: python
 
-    @given('I have beautiful article')
+    @given('I have a beautiful article')
     def i_have_an_article(article):
        """I have an article."""
 
@@ -781,14 +781,14 @@ simply expect them in the child test file.
     def test_conftest():
         pass
 
-There are no definitions of the steps in the test file. They were
+There are no definitions of steps in the test file. They were
 collected from the parent conftest.py.
 
 
 Default steps
 -------------
 
-Here is the list of steps that are implemented inside of the pytest-bdd:
+Here is the list of steps that are implemented inside of pytest-bdd:
 
 given
     * trace - enters the `pdb` debugger via `pytest.set_trace()`
@@ -801,8 +801,8 @@ then
 Feature file paths
 ------------------
 
-By default, pytest-bdd will use current module's path as base path for finding feature files, but this behaviour can be changed in the pytest configuration file (i.e. `pytest.ini`, `tox.ini` or `setup.cfg`) by declaring the new base path in the `bdd_features_base_dir` key. The path is interpreted as relative to the `pytest root directory <https://docs.pytest.org/en/latest/reference/customize.html#rootdir>`__.
-You can also override features base path on a per-scenario basis, in order to override the path for specific tests.
+By default, pytest-bdd will use the current module's path as the base path for finding feature files, but this behaviour can be changed in the pytest configuration file (i.e. `pytest.ini`, `tox.ini` or `setup.cfg`) by declaring the new base path in the `bdd_features_base_dir` key. The path is interpreted as relative to the `pytest root directory <https://docs.pytest.org/en/latest/reference/customize.html#rootdir>`__.
+You can also override the features base path on a per-scenario basis, in order to override the path for specific tests.
 
 pytest.ini:
 
@@ -869,7 +869,7 @@ in the Python docs.
 
 Programmatic step generation
 ----------------------------
-Sometimes you have step definitions that would be much easier to automate rather than writing manually over and over again.
+Sometimes you have step definitions that would be much easier to automate rather than writing them manually over and over again.
 This is common, for example, when using libraries like `pytest-factoryboy <https://pytest-factoryboy.readthedocs.io/>`_ that automatically creates fixtures.
 Writing step definitions for every model can become a tedious task.
 
@@ -877,7 +877,7 @@ For this reason, pytest-bdd provides a way to generate step definitions automati
 
 The trick is to pass the ``stacklevel`` parameter to the ``given``, ``when``, ``then``, ``step`` decorators. This will instruct them to inject the step fixtures in the appropriate module, rather than just injecting them in the caller frame.
 
-Let's look at a concrete example; let's say you have a class ``Wallet`` that has some amount for each currency:
+Let's look at a concrete example; let's say you have a class ``Wallet`` that has some amount of each currency:
 
 .. code-block:: python
 
@@ -1052,7 +1052,7 @@ To have an output in json format:
 
     pytest --cucumberjson=<path to json report>
 
-This will output an expanded (meaning scenario outlines will be expanded to several scenarios) cucumber format.
+This will output an expanded (meaning scenario outlines will be expanded to several scenarios) Cucumber format.
 
 To enable gherkin-formatted output on terminal, use
 
@@ -1065,8 +1065,8 @@ Test code generation helpers
 ----------------------------
 
 For newcomers it's sometimes hard to write all needed test code without being frustrated.
-To simplify their life, simple code generator was implemented. It allows to create fully functional
-but of course empty tests and step definitions for given a feature file.
+To simplify their life, a simple code generator was implemented. It allows to create fully functional
+(but of course empty) tests and step definitions for a given feature file.
 It's done as a separate console script provided by pytest-bdd package:
 
 ::
@@ -1083,7 +1083,7 @@ It will print the generated code to the standard output so you can easily redire
 Advanced code generation
 ------------------------
 
-For more experienced users, there's smart code generation/suggestion feature. It will only generate the
+For more experienced users, there's a smart code generation/suggestion feature. It will only generate the
 test code which is not yet there, checking existing tests and step definitions the same way it's done during the
 test execution. The code suggestion tool is called via passing additional pytest arguments:
 
@@ -1128,7 +1128,7 @@ Migration of your tests from versions 5.x.x
 The primary focus of the pytest-bdd is the compatibility with the latest gherkin developments
 e.g. multiple scenario outline example tables with tags support etc.
 
-In order to provide the best compatibility it is best to support the features described in the official
+In order to provide the best compatibility, it is best to support the features described in the official
 gherkin reference. This means deprecation of some non-standard features that were implemented in pytest-bdd.
 
 
@@ -1146,7 +1146,7 @@ The example tables should have horizontal orientation.
 Step arguments are no longer fixtures
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Step parsed arguments conflicted with the fixtures. Now they no longer define fixture.
-If the fixture has to be defined by the step the target_fixture param should be used.
+If the fixture has to be defined by the step, the target_fixture param should be used.
 
 
 Variable templates in steps are only parsed for Scenario Outlines
@@ -1204,7 +1204,7 @@ Scenario `example_converters` are removed in favor of the converters provided on
 
 Refuse combining scenario outline and pytest parametrization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The significant downside of combining scenario outline and pytest parametrization approach was inability to see the
+The significant downside of combining scenario outline and pytest parametrization approach was an inability to see the
 test table from the feature file.
 
 
@@ -1214,7 +1214,7 @@ Migration of your tests from versions 3.x.x
 -------------------------------------------
 
 
-Given steps are no longer fixtures. In case it is needed to make given step setup a fixture
+Given steps are no longer fixtures. In case it is needed to make given step setup a fixture,
 the target_fixture parameter should be used.
 
 
@@ -1225,7 +1225,7 @@ the target_fixture parameter should be used.
         return Article()
 
 
-Given steps no longer have fixture parameter. In fact the step may depend on multiple fixtures.
+Given steps no longer have the `fixture` parameter. In fact the step may depend on multiple fixtures.
 Just normal step declaration with the dependency injection should be used.
 
 .. code-block:: python
