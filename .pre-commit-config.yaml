@@ -3,11 +3,11 @@
 repos:
 -   repo: https://github.com/psf/black
     # If you update the version here, also update it in tox.ini (py*-pytestlatest-linters)
-    rev: 22.10.0
+    rev: 22.12.0
     hooks:
     - id: black
 -   repo: https://github.com/pycqa/isort
-    rev: 5.10.1
+    rev: 5.11.1
     hooks:
       - id: isort
         name: isort (python)
@@ -19,7 +19,7 @@ repos:
     -   id: check-yaml
     -   id: check-added-large-files
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.0
+    rev: v3.3.1
     hooks:
     -   id: pyupgrade
         args: ["--py37-plus"]
