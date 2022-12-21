@@ -11,6 +11,7 @@ from attr import attrib, attrs
 from pytest_bdd.struct_bdd.model import Step, StepSchema
 from pytest_bdd.typing.parser import ParserProtocol
 from pytest_bdd.typing.pytest import Config
+from pytest_bdd.utils import PytestBDDIdGeneratorHandler
 
 
 @attrs
@@ -40,7 +41,7 @@ class StructBDDParser(ParserProtocol):
     def loader_default(self):
         return self.build_loader()
 
-    def parse(self, config: Config | None, path: Path, uri: str, *args, **kwargs):
+    def parse(self, config: Config | PytestBDDIdGeneratorHandler, path: Path, uri: str, *args, **kwargs):
         encoding = kwargs.pop("encoding", "utf-8")
         mode = kwargs.pop("mode", "r")
         with path.open(mode=mode, encoding=encoding) as feature_file:

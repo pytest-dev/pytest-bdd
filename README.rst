@@ -1371,13 +1371,13 @@ It's done as a separate console script provided by pytest-bdd package:
 
 ::
 
-    pytest-bdd generate <feature file name> .. <feature file nameN>
+    pytest --generate --feature <feature file name> .. <feature file nameN>
 
 It will print the generated code to the standard output so you can easily redirect it to the file:
 
 ::
 
-    pytest-bdd generate features/some.feature > tests/functional/test_some.py
+    pytest --generate --feature features/some.feature > tests/functional/test_some.py
 
 
 Advanced code generation

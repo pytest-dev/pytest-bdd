@@ -1,11 +1,14 @@
 # Implement CI meta message
+from __future__ import annotations
+
 from pathlib import Path
 from time import time_ns
+from typing import cast
 
-from _pytest.config import ExitCode
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
 from attr import attrib, attrs
+from pytest import ExitCode
 
 from pytest_bdd.model.messages import (
     Duration,
@@ -23,7 +26,7 @@ from pytest_bdd.model.messages import (
 )
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.typing.pytest import Config, Parser
-from pytest_bdd.utils import deepattrgetter
+from pytest_bdd.utils import PytestBDDIdGeneratorHandler, deepattrgetter
 
 
 @attrs(eq=False)
@@ -96,10 +99,10 @@ class MessagePlugin:
         )
 
     def pytest_bdd_before_scenario(self, request: FixtureRequest, feature, scenario):
-        config = request.config
-        if config.option.messages_ndjson_path is None:
+        config: Config | PytestBDDIdGeneratorHandler = request.config  # https://github.com/python/typing/issues/213
+        if cast(Config, config).option.messages_ndjson_path is None:
             return
-        hook_handler = config.hook
+        hook_handler = cast(Config, config).hook
 
         test_steps = []
         previous_step = None
@@ -117,7 +120,7 @@ class MessagePlugin:
                 pass
             else:
                 test_step = TestStep(
-                    id=config.pytest_bdd_id_generator.get_next_id(),
+                    id=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator.get_next_id(),
                     pickleStepId=step.id,
                     stepDefinitionIds=[step_definition.id]
                     # TODO Check step_match_arguments_lists
@@ -128,7 +131,9 @@ class MessagePlugin:
                 previous_step = step
 
         self.current_test_case = TestCase(
-            id=config.pytest_bdd_id_generator.get_next_id(), pickleId=scenario.id, testSteps=test_steps
+            id=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator.get_next_id(),
+            pickleId=scenario.id,
+            testSteps=test_steps,
         )
 
         hook_handler.pytest_bdd_message(

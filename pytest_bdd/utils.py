@@ -33,6 +33,11 @@ if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.typing.pytest import RunResult
 
 
+@runtime_checkable
+class PytestBDDIdGeneratorHandler(Protocol):
+    pytest_bdd_id_generator: IdGenerator | Any
+
+
 def get_args(func: Callable) -> list[str]:
     """Get a list of argument names for a function.
 

@@ -5,7 +5,7 @@ from functools import partial
 from itertools import filterfalse
 from operator import contains, methodcaller
 from pathlib import Path
-from typing import Callable
+from typing import Callable, cast
 
 from attr import attrib, attrs
 from attr._make import Factory
@@ -20,7 +20,7 @@ from pytest_bdd.model.messages import MediaType, Message, Source
 from pytest_bdd.typing.parser import ParserProtocol
 from pytest_bdd.typing.pytest import Config
 from pytest_bdd.typing.struct_bdd import STRUCT_BDD_INSTALLED
-from pytest_bdd.utils import IdGenerator
+from pytest_bdd.utils import IdGenerator, PytestBDDIdGeneratorHandler
 
 if STRUCT_BDD_INSTALLED:  # pragma: no cover
     from pytest_bdd.struct_bdd.parser import StructBDDParser
@@ -58,8 +58,8 @@ class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProt
         CucumberIOBaseParser.__init__(self, ast_builder=AstBuilder(id_generator=self.id_generator))
 
     @classmethod
-    def parse(cls, config: Config | None, path: Path, uri: str, *args, **kwargs) -> Feature:
-        parser = cls(id_generator=config.pytest_bdd_id_generator if config is not None else IdGenerator())
+    def parse(cls, config: Config | PytestBDDIdGeneratorHandler, path: Path, uri: str, *args, **kwargs) -> Feature:
+        parser = cls(id_generator=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator)
         encoding = kwargs.pop("encoding", "utf-8")
         with path.open(mode="r", encoding=encoding) as feature_file:
             feature_file_data = feature_file.read()
@@ -69,10 +69,9 @@ class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProt
         else:
             media_type = MediaType.text_x_cucumber_gherkin_plain
 
-        if config is not None:
-            config.hook.pytest_bdd_message(
-                config=config, message=Message(source=Source(uri=uri, data=feature_file_data, mediaType=media_type))
-            )
+        cast(Config, config).hook.pytest_bdd_message(
+            config=config, message=Message(source=Source(uri=uri, data=feature_file_data, mediaType=media_type))
+        )
 
         try:
             gherkin_document_raw_dict = CucumberIOBaseParser.parse(
@@ -94,14 +93,15 @@ class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProt
             id_generator=getattr(config, "pytest_bdd_id_generator", IdGenerator()),
         )
 
-        if config is not None:
-            config.hook.pytest_bdd_message(config=config, message=Message(gherkinDocument=feature.gherkin_document))
-            for pickle in feature.pickles:
-                config.hook.pytest_bdd_message(config=config, message=Message(pickle=pickle))
+        cast(Config, config).hook.pytest_bdd_message(
+            config=config, message=Message(gherkinDocument=feature.gherkin_document)
+        )
+        for pickle in feature.pickles:
+            cast(Config, config).hook.pytest_bdd_message(config=config, message=Message(pickle=pickle))
 
         return feature
 
-    def get_from_paths(self, config: Config | None, paths: list[Path], **kwargs) -> list[Feature]:
+    def get_from_paths(self, config: Config, paths: list[Path], **kwargs) -> list[Feature]:
         """Get features for given paths."""
         seen_names: set[Path] = set()
         features: list[Feature] = []

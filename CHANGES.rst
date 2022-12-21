@@ -12,6 +12,7 @@ Planned
 
 Unreleased
 ----------
+- Separate generation scripts were mved to pytest environment
 - "scenario" no more override collected scenarios; They have to be registered independently
 - Added support of messages
 - Added support of cucumber expressions https://github.com/cucumber/cucumber-expressions#readme

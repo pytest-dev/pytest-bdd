@@ -55,7 +55,12 @@ from pytest_bdd.model.messages import PickleStep as Step
 from pytest_bdd.model.messages import SourceReference, StepDefinition, StepDefinitionPattern
 from pytest_bdd.parsers import StepParser
 from pytest_bdd.typing.pytest import Config, Parser, TypeAlias
-from pytest_bdd.utils import convert_str_to_python_name, get_caller_module_locals, setdefaultattr
+from pytest_bdd.utils import (
+    PytestBDDIdGeneratorHandler,
+    convert_str_to_python_name,
+    get_caller_module_locals,
+    setdefaultattr,
+)
 from pytest_bdd.warning_types import PytestBDDStepDefinitionWarning
 
 
@@ -346,16 +351,16 @@ class StepHandler:
         id = attrib(init=False)
         __cached_message = attrib(init=False)
 
-        def as_message(self, config: Config):
+        def as_message(self, config: Config | PytestBDDIdGeneratorHandler):
             try:
                 message = self.__cached_message
             except AttributeError:
-                self.id = config.pytest_bdd_id_generator.get_next_id()
+                self.id = cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator.get_next_id()
                 self.__cached_message = StepDefinition(
                     id=self.id,
                     pattern=StepDefinitionPattern(source=str(self.parser), type=self.parser.type),
                     sourceReference=SourceReference(
-                        uri=os.path.relpath(getfile(self.func), config.rootpath),
+                        uri=os.path.relpath(getfile(self.func), cast(Config, config).rootpath),
                         location=Location(line=getsourcelines(self.func)[1]),
                     ),
                 )
