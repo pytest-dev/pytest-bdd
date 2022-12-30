@@ -30,7 +30,7 @@ if STRUCT_BDD_INSTALLED:  # pragma: no cover
 
 @attrs
 class GlobMixin:
-    glob: Callable[..., list[str | Path]] = attrib(default=methodcaller("rglob", "*.feature"), kw_only=True)
+    glob: Callable[..., list[str | Path]] = attrib(default=methodcaller("glob", "*.feature"), kw_only=True)
 
 
 class ASTBuilderMixin:

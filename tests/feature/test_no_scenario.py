@@ -17,7 +17,7 @@ def test_no_scenarios(testdir):
         f"""\
         from pytest_bdd import scenarios
 
-        scenarios('features')
+        test_cukes = scenarios('features')
         """
     )
     result = testdir.runpytest()

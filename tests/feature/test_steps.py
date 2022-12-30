@@ -137,25 +137,28 @@ def test_all_steps_can_provide_fixtures(testdir):
     """Test that given/when/then can all provide fixtures."""
     testdir.makefile(
         ".feature",
-        steps="""\
-            Feature: StepHandler fixture
-                Scenario: Given steps can provide fixture
-                    Given Foo is "bar"
-                    Then foo should be "bar"
-                Scenario: When steps can provide fixture
-                    When Foo is "baz"
-                    Then foo should be "baz"
-                Scenario: Then steps can provide fixture
-                    Then foo is "qux"
-                    And foo should be "qux"
-            """,
+        steps=
+        # language=gherkin
+        """\
+        Feature: StepHandler fixture
+            Scenario: Given steps can provide fixture
+                Given Foo is "bar"
+                Then foo should be "bar"
+            Scenario: When steps can provide fixture
+                When Foo is "baz"
+                Then foo should be "baz"
+            Scenario: Then steps can provide fixture
+                Then foo is "qux"
+                And foo should be "qux"
+        """,
     )
 
     testdir.makepyfile(
+        # language=python
         """\
         from pytest_bdd import given, when, then, parsers, scenarios
 
-        scenarios("steps.feature")
+        test_scenarios = scenarios("steps.feature")
 
         @given(parsers.parse('Foo is "{value}"'), target_fixture="foo")
         def given_foo_is_value(value):
@@ -784,20 +787,22 @@ def test_steps_with_yield(testdir):
 
     testdir.makefile(
         ".feature",
-        a="""\
-            Feature: A feature
+        a=
+        # language=gherkin
+        """\
+        Feature: A feature
 
-                Scenario: A scenario
-                    When I setup stuff
-                    Then stuff should be 42
-            """,
+            Scenario: A scenario
+                When I setup stuff
+                Then stuff should be 42
+        """,
     )
     testdir.makepyfile(
+        # language=python
         """\
-        import pytest
-        from pytest_bdd import given, when, then, scenarios
+        from pytest_bdd import when, then, scenarios
 
-        scenarios("a.feature")
+        test_scenarios = scenarios("a.feature")
 
         @when("I setup stuff", target_fixture="stuff")
         def stuff():
@@ -1203,7 +1208,7 @@ def test_default_params(testdir):
 
 def test_uses_correct_step_in_the_hierarchy(testdir):
     """
-    Test regression found in issue #524, where we couldn't find the correct step implemntation in the
+    Test regression found in issue #524, where we couldn't find the correct step implementation in the
     hierarchy of files/folder as expected.
     This test uses many files and folders that act as decoy, while the real step implementation is defined
     in the last file (test_b/test_b.py).
@@ -1211,6 +1216,7 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
     testdir.makefile(
         ".feature",
         specific=textwrap.dedent(
+            # language=gherkin
             """\
             Feature: Specificity of steps
                 Scenario: Overlapping steps
@@ -1222,19 +1228,23 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
 
     testdir.makeconftest(
         textwrap.dedent(
+            # language=python
             """\
             from pytest_bdd import parsers, given, then
             from pytest_bdd.utils import dump_obj
-            import pytest
+
             @given(parsers.re("(?P<thing>.*)"))
             def root_conftest_catchall(thing):
                 dump_obj(thing + " (catchall) root_conftest")
+
             @given(parsers.parse("I have a {thing} thing"))
             def root_conftest(thing):
                 dump_obj(thing + " root_conftest")
+
             @given("I have a specific thing")
             def root_conftest_specific():
                 dump_obj("specific" + "(specific) root_conftest")
+
             @then("pass")
             def _():
                 pass
@@ -1247,30 +1257,40 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
     # We purposefully use test_a and test_c as decoys (while test_b/test_b is "good one"), so that we can test that
     # we pick the right one.
     testdir.makepyfile(
-        test_a="""\
+        test_a=
+        # language=python
+        """\
         from pytest_bdd import given, parsers
         from pytest_bdd.utils import dump_obj
+
         @given(parsers.re("(?P<thing>.*)"))
         def in_root_test_a_catch_all(thing):
             dump_obj(thing + " (catchall) test_a")
+
         @given(parsers.parse("I have a specific thing"))
         def in_root_test_a_specific():
             dump_obj("specific" + " (specific) test_a")
+
         @given(parsers.parse("I have a {thing} thing"))
         def in_root_test_a(thing):
             dump_obj(thing + " root_test_a")
         """
     )
     testdir.makepyfile(
-        test_c="""\
+        test_c=
+        # language = python
+        """\
         from pytest_bdd import given, parsers
         from pytest_bdd.utils import dump_obj
+
         @given(parsers.re("(?P<thing>.*)"))
         def in_root_test_c_catch_all(thing):
             dump_obj(thing + " (catchall) test_c")
+
         @given(parsers.parse("I have a specific thing"))
         def in_root_test_c_specific():
             dump_obj("specific" + " (specific) test_c")
+
         @given(parsers.parse("I have a {thing} thing"))
         def in_root_test_c(thing):
             dump_obj(thing + " root_test_b")
@@ -1282,15 +1302,19 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
     # More decoys: test_b/test_a.py and test_b/test_c.py
     test_b_folder.join("test_a.py").write(
         textwrap.dedent(
+            # language = python
             """\
             from pytest_bdd import given, parsers
             from pytest_bdd.utils import dump_obj
+
             @given(parsers.re("(?P<thing>.*)"))
             def in_root_test_b_test_a_catch_all(thing):
                 dump_obj(thing + " (catchall) test_b_test_a")
+
             @given(parsers.parse("I have a specific thing"))
             def in_test_b_test_a_specific():
                 dump_obj("specific" + " (specific) test_b_test_a")
+
             @given(parsers.parse("I have a {thing} thing"))
             def in_test_b_test_a(thing):
                 dump_obj(thing + " test_b_test_a")
@@ -1299,15 +1323,19 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
     )
     test_b_folder.join("test_c.py").write(
         textwrap.dedent(
+            # language = python
             """\
             from pytest_bdd import given, parsers
             from pytest_bdd.utils import dump_obj
+
             @given(parsers.re("(?P<thing>.*)"))
             def in_root_test_b_test_c_catch_all(thing):
                 dump_obj(thing + " (catchall) test_b_test_c")
+
             @given(parsers.parse("I have a specific thing"))
             def in_test_b_test_c_specific():
                 dump_obj("specific" + " (specific) test_a_test_c")
+
             @given(parsers.parse("I have a {thing} thing"))
             def in_test_b_test_c(thing):
                 dump_obj(thing + " test_c_test_a")
@@ -1318,10 +1346,13 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
     # Finally, the file with the actual step definition that should be used
     test_b_folder.join("test_b.py").write(
         textwrap.dedent(
+            # language = python
             """\
             from pytest_bdd import scenarios, given, parsers
             from pytest_bdd.utils import dump_obj
-            scenarios("../specific.feature")
+
+            test_scenarios = scenarios("specific.feature")
+
             @given(parsers.parse("I have a {thing} thing"))
             def in_test_b_test_b(thing):
                 dump_obj(f"{thing} test_b_test_b")
@@ -1331,10 +1362,13 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
 
     test_b_folder.join("test_b_alternative.py").write(
         textwrap.dedent(
+            # language = python
             """\
             from pytest_bdd import scenarios, given, parsers
             from pytest_bdd.utils import dump_obj
-            scenarios("../specific.feature")
+
+            test_scenarios = scenarios("specific.feature")
+
             # Here we try to use an argument different from the others,
             # to make sure it doesn't matter if a new step parser string is encountered.
             @given(parsers.parse("I have a {t} thing"))

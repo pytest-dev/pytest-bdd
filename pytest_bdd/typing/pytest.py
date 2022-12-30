@@ -37,6 +37,8 @@ if compare_distribution_version("pytest", "6.2", ge):
 else:
     from _pytest.fixtures import FixtureRequest
 
+PYTEST7 = compare_distribution_version("pytest", "7.0", ge)
+
 # endregion
 
 if TYPE_CHECKING:  # pragma: no cover

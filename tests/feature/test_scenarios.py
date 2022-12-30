@@ -6,14 +6,15 @@ from tests.utils import assert_outcomes
 def test_scenarios(testdir, pytest_params):
     """Test scenarios shortcut used together with @scenario"""
     testdir.makeini(
+        # language=toml
         """\
         [pytest]
         console_output_style=classic
         """
     )
     testdir.makeconftest(
+        # language=python
         """\
-        import pytest
         from pytest_bdd import given
 
         @given('I have a bar')
@@ -24,6 +25,7 @@ def test_scenarios(testdir, pytest_params):
     )
     features = testdir.mkdir("features")
     features.join("test.feature").write_text(
+        # language=gherkin
         """\
         Feature: Test scenarios
 
@@ -34,6 +36,7 @@ def test_scenarios(testdir, pytest_params):
         ensure=True,
     )
     features.join("subfolder", "test.feature").write_text(
+        # language=gherkin
         """\
         Feature: Test scenarios
             Scenario: Test subfolder scenario
@@ -52,11 +55,12 @@ def test_scenarios(testdir, pytest_params):
         ensure=True,
     )
     testdir.makepyfile(
+        # language=python
         """\
-        import pytest
+        from pathlib import Path
         from pytest_bdd import scenarios, scenario
 
-        scenarios('features')
+        test_feature = scenarios('test.feature', features_base_dir=Path('features', 'subfolder'))
 
         @scenario('features/subfolder/test.feature', 'Test already bound scenario')
         def test_already_bound():
@@ -64,27 +68,23 @@ def test_scenarios(testdir, pytest_params):
     """
     )
     result = testdir.runpytest("-v", "-s", *pytest_params)
-    assert_outcomes(result, passed=5, failed=1)
-    result.stdout.fnmatch_lines(["*collected 6 items"])
-    result.stdout.fnmatch_lines(
-        ["*test*features/subfolder/test.feature-Test scenarios-Test subfolder scenario* bar!", "PASSED"]
-    )
-    result.stdout.fnmatch_lines(["*test*features/test.feature-Test scenarios-Test scenario* bar!", "PASSED"])
-    result.stdout.fnmatch_lines(
-        ["*test*features/subfolder/test.feature-Test scenarios-Test failing subfolder scenario* FAILED"]
-    )
+    assert_outcomes(result, passed=4, failed=1)
+    result.stdout.fnmatch_lines(["*collected 5 items"])
+    result.stdout.fnmatch_lines(["*test*test.feature-Test scenarios-Test subfolder scenario* bar!", "PASSED"])
+    result.stdout.fnmatch_lines(["*test*test.feature-Test scenarios-Test scenario* bar!", "PASSED"])
+    result.stdout.fnmatch_lines(["*test*test.feature-Test scenarios-Test failing subfolder scenario* FAILED"])
     result.stdout.fnmatch_lines(["*test_already_bound* bar!", "PASSED"])
-    result.stdout.fnmatch_lines(["*test*features/subfolder/test.feature-Test scenarios-Test scenario* bar!", "PASSED"])
+    result.stdout.fnmatch_lines(["*test*test.feature-Test scenarios-Test scenario* bar!", "PASSED"])
 
 
 def test_scenarios_none_found(testdir, pytest_params):
     """Test scenarios shortcut when no scenarios found."""
     testpath = testdir.makepyfile(
+        # language=python
         """\
-        import pytest
         from pytest_bdd import scenarios
 
-        scenarios('.')
+        test_feature = scenarios('.')
     """
     )
     result = testdir.runpytest_subprocess(testpath, *pytest_params)

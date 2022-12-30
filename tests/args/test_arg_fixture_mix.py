@@ -6,8 +6,8 @@ def test_arg_fixture_mix(testdir):
     subdir = testdir.mkpydir("arg_fixture_mix")
     subdir.join("test_a.py").write(
         dedent(
+            # language=python
             """\
-            import re
             import pytest
             from pytest_bdd import scenario, given, then, parsers
 
@@ -19,6 +19,7 @@ def test_arg_fixture_mix(testdir):
             @scenario(
                 'arg_and_fixture_mix.feature',
                 'Use the step argument with the same name as fixture of another test',
+                features_base_dir='arg_fixture_mix'
             )
             def test_args():
                 pass
@@ -35,6 +36,7 @@ def test_arg_fixture_mix(testdir):
             @scenario(
                 'arg_and_fixture_mix.feature',
                 'Everything is fine',
+                features_base_dir='arg_fixture_mix'
             )
             def test_bar():
                 pass
@@ -53,14 +55,15 @@ def test_arg_fixture_mix(testdir):
 
     subdir.join("test_b.py").write(
         dedent(
+            # language=python
             """\
-            import re
             import pytest
             from pytest_bdd import scenario, given, then
 
             @scenario(
                 'arg_and_fixture_mix.feature',
                 'Everything is fine',
+                features_base_dir='arg_fixture_mix'
             )
             def test_args():
                 pass
@@ -88,11 +91,12 @@ def test_arg_fixture_mix(testdir):
 
     subdir.join("arg_and_fixture_mix.feature").write(
         dedent(
+            # language=gherkin
             """\
             Feature: Arg and fixture mix
                 Scenario: Use the step argument with the same name as fixture of another test
-                Given foo is "Hello"
-                Then foo should be "Hello"
+                    Given foo is "Hello"
+                    Then foo should be "Hello"
 
 
                 Scenario: Everything is fine

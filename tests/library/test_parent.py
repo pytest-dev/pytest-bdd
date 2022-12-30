@@ -12,15 +12,18 @@ def test_parent(testdir):
     """
     testdir.makefile(
         ".feature",
-        parent="""\
-            Feature: Parent
-                Scenario: Parenting is easy
-                    Given I have a parent fixture
-                    And I have an overridable fixture
-            """,
+        parent=
+        # language=gherkin
+        """\
+        Feature: Parent
+            Scenario: Parenting is easy
+                Given I have a parent fixture
+                And I have an overridable fixture
+        """,
     )
 
     testdir.makeconftest(
+        # language=python
         """\
         from pytest_bdd import given
 
@@ -37,6 +40,7 @@ def test_parent(testdir):
     )
 
     testdir.makepyfile(
+        # language=python
         """\
         from pytest_bdd import scenario
 
@@ -53,14 +57,13 @@ def test_parent(testdir):
 def test_child(testdir):
     """Test the child conftest overriding the fixture."""
     testdir.makeconftest(
+        # language=python
         """\
         from pytest_bdd import given
-
 
         @given("I have a parent fixture", target_fixture="parent")
         def parent():
             return "parent"
-
 
         @given("I have an overridable fixture", target_fixture="overridable")
         def overridable():
@@ -72,6 +75,7 @@ def test_child(testdir):
 
     subdir.join("conftest.py").write(
         dedent(
+            # language=python
             """\
             from pytest_bdd import given
 
@@ -84,6 +88,7 @@ def test_child(testdir):
     )
 
     subdir.join("child.feature").write(
+        # language=gherkin
         """\
         Feature: Child
             Scenario: Happy childhood
@@ -94,15 +99,15 @@ def test_child(testdir):
 
     subdir.join("test_library.py").write(
         dedent(
+            # language=python
             """\
             from pytest_bdd import scenario
 
-
-            @scenario("child.feature", "Happy childhood")
+            @scenario("child.feature", "Happy childhood", features_base_dir='subdir')
             def test_override(request):
                 assert request.getfixturevalue("parent") == "parent"
                 assert request.getfixturevalue("overridable") == "child"
-        """
+            """
         )
     )
     result = testdir.runpytest()
@@ -112,14 +117,13 @@ def test_child(testdir):
 def test_local(testdir):
     """Test locally overridden fixtures."""
     testdir.makeconftest(
+        # language=python
         """\
         from pytest_bdd import given
-
 
         @given("I have a parent fixture", target_fixture="parent")
         def parent():
             return "parent"
-
 
         @given("I have an overridable fixture", target_fixture="overridable")
         def overridable():
@@ -130,6 +134,7 @@ def test_local(testdir):
     subdir = testdir.mkpydir("subdir")
 
     subdir.join("local.feature").write(
+        # language=gherkin
         """\
         Feature: Local
             Scenario: Local override
@@ -140,21 +145,19 @@ def test_local(testdir):
 
     subdir.join("test_library.py").write(
         dedent(
+            # language=python
             """\
             from pytest_bdd import given, scenario
-
 
             @given("I have an overridable fixture", target_fixture="overridable")
             def overridable():
                 return "local"
 
-
             @given("I have a parent fixture", target_fixture="parent")
             def parent():
                 return "local"
 
-
-            @scenario("local.feature", "Local override")
+            @scenario("local.feature", "Local override", features_base_dir='subdir')
             def test_local(request):
                 assert request.getfixturevalue("parent") == "local"
                 assert request.getfixturevalue("overridable") == "local"
@@ -168,6 +171,7 @@ def test_local(testdir):
 def test_local_multiple_target_fixtures(testdir):
     """Test locally overridden fixtures."""
     testdir.makeconftest(
+        # language=python
         """\
         from pytest_bdd import given
 
@@ -180,6 +184,7 @@ def test_local_multiple_target_fixtures(testdir):
     subdir = testdir.mkpydir("subdir")
 
     subdir.join("local.feature").write(
+        # language=gherkin
         """\
         Feature: Local
             Scenario: Local override
@@ -189,18 +194,19 @@ def test_local_multiple_target_fixtures(testdir):
 
     subdir.join("test_library.py").write(
         dedent(
+            # language=python
             """\
-                from pytest_bdd import given, scenario
+            from pytest_bdd import given, scenario
 
-                @given("I have a parent fixture", target_fixtures=["parent", "overridable"])
-                def parent():
-                    return "local1", "local2"
+            @given("I have a parent fixture", target_fixtures=["parent", "overridable"])
+            def parent():
+                return "local1", "local2"
 
-                @scenario("local.feature", "Local override")
-                def test_local(request):
-                    assert request.getfixturevalue("parent") == "local1"
-                    assert request.getfixturevalue("overridable") == "local2"
-                """
+            @scenario("local.feature", "Local override", features_base_dir='subdir')
+            def test_local(request):
+                assert request.getfixturevalue("parent") == "local1"
+                assert request.getfixturevalue("overridable") == "local2"
+            """
         )
     )
     result = testdir.runpytest()
@@ -210,6 +216,7 @@ def test_local_multiple_target_fixtures(testdir):
 def test_local_both_target_fixture_and_target_fixtures(testdir):
     """Test locally overridden fixtures."""
     testdir.makeconftest(
+        # language=python
         """\
         from pytest_bdd import given
 
@@ -222,6 +229,7 @@ def test_local_both_target_fixture_and_target_fixtures(testdir):
     subdir = testdir.mkpydir("subdir")
 
     subdir.join("local.feature").write(
+        # language=gherkin
         """\
         Feature: Local
             Scenario: Local override
@@ -231,17 +239,18 @@ def test_local_both_target_fixture_and_target_fixtures(testdir):
 
     subdir.join("test_library.py").write(
         dedent(
+            # language=python
             """\
-                from pytest_bdd import given, scenario
+            from pytest_bdd import given, scenario
 
-                @given("I have a parent fixture", target_fixtures=["parent", "overridable"])
-                def parent():
-                    return "local1", "local2"
+            @given("I have a parent fixture", target_fixtures=["parent", "overridable"])
+            def parent():
+                return "local1", "local2"
 
-                @scenario("local.feature", "Local override")
-                def test_local(request):
-                    assert request.getfixturevalue("parent") == "local1"
-                    assert request.getfixturevalue("overridable") == "local2"
+            @scenario("local.feature", "Local override", features_base_dir='subdir')
+            def test_local(request):
+                assert request.getfixturevalue("parent") == "local1"
+                assert request.getfixturevalue("overridable") == "local2"
             """
         )
     )

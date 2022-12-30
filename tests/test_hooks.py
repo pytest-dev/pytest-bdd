@@ -7,6 +7,7 @@ def test_hooks(testdir):
     subdir = testdir.mkpydir("subdir")
     subdir.join("conftest.py").write(
         textwrap.dedent(
+            # language=python
             r"""
             def pytest_pyfunc_call(pyfuncitem):
                 print('\npytest_pyfunc_call hook')
@@ -19,10 +20,11 @@ def test_hooks(testdir):
 
     subdir.join("test_foo.py").write(
         textwrap.dedent(
+            # language=python
             r"""
             from pytest_bdd import scenario
 
-            @scenario('foo.feature', 'Some scenario')
+            @scenario('subdir/foo.feature', 'Some scenario')
             def test_foo():
                 pass
             """
@@ -31,6 +33,7 @@ def test_hooks(testdir):
 
     subdir.join("foo.feature").write(
         textwrap.dedent(
+            # language=gherkin
             r"""
             Feature: The feature
                 Scenario: Some scenario
@@ -47,6 +50,7 @@ def test_hooks(testdir):
 def test_item_collection_does_not_break_on_non_function_items(testdir):
     """Regression test for https://github.com/pytest-dev/pytest-bdd/issues/317"""
     testdir.makeconftest(
+        # language=python
         """\
         import pytest
 
@@ -66,6 +70,7 @@ def test_item_collection_does_not_break_on_non_function_items(testdir):
     )
 
     testdir.makepyfile(
+        # language=python
         """\
         def test_convert_me_to_custom_item_and_assert_true():
             assert False

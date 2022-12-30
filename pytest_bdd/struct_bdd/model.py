@@ -15,7 +15,7 @@ from marshmallow_polyfield import PolyField
 from pytest_bdd.ast import GherkinDocumentSchema
 from pytest_bdd.const import TYPE_KEYWORD_TYPE
 from pytest_bdd.model import Feature
-from pytest_bdd.utils import ModelSchemaPostLoadable, deepattrgetter, get_caller_module_locals, get_caller_module_path
+from pytest_bdd.utils import ModelSchemaPostLoadable, deepattrgetter
 
 
 class CastableToStrField(fields.Str):
@@ -117,44 +117,32 @@ class Step(Node, ModelSchemaPostLoadable):
 
         return feature
 
-    def build_resolver(self, filename, uri):
-        class Resolver:
-            @staticmethod
-            def resolve(config):
-                feature = self.build_feature(filename=filename, uri=uri, id_generator=config.pytest_bdd_id_generator)
-                return zip_longest((), feature.pickles, fillvalue=feature)
+    @attrs
+    class Locator:
+        step: Step = attrib()
+        filename = attrib()
+        uri = attrib()
 
-        return Resolver
-
-    def _inject_test(
-        self, caller_module_locals=None, caller_module_path=None, algorithm="build_bound_locator_test_function"
-    ):
-        from pytest_bdd.scenario import ModuleScenarioRegistry
-
-        caller_locals = caller_module_locals or get_caller_module_locals(stacklevel=3)
-        caller_module_path = caller_module_path or get_caller_module_path(stacklevel=3)
-
-        method = getattr(
-            ModuleScenarioRegistry.get(caller_locals=caller_locals, caller_module_path=caller_module_path), algorithm
-        )
-        return method(
-            self.build_resolver(
-                str(Path(caller_module_path).as_posix()), str(Path(caller_module_path).relative_to(Path.cwd()))
+        def resolve(self, config):
+            feature = self.step.build_feature(
+                filename=self.filename, uri=self.uri, id_generator=config.pytest_bdd_id_generator
             )
+            return zip_longest((), feature.pickles, fillvalue=feature)
+
+    def as_test(self, filename):
+        from pytest_bdd.scenario import _scenarios
+
+        return _scenarios(
+            locators=[self.Locator(self, str(Path(filename).as_posix()), str(Path(filename).relative_to(Path.cwd())))],
+            return_test_decorator=False,
         )
 
-    def inject_test(self, caller_module_locals=None, caller_module_path=None):
-        return self._inject_test(
-            caller_module_locals=caller_module_locals,
-            caller_module_path=caller_module_path,
-            algorithm="build_bound_locator_test_function",
-        )
+    def as_test_decorator(self, filename):
+        from pytest_bdd.scenario import _scenarios
 
-    def build_test_decorator(self, caller_module_locals=None, caller_module_path=None):
-        return self._inject_test(
-            caller_module_locals=caller_module_locals,
-            caller_module_path=caller_module_path,
-            algorithm="build_bound_locator_test_decorator",
+        return _scenarios(
+            locators=[self.Locator(self, str(Path(filename).as_posix()), str(Path(filename).relative_to(Path.cwd())))],
+            return_test_decorator=True,
         )
 
     @staticmethod

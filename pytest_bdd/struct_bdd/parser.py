@@ -35,7 +35,7 @@ class StructBDDParser(ParserProtocol):
 
     @glob.default
     def glob_default(self):
-        return methodcaller("rglob", "*" if self.kind is None else f"*.bdd.{self.kind}")
+        return methodcaller("glob", "*" if self.kind is None else f"*.bdd.{self.kind}")
 
     @loader.default
     def loader_default(self):

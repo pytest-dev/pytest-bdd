@@ -4,7 +4,7 @@ from pytest_bdd import scenario
 from pytest_bdd.typing.allure import ALLURE_INSTALLED
 
 
-@scenario("./features/outline.feature", "Scenario outline")
+@scenario("tests/allure_/features/scenario.feature", "Simple passed scenario")
 @mark.skipif(not ALLURE_INSTALLED, reason="Allure is not installed")
-def test_scenario_outline():
+def test_simple_passed_scenario():
     pass

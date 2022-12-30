@@ -96,7 +96,7 @@ def test_error_message_for_missing_steps(testdir, verbosity):
         f"""\
         from pytest_bdd import scenarios
 
-        scenarios('.')
+        test_cukes = scenarios('.')
         """
     )
     result = testdir.runpytest("--gherkin-terminal-reporter", verbosity)

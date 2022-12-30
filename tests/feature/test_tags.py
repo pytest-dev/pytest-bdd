@@ -8,7 +8,9 @@ def test_tags_selector(testdir):
     """Test tests selection by tags."""
     testdir.makefile(
         ".ini",
-        pytest="""\
+        pytest=
+        # language=ini
+        """\
             [pytest]
             markers =
                 feature_tag_1
@@ -21,7 +23,9 @@ def test_tags_selector(testdir):
     )
     testdir.makefile(
         ".feature",
-        test="""\
+        test=
+        # language=gherkin
+        """\
             @feature_tag_1 @feature_tag_2
             Feature: Tags
 
@@ -32,19 +36,18 @@ def test_tags_selector(testdir):
             @scenario_tag_10 @scenario_tag_20
             Scenario: Tags 2
                 Given I have a bar
-
             """,
     )
     testdir.makepyfile(
+        # language=python
         f"""\
-        import pytest
         from pytest_bdd import given, scenarios
 
         @given('I have a bar')
         def i_have_bar():
             return 'bar'
 
-        scenarios('test.feature')
+        test_scenarios = scenarios('test.feature')
         """
     )
     result = testdir.runpytest("-m", "scenario_tag_10 and not scenario_tag_01", "-vv")
@@ -67,14 +70,18 @@ def test_tags_after_background_issue_160(testdir):
     """Make sure using a tag after background works."""
     testdir.makefile(
         ".ini",
-        pytest="""\
+        pytest=
+        # language=ini
+        """\
             [pytest]
             markers = tag
             """,
     )
     testdir.makefile(
         ".feature",
-        test="""\
+        test=
+        # language=gherkin
+        """\
             Feature: Tags after background
 
                 Background:
@@ -89,6 +96,7 @@ def test_tags_after_background_issue_160(testdir):
             """,
     )
     testdir.makepyfile(
+        # language=python
         f"""\
         import pytest
         from pytest_bdd import given, scenarios
@@ -101,7 +109,7 @@ def test_tags_after_background_issue_160(testdir):
         def i_have_baz():
             return 'baz'
 
-        scenarios('test.feature')
+        test_scenarios = scenarios('test.feature')
         """
     )
     result = testdir.runpytest("-m", "tag", "-vv").parseoutcomes()
@@ -112,7 +120,9 @@ def test_tags_after_background_issue_160(testdir):
 def test_at_in_scenario(testdir):
     testdir.makefile(
         ".feature",
-        test="""\
+        test=
+        # language=gherkin
+        """\
             Feature: At sign in a scenario
 
                 Scenario: Tags
@@ -123,6 +133,7 @@ def test_at_in_scenario(testdir):
             """,
     )
     testdir.makepyfile(
+        # language=python
         f"""\
         from pytest_bdd import given, scenarios
 
@@ -134,7 +145,7 @@ def test_at_in_scenario(testdir):
         def i_have_baz():
             return 'baz'
 
-        scenarios('test.feature')
+        test_scenarios = scenarios('test.feature')
     """
     )
 
@@ -149,6 +160,7 @@ def test_at_in_scenario(testdir):
 def test_invalid_tags(testdir):
     features = testdir.mkdir("features")
     features.join("test.feature").write_text(
+        # language = gherkin
         """\
         Feature: Invalid tags
             Scenario: Invalid tags
@@ -161,10 +173,11 @@ def test_invalid_tags(testdir):
         ensure=True,
     )
     testdir.makepyfile(
+        # language = python
         f"""\
         from pytest_bdd import scenarios
 
-        scenarios('features')
+        test_scenarios = scenarios('features')
         """
     )
     result = testdir.runpytest()

@@ -9,10 +9,15 @@ Planned
 - Check nested Rules support
 - Check load/autoload of \*.md files
 - Tests for messages and integrations
+- Test filters in scenario/scenarios
+- Load features/scenarios by url
+- Features are autoloaded by default
 
 Unreleased
 ----------
-- Separate generation scripts were mved to pytest environment
+- Relative feature paths are counted from pytest rootpath
+- No more injection of tests into module space; Tests has to be registered directly
+- Separate generation scripts were moved to pytest environment
 - "scenario" no more override collected scenarios; They have to be registered independently
 - Added support of messages
 - Added support of cucumber expressions https://github.com/cucumber/cucumber-expressions#readme

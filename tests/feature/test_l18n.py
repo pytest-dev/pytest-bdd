@@ -17,7 +17,7 @@ def test_pt_l18n(testdir):
 
             from pytest_bdd import scenarios, given, when, then, parsers
 
-            scenarios("steps.feature")
+            test_cukes = scenarios("steps.feature")
 
             @given("que o usuário esteja na tela de login")
             def tela_login():

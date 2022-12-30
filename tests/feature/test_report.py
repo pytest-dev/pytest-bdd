@@ -122,7 +122,7 @@ def test_step_trace(testdir):
             assert start_cucumbers['eat'] == eat
 
 
-        scenarios('test.feature')
+        test_cukes = scenarios('test.feature')
         """
     )
     result = testdir.inline_run("-vvl")

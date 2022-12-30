@@ -73,10 +73,8 @@ def test_background_basic(testdir):
         f"""\
         from pytest_bdd import scenarios
 
-        scenarios("rule.feature")
+        test_cukes = scenarios("rule.feature")
         """
     )
-    # TODO remove debug
-    # result = testdir.runpytest("--messagesndjson", fr"{testdir}\cool.ndjson")
     result = testdir.runpytest()
     result.assert_outcomes(passed=8)

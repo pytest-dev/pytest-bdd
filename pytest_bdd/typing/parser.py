@@ -13,7 +13,11 @@ if TYPE_CHECKING:  # pragma: no cover
 
 @runtime_checkable
 class ParserProtocol(Protocol):
+    # Defines which files would be parsed
     glob: Callable[[Path], list[str | Path]]
+
+    def __init__(self, *args, id_generator=None, **kwargs):
+        ...
 
     def parse(
         self, config: Config | PytestBDDIdGeneratorHandler, path: Path, uri: str, *args, **kwargs

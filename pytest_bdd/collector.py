@@ -37,13 +37,11 @@ class FeatureFileModule(PytestModule):
         module_spec = ModuleSpec(module_name, None)
         module = module_from_spec(module_spec)
 
-        _scenarios(
+        module.test_scenarios = _scenarios(
             feature_paths=[self.fspath],
-            scenario_filter_or_scenario_name=None,
+            filter_=None,
             return_test_decorator=False,
             parser_type=getattr(self, "parser_type", None),
-            _caller_module_locals=module.__dict__,
-            _caller_module_path=self.fspath,
         )
 
         return module

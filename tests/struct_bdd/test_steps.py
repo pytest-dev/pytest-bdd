@@ -10,6 +10,7 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
     [
         partial(param, id="plain-yaml")(
             StructBDDParser.KIND.YAML.value,
+            # language=yaml
             """\
             Name: Steps are executed one by one
             Description: |
@@ -31,6 +32,7 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
         ),
         partial(param, id="plain-hocon")(
             StructBDDParser.KIND.HOCON.value,
+            # language=hocon
             r"""
               Name = Steps are executed one by one
               Description: "Steps are executed one by one. Given and When sections\nare not mandatory in some cases.\n",
@@ -55,6 +57,7 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
         ),
         partial(param, id="plain-json")(
             StructBDDParser.KIND.JSON.value,
+            # language=json
             r"""{
               "Name": "Steps are executed one by one",
               "Description": "Steps are executed one by one. Given and When sections\nare not mandatory in some cases.\n",
@@ -80,6 +83,7 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
         ),
         partial(param, id="plain-hjson")(
             StructBDDParser.KIND.HJSON.value,
+            # language=hjson
             r"""{
               Name: Steps are executed one by one
               Description:
@@ -112,6 +116,7 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
         ),
         partial(param, id="plain-json5")(
             StructBDDParser.KIND.JSON5.value,
+            # language=json5
             r"""{
               Name: 'Steps are executed one by one',
               Description: 'Steps are executed one by one. Given and When sections\nare not mandatory in some cases.\n',
@@ -137,6 +142,7 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
         ),
         partial(param, id="plain-toml")(
             StructBDDParser.KIND.TOML.value,
+            # language=toml
             """\
             Name = "Steps are executed one by one"
             Description='''
@@ -160,6 +166,7 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
         ),
         partial(param, id="complex-yaml")(
             StructBDDParser.KIND.YAML.value,
+            # language=yaml
             """\
             Name: Steps are executed one by one
             Description: |
@@ -186,6 +193,7 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
         ),
         partial(param, id="complex-toml")(
             StructBDDParser.KIND.TOML.value,
+            # language=toml
             """\
             Name = "Steps are executed one by one"
             Description='''
@@ -225,10 +233,11 @@ def test_steps(testdir, kind, file_content):
     )
 
     testdir.makepyfile(
+        # language=python
         """\
         from textwrap import dedent
         from pytest_bdd import given, when, then, scenario, step
-        from pytest_bdd.parser import StructBDDParser
+        from pytest_bdd.struct_bdd.parser import StructBDDParser
         from functools import partial
 
         @scenario("steps.bdd.{kind}", "Executed step by step", parser=partial(StructBDDParser, kind="{kind}"))
@@ -313,10 +322,11 @@ def test_default_loader(testdir, kind, file_content):
     )
 
     testdir.makepyfile(
+        # language=python
         """\
         from textwrap import dedent
         from pytest_bdd import given, when, then, scenario
-        from pytest_bdd.parser import StructBDDParser
+        from pytest_bdd.struct_bdd.parser import StructBDDParser
         from functools import partial
 
 
@@ -374,6 +384,7 @@ def test_default_loader(testdir, kind, file_content):
     [
         partial(param, id="plain-yaml")(
             StructBDDParser.KIND.YAML.value,
+            # language=yaml
             """\
             Name: Steps are executed one by one
             Description: |
@@ -402,41 +413,33 @@ def test_autoload_feature_yaml(testdir, kind, file_content):
     )
 
     testdir.makeconftest(
+        # language=python
         """\
-        from textwrap import dedent
-        from pytest_bdd import given, when, then, scenario
-        from pytest_bdd.parser import StructBDDParser
-
+        from pytest_bdd import given, when, then
 
         @given('I have a foo fixture with value "foo"', target_fixture="foo")
         def foo():
             return "foo"
 
-
         @given("there is a list", target_fixture="results")
         def results():
             return []
-
 
         @when("I append 1 to the list")
         def append_1(results):
             results.append(1)
 
-
         @when("I append 2 to the list")
         def append_2(results):
             results.append(2)
-
 
         @when("I append 3 to the list")
         def append_3(results):
             results.append(3)
 
-
         @then('foo should have value "foo"')
         def foo_is_foo(foo):
             assert foo == "foo"
-
 
         @then("the list should be [1, 2, 3]")
         def check_results(results):
@@ -451,6 +454,7 @@ def test_autoload_feature_yaml(testdir, kind, file_content):
     "file_content",
     [
         partial(param, id="simple")(
+            # language=yaml
             """\
             Name: Examples are substituted
             Steps:
@@ -474,11 +478,12 @@ def test_examples(testdir, file_content):
     )
 
     testdir.makepyfile(
+        # language=python
         """\
         from pytest_bdd import given, then, scenarios
-        from pytest_bdd.parser import StructBDDParser
+        from pytest_bdd.struct_bdd.parser import StructBDDParser
 
-        scenarios("steps.bdd.yaml", parser=StructBDDParser)
+        test_scenarios = scenarios("steps.bdd.yaml", parser=StructBDDParser)
 
         @given('I have {count:g} cucumbers', target_fixture="cucumbers")
         def foo(count):
@@ -499,11 +504,12 @@ def test_examples(testdir, file_content):
 
 def test_dsl(testdir):
     testdir.makepyfile(
+        # language=python
         """\
         from pytest_bdd import given, then
         from pytest_bdd.struct_bdd.model import Step, Table
 
-        step = Step(
+        test_scenarios = Step(
             name="Examples are substituted",
             steps=[
                 Step(type='Given', action='I have <have> cucumbers'),
@@ -519,9 +525,8 @@ def test_dsl(testdir):
                     ]
                 )
             ]
-        )
+        ).as_test(filename=__file__)
 
-        step.inject_test()
 
         @given('I have {count:g} cucumbers', target_fixture="cucumbers")
         def foo(count):
@@ -542,6 +547,7 @@ def test_dsl(testdir):
 
 def test_dsl_decorator(testdir):
     testdir.makepyfile(
+        # language=python
         """\
         from pytest_bdd import given, then
         from pytest_bdd.struct_bdd.model import Step, Table
@@ -567,7 +573,7 @@ def test_dsl_decorator(testdir):
             ]
         )
 
-        @step.build_test_decorator()
+        @step.as_test_decorator(filename=__file__)
         def test(feature:Feature, scenario):
             assert feature.name == "Examples are substituted"
 
@@ -590,6 +596,7 @@ def test_dsl_decorator(testdir):
 
 def test_dsl_as_dict(testdir):
     testdir.makepyfile(
+        # language=python
         """\
         from pytest_bdd import given, then
         from pytest_bdd.struct_bdd.model import Step
@@ -616,7 +623,7 @@ def test_dsl_as_dict(testdir):
             )
         )
 
-        step.inject_test()
+        test_sceanrios = step.as_test(filename=__file__)
 
         @given('I have {count:g} cucumbers', target_fixture="cucumbers")
         def foo(count):
@@ -637,6 +644,7 @@ def test_dsl_as_dict(testdir):
 
 def test_dsl_keyworded_steps(testdir):
     testdir.makepyfile(
+        # language=python
         """\
         from pytest_bdd import given, then
         from pytest_bdd.struct_bdd.model import Step, Given, And, Then, Table
@@ -659,7 +667,7 @@ def test_dsl_keyworded_steps(testdir):
             ]
         )
 
-        step.inject_test()
+        test_scenarios = step.as_test(filename=__file__)
 
         @given('I have {count:g} cucumbers', target_fixture="cucumbers")
         def foo(count):
@@ -680,11 +688,12 @@ def test_dsl_keyworded_steps(testdir):
 
 def test_dsl_alternative_steps(testdir):
     testdir.makepyfile(
+        # language=python
         """\
         from pytest_bdd import given, then, step
         from pytest_bdd.struct_bdd.model import Step, Given, And, Then, Table, Alternative, When
 
-        Step(
+        test_scenarios = Step(
             name="Alternative steps",
             steps=[
                 Given('I have <have> cucumbers'),
@@ -711,7 +720,7 @@ def test_dsl_alternative_steps(testdir):
                     ]
                 )
             ]
-        ).inject_test()
+        ).as_test(filename=__file__)
 
         @given('I have {count:g} cucumbers', target_fixture="cucumbers")
         def foo(count):
@@ -736,11 +745,12 @@ def test_dsl_alternative_steps(testdir):
 
 def test_dsl_joined_tables(testdir):
     testdir.makepyfile(
+        # language=python
         """\
         from pytest_bdd import given, then, step
         from pytest_bdd.struct_bdd.model import Step, Given, And, Then, Table, Alternative, When, Join
 
-        Step(
+        test_scenarios = Step(
             name="Alternative steps",
             steps=[
                 Given('I have <have> cucumbers'),
@@ -777,7 +787,7 @@ def test_dsl_joined_tables(testdir):
                     ]
                 )
             ]
-        ).inject_test()
+        ).as_test(filename=__file__)
 
         @given('I have {count:g} cucumbers', target_fixture="cucumbers")
         def foo(count):

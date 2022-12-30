@@ -537,7 +537,7 @@ A common use case is when we have to assert the outcome of an HTTP request:
 
     from my_app.models import Article
 
-    scenarios("blog.feature")
+    test_cukes = scenarios("blog.feature")
 
 
     @given("there is an article", target_fixture="article")
@@ -594,7 +594,7 @@ First option is `scenarios` helper.
     from pytest_bdd import scenarios
 
     # assume 'features' subfolder is in this file's directory
-    scenarios('features')
+    test_cukes = scenarios('features')
 
 That's all you need to do to bind all scenarios found in the `features` folder!
 Note that you can pass multiple paths, and those paths can be either feature files or feature folders.
@@ -605,10 +605,10 @@ Note that you can pass multiple paths, and those paths can be either feature fil
     from pytest_bdd import scenarios
 
     # pass multiple paths/files
-    scenarios('features', 'other_features/some.feature', 'some_other_features')
+    test_cukes = scenarios('features', 'other_features/some.feature', 'some_other_features')
 
 But what if you need to manually bind certain scenario, leaving others to be automatically bound?
-Just write your scenario in a `normal` way, but ensure you do it `AFTER` the call of `scenarios` helper.
+Just write your scenario in a `normal` way, but filter out scenario, and bind it manually:
 
 
 .. code-block:: python
@@ -616,7 +616,7 @@ Just write your scenario in a `normal` way, but ensure you do it `AFTER` the cal
     from pytest_bdd import scenario, scenarios
 
     # assume 'features' subfolder is in this file's directory
-    scenarios('features')
+    test_cukes = scenarios('features', filter_ = lambda: config, feature, scenario: scenario.name != 'Test something')
 
     @scenario('features/some.feature', 'Test something')
     def test_something():
@@ -624,9 +624,6 @@ Just write your scenario in a `normal` way, but ensure you do it `AFTER` the cal
 
 In the example above `test_something` scenario binding will be kept manual, other scenarios found in the `features`
 folder will be bound automatically.
-
-Scenarios registered by `scenario` or `scenarios` are registered once per test module (and re-registered by
-latest inclusions, so keep it wisely).
 
 Both `scenario` or `scenarios` could be used as decorators or as operator calls. Also they could be inlined:
 
@@ -706,7 +703,7 @@ Scenario outlines
 
 Scenarios can be parametrized to cover few cases. In Gherkin the variable
 templates are written using corner braces as ``<somevalue>``.
-`Gherkin scenario outlines <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#scenario-outlines>`_ are supported by pytest-bdd
+`Gherkin scenario outlines <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#scenario-outlines>`_ are supported by pytest-bdd-ng
 exactly as it's described in be behave_ docs.
 
 Example:
@@ -785,7 +782,7 @@ The things you can do (and that is also a recommended way):
           └──login.feature
 
 This looks fine, but how do you run tests only for certain feature?
-As pytest-bdd uses pytest, and bdd scenarios are actually normal tests. But test files
+As pytest-bdd-ng uses pytest, and bdd scenarios are actually normal tests. But test files
 are separate from the feature files, the mapping is up to developers, so the test files structure can look
 completely different:
 
@@ -813,7 +810,7 @@ For picking up tests to run we can use
 `tests selection <http://pytest.org/latest/usage.html#specifying-tests-selecting-tests>`_ technique. The problem is that
 you have to know how your tests are organized, knowing only the feature files organization is not enough.
 `cucumber tags <https://github.com/cucumber/cucumber/wiki/Tags>`_ introduce standard way of categorizing your features
-and scenarios, which pytest-bdd supports. For example, we could have:
+and scenarios, which pytest-bdd-ng supports. For example, we could have:
 
 .. code-block:: gherkin
 
@@ -824,7 +821,7 @@ and scenarios, which pytest-bdd supports. For example, we could have:
       Scenario: Successful login
 
 
-pytest-bdd uses `pytest markers <http://pytest.org/latest/mark.html#mark>`_ as a `storage` of the tags for the given
+pytest-bdd-ng uses `pytest markers <http://pytest.org/latest/mark.html#mark>`_ as a `storage` of the tags for the given
 scenario test, so we can use standard test selection:
 
 .. code-block:: bash
@@ -853,7 +850,7 @@ Test setup
 ----------
 
 Test setup is implemented within the Given section. Even though these steps
-are executed imperatively to apply possible side-effects, pytest-bdd is trying
+are executed imperatively to apply possible side-effects, pytest-bdd-ng is trying
 to benefit of the PyTest fixtures which is based on the dependency injection
 and makes the setup more declarative style.
 
@@ -887,7 +884,7 @@ appear only as the side-effects in the run-time and not declared in the code.
 The publish article step has to trust that the article is already in the context,
 has to know the name of the attribute it is stored there, the type etc.
 
-In pytest-bdd you just declare an argument of the step function that it depends on
+In pytest-bdd-ng you just declare an argument of the step function that it depends on
 and the PyTest will make sure to provide it.
 
 Still side effects can be applied in the imperative style by design of the BDD.
@@ -932,7 +929,7 @@ Backgrounds
 
 It's often the case that to cover certain feature, you'll need multiple scenarios. And it's logical that the
 setup for those scenarios will have some common parts (if not equal). For this, there are `backgrounds`.
-pytest-bdd implements `Gherkin backgrounds <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#backgrounds>`_ for
+pytest-bdd-ng implements `Gherkin backgrounds <http://behat.org/en/v3.0/user_guide/writing_scenarios.html#backgrounds>`_ for
 features.
 
 .. code-block:: gherkin
@@ -1052,7 +1049,7 @@ then
 Feature file paths
 ------------------
 
-By default, pytest-bdd will use current module's path as base path for finding feature files, but this behaviour can be changed in the pytest configuration file (i.e. `pytest.ini`, `tox.ini` or `setup.cfg`) by declaring the new base path in the `bdd_features_base_dir` key. The path is interpreted as relative to the working directory when starting pytest.
+By default, pytest-bdd-ng will use current module's path as base path for finding feature files, but this behaviour can be changed in the pytest configuration file (i.e. `pytest.ini`, `tox.ini` or `setup.cfg`) by declaring the new base path in the `bdd_features_base_dir` key. The path is interpreted as relative to the working directory when starting pytest.
 You can also override features base path on a per-scenario basis, in order to override the path for specific tests.
 
 pytest.ini:
@@ -1121,13 +1118,13 @@ in the Python docs.
 Localization
 ------------
 
-pytest-bdd supports all localizations which Gherkin `does <https://cucumber.io/docs/gherkin/languages/>`_
+pytest-bdd-ng supports all localizations which Gherkin `does <https://cucumber.io/docs/gherkin/languages/>`_
 
 
 Hooks
 -----
 
-pytest-bdd exposes several `pytest hooks <http://pytest.org/latest/plugins.html#well-specified-hooks>`_
+pytest-bdd-ng exposes several `pytest hooks <http://pytest.org/latest/plugins.html#well-specified-hooks>`_
 which might be helpful building useful reporting, visualization, etc on top of it:
 
 * pytest_bdd_before_scenario(request, feature, scenario) - Called before scenario is executed
@@ -1151,7 +1148,7 @@ which might be helpful building useful reporting, visualization, etc on top of i
 Fixtures
 --------
 
-pytest-bdd exposes several plugin fixtures to give more testing flexibility
+pytest-bdd-ng exposes several plugin fixtures to give more testing flexibility
 
 * bdd_example - The current scenario outline parametrization.
 * step_registry - Contains registry of all user-defined steps
@@ -1228,10 +1225,11 @@ Scenario could be imported as usual, but with specified parser:
     from textwrap import dedent
     from pytest_bdd import given, when, then, scenario
     from pytest_bdd.parser import StructBDDParser
+    from functools import partial
 
     kind = StructBDDParser.KIND.YAML
 
-    @scenario(f"steps.bdd.{kind}", "Executed step by step", parser=StructBDDParser(kind=kind))
+    @scenario(f"steps.bdd.{kind}", "Executed step by step", parser=partial(StructBDDParser, kind=kind)
     def test_steps(feature):
         pass
 
@@ -1242,7 +1240,7 @@ Another option is to inject built scenario directly:
 
     from pytest_bdd.struct_bdd.model import Step, Table
 
-    step = Step(
+    test_cukes = Step(
         name="Examples are substituted",
         steps=[
             Step(type='Given', action='I have <have> cucumbers'),
@@ -1258,9 +1256,8 @@ Another option is to inject built scenario directly:
                 ]
             )
         ]
-    )
+    ).as_test(filename=__file__)
 
-    step.inject_test()
 
 There is also an option to build Step from dict(and use your own file format/preprocessor)
 
@@ -1268,7 +1265,7 @@ There is also an option to build Step from dict(and use your own file format/pre
 
     from pytest_bdd.struct_bdd.model import Step
 
-    step = Step.from_dict(
+    test_cukes = Step.from_dict(
             dict(
                 Name="Examples are substituted",
                 Steps=[
@@ -1288,7 +1285,7 @@ There is also an option to build Step from dict(and use your own file format/pre
                     )
                 ]
             )
-        )
+        ).as_test(filename=__file__)
 
     @step.build_test_decorator()
     def test(feature:Feature, scenario):
