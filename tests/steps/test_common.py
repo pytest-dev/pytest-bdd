@@ -101,7 +101,7 @@ def test_step_functions_same_parser(pytester):
 
         scenarios("target_fixture.feature")
 
-        STEP = 'there is a foo with value "(?P<value>\\w+)"'
+        STEP = r'there is a foo with value "(?P<value>\\w+)"'
 
         @given(STEP)
         def _():

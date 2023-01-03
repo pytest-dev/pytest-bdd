@@ -74,9 +74,11 @@ def test_verbose_mode_should_preserve_displaying_regular_tests_as_usual(pytester
     regular.assert_outcomes(passed=1, failed=0)
     gherkin.assert_outcomes(passed=1, failed=0)
 
-    regular.stdout.fnmatch_lines("test_verbose_mode_should_preserve_displaying_regular_tests_as_usual.py . [100%]")
-    gherkin.stdout.fnmatch_lines(
-        "test_verbose_mode_should_preserve_displaying_regular_tests_as_usual.py::test_1 PASSED [100%]"
+    regular.stdout.re_match_lines(
+        r"test_verbose_mode_should_preserve_displaying_regular_tests_as_usual\.py \.\s+\[100%\]"
+    )
+    gherkin.stdout.re_match_lines(
+        r"test_verbose_mode_should_preserve_displaying_regular_tests_as_usual\.py::test_1 PASSED\s+\[100%\]"
     )
 
 

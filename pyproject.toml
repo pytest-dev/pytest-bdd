@@ -42,7 +42,7 @@ pytest = ">=6.2.0"
 typing-extensions = "*"
 
 [tool.poetry.group.dev.dependencies]
-tox = "^3.27.0"
+tox = "^4.1.3"
 mypy = "^0.982"
 types-setuptools = "^65.5.0.2"
 pytest-xdist = "^3.0.2"
