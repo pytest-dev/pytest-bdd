@@ -36,17 +36,17 @@ def add_options(parser: Parser):
     """Add pytest-bdd options."""
     group = parser.getgroup("bdd", "Scenario")
     group.addoption(
-        "--feature-autoload",
-        action="store_true",
+        "--disable-feature-autoload",
+        action="store_false",
         dest="feature_autoload",
-        default=None,
-        help="Turn on feature files autoload",
+        default=True,
+        help="Turn off feature files autoload",
     )
     parser.addini(
-        "feature_autoload",
-        default=False,
+        "disable_feature_autoload",
+        default=True,
         type="bool",
-        help="Turn on feature files autoload",
+        help="Turn off feature files autoload",
     )
 
 

@@ -42,6 +42,7 @@ def test_step_trace(testdir):
     )
     testdir.makefile(
         ".feature",
+        # language=gherkin
         test="""\
         @feature-tag
         Feature: One passing scenario, one failing scenario
@@ -67,10 +68,10 @@ def test_step_trace(testdir):
                 | float   | 1.0    |
         """,
     )
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         f"""\
-        import pytest
-        from pytest_bdd import given, when, scenario, parsers
+        from pytest_bdd import given, parsers
 
         @given('a passing step')
         def a_passing_step():
@@ -87,18 +88,6 @@ def test_step_trace(testdir):
         @given(parsers.parse('type {{type}} and value {{value}}'))
         def type_type_and_value_value():
             return 'pass'
-
-        @scenario('test.feature', 'Passing')
-        def test_passing():
-            pass
-
-        @scenario('test.feature', 'Failing')
-        def test_failing():
-            pass
-
-        @scenario('test.feature', 'Passing outline')
-        def test_passing_outline():
-            pass
         """
     )
     result, jsonobject = runandparse(testdir)
@@ -111,7 +100,7 @@ def test_step_trace(testdir):
             "elements": [
                 {
                     "description": "",
-                    "id": "test_passing[test.feature-One passing scenario, one failing scenario-Passing]",
+                    "id": "test_scenarios[test.feature-One passing scenario, one failing scenario-Passing]",
                     "keyword": "Scenario",
                     "line": 5,
                     "name": "Passing",
@@ -136,7 +125,7 @@ def test_step_trace(testdir):
                 },
                 {
                     "description": "",
-                    "id": "test_failing[test.feature-One passing scenario, one failing scenario-Failing]",
+                    "id": "test_scenarios[test.feature-One passing scenario, one failing scenario-Failing]",
                     "keyword": "Scenario",
                     "line": 10,
                     "name": "Failing",
@@ -175,7 +164,7 @@ def test_step_trace(testdir):
                     "line": 15,
                     "type": "scenario",
                     "id": (
-                        "test_passing_outline["
+                        "test_scenarios["
                         "test.feature-One passing scenario, one failing scenario-"
                         "Passing outline[table_rows:[line: 20]]"
                         "]"
@@ -198,7 +187,7 @@ def test_step_trace(testdir):
                     "line": 15,
                     "type": "scenario",
                     "id": (
-                        "test_passing_outline["
+                        "test_scenarios["
                         "test.feature-One passing scenario, one failing scenario-"
                         "Passing outline[table_rows:[line: 21]]"
                         "]"
@@ -221,7 +210,7 @@ def test_step_trace(testdir):
                     "line": 15,
                     "type": "scenario",
                     "id": (
-                        "test_passing_outline["
+                        "test_scenarios["
                         "test.feature-One passing scenario, one failing scenario-"
                         "Passing outline[table_rows:[line: 22]]"
                         "]"

@@ -16,6 +16,7 @@ def test_cucumber_expression(
 ):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         arguments="""\
             Feature: StepHandler arguments
                 Scenario: Every step takes a parameter with the same name
@@ -28,10 +29,11 @@ def test_cucumber_expression(
             """,
     )
 
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
         import pytest
-        from pytest_bdd import given, when, then, scenario
+        from pytest_bdd import given, when, then
         from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
         from functools import partial
         """
@@ -39,10 +41,6 @@ def test_cucumber_expression(
         """
 
         cucumber_expression = partial(CucumberExpression, parameter_type_registry = ParameterTypeRegistry())
-
-        @scenario("arguments.feature", "Every step takes a parameter with the same name")
-        def test_arguments():
-            pass
 
         @pytest.fixture
         def values():
@@ -54,11 +52,9 @@ def test_cucumber_expression(
         def i_have(euro, values):
             assert euro == values.pop(0)
 
-
         @when(cucumber_expression("I pay {} Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
         def i_pay(euro, values, request):
             assert euro == values.pop(0)
-
 
         @then(cucumber_expression("I should have {int} Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
         def i_should_have(euro, values):
@@ -83,6 +79,7 @@ def test_cucumber_regular_expression(
 ):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         arguments="""\
             Feature: StepHandler arguments
                 Scenario: Every step takes a parameter with the same name
@@ -95,10 +92,11 @@ def test_cucumber_regular_expression(
             """,
     )
 
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
         import pytest
-        from pytest_bdd import given, when, then, scenario
+        from pytest_bdd import given, when, then
         from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
         from functools import partial
         """
@@ -107,25 +105,17 @@ def test_cucumber_regular_expression(
 
         cucumber_expression = partial(CucumberRegularExpression, parameter_type_registry = ParameterTypeRegistry())
 
-        @scenario("arguments.feature", "Every step takes a parameter with the same name")
-        def test_arguments():
-            pass
-
         @pytest.fixture
         def values():
             return [1, 2, 1, 0, 999999]
 
-        """
-        """
         @given(cucumber_expression("I have (\\d+) Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
         def i_have(euro, values):
             assert euro == values.pop(0)
 
-
         @when(cucumber_expression("I pay (.*) Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
         def i_pay(euro, values, request):
             assert euro == values.pop(0)
-
 
         @then(cucumber_expression("I should have (\\d+) Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
         def i_should_have(euro, values):

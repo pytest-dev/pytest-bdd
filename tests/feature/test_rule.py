@@ -1,5 +1,6 @@
 """Test feature background."""
 
+# language=gherkin
 FEATURE = '''\
     Feature: Some rules
         """
@@ -53,9 +54,9 @@ FEATURE = '''\
               |  e  |
 '''
 
+# language=python
 STEPS = """\
     from pytest_bdd import given
-
 
     @given("{}")
     def step():
@@ -69,12 +70,5 @@ def test_background_basic(testdir):
 
     testdir.makeconftest(STEPS)
 
-    testdir.makepyfile(
-        f"""\
-        from pytest_bdd import scenarios
-
-        test_cukes = scenarios("rule.feature")
-        """
-    )
     result = testdir.runpytest()
     result.assert_outcomes(passed=8)

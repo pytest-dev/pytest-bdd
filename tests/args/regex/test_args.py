@@ -13,6 +13,7 @@ from pytest import mark
 def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_string):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         arguments="""\
             Feature: StepHandler arguments
                 Scenario: Every step takes a parameter with the same name
@@ -24,18 +25,14 @@ def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_strin
             """,
     )
 
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
         import pytest
-        from pytest_bdd import given, when, then, scenario
+        from pytest_bdd import given, when, then
         """
         f"{parser_import_string}"
         r"""
-
-        @scenario("arguments.feature", "Every step takes a parameter with the same name")
-        def test_arguments():
-            pass
-
         @pytest.fixture
         def values():
             return [1, 2, 1, 0, 999999]
@@ -44,11 +41,9 @@ def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_strin
         def i_have(euro, values):
             assert euro == values.pop(0)
 
-
         @when(parse_re(r"I pay (\d+) Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
-        def i_pay(euro, values, request):
+        def i_pay(euro, values):
             assert euro == values.pop(0)
-
 
         @then(parse_re(r"I should have (?P<euro>\d+) Euro"), converters=dict(euro=int))
         def i_should_have(euro, values):
@@ -69,6 +64,7 @@ def test_every_steps_takes_param_with_the_same_name(testdir, parser_import_strin
 def test_argument_in_when(testdir, parser_import_string):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         arguments="""\
             Feature: StepHandler arguments
                 Scenario: Argument in when, step 1
@@ -78,10 +74,11 @@ def test_argument_in_when(testdir, parser_import_string):
             """,
     )
 
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
         import pytest
-        from pytest_bdd import given, when, then, scenario
+        from pytest_bdd import given, when, then
         """
         f"{parser_import_string}"
         r"""
@@ -89,20 +86,13 @@ def test_argument_in_when(testdir, parser_import_string):
         def arguments():
             return dict()
 
-
-        @scenario("arguments.feature", "Argument in when, step 1")
-        def test_arguments():
-            pass
-
         @given(parse_re(r"I have an argument (?P<arg>\d+)"))
         def argument(arguments, arg):
             arguments["arg"] = arg
 
-
         @when(parse_re(r"I get argument (?P<arg>\d+)"))
         def get_argument(arguments, arg):
             arguments["arg"] = arg
-
 
         @then(parse_re(r"My argument should be (?P<arg>\d+)"))
         def assert_that_my_argument_is_arg(arguments, arg):

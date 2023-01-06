@@ -8,6 +8,7 @@ from pytest_bdd.utils import collect_dumped_objects
 def test_steps(testdir):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         steps="""\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
@@ -24,43 +25,34 @@ def test_steps(testdir):
             """,
     )
 
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
-        from pytest_bdd import given, when, then, scenario
-
-        @scenario("steps.feature", "Executed step by step")
-        def test_steps():
-            pass
+        from pytest_bdd import given, when, then
 
         @given('I have a foo fixture with value "foo"', target_fixture="foo")
         def foo():
             return "foo"
 
-
         @given("there is a list", target_fixture="results")
         def results():
             return []
-
 
         @when("I append 1 to the list")
         def append_1(results):
             results.append(1)
 
-
         @when("I append 2 to the list")
         def append_2(results):
             results.append(2)
-
 
         @when("I append 3 to the list")
         def append_3(results):
             results.append(3)
 
-
         @then('foo should have value "foo"')
         def foo_is_foo(foo):
             assert foo == "foo"
-
 
         @then("the list should be [1, 2, 3]")
         def check_results(results):
@@ -71,10 +63,17 @@ def test_steps(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_step_function_can_be_decorated_multiple_times(testdir):
-    testdir.makefile(
-        ".feature",
-        steps="""\
+def test_step_function_can_be_decorated_multiple_times(testdir, tmp_path):
+    testdir.makeini(
+        f"""\
+         [pytest]
+         bdd_features_base_dir={tmp_path}
+         """
+    )
+    (tmp_path / "steps.feature").write_text(
+        textwrap.dedent(
+            # language=gherkin
+            """\
             Feature: Steps decoration
                 Scenario: Step function can be decorated multiple times
                     Given there is a foo with value 42
@@ -84,8 +83,10 @@ def test_step_function_can_be_decorated_multiple_times(testdir):
                     Then I make no mistakes
                     And I make no mistakes again
             """,
+        )
     )
     testdir.makepyfile(
+        # language=python
         """\
         from pytest import fixture
         from pytest_bdd import given, when, then, scenario, parsers
@@ -137,48 +138,41 @@ def test_all_steps_can_provide_fixtures(testdir):
     """Test that given/when/then can all provide fixtures."""
     testdir.makefile(
         ".feature",
-        steps=
         # language=gherkin
-        """\
-        Feature: StepHandler fixture
-            Scenario: Given steps can provide fixture
-                Given Foo is "bar"
-                Then foo should be "bar"
-            Scenario: When steps can provide fixture
-                When Foo is "baz"
-                Then foo should be "baz"
-            Scenario: Then steps can provide fixture
-                Then foo is "qux"
-                And foo should be "qux"
+        steps="""\
+            Feature: StepHandler fixture
+                Scenario: Given steps can provide fixture
+                    Given Foo is "bar"
+                    Then foo should be "bar"
+                Scenario: When steps can provide fixture
+                    When Foo is "baz"
+                    Then foo should be "baz"
+                Scenario: Then steps can provide fixture
+                    Then foo is "qux"
+                    And foo should be "qux"
         """,
     )
 
-    testdir.makepyfile(
+    testdir.makeconftest(
         # language=python
         """\
-        from pytest_bdd import given, when, then, parsers, scenarios
-
-        test_scenarios = scenarios("steps.feature")
+        from pytest_bdd import given, when, then, parsers
 
         @given(parsers.parse('Foo is "{value}"'), target_fixture="foo")
         def given_foo_is_value(value):
             return value
 
-
         @when(parsers.parse('Foo is "{value}"'), target_fixture="foo")
         def when_foo_is_value(value):
             return value
-
 
         @then(parsers.parse('Foo is "{value}"'), target_fixture="foo")
         def then_foo_is_value(value):
             return value
 
-
         @then(parsers.parse('foo should be "{value}"'))
         def foo_is_foo(foo, value):
             assert foo == value
-
         """
     )
     result = testdir.runpytest()
@@ -188,6 +182,7 @@ def test_all_steps_can_provide_fixtures(testdir):
 def test_when_first(testdir):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         steps="""\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
@@ -198,18 +193,14 @@ def test_when_first(testdir):
                     Then I make no mistakes
             """,
     )
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
-        from pytest_bdd import when, then, scenario
-
-        @scenario("steps.feature", "When step can be the first")
-        def test_steps():
-            pass
+        from pytest_bdd import when, then
 
         @when("I do nothing")
         def do_nothing():
             pass
-
 
         @then("I make no mistakes")
         def no_errors():
@@ -223,6 +214,7 @@ def test_when_first(testdir):
 def test_then_after_given(testdir):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         steps="""\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
@@ -234,13 +226,10 @@ def test_then_after_given(testdir):
 
             """,
     )
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
-        from pytest_bdd import given, then, scenario
-
-        @scenario("steps.feature", "Then step can follow Given step")
-        def test_steps():
-            pass
+        from pytest_bdd import given, then
 
         @given('I have a foo fixture with value "foo"', target_fixture="foo")
         def foo():
@@ -266,6 +255,7 @@ def test_then_after_given(testdir):
 def test_unknown_first(testdir, keyword):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         steps=f"""\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
@@ -277,13 +267,10 @@ def test_unknown_first(testdir, keyword):
 
             """,
     )
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
-        from pytest_bdd import step, then, scenario
-
-        @scenario("steps.feature", "Then step can follow Given step")
-        def test_steps():
-            pass
+        from pytest_bdd import step, then
 
         @step('I have a foo fixture with value "foo"', target_fixture="foo")
         def foo():
@@ -301,6 +288,7 @@ def test_unknown_first(testdir, keyword):
 def test_conftest(testdir):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         steps="""\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
@@ -313,27 +301,17 @@ def test_conftest(testdir):
             """,
     )
     testdir.makeconftest(
+        # language=python
         """\
         from pytest_bdd import given, then
-
 
         @given("I have a bar", target_fixture="bar")
         def bar():
             return "bar"
 
-
         @then('bar should have value "bar"')
         def bar_is_bar(bar):
             assert bar == "bar"
-        """
-    )
-    testdir.makepyfile(
-        """\
-        from pytest_bdd import scenario
-
-        @scenario("steps.feature", "All steps are declared in the conftest")
-        def test_steps():
-            pass
         """
     )
     result = testdir.runpytest()
@@ -344,6 +322,7 @@ def test_multiple_given(testdir):
     """Using the same given fixture raises an error."""
     testdir.makefile(
         ".feature",
+        # language=gherkin
         steps="""\
             Feature: Steps are executed one by one
                 Scenario: Using the same given twice
@@ -353,24 +332,18 @@ def test_multiple_given(testdir):
 
             """,
     )
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
-        from pytest_bdd import parsers, given, then, scenario
-
+        from pytest_bdd import parsers, given, then
 
         @given(parsers.parse("foo is {value}"), target_fixture="foo")
         def foo(value):
             return value
 
-
         @then(parsers.parse("foo should be {value}"))
         def foo_should_be(foo, value):
             assert foo == value
-
-
-        @scenario("steps.feature", "Using the same given twice")
-        def test_given_twice():
-            pass
         """
     )
     result = testdir.runpytest()
@@ -381,6 +354,7 @@ def test_step_hooks(testdir):
     """When step fails."""
     testdir.makefile(
         ".feature",
+        # language=gherkin
         test="""\
             Feature: StepHandler hooks
                 Scenario: When step has hook on failure
@@ -400,6 +374,7 @@ def test_step_hooks(testdir):
             """,
     )
     testdir.makepyfile(
+        # language=python
         """\
         import pytest
         from pytest_bdd import given, when, scenario
@@ -490,11 +465,12 @@ def test_step_trace(testdir):
         """
         [pytest]
         console_output_style=classic
-    """
+        """
     )
 
     testdir.makefile(
         ".feature",
+        # language=gherkin
         test="""\
             Feature: Test step trace
                 Scenario: When step has failure
@@ -514,8 +490,8 @@ def test_step_trace(testdir):
             """,
     )
     testdir.makepyfile(
+        # language=python
         """\
-        import pytest
         from pytest_bdd import given, when, scenario
 
         @given('I have a bar')
@@ -569,6 +545,7 @@ def test_step_trace(testdir):
 def test_steps_parameter_mapping(testdir):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         steps="""\
             Feature: Steps parameters don't have to be passed as fixtures
 
@@ -578,15 +555,12 @@ def test_steps_parameter_mapping(testdir):
 
             """,
     )
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
         from pytest_bdd.typing.pytest import FixtureLookupError
         from pytest import raises
-        from pytest_bdd import given, then, scenario
-
-        @scenario("steps.feature", "StepHandler parameter don't have to be injected as fixture")
-        def test_steps():
-            pass
+        from pytest_bdd import given, then
 
         @given('I have a "{foo}" parameter which is not injected as fixture', params_fixtures_mapping={})
         def foo(foo):
@@ -605,6 +579,7 @@ def test_steps_parameter_mapping(testdir):
 def test_steps_parameter_mapping_could_redirect_to_fixture(testdir):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         steps="""\
             Feature: Steps parameters could be redirected to another fixture
 
@@ -613,15 +588,12 @@ def test_steps_parameter_mapping_could_redirect_to_fixture(testdir):
                     Then fixture "bar" has value "foo"
             """,
     )
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
         from pytest_bdd.typing.pytest import FixtureLookupError
         from pytest import raises
-        from pytest_bdd import given, then, scenario
-
-        @scenario("steps.feature", "Steps parameters could be redirected to another fixture")
-        def test_steps():
-            pass
+        from pytest_bdd import given, then
 
         @given('I have a "{foo}" parameter which is injected as fixture "bar"', params_fixtures_mapping={"foo":"bar"})
         def foo(foo, bar):
@@ -643,6 +615,7 @@ def test_steps_parameter_mapping_could_redirect_to_fixture(testdir):
 def test_steps_parameter_mapping_rejection_for_all_parameters(testdir, mapping_string):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         steps="""\
             Feature: Steps parameters could be rejected at all to be injected as fixtures
 
@@ -651,15 +624,12 @@ def test_steps_parameter_mapping_rejection_for_all_parameters(testdir, mapping_s
                     Then parameters "foo", "bar", "fizz", "buzz" are not visible in fixtures
             """,
     )
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
         from pytest_bdd.typing.pytest import FixtureLookupError
         from pytest import raises
-        from pytest_bdd import given, then, scenario
-
-        @scenario("steps.feature", "Steps parameters could be rejected at all to be injected as fixtures")
-        def test_steps():
-            pass
+        from pytest_bdd import given, then
 
         @given('I have a "{foo}", "{bar}", "{fizz}", "{buzz}" parameters which are rejected by wild pattern',
                """
@@ -692,6 +662,7 @@ def test_steps_parameter_mapping_rejection_for_all_parameters(testdir, mapping_s
 def test_steps_parameter_mapping_acceptance_for_all_parameters(testdir, mapping_string):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         steps="""\
             Feature: Steps parameters could be accepted at all to be injected as fixtures
 
@@ -700,15 +671,10 @@ def test_steps_parameter_mapping_acceptance_for_all_parameters(testdir, mapping_
                     Then parameters "foo", "bar", "fizz", "buzz" are visible in fixtures
             """,
     )
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
-        from pytest_bdd.typing.pytest import FixtureLookupError
-        from pytest import raises
-        from pytest_bdd import given, then, scenario
-
-        @scenario("steps.feature", "Steps parameters could be accepted at all to be injected as fixtures")
-        def test_steps():
-            pass
+        from pytest_bdd import given, then
 
         @given('I have a "{foo}", "{bar}", "{fizz}", "{buzz}" parameters which are accepted by wild pattern',
             """
@@ -736,6 +702,7 @@ def test_steps_parameter_mapping_acceptance_for_all_parameters(testdir, mapping_
 def test_steps_parameter_mapping_acceptance_for_non_listed_parameters_by_wildcard(testdir):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         steps="""\
             Feature: Steps parameters could be accepted by wildcard and by list to be injected as fixtures
 
@@ -745,15 +712,10 @@ def test_steps_parameter_mapping_acceptance_for_non_listed_parameters_by_wildcar
                     Then parameters "cool_foo", "nice_bar" are visible in fixtures
             """,
     )
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
-        from pytest_bdd.typing.pytest import FixtureLookupError
-        from pytest import raises
-        from pytest_bdd import given, then, scenario
-
-        @scenario("steps.feature", "Steps parameters could be accepted by wildcard and by list to be injected as fixtures")
-        def test_steps():
-            pass
+        from pytest_bdd import given, then
 
         @given('I have a "{foo}", "{bar}", "{fizz}", "{buzz}" parameters few of which are accepted by wild pattern',
                params_fixtures_mapping={'foo': 'cool_foo', 'bar': 'nice_bar', ...: ...})
@@ -787,22 +749,19 @@ def test_steps_with_yield(testdir):
 
     testdir.makefile(
         ".feature",
-        a=
         # language=gherkin
-        """\
-        Feature: A feature
+        a="""\
+            Feature: A feature
 
-            Scenario: A scenario
-                When I setup stuff
-                Then stuff should be 42
+                Scenario: A scenario
+                    When I setup stuff
+                    Then stuff should be 42
         """,
     )
-    testdir.makepyfile(
+    testdir.makeconftest(
         # language=python
         """\
-        from pytest_bdd import when, then, scenarios
-
-        test_scenarios = scenarios("a.feature")
+        from pytest_bdd import when, then
 
         @when("I setup stuff", target_fixture="stuff")
         def stuff():
@@ -828,10 +787,17 @@ def test_steps_with_yield(testdir):
     )
 
 
-def test_liberal_step_decorator(testdir):
-    testdir.makefile(
-        ".feature",
-        steps="""\
+def test_liberal_step_decorator(testdir, tmp_path):
+    testdir.makeini(
+        f"""\
+        [pytest]
+        bdd_features_base_dir={tmp_path}
+        """
+    )
+    (tmp_path / "steps.feature").write_text(
+        textwrap.dedent(
+            # language=gherkin
+            """\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
                 are not mandatory in some cases. All steps could be
@@ -844,10 +810,12 @@ def test_liberal_step_decorator(testdir):
                     But I execute buzz step
                     Then I execute nice step
                     * I execute good step
-            """,
+            """
+        )
     )
 
     testdir.makepyfile(
+        # language=python
         """\
         from pytest_bdd import step, scenario
         from pytest import fixture
@@ -874,10 +842,17 @@ def test_liberal_step_decorator(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_liberal_keyworded_step_decorator(testdir):
-    testdir.makefile(
-        ".feature",
-        steps="""\
+def test_liberal_keyworded_step_decorator(testdir, tmp_path):
+    testdir.makeini(
+        f"""\
+        [pytest]
+        bdd_features_base_dir={tmp_path}
+        """
+    )
+    (tmp_path / "steps.feature").write_text(
+        textwrap.dedent(
+            # language=gherkin
+            """\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
                 are not mandatory in some cases. All steps could be
@@ -891,9 +866,11 @@ def test_liberal_keyworded_step_decorator(testdir):
                     Then I execute nice step
                     * I execute good step
             """,
+        )
     )
 
     testdir.makepyfile(
+        # language=python
         """\
         from pytest_bdd import given, scenario
         from pytest import fixture
@@ -920,26 +897,35 @@ def test_liberal_keyworded_step_decorator(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_liberal_keyworded_step_decorator_cli_option(testdir):
-    testdir.makefile(
-        ".feature",
-        steps="""\
-            Feature: Steps are executed one by one
-                Steps are executed one by one. Given and When sections
-                are not mandatory in some cases. All steps could be
-                executed by "step" decorator
+def test_liberal_keyworded_step_decorator_cli_option(testdir, tmp_path):
+    testdir.makeini(
+        f"""\
+        [pytest]
+        bdd_features_base_dir={tmp_path}
+        """
+    )
+    (tmp_path / "steps.feature").write_text(
+        textwrap.dedent(
+            # language=gherkin
+            """\
+        Feature: Steps are executed one by one
+            Steps are executed one by one. Given and When sections
+            are not mandatory in some cases. All steps could be
+            executed by "step" decorator
 
-                Scenario: Executed step by step
-                    Given I execute foo step
-                    And I execute bar step
-                    When I execute fizz step
-                    But I execute buzz step
-                    Then I execute nice step
-                    * I execute good step
-            """,
+            Scenario: Executed step by step
+                Given I execute foo step
+                And I execute bar step
+                When I execute fizz step
+                But I execute buzz step
+                Then I execute nice step
+                * I execute good step
+        """,
+        )
     )
 
     testdir.makepyfile(
+        # language=python
         """\
         from pytest_bdd import given, scenario
         from pytest import fixture
@@ -966,33 +952,37 @@ def test_liberal_keyworded_step_decorator_cli_option(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_liberal_keyworded_step_decorator_ini_option(testdir):
-    testdir.makefile(
-        ".feature",
-        steps="""\
-            Feature: Steps are executed one by one
-                Steps are executed one by one. Given and When sections
-                are not mandatory in some cases. All steps could be
-                executed by "step" decorator
-
-                Scenario: Executed step by step
-                    Given I execute foo step
-                    And I execute bar step
-                    When I execute fizz step
-                    But I execute buzz step
-                    Then I execute nice step
-                    * I execute good step
-            """,
-    )
-
+def test_liberal_keyworded_step_decorator_ini_option(testdir, tmp_path):
     testdir.makeini(
-        """\
+        f"""\
         [pytest]
         liberal_steps = True
+        bdd_features_base_dir={tmp_path}
         """
     )
 
+    (tmp_path / "steps.feature").write_text(
+        textwrap.dedent(
+            # language=gherkin
+            """\
+        Feature: Steps are executed one by one
+            Steps are executed one by one. Given and When sections
+            are not mandatory in some cases. All steps could be
+            executed by "step" decorator
+
+            Scenario: Executed step by step
+                Given I execute foo step
+                And I execute bar step
+                When I execute fizz step
+                But I execute buzz step
+                Then I execute nice step
+                * I execute good step
+        """,
+        )
+    )
+
     testdir.makepyfile(
+        # language=python
         """\
         from pytest_bdd import given, scenario
         from pytest import fixture
@@ -1019,10 +1009,17 @@ def test_liberal_keyworded_step_decorator_ini_option(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_strict_step_has_precedence_over_liberal_step_decorator(testdir):
-    testdir.makefile(
-        ".feature",
-        steps="""\
+def test_strict_step_has_precedence_over_liberal_step_decorator(testdir, tmp_path):
+    testdir.makeini(
+        f"""\
+        [pytest]
+        bdd_features_base_dir={tmp_path}
+        """
+    )
+    (tmp_path / "steps.feature").write_text(
+        textwrap.dedent(
+            # language=gherkin
+            """\
             Feature: Steps are executed one by one
                 Steps are executed one by one. Given and When sections
                 are not mandatory in some cases. All steps could be
@@ -1036,9 +1033,11 @@ def test_strict_step_has_precedence_over_liberal_step_decorator(testdir):
                     Then I execute nice step
                     * I execute good step
             """,
+        )
     )
 
     testdir.makepyfile(
+        # language=python
         """\
         from pytest_bdd import given, when, step, scenario
         from pytest import fixture
@@ -1081,26 +1080,35 @@ def test_strict_step_has_precedence_over_liberal_step_decorator(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_found_alternate_step_decorators_produce_warning(testdir):
-    testdir.makefile(
-        ".feature",
-        steps="""\
-            Feature: Steps are executed one by one
-                Steps are executed one by one. Given and When sections
-                are not mandatory in some cases. All steps could be
-                executed by "step" decorator
+def test_found_alternate_step_decorators_produce_warning(testdir, tmp_path):
+    testdir.makeini(
+        f"""\
+         [pytest]
+         bdd_features_base_dir={tmp_path}
+         """
+    )
+    (tmp_path / "steps.feature").write_text(
+        textwrap.dedent(
+            # language=gherkin
+            """\
+        Feature: Steps are executed one by one
+            Steps are executed one by one. Given and When sections
+            are not mandatory in some cases. All steps could be
+            executed by "step" decorator
 
-                Scenario: Executed step by step
-                    Given I execute foo step
-                    And I execute bar step
-                    When I execute fizz step
-                    But I execute buzz step
-                    Then I execute nice step
-                    * I execute good step
-            """,
+            Scenario: Executed step by step
+                Given I execute foo step
+                And I execute bar step
+                When I execute fizz step
+                But I execute buzz step
+                Then I execute nice step
+                * I execute good step
+        """,
+        )
     )
 
     testdir.makepyfile(
+        # language=python
         """\
         from pytest_bdd import when, then, scenario
         from pytest import fixture
@@ -1138,6 +1146,7 @@ def test_found_alternate_step_decorators_produce_warning(testdir):
 def test_extend_steps_from_step(testdir):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         steps="""\
             Feature: Steps could be injected during run of other steps
 
@@ -1146,16 +1155,13 @@ def test_extend_steps_from_step(testdir):
                     Then I have foo
             """,
     )
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
         from collections import deque
 
         from pytest_bdd.model import UserStep
-        from pytest_bdd import given, when, then, scenario
-
-        @scenario("steps.feature", "Inject step from other step")
-        def test_steps():
-            pass
+        from pytest_bdd import given, when, then
 
         @when("I inject step \\"{keyword}\\" \\"{step_text}\\"")
         def inject_step(steps_left: deque, keyword, step_text, scenario):
@@ -1177,6 +1183,7 @@ def test_extend_steps_from_step(testdir):
 def test_default_params(testdir):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         steps="""\
             Feature: Steps with default params
 
@@ -1185,13 +1192,10 @@ def test_default_params(testdir):
                     Then I have foo
             """,
     )
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
-        from pytest_bdd import given, then, scenario
-
-        @scenario("steps.feature", "Step provides default_param")
-        def test_steps():
-            pass
+        from pytest_bdd import given, then
 
         @given("I have default defined param", param_defaults={'default_param': 'foo'}, target_fixture='foo_fixture')
         def save_fixture(default_param):
@@ -1206,16 +1210,15 @@ def test_default_params(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
 
-def test_uses_correct_step_in_the_hierarchy(testdir):
+def test_uses_correct_step_in_the_hierarchy(testdir, tmp_path):
     """
     Test regression found in issue #524, where we couldn't find the correct step implementation in the
     hierarchy of files/folder as expected.
     This test uses many files and folders that act as decoy, while the real step implementation is defined
     in the last file (test_b/test_b.py).
     """
-    testdir.makefile(
-        ".feature",
-        specific=textwrap.dedent(
+    (tmp_path / "specific.feature").write_text(
+        textwrap.dedent(
             # language=gherkin
             """\
             Feature: Specificity of steps
@@ -1223,7 +1226,7 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
                     Given I have a specific thing
                     Then pass
             """
-        ),
+        )
     )
 
     testdir.makeconftest(
@@ -1257,43 +1260,41 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
     # We purposefully use test_a and test_c as decoys (while test_b/test_b is "good one"), so that we can test that
     # we pick the right one.
     testdir.makepyfile(
-        test_a=
         # language=python
-        """\
-        from pytest_bdd import given, parsers
-        from pytest_bdd.utils import dump_obj
+        test_a="""\
+            from pytest_bdd import given, parsers
+            from pytest_bdd.utils import dump_obj
 
-        @given(parsers.re("(?P<thing>.*)"))
-        def in_root_test_a_catch_all(thing):
-            dump_obj(thing + " (catchall) test_a")
+            @given(parsers.re("(?P<thing>.*)"))
+            def in_root_test_a_catch_all(thing):
+                dump_obj(thing + " (catchall) test_a")
 
-        @given(parsers.parse("I have a specific thing"))
-        def in_root_test_a_specific():
-            dump_obj("specific" + " (specific) test_a")
+            @given(parsers.parse("I have a specific thing"))
+            def in_root_test_a_specific():
+                dump_obj("specific" + " (specific) test_a")
 
-        @given(parsers.parse("I have a {thing} thing"))
-        def in_root_test_a(thing):
-            dump_obj(thing + " root_test_a")
+            @given(parsers.parse("I have a {thing} thing"))
+            def in_root_test_a(thing):
+                dump_obj(thing + " root_test_a")
         """
     )
     testdir.makepyfile(
-        test_c=
-        # language = python
-        """\
-        from pytest_bdd import given, parsers
-        from pytest_bdd.utils import dump_obj
+        # language=python
+        test_c="""\
+            from pytest_bdd import given, parsers
+            from pytest_bdd.utils import dump_obj
 
-        @given(parsers.re("(?P<thing>.*)"))
-        def in_root_test_c_catch_all(thing):
-            dump_obj(thing + " (catchall) test_c")
+            @given(parsers.re("(?P<thing>.*)"))
+            def in_root_test_c_catch_all(thing):
+                dump_obj(thing + " (catchall) test_c")
 
-        @given(parsers.parse("I have a specific thing"))
-        def in_root_test_c_specific():
-            dump_obj("specific" + " (specific) test_c")
+            @given(parsers.parse("I have a specific thing"))
+            def in_root_test_c_specific():
+                dump_obj("specific" + " (specific) test_c")
 
-        @given(parsers.parse("I have a {thing} thing"))
-        def in_root_test_c(thing):
-            dump_obj(thing + " root_test_b")
+            @given(parsers.parse("I have a {thing} thing"))
+            def in_root_test_c(thing):
+                dump_obj(thing + " root_test_b")
         """
     )
 
@@ -1302,43 +1303,43 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
     # More decoys: test_b/test_a.py and test_b/test_c.py
     test_b_folder.join("test_a.py").write(
         textwrap.dedent(
-            # language = python
+            # language=python
             """\
-            from pytest_bdd import given, parsers
-            from pytest_bdd.utils import dump_obj
+                from pytest_bdd import given, parsers
+                from pytest_bdd.utils import dump_obj
 
-            @given(parsers.re("(?P<thing>.*)"))
-            def in_root_test_b_test_a_catch_all(thing):
-                dump_obj(thing + " (catchall) test_b_test_a")
+                @given(parsers.re("(?P<thing>.*)"))
+                def in_root_test_b_test_a_catch_all(thing):
+                    dump_obj(thing + " (catchall) test_b_test_a")
 
-            @given(parsers.parse("I have a specific thing"))
-            def in_test_b_test_a_specific():
-                dump_obj("specific" + " (specific) test_b_test_a")
+                @given(parsers.parse("I have a specific thing"))
+                def in_test_b_test_a_specific():
+                    dump_obj("specific" + " (specific) test_b_test_a")
 
-            @given(parsers.parse("I have a {thing} thing"))
-            def in_test_b_test_a(thing):
-                dump_obj(thing + " test_b_test_a")
+                @given(parsers.parse("I have a {thing} thing"))
+                def in_test_b_test_a(thing):
+                    dump_obj(thing + " test_b_test_a")
             """
         )
     )
     test_b_folder.join("test_c.py").write(
         textwrap.dedent(
-            # language = python
+            # language=python
             """\
-            from pytest_bdd import given, parsers
-            from pytest_bdd.utils import dump_obj
+                from pytest_bdd import given, parsers
+                from pytest_bdd.utils import dump_obj
 
-            @given(parsers.re("(?P<thing>.*)"))
-            def in_root_test_b_test_c_catch_all(thing):
-                dump_obj(thing + " (catchall) test_b_test_c")
+                @given(parsers.re("(?P<thing>.*)"))
+                def in_root_test_b_test_c_catch_all(thing):
+                    dump_obj(thing + " (catchall) test_b_test_c")
 
-            @given(parsers.parse("I have a specific thing"))
-            def in_test_b_test_c_specific():
-                dump_obj("specific" + " (specific) test_a_test_c")
+                @given(parsers.parse("I have a specific thing"))
+                def in_test_b_test_c_specific():
+                    dump_obj("specific" + " (specific) test_a_test_c")
 
-            @given(parsers.parse("I have a {thing} thing"))
-            def in_test_b_test_c(thing):
-                dump_obj(thing + " test_c_test_a")
+                @given(parsers.parse("I have a {thing} thing"))
+                def in_test_b_test_c(thing):
+                    dump_obj(thing + " test_c_test_a")
             """
         )
     )
@@ -1346,34 +1347,36 @@ def test_uses_correct_step_in_the_hierarchy(testdir):
     # Finally, the file with the actual step definition that should be used
     test_b_folder.join("test_b.py").write(
         textwrap.dedent(
-            # language = python
-            """\
-            from pytest_bdd import scenarios, given, parsers
-            from pytest_bdd.utils import dump_obj
+            # language=python
+            f"""\
+                from pytest_bdd import scenarios, given, parsers
+                from pytest_bdd.utils import dump_obj
+                from pathlib import Path
 
-            test_scenarios = scenarios("specific.feature")
+                test_scenarios = scenarios(Path(r"{tmp_path}") / "specific.feature")
 
-            @given(parsers.parse("I have a {thing} thing"))
-            def in_test_b_test_b(thing):
-                dump_obj(f"{thing} test_b_test_b")
+                @given(parsers.parse("I have a {{thing}} thing"))
+                def in_test_b_test_b(thing):
+                    dump_obj(f"{{thing}} test_b_test_b")
             """
         )
     )
 
     test_b_folder.join("test_b_alternative.py").write(
         textwrap.dedent(
-            # language = python
-            """\
+            # language=python
+            f"""\
             from pytest_bdd import scenarios, given, parsers
             from pytest_bdd.utils import dump_obj
+            from pathlib import Path
 
-            test_scenarios = scenarios("specific.feature")
+            test_scenarios = scenarios(Path(r"{tmp_path}") /"specific.feature")
 
             # Here we try to use an argument different from the others,
             # to make sure it doesn't matter if a new step parser string is encountered.
-            @given(parsers.parse("I have a {t} thing"))
+            @given(parsers.parse("I have a {{t}} thing"))
             def in_test_b_test_b(t):
-                dump_obj(f"{t} test_b_test_b")
+                dump_obj(f"{{t}} test_b_test_b")
             """
         )
     )

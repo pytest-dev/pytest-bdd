@@ -4,6 +4,7 @@ import linecache
 from functools import partial
 from itertools import filterfalse
 from operator import contains, methodcaller
+from os.path import relpath
 from pathlib import Path
 from typing import Callable, cast
 
@@ -116,9 +117,7 @@ class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProt
 
             features.extend(
                 map(
-                    lambda path: self.parse(
-                        config, path, str(path.relative_to(features_base_dir).as_posix()), **kwargs
-                    ),
+                    lambda path: self.parse(config, path, relpath(str(path), str(features_base_dir)), **kwargs),
                     filterfalse(partial(contains, seen_names), file_paths),
                 )
             )

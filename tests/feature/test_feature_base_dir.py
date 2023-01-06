@@ -32,6 +32,7 @@ def prepare_testdir(testdir, ini_base_dir):
 
     feature_file = testdir.mkdir("features").join("steps.feature")
     feature_file.write(
+        # language=gherkin
         """
         Feature: Feature path
             Scenario: When scenario found
@@ -40,6 +41,7 @@ def prepare_testdir(testdir, ini_base_dir):
     )
 
     testdir.makepyfile(
+        # language=python
         f"""\
         import pytest
         from pathlib import Path
@@ -56,7 +58,6 @@ def prepare_testdir(testdir, ini_base_dir):
         def scenario_name(request):
             return request.param
 
-
         @pytest.mark.parametrize(
             'multiple', [True, False]
         )
@@ -69,7 +70,6 @@ def prepare_testdir(testdir, ini_base_dir):
             assert str((Path('{ini_base_dir}') / FEATURE).resolve().as_posix()) in str(Path(str(exc.value.filename)).as_posix())
 
 
-
         @pytest.mark.parametrize(
             'multiple', [True, False]
         )
@@ -79,7 +79,6 @@ def prepare_testdir(testdir, ini_base_dir):
                 scenarios(FEATURE, parser=Parser())
             else:
                 scenario(FEATURE, scenario_name, parser=Parser())
-
 
         @pytest.mark.parametrize(
             'multiple', [True, False]
@@ -97,7 +96,6 @@ def prepare_testdir(testdir, ini_base_dir):
                 else:
                     scenario(FEATURE, scenario_name, features_base_dir=param_base_dir)
             assert str((Path(param_base_dir) / FEATURE).resolve().as_posix()) in str(Path(str(exc.value.filename)).as_posix())
-
 
         @pytest.mark.parametrize(
             'multiple', [True, False]

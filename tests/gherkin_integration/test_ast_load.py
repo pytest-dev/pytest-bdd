@@ -6,8 +6,7 @@ from pytest import mark, param
 
 from pytest_bdd.ast import AST, ASTSchema
 
-resources = Path(__file__).parent / "resources"
-test_data = resources / "testdata"
+test_data = Path(__file__).parent.parent.parent / "testdata"
 
 
 @mark.parametrize(

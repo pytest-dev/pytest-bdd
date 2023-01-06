@@ -1,6 +1,7 @@
 def test_pt_l18n(testdir):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         steps="""\
             #language: pt
             #encoding: UTF-8
@@ -11,13 +12,10 @@ def test_pt_l18n(testdir):
                     Então ele deve ser levado para a tela de criação de conta
             """,
     )
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
-            import pytest
-
-            from pytest_bdd import scenarios, given, when, then, parsers
-
-            test_cukes = scenarios("steps.feature")
+            from pytest_bdd import  given, when, then
 
             @given("que o usuário esteja na tela de login")
             def tela_login():

@@ -8,6 +8,7 @@ from pytest_bdd.packaging import compare_distribution_version
 from pytest_bdd.utils import collect_dumped_objects
 from tests.utils import assert_outcomes
 
+# language=python
 STEPS = """\
     from pytest_bdd import parsers, given, when, then
     from pytest_bdd.utils import dump_obj
@@ -36,6 +37,7 @@ STEPS = """\
         assert start_cucumbers["eat"] == eat
 """
 
+# language=python
 STEPS_OUTLINED = """\
     from pytest_bdd import given, when, then, scenario, parsers
     from pytest_bdd.utils import dump_obj
@@ -55,14 +57,12 @@ STEPS_OUTLINED = """\
         assert isinstance(start, int)
         return {fruits: dict(start=start)}
 
-
     @when(parsers.parse("I eat {eat:g} {fruits}"))
     def eat_fruits(start_fruits, eat, fruits):
         dump_obj(eat, fruits)
 
         assert isinstance(eat, float)
         start_fruits[fruits]["eat"] = eat
-
 
     @then(parsers.parse("I should have {left} {fruits}"))
     def should_have_left_fruits(start_fruits, start, eat, left, fruits):
@@ -85,6 +85,7 @@ STEPS_OUTLINED = """\
 def test_outlined(testdir, examples_header):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         outline=f"""\
             Feature: Outline
                 Scenario Outline: Outlined given, when, thens
@@ -102,18 +103,6 @@ def test_outlined(testdir, examples_header):
 
     testdir.makeconftest(STEPS)
 
-    testdir.makepyfile(
-        f"""\
-        from pytest_bdd import scenario
-
-        @scenario(
-            "outline.feature",
-            "Outlined given, when, thens",
-        )
-        def test_outline(request):
-            pass
-        """
-    )
     result = testdir.runpytest("-s")
     result.assert_outcomes(passed=2)
     # fmt: off
@@ -129,6 +118,7 @@ def test_wrongly_outlined_duplicated_parameter_scenario(testdir):
     """Test parametrized scenario vertical example table has wrong format."""
     testdir.makefile(
         ".feature",
+        # language=gherkin
         outline="""\
             Feature: Outline
                 Scenario Outline: Outlined with duplicated parameter example table
@@ -144,15 +134,6 @@ def test_wrongly_outlined_duplicated_parameter_scenario(testdir):
     )
     testdir.makeconftest(STEPS)
 
-    testdir.makepyfile(
-        f"""\
-        from pytest_bdd import scenario
-
-        @scenario("outline.feature", "Outlined with wrong vertical example table")
-        def test_outline(request):
-            pass
-        """
-    )
     result = testdir.runpytest()
     assert_outcomes(result, errors=1)
     result.stdout.fnmatch_lines(
@@ -165,6 +146,7 @@ def test_wrongly_outlined_missing_parameter_scenario(testdir):
     """Test parametrized scenario vertical example table has wrong format."""
     testdir.makefile(
         ".feature",
+        # language=gherkin
         outline="""\
             Feature: Outline
                 Scenario Outline: Outlined with wrong vertical example table
@@ -180,25 +162,24 @@ def test_wrongly_outlined_missing_parameter_scenario(testdir):
     )
     testdir.makeconftest(STEPS)
 
-    testdir.makepyfile(
-        f"""\
-        from pytest_bdd import scenario
-
-        @scenario("outline.feature", "Outlined with wrong vertical example table")
-        def test_outline(request):
-            pass
-        """
-    )
     result = testdir.runpytest()
     assert_outcomes(result, errors=1)
     result.stdout.fnmatch_lines("*FeatureError*")
 
 
-def test_outlined_with_other_fixtures(testdir):
+def test_outlined_with_other_fixtures(testdir, tmp_path):
     """Test outlined scenario also using other parametrized fixture."""
-    testdir.makefile(
-        ".feature",
-        outline="""\
+    testdir.makeini(
+        f"""\
+         [pytest]
+         bdd_features_base_dir={tmp_path}
+         """
+    )
+
+    (tmp_path / "outline.feature").write_text(
+        dedent(
+            # language=gherkin
+            """\
             Feature: Outline
                 Scenario Outline: Outlined given, when, thens
                     Given there are <start> cucumbers
@@ -209,12 +190,14 @@ def test_outlined_with_other_fixtures(testdir):
                     | start | eat | left |
                     |  12   |  5  |  7   |
                     |  5    |  4  |  1   |
-            """,
+            """
+        )
     )
 
     testdir.makeconftest(STEPS)
 
     testdir.makepyfile(
+        # language=python
         f"""\
         from pytest import fixture
         from pytest_bdd import scenario
@@ -251,6 +234,7 @@ def test_outline_with_escaped_pipes(testdir, parser):
     """Test parametrized feature example table with escaped pipe characters in input."""
     testdir.makefile(
         ".feature",
+        # language=gherkin
         outline=dedent(
             r"""
             Feature: Outline With Special characters
@@ -272,15 +256,11 @@ def test_outline_with_escaped_pipes(testdir, parser):
         ),
     )
 
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         f"""\
-        from pytest_bdd import scenario, given, parsers
+        from pytest_bdd import given, parsers
         from pytest_bdd.utils import dump_obj
-
-        @scenario("outline.feature", "Outline with escaped pipe character")
-        def test_outline_with_escaped_pipe_character(request):
-            pass
-
 
         @given(parsers.parse("I print the {{string}}"))
         def i_print_the_string(string):

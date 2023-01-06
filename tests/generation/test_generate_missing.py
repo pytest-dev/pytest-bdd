@@ -1,5 +1,6 @@
 """Code generation and assertion tests."""
 import itertools
+import textwrap
 
 from pytest_bdd.scenario import get_python_name_generator
 from tests.utils import assert_outcomes
@@ -14,11 +15,13 @@ def test_python_name_generator():
     ]
 
 
-def test_generate_missing(testdir):
+def test_generate_missing(testdir, tmp_path):
     """Test generate missing command."""
-    testdir.makefile(
-        ".feature",
-        generation="""\
+
+    (tmp_path / "generation.feature").write_text(
+        textwrap.dedent(
+            # language=gherkin
+            """\
             Feature: Missing code generation
 
                 Background:
@@ -27,23 +30,24 @@ def test_generate_missing(testdir):
                 Scenario: Scenario tests which are already bound to the tests stay as is
                     Given I have a bar
 
-
                 Scenario: Code is generated for scenarios which are not bound to any tests
                     Given I have a bar
 
-
                 Scenario: Code is generated for scenario steps which are not yet defined(implemented)
                     Given I have a custom bar
-            """,
+            """
+        )
     )
 
     testdir.makepyfile(
-        """\
+        # language=python
+        f"""\
         import functools
 
         from pytest_bdd import scenario, given
+        from pathlib import Path
 
-        scenario = functools.partial(scenario, "generation.feature")
+        scenario = functools.partial(scenario, Path(r"{tmp_path}") / "generation.feature")
 
         @given("I have a bar")
         def i_have_a_bar():
@@ -59,7 +63,7 @@ def test_generate_missing(testdir):
         """
     )
 
-    result = testdir.runpytest("--generate-missing", "--feature", "generation.feature")
+    result = testdir.runpytest("--generate-missing", "--feature", str(tmp_path / "generation.feature"))
     assert_outcomes(result, passed=0, failed=0, errors=0)
     assert not result.stderr.str()
     assert result.ret == 0
@@ -82,6 +86,7 @@ def test_generate_missing_with_step_parsers(testdir):
     """Test that step parsers are correctly discovered and won't be part of the missing steps."""
     testdir.makefile(
         ".feature",
+        # language=gherkin
         generation="""\
             Feature: Missing code generation with step parsers
 
@@ -93,13 +98,10 @@ def test_generate_missing_with_step_parsers(testdir):
             """,
     )
 
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
-        import functools
-
-        from pytest_bdd import scenarios, given, parsers
-
-        scenarios("generation.feature")
+        from pytest_bdd import given, parsers
 
         @given("I use the string parser without parameter")
         def i_have_a_bar():

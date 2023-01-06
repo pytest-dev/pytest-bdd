@@ -639,8 +639,8 @@ Both `scenario` or `scenarios` could be used as decorators or as operator calls.
 Features autoload
 ^^^^^^^^^^^^^^^^^
 
-Another possibility to load features is usage of `--feature-autoload` cli option or `feature_autoload` ini option.
-In this case feature files (\*.gherkin or \*.feature) have to be stored in same structure as origin pytest tests.
+If feature files or symlinks to them (\*.gherkin or \*.feature) are placed in the same structure as tests the would be automatically collected.
+To disable this behavior globally use `--disable-feature-autoload` cli option or `disable_feature_autoload` pytest.ini option
 Steps from lower directory layers overriding higher ones if step parsing collision occurs.
 
 Test project layout part could be (pay attention to symlinks):
@@ -1049,7 +1049,7 @@ then
 Feature file paths
 ------------------
 
-By default, pytest-bdd-ng will use current module's path as base path for finding feature files, but this behaviour can be changed in the pytest configuration file (i.e. `pytest.ini`, `tox.ini` or `setup.cfg`) by declaring the new base path in the `bdd_features_base_dir` key. The path is interpreted as relative to the working directory when starting pytest.
+By default, pytest-bdd-ng will use current module's path as base path for finding feature files, but this behaviour can be changed in the pytest configuration file (i.e. `pytest.ini`, `tox.ini` or `setup.cfg`) by declaring the new base path in the `bdd_features_base_dir` key. The path is interpreted as relative to the pytest root directory.
 You can also override features base path on a per-scenario basis, in order to override the path for specific tests.
 
 pytest.ini:

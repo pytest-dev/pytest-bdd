@@ -1,6 +1,8 @@
 % if features:
 """${ features[0].name or features[0].rel_filename } feature tests."""
 
+from pathlib import Path
+
 from pytest_bdd import (
     scenario,
     given,
@@ -12,7 +14,7 @@ from pytest_bdd import (
 
 % endif
 % for feature, pickle in feature_pickles :
-@scenario('${feature.rel_filename}', ${ make_string_literal(pickle.name)})
+@scenario(Path('${feature.rel_filename}'), ${ make_string_literal(pickle.name)})
 def test_${ make_python_name(pickle.name)}():
     ${make_python_docstring(pickle.name)}
 

@@ -4,6 +4,7 @@
 def test_step_alias(testdir):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         alias="""\
             Feature: StepHandler aliases
                 Scenario: Multiple step aliases
@@ -18,32 +19,24 @@ def test_step_alias(testdir):
             """,
     )
 
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         f"""\
-        import pytest
-        from pytest_bdd import given, when, then, scenario
-
-        @scenario("alias.feature", "Multiple step aliases")
-        def test_alias():
-            pass
-
+        from pytest_bdd import given, when, then
 
         @given("I have an empty list", target_fixture="results")
         def results():
             return []
-
 
         @given("I have foo (which is 1) in my list")
         @given("I have bar (alias of foo) in my list")
         def foo(results):
             results.append(1)
 
-
         @when("I do crash (which is 2)")
         @when("I do boom (alias of crash)")
         def crash(results):
             results.append(2)
-
 
         @then("my list should be [1, 1, 2, 2]")
         def check_results(results):

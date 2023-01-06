@@ -60,6 +60,7 @@ def test_step_trace(testdir):
     )
     feature = testdir.makefile(
         ".feature",
+        # language=gherkin
         test="""\
             @feature-tag
             Feature: One passing scenario, one failing scenario
@@ -85,10 +86,10 @@ def test_step_trace(testdir):
                     |  5    |  4  |  1   |
             """,
     )
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
-        import pytest
-        from pytest_bdd import given, when, then, scenarios, parsers
+        from pytest_bdd import given, when, then, parsers
 
         @given('a passing step')
         def a_passing_step():
@@ -107,12 +108,10 @@ def test_step_trace(testdir):
             assert isinstance(start, int)
             return {"start": start}
 
-
         @when(parsers.parse('I eat {eat:g} cucumbers'))
         def eat_cucumbers(start_cucumbers, eat):
             assert isinstance(eat, float)
             start_cucumbers['eat'] = eat
-
 
         @then(parsers.parse('I should have {left} cucumbers'))
         def should_have_left_cucumbers(start_cucumbers, start, eat, left):
@@ -120,9 +119,6 @@ def test_step_trace(testdir):
             assert start - eat == int(left)
             assert start_cucumbers['start'] == start
             assert start_cucumbers['eat'] == eat
-
-
-        test_cukes = scenarios('test.feature')
         """
     )
     result = testdir.inline_run("-vvl")
@@ -303,6 +299,7 @@ def test_complex_types(testdir, pytestconfig):
 
     testdir.makefile(
         ".feature",
+        # language=gherkin
         test="""\
             Feature: Report serialization containing parameters of complex types
 
@@ -315,9 +312,10 @@ def test_complex_types(testdir, pytestconfig):
             """,
     )
     testdir.makepyfile(
+        # language=python
         """\
         import pytest
-        from pytest_bdd import given, when, then, scenario, parsers
+        from pytest_bdd import given,  scenario, parsers
 
         class Point:
 
@@ -340,7 +338,6 @@ def test_complex_types(testdir, pytestconfig):
         def given_there_is_a_point(point):
             assert isinstance(point, Point)
             return point
-
 
         @pytest.mark.parametrize('alien', [Alien()])
         @scenario('test.feature', 'Complex')

@@ -327,7 +327,6 @@ def test_default_loader(testdir, kind, file_content):
         from textwrap import dedent
         from pytest_bdd import given, when, then, scenario
         from pytest_bdd.struct_bdd.parser import StructBDDParser
-        from functools import partial
 
 
         @scenario("steps.bdd.{kind}", "Executed step by step", parser=StructBDDParser)
@@ -446,7 +445,7 @@ def test_autoload_feature_yaml(testdir, kind, file_content):
             assert results == [1, 2, 3]
         """
     )
-    result = testdir.runpytest("--feature-autoload")
+    result = testdir.runpytest()
     result.assert_outcomes(passed=1, failed=0)
 
 

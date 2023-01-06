@@ -1,15 +1,16 @@
 """Test scenarios shortcut."""
+from textwrap import dedent
 
 from tests.utils import assert_outcomes
 
 
-def test_scenarios(testdir, pytest_params):
+def test_scenarios(testdir, pytest_params, tmp_path):
     """Test scenarios shortcut used together with @scenario"""
     testdir.makeini(
-        # language=toml
-        """\
+        f"""\
         [pytest]
         console_output_style=classic
+        bdd_features_base_dir={tmp_path}
         """
     )
     testdir.makeconftest(
@@ -23,19 +24,21 @@ def test_scenarios(testdir, pytest_params):
             return 'bar'
         """
     )
-    features = testdir.mkdir("features")
-    features.join("test.feature").write_text(
-        # language=gherkin
-        """\
-        Feature: Test scenarios
 
-            Scenario: Test scenario
-                Given I have a bar
-        """,
-        "utf-8",
-        ensure=True,
+    (tmp_path / "features" / "subfolder").mkdir(parents=True)
+
+    (tmp_path / "features" / "test.feature").write_text(
+        dedent(
+            # language=gherkin
+            """\
+            Feature: Test scenarios
+
+                Scenario: Test scenario
+                    Given I have a bar
+            """
+        )
     )
-    features.join("subfolder", "test.feature").write_text(
+    (tmp_path / "features" / "subfolder" / "test.feature").write_text(
         # language=gherkin
         """\
         Feature: Test scenarios
@@ -50,17 +53,14 @@ def test_scenarios(testdir, pytest_params):
 
             Scenario: Test scenario
                 Given I have a bar
-        """,
-        "utf-8",
-        ensure=True,
+        """
     )
     testdir.makepyfile(
         # language=python
         """\
-        from pathlib import Path
         from pytest_bdd import scenarios, scenario
 
-        test_feature = scenarios('test.feature', features_base_dir=Path('features', 'subfolder'))
+        test_feature = scenarios('features/subfolder/test.feature')
 
         @scenario('features/subfolder/test.feature', 'Test already bound scenario')
         def test_already_bound():

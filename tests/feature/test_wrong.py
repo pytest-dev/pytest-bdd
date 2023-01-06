@@ -10,6 +10,7 @@ def test_multiple_features_single_file(testdir):
     testdir.makefile(
         ".feature",
         wrong=textwrap.dedent(
+            # language=gherkin
             """\
             Feature: Feature One
 
@@ -36,19 +37,6 @@ def test_multiple_features_single_file(testdir):
                 Then something else about A and B
         """
         ),
-    )
-    testdir.makepyfile(
-        textwrap.dedent(
-            """\
-        import pytest
-        from pytest_bdd import then, scenario
-
-        @scenario("wrong.feature", "Do something with A")
-        def test_wrong():
-            pass
-
-        """
-        )
     )
     result = testdir.runpytest()
     assert_outcomes(result, errors=1)

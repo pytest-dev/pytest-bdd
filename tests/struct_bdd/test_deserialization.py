@@ -18,6 +18,7 @@ def test_load_simplest_step():
 
 def test_load_simplest_step_with_steps():
     doc = dedent(
+        # language=yaml
         """\
         Steps: []
         """
@@ -38,6 +39,7 @@ def test_load_simplest_step_with_steps():
 
 def test_load_simplest_step_with_text_steps():
     doc = dedent(
+        # language=yaml
         """\
         Steps:
           - Do something
@@ -61,6 +63,7 @@ def test_load_simplest_step_with_text_steps():
 
 def test_load_actioned_step_with_text_steps():
     doc = dedent(
+        # language=yaml
         """\
         Action: "First do"
         Steps:
@@ -84,6 +87,7 @@ def test_load_actioned_step_with_text_steps():
 
 def test_load_actioned_step_with_alternative_text_steps():
     doc = dedent(
+        # language=yaml
         """\
         Action: "First do"
         Steps:
@@ -105,6 +109,7 @@ def test_load_actioned_step_with_alternative_text_steps():
 
 def test_load_simplest_step_with_keyworded_steps():
     doc = dedent(
+        # language=yaml
         """\
         Steps:
           - Given: Do something
@@ -126,6 +131,7 @@ def test_load_simplest_step_with_keyworded_steps():
 def test_load_step_with_single_simplest_steps():
     try:
         doc = dedent(
+            # language=yaml
             """\
             Steps:
                 - Step: {}
@@ -142,6 +148,7 @@ def test_load_step_with_single_simplest_steps():
 def test_node_module_load_for_step():
     try:
         doc = dedent(
+            # language=yaml
             """\
             Name: StepName
             Tags:
@@ -167,6 +174,7 @@ def test_node_module_load_for_step():
 def test_data_load():
     try:
         doc = dedent(
+            # language=yaml
             """\
             Name: StepName
             Data:
@@ -196,6 +204,7 @@ def test_data_load():
 def test_nested_data_load():
     try:
         doc = dedent(
+            # language=yaml
             """\
             Name: StepName
             Data:
@@ -238,6 +247,7 @@ def test_nested_data_load():
 def test_nested_examples_load():
     try:
         doc = dedent(
+            # language=yaml
             """\
             Name: StepName
             Examples:
@@ -279,6 +289,7 @@ def test_nested_examples_load():
 
 def test_tags_steps_examples_load():
     doc = dedent(
+        # language=yaml
         """\
         Tags:
           - TopTag
@@ -339,6 +350,7 @@ def test_tags_steps_examples_load():
 
 def test_tags_steps_examples_load_complex():
     doc = dedent(
+        # language=yaml
         """\
         Tags:
           - TopTag
@@ -469,6 +481,7 @@ def test_tags_steps_examples_load_complex():
 
 def test_tags_steps_examples_joined_by_value_load():
     doc = dedent(
+        # language=yaml
         """\
         Tags:
           - TopTag
@@ -511,22 +524,23 @@ def test_tags_steps_examples_joined_by_value_load():
 def test_load_nested_steps():
     try:
         doc = dedent(
+            # language=yaml
             """\
-        Steps:
-          - Alternative:
+            Steps:
+              - Alternative:
+                  - Given: Do something
+                  - When: Do something
+                  - Then: Do something
+                  - And: Do something
+                  - "*": Do something
               - Given: Do something
               - When: Do something
               - Then: Do something
               - And: Do something
               - "*": Do something
-          - Given: Do something
-          - When: Do something
-          - Then: Do something
-          - And: Do something
-          - "*": Do something
-          - Step:
-              Action: Do something
-        """
+              - Step:
+                  Action: Do something
+            """
         )
 
         data = load(doc, Loader=FullLoader)

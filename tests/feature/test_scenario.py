@@ -1,4 +1,5 @@
 """Test scenario decorator."""
+from textwrap import dedent
 
 from tests.utils import assert_outcomes
 
@@ -7,20 +8,10 @@ def test_scenario_not_found(testdir, pytest_params):
     """Test the situation when scenario is not found."""
     testdir.makefile(
         ".feature",
+        # language=gherkin
         not_found="""\
             Feature: Scenario is not found
             """,
-    )
-    testdir.makepyfile(
-        """\
-        import re
-        import pytest
-        from pytest_bdd import parsers, given, then, scenario
-
-        @scenario("not_found.feature", "NOT FOUND")
-        def test_not_found():
-            pass
-        """
     )
     result = testdir.runpytest_subprocess(*pytest_params)
 
@@ -31,6 +22,7 @@ def test_scenario_comments(testdir):
     """Test comments inside scenario."""
     testdir.makefile(
         ".feature",
+        # language=gherkin
         comments="""\
             Feature: Comments
                 Scenario: Comments
@@ -41,34 +33,22 @@ def test_scenario_comments(testdir):
                     Given comments should be at the start of words
                     Then this is not a#comment
                     And this is not "#acomment"
-
             """,
     )
 
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
         import re
-        import pytest
-        from pytest_bdd import parsers, given, then, scenario
-
-        @scenario("comments.feature", "Comments")
-        def test_1():
-            pass
-
-        @scenario("comments.feature", "Strings that are not comments")
-        def test_2():
-            pass
-
+        from pytest_bdd import parsers, given, then
 
         @given("I have a bar")
         def bar():
             return "bar"
 
-
         @given("comments should be at the start of words")
         def comments():
             pass
-
 
         @then(parsers.parse("this is not {acomment}"))
         def a_comment(acomment):
@@ -81,21 +61,28 @@ def test_scenario_comments(testdir):
     result.assert_outcomes(passed=2)
 
 
-def test_simple(testdir, pytest_params):
+def test_simple(testdir, pytest_params, tmp_path):
     """Test scenario decorator with a standard usage."""
-    testdir.makefile(
-        ".feature",
-        simple="""
-        Feature: Simple feature
-            Scenario: Simple scenario
-                Given I have a bar
-        """,
+    (tmp_path / "simple.feature").write_text(
+        dedent(
+            # language=gherkin
+            """\
+            Feature: Simple feature
+                Scenario: Simple scenario
+                    Given I have a bar
+            """,
+        )
     )
     testdir.makepyfile(
-        """
+        # language=python
+        '''\
+        from pathlib import Path
+
         from pytest_bdd import scenario, given, then
 
-        @scenario("simple.feature", "Simple scenario")
+        @scenario(Path(r"'''
+        f"{tmp_path / 'simple.feature'}"
+        """"), "Simple scenario")
         def test_simple():
             pass
 

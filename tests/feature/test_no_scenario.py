@@ -14,6 +14,7 @@ def test_no_scenarios(testdir):
         ensure=True,
     )
     testdir.makepyfile(
+        # language=python
         f"""\
         from pytest_bdd import scenarios
 

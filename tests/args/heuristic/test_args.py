@@ -6,6 +6,7 @@ def test_heuristic_parser(
 ):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         arguments="""\
             Feature: StepHandler arguments
                 Scenario: Every step takes a parameter with the same name
@@ -20,16 +21,11 @@ def test_heuristic_parser(
             """,
     )
 
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
         import pytest
-        from pytest_bdd import given, when, then, scenario
-        from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
-        from functools import partial
-
-        @scenario("arguments.feature", "Every step takes a parameter with the same name")
-        def test_arguments():
-            pass
+        from pytest_bdd import given, when, then
 
         @pytest.fixture
         def values():

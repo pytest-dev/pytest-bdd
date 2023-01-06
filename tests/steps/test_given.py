@@ -4,6 +4,7 @@
 def test_given_injection(testdir):
     testdir.makefile(
         ".feature",
+        # language=gherkin
         given="""\
             Feature: Given
                 Scenario: Test given fixture injection
@@ -11,19 +12,14 @@ def test_given_injection(testdir):
                     Then foo should be "injected foo"
             """,
     )
-    testdir.makepyfile(
+    testdir.makeconftest(
+        # language=python
         """\
-        import pytest
-        from pytest_bdd import given, then, scenario
-
-        @scenario("given.feature", "Test given fixture injection")
-        def test_given():
-            pass
+        from pytest_bdd import given, then
 
         @given("I have injecting given", target_fixture="foo")
         def injecting_given():
             return "injected foo"
-
 
         @then('foo should be "injected foo"')
         def foo_is_injected_foo(foo):

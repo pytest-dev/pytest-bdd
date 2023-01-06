@@ -10,6 +10,7 @@ def test_generate(testdir):
     features = testdir.mkdir("scripts")
     feature = features.join("generate.feature")
     feature.write_text(
+        # language=gherkin
         """\
         Feature: Code generation
 
@@ -29,46 +30,51 @@ def test_generate(testdir):
     assert (
         result.stdout.str().strip()
         == dedent(
-            '''\
-        """Code generation feature tests."""
+            # language=python
+            f'''\
+            """Code generation feature tests."""
 
-        from pytest_bdd import (
-            scenario,
-            given,
-            when,
-            then,
-            step,
-        )
+            from pathlib import Path
 
-
-        @scenario('scripts/generate.feature', 'Given and when using the same fixture should not evaluate it twice')
-        def test_given_and_when_using_the_same_fixture_should_not_evaluate_it_twice():
-            """Given and when using the same fixture should not evaluate it twice."""
+            from pytest_bdd import (
+                scenario,
+                given,
+                when,
+                then,
+                step,
+            )
 
 
-        @given('1 have a fixture (appends 1 to a list) in reuse syntax')
-        def have_a_fixture_appends_1_to_a_list_in_reuse_syntax():
-            """1 have a fixture (appends 1 to a list) in reuse syntax."""
-            raise NotImplementedError
+            @scenario(Path('scripts'''
+            f"{os.path.sep}"
+            '''generate.feature'), 'Given and when using the same fixture should not evaluate it twice')
+            def test_given_and_when_using_the_same_fixture_should_not_evaluate_it_twice():
+                """Given and when using the same fixture should not evaluate it twice."""
 
 
-        @given('I have an empty list')
-        def i_have_an_empty_list():
-            """I have an empty list."""
-            raise NotImplementedError
+            @given('1 have a fixture (appends 1 to a list) in reuse syntax')
+            def have_a_fixture_appends_1_to_a_list_in_reuse_syntax():
+                """1 have a fixture (appends 1 to a list) in reuse syntax."""
+                raise NotImplementedError
 
 
-        @when('I use this fixture')
-        def i_use_this_fixture():
-            """I use this fixture."""
-            raise NotImplementedError
+            @given('I have an empty list')
+            def i_have_an_empty_list():
+                """I have an empty list."""
+                raise NotImplementedError
 
 
-        @then('my list should be [1]')
-        def my_list_should_be_1():
-            """my list should be [1]."""
-            raise NotImplementedError
-        '''
+            @when('I use this fixture')
+            def i_use_this_fixture():
+                """I use this fixture."""
+                raise NotImplementedError
+
+
+            @then('my list should be [1]')
+            def my_list_should_be_1():
+                """my list should be [1]."""
+                raise NotImplementedError
+            '''
         ).strip()
     )
 
@@ -77,6 +83,7 @@ def test_generate_with_quotes(testdir):
     """Test that code generation escapes quote characters properly."""
     testdir.makefile(
         ".feature",
+        # language=gherkin
         generate_with_quotes='''\
         Feature: Handling quotes in code generation
 
@@ -96,58 +103,61 @@ def test_generate_with_quotes(testdir):
     assert (
         result.stdout.str().strip()
         == dedent(
+            # language=python
             '''\
-        """Handling quotes in code generation feature tests."""
+            """Handling quotes in code generation feature tests."""
 
-        from pytest_bdd import (
-            scenario,
-            given,
-            when,
-            then,
-            step,
-        )
+            from pathlib import Path
 
-
-        @scenario('generate_with_quotes.feature', 'A step definition with quotes should be escaped as needed')
-        def test_a_step_definition_with_quotes_should_be_escaped_as_needed():
-            """A step definition with quotes should be escaped as needed."""
+            from pytest_bdd import (
+                scenario,
+                given,
+                when,
+                then,
+                step,
+            )
 
 
-        @when('I generate the code')
-        def i_generate_the_code():
-            """I generate the code."""
-            raise NotImplementedError
+            @scenario(Path('generate_with_quotes.feature'), 'A step definition with quotes should be escaped as needed')
+            def test_a_step_definition_with_quotes_should_be_escaped_as_needed():
+                """A step definition with quotes should be escaped as needed."""
 
 
-        @given('I have a fixture with "double" quotes')
-        def i_have_a_fixture_with_double_quotes():
-            """I have a fixture with "double" quotes."""
-            raise NotImplementedError
+            @when('I generate the code')
+            def i_generate_the_code():
+                """I generate the code."""
+                raise NotImplementedError
 
 
-        @given('I have a fixture with \\'single\\' quotes')
-        def i_have_a_fixture_with_single_quotes():
-            """I have a fixture with 'single' quotes."""
-            raise NotImplementedError
+            @given('I have a fixture with "double" quotes')
+            def i_have_a_fixture_with_double_quotes():
+                """I have a fixture with "double" quotes."""
+                raise NotImplementedError
 
 
-        @given('I have a fixture with double-quote """triple""" quotes')
-        def i_have_a_fixture_with_doublequote_triple_quotes():
-            """I have a fixture with double-quote \\"\\"\\"triple\\"\\"\\" quotes."""
-            raise NotImplementedError
+            @given('I have a fixture with \\'single\\' quotes')
+            def i_have_a_fixture_with_single_quotes():
+                """I have a fixture with 'single' quotes."""
+                raise NotImplementedError
 
 
-        @given('I have a fixture with single-quote \\'\\'\\'triple\\'\\'\\' quotes')
-        def i_have_a_fixture_with_singlequote_triple_quotes():
-            """I have a fixture with single-quote \'\'\'triple\'\'\' quotes."""
-            raise NotImplementedError
+            @given('I have a fixture with double-quote """triple""" quotes')
+            def i_have_a_fixture_with_doublequote_triple_quotes():
+                """I have a fixture with double-quote \\"\\"\\"triple\\"\\"\\" quotes."""
+                raise NotImplementedError
 
 
-        @then('The generated string should be written')
-        def the_generated_string_should_be_written():
-            """The generated string should be written."""
-            raise NotImplementedError
-        '''
+            @given('I have a fixture with single-quote \\'\\'\\'triple\\'\\'\\' quotes')
+            def i_have_a_fixture_with_singlequote_triple_quotes():
+                """I have a fixture with single-quote \'\'\'triple\'\'\' quotes."""
+                raise NotImplementedError
+
+
+            @then('The generated string should be written')
+            def the_generated_string_should_be_written():
+                """The generated string should be written."""
+                raise NotImplementedError
+            '''
         ).strip()
     )
 
@@ -160,6 +170,7 @@ def test_unicode_characters(testdir, monkeypatch):
 
     testdir.makefile(
         ".feature",
+        # language=gherkin
         unicode_characters="""\
             Feature: Generating unicode characters
 
@@ -172,8 +183,11 @@ def test_unicode_characters(testdir, monkeypatch):
 
     result = testdir.runpytest("--generate", "--feature", "unicode_characters.feature")
     expected_output = dedent(
+        # language=python
         '''\
         """Generating unicode characters feature tests."""
+
+        from pathlib import Path
 
         from pytest_bdd import (
             scenario,
@@ -184,7 +198,7 @@ def test_unicode_characters(testdir, monkeypatch):
         )
 
 
-        @scenario('unicode_characters.feature', 'Calculating the circumference of a circle')
+        @scenario(Path('unicode_characters.feature'), 'Calculating the circumference of a circle')
         def test_calculating_the_circumference_of_a_circle():
             """Calculating the circumference of a circle."""
 
