@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import collections
 from functools import reduce
-from operator import truediv
+from operator import attrgetter, truediv
 from os.path import commonpath
 from pathlib import Path
 from typing import Callable, Iterable, Sequence, cast
@@ -26,7 +26,7 @@ from pytest_bdd.model import Feature
 from pytest_bdd.model.messages import Pickle
 from pytest_bdd.parser import GherkinParser
 from pytest_bdd.typing.parser import ParserProtocol
-from pytest_bdd.typing.pytest import Config, Parser
+from pytest_bdd.typing.pytest import PYTEST61, Config, Parser
 from pytest_bdd.utils import PytestBDDIdGeneratorHandler, make_python_name
 
 Args = collections.namedtuple("Args", ["args", "kwargs"])
@@ -59,6 +59,10 @@ class FileScenarioLocator:
     parser_type: type[ParserProtocol] = attrib(default=GherkinParser)
     parse_args: Args = attrib(default=Factory(lambda: Args((), {})))
 
+    @staticmethod
+    def _get_config_rootpath(config: Config | PytestBDDIdGeneratorHandler):
+        return Path(getattr(cast(Config, config), "rootpath" if PYTEST61 else "rootdir"))
+
     def resolve(self, config: Config | PytestBDDIdGeneratorHandler):
         try:
             if self.features_base_dir is None:
@@ -66,10 +70,12 @@ class FileScenarioLocator:
             else:
                 features_base_dir = self.features_base_dir
         except (ValueError, KeyError):
-            features_base_dir = cast(Config, config).rootpath
-        if callable(features_base_dir):
-            features_base_dir = features_base_dir(config)
-        features_base_dir = (Path(cast(Config, config).rootpath) / Path(features_base_dir)).resolve()
+            features_base_dir = self._get_config_rootpath(config)
+        else:
+            if callable(features_base_dir):
+                features_base_dir = features_base_dir(config)
+
+            features_base_dir = (self._get_config_rootpath(config) / Path(features_base_dir)).resolve()
 
         already_resolved = set()
 

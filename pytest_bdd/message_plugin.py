@@ -68,6 +68,8 @@ class MessagePlugin:
             return
         hook_handler = config.hook
 
+        # TODO check messaging of step definitions; seems outdated
+
         # Message plugins step definitions (test module step definitions are messaged separately)
         for plugin in session.config.pluginmanager._plugin2hookcallers.keys():
             registry = deepattrgetter("step_registry.__registry__.registry", default=set())(plugin)[0]

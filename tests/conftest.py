@@ -1,13 +1,13 @@
 import pytest
 
-from tests.utils import PYTEST_6
+from tests.utils import PYTEST6
 
 pytest_plugins = "pytester"
 
 
 def pytest_generate_tests(metafunc):
     if "pytest_params" in metafunc.fixturenames:
-        if PYTEST_6:
+        if PYTEST6:
             parametrizations = [
                 pytest.param([], id="no-import-mode"),
                 pytest.param(["--import-mode=prepend"], id="--import-mode=prepend"),

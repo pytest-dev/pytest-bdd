@@ -40,6 +40,7 @@ import os
 import warnings
 from contextlib import suppress
 from inspect import getfile, getsourcelines
+from pathlib import Path
 from typing import Any, Callable, Iterable, Iterator, Sequence, cast
 from uuid import uuid4
 from warnings import warn
@@ -54,7 +55,7 @@ from pytest_bdd.model.messages import Location, Pickle
 from pytest_bdd.model.messages import PickleStep as Step
 from pytest_bdd.model.messages import SourceReference, StepDefinition, StepDefinitionPattern
 from pytest_bdd.parsers import StepParser
-from pytest_bdd.typing.pytest import Config, Parser, TypeAlias
+from pytest_bdd.typing.pytest import PYTEST61, Config, Parser, TypeAlias
 from pytest_bdd.utils import (
     PytestBDDIdGeneratorHandler,
     convert_str_to_python_name,
@@ -360,7 +361,10 @@ class StepHandler:
                     id=self.id,
                     pattern=StepDefinitionPattern(source=str(self.parser), type=self.parser.type),
                     sourceReference=SourceReference(
-                        uri=os.path.relpath(getfile(self.func), cast(Config, config).rootpath),
+                        uri=os.path.relpath(
+                            getfile(self.func),
+                            str(Path(getattr(cast(Config, config), "rootpath" if PYTEST61 else "rootdir"))),
+                        ),
                         location=Location(line=getsourcelines(self.func)[1]),
                     ),
                 )

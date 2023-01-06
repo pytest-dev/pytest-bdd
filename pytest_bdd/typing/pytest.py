@@ -37,6 +37,8 @@ if compare_distribution_version("pytest", "6.2", ge):
 else:
     from _pytest.fixtures import FixtureRequest
 
+PYTEST6 = compare_distribution_version("pytest", "6.0", ge)
+PYTEST61 = compare_distribution_version("pytest", "6.1", ge)
 PYTEST7 = compare_distribution_version("pytest", "7.0", ge)
 
 # endregion
@@ -68,6 +70,8 @@ __all__ = [
     "Metafunc",
     "Parser",
     "PytestPluginManager",
+    "PYTEST6",
+    "PYTEST7",
     "Session",
     "TerminalReporter",
     "TestReport",

@@ -1,17 +1,13 @@
 from __future__ import annotations
 
-from operator import ge
 from typing import TYPE_CHECKING
 
-from pytest_bdd.packaging import compare_distribution_version
+from pytest_bdd.typing.pytest import PYTEST6
 
 if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.typing.pytest import RunResult
 
-PYTEST_6 = compare_distribution_version("pytest", "6", ge)
-
-
-if PYTEST_6:
+if PYTEST6:
 
     def assert_outcomes(
         result: RunResult,

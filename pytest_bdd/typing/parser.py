@@ -16,7 +16,7 @@ class ParserProtocol(Protocol):
     # Defines which files would be parsed
     glob: Callable[[Path], list[str | Path]]
 
-    def __init__(self, *args, id_generator=None, **kwargs):
+    def __init__(self, *args, id_generator=None, **kwargs):  # pragma: no cover
         ...
 
     def parse(
