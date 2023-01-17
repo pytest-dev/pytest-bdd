@@ -264,6 +264,7 @@ class Step:
     scenario: ScenarioTemplate | None = field(init=False, default=None)
     background: Background | None = field(init=False, default=None)
     lines: list[str] = field(init=False, default_factory=list)
+    datatable: list[str] = None
 
     def __init__(self, name: str, type: str, indent: int, line_number: int, keyword: str) -> None:
         self.name = name
@@ -276,13 +277,19 @@ class Step:
         self.scenario = None
         self.background = None
         self.lines = []
+        self.datatable = []
 
     def add_line(self, line: str) -> None:
-        """Add line to the multiple step.
+        """Add line to the multiple step or add a line to the datatable.
 
-        :param str line: Line of text - the continuation of the step name.
+        :param str line: Line of text - the continuation of the step name or a datatable row.
         """
-        self.lines.append(line)
+        if(line.startswith("|") and line.endswith("|")):
+            # datatable line
+            line = line[1:-1]
+            self.datatable.append(line.split("|"))
+        else:
+            self.lines.append(line)
 
     @property
     def name(self) -> str:
