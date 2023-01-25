@@ -51,7 +51,7 @@ def parse_line(line: str) -> tuple[str, str]:
     """
     for prefix, _ in STEP_PREFIXES:
         if line.startswith(prefix):
-            return prefix.strip(), line[len(prefix):].strip()
+            return prefix.strip(), line[len(prefix) :].strip()
     return "", line
 
 
@@ -167,22 +167,18 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
             )
             feature.scenarios[parsed_line] = scenario
         elif mode == types.BACKGROUND:
-            feature.background = Background(
-                feature=feature, line_number=line_number)
+            feature.background = Background(feature=feature, line_number=line_number)
         elif mode == types.EXAMPLES:
             mode = types.EXAMPLES_HEADERS
             scenario.examples.line_number = line_number
             scenario.examples.tags = get_tags(all_lines, line_number)
         elif mode == types.EXAMPLES_HEADERS:
-            scenario.examples.set_param_names(
-                [l for l in split_line(parsed_line) if l])
+            scenario.examples.set_param_names([l for l in split_line(parsed_line) if l])
             mode = types.EXAMPLE_LINE
         elif mode == types.EXAMPLE_LINE:
-            scenario.examples.add_example(
-                [l for l in split_line(stripped_line)])
+            scenario.examples.add_example([l for l in split_line(stripped_line)])
         elif mode and mode not in (types.FEATURE, types.TAG):
-            step = Step(name=parsed_line, type=mode, indent=line_indent,
-                        line_number=line_number, keyword=keyword)
+            step = Step(name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword)
             if feature.background and not scenario:
                 feature.background.add_step(step)
             else:
@@ -289,7 +285,7 @@ class Step:
         :param str line: Line of text - the continuation of the step name or a datatable row.
         """
         clean_line = line.strip()
-        if (clean_line.startswith("|") and clean_line.endswith("|")):
+        if clean_line.startswith("|") and clean_line.endswith("|"):
             # datatable line
             clean_line = clean_line[1:-1]
             self.datatable.append(clean_line.split("|"))
@@ -298,8 +294,7 @@ class Step:
 
     @property
     def name(self) -> str:
-        multilines_content = textwrap.dedent(
-            "\n".join(self.lines)) if self.lines else ""
+        multilines_content = textwrap.dedent("\n".join(self.lines)) if self.lines else ""
 
         # Remove the multiline quotes, if present.
         multilines_content = re.sub(
@@ -395,8 +390,7 @@ def get_tags(all_lines: list[str] | str | None, line_number: int = 0) -> set[str
         return set()
     else:
         while (line_number - 1) > 0 and all_lines[line_number - line_offset].strip().startswith("@"):
-            line_tags = {tag.lstrip(
-                "@") for tag in all_lines[line_number - 2].strip().split(" @") if len(tag) > 1}
+            line_tags = {tag.lstrip("@") for tag in all_lines[line_number - 2].strip().split(" @") if len(tag) > 1}
             total_tags = total_tags.union(line_tags)
             line_number -= 1
         return total_tags
