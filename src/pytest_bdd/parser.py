@@ -391,12 +391,12 @@ def get_tags(all_lines: list[str] | str | None, line_number: int = 0) -> set[str
 
     total_tags = set[str]
     line_offset = 2  # Used to denote the line containing the tags, above the current line
-    if not all_lines[line_number-line_offset] or not all_lines[line_number-line_offset].strip().startswith("@"):
+    if not all_lines[line_number - line_offset] or not all_lines[line_number - line_offset].strip().startswith("@"):
         return set()
     else:
-        while (line_number - 1) > 0 and all_lines[line_number-line_offset].strip().startswith("@"):
+        while (line_number - 1) > 0 and all_lines[line_number - line_offset].strip().startswith("@"):
             line_tags = {tag.lstrip(
-                "@") for tag in all_lines[line_number-2].strip().split(" @") if len(tag) > 1}
+                "@") for tag in all_lines[line_number - 2].strip().split(" @") if len(tag) > 1}
             total_tags = total_tags.union(line_tags)
             line_number -= 1
         return total_tags

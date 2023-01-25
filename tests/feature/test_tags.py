@@ -66,6 +66,7 @@ def test_tags_selector(pytester):
     result = pytester.runpytest("-m", "feature_tag_10", "-vv").parseoutcomes()
     assert result["deselected"] == 2
 
+
 def test_multiline_tags(pytester):
     """Test tests selection by multiline tags."""
     pytester.makefile(
@@ -87,7 +88,7 @@ def test_multiline_tags(pytester):
     pytester.makefile(
         ".feature",
         test="""
-    @feature_tag_1 
+    @feature_tag_1
     @feature_tag_2
     Feature: Tags
 
@@ -95,7 +96,7 @@ def test_multiline_tags(pytester):
     Scenario: Tags
         Given I have a bar
 
-    @scenario_tag_10 
+    @scenario_tag_10
     @scenario_tag_20
     @scenario_tag_30
     Scenario: Tags 2
@@ -228,7 +229,7 @@ def test_example_tags(pytester):
 
     result = pytester.runpytest("-m", "feature_tag_1", "-vv").parseoutcomes()
     assert result["passed"] == 2
-    
+
     result = pytester.runpytest("-m", "feature_tag_1 and not example_tag_02", "-vv").parseoutcomes()
     assert result["passed"] == 1
     assert result["deselected"] == 1
