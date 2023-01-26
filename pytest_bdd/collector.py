@@ -6,7 +6,7 @@ from uuid import uuid4
 from pytest import Module as PytestModule
 
 from pytest_bdd.model.messages import Message
-from pytest_bdd.scenario import _scenarios
+from pytest_bdd.scenario import scenarios
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.utils import convert_str_to_python_name
 
@@ -37,8 +37,8 @@ class FeatureFileModule(PytestModule):
         module_spec = ModuleSpec(module_name, None)
         module = module_from_spec(module_spec)
 
-        module.test_scenarios = _scenarios(
-            feature_paths=[self.fspath],
+        module.test_scenarios = scenarios(
+            Path(self.fspath),
             filter_=None,
             return_test_decorator=False,
             parser_type=getattr(self, "parser_type", None),

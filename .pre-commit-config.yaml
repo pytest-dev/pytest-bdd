@@ -32,4 +32,4 @@ repos:
     rev: v0.942
     hooks:
     -   id: mypy
-        additional_dependencies: [types-setuptools]
+        additional_dependencies: [types-setuptools, types-certifi]

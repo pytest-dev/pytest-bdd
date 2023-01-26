@@ -117,7 +117,9 @@ class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProt
 
             features.extend(
                 map(
-                    lambda path: self.parse(config, path, relpath(str(path), str(features_base_dir)), **kwargs),
+                    lambda path: self.parse(
+                        config, path, "file:" + relpath(str(path), str(features_base_dir)), **kwargs
+                    ),
                     filterfalse(partial(contains, seen_names), file_paths),
                 )
             )

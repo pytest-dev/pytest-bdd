@@ -5,12 +5,13 @@ from collections import deque
 from contextlib import suppress
 from functools import partial
 from inspect import signature
-from itertools import chain
+from itertools import chain, filterfalse, tee
 from operator import attrgetter, contains, methodcaller
 from pathlib import Path
 from types import ModuleType
 from typing import Any, Collection, Iterable
 from unittest.mock import patch
+from urllib.parse import urlparse
 
 import py
 import pytest
@@ -20,17 +21,21 @@ from pytest_bdd.allure_logging import AllurePytestBDD
 from pytest_bdd.collector import FeatureFileModule as FeatureFileCollector
 from pytest_bdd.collector import Module as ModuleCollector
 from pytest_bdd.message_plugin import MessagePlugin
+from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.model import Feature
 from pytest_bdd.model.messages import Pickle
 from pytest_bdd.model.messages import PickleStep as Step
+from pytest_bdd.parser import GherkinParser
 from pytest_bdd.reporting import ScenarioReporterPlugin
 from pytest_bdd.runner import ScenarioRunner
-from pytest_bdd.scenario import FileScenarioLocator, _scenarios
+from pytest_bdd.scenario import FeaturePathType, FileScenarioLocator, UrlScenarioLocator
 from pytest_bdd.scenario import add_options as scenario_add_options
+from pytest_bdd.scenario import scenarios
 from pytest_bdd.steps import StepHandler
+from pytest_bdd.struct_bdd.plugin import StructBDDPlugin
 from pytest_bdd.typing.pytest import PYTEST7, Config, Mark, MarkDecorator, Metafunc, Parser, PytestPluginManager
 from pytest_bdd.typing.struct_bdd import STRUCT_BDD_INSTALLED
-from pytest_bdd.utils import IdGenerator, setdefaultattr
+from pytest_bdd.utils import IdGenerator, getitemdefault, setdefaultattr
 
 
 def pytest_addhooks(pluginmanager: PytestPluginManager) -> None:
@@ -85,6 +90,7 @@ def pytest_addoption(parser: Parser) -> None:
 
 def add_bdd_ini(parser: Parser) -> None:
     parser.addini("bdd_features_base_dir", "Base features directory.")
+    parser.addini("bdd_features_base_url", "Base features url.")
 
 
 @pytest.mark.trylast
@@ -99,6 +105,7 @@ def pytest_configure(config: Config) -> None:
     config.pluginmanager.register(MessagePlugin(config=config), name="pytest_bdd_messages")  # type: ignore[call-arg]
     config.__allure_plugin__ = AllurePytestBDD.register_if_allure_accessible(config)  # type: ignore[attr-defined]
     setdefaultattr(config, "pytest_bdd_id_generator", value_factory=IdGenerator)
+    config.pluginmanager.register(StructBDDPlugin())
 
 
 @pytest.mark.tryfirst
@@ -121,47 +128,107 @@ def pytest_plugin_registered(plugin, manager):
         StepHandler.Registry.inject_registry_fixture_and_register_steps(plugin)
 
 
+def _build_filter(filter_):
+    if callable(filter_):
+        updated_filter = filter_
+    else:
+        if filter_ is None:
+            updated_filter = None
+        else:
+            if not isinstance(filter_, str):
+                filter_ = str(filter_)
+
+            def updated_filter(config, feature, scenario):
+                return scenario.name == filter_
+
+    return updated_filter
+
+
 def _build_scenario_locators_from_mark(mark: Mark, config: Config) -> Iterable[Any]:
-    raw_mark_arguments = signature(_scenarios).bind(*mark.args, **mark.kwargs)
+    raw_mark_arguments = signature(scenarios).bind(*mark.args, **mark.kwargs)
     raw_mark_arguments.apply_defaults()
     mark_arguments = raw_mark_arguments.arguments
 
     locators_iterables = [mark_arguments["locators"]]
 
-    if mark_arguments["feature_paths"]:
+    filter_ = _build_filter(getitemdefault(mark_arguments, "filter_", default=None))
+
+    features_base_dir = mark.kwargs.get("features_base_dir")
+    if features_base_dir is None:
         try:
-            features_base_dir = mark.kwargs.get("features_base_dir", config.getini("bdd_features_base_dir"))
+            features_base_dir = config.getini("bdd_features_base_dir")
         except (ValueError, KeyError):
             features_base_dir = config.rootpath
-        if callable(features_base_dir):
-            features_base_dir = features_base_dir(config)
+    if callable(features_base_dir):
+        features_base_dir = features_base_dir(config)
 
-        path_locator = FileScenarioLocator(  # type: ignore[call-arg]
-            feature_paths=mark_arguments["feature_paths"],
-            filter_=mark_arguments["filter_"],
-            encoding=mark_arguments["encoding"],
-            features_base_dir=features_base_dir,
-            parser_type=mark_arguments["parser_type"],
-            parse_args=mark_arguments["parse_args"],
-        )
+    features_base_url = mark.kwargs.get("features_base_url")
+    if features_base_url is None:
+        try:
+            features_base_url = config.getini("bdd_features_base_url")
+        except (ValueError, KeyError):
+            features_base_url = None
+    if callable(features_base_url):
+        features_base_url = features_base_url(config)
 
-        locators_iterables.append([path_locator])
+    features_path_type = mark_arguments["features_path_type"]
+    if features_path_type is None:
+        features_path_type = FeaturePathType.UNDEFINED
+    elif isinstance(features_path_type, str):
+        features_path_type = FeaturePathType(features_path_type)
+    elif isinstance(features_path_type, FeaturePathType):
+        pass
+    else:
+        raise ValueError(f"Unknown feature path type")
 
-    if mark_arguments["features_base_url"]:
-        features_base_url = mark.kwargs.get("features_base_url", config.getini("bdd_features_base_url"))
-        if callable(features_base_url):
-            features_base_url = features_base_url(config)
+    feature_paths = mark_arguments["feature_paths"]
+    if feature_paths is None:
+        feature_paths = []
 
-        url_locator = UrlScenarioLocator(  # type: ignore[call-arg, name-defined]
-            url_paths=mark_arguments["url_paths"],
-            filter_=mark_arguments["filter_"],
-            encoding=mark_arguments["encoding"],
-            features_base_url=features_base_url,
-            parser_type=mark_arguments["parser_type"],
-            parse_args=mark_arguments["parse_args"],
-        )
+    feature_paths_gen_1, feature_paths_gen_2 = tee(iter(feature_paths), 2)
 
-        locators_iterables.append([url_locator])
+    def is_valid_local_url(urllike: str):
+        try:
+            return not any(attrgetter("scheme", "netloc")(urlparse(urllike)))
+        except ValueError:
+            return False
+
+    def is_valid_local_path(pathlike):
+        return Path(pathlike).exists()
+
+    def is_local_path(pathlike: Path | str):
+        if features_path_type is FeaturePathType.PATH:
+            return True
+        elif features_path_type is FeaturePathType.URL:
+            return False
+        if is_valid_local_url(str(pathlike)):
+            return True
+        else:
+            return is_valid_local_path(pathlike)
+
+    path_locator = FileScenarioLocator(  # type: ignore[call-arg]
+        feature_paths=filter(is_local_path, feature_paths_gen_1),
+        filter_=filter_,
+        encoding=mark_arguments["encoding"],
+        features_base_dir=features_base_dir,
+        mimetype=mark_arguments["features_mimetype"],
+        parser_type=mark_arguments["parser_type"],
+        parse_args=mark_arguments["parse_args"],
+    )
+
+    locators_iterables.append([path_locator])
+
+    url_locator = UrlScenarioLocator(  # type: ignore[call-arg]
+        url_paths=filterfalse(is_local_path, feature_paths_gen_2),
+        filter_=mark_arguments["filter_"],
+        encoding=mark_arguments["encoding"],
+        features_base_url=features_base_url,
+        mimetype=mark_arguments["features_mimetype"],
+        parser_type=mark_arguments["parser_type"],
+        parse_args=mark_arguments["parse_args"],
+    )
+
+    locators_iterables.append([url_locator])
     return chain(*locators_iterables)
 
 
@@ -184,7 +251,8 @@ def pytest_generate_tests(metafunc: Metafunc):
 
     # build marker locators
     marks: list[Mark] = metafunc.definition.own_markers
-    if "pytest_bdd_scenario" in list(map(attrgetter("name"), marks)):
+    mark_names = list(map(attrgetter("name"), marks))
+    if "pytest_bdd_scenario" in mark_names:
         scenario_marks = filter(lambda mark: mark.name == "scenarios", marks)
 
         locators = chain.from_iterable(
@@ -245,3 +313,12 @@ def pytest_bdd_match_step_definition_to_step(request, feature, scenario, step, p
     step_matcher: StepHandler.Matcher = request.getfixturevalue("step_matcher")
 
     return step_matcher(feature, scenario, step, previous_step, step_registry)
+
+
+def pytest_bdd_get_mimetype(config: Config, path: Path):
+    if str(path).endswith(".gherkin") or str(path).endswith(".feature"):
+        return Mimetype.gherkin_plain, None
+
+
+def pytest_bdd_get_parser(config: Config, mimetype: Mimetype):
+    return {Mimetype.gherkin_plain: GherkinParser}.get(mimetype)

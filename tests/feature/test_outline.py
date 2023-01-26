@@ -171,9 +171,9 @@ def test_outlined_with_other_fixtures(testdir, tmp_path):
     """Test outlined scenario also using other parametrized fixture."""
     testdir.makeini(
         f"""\
-         [pytest]
-         bdd_features_base_dir={tmp_path}
-         """
+        [pytest]
+        bdd_features_base_dir={tmp_path}
+        """
     )
 
     (tmp_path / "outline.feature").write_text(

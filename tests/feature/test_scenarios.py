@@ -65,7 +65,7 @@ def test_scenarios(testdir, pytest_params, tmp_path):
         @scenario('features/subfolder/test.feature', 'Test already bound scenario')
         def test_already_bound():
             pass
-    """
+        """
     )
     result = testdir.runpytest("-v", "-s", *pytest_params)
     assert_outcomes(result, passed=4, failed=1)
@@ -85,7 +85,7 @@ def test_scenarios_none_found(testdir, pytest_params):
         from pytest_bdd import scenarios
 
         test_feature = scenarios('.')
-    """
+        """
     )
     result = testdir.runpytest_subprocess(testpath, *pytest_params)
     assert_outcomes(result, skipped=1)

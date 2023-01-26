@@ -132,7 +132,7 @@ def test_at_in_scenario(testdir):
         @given('I have a baz')
         def i_have_baz():
             return 'baz'
-    """
+        """
     )
 
     # Deprecate --strict after pytest 6.1

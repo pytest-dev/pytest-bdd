@@ -66,9 +66,9 @@ def test_steps(testdir):
 def test_step_function_can_be_decorated_multiple_times(testdir, tmp_path):
     testdir.makeini(
         f"""\
-         [pytest]
-         bdd_features_base_dir={tmp_path}
-         """
+        [pytest]
+        bdd_features_base_dir={tmp_path}
+        """
     )
     (tmp_path / "steps.feature").write_text(
         textwrap.dedent(
@@ -1083,9 +1083,9 @@ def test_strict_step_has_precedence_over_liberal_step_decorator(testdir, tmp_pat
 def test_found_alternate_step_decorators_produce_warning(testdir, tmp_path):
     testdir.makeini(
         f"""\
-         [pytest]
-         bdd_features_base_dir={tmp_path}
-         """
+        [pytest]
+        bdd_features_base_dir={tmp_path}
+        """
     )
     (tmp_path / "steps.feature").write_text(
         textwrap.dedent(

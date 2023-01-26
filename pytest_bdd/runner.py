@@ -192,5 +192,5 @@ class ScenarioRunner:
                 f'Step keyword: "{step.keyword}". '
                 f"Line {step.line_number} "
                 f'in scenario "{self.scenario.name}" '
-                f'in the feature "{self.feature.filename}"'
+                f'in the feature "{self.feature.uri}"'
             ) from e

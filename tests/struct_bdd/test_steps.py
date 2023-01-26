@@ -1,4 +1,5 @@
 from functools import partial
+from textwrap import dedent
 
 from pytest import mark, param
 
@@ -226,10 +227,14 @@ from pytest_bdd.struct_bdd.parser import StructBDDParser
         ),
     ],
 )
-def test_steps(testdir, kind, file_content):
-    testdir.makefile(
-        f".bdd.{kind}",
-        steps=file_content,
+def test_steps(testdir, kind, file_content, tmp_path):
+    (tmp_path / f"steps.bdd.{kind}").write_text(dedent(file_content))
+
+    testdir.makeini(
+        f"""\
+        [pytest]
+        bdd_features_base_dir={tmp_path}
+        """
     )
 
     testdir.makepyfile(
@@ -237,10 +242,8 @@ def test_steps(testdir, kind, file_content):
         """\
         from textwrap import dedent
         from pytest_bdd import given, when, then, scenario, step
-        from pytest_bdd.struct_bdd.parser import StructBDDParser
-        from functools import partial
 
-        @scenario("steps.bdd.{kind}", "Executed step by step", parser=partial(StructBDDParser, kind="{kind}"))
+        @scenario("steps.bdd.{kind}", "Executed step by step")
         def test_steps(feature):
             assert feature.description == dedent('''\\
                 Steps are executed one by one. Given and When sections
@@ -252,31 +255,25 @@ def test_steps(testdir, kind, file_content):
         def foo():
             return "foo"
 
-
         @given("there is a list", target_fixture="results", liberal=True)
         def results():
             return []
-
 
         @when("I append 1 to the list")
         def append_1(results):
             results.append(1)
 
-
         @when("I append 2 to the list")
         def append_2(results):
             results.append(2)
-
 
         @when("I append 3 to the list")
         def append_3(results):
             results.append(3)
 
-
         @then('foo should have value "foo"')
         def foo_is_foo(foo):
             assert foo == "foo"
-
 
         @then("the list should be [1, 2, 3]")
         def check_results(results):
@@ -326,10 +323,8 @@ def test_default_loader(testdir, kind, file_content):
         """\
         from textwrap import dedent
         from pytest_bdd import given, when, then, scenario
-        from pytest_bdd.struct_bdd.parser import StructBDDParser
 
-
-        @scenario("steps.bdd.{kind}", "Executed step by step", parser=StructBDDParser)
+        @scenario("steps.bdd.{kind}", "Executed step by step")
         def test_steps(feature):
             assert feature.description == dedent('''\\
                 Steps are executed one by one. Given and When sections
@@ -480,9 +475,8 @@ def test_examples(testdir, file_content):
         # language=python
         """\
         from pytest_bdd import given, then, scenarios
-        from pytest_bdd.struct_bdd.parser import StructBDDParser
 
-        test_scenarios = scenarios("steps.bdd.yaml", parser=StructBDDParser)
+        test_scenarios = scenarios("steps.bdd.yaml")
 
         @given('I have {count:g} cucumbers', target_fixture="cucumbers")
         def foo(count):
@@ -747,7 +741,7 @@ def test_dsl_joined_tables(testdir):
         # language=python
         """\
         from pytest_bdd import given, then, step
-        from pytest_bdd.struct_bdd.model import Step, Given, And, Then, Table, Alternative, When, Join
+        from pytest_bdd.struct_bdd.model import Step, Given, And, Then, Table, Join
 
         test_scenarios = Step(
             name="Alternative steps",

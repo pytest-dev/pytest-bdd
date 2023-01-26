@@ -100,7 +100,7 @@ def test_step_trace(testdir):
             "elements": [
                 {
                     "description": "",
-                    "id": "test_scenarios[test.feature-One passing scenario, one failing scenario-Passing]",
+                    "id": "test_scenarios[file:test.feature-One passing scenario, one failing scenario-Passing]",
                     "keyword": "Scenario",
                     "line": 5,
                     "name": "Passing",
@@ -125,7 +125,7 @@ def test_step_trace(testdir):
                 },
                 {
                     "description": "",
-                    "id": "test_scenarios[test.feature-One passing scenario, one failing scenario-Failing]",
+                    "id": "test_scenarios[file:test.feature-One passing scenario, one failing scenario-Failing]",
                     "keyword": "Scenario",
                     "line": 10,
                     "name": "Failing",
@@ -165,7 +165,7 @@ def test_step_trace(testdir):
                     "type": "scenario",
                     "id": (
                         "test_scenarios["
-                        "test.feature-One passing scenario, one failing scenario-"
+                        "file:test.feature-One passing scenario, one failing scenario-"
                         "Passing outline[table_rows:[line: 20]]"
                         "]"
                     ),
@@ -188,7 +188,7 @@ def test_step_trace(testdir):
                     "type": "scenario",
                     "id": (
                         "test_scenarios["
-                        "test.feature-One passing scenario, one failing scenario-"
+                        "file:test.feature-One passing scenario, one failing scenario-"
                         "Passing outline[table_rows:[line: 21]]"
                         "]"
                     ),
@@ -211,7 +211,7 @@ def test_step_trace(testdir):
                     "type": "scenario",
                     "id": (
                         "test_scenarios["
-                        "test.feature-One passing scenario, one failing scenario-"
+                        "file:test.feature-One passing scenario, one failing scenario-"
                         "Passing outline[table_rows:[line: 22]]"
                         "]"
                     ),

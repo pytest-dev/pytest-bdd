@@ -125,7 +125,9 @@ def test_step_trace(testdir):
     assert result.ret
 
     report = matchreport(
-        result, re.compile(r"test.*\[test\.feature-One passing scenario, one failing scenario-Passing\]"), when="call"
+        result,
+        re.compile(r"test.*\[file:test\.feature-One passing scenario, one failing scenario-Passing\]"),
+        when="call",
     ).scenario
     expected = {
         "feature": {
@@ -162,7 +164,9 @@ def test_step_trace(testdir):
     assert report == expected
 
     report = matchreport(
-        result, re.compile(r"test.*\[test.feature-One passing scenario, one failing scenario-Failing]"), when="call"
+        result,
+        re.compile(r"test.*\[file:test.feature-One passing scenario, one failing scenario-Failing]"),
+        when="call",
     ).scenario
     expected = {
         "feature": {
@@ -200,7 +204,7 @@ def test_step_trace(testdir):
     report = matchreport(
         result,
         re.compile(
-            r"test.*\[test\.feature-One passing scenario, one failing scenario-Outlined\[table_rows:\[line: 21]]]"
+            r"test.*\[file:test\.feature-One passing scenario, one failing scenario-Outlined\[table_rows:\[line: 21]]]"
         ),
         when="call",
     ).scenario
@@ -248,7 +252,7 @@ def test_step_trace(testdir):
     report = matchreport(
         result,
         re.compile(
-            r"test.*\[test\.feature-One passing scenario, one failing scenario-Outlined\[table_rows:\[line: 22]]]"
+            r"test.*\[file:test\.feature-One passing scenario, one failing scenario-Outlined\[table_rows:\[line: 22]]]"
         ),
         when="call",
     ).scenario
@@ -350,7 +354,7 @@ def test_complex_types(testdir, pytestconfig):
         result,
         re.compile(
             r"test_complex.*\["
-            r"test\.feature-Report serialization containing parameters of complex types-"
+            r"file:test\.feature-Report serialization containing parameters of complex types-"
             r"Complex\[table_rows:\[line: 8]]-alien0"
             r"]"
         ),

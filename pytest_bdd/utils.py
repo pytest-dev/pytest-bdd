@@ -8,7 +8,7 @@ import sys
 from collections import defaultdict
 from contextlib import nullcontext, suppress
 from enum import Enum
-from functools import partial
+from functools import partial, reduce
 from inspect import getframeinfo, signature
 from itertools import tee
 from operator import attrgetter, getitem, itemgetter
@@ -229,6 +229,31 @@ class _NoneException(Exception):
     ...
 
 
+class Empty(Enum):
+    empty = None
+
+
+def getitemdefault(
+    obj, index, default=Empty.empty, default_factory: Callable | None = None, treat_as_empty=Empty.empty
+):
+    if default is not Empty.empty:
+        if default_factory is not None:
+            raise ValueError("Both 'default' and 'default_factory' were specified")
+        else:
+            default_factory = lambda: default
+    try:
+        item = getitem(obj, index)
+    except KeyError:
+        if default_factory is None:
+            raise
+        else:
+            item = default_factory()
+    if item is not treat_as_empty:
+        return item
+    else:
+        raise KeyError(f"{index}")
+
+
 def deepattrgetter(*attrs, **kwargs):
     empty = object()
     default = kwargs.pop("default", empty)
@@ -252,12 +277,8 @@ def deepattrgetter(*attrs, **kwargs):
     return fn
 
 
-class EMPTY(Enum):
-    EMPTY = 1
-
-
-def setdefaultattr(obj, key, value: Literal[EMPTY.EMPTY] | Any = EMPTY.EMPTY, value_factory: None | Callable = None):
-    if value is not EMPTY.EMPTY and value_factory is not None:
+def setdefaultattr(obj, key, value: Literal[Empty.empty] | Any = Empty.empty, value_factory: None | Callable = None):
+    if value is not Empty.empty and value_factory is not None:
         raise ValueError("Both 'value' and 'value_factory' were specified")
     with suppress(AttributeError):
         return getattr(obj, key)
@@ -265,6 +286,10 @@ def setdefaultattr(obj, key, value: Literal[EMPTY.EMPTY] | Any = EMPTY.EMPTY, va
         value = value_factory()
     setattr(obj, key, value)
     return value
+
+
+def compose(*funcs):
+    return reduce(lambda f, g: lambda *args, **kwargs: f(g(*args, **kwargs)), funcs)
 
 
 def make_python_name(string: str) -> str:

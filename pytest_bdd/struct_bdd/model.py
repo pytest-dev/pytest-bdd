@@ -130,17 +130,17 @@ class Step(Node, ModelSchemaPostLoadable):
             return zip_longest((), feature.pickles, fillvalue=feature)
 
     def as_test(self, filename):
-        from pytest_bdd.scenario import _scenarios
+        from pytest_bdd.scenario import scenarios
 
-        return _scenarios(
+        return scenarios(
             locators=[self.Locator(self, str(Path(filename).as_posix()), str(Path(filename).relative_to(Path.cwd())))],
             return_test_decorator=False,
         )
 
     def as_test_decorator(self, filename):
-        from pytest_bdd.scenario import _scenarios
+        from pytest_bdd.scenario import scenarios
 
-        return _scenarios(
+        return scenarios(
             locators=[self.Locator(self, str(Path(filename).as_posix()), str(Path(filename).relative_to(Path.cwd())))],
             return_test_decorator=True,
         )

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Iterable
 
 from _pytest.fixtures import FixtureRequest
@@ -75,3 +76,13 @@ def pytest_bdd_get_step_dispatcher(request: FixtureRequest, feature: Feature, sc
 
 def pytest_bdd_message(config: Config, message: Message):
     """Implement cucumber message protocol https://github.com/cucumber/messages"""
+
+
+@hookspec(firstresult=True)
+def pytest_bdd_get_parser(config: Config, mimetype: str):
+    """Get parser for specific file path"""
+
+
+@hookspec(firstresult=True)
+def pytest_bdd_get_mimetype(config: Config, path: Path):
+    """Get parser for specific file path"""
