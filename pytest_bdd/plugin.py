@@ -5,7 +5,7 @@ from collections import deque
 from contextlib import suppress
 from functools import partial
 from inspect import signature
-from itertools import chain, filterfalse, tee
+from itertools import chain, filterfalse, starmap, tee
 from operator import attrgetter, contains, methodcaller
 from pathlib import Path
 from types import ModuleType
@@ -35,7 +35,7 @@ from pytest_bdd.steps import StepHandler
 from pytest_bdd.struct_bdd.plugin import StructBDDPlugin
 from pytest_bdd.typing.pytest import PYTEST7, Config, Mark, MarkDecorator, Metafunc, Parser, PytestPluginManager
 from pytest_bdd.typing.struct_bdd import STRUCT_BDD_INSTALLED
-from pytest_bdd.utils import IdGenerator, getitemdefault, setdefaultattr
+from pytest_bdd.utils import IdGenerator, compose, getitemdefault, setdefaultattr
 
 
 def pytest_addhooks(pluginmanager: PytestPluginManager) -> None:
@@ -246,6 +246,9 @@ def _build_scenario_param(feature: Feature, pickle: Pickle, config: Config):
     )
 
 
+chain_map = compose(chain.from_iterable, map)
+
+
 def pytest_generate_tests(metafunc: Metafunc):
     config = metafunc.config
 
@@ -254,15 +257,12 @@ def pytest_generate_tests(metafunc: Metafunc):
     mark_names = list(map(attrgetter("name"), marks))
     if "pytest_bdd_scenario" in mark_names:
         scenario_marks = filter(lambda mark: mark.name == "scenarios", marks)
-
-        locators = chain.from_iterable(
-            map(lambda mark: _build_scenario_locators_from_mark(mark, config), scenario_marks)
-        )
-        resolved_locators = chain.from_iterable(map(methodcaller("resolve", config), locators))
+        locators = chain_map(partial(_build_scenario_locators_from_mark, config=config), scenario_marks)
+        resolved_locators = chain_map(methodcaller("resolve", config), locators)
 
         metafunc.parametrize(
             "feature, scenario",
-            [_build_scenario_param(feature, pickle, config) for feature, pickle in resolved_locators],
+            starmap(partial(_build_scenario_param, config=config), resolved_locators),
         )
 
 
@@ -317,8 +317,8 @@ def pytest_bdd_match_step_definition_to_step(request, feature, scenario, step, p
 
 def pytest_bdd_get_mimetype(config: Config, path: Path):
     if str(path).endswith(".gherkin") or str(path).endswith(".feature"):
-        return Mimetype.gherkin_plain, None
+        return Mimetype.gherkin_plain.value
 
 
-def pytest_bdd_get_parser(config: Config, mimetype: Mimetype):
-    return {Mimetype.gherkin_plain: GherkinParser}.get(mimetype)
+def pytest_bdd_get_parser(config: Config, mimetype: str):
+    return {Mimetype.gherkin_plain.value: GherkinParser}.get(mimetype)

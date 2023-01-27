@@ -101,17 +101,13 @@ class UrlScenarioLocator:
             if isinstance(response, Exception):
                 continue
 
-            raw_mimetype, feature_content = response
-            try:
-                mimetype = Mimetype(raw_mimetype)
-            except:
-                mimetype = None
+            mimetype, feature_content = response
 
             if self.mimetype is not None:
                 mimetype = self.mimetype
 
-            if isinstance(mimetype, str):
-                mimetype = Mimetype(mimetype)
+                if isinstance(mimetype, Mimetype):
+                    mimetype = mimetype.value
 
             if self.parser_type is None:
                 parser_type = hook_handler.pytest_bdd_get_parser(
@@ -222,19 +218,13 @@ class FileScenarioLocator:
             uri = self._build_file_uri(features_base_dir, feature_path)
             already_resolved_feature_paths.add(feature_path_key)
             hook_handler = cast(Config, config).hook
+            encoding = self.encoding
 
             if self.parser_type is None:
                 if self.mimetype is None:
-                    calculated_pytest_mimetype = hook_handler.pytest_bdd_get_mimetype(config=config, path=feature_path)
-                    if calculated_pytest_mimetype is None:
-                        mimetype, encoding = self.encoding, self.mimetype
-                    else:
-                        mimetype, encoding = calculated_pytest_mimetype
+                    mimetype = hook_handler.pytest_bdd_get_mimetype(config=config, path=feature_path)
                 else:
-                    mimetype, encoding = self.encoding, self.mimetype
-
-                if encoding is None:
-                    encoding = self.encoding
+                    mimetype = self.mimetype
 
                 parser_type = hook_handler.pytest_bdd_get_parser(
                     config=config,
@@ -242,7 +232,6 @@ class FileScenarioLocator:
                 )
             else:
                 parser_type = self.parser_type
-                encoding = self.encoding
 
             if parser_type is None:
                 break
