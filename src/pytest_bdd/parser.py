@@ -107,11 +107,11 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
     description: list[str] = []
     step = None
     multiline_step = False
-    prev_line = None
 
     with open(abs_filename, encoding=encoding) as f:
         content = f.read()
 
+    all_lines = content.splitlines()
     for line_number, line in enumerate(content.splitlines(), start=1):
         unindented_line = line.lstrip()
         line_indent = len(line) - len(unindented_line)
@@ -140,7 +140,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
             if prev_mode is None or prev_mode == types.TAG:
                 _, feature.name = parse_line(clean_line)
                 feature.line_number = line_number
-                feature.tags = get_tags(prev_line)
+                feature.tags = get_tags(all_lines, line_number)
             elif prev_mode == types.FEATURE:
                 description.append(clean_line)
             else:
@@ -157,7 +157,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
         keyword, parsed_line = parse_line(clean_line)
 
         if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
-            tags = get_tags(prev_line)
+            tags = get_tags(all_lines, line_number)
             scenario = ScenarioTemplate(
                 feature=feature,
                 name=parsed_line,
@@ -171,6 +171,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
         elif mode == types.EXAMPLES:
             mode = types.EXAMPLES_HEADERS
             scenario.examples.line_number = line_number
+            scenario.examples.tags = get_tags(all_lines, line_number)
         elif mode == types.EXAMPLES_HEADERS:
             scenario.examples.set_param_names([l for l in split_line(parsed_line) if l])
             mode = types.EXAMPLE_LINE
@@ -183,7 +184,6 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
             else:
                 scenario = cast(ScenarioTemplate, scenario)
                 scenario.add_step(step)
-        prev_line = clean_line
 
     feature.description = "\n".join(description).strip()
     return feature
@@ -264,6 +264,7 @@ class Step:
     scenario: ScenarioTemplate | None = field(init=False, default=None)
     background: Background | None = field(init=False, default=None)
     lines: list[str] = field(init=False, default_factory=list)
+    datatable: list[str] = field(init=False, default_factory=list)
 
     def __init__(self, name: str, type: str, indent: int, line_number: int, keyword: str) -> None:
         self.name = name
@@ -276,13 +277,20 @@ class Step:
         self.scenario = None
         self.background = None
         self.lines = []
+        self.datatable = []
 
     def add_line(self, line: str) -> None:
-        """Add line to the multiple step.
+        """Add line to the multiple step or add a line to the datatable.
 
-        :param str line: Line of text - the continuation of the step name.
+        :param str line: Line of text - the continuation of the step name or a datatable row.
         """
-        self.lines.append(line)
+        clean_line = line.strip()
+        if clean_line.startswith("|") and clean_line.endswith("|"):
+            # datatable line
+            clean_line = clean_line[1:-1]
+            self.datatable.append(clean_line.split("|"))
+        else:
+            self.lines.append(line)
 
     @property
     def name(self) -> str:
@@ -337,8 +345,10 @@ class Examples:
 
     line_number: int | None = field(default=None)
     name: str | None = field(default=None)
+    tags: set[str] = field(default_factory=set)
 
     example_params: list[str] = field(init=False, default_factory=list)
+    example_tags: list[str] = field(init=False, default_factory=list)
     examples: list[Sequence[str]] = field(init=False, default_factory=list)
 
     def set_param_names(self, keys: Iterable[str]) -> None:
@@ -346,28 +356,41 @@ class Examples:
 
     def add_example(self, values: Sequence[str]) -> None:
         self.examples.append(values)
+        self.example_tags.append(self.tags)
 
-    def as_contexts(self) -> Iterable[dict[str, Any]]:
+    def as_contexts(self) -> Iterable[dict[str, Any], list[str]]:
         if not self.examples:
             return
+        header, rows, tags = self.example_params, self.examples, self.example_tags
 
-        header, rows = self.example_params, self.examples
-
-        for row in rows:
+        for index, row in enumerate(rows):
             assert len(header) == len(row)
-            yield dict(zip(header, row))
+            yield dict(zip(header, row)), tags[index]
 
     def __bool__(self) -> bool:
         return bool(self.examples)
 
 
-def get_tags(line: str | None) -> set[str]:
+def get_tags(all_lines: list[str] | str | None, line_number: int = 0) -> set[str]:
     """Get tags out of the given line.
 
     :param str line: Feature file text line.
+    :param int line_number: Starting line.
 
     :return: List of tags.
     """
-    if not line or not line.strip().startswith("@"):
+    if isinstance(all_lines, str) or not all_lines:
+        if not all_lines or not all_lines.strip().startswith("@"):
+            return set()
+        return {tag.lstrip("@") for tag in all_lines.strip().split(" @") if len(tag) > 1}
+
+    total_tags = set[str]
+    line_offset = 2  # Used to denote the line containing the tags, above the current line
+    if not all_lines[line_number - line_offset] or not all_lines[line_number - line_offset].strip().startswith("@"):
         return set()
-    return {tag.lstrip("@") for tag in line.strip().split(" @") if len(tag) > 1}
+    else:
+        while (line_number - 1) > 0 and all_lines[line_number - line_offset].strip().startswith("@"):
+            line_tags = {tag.lstrip("@") for tag in all_lines[line_number - 2].strip().split(" @") if len(tag) > 1}
+            total_tags = total_tags.union(line_tags)
+            line_number -= 1
+        return total_tags
