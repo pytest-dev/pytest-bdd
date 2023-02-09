@@ -269,7 +269,7 @@ class ScenarioTemplate:
         """Get the scenario's description.
         :return: The scenario description
         """
-        return u"\n".join(self._description_lines)
+        return "\n".join(self._description_lines)
 
 
 @dataclass
