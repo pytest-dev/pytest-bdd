@@ -256,7 +256,14 @@ class ScenarioTemplate:
                 for step in self._steps
             ]
         steps = background_steps + scenario_steps
-        return Scenario(feature=self.feature, name=self.name, line_number=self.line_number, steps=steps, tags=self.tags, description=self._description_lines)
+        return Scenario(
+            feature=self.feature,
+            name=self.name,
+            line_number=self.line_number,
+            steps=steps,
+            tags=self.tags,
+            description=self._description_lines,
+        )
 
     def add_description_line(self, description_line):
         """Add a description line to the scenario.
