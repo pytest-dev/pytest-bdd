@@ -19,7 +19,6 @@ def test_description(pytester):
             Some description goes here.
 
             Scenario: Description
-
                 Also, the scenario can have a description.
 
                 It goes here between the scenario name

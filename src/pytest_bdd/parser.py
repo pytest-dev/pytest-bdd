@@ -147,7 +147,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
             elif prev_mode == types.FEATURE:
                 # Do not include comments in descriptions
                 if not stripped_line.startswith("#"):
-                    description.append(line)
+                    description.append(clean_line)
             else:
                 raise exceptions.FeatureError(
                     "Multiple features are not allowed in a single feature file",
@@ -169,7 +169,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
                 # Do not include comments in descriptions
                 if stripped_line.startswith("#"):
                     continue
-                scenario.add_description_line(line)
+                scenario.add_description_line(clean_line)
                 continue
             tags = get_tags(prev_line)
             scenario = ScenarioTemplate(
