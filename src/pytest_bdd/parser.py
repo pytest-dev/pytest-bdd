@@ -167,9 +167,8 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
             # are considered part of the scenario description.
             if scenario and not keyword:
                 # Do not include comments in descriptions
-                if stripped_line.startswith("#"):
-                    continue
-                scenario.add_description_line(clean_line)
+                if not stripped_line.startswith("#"):
+                    scenario.add_description_line(clean_line)
                 continue
             tags = get_tags(prev_line)
             scenario = ScenarioTemplate(
