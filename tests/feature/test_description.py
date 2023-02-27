@@ -19,6 +19,10 @@ def test_description(pytester):
             Some description goes here.
 
             Scenario: Description
+                Also, the scenario can have a description.
+
+                It goes here between the scenario name
+                and the first step.
                 Given I have a bar
         """
         ),
@@ -39,7 +43,7 @@ def test_description(pytester):
         def _():
             return "bar"
 
-        def test_scenario_description():
+        def test_feature_description():
             assert test_description.__scenario__.feature.description == textwrap.dedent(
                 \"\"\"\\
                 In order to achieve something
@@ -49,9 +53,18 @@ def test_description(pytester):
 
                 Some description goes here.\"\"\"
             )
+
+        def test_scenario_description():
+            assert test_description.__scenario__.description == textwrap.dedent(
+                \"\"\"\\
+                Also, the scenario can have a description.
+
+                It goes here between the scenario name
+                and the first step.\"\"\"
+            )
         """
         )
     )
 
     result = pytester.runpytest()
-    result.assert_outcomes(passed=2)
+    result.assert_outcomes(passed=3)
