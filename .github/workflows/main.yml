@@ -83,5 +83,8 @@ jobs:
 
     - uses: codecov/codecov-action@v3
       with:
+        # Explicitly using the token in order to avoid Codecov rate limit errors
+        # See https://community.codecov.com/t/upload-issues-unable-to-locate-build-via-github-actions-api/3954
+        token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: true
         verbose: true # optional (default = false)
