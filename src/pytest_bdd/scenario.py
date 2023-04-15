@@ -12,7 +12,10 @@ test_publish_article = scenario(
 """
 from __future__ import annotations
 
+import asyncio
 import contextlib
+import functools
+import inspect
 import logging
 import os
 import re
@@ -33,7 +36,6 @@ if TYPE_CHECKING:
     from _pytest.mark.structures import ParameterSet
 
     from .parser import Feature, Scenario, ScenarioTemplate, Step
-
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +158,14 @@ def _execute_step_function(
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
         # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
-        return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
+        step_func = context.step_func
+        if context.is_async:
+            if inspect.isasyncgenfunction(context.step_func):
+                step_func = _wrap_asyncgen(request, context.step_func)
+            elif inspect.iscoroutinefunction(context.step_func):
+                step_func = _wrap_coroutine(context.step_func)
+
+        return_value = call_fixture_func(fixturefunc=step_func, request=request, kwargs=kwargs)
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
         raise
@@ -165,6 +174,73 @@ def _execute_step_function(
         inject_fixture(request, context.target_fixture, return_value)
 
     request.config.hook.pytest_bdd_after_step(**kw)
+
+
+def _wrap_asyncgen(request: FixtureRequest, func: Callable) -> Callable:
+    """Wrapper for an async_generator function.
+
+    This will wrap the function in a synchronized method to return the first
+    yielded value from the generator. A finalizer will be added to the fixture
+    to ensure that no other values are yielded and that the loop is closed.
+
+    :param request: The fixture request.
+    :param func: The function to wrap.
+
+    :returns: The wrapped function.
+    """
+
+    @functools.wraps(func)
+    def _wrapper(*args, **kwargs):
+        try:
+            loop, created = asyncio.get_running_loop(), False
+        except RuntimeError:
+            loop, created = asyncio.get_event_loop_policy().new_event_loop(), True
+
+        async_obj = func(*args, **kwargs)
+
+        def _finalizer() -> None:
+            """Ensure no more values are yielded and close the loop."""
+            try:
+                loop.run_until_complete(async_obj.__anext__())
+            except StopAsyncIteration:
+                pass
+            else:
+                raise ValueError("Async generator must only yield once.")
+
+            if created:
+                loop.close()
+
+        value = loop.run_until_complete(async_obj.__anext__())
+        request.addfinalizer(_finalizer)
+
+        return value
+
+    return _wrapper
+
+
+def _wrap_coroutine(func: Callable) -> Callable:
+    """Wrapper for a coroutine function.
+
+    :param func: The function to wrap.
+
+    :returns: The wrapped function.
+    """
+
+    @functools.wraps(func)
+    def _wrapper(*args, **kwargs):
+        try:
+            loop, created = asyncio.get_running_loop(), False
+        except RuntimeError:
+            loop, created = asyncio.get_event_loop_policy().new_event_loop(), True
+
+        try:
+            async_obj = func(*args, **kwargs)
+            return loop.run_until_complete(async_obj)
+        finally:
+            if created:
+                loop.close()
+
+    return _wrapper
 
 
 def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequest) -> None:
