@@ -5,11 +5,22 @@ from unittest import mock
 import pytest
 
 from pytest_bdd import given, parsers, then, when
+from pytest_bdd.asyncio import async_given, async_then, async_when
 from pytest_bdd.utils import collect_dumped_objects
 
 
-@pytest.mark.parametrize("step_fn, step_type", [(given, "given"), (when, "when"), (then, "then")])
-def test_given_when_then_delegate_to_step(step_fn: Callable[..., Any], step_type: str) -> None:
+@pytest.mark.parametrize(
+    "step_fn, step_type, is_async",
+    [
+        (given, "given", False),
+        (when, "when", False),
+        (then, "then", False),
+        (async_given, "given", True),
+        (async_when, "when", True),
+        (async_then, "then", True),
+    ],
+)
+def test_given_when_then_delegate_to_step(step_fn: Callable[..., Any], step_type: str, is_async: bool) -> None:
     """Test that @given, @when, @then just delegate the work to @step(...).
     This way we don't have to repeat integration tests for each step decorator.
     """
@@ -18,7 +29,9 @@ def test_given_when_then_delegate_to_step(step_fn: Callable[..., Any], step_type
     with mock.patch("pytest_bdd.steps.step", autospec=True) as step_mock:
         step_fn("foo")
 
-    step_mock.assert_called_once_with("foo", type_=step_type, converters=None, target_fixture=None, stacklevel=1)
+    step_mock.assert_called_once_with(
+        "foo", type_=step_type, converters=None, target_fixture=None, stacklevel=1, is_async=is_async
+    )
 
     # Advanced usage: step parser, converters, target_fixture, ...
     with mock.patch("pytest_bdd.steps.step", autospec=True) as step_mock:
@@ -26,7 +39,7 @@ def test_given_when_then_delegate_to_step(step_fn: Callable[..., Any], step_type
         step_fn(parser, converters={"n": int}, target_fixture="foo_n", stacklevel=3)
 
     step_mock.assert_called_once_with(
-        name=parser, type_=step_type, converters={"n": int}, target_fixture="foo_n", stacklevel=3
+        name=parser, type_=step_type, converters={"n": int}, target_fixture="foo_n", stacklevel=3, is_async=is_async
     )
 
 
