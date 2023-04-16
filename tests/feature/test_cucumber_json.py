@@ -29,7 +29,7 @@ class OfType:
         return isinstance(other, self.type) if self.type else True
 
 
-def test_step_trace(pytester):
+def test_cucumber_json_step_trace(pytester):
     """Test step trace."""
     pytester.makefile(
         ".ini",
@@ -222,7 +222,7 @@ def test_step_trace(pytester):
                     "name": "Passing outline",
                 },
             ],
-            "id": os.path.join("test_step_trace0", "test.feature"),
+            "id": os.path.join("test_cucumber_json_step_trace0", "test.feature"),
             "keyword": "Feature",
             "line": 2,
             "name": "One passing scenario, one failing scenario",
