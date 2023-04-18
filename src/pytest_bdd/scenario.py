@@ -140,7 +140,8 @@ def _execute_step_function(
     converters = context.converters
     kwargs = {}
     args = get_args(context.step_func)
-
+    args_with_default = get_args_with_default_value(context.step_func)
+    
     try:
         parsed_args = context.parser.parse_arguments(step.name)
         assert parsed_args is not None, (
