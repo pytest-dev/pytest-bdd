@@ -25,7 +25,7 @@ from _pytest.nodes import iterparentnodeids
 from . import exceptions
 from .feature import get_feature, get_features
 from .steps import StepFunctionContext, get_step_fixture_name, inject_fixture
-from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
+from .utils import CONFIG_STACK, get_args, get_args_with_default_value, get_caller_module_locals, get_caller_module_path
 
 if TYPE_CHECKING:
     from typing import Any, Iterable
@@ -151,7 +151,12 @@ def _execute_step_function(
                 value = converters[arg](value)
             kwargs[arg] = value
 
-        kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
+        for arg in args:
+            if not arg in kwargs:
+                if not arg in args_with_default:
+                    kwargs[arg] = request.getfixturevalue()
+                else:
+                    kwargs[arg] = args_with_default[arg]
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)

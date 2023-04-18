@@ -32,6 +32,17 @@ def get_args(func: Callable) -> list[str]:
         param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD and param.default is param.empty
     ]
 
+def get_args_with_default_value(func: Callable) -> dict:
+    """Get a dictionary of arguments with default value
+    
+    :param func: The function to inspect
+    :return: A dictionary of arguments with default value
+    :rtype: dict"""
+    params = signature(func).parameters.values()
+    return {
+        param.name: param.default for param in params if not param.default == param.empty
+    }
+
 
 def get_caller_module_locals(stacklevel: int = 1) -> dict[str, Any]:
     """Get the caller module locals dictionary.
