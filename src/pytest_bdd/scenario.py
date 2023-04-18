@@ -155,7 +155,7 @@ def _execute_step_function(
         for arg in args:
             if not arg in kwargs:
                 if not arg in args_with_default:
-                    kwargs[arg] = request.getfixturevalue()
+                    kwargs[arg] = request.getfixturevalue(arg)
                 else:
                     kwargs[arg] = args_with_default[arg]
         kw["step_func_args"] = kwargs
