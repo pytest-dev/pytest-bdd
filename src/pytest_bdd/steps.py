@@ -66,6 +66,7 @@ class StepFunctionContext:
     parser: StepParser
     converters: dict[str, Callable[..., Any]] = field(default_factory=dict)
     target_fixture: str | None = None
+    target_exception: str | None = None
 
 
 def get_step_fixture_name(step: Step) -> str:
@@ -96,6 +97,7 @@ def when(
     name: str | StepParser,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
+    target_exception: str | None = None,
     stacklevel: int = 1,
 ) -> Callable:
     """When step decorator.
@@ -104,11 +106,12 @@ def when(
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
+    :param target_exception: Target exception name to receive Exception object
     :param stacklevel: Stack level to find the caller frame. This is used when injecting the step definition fixture.
 
     :return: Decorator function for the step.
     """
-    return step(name, WHEN, converters=converters, target_fixture=target_fixture, stacklevel=stacklevel)
+    return step(name, WHEN, converters=converters, target_fixture=target_fixture, target_exception=target_exception, stacklevel=stacklevel)
 
 
 def then(
@@ -135,6 +138,7 @@ def step(
     type_: Literal["given", "when", "then"] | None = None,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
+    target_exception: str | None = None,
     stacklevel: int = 1,
 ) -> Callable[[TCallable], TCallable]:
     """Generic step decorator.
@@ -143,6 +147,7 @@ def step(
     :param type_: Step type ("given", "when" or "then"). If None, this step will work for all the types.
     :param converters: Optional step arguments converters mapping.
     :param target_fixture: Optional fixture name to replace by step definition.
+    :param target_exception: Optional target exception name
     :param stacklevel: Stack level to find the caller frame. This is used when injecting the step definition fixture.
 
     :return: Decorator function for the step.
@@ -165,6 +170,7 @@ def step(
             parser=parser,
             converters=converters,
             target_fixture=target_fixture,
+            target_exception=target_exception,
         )
 
         def step_function_marker() -> StepFunctionContext:
