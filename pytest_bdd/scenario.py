@@ -126,12 +126,24 @@ def _execute_step_function(request: FixtureRequest, scenario: Scenario, step: St
         # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
         return_value = call_fixture_func(fixturefunc=step_func, request=request, kwargs=kwargs)
         if target_fixture:
-            inject_fixture(request, target_fixture, return_value)
+            if isinstance(return_value, Exception):
+                target_exception = getattr(step_func, "target_exception", None)
+                arg = target_exception if target_exception else "response"
+                inject_fixture(request=request, arg=arg, value=return_value)
+            else:
+                target_fixture_tokens = [token for token in target_fixture.split(",") if token]
+                return_values = (return_value,) if not isinstance(return_value, tuple) else return_value
+                assert len(target_fixture_tokens) == len(
+                    return_values
+                ), f"Return value count: {len(return_values)} are not matching target_fixture count: {len(target_fixture_tokens)}"
+                for token, value in zip(target_fixture_tokens, return_values):
+                    inject_fixture(request=request, arg=token, value=value)
 
         request.config.hook.pytest_bdd_after_step(**kw)
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
         raise
+
 
 
 def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequest) -> None:

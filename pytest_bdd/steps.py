@@ -77,17 +77,17 @@ def given(
     return _step_decorator(GIVEN, name, converters=converters, target_fixture=target_fixture)
 
 
-def when(name: Any, converters: dict[str, Callable] | None = None, target_fixture: str | None = None) -> Callable:
+def when(name: Any, converters: dict[str, Callable] | None = None, target_fixture: str | None = None, target_exception: str | None = None) -> Callable:
     """When step decorator.
 
     :param name: Step name or a parser object.
     :param converters: Optional `dict` of the argument or parameter converters in form
                        {<param_name>: <converter function>}.
     :param target_fixture: Target fixture name to replace by steps definition function.
-
+    :param target_exception: Target exception name to receive Exception object
     :return: Decorator function for the step.
     """
-    return _step_decorator(WHEN, name, converters=converters, target_fixture=target_fixture)
+    return _step_decorator(WHEN, name, converters=converters, target_fixture=target_fixture, target_exception=target_exception)
 
 
 def then(name: Any, converters: dict[str, Callable] | None = None, target_fixture: str | None = None) -> Callable:
@@ -108,6 +108,7 @@ def _step_decorator(
     step_name: Any,
     converters: dict[str, Callable] | None = None,
     target_fixture: str | None = None,
+    target_exception: str | None = None,
 ) -> Callable:
     """Step decorator for the type and the name.
 
@@ -115,7 +116,7 @@ def _step_decorator(
     :param str step_name: Step name as in the feature file.
     :param dict converters: Optional step arguments converters mapping
     :param target_fixture: Optional fixture name to replace by step definition
-
+    :param target_exception: Optional target exception name
     :return: Decorator function for the step.
     """
 
@@ -144,6 +145,7 @@ def _step_decorator(
             step_func.converters = lazy_step_func.converters = converters
 
         step_func.target_fixture = lazy_step_func.target_fixture = target_fixture
+        step_func.target_exception = lazy_step_func.target_exception = target_exception
 
         lazy_step_func = pytest.fixture()(lazy_step_func)
         fixture_step_name = get_step_fixture_name(parsed_step_name, step_type)
