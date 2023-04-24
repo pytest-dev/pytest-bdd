@@ -609,7 +609,7 @@ def test_when_exception(pytester):
         @scenario("when_exception.feature", "Test when exception is generated")
         def test_when_exception():
             pass
-        
+
         @when("I have injected exception", target_fixture="foo")
         def _():
             return Exception("Dummy Exception obj")

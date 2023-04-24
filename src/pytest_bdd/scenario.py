@@ -167,7 +167,7 @@ def _execute_step_function(
             inject_fixture(request=request, arg=arg, value=return_value)
         else:
             target_fixture_tokens = [token for token in context.target_fixture.split(",") if token]
-            # Single return value in target_fixture 
+            # Single return value in target_fixture
             if len(target_fixture_tokens) == 1:
                 inject_fixture(request=request, arg=target_fixture_tokens[0], value=return_value)
             # Multiple comma separated return values in target_fixture

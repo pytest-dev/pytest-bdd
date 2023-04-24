@@ -111,7 +111,14 @@ def when(
 
     :return: Decorator function for the step.
     """
-    return step(name, WHEN, converters=converters, target_fixture=target_fixture, target_exception=target_exception, stacklevel=stacklevel)
+    return step(
+        name,
+        WHEN,
+        converters=converters,
+        target_fixture=target_fixture,
+        target_exception=target_exception,
+        stacklevel=stacklevel,
+    )
 
 
 def then(
