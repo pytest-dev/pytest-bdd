@@ -26,6 +26,7 @@ STEP_PREFIXES = [
     # Continuation of the previously mentioned step type
     ("And ", None),
     ("But ", None),
+    ("* ", None),
 ]
 
 TYPES_WITH_DESCRIPTIONS = [types.FEATURE, types.SCENARIO, types.SCENARIO_OUTLINE]
