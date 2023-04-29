@@ -5,6 +5,7 @@ Unreleased
 ----------
 - ⚠️ Backwards incompatible: - ``parsers.re`` now does a `fullmatch <https://docs.python.org/3/library/re.html#re.fullmatch>`_ instead of a partial match. This is to make it work just like the other parsers, since they don't ignore non-matching characters at the end of the string. `#539 <https://github.com/pytest-dev/pytest-bdd/pull/539>`_
 - Add support for Scenarios and Scenario Outlines to have descriptions. `#600 <https://github.com/pytest-dev/pytest-bdd/pull/600>`_
+- Add support for asterisks ( ``*`` ) as continuation steps. `#??? <https://github.com/pytest-dev/pytest-bdd/pull/???>`_
 
 6.1.1
 -----
