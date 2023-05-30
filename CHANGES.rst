@@ -8,12 +8,14 @@ Planned
 - Examples of data tables & docstrings usage
 - Check nested Rules support
 - Implement support of \*.md files
-    - Waiting fro upstream issue https://github.com/cucumber/gherkin/pull/64
+    - Waiting for upstream issue https://github.com/cucumber/gherkin/pull/64
 - Tests for messages and integrations
 - Test filters in scenario/scenarios
 - Features are autoloaded by default
     - .lnk, .desktop link files support for Feature mapping
     - add mechanism to exclude folders/features to be autocollected
+- Add support of python 3.12, PyPy at CI
+- Rework usage of Marshmallow to Pydantic
 
 
 Unreleased
