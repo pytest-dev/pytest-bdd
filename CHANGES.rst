@@ -10,7 +10,6 @@ Planned
 - Implement support of \*.md files
 - Tests for messages and integrations
 - Test filters in scenario/scenarios
-- Load features/scenarios by url
 - Features are autoloaded by default
     - .lnk, .desktop link files support for Feature mapping
     - add mechanism to exclude folders/features to be autocollected
@@ -18,9 +17,10 @@ Planned
 
 Unreleased
 ----------
+- Load features/scenarios by url
 - Features are autoloaded by default; Feature autoload could be disabled by --disable-feature-autoload cli option
 - Relative feature paths are counted from pytest rootpath
-- No more injection of tests into module space; Tests has to be registered directly
+- No more injection of tests into module space; Tests have to be registered directly
 - Separate generation scripts were moved to pytest environment
 - "scenario" no more override collected scenarios; They have to be registered independently. Scenarios could be filtered out if needed.
 - Added support of messages
