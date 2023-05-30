@@ -8,6 +8,7 @@ Planned
 - Examples of data tables & docstrings usage
 - Check nested Rules support
 - Implement support of \*.md files
+    - Waiting fro upstream issue https://github.com/cucumber/gherkin/pull/64
 - Tests for messages and integrations
 - Test filters in scenario/scenarios
 - Features are autoloaded by default
