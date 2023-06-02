@@ -291,6 +291,7 @@ def test_steps(testdir, kind, file_content, tmp_path):
     [
         partial(param, id="plain-yaml")(
             StructBDDParser.KIND.YAML.value,
+            # language=yaml
             """\
             Name: Steps are executed one by one
             Description: |
@@ -369,7 +370,7 @@ def test_default_loader(testdir, kind, file_content):
             kind=kind
         )
     )
-    result = testdir.runpytest()
+    result = testdir.runpytest("--disable-feature-autoload")
     result.assert_outcomes(passed=1, failed=0)
 
 
@@ -402,7 +403,7 @@ def test_default_loader(testdir, kind, file_content):
 )
 def test_autoload_feature_yaml(testdir, kind, file_content):
     testdir.makefile(
-        f".bdd.feature.{kind}",
+        f".bdd.{kind}",
         steps=file_content,
     )
 
@@ -471,12 +472,10 @@ def test_examples(testdir, file_content):
         steps=file_content,
     )
 
-    testdir.makepyfile(
+    testdir.makeconftest(
         # language=python
         """\
-        from pytest_bdd import given, then, scenarios
-
-        test_scenarios = scenarios("steps.bdd.yaml")
+        from pytest_bdd import given, then
 
         @given('I have {count:g} cucumbers', target_fixture="cucumbers")
         def foo(count):

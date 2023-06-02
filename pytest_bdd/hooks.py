@@ -79,6 +79,11 @@ def pytest_bdd_message(config: Config, message: Message):
 
 
 @hookspec(firstresult=True)
+def pytest_bdd_is_collectible(config: Config, path: Path):
+    """Verifies if path could be collected by pytest_bdd"""
+
+
+@hookspec(firstresult=True)
 def pytest_bdd_get_parser(config: Config, mimetype: str):
     """Get parser for specific file path"""
 

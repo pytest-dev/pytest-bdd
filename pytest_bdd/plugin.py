@@ -15,6 +15,7 @@ from urllib.parse import urlparse
 
 import py
 import pytest
+from _pytest.nodes import Collector
 
 from pytest_bdd import cucumber_json, generation, gherkin_terminal_reporter, given, steps, then, when
 from pytest_bdd.allure_logging import AllurePytestBDD
@@ -34,7 +35,6 @@ from pytest_bdd.scenario import scenarios
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.struct_bdd.plugin import StructBDDPlugin
 from pytest_bdd.typing.pytest import PYTEST7, Config, Mark, MarkDecorator, Metafunc, Parser, PytestPluginManager
-from pytest_bdd.typing.struct_bdd import STRUCT_BDD_INSTALLED
 from pytest_bdd.utils import IdGenerator, compose, getitemdefault, setdefaultattr
 
 
@@ -270,7 +270,7 @@ def pytest_cmdline_main(config: Config) -> int | None:
     return generation.cmdline_main(config)
 
 
-def pytest_collect_file(parent, path, file_path=None):
+def pytest_collect_file(parent: Collector, path, file_path=None):
     file_path = file_path or Path(path)
     config = parent.session.config
     is_enabled_feature_autoload = config.getoption("feature_autoload")
@@ -278,27 +278,17 @@ def pytest_collect_file(parent, path, file_path=None):
         is_enabled_feature_autoload = config.getini("feature_autoload")
     if not is_enabled_feature_autoload:
         return
-    if any(map(partial(contains, {".gherkin", ".feature"}), file_path.suffixes)):
+
+    config = parent.config
+    hook = parent.config.hook
+
+    if hook.pytest_bdd_is_collectible(config=config, path=Path(file_path)):
         if hasattr(FeatureFileCollector, "from_parent"):
             collector = FeatureFileCollector.from_parent(
                 parent, **(dict(path=Path(file_path)) if PYTEST7 else dict(fspath=py.path.local(file_path)))
             )
         else:
             collector = FeatureFileCollector(parent=parent, fspath=py.path.local(file_path))
-
-        if STRUCT_BDD_INSTALLED:
-            from pytest_bdd.struct_bdd.parser import StructBDDParser
-
-            struct_bdd_parser_kind = next(
-                filter(
-                    partial(contains, list(map(methodcaller("strip", "."), file_path.suffixes))),
-                    list(map(attrgetter("value"), StructBDDParser.KIND)),
-                ),
-                None,
-            )
-
-            if struct_bdd_parser_kind is not None:
-                collector.parser_type = partial(StructBDDParser, kind=struct_bdd_parser_kind)
 
         return collector
 
@@ -322,3 +312,8 @@ def pytest_bdd_get_mimetype(config: Config, path: Path):
 
 def pytest_bdd_get_parser(config: Config, mimetype: str):
     return {Mimetype.gherkin_plain.value: GherkinParser}.get(mimetype)
+
+
+def pytest_bdd_is_collectible(config: Config, path: Path):
+    if any(map(partial(contains, {".gherkin", ".feature"}), path.suffixes)):
+        return True

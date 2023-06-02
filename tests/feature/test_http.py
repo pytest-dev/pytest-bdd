@@ -44,6 +44,45 @@ def test_feature_load_by_http(testdir, httpserver: HTTPServer):
     result.assert_outcomes(passed=1)
 
 
+def test_struct_bdd_feature_load_by_http(testdir, httpserver: HTTPServer):
+    httpserver.expect_request("/feature").respond_with_data(
+        dedent(
+            # language=yaml
+            """
+            Name: minimal
+            Description: |
+              Cucumber doesn't execute this markdown, but @cucumber/react renders it
+
+              * This is
+              * a bullet
+              * list
+            Steps:
+                - Step:
+                    Name: Passing cukes
+                    Steps:
+                        - Given: I have 42 cukes in my belly
+            """
+        ),
+        content_type=Mimetype.struct_bdd_yaml.value,
+    )
+    testdir.makepyfile(
+        # language=python
+        test_http=f"""\
+            from pytest_bdd import given, scenarios
+
+            @given("I have {{cuckes_count}} cukes in my belly")
+            def results(cuckes_count):
+                assert cuckes_count == '42'
+
+            test_cuckes = scenarios(
+                f"http://localhost:{httpserver.port}/feature",
+            )
+        """
+    )
+    result = testdir.runpytest_inprocess()
+    result.assert_outcomes(passed=1)
+
+
 def test_feature_load_by_http_with_base_url(testdir, httpserver: HTTPServer):
     httpserver.expect_request("/feature").respond_with_data(
         dedent(

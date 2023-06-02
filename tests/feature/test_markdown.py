@@ -3,7 +3,7 @@ from textwrap import dedent
 import pytest
 
 
-@pytest.mark.xfail(reason="gherkin-official<=24.1 doesn't support markdown parsing")
+@pytest.mark.xfail(reason="https://github.com/cucumber/gherkin/pull/64")
 def test_markdown(testdir):
     testdir.makefile(
         ".feature.md",
