@@ -291,7 +291,7 @@ def scenario(
     :param encoding: Feature file encoding.
     :param features_base_dir: Feature base directory from where features will be searched
     :param features_base_url: Feature base url from where features will be loaded
-    :param features_path_type: If feature path is not absolute helps to select if filepath o url will be used
+    :param features_path_type: If feature path is not absolute helps to select if filepath or url will be used
     :param features_mimetype: Helps to select appropriate parser if non-standard file extension is used
     :param return_test_decorator; Return test decorator or generated test
     :param parser_type: Parser used to parse feature-like file
@@ -334,7 +334,7 @@ def scenarios(
     :param encoding: Feature file encoding.
     :param features_base_dir: Feature base directory from where features will be searched
     :param features_base_url: Feature base url from where features will be loaded
-    :param features_path_type: If feature path is not absolute helps to select if filepath o url will be used
+    :param features_path_type: If feature path is not absolute helps to select if filepath or url will be used
     :param features_mimetype: Helps to select appropriate parser if non-standard file extension is used
     :param return_test_decorator; Return test decorator or generated test
     :param parser_type: Parser used to parse feature-like file

@@ -43,13 +43,10 @@ PYTEST6, PYTEST61, PYTEST62, PYTEST7 = map(
 )
 
 if PYTEST7:
-    if TYPE_CHECKING:  # pragma: no cover
-        from pytest import Testdir
+    from pytest import Testdir
 else:
     import py
-
-    if TYPE_CHECKING:  # pragma: no cover
-        from _pytest.pytester import Testdir  # type: ignore[no-redef, attr-defined]
+    from _pytest.pytester import Testdir  # type: ignore[no-redef, attr-defined]
 
 if PYTEST62:
     from pytest import FixtureRequest

@@ -1,27 +1,43 @@
+from pathlib import Path
 from textwrap import dedent
 
 from pytest_httpserver import HTTPServer
 
+from pytest_bdd.compatibility.pytest import Testdir
 from pytest_bdd.mimetypes import Mimetype
+from pytest_bdd.webloc import write as webloc_write
+
+MINIMAL_FEATURE = dedent(
+    # language=gherkin
+    """
+    Feature: minimal
+
+      Cucumber doesn't execute this markdown, but @cucumber/react renders it
+
+      * This is
+      * a bullet
+      * list
+
+      Scenario: Passing cukes
+        Given I have 42 cukes in my belly
+    """
+)
+
+MINIMAL_CONFTEST = dedent(
+    # language=python
+    f"""\
+    from pytest_bdd import given
+
+    @given("I have {{cuckes_count}} cukes in my belly")
+    def results(cuckes_count):
+        assert cuckes_count == '42'
+    """
+)
 
 
 def test_feature_load_by_http(testdir, httpserver: HTTPServer):
     httpserver.expect_request("/feature").respond_with_data(
-        dedent(
-            # language=gherkin
-            """
-            Feature: minimal
-
-              Cucumber doesn't execute this markdown, but @cucumber/react renders it
-
-              * This is
-              * a bullet
-              * list
-
-              Scenario: Passing cukes
-                Given I have 42 cukes in my belly
-            """
-        ),
+        MINIMAL_FEATURE,
         content_type=Mimetype.gherkin_plain.value,
     )
     testdir.makepyfile(
@@ -38,6 +54,65 @@ def test_feature_load_by_http(testdir, httpserver: HTTPServer):
                 f"http://localhost:{httpserver.port}/feature",
                 features_mimetype=Mimetype.gherkin_plain
             )
+        """
+    )
+    result = testdir.runpytest_inprocess()
+    result.assert_outcomes(passed=1)
+
+
+def test_feature_load_by_http_from_url_file(testdir, httpserver: HTTPServer):
+    httpserver.expect_request("/feature").respond_with_data(
+        MINIMAL_FEATURE,
+        content_type=Mimetype.gherkin_plain.value,
+    )
+    testdir.makefile(
+        # language=ini
+        test_http=f"""\
+                [InternetShortcut]
+                URL=http://localhost:{httpserver.port}/feature
+            """,
+        ext=".url",
+    )
+
+    testdir.makeconftest(MINIMAL_CONFTEST)
+    result = testdir.runpytest_inprocess()
+    result.assert_outcomes(passed=1)
+
+
+def test_feature_load_by_http_from_desktop_file(testdir, httpserver: HTTPServer):
+    httpserver.expect_request("/feature").respond_with_data(
+        MINIMAL_FEATURE,
+        content_type=Mimetype.gherkin_plain.value,
+    )
+    testdir.makefile(
+        # language=ini
+        test_http=f"""\
+            [Desktop Entry]
+            Type=Link
+            URL=http://localhost:{httpserver.port}/feature
+        """,
+        ext=".desktop",
+    )
+    testdir.makeconftest(MINIMAL_CONFTEST)
+    result = testdir.runpytest_inprocess()
+    result.assert_outcomes(passed=1)
+
+
+def test_feature_load_by_http_from_webloc_file(testdir: Testdir, httpserver: HTTPServer):
+    httpserver.expect_request("/feature").respond_with_data(
+        MINIMAL_FEATURE,
+        content_type=Mimetype.gherkin_plain.value,
+    )
+    webloc_write(Path(testdir.tmpdir) / "test_http.webloc", f"http://localhost:{httpserver.port}/feature")
+    testdir.makeconftest(
+        # language=python
+        f"""\
+        from pytest_bdd import given
+
+        @given("I have {{cuckes_count}} cukes in my belly")
+        def results(cuckes_count):
+            assert cuckes_count == '42'
+
         """
     )
     result = testdir.runpytest_inprocess()
@@ -85,21 +160,7 @@ def test_struct_bdd_feature_load_by_http(testdir, httpserver: HTTPServer):
 
 def test_feature_load_by_http_with_base_url(testdir, httpserver: HTTPServer):
     httpserver.expect_request("/feature").respond_with_data(
-        dedent(
-            # language=gherkin
-            """
-            Feature: minimal
-
-              Cucumber doesn't execute this markdown, but @cucumber/react renders it
-
-              * This is
-              * a bullet
-              * list
-
-              Scenario: Passing cukes
-                Given I have 42 cukes in my belly
-            """
-        ),
+        MINIMAL_FEATURE,
         content_type=Mimetype.gherkin_plain.value,
     )
     testdir.makepyfile(
@@ -127,21 +188,7 @@ def test_feature_load_by_http_with_base_url(testdir, httpserver: HTTPServer):
 
 def test_feature_load_by_http_with_base_url_from_ini(testdir, httpserver: HTTPServer):
     httpserver.expect_request("/feature").respond_with_data(
-        dedent(
-            # language=gherkin
-            """
-            Feature: minimal
-
-              Cucumber doesn't execute this markdown, but @cucumber/react renders it
-
-              * This is
-              * a bullet
-              * list
-
-              Scenario: Passing cukes
-                Given I have 42 cukes in my belly
-            """
-        ),
+        MINIMAL_FEATURE,
         content_type=Mimetype.gherkin_plain.value,
     )
 

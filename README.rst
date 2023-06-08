@@ -635,11 +635,12 @@ Both `scenario` or `scenarios` could be used as decorators or as operator calls.
 
     test_specific_scenario = scenario('features/some.feature', 'Test something', return_test_decorator=False)
 
+Both `scenario` and `scenarios` functions could use http/https URIs to get features from remote servers(and be integrated with tools like Hiptest)
 
 Features autoload
 ^^^^^^^^^^^^^^^^^
 
-If feature files or symlinks to them (\*.gherkin or \*.feature) are placed in the same structure as tests the would be automatically collected.
+If feature files or symlinks to them (\*.gherkin or \*.feature) are placed in the same structure as tests - they would be automatically collected.
 To disable this behavior globally use `--disable-feature-autoload` cli option or `disable_feature_autoload` pytest.ini option
 Steps from lower directory layers overriding higher ones if step parsing collision occurs.
 
@@ -697,6 +698,9 @@ tests/integration/conftest.py:
 
     # Other steps specific only for integration scenarios
     ...
+
+Not only feature files are collected. If some features are stored on remote server - you could put
+link to a feature into .url/.desktop/.weblock file inside test directory and it would be also collected
 
 Scenario outlines
 -----------------

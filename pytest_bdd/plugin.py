@@ -303,5 +303,5 @@ def pytest_bdd_get_parser(config: Config, mimetype: str):
 
 
 def pytest_bdd_is_collectible(config: Config, path: Path):
-    if any(map(partial(contains, {".gherkin", ".feature"}), path.suffixes)):
+    if any(map(partial(contains, {".gherkin", ".feature", ".url", ".desktop", ".webloc"}), path.suffixes)):
         return True
