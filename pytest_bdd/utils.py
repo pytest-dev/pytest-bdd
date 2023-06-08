@@ -21,14 +21,6 @@ from pytest_bdd.compatibility import Literal, Protocol, runtime_checkable
 from pytest_bdd.compatibility.pytest import FixtureDef
 from pytest_bdd.const import ALPHA_REGEX, PYTHON_REPLACE_REGEX
 
-if sys.version_info < (3, 8):
-    from singledispatchmethod import singledispatchmethod
-else:
-    from functools import singledispatchmethod
-
-assert singledispatchmethod
-
-
 if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.compatibility.pytest import RunResult
 

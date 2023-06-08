@@ -58,7 +58,7 @@ class StructBDDParser(ParserProtocol):
 
             return partial(load_yaml, Loader=FullLoader)
         elif self.kind == self.KIND.TOML.value:
-            from tomli import loads as load_toml
+            from pytest_bdd.compatibility.tomllib import loads as load_toml
 
             return load_toml
         elif self.kind == self.KIND.JSON.value:

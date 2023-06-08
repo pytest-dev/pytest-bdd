@@ -11,7 +11,6 @@ from pytest_bdd.compatibility import Protocol, runtime_checkable
 from pytest_bdd.compatibility.pytest import Parser, TerminalReporter, TestReport
 
 if TYPE_CHECKING:  # pragma: no cover
-
     from pytest_bdd.compatibility.pytest import Config as BaseConfig
 
     @runtime_checkable

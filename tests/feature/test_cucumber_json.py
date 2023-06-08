@@ -20,7 +20,7 @@ def runandparse(testdir: Testdir, *args: Any) -> tuple[RunResult, list[dict[str,
 class OfType:
     """Helper object to help compare object type to initialization type"""
 
-    def __init__(self, type: type = None) -> None:
+    def __init__(self, type: type | None = None) -> None:
         self.type = type
 
     def __eq__(self, other: object) -> bool:

@@ -90,7 +90,6 @@ class AllurePytestBDD:
 
     @pytest.hookimpl
     def pytest_bdd_before_scenario(self, request, feature, scenario):
-
         scenario_result_uuid = self._cache.get(scenario)
         test_result_uuid = self._cache.get(request.node.nodeid)
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 120
-target-version = ["py37", "py38", "py39", "py310"]
+target-version = ["py37", "py38", "py39", "py310", "py311"]
 
 [tool.isort]
 profile = "black"
@@ -13,10 +13,12 @@ multi_line_output = 3
 
 [tool.mypy]
 files = "pytest_bdd/**/*.py"
-python_version = "3.7"
 show_error_codes = true
 warn_return_any = true
 warn_unused_configs = true
+plugins = [
+  "pydantic.mypy"
+]
 
 [[tool.mypy.overrides]]
 module = [

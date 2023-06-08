@@ -29,12 +29,13 @@ from attr import Factory, attrib, attrs
 from gherkin.errors import CompositeParserException  # type: ignore[import]
 from gherkin.pickles.compiler import Compiler  # type: ignore[import]
 
+from pytest_bdd.compatibility.functools import singledispatchmethod
 from pytest_bdd.const import TAG_PREFIX
 from pytest_bdd.model.messages import Background, Examples
 from pytest_bdd.model.messages import Feature as FeatureMessage
 from pytest_bdd.model.messages import GherkinDocument, Pickle, PickleStep, Rule, Scenario, Step, TableRow, Tag
 from pytest_bdd.model.scenario import UserStep
-from pytest_bdd.utils import _itemgetter, deepattrgetter, singledispatchmethod
+from pytest_bdd.utils import _itemgetter, deepattrgetter
 
 
 @attrs

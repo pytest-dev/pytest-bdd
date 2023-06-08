@@ -162,12 +162,12 @@ class FileScenarioLocator:
             else:
                 features_base_dir = self.features_base_dir
         except (ValueError, KeyError):
-            features_base_dir = get_config_root_path(config)
+            features_base_dir = get_config_root_path(cast(Config, config))
         else:
             if callable(features_base_dir):
                 features_base_dir = features_base_dir(config)
 
-            features_base_dir = (get_config_root_path(config) / Path(features_base_dir)).resolve()
+            features_base_dir = (get_config_root_path(cast(Config, config)) / Path(features_base_dir)).resolve()
 
         return features_base_dir
 
@@ -206,7 +206,6 @@ class FileScenarioLocator:
         already_resolved_feature_paths = set()
 
         for feature_path in self._gen_feature_paths(features_base_dir=features_base_dir):
-
             feature_path_key = str(feature_path)
             if feature_path_key in already_resolved_feature_paths:
                 break

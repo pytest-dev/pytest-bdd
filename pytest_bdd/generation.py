@@ -122,7 +122,6 @@ def generate_and_print_missing_code(config: Config) -> int | ExitCode:
         non_matched_feature_pickle_steps = []
 
         for item in session.items:
-
             is_legacy_pytest = compare_distribution_version("pytest", "7.0", lt)
 
             method_name = "prepare" if is_legacy_pytest else "setup"

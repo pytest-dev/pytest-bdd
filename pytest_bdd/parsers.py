@@ -18,8 +18,9 @@ from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
 from cucumber_expressions.regular_expression import RegularExpression as CucumberRegularExpression
 
 from pytest_bdd.compatibility import Protocol, runtime_checkable
+from pytest_bdd.compatibility.functools import singledispatchmethod
 from pytest_bdd.model.messages import ExpressionType
-from pytest_bdd.utils import StringableProtocol, singledispatchmethod, stringify
+from pytest_bdd.utils import StringableProtocol, stringify
 
 
 class ParserBuildValueError(ValueError):
@@ -63,7 +64,6 @@ class StepParser(StepParserProtocol, metaclass=ABCMeta):
 
     @classmethod
     def build(cls, parserlike: str | bytes | StepParser | StepParserProtocol) -> StepParser:
-
         """Get parser by given name.
 
         :param parserlike: name of the step to parse
@@ -93,7 +93,8 @@ class re(StepParser):
 
     type = ExpressionType.pytest_bdd_regular_expression
 
-    @singledispatchmethod
+    # https://bugs.python.org/issue45684
+    @singledispatchmethod  # type:ignore[misc]
     def __init__(self, *args, **kwargs):
         raise NotImplementedError()  # pragma: no cover
 
@@ -144,7 +145,8 @@ class parse(StepParser):
 
     type = ExpressionType.pytest_bdd_parse_expression
 
-    @singledispatchmethod
+    # https://bugs.python.org/issue45684
+    @singledispatchmethod  # type:ignore[misc]
     def __init__(self, format, *args, **kwargs):
         if isinstance(format, (StringableProtocol, str, bytes)):
             self.__init_stringable__(format, *args, **kwargs)
@@ -240,7 +242,8 @@ class _CucumberExpression(StepParser):
 class cucumber_expression(_CucumberExpression):
     type = ExpressionType.cucumber_expression
 
-    @singledispatchmethod
+    # https://bugs.python.org/issue45684
+    @singledispatchmethod  # type:ignore[misc]
     def __init__(self, *args, **kwargs):
         raise NotImplementedError()  # pragma: no cover
 
@@ -258,7 +261,8 @@ class cucumber_expression(_CucumberExpression):
 class cucumber_regular_expression(_CucumberExpression):
     type = ExpressionType.regular_expression
 
-    @singledispatchmethod
+    # https://bugs.python.org/issue45684
+    @singledispatchmethod  # type:ignore[misc]
     def __init__(self, *args, **kwargs):
         raise NotImplementedError()  # pragma: no cover
 

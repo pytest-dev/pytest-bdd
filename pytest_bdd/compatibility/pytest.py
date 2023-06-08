@@ -26,8 +26,23 @@ if sys.version_info >= (3, 10):
 else:
     from typing_extensions import TypeAlias
 
+
 # region pytest version dependent imports
-if compare_distribution_version("pytest", "7.0", ge):
+def is_pytest_version_greater(version: str):
+    return compare_distribution_version("pytest", version, ge)
+
+
+PYTEST6, PYTEST61, PYTEST62, PYTEST7 = map(
+    is_pytest_version_greater,
+    [
+        "6.0",
+        "6.1",
+        "6.2",
+        "7.0",
+    ],
+)
+
+if PYTEST7:
     if TYPE_CHECKING:  # pragma: no cover
         from pytest import Testdir
 else:
@@ -36,15 +51,10 @@ else:
     if TYPE_CHECKING:  # pragma: no cover
         from _pytest.pytester import Testdir  # type: ignore[no-redef, attr-defined]
 
-if compare_distribution_version("pytest", "6.2", ge):
+if PYTEST62:
     from pytest import FixtureRequest
 else:
     from _pytest.fixtures import FixtureRequest
-
-PYTEST6 = compare_distribution_version("pytest", "6.0", ge)
-PYTEST61 = compare_distribution_version("pytest", "6.1", ge)
-PYTEST7 = compare_distribution_version("pytest", "7.0", ge)
-
 # endregion
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -128,8 +138,9 @@ else:
         xfailed: int = 0,
     ) -> None:
         """Compatibility function for result.assert_outcomes"""
-        result.assert_outcomes(
-            error=errors,  # Pytest < 6 uses the singular form
+        result.assert_outcomes(  # type: ignore[call-arg]
+            #  Pytest < 6 uses the singular form
+            error=errors,
             passed=passed,
             skipped=skipped,
             failed=failed,

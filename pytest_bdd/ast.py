@@ -236,7 +236,6 @@ class ScenarioSchema(NodeStepContainerProtoSchema, IdentifiableSchema, TagableSc
 
 @attrs
 class NodeContainerChild(ModelSchemaPostLoadable):
-
     # Workaround because of allure integration
     if TYPE_CHECKING:  # pragma: no cover
         background: Background = attrib(init=False)

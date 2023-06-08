@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 20
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
 
     steps:
     - uses: actions/checkout@v2
@@ -25,16 +25,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -U setuptools
         pip install tox tox-gh-actions codecov
-    - name: Type checking
-      if: "matrix.python-version == '3.7'"
-      run: |
-        tox -e py37-pytestlatest-mypy
     - name: Test with tox
       run: |
         tox
         codecov
     - name: Build checking
-      if: "matrix.python-version == '3.10'"
+      if: "matrix.python-version == '3.11'"
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
