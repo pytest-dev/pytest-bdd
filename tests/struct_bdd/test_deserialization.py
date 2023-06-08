@@ -6,7 +6,7 @@ from gherkin.pickles.compiler import Compiler
 from yaml import FullLoader, load
 
 from pytest_bdd import ast
-from pytest_bdd.const import StepType
+from pytest_bdd.model import StepType
 from pytest_bdd.struct_bdd import ast_builder
 from pytest_bdd.struct_bdd.model import Step, StepSchema
 from pytest_bdd.utils import IdGenerator

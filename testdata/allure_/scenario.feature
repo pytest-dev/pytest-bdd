@@ -1,6 +1,7 @@
 Feature: Scenario
   Scenario: Simple passed scenario
     Given example.feature with content:
+      # language=gherkin
       """
       Feature: Scenario
         Scenario: Simple passed example
@@ -8,9 +9,9 @@ Feature: Scenario
           When passed step
           Then passed step
       """
-    And example_test.py with content:
+    And conftest.py with content:
+      # language=python
       """
-      from pytest_bdd import scenario
       from pytest_bdd import given, then, when
 
       @given("passed step")
@@ -20,10 +21,6 @@ Feature: Scenario
       @when("passed step")
       @then("passed step")
       def passed_step():
-          pass
-
-      @scenario("example.feature", "Simple passed example")
-      def test_scenario_example():
           pass
       """
     When run pytest-bdd with allure

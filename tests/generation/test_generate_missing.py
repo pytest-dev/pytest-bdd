@@ -2,8 +2,8 @@
 import itertools
 import textwrap
 
+from pytest_bdd.compatibility.pytest import assert_outcomes
 from pytest_bdd.scenario import get_python_name_generator
-from tests.utils import assert_outcomes
 
 
 def test_python_name_generator():

@@ -1,7 +1,7 @@
 """Test scenario decorator."""
 from textwrap import dedent
 
-from tests.utils import assert_outcomes
+from pytest_bdd.compatibility.pytest import assert_outcomes
 
 
 def test_scenario_not_found(testdir, pytest_params):

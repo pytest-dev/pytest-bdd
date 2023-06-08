@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pytest_bdd.typing.pytest import Config, Parser, TerminalReporter, TestReport
+from pytest_bdd.compatibility.pytest import Config, Parser, TerminalReporter, TestReport
 
 
 def add_options(parser: Parser) -> None:

@@ -5,7 +5,7 @@ from collections import deque
 from contextlib import suppress
 from functools import partial
 from inspect import signature
-from itertools import chain, filterfalse, starmap, tee
+from itertools import chain, filterfalse, starmap
 from operator import attrgetter, contains, methodcaller
 from pathlib import Path
 from types import ModuleType
@@ -13,7 +13,6 @@ from typing import Any, Collection, Iterable
 from unittest.mock import patch
 from urllib.parse import urlparse
 
-import py
 import pytest
 from _pytest.nodes import Collector
 
@@ -21,6 +20,7 @@ from pytest_bdd import cucumber_json, generation, gherkin_terminal_reporter, giv
 from pytest_bdd.allure_logging import AllurePytestBDD
 from pytest_bdd.collector import FeatureFileModule as FeatureFileCollector
 from pytest_bdd.collector import Module as ModuleCollector
+from pytest_bdd.compatibility.pytest import Config, Mark, MarkDecorator, Metafunc, Parser, PytestPluginManager
 from pytest_bdd.message_plugin import MessagePlugin
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.model import Feature
@@ -34,7 +34,6 @@ from pytest_bdd.scenario import add_options as scenario_add_options
 from pytest_bdd.scenario import scenarios
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.struct_bdd.plugin import StructBDDPlugin
-from pytest_bdd.typing.pytest import PYTEST7, Config, Mark, MarkDecorator, Metafunc, Parser, PytestPluginManager
 from pytest_bdd.utils import IdGenerator, compose, getitemdefault, setdefaultattr
 
 
@@ -108,7 +107,7 @@ def pytest_configure(config: Config) -> None:
     config.pluginmanager.register(StructBDDPlugin())
 
 
-@pytest.mark.tryfirst
+@pytest.hookimpl(tryfirst=True)
 def pytest_unconfigure(config: Config) -> None:
     config.pluginmanager.unregister(name="pytest_bdd_messages")
     with suppress(AttributeError):
@@ -181,11 +180,7 @@ def _build_scenario_locators_from_mark(mark: Mark, config: Config) -> Iterable[A
     else:
         raise ValueError(f"Unknown feature path type")
 
-    feature_paths = mark_arguments["feature_paths"]
-    if feature_paths is None:
-        feature_paths = []
-
-    feature_paths_gen_1, feature_paths_gen_2 = tee(iter(feature_paths), 2)
+    feature_paths = list(mark_arguments["feature_paths"] or [])
 
     def is_valid_local_url(urllike: str):
         try:
@@ -207,7 +202,7 @@ def _build_scenario_locators_from_mark(mark: Mark, config: Config) -> Iterable[A
             return is_valid_local_path(pathlike)
 
     path_locator = FileScenarioLocator(  # type: ignore[call-arg]
-        feature_paths=filter(is_local_path, feature_paths_gen_1),
+        feature_paths=filter(is_local_path, feature_paths),
         filter_=filter_,
         encoding=mark_arguments["encoding"],
         features_base_dir=features_base_dir,
@@ -219,7 +214,7 @@ def _build_scenario_locators_from_mark(mark: Mark, config: Config) -> Iterable[A
     locators_iterables.append([path_locator])
 
     url_locator = UrlScenarioLocator(  # type: ignore[call-arg]
-        url_paths=filterfalse(is_local_path, feature_paths_gen_2),
+        url_paths=filterfalse(is_local_path, feature_paths),
         filter_=mark_arguments["filter_"],
         encoding=mark_arguments["encoding"],
         features_base_url=features_base_url,
@@ -283,14 +278,7 @@ def pytest_collect_file(parent: Collector, path, file_path=None):
     hook = parent.config.hook
 
     if hook.pytest_bdd_is_collectible(config=config, path=Path(file_path)):
-        if hasattr(FeatureFileCollector, "from_parent"):
-            collector = FeatureFileCollector.from_parent(
-                parent, **(dict(path=Path(file_path)) if PYTEST7 else dict(fspath=py.path.local(file_path)))
-            )
-        else:
-            collector = FeatureFileCollector(parent=parent, fspath=py.path.local(file_path))
-
-        return collector
+        return FeatureFileCollector.build(parent=parent, file_path=file_path)
 
 
 @pytest.mark.trylast

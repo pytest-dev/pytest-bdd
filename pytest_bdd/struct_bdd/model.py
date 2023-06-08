@@ -13,8 +13,8 @@ from marshmallow import Schema, fields, post_load, pre_load
 from marshmallow_polyfield import PolyField
 
 from pytest_bdd.ast import GherkinDocumentSchema
-from pytest_bdd.const import TYPE_KEYWORD_TYPE
 from pytest_bdd.model import Feature
+from pytest_bdd.model import Step as ModelStep
 from pytest_bdd.utils import ModelSchemaPostLoadable, deepattrgetter
 
 
@@ -93,7 +93,7 @@ class Step(Node, ModelSchemaPostLoadable):
 
     @property
     def keyword_type(self):
-        return TYPE_KEYWORD_TYPE[self.type]
+        return ModelStep.KEYWORD_TYPE_MAPPING[self.type]
 
     def build_feature(self, filename, uri, id_generator):
         from pytest_bdd.struct_bdd.ast_builder import GherkinDocumentBuilder

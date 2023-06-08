@@ -15,12 +15,12 @@ from gherkin.errors import CompositeParserException
 from gherkin.parser import Parser as CucumberIOBaseParser  # type: ignore[import]
 from gherkin.pickles.compiler import Compiler as PicklesCompiler
 
+from pytest_bdd.compatibility.parser import ParserProtocol
+from pytest_bdd.compatibility.pytest import Config
+from pytest_bdd.compatibility.struct_bdd import STRUCT_BDD_INSTALLED
 from pytest_bdd.exceptions import FeatureError
 from pytest_bdd.model import Feature
 from pytest_bdd.model.messages import MediaType, Message, Source
-from pytest_bdd.typing.parser import ParserProtocol
-from pytest_bdd.typing.pytest import Config
-from pytest_bdd.typing.struct_bdd import STRUCT_BDD_INSTALLED
 from pytest_bdd.utils import IdGenerator, PytestBDDIdGeneratorHandler
 
 if STRUCT_BDD_INSTALLED:  # pragma: no cover

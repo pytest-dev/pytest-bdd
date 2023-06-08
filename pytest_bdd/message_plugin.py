@@ -10,6 +10,7 @@ from _pytest.main import Session
 from attr import attrib, attrs
 from pytest import ExitCode
 
+from pytest_bdd.compatibility.pytest import Config, Parser
 from pytest_bdd.model.messages import (
     Duration,
     Message,
@@ -25,7 +26,6 @@ from pytest_bdd.model.messages import (
     Timestamp,
 )
 from pytest_bdd.steps import StepHandler
-from pytest_bdd.typing.pytest import Config, Parser
 from pytest_bdd.utils import PytestBDDIdGeneratorHandler, deepattrgetter
 
 

@@ -10,7 +10,7 @@ from attr.exceptions import NotAnAttrsClassError
 from pluggy import HookimplMarker
 from pydantic import BaseModel as PydanticBaseModel
 
-from pytest_bdd.typing.allure import ALLURE_INSTALLED
+from pytest_bdd.compatibility.allure import ALLURE_INSTALLED
 
 if ALLURE_INSTALLED:
     from allure_commons import hookimpl

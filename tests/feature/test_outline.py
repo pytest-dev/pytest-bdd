@@ -4,9 +4,9 @@ from textwrap import dedent
 
 from pytest import mark, param
 
+from pytest_bdd.compatibility.pytest import assert_outcomes
 from pytest_bdd.packaging import compare_distribution_version
 from pytest_bdd.utils import collect_dumped_objects
-from tests.utils import assert_outcomes
 
 # language=python
 STEPS = """\

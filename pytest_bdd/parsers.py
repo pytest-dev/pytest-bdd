@@ -17,8 +17,8 @@ from cucumber_expressions.expression import CucumberExpression
 from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
 from cucumber_expressions.regular_expression import RegularExpression as CucumberRegularExpression
 
+from pytest_bdd.compatibility import Protocol, runtime_checkable
 from pytest_bdd.model.messages import ExpressionType
-from pytest_bdd.typing import Protocol, runtime_checkable
 from pytest_bdd.utils import StringableProtocol, singledispatchmethod, stringify
 
 

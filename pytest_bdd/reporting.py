@@ -11,9 +11,9 @@ from typing import Any, Callable
 import pytest
 from attr import Factory, attrib, attrs
 
+from pytest_bdd.compatibility.pytest import CallInfo, FixtureRequest, Item
 from pytest_bdd.model import Feature
 from pytest_bdd.model.messages import Pickle, PickleStep
-from pytest_bdd.typing.pytest import CallInfo, FixtureRequest, Item
 
 
 class StepReport:

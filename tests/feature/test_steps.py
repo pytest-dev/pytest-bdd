@@ -558,7 +558,7 @@ def test_steps_parameter_mapping(testdir):
     testdir.makeconftest(
         # language=python
         """\
-        from pytest_bdd.typing.pytest import FixtureLookupError
+        from pytest_bdd.compatibility.pytest import FixtureLookupError
         from pytest import raises
         from pytest_bdd import given, then
 
@@ -591,7 +591,7 @@ def test_steps_parameter_mapping_could_redirect_to_fixture(testdir):
     testdir.makeconftest(
         # language=python
         """\
-        from pytest_bdd.typing.pytest import FixtureLookupError
+        from pytest_bdd.compatibility.pytest import FixtureLookupError
         from pytest import raises
         from pytest_bdd import given, then
 
@@ -627,7 +627,7 @@ def test_steps_parameter_mapping_rejection_for_all_parameters(testdir, mapping_s
     testdir.makeconftest(
         # language=python
         """\
-        from pytest_bdd.typing.pytest import FixtureLookupError
+        from pytest_bdd.compatibility.pytest import FixtureLookupError
         from pytest import raises
         from pytest_bdd import given, then
 

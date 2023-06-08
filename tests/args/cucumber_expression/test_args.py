@@ -109,7 +109,7 @@ def test_cucumber_regular_expression(
         def values():
             return [1, 2, 1, 0, 999999]
 
-        @given(cucumber_expression("I have (\\d+) Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
+        @given(cucumber_expression(r"I have (\\d+) Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
         def i_have(euro, values):
             assert euro == values.pop(0)
 
@@ -117,7 +117,7 @@ def test_cucumber_regular_expression(
         def i_pay(euro, values, request):
             assert euro == values.pop(0)
 
-        @then(cucumber_expression("I should have (\\d+) Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
+        @then(cucumber_expression(r"I should have (\\d+) Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
         def i_should_have(euro, values):
             assert euro == values.pop(0)
         """

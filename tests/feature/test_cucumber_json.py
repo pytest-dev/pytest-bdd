@@ -5,7 +5,7 @@ import json
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pytest_bdd.typing.pytest import RunResult, Testdir
+    from pytest_bdd.compatibility.pytest import RunResult, Testdir
 
 
 def runandparse(testdir: Testdir, *args: Any) -> tuple[RunResult, list[dict[str, Any]]]:

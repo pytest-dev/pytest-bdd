@@ -7,12 +7,12 @@ import os
 import time
 from typing import TYPE_CHECKING, Any, cast
 
-from pytest_bdd.typing import Protocol, runtime_checkable
-from pytest_bdd.typing.pytest import Parser, TerminalReporter, TestReport
+from pytest_bdd.compatibility import Protocol, runtime_checkable
+from pytest_bdd.compatibility.pytest import Parser, TerminalReporter, TestReport
 
 if TYPE_CHECKING:  # pragma: no cover
 
-    from pytest_bdd.typing.pytest import Config as BaseConfig
+    from pytest_bdd.compatibility.pytest import Config as BaseConfig
 
     @runtime_checkable
     class LogBDDCucumberJSONProtocol(Protocol):
@@ -22,7 +22,7 @@ if TYPE_CHECKING:  # pragma: no cover
         pass
 
 else:
-    from pytest_bdd.typing.pytest import Config
+    from pytest_bdd.compatibility.pytest import Config
 
 
 def add_options(parser: Parser) -> None:

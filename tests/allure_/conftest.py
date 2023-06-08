@@ -6,7 +6,7 @@ import pytest
 from hamcrest import all_of, any_of, assert_that, contains_string, equal_to, has_entry, has_item, has_property
 
 from pytest_bdd import given, parsers, then, when
-from pytest_bdd.typing.allure import ALLURE_INSTALLED
+from pytest_bdd.compatibility.allure import ALLURE_INSTALLED
 
 if ALLURE_INSTALLED:
     import allure_commons

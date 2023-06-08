@@ -12,16 +12,31 @@ import py
 from mako.lookup import TemplateLookup
 from pytest import ExitCode
 
-from pytest_bdd.const import STEP_TYPE_TO_STEP_METHOD_NAME, STEP_TYPE_TO_STEP_PREFIX, StepType
-from pytest_bdd.model import Feature
+from pytest_bdd.compatibility.pytest import Config, FixtureRequest, Item, Parser, Session, wrap_session
+from pytest_bdd.model import Feature, StepType
 from pytest_bdd.model.messages import Pickle, PickleStep
 from pytest_bdd.packaging import compare_distribution_version
 from pytest_bdd.parser import GherkinParser
 from pytest_bdd.steps import StepHandler
-from pytest_bdd.typing.pytest import Config, FixtureRequest, Item, Parser, Session, wrap_session
 from pytest_bdd.utils import make_python_name
 
 template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
+
+
+STEP_TYPE_TO_STEP_PREFIX = {
+    StepType.unknown: "*",
+    StepType.outcome: "Then",
+    StepType.context: "Given",
+    StepType.action: "When",
+}
+
+
+STEP_TYPE_TO_STEP_METHOD_NAME = {
+    StepType.unknown: "step",
+    StepType.outcome: "then",
+    StepType.context: "given",
+    StepType.action: "when",
+}
 
 
 def check_existense(file_name):

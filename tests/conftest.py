@@ -1,6 +1,6 @@
 import pytest
 
-from tests.utils import PYTEST6
+from pytest_bdd.compatibility.pytest import PYTEST6
 
 pytest_plugins = "pytester"
 

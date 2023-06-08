@@ -1,7 +1,7 @@
 """Test scenarios shortcut."""
 from textwrap import dedent
 
-from tests.utils import assert_outcomes
+from pytest_bdd.compatibility.pytest import assert_outcomes
 
 
 def test_scenarios(testdir, pytest_params, tmp_path):

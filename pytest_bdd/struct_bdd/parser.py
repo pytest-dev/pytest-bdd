@@ -8,9 +8,9 @@ from typing import cast
 
 from attr import attrib, attrs
 
+from pytest_bdd.compatibility.parser import ParserProtocol
+from pytest_bdd.compatibility.pytest import Config
 from pytest_bdd.struct_bdd.model import Step, StepSchema
-from pytest_bdd.typing.parser import ParserProtocol
-from pytest_bdd.typing.pytest import Config
 from pytest_bdd.utils import PytestBDDIdGeneratorHandler
 
 

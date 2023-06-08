@@ -1,7 +1,7 @@
 from pytest import mark
 
 from pytest_bdd import scenario
-from pytest_bdd.typing.allure import ALLURE_INSTALLED
+from pytest_bdd.compatibility.allure import ALLURE_INSTALLED
 
 
 @scenario("testdata/allure_/outline.feature", "Scenario outline")

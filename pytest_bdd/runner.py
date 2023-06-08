@@ -10,11 +10,11 @@ from pluggy import PluginManager
 from pytest import hookimpl
 
 from pytest_bdd import exceptions
+from pytest_bdd.compatibility.pytest import FixtureRequest, Item, call_fixture_func
 from pytest_bdd.model import Feature
 from pytest_bdd.model import Pickle as Scenario
 from pytest_bdd.model.messages import PickleStep
 from pytest_bdd.steps import StepHandler
-from pytest_bdd.typing.pytest import FixtureRequest, Item, call_fixture_func
 from pytest_bdd.utils import DefaultMapping, get_args, inject_fixture
 
 

@@ -2,7 +2,7 @@
 
 import textwrap
 
-from tests.utils import assert_outcomes
+from pytest_bdd.compatibility.pytest import assert_outcomes
 
 
 def test_multiple_features_single_file(testdir):

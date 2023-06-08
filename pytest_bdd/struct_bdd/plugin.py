@@ -2,8 +2,7 @@ from contextlib import suppress
 from functools import partial
 from pathlib import Path
 
-from pytest import Config
-
+from pytest_bdd.compatibility.pytest import Config
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.struct_bdd.parser import StructBDDParser
 

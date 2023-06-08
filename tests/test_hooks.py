@@ -39,7 +39,7 @@ def test_item_collection_does_not_break_on_non_function_items(testdir):
         """\
         import pytest
 
-        @pytest.mark.tryfirst
+        @pytest.hookimpl(tryfirst=True)
         def pytest_collection_modifyitems(session, config, items):
             try:
                 item_creator = CustomItem.from_parent  # Only available in pytest >= 5.4.0

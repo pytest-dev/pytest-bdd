@@ -17,9 +17,9 @@ from typing import TYPE_CHECKING, Any, Callable, Collection, Mapping, cast
 
 from marshmallow import post_load
 
+from pytest_bdd.compatibility import Literal, Protocol, runtime_checkable
+from pytest_bdd.compatibility.pytest import FixtureDef
 from pytest_bdd.const import ALPHA_REGEX, PYTHON_REPLACE_REGEX
-from pytest_bdd.typing import Literal, Protocol, runtime_checkable
-from pytest_bdd.typing.pytest import FixtureDef
 
 if sys.version_info < (3, 8):
     from singledispatchmethod import singledispatchmethod
@@ -30,7 +30,7 @@ assert singledispatchmethod
 
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pytest_bdd.typing.pytest import RunResult
+    from pytest_bdd.compatibility.pytest import RunResult
 
 
 @runtime_checkable

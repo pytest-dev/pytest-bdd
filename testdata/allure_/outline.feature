@@ -1,6 +1,7 @@
 Feature: Scenario outline
   Scenario: Scenario outline
     Given example.feature with content:
+      # language=gherkin
       """
       Feature: Scenario outline
         Scenario Outline: Outline example
@@ -13,9 +14,9 @@ Feature: Scenario outline
         | Alpha |      1 |
         | Bravo |      2 |
       """
-    And example_test.py with content:
+    And conftest.py with content:
+      # language=python
       """
-      from pytest_bdd import scenario
       from pytest_bdd import given, then, when
       from pytest_bdd.parsers import cfparse
 
@@ -29,10 +30,6 @@ Feature: Scenario outline
 
       @then(cfparse("step with {second} param"))
       def then_step(second):
-          pass
-
-      @scenario("example.feature", "Outline example")
-      def test_scenario_outline_example():
           pass
       """
     When run pytest-bdd with allure

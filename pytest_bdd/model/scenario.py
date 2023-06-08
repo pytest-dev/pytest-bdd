@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from collections import defaultdict
 from typing import TYPE_CHECKING, cast
 
 from attr import Factory, attrib, attrs
@@ -9,7 +10,8 @@ from marshmallow import Schema, fields, post_load
 from pytest_bdd.ast import Scenario as ASTScenario
 from pytest_bdd.ast import Step as ASTStep
 from pytest_bdd.ast import TableRow as ASTTableRow
-from pytest_bdd.const import TAG_PREFIX, TYPE_KEYWORD_TYPE
+from pytest_bdd.const import TAG_PREFIX
+from pytest_bdd.model.messages import Type as StepType
 from pytest_bdd.utils import ModelSchemaPostLoadable, _itemgetter, deepattrgetter
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -118,6 +120,18 @@ class Step(ASTNodeIDsMixin, ModelSchemaPostLoadable):
     # region Indirectly loadable
     pickle = attrib(init=False)
     # endregion
+
+    KEYWORD_TYPE_MAPPING = defaultdict(
+        lambda: StepType.unknown,
+        {
+            "And": StepType.unknown,
+            "But": StepType.unknown,
+            "*": StepType.unknown,
+            "Given": StepType.context,
+            "When": StepType.action,
+            "Then": StepType.outcome,
+        },
+    )
 
     @property
     def _ast_step(self) -> ASTStep:
@@ -280,4 +294,4 @@ class UserStep:
 
     @property
     def type(self):
-        return TYPE_KEYWORD_TYPE[self.keyword]
+        return Step.KEYWORD_TYPE_MAPPING[self.keyword]

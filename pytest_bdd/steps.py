@@ -40,7 +40,6 @@ import os
 import warnings
 from contextlib import suppress
 from inspect import getfile, getsourcelines
-from pathlib import Path
 from typing import Any, Callable, Iterable, Iterator, Sequence, cast
 from uuid import uuid4
 from warnings import warn
@@ -49,13 +48,12 @@ import pytest
 from attr import Factory, attrib, attrs
 from ordered_set import OrderedSet
 
-from pytest_bdd.const import StepType
-from pytest_bdd.model import Feature
+from pytest_bdd.compatibility.pytest import Config, Parser, TypeAlias, get_config_root_path
+from pytest_bdd.model import Feature, StepType
 from pytest_bdd.model.messages import Location, Pickle
 from pytest_bdd.model.messages import PickleStep as Step
 from pytest_bdd.model.messages import SourceReference, StepDefinition, StepDefinitionPattern
 from pytest_bdd.parsers import StepParser
-from pytest_bdd.typing.pytest import PYTEST61, Config, Parser, TypeAlias
 from pytest_bdd.utils import (
     PytestBDDIdGeneratorHandler,
     convert_str_to_python_name,
@@ -290,7 +288,7 @@ class StepHandler:
                 if len(step_definitions) > 1:
                     warn(PytestBDDStepDefinitionWarning(f"Alternative step definitions are found: {step_definitions}"))
                 return step_definitions[0]
-            raise self.MatchNotFoundError
+            raise self.MatchNotFoundError(self.step.text)
 
         def strict_matcher(self, step_definition):
             return step_definition.type_ == self.step_type_context and step_definition.parser.is_matching(
@@ -363,7 +361,7 @@ class StepHandler:
                     sourceReference=SourceReference(
                         uri=os.path.relpath(
                             getfile(self.func),
-                            str(Path(getattr(cast(Config, config), "rootpath" if PYTEST61 else "rootdir"))),
+                            str(get_config_root_path(cast(Config, config))),
                         ),
                         location=Location(line=getsourcelines(self.func)[1]),
                     ),

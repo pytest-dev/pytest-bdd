@@ -1,10 +1,8 @@
 from importlib.machinery import ModuleSpec
 from importlib.util import module_from_spec
-from pathlib import Path
 from uuid import uuid4
 
-from pytest import Module as PytestModule
-
+from pytest_bdd.compatibility.pytest import Module as PytestModule
 from pytest_bdd.model.messages import Message
 from pytest_bdd.scenario import scenarios
 from pytest_bdd.steps import StepHandler
@@ -27,18 +25,18 @@ class Module(PytestModule):
         return super().collect()
 
 
-class FeatureFileModule(PytestModule):
+class FeatureFileModule(Module):
     def _getobj(self):
         return self._build_test_module()
 
     def _build_test_module(self):
-        module_name = convert_str_to_python_name(f"{Path(self.fspath).name}_{uuid4()}")
+        module_name = convert_str_to_python_name(f"{self.get_path().name}_{uuid4()}")
 
         module_spec = ModuleSpec(module_name, None)
         module = module_from_spec(module_spec)
 
         module.test_scenarios = scenarios(
-            Path(self.fspath),
+            self.get_path(),
             filter_=None,
             return_test_decorator=False,
             parser_type=getattr(self, "parser_type", None),

@@ -6,9 +6,9 @@ from typing import Iterable
 from _pytest.fixtures import FixtureRequest
 from pytest import hookspec
 
+from pytest_bdd.compatibility.pytest import Config, Mark
 from pytest_bdd.model import Feature
 from pytest_bdd.model.messages import Message, Pickle
-from pytest_bdd.typing.pytest import Config, Mark
 
 """Pytest-bdd pytest hooks."""
 
