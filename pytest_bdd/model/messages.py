@@ -19,6 +19,7 @@ class MediaType(Enum):
 class Source(BaseModel):
     class Config:
         extra = Extra.forbid
+        allow_population_by_field_name = True
 
     uri: str = Field(
         ...,
@@ -230,6 +231,7 @@ class StepMatchArgumentsList(BaseModel):
 class TestStep(BaseModel):
     class Config:
         extra = Extra.forbid
+        allow_population_by_field_name = True
 
     hook_id: Optional[str] = Field(
         None,
@@ -423,6 +425,7 @@ class Step(BaseModel):
 class SourceReference(BaseModel):
     class Config:
         extra = Extra.forbid
+        allow_population_by_field_name = True
 
     uri: Optional[str] = None
     java_method: Optional[JavaMethod] = Field(None, alias="javaMethod")
@@ -462,6 +465,7 @@ class PickleTable(BaseModel):
 class StepDefinition(BaseModel):
     class Config:
         extra = Extra.forbid
+        allow_population_by_field_name = True
 
     id: str
     pattern: StepDefinitionPattern
@@ -471,6 +475,7 @@ class StepDefinition(BaseModel):
 class TestCase(BaseModel):
     class Config:
         extra = Extra.forbid
+        allow_population_by_field_name = True
 
     id: str
     pickle_id: str = Field(
@@ -679,6 +684,7 @@ class GherkinDocument(BaseModel):
 class Message(BaseModel):
     class Config:
         extra = Extra.forbid
+        allow_population_by_field_name = True
 
     attachment: Optional[Attachment] = None
     gherkin_document: Optional[GherkinDocument] = Field(None, alias="gherkinDocument")

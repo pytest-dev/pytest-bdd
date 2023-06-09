@@ -1,11 +1,14 @@
 from pathlib import Path
 from textwrap import dedent
+from typing import TYPE_CHECKING
 
 from pytest_httpserver import HTTPServer
 
-from pytest_bdd.compatibility.pytest import Testdir
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.webloc import write as webloc_write
+
+if TYPE_CHECKING:
+    from pytest_bdd.compatibility.pytest import Testdir
 
 MINIMAL_FEATURE = dedent(
     # language=gherkin
@@ -35,7 +38,7 @@ MINIMAL_CONFTEST = dedent(
 )
 
 
-def test_feature_load_by_http(testdir, httpserver: HTTPServer):
+def test_feature_load_by_http(testdir: "Testdir", httpserver: HTTPServer):
     httpserver.expect_request("/feature").respond_with_data(
         MINIMAL_FEATURE,
         content_type=Mimetype.gherkin_plain.value,
@@ -98,7 +101,7 @@ def test_feature_load_by_http_from_desktop_file(testdir, httpserver: HTTPServer)
     result.assert_outcomes(passed=1)
 
 
-def test_feature_load_by_http_from_webloc_file(testdir: Testdir, httpserver: HTTPServer):
+def test_feature_load_by_http_from_webloc_file(testdir: "Testdir", httpserver: HTTPServer):
     httpserver.expect_request("/feature").respond_with_data(
         MINIMAL_FEATURE,
         content_type=Mimetype.gherkin_plain.value,

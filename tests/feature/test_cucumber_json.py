@@ -5,10 +5,10 @@ import json
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pytest_bdd.compatibility.pytest import RunResult, Testdir
+    from pytest_bdd.compatibility.pytest import RunResult
 
 
-def runandparse(testdir: Testdir, *args: Any) -> tuple[RunResult, list[dict[str, Any]]]:
+def runandparse(testdir, *args: Any) -> tuple[RunResult, list[dict[str, Any]]]:
     """Run tests in testdir and parse json output."""
     resultpath = testdir.tmpdir.join("cucumber.json")
     result = testdir.runpytest(f"--cucumberjson={resultpath}", "-s", *args)

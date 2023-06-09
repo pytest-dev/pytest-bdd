@@ -358,7 +358,7 @@ class StepHandler:
                 self.__cached_message = StepDefinition(
                     id=self.id,
                     pattern=StepDefinitionPattern(source=str(self.parser), type=self.parser.type),
-                    sourceReference=SourceReference(
+                    source_reference=SourceReference(
                         uri=os.path.relpath(
                             getfile(self.func),
                             str(get_config_root_path(cast(Config, config))),

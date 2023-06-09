@@ -189,7 +189,10 @@ def _build_scenario_locators_from_mark(mark: Mark, config: Config) -> Iterable[A
             return False
 
     def is_valid_local_path(pathlike):
-        return Path(pathlike).exists()
+        try:
+            return Path(pathlike).exists()
+        except OSError:
+            return False
 
     def is_local_path(pathlike: Path | str):
         if features_path_type is FeaturePathType.PATH:

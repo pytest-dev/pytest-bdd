@@ -71,7 +71,7 @@ class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProt
             media_type = MediaType.text_x_cucumber_gherkin_plain
 
         cast(Config, config).hook.pytest_bdd_message(
-            config=config, message=Message(source=Source(uri=uri, data=feature_file_data, mediaType=media_type))
+            config=config, message=Message(source=Source(uri=uri, data=feature_file_data, media_type=media_type))
         )
 
         try:
@@ -95,7 +95,7 @@ class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProt
         )
 
         cast(Config, config).hook.pytest_bdd_message(
-            config=config, message=Message(gherkinDocument=feature.gherkin_document)
+            config=config, message=Message(gherkin_document=feature.gherkin_document)
         )
         for pickle in feature.pickles:
             cast(Config, config).hook.pytest_bdd_message(config=config, message=Message(pickle=pickle))

@@ -43,10 +43,13 @@ PYTEST6, PYTEST61, PYTEST62, PYTEST7 = map(
 )
 
 if PYTEST7:
-    from pytest import Testdir
+    if TYPE_CHECKING:
+        from pytest import Testdir
 else:
     import py
-    from _pytest.pytester import Testdir  # type: ignore[no-redef, attr-defined]
+
+    if TYPE_CHECKING:
+        from _pytest.pytester import Testdir  # type: ignore[no-redef, attr-defined]
 
 if PYTEST62:
     from pytest import FixtureRequest

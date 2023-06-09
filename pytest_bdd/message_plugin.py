@@ -75,12 +75,12 @@ class MessagePlugin:
             registry = deepattrgetter("step_registry.__registry__.registry", default=set())(plugin)[0]
             for step_definition in registry:
                 hook_handler.pytest_bdd_message(
-                    config=config, message=Message(stepDefinition=step_definition.as_message(config=config))
+                    config=config, message=Message(step_definition=step_definition.as_message(config=config))
                 )
 
         hook_handler.pytest_bdd_message(
             config=config,
-            message=Message(testRunStarted=TestRunStarted(timestamp=self.get_timestamp())),
+            message=Message(test_run_started=TestRunStarted(timestamp=self.get_timestamp())),
         )
 
     def pytest_sessionfinish(self, session, exitstatus):
@@ -123,8 +123,8 @@ class MessagePlugin:
             else:
                 test_step = TestStep(
                     id=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator.get_next_id(),
-                    pickleStepId=step.id,
-                    stepDefinitionIds=[step_definition.id]
+                    pickle_step_id=step.id,
+                    step_definition_ids=[step_definition.id]
                     # TODO Check step_match_arguments_lists
                 )
                 test_steps.append(test_step)
@@ -134,13 +134,13 @@ class MessagePlugin:
 
         self.current_test_case = TestCase(
             id=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator.get_next_id(),
-            pickleId=scenario.id,
-            testSteps=test_steps,
+            pickle_id=scenario.id,
+            test_steps=test_steps,
         )
 
         hook_handler.pytest_bdd_message(
             config=config,
-            message=Message(testCase=self.current_test_case),
+            message=Message(test_case=self.current_test_case),
         )
 
     def pytest_bdd_after_scenario(self, request, feature, scenario):
