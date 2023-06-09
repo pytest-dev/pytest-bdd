@@ -3,6 +3,8 @@ requires = ["setuptools>=58", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
+check = true
+verbose = true
 line-length = 120
 target-version = ["py37", "py38", "py39", "py310", "py311"]
 
