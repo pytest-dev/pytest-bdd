@@ -42,6 +42,11 @@ PYTEST6, PYTEST61, PYTEST62, PYTEST7 = map(
     ],
 )
 
+if PYTEST6:
+    from _pytest.config import ExitCode
+else:
+    ExitCode: TypeAlias = int  # type:ignore[no-redef]
+
 if PYTEST7:
     if TYPE_CHECKING:
         from pytest import Testdir
@@ -73,6 +78,7 @@ __all__ = [
     "CallInfo",
     "call_fixture_func",
     "Config",
+    "ExitCode",
     "FixtureDef",
     "FixtureLookupError",
     "FixtureRequest",

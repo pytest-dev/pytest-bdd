@@ -50,6 +50,5 @@ nosetests.xml
 /.Python
 /lib
 /include
-/src
 /share
 /local

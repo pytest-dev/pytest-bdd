@@ -1,9 +1,88 @@
+[project]
+name = "pytest-bdd-ng"
+description = "BDD for pytest"
+readme = {file = "README.rst", content-type = "text/x-rst"}
+authors = [
+  {name = "Oleg Pidsadnyi", email = "oleg.pidsadnyi@gmail.com"},
+  {name = "Anatoly Bubenkov", email = "bubenkoff@gmail.com"},
+  {name="Adam Coddington" , email = "me@adamcoddington.net"},
+  {name="Albert-Jan Nijburg" , email = "albertjan@curit.com"},
+  {name="Alessio Bogon"},
+  {name="Andrey Makhnach" , email = "andrey.makhnach@gmail.com"},
+  {name="Aron Curzon" , email = "curzona@gmail.com"},
+  {name="Dmitrijs Milajevs" , email = "dimazest@gmail.com"},
+  {name="Dmitry Kolyagin" },
+  {name="Florian Bruhin" , email = "me@the-compiler.org"},
+  {name="Floris Bruynooghe" , email = "flub@devork.be"},
+  {name="Harro van der Klauw" , email = "hvdklauw@gmail.com"},
+  {name="Hugo van Kemenade"},
+  {name="Konstantin Goloveshko" , email = "kostya.goloveshko@gmail.com"},
+  {name="Laurence Rowe" , email = "l@lrowe.co.uk"},
+  {name="Leonardo Santagada" , email = "santagada@github.com"},
+  {name="Milosz Sliwinski" },
+  {name="Michiel Holtkamp" , email = "github@elfstone.nl"},
+  {name="Robin Pedersen" , email = "ropez@github.com"},
+  {name="Sergey Kraynev" , email = "sergejyit@gmail.com"},
+]
+maintainers = [
+  {name="Konstantin Goloveshko" , email = "kostya.goloveshko@gmail.com"},
+]
+license = {file = "LICENSE.txt"}
+urls = {Repository ="https://github.com/elchupanebrej/pytest-bdd-ng"}
+version = "1.2.3"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Pytest",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS :: MacOS X",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Utilities",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+requires-python = ">=3.7"
+dependencies = [
+    "aiohttp",
+    "attrs",
+    "certifi",
+    "cucumber-expressions",
+    "gherkin-official>=24",
+    "importlib-metadata;python_version<'3.10.0'",
+    "importlib-resources",
+    "Mako",
+    "marshmallow",
+    "marshmallow-polyfield",
+    "ordered_set",
+    "packaging",
+    "parse",
+    "parse_type>=0.6.0",
+    "py",
+    "pydantic>=1.0",
+    "pytest>=5.0",
+    "setuptools>=58",
+    "singledispatchmethod;python_version<'3.8.0'",
+    "six>=1.16;python_version~='3.8'",
+    "typing-extensions;python_version<'3.10.0'",
+]
+
+[project.scripts]
+pytest-bdd = "pytest_bdd.scripts:main"
+[project.entry-points]
+pytest11 = {"pytest-bdd" = "pytest_bdd.plugin"}
+
 [build-system]
 requires = ["setuptools>=58", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
-check = true
 verbose = true
 line-length = 120
 target-version = ["py37", "py38", "py39", "py310", "py311"]
@@ -14,7 +93,7 @@ line_length = 120
 multi_line_output = 3
 
 [tool.mypy]
-files = "pytest_bdd/**/*.py"
+files = "src/pytest_bdd/**/*.py"
 show_error_codes = true
 warn_return_any = true
 warn_unused_configs = true
@@ -24,24 +103,24 @@ plugins = [
 
 [[tool.mypy.overrides]]
 module = [
-        "allure_commons.*",
-        "allure_pytest.*",
-        "attr.*",
-        "cucumber_expressions.*",
-        "execnet.*",
-        "gherkin.*",
-        "hjson",
-        "json5",
-        "mako.*",
-        "marshmallow_polyfield.*",
-        "ordered_set",
-        "parse",
-        "parse_type.*",
-        "pluggy.*",
-        "_pytest.*",
-        "pyhocon",
-        "pytest.*",
-        "singledispatchmethod.*",
-        "yaml.*"
-    ]
+    "allure_commons.*",
+    "allure_pytest.*",
+    "attr.*",
+    "cucumber_expressions.*",
+    "execnet.*",
+    "gherkin.*",
+    "hjson",
+    "json5",
+    "mako.*",
+    "marshmallow_polyfield.*",
+    "ordered_set",
+    "parse",
+    "parse_type.*",
+    "pluggy.*",
+    "_pytest.*",
+    "pyhocon",
+    "pytest.*",
+    "singledispatchmethod.*",
+    "yaml.*"
+]
 ignore_missing_imports = true

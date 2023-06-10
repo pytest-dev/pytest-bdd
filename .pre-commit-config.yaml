@@ -2,14 +2,12 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: https://github.com/psf/black
-    # If you update the version here, also update it in tox.ini (py*-pytestlatest-linters)
     rev: 23.3.0
     hooks:
     - id: black
       args:
-        - "setup.py"
         - docs
-        - pytest_bdd
+        - "src/pytest_bdd"
         - tests
 -   repo: https://github.com/pycqa/isort
     rev: 5.12.0
@@ -23,6 +21,7 @@ repos:
     -   id: end-of-file-fixer
     -   id: check-yaml
     -   id: check-added-large-files
+    -   id: check-toml
 -   repo: https://github.com/asottile/pyupgrade
     rev: v3.4.0
     hooks:

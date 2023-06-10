@@ -9,19 +9,16 @@ from pathlib import Path
 from typing import Iterable, Tuple, cast
 
 import py
-from mako.lookup import TemplateLookup
-from pytest import ExitCode
+from mako.template import Template
 
-from pytest_bdd.compatibility.pytest import Config, FixtureRequest, Item, Parser, Session, wrap_session
+from pytest_bdd.compatibility.importlib.resources import as_file, files
+from pytest_bdd.compatibility.pytest import Config, ExitCode, FixtureRequest, Item, Parser, Session, wrap_session
 from pytest_bdd.model import Feature, StepType
 from pytest_bdd.model.messages import Pickle, PickleStep
 from pytest_bdd.packaging import compare_distribution_version
 from pytest_bdd.parser import GherkinParser
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.utils import make_python_name
-
-template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
-
 
 STEP_TYPE_TO_STEP_PREFIX = {
     StepType.unknown: "*",
@@ -92,7 +89,8 @@ def generate_code(
     feature_pickle_steps: list[tuple[tuple[Feature, Pickle], PickleStep]],
 ) -> str:
     """Generate test code for the given filenames."""
-    template = template_lookup.get_template("test.py.mak")
+    with as_file(files("pytest_bdd.template").joinpath("test.py.mak")) as path:
+        template = Template(filename=str(path))
     code = template.render(
         features=features,
         feature_pickles=feature_pickles,

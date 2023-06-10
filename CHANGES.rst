@@ -13,11 +13,13 @@ Planned
 - Add support of python 3.12, PyPy at CI
 - Rework usage of Marshmallow to Pydantic
 - Add mode to execute scenarios with missing/failing steps
+- Remove
+  - Hide traceback for pytest code
 
 Unreleased
 ----------
 - Test filters in scenario/scenarios to filter out not needed scenarios
-- .url, .desktop and .webloc files are collected from test directories, so scenario/sceanrios usages is not necessary
+- .url, .desktop and .webloc files are collected from test directories, so scenario/scenarios usages is not necessary
 - Load features/scenarios by url
 - Features are autoloaded by default; Feature autoload could be disabled by --disable-feature-autoload cli option
 - Relative feature paths are counted from pytest rootpath
