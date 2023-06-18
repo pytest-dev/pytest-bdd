@@ -50,7 +50,6 @@ class StepReport:
             "duration": self.duration,
         }
 
-
     def finalize(self, failed: bool, skipped=False) -> None:
         """Stop collecting information and finalize the report.
 
@@ -177,6 +176,7 @@ def step_skip(
 ) -> None:
     """Finalize the step report as skipped."""
     request.node.__scenario_report__.skip()
+
 
 def step_error(
     request: FixtureRequest,
