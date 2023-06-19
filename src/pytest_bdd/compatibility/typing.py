@@ -1,8 +1,15 @@
 import sys
 
 if sys.version_info >= (3, 10):
-    # noinspection PyUnresolvedReferences
-    from typing import Literal, Protocol, TypeAlias
+    from typing import Literal, Protocol, TypeAlias, runtime_checkable
 else:
-    # noinspection PyUnresolvedReferences
+    from typing import runtime_checkable
+
     from typing_extensions import Literal, Protocol, TypeAlias
+
+__all__ = [
+    "Literal",
+    "Protocol",
+    "runtime_checkable",
+    "TypeAlias",
+]

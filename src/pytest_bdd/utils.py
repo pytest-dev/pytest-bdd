@@ -14,8 +14,8 @@ from operator import attrgetter, getitem, itemgetter
 from sys import _getframe
 from typing import TYPE_CHECKING, Any, Callable, Collection, Mapping, cast
 
-from pytest_bdd.compatibility import Literal, Protocol, runtime_checkable
 from pytest_bdd.compatibility.pytest import FixtureDef
+from pytest_bdd.compatibility.typing import Literal, Protocol, runtime_checkable
 from pytest_bdd.const import ALPHA_REGEX, PYTHON_REPLACE_REGEX
 
 if TYPE_CHECKING:  # pragma: no cover

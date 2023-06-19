@@ -1,4 +1,3 @@
-# noinspection PyUnresolvedReferences
 from importlib_resources import *
 from importlib_resources import as_file, files
 

@@ -12,4 +12,4 @@ from pytest_bdd.warning_types import (
 
 __version__ = str(get_distribution_version("pytest-bdd-ng"))
 
-__all__ = ["given", "when", "then", "scenario", "scenarios"]
+__all__ = ["given", "when", "then", "step", "scenario", "scenarios"]

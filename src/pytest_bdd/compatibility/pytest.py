@@ -73,34 +73,6 @@ else:
     from _pytest.nodes import Item
 
 
-__all__ = [
-    "Item",
-    "CallInfo",
-    "call_fixture_func",
-    "Config",
-    "ExitCode",
-    "FixtureDef",
-    "FixtureLookupError",
-    "FixtureRequest",
-    "get_config_root_path",
-    "Mark",
-    "MarkDecorator",
-    "Metafunc",
-    "Module",
-    "Parser",
-    "PytestPluginManager",
-    "PYTEST6",
-    "PYTEST7",
-    "RunResult",
-    "Session",
-    "TerminalReporter",
-    "Testdir",
-    "TestReport",
-    "TypeAlias",
-    "wrap_session",
-]
-
-
 class Module(PytestModule):
     @classmethod
     def build(cls, parent, file_path):
@@ -157,3 +129,32 @@ else:
 
 def get_config_root_path(config: Config) -> Path:
     return Path(getattr(cast(Config, config), "rootpath" if PYTEST61 else "rootdir"))
+
+
+__all__ = [
+    "assert_outcomes",
+    "Item",
+    "CallInfo",
+    "call_fixture_func",
+    "Config",
+    "ExitCode",
+    "FixtureDef",
+    "FixtureLookupError",
+    "FixtureRequest",
+    "get_config_root_path",
+    "Mark",
+    "MarkDecorator",
+    "Metafunc",
+    "Module",
+    "Parser",
+    "PytestPluginManager",
+    "PYTEST6",
+    "PYTEST7",
+    "RunResult",
+    "Session",
+    "TerminalReporter",
+    "Testdir",
+    "TestReport",
+    "TypeAlias",
+    "wrap_session",
+]
