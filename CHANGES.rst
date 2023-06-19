@@ -4,7 +4,6 @@ Changelog
 In-progress
 -----------
 
-
 Planned
 -------
 - Review report generation to be conform with official tools
@@ -15,7 +14,6 @@ Planned
     - Waiting for upstream issue https://github.com/cucumber/gherkin/pull/64
 - Tests for messages and integrations
 - Add support of python 3.12, PyPy at CI
-- Drop python 3.7
 - Rework usage of Marshmallow to Pydantic
 - Add mode to execute scenarios with missing/failing steps
 - Remove
@@ -24,6 +22,7 @@ Planned
 
 Unreleased
 ----------
+- Drop python 3.7
 - Move StructBDD model to Pydantic
 - Remove ast module usage by StructBDD
 - Test filters in scenario/scenarios to filter out not needed scenarios

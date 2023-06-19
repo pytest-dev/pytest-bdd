@@ -21,7 +21,7 @@ def parse_version(version: str) -> Version:
     return Version(version)
 
 
-@lru_cache()
+@lru_cache
 def compare_distribution_version(
     distribution_name: str, version: str, operator: Callable[[Any, Any], bool] = eq
 ) -> bool:

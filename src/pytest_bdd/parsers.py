@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from functools import partial
+from functools import partial, singledispatchmethod
 from itertools import filterfalse
 from operator import attrgetter, contains, methodcaller
 from re import Match
@@ -18,7 +18,6 @@ from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
 from cucumber_expressions.regular_expression import RegularExpression as CucumberRegularExpression
 
 from pytest_bdd.compatibility import Protocol, runtime_checkable
-from pytest_bdd.compatibility.functools import singledispatchmethod
 from pytest_bdd.model.messages import ExpressionType
 from pytest_bdd.utils import StringableProtocol, stringify
 
