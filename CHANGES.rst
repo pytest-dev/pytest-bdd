@@ -3,10 +3,10 @@ Changelog
 
 In-progress
 -----------
+- Move documentation to Gherkin itself
 
 Planned
 -------
-- Move documentation to Gherkin itself
 - Review report generation to be conform with official tools
 
   - https://github.com/pytest-dev/pytest-bdd/issues/488
@@ -21,6 +21,8 @@ Planned
 - Remove
 
   - Hide traceback for pytest code
+- Generate documentation via https://github.com/jolly-good-toolbelt/sphinx_gherkindoc instead of direct use
+
 
 Unreleased
 ----------
