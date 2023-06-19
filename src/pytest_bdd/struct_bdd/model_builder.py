@@ -1,16 +1,32 @@
 from __future__ import annotations
 
-from itertools import count, filterfalse
+from itertools import filterfalse
+from json import loads as json_loads
 from operator import attrgetter
 from typing import Any
 
-from attr import Factory, attrib, attrs
+from attr import attrib, attrs
+from gherkin.pickles.compiler import Compiler
 
-import pytest_bdd.ast as ast
-from pytest_bdd.model.messages import KeywordType
-from pytest_bdd.struct_bdd.model import Join, Step, Table
-
-# TODO rework to use pydantic models instead
+from pytest_bdd.model.gherkin_document import Feature as GherkinDocumentFeature
+from pytest_bdd.model.messages import (
+    DataTable,
+    DocString,
+    Examples,
+    Feature,
+    FeatureChild,
+    GherkinDocument,
+    KeywordType,
+    Location,
+    Scenario,
+    Step,
+    TableCell,
+    TableRow,
+    Tag,
+)
+from pytest_bdd.struct_bdd.model import Join as StructJoin
+from pytest_bdd.struct_bdd.model import Step as StructStep
+from pytest_bdd.struct_bdd.model import Table as StructTable
 
 
 @attrs
@@ -23,27 +39,48 @@ class _ASTBuilder:
 
 @attrs
 class GherkinDocumentBuilder(_ASTBuilder):
-    model: Step = attrib()
+    model: StructStep = attrib()
 
     def build(self, id_generator):
-        return ast.GherkinDocument(comments=[], uri=None).setattrs(
-            feature=StepToFeatureASTBuilder(self.model).build(id_generator=id_generator)
+        return GherkinDocument(
+            comments=[], uri=None, feature=StepToFeatureASTBuilder(self.model).build(id_generator=id_generator)
         )
+
+    def build_feature(self, filename, uri, id_generator):
+        gherkin_document = self.build(id_generator=id_generator)
+        gherkin_document.uri = uri
+
+        gherkin_document_serialized = gherkin_document.json(by_alias=True, exclude_none=True)
+
+        scenarios_data = Compiler().compile(json_loads(gherkin_document_serialized))
+        pickles = GherkinDocumentFeature.load_pickles(scenarios_data)
+
+        feature = GherkinDocumentFeature(  # type: ignore[call-arg]
+            gherkin_document=gherkin_document,
+            uri=uri,
+            pickles=pickles,
+            filename=filename,
+        )
+
+        feature.fill_registry()
+
+        return feature
 
 
 @attrs
 class StepToFeatureASTBuilder(_ASTBuilder):
-    model: Step = attrib()
+    model: StructStep = attrib()
 
     def build(self, id_generator):
-        return ast.Feature(
+        return Feature(
             children=self._build_children(id_generator=id_generator),
             description=self.model.description or "",
             language="EN",
-            location=ast.Location(column=0, line=0),
+            location=Location(column=0, line=0),
             tags=[],
             name=self.model.name or "",
-        ).setattrs(keyword="Feature")
+            keyword="Feature",
+        )
 
     def _build_children(self, id_generator):
         def _():
@@ -58,19 +95,18 @@ class StepToFeatureASTBuilder(_ASTBuilder):
                                 if step.keyword_type is KeywordType.conjunction
                                 else step.keyword_type
                             )
-                            yield ast.Step(
-                                identifier=next(id_generator),
-                                keyword=step.type,
-                                location=ast.Location(column=0, line=0),
+                            yield Step(
+                                id=next(id_generator),
+                                keyword=step.type if isinstance(step.type, str) else step.type.value,
+                                location=Location(column=0, line=0),
                                 text=step.action,
                                 keyword_type=step_keyword_type.value,
-                            ).setattrs(
                                 **(
                                     (
                                         lambda rows: dict(
-                                            data_table=ast.DataTable(
+                                            data_table=DataTable(
                                                 rows=rows,
-                                                location=ast.Location(column=0, line=0),  # type: ignore[call-arg]
+                                                location=Location(column=0, line=0),  # type: ignore[call-arg]
                                             )  # type: ignore[call-arg]
                                         )
                                         if rows
@@ -82,9 +118,9 @@ class StepToFeatureASTBuilder(_ASTBuilder):
                                                 map(
                                                     lambda row_values: (
                                                         (
-                                                            lambda cells: ast.TableRow(
-                                                                identifier=next(id_generator),
-                                                                location=ast.Location(column=0, line=0),  # type: ignore[call-arg]
+                                                            lambda cells: TableRow(
+                                                                id=next(id_generator),
+                                                                location=Location(column=0, line=0),  # type: ignore[call-arg]
                                                                 cells=cells,
                                                             )  # type: ignore[call-arg]
                                                             if cells
@@ -92,8 +128,8 @@ class StepToFeatureASTBuilder(_ASTBuilder):
                                                         )(
                                                             [
                                                                 *map(
-                                                                    lambda parameter: ast.TableCell(
-                                                                        location=ast.Location(column=0, line=0),
+                                                                    lambda parameter: TableCell(
+                                                                        location=Location(column=0, line=0),
                                                                         value=parameter,
                                                                     ),
                                                                     row_values,
@@ -101,7 +137,7 @@ class StepToFeatureASTBuilder(_ASTBuilder):
                                                             ]
                                                         )
                                                     ),
-                                                    Join(tables=step.data).rowed_values,
+                                                    StructJoin(tables=step.data).rowed_values,
                                                 ),
                                             )
                                         ]
@@ -109,10 +145,10 @@ class StepToFeatureASTBuilder(_ASTBuilder):
                                 ),
                                 **(
                                     dict(
-                                        doc_string=ast.DocString(
+                                        doc_string=DocString(
                                             content=step.description,
                                             delimiter="\n",
-                                            location=ast.Location(column=0, line=0),
+                                            location=Location(column=0, line=0),
                                         )
                                     )
                                     if step.description
@@ -123,21 +159,21 @@ class StepToFeatureASTBuilder(_ASTBuilder):
 
                     steps = [*steps_gen(filter(lambda step: step.action is not None, route.steps))]
 
-                    yield ast.NodeContainerChild().setattrs(
-                        scenario=ast.Scenario(
+                    yield FeatureChild(
+                        scenario=Scenario(
                             description=route.steps[0].description or "",
                             examples=[ExampleASTBuilder(route.example_table).build(id_generator=id_generator)]
                             if route.example_table.values
                             else [],
-                            identifier=next(id_generator),
+                            id=next(id_generator),
                             keyword="Scenario",
-                            location=ast.Location(column=0, line=0),
+                            location=Location(column=0, line=0),
                             name=next(filter(bool, map(attrgetter("name"), reversed(route.steps))), ""),
                             tags=[
                                 *map(
-                                    lambda tag_name: ast.Tag(
-                                        identifier=next(id_generator),
-                                        location=ast.Location(column=0, line=0),
+                                    lambda tag_name: Tag(
+                                        id=next(id_generator),
+                                        location=Location(column=0, line=0),
                                         name=tag_name,
                                     ),
                                     route.tags,
@@ -152,24 +188,24 @@ class StepToFeatureASTBuilder(_ASTBuilder):
 
 @attrs
 class ExampleASTBuilder(_ASTBuilder):
-    model: Table | Join = attrib()
+    model: StructJoin | StructTable = attrib()
 
     def build(self, id_generator):
-        return ast.Example(
+        return Examples(
             description=self.model.description,
-            identifier=next(id_generator),
+            id=next(id_generator),
             keyword="Examples",
-            location=ast.Location(column=0, line=0),
+            location=Location(column=0, line=0),
             name=self.model.name,
             table_body=[
                 *map(
-                    lambda row_values: ast.TableRow(
-                        identifier=next(id_generator),
-                        location=ast.Location(column=0, line=0),
+                    lambda row_values: TableRow(
+                        id=next(id_generator),
+                        location=Location(column=0, line=0),
                         cells=[
                             *map(
-                                lambda parameter: ast.TableCell(
-                                    location=ast.Location(column=0, line=0),
+                                lambda parameter: TableCell(
+                                    location=Location(column=0, line=0),
                                     value=parameter,
                                 ),
                                 row_values,
@@ -181,22 +217,21 @@ class ExampleASTBuilder(_ASTBuilder):
             ],
             tags=[
                 *map(
-                    lambda tag_name: ast.Tag(
-                        identifier=next(id_generator),
-                        location=ast.Location(column=0, line=0),
+                    lambda tag_name: Tag(
+                        id=next(id_generator),
+                        location=Location(column=0, line=0),
                         name=tag_name,
                     ),
                     self.model.tags,
                 )
             ],
-        ).setattrs(
-            table_header=ast.ExampleTableHeader(
-                identifier=next(id_generator),
-                location=ast.Location(column=0, line=0),
+            table_header=TableRow(
+                id=next(id_generator),
+                location=Location(column=0, line=0),
                 cells=[
                     *map(
-                        lambda parameter: ast.TableCell(
-                            location=ast.Location(column=0, line=0),
+                        lambda parameter: TableCell(
+                            location=Location(column=0, line=0),
                             value=parameter,
                         ),
                         self.model.parameters,

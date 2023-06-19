@@ -29,12 +29,10 @@ from attr import Factory, attrib, attrs
 from gherkin.errors import CompositeParserException  # type: ignore[import]
 from gherkin.pickles.compiler import Compiler  # type: ignore[import]
 
-from pytest_bdd.compatibility.functools import singledispatchmethod
 from pytest_bdd.const import TAG_PREFIX
 from pytest_bdd.model.messages import Background, Examples
 from pytest_bdd.model.messages import Feature as FeatureMessage
 from pytest_bdd.model.messages import GherkinDocument, Pickle, PickleStep, Rule, Scenario, Step, TableRow, Tag
-from pytest_bdd.model.scenario import UserStep
 from pytest_bdd.utils import _itemgetter, deepattrgetter
 
 
@@ -180,45 +178,26 @@ class Feature:
     def _get_pickle_line_number(self, pickle: Pickle):
         return self._get_pickle_ast_scenario(pickle).location.line
 
-    def _get_pickle_step_ast_step(self, pickle_step: PickleStep):
+    def _get_pickle_step_model_step(self, pickle_step: PickleStep):
         return cast(Step, next(filter(lambda node: type(node) is Step, self._get_linked_ast_nodes(pickle_step)), None))
 
-    @singledispatchmethod
     def _get_step_keyword(self, step: PickleStep):
-        return self._get_pickle_step_ast_step(step).keyword.strip()
+        model_step: Step | None = self._get_pickle_step_model_step(step)
+        if model_step is not None:
+            return model_step.keyword.strip()
 
-    @_get_step_keyword.register
-    def _(self, step: UserStep):
-        return step.keyword
-
-    @singledispatchmethod
     def _get_step_prefix(self, step: PickleStep):
-        return self._get_step_keyword(step).lower()
+        step_keyword = self._get_step_keyword(step)
+        if step_keyword is not None:
+            return step_keyword.lower()
 
-    @_get_step_prefix.register
-    def _(self, step: UserStep):
-        return step.prefix
-
-    @singledispatchmethod
     def _get_step_line_number(self, step: PickleStep):
-        return self._get_pickle_step_ast_step(step).location.line
+        model_step: Step | None = self._get_pickle_step_model_step(step)
+        if model_step is not None:
+            return model_step.location.line
 
-    @_get_step_line_number.register
-    def _(self, step: UserStep):
-        return step.line_number
-
-    @singledispatchmethod
     def _get_step_doc_string(self, step: PickleStep):
-        return self._get_pickle_step_ast_step(step).doc_string
+        return getattr(self._get_pickle_step_model_step(step), "doc_string", None)
 
-    @_get_step_doc_string.register
-    def _(self, step: UserStep):
-        return step.doc_string
-
-    @singledispatchmethod
     def _get_step_data_table(self, step: PickleStep):
-        return self._get_pickle_step_ast_step(step).data_table
-
-    @_get_step_data_table.register
-    def _(self, step: UserStep):
-        return step.data_table
+        return getattr(self._get_pickle_step_model_step(step), "data_table", None)

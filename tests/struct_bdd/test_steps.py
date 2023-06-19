@@ -593,7 +593,7 @@ def test_dsl_as_dict(testdir):
         from pytest_bdd import given, then
         from pytest_bdd.struct_bdd.model import Step
 
-        step = Step.from_dict(
+        step = Step.parse_obj(
             dict(
                 Name="Examples are substituted",
                 Steps=[

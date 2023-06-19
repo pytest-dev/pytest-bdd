@@ -4,13 +4,13 @@ from enum import Enum
 from functools import partial
 from operator import methodcaller
 from pathlib import Path
-from typing import cast
 
 from attr import attrib, attrs
 
 from pytest_bdd.compatibility.parser import ParserProtocol
 from pytest_bdd.compatibility.pytest import Config
-from pytest_bdd.struct_bdd.model import Step, StepSchema
+from pytest_bdd.struct_bdd.model import Step
+from pytest_bdd.struct_bdd.model_builder import GherkinDocumentBuilder
 from pytest_bdd.utils import PytestBDDIdGeneratorHandler
 
 
@@ -46,10 +46,10 @@ class StructBDDParser(ParserProtocol):
         mode = kwargs.pop("mode", "r")
         with path.open(mode=mode, encoding=encoding) as feature_file:
             content = feature_file.read()
-
-        return cast(Step, StepSchema().load(self.loader(content, *args, **kwargs))).build_feature(
-            filename=str(path.as_posix()), uri=uri, id_generator=self.id_generator
-        )
+        filename = str(path.as_posix())
+        raw_step = self.loader(content, *args, **kwargs)
+        step = Step.parse_obj(raw_step)
+        return GherkinDocumentBuilder(model=step).build_feature(filename, uri, self.id_generator)  # type: ignore[call-arg]
 
     def build_loader(self):
         if self.kind == self.KIND.YAML.value:

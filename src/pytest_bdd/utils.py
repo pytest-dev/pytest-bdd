@@ -4,18 +4,15 @@ from __future__ import annotations
 import base64
 import pickle
 import re
-import sys
 from collections import defaultdict
 from contextlib import nullcontext, suppress
 from enum import Enum
-from functools import partial, reduce
+from functools import reduce
 from inspect import getframeinfo, signature
 from itertools import tee
 from operator import attrgetter, getitem, itemgetter
 from sys import _getframe
 from typing import TYPE_CHECKING, Any, Callable, Collection, Mapping, cast
-
-from marshmallow import post_load
 
 from pytest_bdd.compatibility import Literal, Protocol, runtime_checkable
 from pytest_bdd.compatibility.pytest import FixtureDef
@@ -172,37 +169,6 @@ def inject_fixture(request, arg, value):
     request._fixture_defs[arg] = fd
     if add_fixturename:
         request._pyfuncitem._fixtureinfo.names_closure.append(arg)
-
-
-class ModelSchemaPostLoadable:
-    postbuild_attrs: list[str] = []
-
-    @staticmethod
-    def build_from_schema(cls, data, many, **kwargs):
-        return cls.postbuild_attr_builder(cls, data, cls.postbuild_attrs)
-
-    @classmethod
-    def schema_post_loader(cls):
-        return post_load(partial(cls.build_from_schema, cls))
-
-    @staticmethod
-    def postbuild_attr_builder(cls, data, postbuild_args):
-        _data = {**data}
-        empty = object()
-        postbuildable_args = []
-        for argument in postbuild_args:
-            value = _data.pop(argument, empty)
-            if value is not empty:
-                postbuildable_args.append((argument, value))
-        instance = cls(**_data)
-        for argument, value in postbuildable_args:
-            setattr(instance, argument, value)
-        return instance
-
-    def setattrs(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        return self
 
 
 def _itemgetter(*items):

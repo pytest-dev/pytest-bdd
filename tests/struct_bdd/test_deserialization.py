@@ -3,31 +3,165 @@ from operator import contains
 from textwrap import dedent
 
 from gherkin.pickles.compiler import Compiler
-from yaml import FullLoader, load
+from yaml import FullLoader
+from yaml import load as load_yaml
 
-from pytest_bdd import ast
-from pytest_bdd.model import StepType
-from pytest_bdd.struct_bdd import ast_builder
-from pytest_bdd.struct_bdd.model import Step, StepSchema
+from pytest_bdd.model.messages import KeywordType
+from pytest_bdd.struct_bdd.model import Alternative, Join, Keyword, Node, Step, Table
+from pytest_bdd.struct_bdd.model_builder import GherkinDocumentBuilder
 from pytest_bdd.utils import IdGenerator
 
 
-def test_load_simplest_step():
-    StepSchema().load({})
-
-
-def test_load_simplest_step_with_steps():
-    doc = dedent(
-        # language=yaml
-        """\
-        Steps: []
-        """
+def test_node_containing_data_load():
+    node = Node.parse_obj(
+        {
+            "Tags": ["Tag A", "Tag B"],
+            "Name": "Node name",
+            "Description": "Node description",
+            "Comments": ["Comment A", "Comment B"],
+        }
+    )
+    assert all(
+        [
+            "Tag A" in node.tags,
+            "Tag B" in node.tags,
+        ]
+    )
+    assert node.name == "Node name"
+    assert node.description == "Node description"
+    assert all(
+        [
+            "Comment A" in node.comments,
+            "Comment B" in node.comments,
+        ]
     )
 
-    data = load(doc, Loader=FullLoader)
 
-    step = StepSchema().load(data)
+def test_node_non_containing_data_load():
+    node = Node.parse_obj({})
+    assert node.tags == []
+    assert node.name is None
+    assert node.description is None
+    assert node.comments == []
+
+
+def test_table_columned_containing_data_load():
+    table = Table.parse_obj(
+        dict(
+            Tags=["Tag A", "Tag B"],
+            Name="Table name",
+            Description="Table description",
+            Comments=["Comment A", "Comment B"],
+            Type="Columned",
+            Parameters=["Parameter A", "Parameter B"],
+            Values=[["Value A1", "Value A2"], ["Value B1", "Value B2"]],
+        )
+    )
+
+    assert all(
+        [
+            "Tag A" in table.tags,
+            "Tag B" in table.tags,
+        ]
+    )
+    assert table.name == "Table name"
+    assert table.description == "Table description"
+    assert all(
+        [
+            "Comment A" in table.comments,
+            "Comment B" in table.comments,
+        ]
+    )
+
+    assert table.type == "Columned"
+    assert table.parameters == ["Parameter A", "Parameter B"]
+    assert table.values[0] == ["Value A1", "Value A2"]
+    assert table.values[1] == ["Value B1", "Value B2"]
+    assert table.columned_values == table.values
+
+
+def test_table_rowed_containing_data_load():
+    table = Table.parse_obj(
+        dict(
+            Type="Rowed",
+            Parameters=["Parameter A", "Parameter B"],
+            Values=[["Value A1", "Value A2"], ["Value B1", "Value B2"]],
+        )
+    )
+    assert table.type == "Rowed"
+    assert table.parameters == ["Parameter A", "Parameter B"]
+    assert table.values[0] == ["Value A1", "Value A2"]
+    assert table.values[1] == ["Value B1", "Value B2"]
+    assert table.rowed_values == table.values
+
+
+def test_table_non_containing_data_load():
+    table = Table.parse_obj({})
+
+    assert table.tags == []
+    assert table.name is None
+    assert table.description is None
+    assert table.comments == []
+
+    assert table.type == "Rowed"
+    assert table.parameters == []
+    assert table.values == []
+
+
+def test_join_load():
+    raw_table_a = dict(
+        Tags=["Tag A1", "Tag A2"],
+        Name="Table A name",
+        Description="Table A description",
+        Comments=["Comment A1", "Comment A2"],
+        Type="Columned",
+        Parameters=["Parameter A1", "Parameter A2"],
+        Values=[["Value A11", "Value A12"], ["Value A21", "Value A22"]],
+    )
+    raw_table_b = dict(
+        Tags=["Tag B1", "Tag B2"],
+        Name="Table B name",
+        Description="Table B description",
+        Comments=["Comment B1", "Comment B2"],
+        Type="Columned",
+        Parameters=["Parameter B1", "Parameter B2"],
+        Values=[["Value B11", "Value B12"], ["Value B21", "Value B22"]],
+    )
+
+    join = Join.parse_obj(dict(Join=[raw_table_a, raw_table_b]))
+    assert join.tags == ["Tag A1", "Tag A2", "Tag B1", "Tag B2"]
+    assert join.name == "\n".join([raw_table_a["Name"], raw_table_b["Name"]])
+    assert join.description == "\n".join([raw_table_a["Description"], raw_table_b["Description"]])
+    assert join.comments == ["Comment A1", "Comment A2", "Comment B1", "Comment B2"]
+    assert join.parameters == ["Parameter A1", "Parameter A2", "Parameter B1", "Parameter B2"]
+    assert join.values == [
+        ["Value A11", "Value A21", "Value B11", "Value B21"],
+        ["Value A11", "Value A21", "Value B12", "Value B22"],
+        ["Value A12", "Value A22", "Value B11", "Value B21"],
+        ["Value A12", "Value A22", "Value B12", "Value B22"],
+    ]
+    assert join.columned_values == [
+        ("Value A11", "Value A11", "Value A12", "Value A12"),
+        ("Value A21", "Value A21", "Value A22", "Value A22"),
+        ("Value B11", "Value B12", "Value B11", "Value B12"),
+        ("Value B21", "Value B22", "Value B21", "Value B22"),
+    ]
+
+
+def test_step_non_containing_data_load():
+    step = Step().parse_obj({})
+
+    assert step.tags == []
+    assert step.name is None
+    assert step.description is None
+    assert step.comments == []
+
     assert step.steps == []
+    assert step.action is None
+    assert step.type == Keyword.Star
+    assert step.data == []
+    assert step.examples == []
+
     routes = list(step.routes)
     assert len(routes) == 1
     route = routes[0]
@@ -38,19 +172,29 @@ def test_load_simplest_step_with_steps():
 
 
 def test_load_simplest_step_with_text_steps():
-    doc = dedent(
-        # language=yaml
-        """\
-        Steps:
-          - Do something
-        """
+    step: Step = Step().parse_obj(dict(Steps=["Do something"]))
+    assert step.steps[0].type == Keyword.Star
+    assert step.steps[0].keyword_type == KeywordType.unknown
+    assert step.steps[0].action == "Do something"
+
+    routes = list(step.routes)
+    assert len(routes) == 1
+    route = routes[0]
+    assert route.tags == []
+    assert route.steps[0].action is None
+    assert route.steps[1] == step.steps[0]
+
+
+def test_load_simplest_given():
+    step = Step.parse_obj(
+        dict(
+            Steps=[
+                dict(Given="Do something"),
+            ]
+        )
     )
-
-    data = load(doc, Loader=FullLoader)
-
-    step: Step = StepSchema().load(data)
-    assert step.steps[0].type == "*"
-    assert step.steps[0].keyword_type == StepType.unknown
+    assert step.steps[0].type == Keyword.Given
+    assert step.steps[0].keyword_type == KeywordType.context
     assert step.steps[0].action == "Do something"
 
     routes = list(step.routes)
@@ -62,20 +206,9 @@ def test_load_simplest_step_with_text_steps():
 
 
 def test_load_actioned_step_with_text_steps():
-    doc = dedent(
-        # language=yaml
-        """\
-        Action: "First do"
-        Steps:
-          - Do something
-        """
-    )
-
-    data = load(doc, Loader=FullLoader)
-
-    step: Step = StepSchema().load(data)
-    assert step.steps[0].type == "*"
-    assert step.steps[0].keyword_type == StepType.unknown
+    step: Step = Step.parse_obj(dict(Action="First do", Steps=["Do something"]))
+    assert step.steps[0].type == Keyword.Star
+    assert step.steps[0].keyword_type == KeywordType.unknown
     assert step.steps[0].action == "Do something"
 
     routes = list(step.routes)
@@ -85,21 +218,30 @@ def test_load_actioned_step_with_text_steps():
     assert route.steps == [step, step.steps[0]]
 
 
+def test_load_alternative_step_with_text_steps():
+    alternative_step: Alternative = Alternative.parse_obj(dict(Alternative=["Do something"]))
+
+    routes = list(alternative_step.routes)
+    assert len(routes) == 1
+    route = routes[0]
+    assert route.tags == []
+    assert route.steps[0].action == "Do something"
+
+
 def test_load_actioned_step_with_alternative_text_steps():
-    doc = dedent(
-        # language=yaml
-        """\
-        Action: "First do"
-        Steps:
-          - Alternative:
-            - Do something
-            - Do something else
-        """
+    step: Step = Step.parse_obj(
+        dict(
+            Action="First do",
+            Steps=[
+                dict(
+                    Alternative=[
+                        "Do something",
+                        "Do something else",
+                    ]
+                )
+            ],
+        )
     )
-
-    data = load(doc, Loader=FullLoader)
-
-    step: Step = StepSchema().load(data)
 
     routes = list(step.routes)
     assert len(routes) == 2
@@ -108,21 +250,23 @@ def test_load_actioned_step_with_alternative_text_steps():
 
 
 def test_load_simplest_step_with_keyworded_steps():
-    doc = dedent(
-        # language=yaml
-        """\
-        Steps:
-          - Given: Do something
-          - When: Do something
-          - Then: Do something
-          - And: Do something
-          - "*": Do something
-        """
+    step: Step = Step.parse_obj(
+        dict(
+            Steps=[
+                dict(Given="Do something"),
+                dict(When="Do something"),
+                dict(Then="Do something"),
+                dict(And="Do something"),
+                dict(But="Do something"),
+                {"*": "Do something"},
+                "Do something",
+                dict(Type="So", Action="Do something"),
+                dict(Type="So", Action="Do something"),
+                dict(Because="Do something"),
+                dict(Step=dict(Action="Do something")),
+            ]
+        )
     )
-
-    data = load(doc, Loader=FullLoader)
-
-    step = StepSchema().load(data)
 
     routes = list(step.routes)
     assert len(routes) == 1
@@ -130,17 +274,7 @@ def test_load_simplest_step_with_keyworded_steps():
 
 def test_load_step_with_single_simplest_steps():
     try:
-        doc = dedent(
-            # language=yaml
-            """\
-            Steps:
-                - Step: {}
-            """
-        )
-
-        data = load(doc, Loader=FullLoader)
-
-        StepSchema().load(data)
+        Step.parse_obj(dict(Steps=[dict(Step=dict())]))
     except Exception as e:
         raise AssertionError from e
 
@@ -164,9 +298,8 @@ def test_node_module_load_for_step():
             """
         )
 
-        data = load(doc, Loader=FullLoader)
-
-        StepSchema().load(data)
+        data = load_yaml(doc, Loader=FullLoader)
+        Step.parse_obj(data)
     except Exception as e:
         raise AssertionError from e
 
@@ -194,9 +327,35 @@ def test_data_load():
             """
         )
 
-        data = load(doc, Loader=FullLoader)
+        data = load_yaml(doc, Loader=FullLoader)
+        Step.parse_obj(data)
+    except Exception as e:
+        raise AssertionError from e
 
-        StepSchema().load(data)
+
+def test_nested_sub_join_load():
+    try:
+        doc = dedent(
+            # language=yaml
+            """
+            Join:
+              - Table:
+                  Parameters:
+                    - StepDataTableParametersHeader1
+                    - StepDataTableParametersHeader2
+                  Values:
+                    - [ a, b, c ]
+                    - [ d, e, f ]
+              - Table:
+                  Parameters:
+                    - StepDataTableParametersHeader3
+                    - StepDataTableParametersHeader4
+                  Values: [ ]
+            """
+        )
+
+        data = load_yaml(doc, Loader=FullLoader)
+        Join.parse_obj(data)
     except Exception as e:
         raise AssertionError from e
 
@@ -237,9 +396,8 @@ def test_nested_data_load():
             """
         )
 
-        data = load(doc, Loader=FullLoader)
-
-        StepSchema().load(data)
+        data = load_yaml(doc, Loader=FullLoader)
+        Step.parse_obj(data)
     except Exception as e:
         raise AssertionError from e
 
@@ -280,9 +438,8 @@ def test_nested_examples_load():
             """
         )
 
-        data = load(doc, Loader=FullLoader)
-
-        StepSchema().load(data)
+        data = load_yaml(doc, Loader=FullLoader)
+        Step.parse_obj(data)
     except Exception as e:
         raise AssertionError from e
 
@@ -323,10 +480,8 @@ def test_tags_steps_examples_load():
         """
     )
 
-    data = load(doc, Loader=FullLoader)
-
-    step = StepSchema().load(data)
-
+    data = load_yaml(doc, Loader=FullLoader)
+    step = Step.parse_obj(data)
     routes = list(step.routes)
 
     assert len(routes) == 1
@@ -340,11 +495,10 @@ def test_tags_steps_examples_load():
     )
     assert len(route.example_table.values) == 4
 
-    document_ast = ast_builder.GherkinDocumentBuilder(step).build(id_generator=IdGenerator())
+    document_ast = GherkinDocumentBuilder(step).build(id_generator=IdGenerator())
     document_ast.uri = "uri"
 
-    row_document_ast = ast.GherkinDocumentSchema().dump(document_ast)
-    pickles = Compiler().compile(row_document_ast)
+    pickles = Compiler().compile(document_ast.dict(by_alias=True, exclude_none=True))
     assert len(pickles) == 4
 
 
@@ -426,9 +580,8 @@ def test_tags_steps_examples_load_complex():
         """
     )
 
-    data = load(doc, Loader=FullLoader)
-
-    step = StepSchema().load(data)
+    data = load_yaml(doc, Loader=FullLoader)
+    step = Step.parse_obj(data)
 
     routes = list(step.routes)
 
@@ -510,9 +663,8 @@ def test_tags_steps_examples_joined_by_value_load():
         """
     )
 
-    data = load(doc, Loader=FullLoader)
-
-    step = StepSchema().load(data)
+    data = load_yaml(doc, Loader=FullLoader)
+    step = Step.parse_obj(data)
 
     routes = list(step.routes)
 
@@ -543,8 +695,7 @@ def test_load_nested_steps():
             """
         )
 
-        data = load(doc, Loader=FullLoader)
-
-        StepSchema().load(data)
+        data = load_yaml(doc, Loader=FullLoader)
+        Step.parse_obj(data)
     except Exception as e:
         raise AssertionError from e

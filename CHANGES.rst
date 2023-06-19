@@ -1,6 +1,10 @@
 Changelog
 =========
 
+In-progress
+-----------
+
+
 Planned
 -------
 - Review report generation to be conform with official tools
@@ -11,13 +15,17 @@ Planned
     - Waiting for upstream issue https://github.com/cucumber/gherkin/pull/64
 - Tests for messages and integrations
 - Add support of python 3.12, PyPy at CI
+- Drop python 3.7
 - Rework usage of Marshmallow to Pydantic
 - Add mode to execute scenarios with missing/failing steps
 - Remove
   - Hide traceback for pytest code
+- Review StructBdd step collection
 
 Unreleased
 ----------
+- Move StructBDD model to Pydantic
+- Remove ast module usage by StructBDD
 - Test filters in scenario/scenarios to filter out not needed scenarios
 - .url, .desktop and .webloc files are collected from test directories, so scenario/scenarios usages is not necessary
 - Load features/scenarios by url

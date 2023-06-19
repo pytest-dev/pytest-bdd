@@ -1,10 +1,9 @@
 import json
 from pathlib import Path
 
-from marshmallow.utils import RAISE
 from pytest import mark, param
 
-from pytest_bdd.ast import AST, ASTSchema
+from pytest_bdd.model.messages import Message
 
 test_data = Path(__file__).parent.parent.parent / "testdata"
 
@@ -16,13 +15,13 @@ test_data = Path(__file__).parent.parent.parent / "testdata"
         (test_data / "good").glob("*.ast.ndjson"),
     ),
 )
-def test_simple_load_ast(ast_path: Path):
+def test_simple_load_model(ast_path: Path):
     with ast_path.open(mode="r") as ast_file:
         for ast_line in ast_file:
-            ast_datum = json.loads(ast_line)
-            ast = ASTSchema().load(data=ast_datum, unknown=RAISE)
-            assert isinstance(ast, AST)
+            model_datum = json.loads(ast_line)
+            model = Message.parse_obj(model_datum)
+            assert isinstance(model, Message)
 
-            dumped_ast_datum = ASTSchema().dump(ast)
+            dumped_ast_datum = json.loads(model.json(by_alias=True, exclude_none=True))
 
-            assert ast_datum == dumped_ast_datum
+            assert model_datum == dumped_ast_datum

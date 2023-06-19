@@ -58,8 +58,6 @@ dependencies = [
     "importlib-metadata;python_version<'3.10.0'",
     "importlib-resources",
     "Mako",
-    "marshmallow",
-    "marshmallow-polyfield",
     "ordered_set",
     "packaging",
     "parse",

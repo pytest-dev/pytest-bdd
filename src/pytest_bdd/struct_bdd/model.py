@@ -1,287 +1,67 @@
 from __future__ import annotations
 
-from collections import namedtuple
+from collections import defaultdict, namedtuple
+from enum import Enum
 from functools import partial
 from itertools import chain, product, starmap, zip_longest
 from operator import attrgetter, eq, is_not
 from pathlib import Path
-from typing import cast
+from typing import Any, Sequence
 
-from attr import Factory, attrib, attrs
-from gherkin.pickles.compiler import Compiler
-from marshmallow import Schema, fields, post_load, pre_load
-from marshmallow_polyfield import PolyField
+from attr import attrib, attrs
+from pydantic import BaseModel, Extra, Field, validator
 
-from pytest_bdd.ast import GherkinDocumentSchema
-from pytest_bdd.model import Feature
-from pytest_bdd.model import Step as ModelStep
-from pytest_bdd.utils import ModelSchemaPostLoadable, deepattrgetter
+from pytest_bdd.compatibility.typing import Literal
+from pytest_bdd.model.messages import KeywordType
+from pytest_bdd.utils import deepattrgetter
 
 
-class CastableToStrField(fields.Str):
-    def __init__(
-        self,
-        *args,
-        strict=False,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        self.strict = strict
-
-    def _deserialize(self, value, attr, data, **kwargs):
-        if not self.strict and not isinstance(value, (str, bytes)):
-            value = str(value)
-        return super()._deserialize(value, attr, data, **kwargs)
+class Keyword(Enum):
+    Given = "Given"
+    When = "When"
+    Then = "Then"
+    And = "And"
+    But = "But"
+    Star = "*"
 
 
-@attrs
-class Node:
-    tags: list[str] = attrib(default=Factory(list))
-    name: str | None = attrib(default=None)
-    description: str | None = attrib(default=None)
-    comments: list[str] = attrib(default=Factory(list))
+class SubKeyword(Enum):
+    Step = "Step"
+    Alternative = "Alternative"
 
 
-class NodeSchema(Schema):
-    tags = fields.List(fields.Str(), required=False, data_key="Tags")
-    name = fields.Str(required=False, data_key="Name")
-    description = fields.Str(required=False, data_key="Description")
-    comments = fields.List(fields.Str(), required=False, data_key="Comments")
-
-
-@attrs
-class Step(Node, ModelSchemaPostLoadable):
-    steps: list[Step] = attrib(default=Factory(list))
-    action: str | None = attrib(default=None)
-    type: str | None = attrib(default="*")
-
-    data: list[Table | Join] = attrib(default=Factory(list))
-    examples: list[Table | Join] = attrib(default=Factory(list))
-
-    Route = namedtuple("Route", ["tags", "steps", "example_table"])
-
-    @property
-    def routes(self):
-        for routes in (
-            product(*map(attrgetter("routes"), self.steps))
-            if self.steps
-            else [[self.Route([], [], Table(parameters=[], values=[]))]]
-        ):
-            steps = [self, *chain.from_iterable(map(attrgetter("steps"), routes))]
-
-            if self.examples:
-                for _example_table in self.examples:
-                    example_table = Join(tables=[*map(attrgetter("example_table"), routes), _example_table])
-                    tags = list(
-                        {*chain.from_iterable(map(attrgetter("tags"), routes)), *example_table.tags, *self.tags}
-                    )
-
-                    yield self.Route(
-                        tags,
-                        steps,
-                        example_table,
-                    )
-            else:
-                example_table = Join(tables=[*map(attrgetter("example_table"), routes)])
-                tags = list({*chain.from_iterable(map(attrgetter("tags"), routes)), *example_table.tags, *self.tags})
-
-                yield self.Route(
-                    tags,
-                    steps,
-                    example_table,
-                )
-
-    @property
-    def keyword_type(self):
-        return ModelStep.KEYWORD_TYPE_MAPPING[self.type]
-
-    def build_feature(self, filename, uri, id_generator):
-        from pytest_bdd.struct_bdd.ast_builder import GherkinDocumentBuilder
-
-        gherkin_ast = GherkinDocumentBuilder(self).build(id_generator=id_generator)
-        gherkin_ast.uri = uri
-        gherkin_ast_data = GherkinDocumentSchema().dump(gherkin_ast)
-        gherkin_document_ast = Feature.load_gherkin_document(gherkin_ast_data)
-
-        scenarios_data = Compiler().compile(gherkin_ast_data)
-        pickles = Feature.load_pickles(scenarios_data)
-
-        feature = Feature(  # type: ignore[call-arg]
-            gherkin_document=gherkin_document_ast,
-            uri=uri,
-            pickles=pickles,
-            filename=filename,
-        )
-
-        feature.fill_registry()
-
-        return feature
-
-    @attrs
-    class Locator:
-        step: Step = attrib()
-        filename = attrib()
-        uri = attrib()
-
-        def resolve(self, config):
-            feature = self.step.build_feature(
-                filename=self.filename, uri=self.uri, id_generator=config.pytest_bdd_id_generator
-            )
-            return zip_longest((), feature.pickles, fillvalue=feature)
-
-    def as_test(self, filename):
-        from pytest_bdd.scenario import scenarios
-
-        return scenarios(
-            locators=[self.Locator(self, str(Path(filename).as_posix()), str(Path(filename).relative_to(Path.cwd())))],
-            return_test_decorator=False,
-        )
-
-    def as_test_decorator(self, filename):
-        from pytest_bdd.scenario import scenarios
-
-        return scenarios(
-            locators=[self.Locator(self, str(Path(filename).as_posix()), str(Path(filename).relative_to(Path.cwd())))],
-            return_test_decorator=True,
-        )
-
-    @staticmethod
-    def from_dict(_dict) -> Step:
-        return cast(Step, StepSchema().load(_dict))
-
-
-class Given(Step):
-    def __new__(cls, action, *args, **kwargs):
-        return Step(*args, type="Given", action=action, **kwargs)
-
-
-class When(Step):
-    def __new__(cls, action, *args, **kwargs):
-        return Step(*args, type="When", action=action, **kwargs)
-
-
-class Then(Step):
-    def __new__(cls, action, *args, **kwargs):
-        return Step(*args, type="Then", action=action, **kwargs)
-
-
-class Do(Step):
-    def __new__(cls, action, *args, **kwargs):
-        return Step(*args, action=action, **kwargs)
-
-
-class And(Step):
-    def __new__(cls, action, *args, **kwargs):
-        return Step(*args, type="And", action=action, **kwargs)
-
-
-class But(Step):
-    def __new__(cls, action, *args, **kwargs):
-        return Step(*args, type="But", action=action, **kwargs)
-
-
-KEYWORDS = ["given", "when", "then", "and", "but", "*"]
-
-
-def step_deserialization_schema_selector(obj, parent_obj):
-    if isinstance(obj, str):
-        return StepStringSchema()
-
-    try:
-        key, *others = iter(obj.keys())
-        if others:
-            raise TypeError
-        key = str(key).strip().lower()
-    except StopIteration as e:
-        raise TypeError from e
-
-    if key in KEYWORDS:
-        return StepKeywordSchema()
-    elif key == "alternative":
-        return AlternativeSchema()
-    else:
-        return StepContainerSchema()
-
-
-def table_deserialization_schema_selector(obj, parent_obj):
-    try:
-        key, *others = iter(obj.keys())
-        if others:
-            raise TypeError
-        key = str(key).strip().lower()
-    except StopIteration as e:
-        raise TypeError from e
-
-    if key == "table":
-        return TableContainerSchema()
-    elif key == "join":
-        return JoinSchema()
-    else:
-        raise TypeError
-
-
-TablePolyfield = partial(
-    PolyField,
-    deserialization_schema_selector=table_deserialization_schema_selector,
-)
-
-StepPolyfield = partial(
-    PolyField,
-    deserialization_schema_selector=step_deserialization_schema_selector,
+KEYWORD_TO_TYPE = defaultdict(
+    lambda: KeywordType.unknown,
+    [
+        (Keyword.Given, KeywordType.context),
+        (Keyword.When, KeywordType.action),
+        (Keyword.Then, KeywordType.outcome),
+        (Keyword.And, KeywordType.conjunction),
+        (Keyword.But, KeywordType.conjunction),
+        (Keyword.Star, KeywordType.unknown),
+    ],
 )
 
 
-class StepSchema(NodeSchema):
-    steps = StepPolyfield(many=True, data_key="Steps", required=False)
+class Node(BaseModel):
+    class Config:
+        extra = Extra.forbid
+        allow_population_by_field_name = True
 
-    action = fields.Str(required=False, data_key="Action")
-    type = fields.Str(required=False, data_key="Type")
-    data = TablePolyfield(many=True, data_key="Data", required=False)
-    examples = TablePolyfield(many=True, data_key="Examples", required=False)
-
-    schema_post_loader = Step.schema_post_loader()
-
-
-class StepContainerSchema(Schema):
-    step = fields.Nested(StepSchema, data_key="Step")
-
-    @post_load
-    def _(self, obj, *args, **kwargs):
-        return obj["step"]
+    tags: Sequence[str] | None = Field(default_factory=list, alias="Tags")
+    name: str | None = Field(None, alias="Name")
+    description: str | None = Field(None, alias="Description")
+    comments: list[str] | None = Field(default_factory=list, alias="Comments")
 
 
-class StepStringSchema(StepSchema, Schema):
-    @pre_load
-    def convert(self, data, many, **kwargs):
-        return {"Action": data}
+class Table(Node):
+    class Config:
+        extra = Extra.forbid
+        allow_population_by_field_name = True
 
-
-class StepKeywordSchema(StepSchema, Schema):
-    @pre_load
-    def convert(self, data, many, **kwargs):
-        return (lambda keyword, action: {"Action": action, "Type": keyword})(*next(iter(data.items())))
-
-
-@attrs
-class Alternative(ModelSchemaPostLoadable):
-    steps: list[Step | Alternative] = attrib(default=Factory(list))
-
-    @property
-    def routes(self):
-        yield from chain.from_iterable(map(attrgetter("routes"), self.steps))
-
-
-class AlternativeSchema(Schema):
-    steps = StepPolyfield(many=True, data_key="Alternative")
-
-    schema_post_loader = Alternative.schema_post_loader()
-
-
-@attrs
-class Table(Node, ModelSchemaPostLoadable):
-    type: str | None = attrib(default="Rowed")
-    parameters: list[str] = attrib(default=Factory(list))
-    values: list[list[str]] = attrib(default=Factory(list))
+    type: Literal["Rowed", "Columned"] | None = Field("Rowed", alias="Type")
+    parameters: list[str] | None = Field(default_factory=list, alias="Parameters")
+    values: list[list[Any]] | None = Field(default_factory=list, alias="Values")
 
     @property
     def columned_values(self):
@@ -298,39 +78,26 @@ class Table(Node, ModelSchemaPostLoadable):
             return list(zip(*self.values))
 
 
-class TableSchema(NodeSchema):
-    type = fields.Str(required=False, data_key="Type")
-
-    parameters = fields.List(
-        CastableToStrField(),
-        data_key="Parameters",
-    )
-    values = fields.List(fields.List(CastableToStrField()), data_key="Values")
-
-    schema_post_loader = Table.schema_post_loader()
+class SubTable(Node):
+    sub_table: Table = Field(..., alias="Table")
 
 
-class TableContainerSchema(Schema):
-    table = fields.Nested(lambda: TableSchema(), data_key="Table")
+class Join(BaseModel):
+    class Config:
+        extra = Extra.forbid
+        allow_population_by_field_name = True
 
-    @post_load
-    def _(self, obj, *args, **kwargs):
-        return obj["table"]
-
-
-@attrs
-class Join(ModelSchemaPostLoadable):
-    tables: list[Table] = attrib(default=Factory(list))
+    tables: list[Table | Join | SubTable] = Field(default_factory=list, alias="Join")
 
     __hash__ = id
 
     @property
     def tags(self):
-        return list({*chain.from_iterable(map(attrgetter("tags"), self.tables))})
+        return list(dict.fromkeys(chain.from_iterable(map(attrgetter("tags"), self.tables))))
 
     @property
     def name(self):
-        return "\n".join(filter(partial(is_not, None), reversed(list(chain(map(attrgetter("name"), self.tables))))))
+        return "\n".join(filter(partial(is_not, None), list(chain(map(attrgetter("name"), self.tables)))))
 
     @property
     def description(self):
@@ -343,11 +110,11 @@ class Join(ModelSchemaPostLoadable):
 
     @property
     def comments(self):
-        return list(chain(map(attrgetter("comments"), self.tables)))
+        return list(chain.from_iterable(map(attrgetter("comments"), self.tables)))
 
     @property
     def parameters(self):
-        return list(set(chain.from_iterable(map(attrgetter("parameters"), self.tables))))
+        return list(dict.fromkeys(chain.from_iterable(map(attrgetter("parameters"), self.tables))))
 
     @property
     def type(self):
@@ -408,8 +175,261 @@ class Join(ModelSchemaPostLoadable):
     def rowed_values(self):
         return self.values
 
+    @validator("tables", each_item=True)
+    def convert_sub_tables_to_tables(cls, value):
+        if isinstance(value, SubTable):
+            return value.sub_table
+        else:
+            return value
 
-class JoinSchema(Schema):
-    tables = TablePolyfield(many=True, data_key="Join")
 
-    schema_post_loader = Join.schema_post_loader()
+@validator("steps", pre=True, each_item=True)
+def convert_to_step(cls, value):
+    if isinstance(value, str):
+        return Step(action=value)
+    elif isinstance(value, dict) and len(value) == 1 and next(iter(value)) not in SubKeyword.__members__:
+        return Step(type=next(iter(value.keys())), action=next(iter(value.values())))
+    else:
+        return value
+
+
+@validator("type")
+def select_step_keyword_type(cls, value, values, **kwargs):
+    try:
+        return Keyword(value)
+    except:
+        return value
+
+
+@validator("steps", each_item=True)
+def convert_sub_steps_to_steps(cls, value):
+    if isinstance(value, SubStep):
+        return value.sub_step
+    else:
+        return value
+
+
+class StepPrototype(Node):
+    steps: Sequence[
+        Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep | SubStep
+    ] = Field(default_factory=list, alias="Steps")
+
+    type: Keyword | str | None = Field(Keyword.Star, alias="Type")
+    data: list[Table | Join | SubTable] = Field(default_factory=list, alias="Data")
+    examples: list[Table | Join | SubTable] = Field(default_factory=list, alias="Examples")
+
+    Route = namedtuple("Route", ["tags", "steps", "example_table"])
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.keyword_type = KEYWORD_TO_TYPE[self.type]
+
+    @property
+    def routes(self):
+        for routes in (
+            product(*map(attrgetter("routes"), self.steps))
+            if self.steps
+            else [[self.Route([], [], Table(parameters=[], values=[]))]]
+        ):
+            steps = [self, *chain.from_iterable(map(attrgetter("steps"), routes))]
+
+            if self.examples:
+                for _example_table in self.examples:
+                    example_table = Join(tables=[*map(attrgetter("example_table"), routes), _example_table])
+                    tags = list(
+                        {*chain.from_iterable(map(attrgetter("tags"), routes)), *example_table.tags, *self.tags}
+                    )
+
+                    yield self.Route(
+                        tags,
+                        steps,
+                        example_table,
+                    )
+            else:
+                example_table = Join(tables=[*map(attrgetter("example_table"), routes)])
+                tags = list({*chain.from_iterable(map(attrgetter("tags"), routes)), *example_table.tags, *self.tags})
+
+                yield self.Route(
+                    tags,
+                    steps,
+                    example_table,
+                )
+
+    @classmethod
+    def build_action_first_arg(cls, action, *args, **kwargs):
+        return cls(*args, **kwargs, action=action)
+
+    @validator("examples", each_item=True)
+    def convert_sub_tables_to_tables_at_examples(cls, value):
+        if isinstance(value, SubTable):
+            return value.sub_table
+        else:
+            return value
+
+    @validator("data", each_item=True)
+    def convert_sub_tables_to_tables_at_data(cls, value):
+        if isinstance(value, SubTable):
+            return value.sub_table
+        else:
+            return value
+
+    convert_sub_steps_to_steps = convert_sub_steps_to_steps
+
+    @attrs
+    class Locator:
+        step: Step = attrib()
+        filename = attrib()
+        uri = attrib()
+
+        def resolve(self, config):
+            from pytest_bdd.struct_bdd.model_builder import GherkinDocumentBuilder
+
+            feature = GherkinDocumentBuilder(self.step).build_feature(
+                filename=self.filename, uri=self.uri, id_generator=config.pytest_bdd_id_generator
+            )
+            return zip_longest((), feature.pickles, fillvalue=feature)
+
+    def as_test(self, filename):
+        from pytest_bdd.scenario import scenarios
+
+        return scenarios(
+            locators=[self.Locator(self, str(Path(filename).as_posix()), str(Path(filename).relative_to(Path.cwd())))],
+            return_test_decorator=False,
+        )
+
+    def as_test_decorator(self, filename):
+        from pytest_bdd.scenario import scenarios
+
+        return scenarios(
+            locators=[self.Locator(self, str(Path(filename).as_posix()), str(Path(filename).relative_to(Path.cwd())))],
+            return_test_decorator=True,
+        )
+
+
+class Alternative(Node):
+    steps: list[Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep | SubStep] = Field(
+        default_factory=list, alias="Alternative"
+    )
+
+    class Config:
+        extra = Extra.forbid
+        allow_population_by_field_name = True
+
+    @property
+    def routes(self):
+        yield from chain.from_iterable(map(attrgetter("routes"), self.steps))
+
+    @validator("steps", pre=True, each_item=True)
+    def convert_step(cls, value):
+        if isinstance(value, str):
+            return Step(action=value)
+        else:
+            return value
+
+    convert_sub_steps_to_steps = convert_sub_steps_to_steps
+
+
+class Step(StepPrototype):
+    steps: list[Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep | SubStep] = Field(
+        default_factory=list, alias="Steps"
+    )
+    type: Keyword | str | None = Field(Keyword.Star, alias="Type")
+    keyword_type: KeywordType | None = Field(KeywordType.unknown)
+    action: str | None = Field(alias="Action")
+
+    convert_to_step = convert_to_step
+    select_step_keyword_type = select_step_keyword_type
+
+
+class SubStep(BaseModel):
+    sub_step: Step = Field(..., alias="Step")
+
+
+class StarStep(StepPrototype):
+    steps: Sequence[
+        Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep | SubStep
+    ] = Field(default_factory=list, alias="Steps")
+
+    type: Keyword | None = Field(Keyword.Star, alias="Type")
+    keyword_type: KeywordType | None = Field(KeywordType.unknown)
+    action: str | None = Field(alias=Keyword.Star.value)
+
+    convert_to_step = convert_to_step
+    select_step_keyword_type = select_step_keyword_type
+
+
+class GivenStep(StepPrototype):
+    steps: Sequence[
+        Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep | SubStep
+    ] = Field(default_factory=list, alias="Steps")
+    type: Keyword | None = Field(Keyword.Given)
+    keyword_type: KeywordType | None = Field(KeywordType.context, alias="Type")
+    action: str | None = Field(alias=Keyword.Given.value)
+
+    convert_to_step = convert_to_step
+    select_step_keyword_type = select_step_keyword_type
+
+
+class WhenStep(StepPrototype):
+    steps: Sequence[
+        Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep | SubStep
+    ] = Field(default_factory=list, alias="Steps")
+    type: Keyword | None = Field(Keyword.When)
+    keyword_type: KeywordType | None = Field(KeywordType.action, alias="Type")
+    action: str | None = Field(alias=Keyword.When.value)
+
+    convert_to_step = convert_to_step
+    select_step_keyword_type = select_step_keyword_type
+
+
+class ThenStep(StepPrototype):
+    steps: Sequence[
+        Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep | SubStep
+    ] = Field(default_factory=list, alias="Steps")
+    type: Keyword | None = Field(Keyword.Then)
+    keyword_type: KeywordType | None = Field(KeywordType.outcome, alias="Type")
+    action: str | None = Field(alias=Keyword.Then.value)
+
+    convert_to_step = convert_to_step
+    select_step_keyword_type = select_step_keyword_type
+
+
+class AndStep(StepPrototype):
+    steps: list[Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep] = Field(
+        default_factory=list, alias="Steps"
+    )
+    type: Keyword | None = Field(Keyword.And)
+    keyword_type: KeywordType | None = Field(KeywordType.conjunction, alias="Type")
+    action: str | None = Field(alias=Keyword.And.value)
+
+    convert_to_step = convert_to_step
+    select_step_keyword_type = select_step_keyword_type
+
+
+class ButStep(StepPrototype):
+    steps: Sequence[
+        Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep | SubStep
+    ] = Field(default_factory=list, alias="Steps")
+    type: Keyword | None = Field(Keyword.But)
+    keyword_type: KeywordType | None = Field(KeywordType.conjunction, alias="Type")
+    action: str | None = Field(alias=Keyword.But.value)
+
+    convert_to_step = convert_to_step
+    select_step_keyword_type = select_step_keyword_type
+
+
+Join.update_forward_refs()
+Step.update_forward_refs()
+StarStep.update_forward_refs()
+GivenStep.update_forward_refs()
+WhenStep.update_forward_refs()
+ThenStep.update_forward_refs()
+AndStep.update_forward_refs()
+ButStep.update_forward_refs()
+Alternative.update_forward_refs()
+
+Given = GivenStep.build_action_first_arg
+When = WhenStep.build_action_first_arg
+Then = ThenStep.build_action_first_arg
+And = AndStep.build_action_first_arg
+But = ButStep.build_action_first_arg

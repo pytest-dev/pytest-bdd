@@ -394,6 +394,7 @@ class DataTable(BaseModel):
 class Examples(BaseModel):
     class Config:
         extra = Extra.forbid
+        allow_population_by_field_name = True
 
     location: Location = Field(..., description="The location of the `Examples` keyword")
     tags: List[Tag]
@@ -408,6 +409,7 @@ class Examples(BaseModel):
 class Step(BaseModel):
     class Config:
         extra = Extra.forbid
+        allow_population_by_field_name = True
 
     location: Location = Field(..., description="The location of the steps' `keyword`")
     keyword: str = Field(..., description="The actual keyword as it appeared in the source.")
@@ -588,13 +590,13 @@ class RuleChild(BaseModel):
 class PickleStep(BaseModel):
     class Config:
         extra = Extra.forbid
+        allow_population_by_field_name = True
 
     argument: Optional[PickleStepArgument] = None
     ast_node_ids: List[str] = Field(
         ...,
         alias="astNodeIds",
         description="References the IDs of the source of the step. For Gherkin, this can be\n the ID of a Step, and possibly also the ID of a TableRow",
-        min_items=1,
     )
     id: str = Field(..., description="A unique ID for the PickleStep")
     type: Optional[Type] = Field(
@@ -657,8 +659,8 @@ class Feature(BaseModel):
         ...,
         description="The [ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1) language code of the Gherkin document",
     )
-    keyword: str = Field(
-        ...,
+    keyword: Optional[str] = Field(
+        None,
         description="The text of the `Feature` keyword (in the language specified by `language`)",
     )
     name: str = Field(..., description="The name of the feature (the text following the `keyword`)")
@@ -672,6 +674,7 @@ class Feature(BaseModel):
 class GherkinDocument(BaseModel):
     class Config:
         extra = Extra.forbid
+        allow_population_by_field_name = True
 
     uri: Optional[str] = Field(
         None,

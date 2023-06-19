@@ -1160,12 +1160,17 @@ def test_extend_steps_from_step(testdir):
         """\
         from collections import deque
 
-        from pytest_bdd.model import UserStep
+        from pytest_bdd.model.messages import PickleStep, Type
         from pytest_bdd import given, when, then
 
         @when("I inject step \\"{keyword}\\" \\"{step_text}\\"")
         def inject_step(steps_left: deque, keyword, step_text, scenario):
-            steps_left.appendleft(UserStep(text=step_text, keyword=keyword, scenario=scenario))
+            steps_left.appendleft(PickleStep(
+                id='MyStep',
+                ast_node_ids=[],
+                type=Type.context,
+                text=step_text,
+            ))
 
         @given('I have {fixture_value}', target_fixture='foo_fixture')
         def save_fixture(fixture_value):
