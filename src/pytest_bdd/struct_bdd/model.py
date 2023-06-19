@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict, namedtuple
 from enum import Enum
 from functools import partial
+from inspect import getfile
 from itertools import chain, product, starmap, zip_longest
 from operator import attrgetter, eq, is_not
 from pathlib import Path
@@ -277,7 +278,7 @@ class StepPrototype(Node):
 
     @attrs
     class Locator:
-        step: Step = attrib()
+        step: StepPrototype = attrib()
         filename = attrib()
         uri = attrib()
 
@@ -304,6 +305,9 @@ class StepPrototype(Node):
             locators=[self.Locator(self, str(Path(filename).as_posix()), str(Path(filename).relative_to(Path.cwd())))],
             return_test_decorator=True,
         )
+
+    def __call__(self, func):
+        return self.as_test_decorator(getfile(func))(func)
 
 
 class Alternative(Node):

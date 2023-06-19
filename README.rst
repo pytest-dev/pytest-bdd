@@ -1260,7 +1260,7 @@ Another option is to inject built scenario directly:
                 ]
             )
         ]
-    ).as_test(filename=__file__)
+    )
 
 
 There is also an option to build Step from dict(and use your own file format/preprocessor)
@@ -1269,7 +1269,7 @@ There is also an option to build Step from dict(and use your own file format/pre
 
     from pytest_bdd.struct_bdd.model import Step
 
-    test_cukes = Step.from_dict(
+    cukes = Step.parse_obj(
             dict(
                 Name="Examples are substituted",
                 Steps=[
@@ -1289,9 +1289,9 @@ There is also an option to build Step from dict(and use your own file format/pre
                     )
                 ]
             )
-        ).as_test(filename=__file__)
+        )
 
-    @step.build_test_decorator()
+    @cukes
     def test(feature:Feature, scenario):
         assert feature.name == "Examples are substituted"
 

@@ -25,7 +25,7 @@ from pytest_bdd.model.messages import (
     Tag,
 )
 from pytest_bdd.struct_bdd.model import Join as StructJoin
-from pytest_bdd.struct_bdd.model import Step as StructStep
+from pytest_bdd.struct_bdd.model import StepPrototype as StructStep
 from pytest_bdd.struct_bdd.model import Table as StructTable
 
 

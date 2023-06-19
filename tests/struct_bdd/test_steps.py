@@ -517,7 +517,7 @@ def test_dsl(testdir):
                     ]
                 )
             ]
-        ).as_test(filename=__file__)
+        )
 
 
         @given('I have {count:g} cucumbers', target_fixture="cucumbers")
@@ -565,7 +565,7 @@ def test_dsl_decorator(testdir):
             ]
         )
 
-        @step.as_test_decorator(filename=__file__)
+        @step
         def test(feature:Feature, scenario):
             assert feature.name == "Examples are substituted"
 
@@ -593,7 +593,7 @@ def test_dsl_as_dict(testdir):
         from pytest_bdd import given, then
         from pytest_bdd.struct_bdd.model import Step
 
-        step = Step.parse_obj(
+        test_scenarios = Step.parse_obj(
             dict(
                 Name="Examples are substituted",
                 Steps=[
@@ -614,8 +614,6 @@ def test_dsl_as_dict(testdir):
                 ]
             )
         )
-
-        test_sceanrios = step.as_test(filename=__file__)
 
         @given('I have {count:g} cucumbers', target_fixture="cucumbers")
         def foo(count):
@@ -641,7 +639,7 @@ def test_dsl_keyworded_steps(testdir):
         from pytest_bdd import given, then
         from pytest_bdd.struct_bdd.model import Step, Given, And, Then, Table
 
-        step = Step(
+        test_scenarios = Step(
             name="Examples are substituted",
             steps=[
                 Given('I have <have> cucumbers'),
@@ -658,8 +656,6 @@ def test_dsl_keyworded_steps(testdir):
                 )
             ]
         )
-
-        test_scenarios = step.as_test(filename=__file__)
 
         @given('I have {count:g} cucumbers', target_fixture="cucumbers")
         def foo(count):
@@ -712,7 +708,7 @@ def test_dsl_alternative_steps(testdir):
                     ]
                 )
             ]
-        ).as_test(filename=__file__)
+        )
 
         @given('I have {count:g} cucumbers', target_fixture="cucumbers")
         def foo(count):
@@ -779,7 +775,7 @@ def test_dsl_joined_tables(testdir):
                     ]
                 )
             ]
-        ).as_test(filename=__file__)
+        )
 
         @given('I have {count:g} cucumbers', target_fixture="cucumbers")
         def foo(count):

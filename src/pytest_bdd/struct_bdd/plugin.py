@@ -1,9 +1,13 @@
 from contextlib import suppress
 from functools import partial
+from inspect import getmembers
 from pathlib import Path
 
-from pytest_bdd.compatibility.pytest import Config
+import pytest
+
+from pytest_bdd.compatibility.pytest import Config, Module
 from pytest_bdd.mimetypes import Mimetype
+from pytest_bdd.struct_bdd.model import StepPrototype
 from pytest_bdd.struct_bdd.parser import StructBDDParser
 
 
@@ -40,3 +44,12 @@ class StructBDDPlugin:
         for extension_suffix, mimetype in self.extension_to_mimetype.items():
             if str(path).endswith(f".bdd.{extension_suffix.value}"):
                 return True
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_pycollect_makemodule(self, module_path, path, parent):
+        outcome = yield
+        res = outcome.get_result()
+        if isinstance(res, Module):
+            for member_name, member in getmembers(res.module):
+                if isinstance(member, StepPrototype) and member_name.startswith("test_"):
+                    setattr(res.module, member_name, member.as_test(res.module.__file__))

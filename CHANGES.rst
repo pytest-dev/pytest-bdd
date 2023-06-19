@@ -6,33 +6,36 @@ In-progress
 
 Planned
 -------
+- Move documentation to Gherkin itself
 - Review report generation to be conform with official tools
-   - https://github.com/pytest-dev/pytest-bdd/issues/488
+
+  - https://github.com/pytest-dev/pytest-bdd/issues/488
 - Examples of data tables & docstrings usage
 - Check nested Rules support
 - Implement support of \*.md files
-    - Waiting for upstream issue https://github.com/cucumber/gherkin/pull/64
+
+  - Waiting for upstream issue https://github.com/cucumber/gherkin/pull/64
 - Tests for messages and integrations
 - Add support of python 3.12, PyPy at CI
-- Rework usage of Marshmallow to Pydantic
 - Add mode to execute scenarios with missing/failing steps
 - Remove
+
   - Hide traceback for pytest code
-- Review StructBdd step collection
 
 Unreleased
 ----------
+- Reviewed StructBdd step collection; no more ``as_test`` / ``as_test_decorator`` Step methods are needed directly used
 - Drop python 3.7
 - Move StructBDD model to Pydantic
 - Remove ast module usage by StructBDD
 - Test filters in scenario/scenarios to filter out not needed scenarios
-- .url, .desktop and .webloc files are collected from test directories, so scenario/scenarios usages is not necessary
+- ``.url``, ``.desktop`` and ``.webloc`` files are collected from test directories, so scenario/scenarios usages is not necessary
 - Load features/scenarios by url
-- Features are autoloaded by default; Feature autoload could be disabled by --disable-feature-autoload cli option
+- Features are autoloaded by default; Feature autoload could be disabled by ``--disable-feature-autoload`` cli option
 - Relative feature paths are counted from pytest rootpath
 - No more injection of tests into module space; Tests have to be registered directly
 - Separate generation scripts were moved to pytest environment
-- "scenario" no more override collected scenarios; They have to be registered independently. Scenarios could be filtered out if needed.
+- ``scenario`` no more override collected scenarios; They have to be registered independently. Scenarios could be filtered out if needed.
 - Added support of messages
 - Added support of cucumber expressions https://github.com/cucumber/cucumber-expressions#readme
 - It possible to name anonymous groups during step parsing
@@ -53,8 +56,9 @@ Unreleased
 1.2.0
 -----
 - Make liberal step definitions conform with
-   - `Change messages and Gherkin parser/pickle compiler to retain step keyword (#1741) <https://github.com/cucumber/common/pull/1741>`_
-   - `Proposal: Unambiguous Keywords (#768) <https://github.com/cucumber/common/issues/768>`_
+
+  - `Change messages and Gherkin parser/pickle compiler to retain step keyword (#1741) <https://github.com/cucumber/common/pull/1741>`_
+  - `Proposal: Unambiguous Keywords (#768) <https://github.com/cucumber/common/issues/768>`_
 
 1.1.2
 -----
@@ -83,18 +87,21 @@ Unreleased
 - Step definitions can have "yield" statements again (4.0 release broke it). They will be executed as normal fixtures: code after the yield is executed during teardown of the test. (youtux)
 - Show pass/fail status per step in Gherkin terminal reporter
 - Step definitions could be used independently from keyword by ``step`` decorator
-   - https://github.com/pytest-dev/pytest-bdd/issues/450
+
+  - https://github.com/pytest-dev/pytest-bdd/issues/450
 - ``pytest_bdd_apply_tag`` was removed; ``pytest_bdd_convert_tag_to_marks`` was added instead
 - Feature parser switched to official one
-   - https://github.com/pytest-dev/pytest-bdd/issues/394
-   - https://github.com/pytest-dev/pytest-bdd/issues/511
+
+  - https://github.com/pytest-dev/pytest-bdd/issues/394
+  - https://github.com/pytest-dev/pytest-bdd/issues/511
 - Changes ``scenario`` and ``scenarios`` function/decorator feature registration order. Both could be used as decorators
 - Move scenario execution & step matching to hooks
 - Added possibility to operate steps stack via fixture
 - Other
-   - https://github.com/pytest-dev/pytest-bdd/issues/464
-   - https://github.com/pytest-dev/pytest-bdd/issues/474
-   - https://github.com/pytest-dev/pytest-bdd/issues/512
+
+  - https://github.com/pytest-dev/pytest-bdd/issues/464
+  - https://github.com/pytest-dev/pytest-bdd/issues/474
+  - https://github.com/pytest-dev/pytest-bdd/issues/512
 
 
 Pre pytest-bdd-ng era
