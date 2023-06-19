@@ -1,9 +1,7 @@
 """Test scenario reporting."""
-
-from __future__ import annotations
-
 import re
 from pathlib import Path
+from typing import Optional, Union
 
 import execnet.gateway_base
 
@@ -11,7 +9,7 @@ import execnet.gateway_base
 class OfType:
     """Helper object comparison to which is always 'equal'."""
 
-    def __init__(self, type: type | None = None) -> None:
+    def __init__(self, type: Optional[type] = None) -> None:
         self.type = type
 
     def __eq__(self, other: object) -> bool:
@@ -20,7 +18,7 @@ class OfType:
 
 def matchreport(
     result,
-    inamepart_match: str | re.Pattern = "",
+    inamepart_match: Union[str, re.Pattern] = "",
     names="pytest_runtest_logreport pytest_collectreport",
     when=None,
 ):
@@ -307,7 +305,7 @@ def test_complex_types(testdir, pytestconfig):
         test="""\
             Feature: Report serialization containing parameters of complex types
 
-            Scenario: Complex
+            Scenario Outline: Complex
                 Given there is a coordinate <point>
 
                 Examples:

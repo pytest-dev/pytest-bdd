@@ -1,14 +1,13 @@
 """Test cucumber json output."""
-from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Tuple
 
 if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.compatibility.pytest import RunResult
 
 
-def runandparse(testdir, *args: Any) -> tuple[RunResult, list[dict[str, Any]]]:
+def runandparse(testdir, *args: Any) -> Tuple["RunResult", Sequence[Dict[str, Any]]]:
     """Run tests in testdir and parse json output."""
     resultpath = testdir.tmpdir.join("cucumber.json")
     result = testdir.runpytest(f"--cucumberjson={resultpath}", "-s", *args)
@@ -20,7 +19,7 @@ def runandparse(testdir, *args: Any) -> tuple[RunResult, list[dict[str, Any]]]:
 class OfType:
     """Helper object to help compare object type to initialization type"""
 
-    def __init__(self, type: type | None = None) -> None:
+    def __init__(self, type: Optional[type] = None) -> None:
         self.type = type
 
     def __eq__(self, other: object) -> bool:
@@ -58,7 +57,7 @@ def test_step_trace(testdir):
                 And a failing step
 
             @scenario-outline-passing-tag
-            Scenario: Passing outline
+            Scenario Outline: Passing outline
                 Given type <type> and value <value>
 
                 Examples: example1
@@ -70,7 +69,7 @@ def test_step_trace(testdir):
     )
     testdir.makeconftest(
         # language=python
-        f"""\
+        f"""
         from pytest_bdd import given, parsers
 
         @given('a passing step')

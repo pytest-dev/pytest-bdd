@@ -1,12 +1,10 @@
-from __future__ import annotations
-
 import linecache
 from functools import partial
 from itertools import filterfalse
 from operator import contains, methodcaller
 from os.path import relpath
 from pathlib import Path
-from typing import Callable, cast
+from typing import Callable, List, Sequence, Set, Union, cast
 
 from attr import attrib, attrs
 from attr._make import Factory
@@ -31,7 +29,7 @@ if STRUCT_BDD_INSTALLED:  # pragma: no cover
 
 @attrs
 class GlobMixin:
-    glob: Callable[..., list[str | Path]] = attrib(default=methodcaller("glob", "*.feature"), kw_only=True)
+    glob: Callable[..., Sequence[Union[str, Path]]] = attrib(default=methodcaller("glob", "*.feature"), kw_only=True)
 
 
 class ASTBuilderMixin:
@@ -59,7 +57,9 @@ class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProt
         CucumberIOBaseParser.__init__(self, ast_builder=AstBuilder(id_generator=self.id_generator))
 
     @classmethod
-    def parse(cls, config: Config | PytestBDDIdGeneratorHandler, path: Path, uri: str, *args, **kwargs) -> Feature:
+    def parse(
+        cls, config: Union[Config, PytestBDDIdGeneratorHandler], path: Path, uri: str, *args, **kwargs
+    ) -> Feature:
         parser = cls(id_generator=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator)
         encoding = kwargs.pop("encoding", "utf-8")
         with path.open(mode="r", encoding=encoding) as feature_file:
@@ -102,10 +102,10 @@ class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProt
 
         return feature
 
-    def get_from_paths(self, config: Config, paths: list[Path], **kwargs) -> list[Feature]:
+    def get_from_paths(self, config: Config, paths: Sequence[Path], **kwargs) -> Sequence[Feature]:
         """Get features for given paths."""
-        seen_names: set[Path] = set()
-        features: list[Feature] = []
+        seen_names: Set[Path] = set()
+        features: List[Feature] = []
         features_base_dir = kwargs.pop("features_base_dir", Path.cwd())
         if not features_base_dir.is_absolute():
             features_base_dir = Path.cwd() / features_base_dir

@@ -1,6 +1,4 @@
 """Various utility functions."""
-from __future__ import annotations
-
 import base64
 import pickle
 import re
@@ -12,7 +10,7 @@ from inspect import getframeinfo, signature
 from itertools import tee
 from operator import attrgetter, getitem, itemgetter
 from sys import _getframe
-from typing import TYPE_CHECKING, Any, Callable, Collection, Mapping, cast
+from typing import TYPE_CHECKING, Any, Callable, Collection, Dict, Mapping, Optional, Sequence, Union, cast
 
 from pytest_bdd.compatibility.pytest import FixtureDef
 from pytest_bdd.compatibility.typing import Literal, Protocol, runtime_checkable
@@ -24,10 +22,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
 @runtime_checkable
 class PytestBDDIdGeneratorHandler(Protocol):
-    pytest_bdd_id_generator: IdGenerator | Any
+    pytest_bdd_id_generator: Union["IdGenerator", Any]
 
 
-def get_args(func: Callable) -> list[str]:
+def get_args(func: Callable) -> Sequence[str]:
     """Get a list of argument names for a function.
 
     :param func: The function to inspect.
@@ -39,7 +37,7 @@ def get_args(func: Callable) -> list[str]:
     return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
 
 
-def get_caller_module_locals(stacklevel: int = 1) -> dict[str, Any]:
+def get_caller_module_locals(stacklevel: int = 1) -> Dict[str, Any]:
     """Get the caller module locals dictionary.
 
     We use sys._getframe instead of inspect.stack(0) because the latter is way slower, since it iterates over
@@ -82,7 +80,7 @@ def dump_obj(*objects: Any) -> None:
         print(f"{_DUMP_START}{encoded}{_DUMP_END}")
 
 
-def collect_dumped_objects(result: RunResult):
+def collect_dumped_objects(result: "RunResult"):
     """Parse all the objects dumped with `dump_object` from the result.
 
     Note: You must run the result with output to stdout enabled.
@@ -123,7 +121,7 @@ class DefaultMapping(defaultdict):
 
     @classmethod
     def instantiate_from_collection_or_bool(
-        cls, bool_or_items: Collection[str] | dict[str, Any] | Any = True, *, warm_up_keys=()
+        cls, bool_or_items: Union[Collection[str], Dict[str, Any], Any] = True, *, warm_up_keys=()
     ):
         if isinstance(bool_or_items, Collection):
             if not isinstance(bool_or_items, Mapping):
@@ -192,7 +190,7 @@ class Empty(Enum):
 
 
 def getitemdefault(
-    obj, index, default=Empty.empty, default_factory: Callable | None = None, treat_as_empty=Empty.empty
+    obj, index, default=Empty.empty, default_factory: Optional[Callable] = None, treat_as_empty=Empty.empty
 ):
     if default is not Empty.empty:
         if default_factory is not None:
@@ -235,7 +233,9 @@ def deepattrgetter(*attrs, **kwargs):
     return fn
 
 
-def setdefaultattr(obj, key, value: Literal[Empty.empty] | Any = Empty.empty, value_factory: None | Callable = None):
+def setdefaultattr(
+    obj, key, value: Union[Literal[Empty.empty], Any] = Empty.empty, value_factory: Optional[Callable] = None
+):
     if value is not Empty.empty and value_factory is not None:
         raise ValueError("Both 'value' and 'value_factory' were specified")
     with suppress(AttributeError):
@@ -262,7 +262,7 @@ class StringableProtocol(Protocol):
         ...  # pragma: no cover
 
 
-def stringify(value: StringableProtocol | str | bytes) -> str:
+def stringify(value: Union[StringableProtocol, str, bytes]) -> str:
     return str(value, **({"encoding": "utf-8"} if isinstance(value, bytes) else {}))
 
 

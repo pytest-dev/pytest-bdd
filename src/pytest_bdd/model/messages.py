@@ -337,6 +337,7 @@ class Duration(BaseModel):
 class TestStepStarted(BaseModel):
     class Config:
         extra = Extra.forbid
+        allow_population_by_field_name = True
 
     test_case_started_id: str = Field(..., alias="testCaseStartedId")
     test_step_id: str = Field(..., alias="testStepId")
@@ -491,6 +492,7 @@ class TestCase(BaseModel):
 class TestCaseFinished(BaseModel):
     class Config:
         extra = Extra.forbid
+        allow_population_by_field_name = True
 
     test_case_started_id: str = Field(..., alias="testCaseStartedId")
     timestamp: Timestamp
@@ -572,6 +574,7 @@ class PickleStepArgument(BaseModel):
 class TestStepFinished(BaseModel):
     class Config:
         extra = Extra.forbid
+        allow_population_by_field_name = True
 
     test_case_started_id: str = Field(..., alias="testCaseStartedId")
     test_step_id: str = Field(..., alias="testStepId")
@@ -622,6 +625,7 @@ class Rule(BaseModel):
 class Pickle(BaseModel):
     class Config:
         extra = Extra.forbid
+        allow_population_by_field_name = True
 
     id: str = Field(..., description="*\n A unique id for the pickle")
     uri: str = Field(..., description="The uri of the source file")

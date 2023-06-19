@@ -10,8 +10,6 @@ test_publish_article = scenario(
     scenario_name="Publishing the article",
 )
 """
-from __future__ import annotations
-
 import asyncio
 import collections
 import os
@@ -23,7 +21,7 @@ from operator import methodcaller, truediv
 from os.path import commonpath
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Callable, Iterable, cast
+from typing import Callable, Iterable, Optional, Tuple, Type, Union, cast
 from urllib.parse import urljoin
 
 import aiohttp
@@ -79,7 +77,7 @@ class UrlScenarioLocator:
         async with aiohttp.ClientSession() as session:
             return await asyncio.gather(*[self.fetch(session, url) for url in urls], return_exceptions=True)
 
-    def resolve(self, config: Config | PytestBDDIdGeneratorHandler):
+    def resolve(self, config: Union[Config, PytestBDDIdGeneratorHandler]):
         urls = list(
             self.url_paths
             if self.features_base_url is None
@@ -148,14 +146,14 @@ class UrlScenarioLocator:
 @attrs
 class FileScenarioLocator:
     feature_paths = attrib(default=Factory(list))
-    filter_: Callable[[Config, Feature, Pickle], tuple[Feature, Pickle]] | None = attrib(default=None)
+    filter_: Optional[Callable[[Config, Feature, Pickle], Tuple[Feature, Pickle]]] = attrib(default=None)
     encoding = attrib(default="utf-8")
-    features_base_dir: str | Path | None = attrib(default=None)
-    mimetype: str | None = attrib(default=None)
-    parser_type: type[ParserProtocol] | None = attrib(default=GherkinParser)
+    features_base_dir: Optional[Union[str, Path]] = attrib(default=None)
+    mimetype: Optional[str] = attrib(default=None)
+    parser_type: Optional[Type[ParserProtocol]] = attrib(default=GherkinParser)
     parse_args: Args = attrib(default=Factory(lambda: Args((), {})))
 
-    def _resolve_features_base_dir(self, config: Config | PytestBDDIdGeneratorHandler):
+    def _resolve_features_base_dir(self, config: Union[Config, PytestBDDIdGeneratorHandler]):
         try:
             if self.features_base_dir is None:
                 features_base_dir = cast(Config, config).getini("bdd_features_base_dir")
@@ -201,7 +199,7 @@ class FileScenarioLocator:
 
         return "file:" + str(rel_feature_path.as_posix())
 
-    def resolve(self, config: Config | PytestBDDIdGeneratorHandler):
+    def resolve(self, config: Union[Config, PytestBDDIdGeneratorHandler]):
         features_base_dir = self._resolve_features_base_dir(config)
         already_resolved_feature_paths = set()
 
@@ -271,15 +269,15 @@ class FeaturePathType(Enum):
 
 
 def scenario(
-    feature_name: Path | str | None = None,
-    scenario_name: str | None = None,
+    feature_name: Optional[Union[Path, str]] = None,
+    scenario_name: Optional[str] = None,
     encoding: str = "utf-8",
-    features_base_dir: Path | str | None = None,
+    features_base_dir: Optional[Union[Path, str]] = None,
     features_base_url=None,
-    features_path_type: FeaturePathType | str | None = None,
-    features_mimetype: Mimetype | None = None,
+    features_path_type: Optional[Union[FeaturePathType, str]] = None,
+    features_mimetype: Optional[Mimetype] = None,
     return_test_decorator=True,
-    parser_type: type[ParserProtocol] | None = None,
+    parser_type: Optional[Type[ParserProtocol]] = None,
     parse_args=Args((), {}),
     locators=(),
 ):
@@ -314,15 +312,15 @@ def scenario(
 
 
 def scenarios(
-    *feature_paths: Path | str,
-    filter_: str | Callable | None = None,
+    *feature_paths: Union[Path, str],
+    filter_: Optional[Union[str, Callable]] = None,
     return_test_decorator=False,
     encoding: str = "utf-8",
-    features_base_dir: Path | str | None = None,
-    features_base_url: str | None = None,
-    features_path_type: FeaturePathType | str | None = None,
-    features_mimetype: Mimetype | None = None,
-    parser_type: type[ParserProtocol] | None = None,
+    features_base_dir: Optional[Union[Path, str]] = None,
+    features_base_url: Optional[str] = None,
+    features_path_type: Optional[Union[FeaturePathType, str]] = None,
+    features_mimetype: Optional[Mimetype] = None,
+    parser_type: Optional[Type[ParserProtocol]] = None,
     parse_args=Args((), {}),
     locators=(),
 ):

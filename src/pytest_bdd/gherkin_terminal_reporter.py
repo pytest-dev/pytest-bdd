@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any
 
 from pytest_bdd.compatibility.pytest import Config, Parser, TerminalReporter, TestReport

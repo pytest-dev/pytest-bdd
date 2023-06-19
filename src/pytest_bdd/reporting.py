@@ -3,10 +3,8 @@
 Collection of the scenario execution statuses, timing and other information
 that enriches the pytest test reporting.
 """
-from __future__ import annotations
-
 import time
-from typing import Any, Callable
+from typing import Any, Callable, Dict, List, Sequence
 
 import pytest
 from attr import Factory, attrib, attrs
@@ -30,7 +28,7 @@ class StepReport:
         self.step = step
         self.started = time.perf_counter()
 
-    def serialize(self, feature: Feature) -> dict[str, Any]:
+    def serialize(self, feature: Feature) -> Dict[str, Any]:
         """Serialize the step execution report.
 
         :return: Serialized step execution report.
@@ -72,7 +70,7 @@ class ScenarioReport:
 
     feature: Feature = attrib()
     scenario: Pickle = attrib()
-    step_reports: list[StepReport] = attrib(default=Factory(list))
+    step_reports: List[StepReport] = attrib(default=Factory(list))
 
     @property
     def current_step_report(self) -> StepReport:
@@ -91,7 +89,7 @@ class ScenarioReport:
         """
         self.step_reports.append(step_report)
 
-    def serialize(self) -> dict[str, Any]:
+    def serialize(self) -> Dict[str, Any]:
         """Serialize scenario execution report in order to transfer reporting from nodes in the distributed mode.
 
         :return: Serialized report.

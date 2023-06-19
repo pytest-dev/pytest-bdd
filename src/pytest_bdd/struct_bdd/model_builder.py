@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 from itertools import filterfalse
 from json import loads as json_loads
 from operator import attrgetter
-from typing import Any
+from typing import Any, Union, cast
 
 from attr import attrib, attrs
 from gherkin.pickles.compiler import Compiler
@@ -23,6 +21,7 @@ from pytest_bdd.model.messages import (
     TableCell,
     TableRow,
     Tag,
+    Type,
 )
 from pytest_bdd.struct_bdd.model import Join as StructJoin
 from pytest_bdd.struct_bdd.model import StepPrototype as StructStep
@@ -97,7 +96,7 @@ class StepToFeatureASTBuilder(_ASTBuilder):
                             )
                             yield Step(
                                 id=next(id_generator),
-                                keyword=step.type if isinstance(step.type, str) else step.type.value,
+                                keyword=step.type if isinstance(step.type, str) else cast(Type, step.type).value,
                                 location=Location(column=0, line=0),
                                 text=step.action,
                                 keyword_type=step_keyword_type.value,
@@ -188,7 +187,7 @@ class StepToFeatureASTBuilder(_ASTBuilder):
 
 @attrs
 class ExampleASTBuilder(_ASTBuilder):
-    model: StructJoin | StructTable = attrib()
+    model: Union[StructJoin, StructTable] = attrib()
 
     def build(self, id_generator):
         return Examples(

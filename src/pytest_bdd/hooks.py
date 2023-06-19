@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 
 from _pytest.fixtures import FixtureRequest
 from pytest import hookspec
@@ -50,7 +48,7 @@ def pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exceptio
 
 
 @hookspec(firstresult=True)
-def pytest_bdd_convert_tag_to_marks(feature, scenario, tag) -> Iterable[Mark] | None:
+def pytest_bdd_convert_tag_to_marks(feature, scenario, tag) -> Optional[Iterable[Mark]]:
     """Apply a tag (from a ``.feature`` file) to the given test item.
 
     The default implementation does the equivalent of

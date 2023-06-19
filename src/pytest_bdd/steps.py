@@ -34,13 +34,11 @@ def given_beautiful_article(article):
     pass
 
 """
-from __future__ import annotations
-
 import os
 import warnings
 from contextlib import suppress
 from inspect import getfile, getsourcelines
-from typing import Any, Callable, Iterable, Iterator, Sequence, cast
+from typing import Any, Callable, Dict, Iterable, Iterator, Optional, Sequence, Set, Union, cast
 from uuid import uuid4
 from warnings import warn
 
@@ -83,13 +81,13 @@ def add_options(parser: Parser):
 
 def given(
     parserlike: Any,
-    anonymous_group_names: Iterable[str] | None = None,
-    converters: dict[str, Callable] | None = None,
-    target_fixture: str | None = None,
-    target_fixtures: list[str] | None = None,
-    params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
-    param_defaults: dict | None = None,
-    liberal: bool | None = None,
+    anonymous_group_names: Optional[Iterable[str]] = None,
+    converters: Optional[Dict[str, Callable]] = None,
+    target_fixture: Optional[str] = None,
+    target_fixtures: Optional[Sequence[str]] = None,
+    params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+    param_defaults: Optional[dict] = None,
+    liberal: Optional[bool] = None,
     stacklevel=1,
 ) -> Callable:
     """Given step decorator.
@@ -124,13 +122,13 @@ def given(
 
 def when(
     parserlike: Any,
-    anonymous_group_names: Iterable[str] | None = None,
-    converters: dict[str, Callable] | None = None,
-    target_fixture: str | None = None,
-    target_fixtures: list[str] | None = None,
-    params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
-    param_defaults: dict | None = None,
-    liberal: bool | None = None,
+    anonymous_group_names: Optional[Iterable[str]] = None,
+    converters: Optional[Dict[str, Callable]] = None,
+    target_fixture: Optional[str] = None,
+    target_fixtures: Optional[Sequence[str]] = None,
+    params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+    param_defaults: Optional[dict] = None,
+    liberal: Optional[bool] = None,
     stacklevel=1,
 ) -> Callable:
     """When step decorator.
@@ -164,13 +162,13 @@ def when(
 
 def then(
     parserlike: Any,
-    anonymous_group_names: Iterable[str] | None = None,
-    converters: dict[str, Callable] | None = None,
-    target_fixture: str | None = None,
-    target_fixtures: list[str] | None = None,
-    params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
-    param_defaults: dict | None = None,
-    liberal: bool | None = None,
+    anonymous_group_names: Optional[Iterable[str]] = None,
+    converters: Optional[Dict[str, Callable]] = None,
+    target_fixture: Optional[str] = None,
+    target_fixtures: Optional[Sequence[str]] = None,
+    params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+    param_defaults: Optional[dict] = None,
+    liberal: Optional[bool] = None,
     stacklevel=1,
 ) -> Callable:
     """Then step decorator.
@@ -204,13 +202,13 @@ def then(
 
 def step(
     parserlike: Any,
-    anonymous_group_names: Iterable[str] | None = None,
-    converters: dict[str, Callable] | None = None,
-    target_fixture: str | None = None,
-    target_fixtures: list[str] | None = None,
-    params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
-    param_defaults: dict | None = None,
-    liberal: bool | None = None,
+    anonymous_group_names: Optional[Iterable[str]] = None,
+    converters: Optional[Dict[str, Callable]] = None,
+    target_fixture: Optional[str] = None,
+    target_fixtures: Optional[Sequence[str]] = None,
+    params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+    param_defaults: Optional[dict] = None,
+    liberal: Optional[bool] = None,
     stacklevel=1,
 ):
     """Liberal step decorator which could be used with any keyword.
@@ -251,8 +249,8 @@ class StepHandler:
         feature: Feature = attrib(init=False)
         pickle: Pickle = attrib(init=False)
         step: Step = attrib(init=False)
-        previous_step: Step | None = attrib(init=False)
-        step_registry: StepHandler.Registry = attrib(init=False)
+        previous_step: Optional[Step] = attrib(init=False)
+        step_registry: "StepHandler.Registry" = attrib(init=False)
         step_type_context = attrib(default=None)
 
         class MatchNotFoundError(RuntimeError):
@@ -263,9 +261,9 @@ class StepHandler:
             feature: Feature,
             pickle: Pickle,
             step: Step,
-            previous_step: Step | None,
-            step_registry: StepHandler.Registry,
-        ) -> StepHandler.Definition:
+            previous_step: Optional[Step],
+            step_registry: "StepHandler.Registry",
+        ) -> "StepHandler.Definition":
             self.feature = feature
             self.pickle = pickle
             self.step = step
@@ -320,8 +318,8 @@ class StepHandler:
 
         @staticmethod
         def find_step_definition_matches(
-            registry: StepHandler.Registry | None, matchers: Sequence[Callable[[StepHandler.Definition], bool]]
-        ) -> Iterable[StepHandler.Definition]:
+            registry: Optional["StepHandler.Registry"], matchers: Sequence[Callable[["StepHandler.Definition"], bool]]
+        ) -> Iterable["StepHandler.Definition"]:
             if registry:
                 found_matches = False
                 for matcher in matchers:
@@ -338,19 +336,19 @@ class StepHandler:
     @attrs(eq=False)
     class Definition:
         func: Callable = attrib()
-        type_: str | StepType | None = attrib()
+        type_: Optional[Union[str, StepType]] = attrib()
         parser: StepParser = attrib()
-        anonymous_group_names: Iterable[str] | None = attrib()
-        converters: dict[str, Callable] = attrib()
-        params_fixtures_mapping: set[str] | dict[str, str] | Any = attrib()
+        anonymous_group_names: Optional[Iterable[str]] = attrib()
+        converters: Dict[str, Callable] = attrib()
+        params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = attrib()
         param_defaults: dict = attrib()
-        target_fixtures: list[str] = attrib()
-        liberal: Any | None = attrib()
+        target_fixtures: Sequence[str] = attrib()
+        liberal: Optional[Any] = attrib()
 
         id = attrib(init=False)
         __cached_message = attrib(init=False)
 
-        def as_message(self, config: Config | PytestBDDIdGeneratorHandler):
+        def as_message(self, config: Union[Config, PytestBDDIdGeneratorHandler]):
             try:
                 message = self.__cached_message
             except AttributeError:
@@ -380,8 +378,8 @@ class StepHandler:
 
     @attrs
     class Registry:
-        registry: set[StepHandler.Definition] = attrib(default=Factory(set))
-        parent: StepHandler.Registry = attrib(default=None, init=False)
+        registry: Set["StepHandler.Definition"] = attrib(default=Factory(set))
+        parent: "StepHandler.Registry" = attrib(default=None, init=False)
 
         @classmethod
         def inject_registry_fixture_and_register_steps(cls, obj):
@@ -412,20 +410,20 @@ class StepHandler:
             step_registry.__registry__ = self
             return step_registry
 
-        def __iter__(self) -> Iterator[StepHandler.Definition]:
+        def __iter__(self) -> Iterator["StepHandler.Definition"]:
             return iter(self.registry)
 
     @staticmethod
     def decorator_builder(
-        step_type: str | StepType | None,
+        step_type: Optional[Union[str, StepType]],
         step_parserlike: Any,
-        anonymous_group_names: Iterable[str] | None = None,
-        converters: dict[str, Callable] | None = None,
-        target_fixture: str | None = None,
-        target_fixtures: list[str] | None = None,
-        params_fixtures_mapping: set[str] | dict[str, str] | Any = True,
-        param_defaults: dict | None = None,
-        liberal: Any | None = None,
+        anonymous_group_names: Optional[Iterable[str]] = None,
+        converters: Optional[Dict[str, Callable]] = None,
+        target_fixture: Optional[str] = None,
+        target_fixtures: Optional[Sequence[str]] = None,
+        params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+        param_defaults: Optional[dict] = None,
+        liberal: Optional[Any] = None,
         stacklevel=2,
     ) -> Callable:
         """StepHandler decorator for the type and the name.

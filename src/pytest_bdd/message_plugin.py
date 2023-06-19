@@ -1,9 +1,6 @@
-# Implement CI meta message
-from __future__ import annotations
-
 from pathlib import Path
 from time import time_ns
-from typing import cast
+from typing import Union, cast
 
 from _pytest.fixtures import FixtureRequest
 from _pytest.main import Session
@@ -93,7 +90,7 @@ class MessagePlugin:
         hook_handler.pytest_bdd_message(
             config=config,
             message=Message(
-                testRunFinished=TestRunFinished(
+                test_run_finished=TestRunFinished(
                     timestamp=self.get_timestamp(),
                     success=is_testrun_success,
                 )
@@ -101,7 +98,9 @@ class MessagePlugin:
         )
 
     def pytest_bdd_before_scenario(self, request: FixtureRequest, feature, scenario):
-        config: Config | PytestBDDIdGeneratorHandler = request.config  # https://github.com/python/typing/issues/213
+        config: Union[
+            Config, PytestBDDIdGeneratorHandler
+        ] = request.config  # https://github.com/python/typing/issues/213
         if cast(Config, config).option.messages_ndjson_path is None:
             return
         hook_handler = cast(Config, config).hook
@@ -153,11 +152,11 @@ class MessagePlugin:
         hook_handler.pytest_bdd_message(
             config=config,
             message=Message(
-                testCaseFinished=TestCaseFinished(
-                    testCaseStartedId=self.current_test_case.id,
+                test_case_finished=TestCaseFinished(
+                    test_case_started_id=self.current_test_case.id,
                     timestamp=self.get_timestamp(),
                     # TODO check usage
-                    willBeRetried=False,
+                    will_be_retried=False,
                 )
             ),
         )
@@ -177,10 +176,10 @@ class MessagePlugin:
         hook_handler.pytest_bdd_message(
             config=config,
             message=Message(
-                testStepStarted=TestStepStarted(
-                    testCaseStartedId=self.current_test_case.id,
+                test_step_started=TestStepStarted(
+                    test_case_started_id=self.current_test_case.id,
                     timestamp=self.current_test_case_step_start_timestamp,
-                    testStepId=step_definition.id,
+                    test_step_id=step_definition.id,
                 )
             ),
         )
@@ -213,11 +212,11 @@ class MessagePlugin:
         hook_handler.pytest_bdd_message(
             config=config,
             message=Message(
-                testStepFinished=TestStepFinished(
-                    testCaseStartedId=self.current_test_case.id,
+                test_step_finished=TestStepFinished(
+                    test_case_started_id=self.current_test_case.id,
                     timestamp=self.current_test_case_step_finish_timestamp,
-                    testStepId=step_definition.id,
-                    testStepResult=TestStepResult(duration=current_test_case_step_duration, status=Status.passed),
+                    test_step_id=step_definition.id,
+                    test_step_result=TestStepResult(duration=current_test_case_step_duration, status=Status.passed),
                 )
             ),
         )
@@ -252,11 +251,11 @@ class MessagePlugin:
         hook_handler.pytest_bdd_message(
             config=config,
             message=Message(
-                testStepFinished=TestStepFinished(
-                    testCaseStartedId=self.current_test_case.id,
+                test_step_finished=TestStepFinished(
+                    test_case_started_id=self.current_test_case.id,
                     timestamp=self.current_test_case_step_finish_timestamp,
-                    testStepId=step_definition.id,
-                    testStepResult=TestStepResult(duration=current_test_case_step_duration, status=Status.failed),
+                    test_step_id=step_definition.id,
+                    test_step_result=TestStepResult(duration=current_test_case_step_duration, status=Status.failed),
                 )
             ),
         )

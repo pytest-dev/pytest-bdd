@@ -1,12 +1,10 @@
 """pytest-bdd missing test code generation."""
-from __future__ import annotations
-
 import argparse
 import os.path
 from itertools import chain, filterfalse, zip_longest
 from operator import lt, methodcaller
 from pathlib import Path
-from typing import Iterable, Tuple, cast
+from typing import Iterable, Optional, Sequence, Tuple, Union, cast
 
 import py
 from mako.template import Template
@@ -73,7 +71,7 @@ def add_options(parser: Parser) -> None:
     )
 
 
-def cmdline_main(config: Config) -> int | None:
+def cmdline_main(config: Config) -> Optional[int]:
     """Check config option to show missing code."""
     if config.option.generate_missing:
         return generate_and_print_missing_code(config)
@@ -84,9 +82,9 @@ def cmdline_main(config: Config) -> int | None:
 
 
 def generate_code(
-    features: list[Feature],
-    feature_pickles: list[tuple[Feature, Pickle]],
-    feature_pickle_steps: list[tuple[tuple[Feature, Pickle], PickleStep]],
+    features: Sequence[Feature],
+    feature_pickles: Sequence[Tuple[Feature, Pickle]],
+    feature_pickle_steps: Sequence[Tuple[Tuple[Feature, Pickle], PickleStep]],
 ) -> str:
     """Generate test code for the given filenames."""
     with as_file(files("pytest_bdd.template").joinpath("test.py.mak")) as path:
@@ -103,7 +101,7 @@ def generate_code(
     return cast(str, code)
 
 
-def generate_and_print_missing_code(config: Config) -> int | ExitCode:
+def generate_and_print_missing_code(config: Config) -> Union[int, ExitCode]:
     """Wrap pytest session to show missing code."""
 
     def _(config: Config, session: Session) -> None:
@@ -192,7 +190,7 @@ def generate_and_print_missing_code(config: Config) -> int | ExitCode:
     return wrap_session(config=config, doit=_)
 
 
-def generate_and_print_code(config: Config) -> int | ExitCode:
+def generate_and_print_code(config: Config) -> Union[int, ExitCode]:
     """Wrap pytest session to show missing code."""
 
     def _(config: Config, session: Session) -> None:
@@ -206,7 +204,7 @@ def generate_and_print_code(config: Config) -> int | ExitCode:
 
         features = GherkinParser().get_from_paths(config, list(map(Path, config.option.features)))
 
-        feature_pickles: list[tuple[Feature, Pickle]] = list(
+        feature_pickles: Sequence[Tuple[Feature, Pickle]] = list(
             chain.from_iterable(
                 map(
                     lambda feature: cast(
@@ -217,7 +215,7 @@ def generate_and_print_code(config: Config) -> int | ExitCode:
             )
         )
 
-        feature_pickles_steps: list[tuple[tuple[Feature, Pickle], PickleStep]] = list(
+        feature_pickles_steps: Sequence[Tuple[Tuple[Feature, Pickle], PickleStep]] = list(
             chain.from_iterable(
                 map(
                     lambda feature_pickle: cast(
@@ -260,8 +258,8 @@ def generate_and_print_code(config: Config) -> int | ExitCode:
 
 def print_missing_code(
     features,
-    feature_pickles: list[tuple[Feature, Pickle]],
-    feature_pickle_steps: list[tuple[tuple[Feature, Pickle], PickleStep]],
+    feature_pickles: Sequence[Tuple[Feature, Pickle]],
+    feature_pickle_steps: Sequence[Tuple[Tuple[Feature, Pickle], PickleStep]],
     unique_steps,
 ) -> None:
     """Print missing code with TerminalWriter."""

@@ -1,5 +1,4 @@
 """pytest-bdd Exceptions."""
-from __future__ import annotations
 
 
 class ScenarioIsDecoratorOnly(Exception):

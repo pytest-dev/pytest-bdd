@@ -46,7 +46,7 @@ class StructBDDPlugin:
                 return True
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_pycollect_makemodule(self, module_path, path, parent):
+    def pytest_pycollect_makemodule(self, path, parent, module_path=None):
         outcome = yield
         res = outcome.get_result()
         if isinstance(res, Module):

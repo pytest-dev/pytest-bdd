@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from collections import defaultdict, namedtuple
 from enum import Enum
 from functools import partial
@@ -7,7 +5,7 @@ from inspect import getfile
 from itertools import chain, product, starmap, zip_longest
 from operator import attrgetter, eq, is_not
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, List, Optional, Sequence, Union
 
 from attr import attrib, attrs
 from pydantic import BaseModel, Extra, Field, validator
@@ -49,10 +47,10 @@ class Node(BaseModel):
         extra = Extra.forbid
         allow_population_by_field_name = True
 
-    tags: Sequence[str] | None = Field(default_factory=list, alias="Tags")
-    name: str | None = Field(None, alias="Name")
-    description: str | None = Field(None, alias="Description")
-    comments: list[str] | None = Field(default_factory=list, alias="Comments")
+    tags: Optional[Sequence[str]] = Field(default_factory=list, alias="Tags")
+    name: Optional[str] = Field(None, alias="Name")
+    description: Optional[str] = Field(None, alias="Description")
+    comments: Optional[Sequence[str]] = Field(default_factory=list, alias="Comments")
 
 
 class Table(Node):
@@ -60,9 +58,9 @@ class Table(Node):
         extra = Extra.forbid
         allow_population_by_field_name = True
 
-    type: Literal["Rowed", "Columned"] | None = Field("Rowed", alias="Type")
-    parameters: list[str] | None = Field(default_factory=list, alias="Parameters")
-    values: list[list[Any]] | None = Field(default_factory=list, alias="Values")
+    type: Optional[Literal["Rowed", "Columned"]] = Field("Rowed", alias="Type")
+    parameters: Optional[Sequence[str]] = Field(default_factory=list, alias="Parameters")
+    values: Optional[Sequence[Sequence[Any]]] = Field(default_factory=list, alias="Values")
 
     @property
     def columned_values(self):
@@ -88,7 +86,7 @@ class Join(BaseModel):
         extra = Extra.forbid
         allow_population_by_field_name = True
 
-    tables: list[Table | Join | SubTable] = Field(default_factory=list, alias="Join")
+    tables: List[Union[Table, "Join", SubTable]] = Field(default_factory=list, alias="Join")
 
     __hash__ = id
 
@@ -212,12 +210,12 @@ def convert_sub_steps_to_steps(cls, value):
 
 class StepPrototype(Node):
     steps: Sequence[
-        Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep | SubStep
+        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
     ] = Field(default_factory=list, alias="Steps")
 
-    type: Keyword | str | None = Field(Keyword.Star, alias="Type")
-    data: list[Table | Join | SubTable] = Field(default_factory=list, alias="Data")
-    examples: list[Table | Join | SubTable] = Field(default_factory=list, alias="Examples")
+    type: Optional[Union[Keyword, str]] = Field(Keyword.Star, alias="Type")
+    data: List[Union[Table, Join, SubTable]] = Field(default_factory=list, alias="Data")
+    examples: List[Union[Table, Join, SubTable]] = Field(default_factory=list, alias="Examples")
 
     Route = namedtuple("Route", ["tags", "steps", "example_table"])
 
@@ -278,7 +276,7 @@ class StepPrototype(Node):
 
     @attrs
     class Locator:
-        step: StepPrototype = attrib()
+        step: "StepPrototype" = attrib()
         filename = attrib()
         uri = attrib()
 
@@ -311,9 +309,9 @@ class StepPrototype(Node):
 
 
 class Alternative(Node):
-    steps: list[Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep | SubStep] = Field(
-        default_factory=list, alias="Alternative"
-    )
+    steps: Sequence[
+        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
+    ] = Field(default_factory=list, alias="Alternative")
 
     class Config:
         extra = Extra.forbid
@@ -334,12 +332,12 @@ class Alternative(Node):
 
 
 class Step(StepPrototype):
-    steps: list[Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep | SubStep] = Field(
-        default_factory=list, alias="Steps"
-    )
-    type: Keyword | str | None = Field(Keyword.Star, alias="Type")
-    keyword_type: KeywordType | None = Field(KeywordType.unknown)
-    action: str | None = Field(alias="Action")
+    steps: Sequence[
+        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
+    ] = Field(default_factory=list, alias="Steps")
+    type: Union[Keyword, Optional[str]] = Field(Keyword.Star, alias="Type")
+    keyword_type: Optional[KeywordType] = Field(KeywordType.unknown)
+    action: Optional[str] = Field(alias="Action")
 
     convert_to_step = convert_to_step
     select_step_keyword_type = select_step_keyword_type
@@ -351,12 +349,12 @@ class SubStep(BaseModel):
 
 class StarStep(StepPrototype):
     steps: Sequence[
-        Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep | SubStep
+        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
     ] = Field(default_factory=list, alias="Steps")
 
-    type: Keyword | None = Field(Keyword.Star, alias="Type")
-    keyword_type: KeywordType | None = Field(KeywordType.unknown)
-    action: str | None = Field(alias=Keyword.Star.value)
+    type: Optional[Keyword] = Field(Keyword.Star, alias="Type")
+    keyword_type: Optional[KeywordType] = Field(KeywordType.unknown)
+    action: Optional[str] = Field(alias=Keyword.Star.value)
 
     convert_to_step = convert_to_step
     select_step_keyword_type = select_step_keyword_type
@@ -364,11 +362,11 @@ class StarStep(StepPrototype):
 
 class GivenStep(StepPrototype):
     steps: Sequence[
-        Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep | SubStep
+        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
     ] = Field(default_factory=list, alias="Steps")
-    type: Keyword | None = Field(Keyword.Given)
-    keyword_type: KeywordType | None = Field(KeywordType.context, alias="Type")
-    action: str | None = Field(alias=Keyword.Given.value)
+    type: Optional[Keyword] = Field(Keyword.Given)
+    keyword_type: Optional[KeywordType] = Field(KeywordType.context, alias="Type")
+    action: Optional[str] = Field(alias=Keyword.Given.value)
 
     convert_to_step = convert_to_step
     select_step_keyword_type = select_step_keyword_type
@@ -376,11 +374,11 @@ class GivenStep(StepPrototype):
 
 class WhenStep(StepPrototype):
     steps: Sequence[
-        Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep | SubStep
+        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
     ] = Field(default_factory=list, alias="Steps")
-    type: Keyword | None = Field(Keyword.When)
-    keyword_type: KeywordType | None = Field(KeywordType.action, alias="Type")
-    action: str | None = Field(alias=Keyword.When.value)
+    type: Optional[Keyword] = Field(Keyword.When)
+    keyword_type: Optional[KeywordType] = Field(KeywordType.action, alias="Type")
+    action: Optional[str] = Field(alias=Keyword.When.value)
 
     convert_to_step = convert_to_step
     select_step_keyword_type = select_step_keyword_type
@@ -388,23 +386,23 @@ class WhenStep(StepPrototype):
 
 class ThenStep(StepPrototype):
     steps: Sequence[
-        Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep | SubStep
+        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
     ] = Field(default_factory=list, alias="Steps")
-    type: Keyword | None = Field(Keyword.Then)
-    keyword_type: KeywordType | None = Field(KeywordType.outcome, alias="Type")
-    action: str | None = Field(alias=Keyword.Then.value)
+    type: Optional[Keyword] = Field(Keyword.Then)
+    keyword_type: Optional[KeywordType] = Field(KeywordType.outcome, alias="Type")
+    action: Optional[str] = Field(alias=Keyword.Then.value)
 
     convert_to_step = convert_to_step
     select_step_keyword_type = select_step_keyword_type
 
 
 class AndStep(StepPrototype):
-    steps: list[Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep] = Field(
-        default_factory=list, alias="Steps"
-    )
-    type: Keyword | None = Field(Keyword.And)
-    keyword_type: KeywordType | None = Field(KeywordType.conjunction, alias="Type")
-    action: str | None = Field(alias=Keyword.And.value)
+    steps: Sequence[
+        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
+    ] = Field(default_factory=list, alias="Steps")
+    type: Optional[Keyword] = Field(Keyword.And)
+    keyword_type: Optional[KeywordType] = Field(KeywordType.conjunction, alias="Type")
+    action: Optional[str] = Field(alias=Keyword.And.value)
 
     convert_to_step = convert_to_step
     select_step_keyword_type = select_step_keyword_type
@@ -412,11 +410,11 @@ class AndStep(StepPrototype):
 
 class ButStep(StepPrototype):
     steps: Sequence[
-        Alternative | Step | StarStep | GivenStep | WhenStep | ThenStep | AndStep | ButStep | SubStep
+        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
     ] = Field(default_factory=list, alias="Steps")
-    type: Keyword | None = Field(Keyword.But)
-    keyword_type: KeywordType | None = Field(KeywordType.conjunction, alias="Type")
-    action: str | None = Field(alias=Keyword.But.value)
+    type: Optional[Keyword] = Field(Keyword.But)
+    keyword_type: Optional[KeywordType] = Field(KeywordType.conjunction, alias="Type")
+    action: Optional[str] = Field(alias=Keyword.But.value)
 
     convert_to_step = convert_to_step
     select_step_keyword_type = select_step_keyword_type

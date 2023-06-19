@@ -19,11 +19,9 @@ Syntax example:
 :note: There are no multiline steps, the description of the step must fit in
 one line.
 """
-from __future__ import annotations
-
 from itertools import chain
 from textwrap import dedent
-from typing import cast
+from typing import Sequence, Union, cast
 
 from attr import Factory, attrib, attrs
 from gherkin.errors import CompositeParserException  # type: ignore[import]
@@ -43,13 +41,13 @@ class Feature:
     filename: str = attrib()
 
     registry: dict = attrib(default=Factory(dict))
-    pickles: list[Pickle] = attrib(default=Factory(list))
+    pickles: Sequence[Pickle] = attrib(default=Factory(list))
 
     def __attrs_post_init__(self):
         self.fill_registry()
 
     @staticmethod
-    def load_pickles(scenarios_data) -> list[Pickle]:
+    def load_pickles(scenarios_data) -> Sequence[Pickle]:
         return [*map(Pickle.parse_obj, scenarios_data)]
 
     def fill_registry(self):
@@ -125,7 +123,7 @@ class Feature:
     load_gherkin_document = staticmethod(GherkinDocument.parse_obj)
 
     @property
-    def name(self) -> str | None:
+    def name(self) -> Union[str, None]:
         if self.gherkin_document.feature is not None:
             return self.gherkin_document.feature.name
         else:
@@ -182,7 +180,7 @@ class Feature:
         return cast(Step, next(filter(lambda node: type(node) is Step, self._get_linked_ast_nodes(pickle_step)), None))
 
     def _get_step_keyword(self, step: PickleStep):
-        model_step: Step | None = self._get_pickle_step_model_step(step)
+        model_step: Union[Step, None] = self._get_pickle_step_model_step(step)
         if model_step is not None:
             return model_step.keyword.strip()
 
@@ -192,7 +190,7 @@ class Feature:
             return step_keyword.lower()
 
     def _get_step_line_number(self, step: PickleStep):
-        model_step: Step | None = self._get_pickle_step_model_step(step)
+        model_step: Union[Step, None] = self._get_pickle_step_model_step(step)
         if model_step is not None:
             return model_step.location.line
 

@@ -1,5 +1,5 @@
 """Pytest plugin entry point. Used for any fixtures needed."""
-from __future__ import annotations
+# from __future__ import annotations
 
 from collections import deque
 from contextlib import suppress
@@ -9,7 +9,7 @@ from itertools import chain, filterfalse, starmap
 from operator import attrgetter, contains, methodcaller
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Collection, Iterable
+from typing import Any, Collection, Deque, Iterable, Optional, Sequence, Union
 from unittest.mock import patch
 from urllib.parse import urlparse
 
@@ -71,7 +71,7 @@ def step_matcher(pytestconfig) -> StepHandler.Matcher:
 
 
 @pytest.fixture
-def steps_left() -> deque[Step]:
+def steps_left() -> Deque[Step]:
     """Fixture containing steps which are left to be executed"""
     return deque()
 
@@ -194,7 +194,7 @@ def _build_scenario_locators_from_mark(mark: Mark, config: Config) -> Iterable[A
         except OSError:
             return False
 
-    def is_local_path(pathlike: Path | str):
+    def is_local_path(pathlike: Union[Path, str]):
         if features_path_type is FeaturePathType.PATH:
             return True
         elif features_path_type is FeaturePathType.URL:
@@ -251,7 +251,7 @@ def pytest_generate_tests(metafunc: Metafunc):
     config = metafunc.config
 
     # build marker locators
-    marks: list[Mark] = metafunc.definition.own_markers
+    marks: Sequence[Mark] = metafunc.definition.own_markers
     mark_names = list(map(attrgetter("name"), marks))
     if "pytest_bdd_scenario" in mark_names:
         scenario_marks = filter(lambda mark: mark.name == "scenarios", marks)
@@ -264,7 +264,7 @@ def pytest_generate_tests(metafunc: Metafunc):
         )
 
 
-def pytest_cmdline_main(config: Config) -> int | None:
+def pytest_cmdline_main(config: Config) -> Optional[int]:
     return generation.cmdline_main(config)
 
 
@@ -285,7 +285,7 @@ def pytest_collect_file(parent: Collector, path, file_path=None):
 
 
 @pytest.mark.trylast
-def pytest_bdd_convert_tag_to_marks(feature, scenario, tag) -> Collection[Mark | MarkDecorator] | None:
+def pytest_bdd_convert_tag_to_marks(feature, scenario, tag) -> Optional[Collection[Union[Mark, MarkDecorator]]]:
     return [getattr(pytest.mark, tag)]
 
 
