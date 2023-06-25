@@ -1,38 +1,56 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+---
 repos:
--   repo: https://github.com/psf/black
+  - repo: https://github.com/psf/black
     rev: 23.3.0
     hooks:
-    - id: black
-      args:
-        - docs
-        - "src/pytest_bdd"
-        - tests
--   repo: https://github.com/pycqa/isort
+      - id: black
+        args:
+          - docs
+          - "src/pytest_bdd"
+          - tests
+  - repo: https://github.com/pycqa/isort
     rev: 5.12.0
     hooks:
       - id: isort
         name: isort (python)
--   repo: https://github.com/pre-commit/pre-commit-hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
-    -   id: trailing-whitespace
-    -   id: end-of-file-fixer
-    -   id: check-yaml
-    -   id: check-added-large-files
-    -   id: check-toml
--   repo: https://github.com/asottile/pyupgrade
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-toml
+  - repo: https://github.com/asottile/pyupgrade
     rev: v3.7.0
     hooks:
-    -   id: pyupgrade
+      - id: pyupgrade
         args: ["--py38-plus"]
--   repo: https://github.com/pre-commit/mirrors-mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.3.0
     hooks:
-    -   id: mypy
+      - id: mypy
         additional_dependencies: [pydantic, types-setuptools, types-certifi]
--   repo: https://github.com/tox-dev/tox-ini-fmt
+  - repo: https://github.com/tox-dev/tox-ini-fmt
     rev: "1.1.0"
     hooks:
       - id: tox-ini-fmt
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.21.0
+    hooks:
+      - id: yamllint
+        args: [--format, parsable, --strict]
+  - repo: local
+    hooks:
+      - id: generate-feature-doc
+        name: generate-feature-doc
+        entry: >
+          python src/pytest_bdd/script/bdd_tree_to_rst.py
+          Features
+          docs/features.rst
+        language: python
+        types: [python]
+        pass_filenames: false
+        additional_dependencies: ['docopt-ng']

@@ -27,7 +27,7 @@ def run_pytest(testdir, step):
         options_dict = dict(zip(data_table_keys, data_table_values))
     else:
         options_dict = {}
-    testrunner = testdir.runpytest if options_dict.get("subprocess", False) else testdir.runpytest_inprocess
+    testrunner = testdir.runpytest_inprocess if options_dict.get("subprocess", False) else testdir.runpytest
 
     return testrunner(*options_dict.get("cli_args", []))
 

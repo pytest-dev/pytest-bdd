@@ -1,9 +1,21 @@
 Welcome to Pytest-BDD-NextGeneration's documentation!
 =====================================================
 
+.. include:: ../README.rst
+
 .. contents::
 
-.. include:: ../README.rst
+Features
+========
+
+.. toctree::
+   :glob:
+
+   *
+
+.. include:: features.rst
+
+.. include:: ../DOCUMENTATION.rst
 
 .. include:: ../AUTHORS.rst
 

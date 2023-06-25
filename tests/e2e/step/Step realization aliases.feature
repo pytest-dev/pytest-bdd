@@ -1,1 +1,0 @@
-C:/Users/bulky/Projects/pytest-bdd/features/step/Step realization aliases.feature

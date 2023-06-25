@@ -10,7 +10,7 @@ These people have contributed to `pytest-bdd`, in alphabetical order:
 
 * `Adam Coddington <me@adamcoddington.net>`_
 * `Albert-Jan Nijburg <albertjan@curit.com>`_
-* `Alessio Bogon <youtux>`_
+* `Alessio Bogon <youtux@gmail.com>`_
 * `Andrey Makhnach <andrey.makhnach@gmail.com>`_
 * `Aron Curzon <curzona@gmail.com>`_
 * `Dmitrijs Milajevs <dimazest@gmail.com>`_

@@ -10,8 +10,8 @@ Planned
 - Review report generation to be conform with official tools
 
   - https://github.com/pytest-dev/pytest-bdd/issues/488
-- Examples of data tables & docstrings usage
 - Check nested Rules support
+    - Review after fix https://github.com/cucumber/gherkin/issues/126
 - Implement support of \*.md files
 
   - Waiting for upstream issue https://github.com/cucumber/gherkin/pull/64
@@ -111,7 +111,7 @@ Pre pytest-bdd-ng era
 
 5.0.0
 -----
-This release introduces breaking changes, please refer to the :ref:`Migration from 4.x.x`.
+This release introduces breaking changes, please refer to the `Migration from 4.x.x`.
 
 - Rewrite the logic to parse Examples for Scenario Outlines. Now the substitution of the examples is done during the parsing of Gherkin feature files. You won't need to define the steps twice like ``@given("there are <start> cucumbers")`` and ``@given(parsers.parse("there are {start} cucumbers"))``. The latter will be enough.
 - Removed ``example_converters`` from ``scenario(...)`` signature. You should now use just the ``converters`` parameter for ``given``, ``when``, ``then``.
@@ -138,7 +138,7 @@ This release introduces breaking changes, please refer to the :ref:`Migration fr
 4.0.0
 -----
 
-This release introduces breaking changes, please refer to the :ref:`Migration from 3.x.x`.
+This release introduces breaking changes, please refer to the `Migration from 3.x.x`.
 
 - Strict Gherkin option is removed (``@scenario()`` does not accept the ``strict_gherkin`` parameter). (olegpidsadnyi)
 - ``@scenario()`` does not accept the undocumented parameter ``caller_module`` anymore. (youtux)

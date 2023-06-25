@@ -1,6 +1,7 @@
+---
 name: Main testing workflow
 
-on:
+on:  # yamllint disable-line rule:truthy
   push:
   pull_request:
   workflow_dispatch:
@@ -15,26 +16,26 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -U setuptools
-        pip install tox tox-gh-actions codecov
-    - name: Test with tox
-      run: |
-        tox
-        codecov
-    - name: Build checking
-      if: "matrix.python-version == '3.11'"
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-      run: |
-        python -m pip install --upgrade build twine
-        python -m build
-        twine check dist/*
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -U setuptools
+          pip install tox "tox-gh-actions<3" codecov
+      - name: Test with tox
+        run: |
+          tox
+          codecov
+      - name: Build checking
+        if: "matrix.python-version == '3.11'"
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          python -m pip install --upgrade build twine
+          python -m build
+          twine check dist/*

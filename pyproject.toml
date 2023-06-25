@@ -7,7 +7,7 @@ authors = [
   {name = "Anatoly Bubenkov", email = "bubenkoff@gmail.com"},
   {name="Adam Coddington" , email = "me@adamcoddington.net"},
   {name="Albert-Jan Nijburg" , email = "albertjan@curit.com"},
-  {name="Alessio Bogon"},
+  {name="Alessio Bogon", email = "youtux@gmail.com"},
   {name="Andrey Makhnach" , email = "andrey.makhnach@gmail.com"},
   {name="Aron Curzon" , email = "curzona@gmail.com"},
   {name="Dmitrijs Milajevs" , email = "dimazest@gmail.com"},
@@ -19,7 +19,7 @@ authors = [
   {name="Konstantin Goloveshko" , email = "kostya.goloveshko@gmail.com"},
   {name="Laurence Rowe" , email = "l@lrowe.co.uk"},
   {name="Leonardo Santagada" , email = "santagada@github.com"},
-  {name="Milosz Sliwinski" },
+  {name="Milosz Sliwinski", email = "sliwinski.milosz@gmail.com" },
   {name="Michiel Holtkamp" , email = "github@elfstone.nl"},
   {name="Robin Pedersen" , email = "ropez@github.com"},
   {name="Sergey Kraynev" , email = "sergejyit@gmail.com"},
@@ -53,6 +53,7 @@ dependencies = [
     "attrs",
     "certifi",
     "cucumber-expressions",
+    "docopt-ng",
     "gherkin-official>=24",
     "importlib-metadata;python_version<'3.10.0'",
     "importlib-resources",
@@ -66,16 +67,18 @@ dependencies = [
     "pytest>=5.0",
     "setuptools>=58",
     "six>=1.16;python_version~='3.8'",
+    "types-docopt",
     "typing-extensions;python_version<'3.10.0'",
 ]
 
 [project.scripts]
-pytest-bdd = "pytest_bdd.scripts:main"
+bdd_tree_to_rst = "pytest_bdd.script.bdd_tree_to_rst:main"
+
 [project.entry-points]
 pytest11 = {"pytest-bdd" = "pytest_bdd.plugin"}
 
 [build-system]
-requires = ["setuptools>=58", "wheel"]
+requires = ["setuptools<68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
@@ -89,6 +92,8 @@ line_length = 120
 multi_line_output = 3
 
 [tool.mypy]
+install_types = true
+non_interactive = true
 files = "src/pytest_bdd/**/*.py"
 show_error_codes = true
 warn_return_any = true
