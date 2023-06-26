@@ -18,6 +18,7 @@ from _pytest.reports import TestReport
 from _pytest.runner import CallInfo
 from _pytest.terminal import TerminalReporter
 from pytest import Module as PytestModule
+from pytest import fail as _pytest_fail
 
 from pytest_bdd.packaging import compare_distribution_version
 
@@ -131,6 +132,14 @@ def get_config_root_path(config: Config) -> Path:
     return Path(getattr(cast(Config, config), "rootpath" if PYTEST61 else "rootdir"))
 
 
+def fail(reason, pytrace=True):
+    __tracebackhide__ = True
+    if PYTEST7:
+        return _pytest_fail(reason, pytrace=pytrace)
+    else:
+        return _pytest_fail(msg=reason, pytrace=pytrace)
+
+
 __all__ = [
     "assert_outcomes",
     "Item",
@@ -138,6 +147,7 @@ __all__ = [
     "call_fixture_func",
     "Config",
     "ExitCode",
+    "fail",
     "FixtureDef",
     "FixtureLookupError",
     "FixtureRequest",

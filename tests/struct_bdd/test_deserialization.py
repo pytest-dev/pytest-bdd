@@ -9,7 +9,7 @@ from yaml import load as load_yaml
 from pytest_bdd.model.messages import KeywordType
 from pytest_bdd.struct_bdd.model import Alternative, Join, Keyword, Node, Step, Table
 from pytest_bdd.struct_bdd.model_builder import GherkinDocumentBuilder
-from pytest_bdd.utils import IdGenerator
+from pytest_bdd.utils import IdGenerator, doesnt_raise
 
 
 def test_node_containing_data_load():
@@ -273,14 +273,12 @@ def test_load_simplest_step_with_keyworded_steps():
 
 
 def test_load_step_with_single_simplest_steps():
-    try:
+    with doesnt_raise(Exception):
         Step.parse_obj(dict(Steps=[dict(Step=dict())]))
-    except Exception as e:
-        raise AssertionError from e
 
 
 def test_node_module_load_for_step():
-    try:
+    with doesnt_raise(Exception):
         doc = dedent(
             # language=yaml
             """\
@@ -300,12 +298,10 @@ def test_node_module_load_for_step():
 
         data = load_yaml(doc, Loader=FullLoader)
         Step.parse_obj(data)
-    except Exception as e:
-        raise AssertionError from e
 
 
 def test_data_load():
-    try:
+    with doesnt_raise(Exception):
         doc = dedent(
             # language=yaml
             """\
@@ -329,12 +325,10 @@ def test_data_load():
 
         data = load_yaml(doc, Loader=FullLoader)
         Step.parse_obj(data)
-    except Exception as e:
-        raise AssertionError from e
 
 
 def test_nested_sub_join_load():
-    try:
+    with doesnt_raise(Exception):
         doc = dedent(
             # language=yaml
             """
@@ -356,12 +350,10 @@ def test_nested_sub_join_load():
 
         data = load_yaml(doc, Loader=FullLoader)
         Join.parse_obj(data)
-    except Exception as e:
-        raise AssertionError from e
 
 
 def test_nested_data_load():
-    try:
+    with doesnt_raise(Exception):
         doc = dedent(
             # language=yaml
             """\
@@ -398,12 +390,10 @@ def test_nested_data_load():
 
         data = load_yaml(doc, Loader=FullLoader)
         Step.parse_obj(data)
-    except Exception as e:
-        raise AssertionError from e
 
 
 def test_nested_examples_load():
-    try:
+    with doesnt_raise(Exception):
         doc = dedent(
             # language=yaml
             """\
@@ -440,8 +430,6 @@ def test_nested_examples_load():
 
         data = load_yaml(doc, Loader=FullLoader)
         Step.parse_obj(data)
-    except Exception as e:
-        raise AssertionError from e
 
 
 def test_tags_steps_examples_load():
@@ -674,7 +662,7 @@ def test_tags_steps_examples_joined_by_value_load():
 
 
 def test_load_nested_steps():
-    try:
+    with doesnt_raise(Exception):
         doc = dedent(
             # language=yaml
             """\
@@ -697,5 +685,3 @@ def test_load_nested_steps():
 
         data = load_yaml(doc, Loader=FullLoader)
         Step.parse_obj(data)
-    except Exception as e:
-        raise AssertionError from e

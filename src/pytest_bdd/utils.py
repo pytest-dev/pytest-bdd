@@ -2,17 +2,33 @@
 import base64
 import pickle
 import re
+import sys
 from collections import defaultdict
-from contextlib import nullcontext, suppress
+from contextlib import contextmanager, nullcontext, suppress
 from enum import Enum
 from functools import reduce
 from inspect import getframeinfo, signature
 from itertools import tee
 from operator import attrgetter, getitem, itemgetter
 from sys import _getframe
-from typing import TYPE_CHECKING, Any, Callable, Collection, Dict, Mapping, Optional, Sequence, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Collection,
+    Dict,
+    Mapping,
+    Optional,
+    Pattern,
+    Sequence,
+    Type,
+    Union,
+    cast,
+)
 
-from pytest_bdd.compatibility.pytest import FixtureDef
+from pytest import raises
+
+from pytest_bdd.compatibility.pytest import FixtureDef, fail
 from pytest_bdd.compatibility.typing import Literal, Protocol, runtime_checkable
 from pytest_bdd.const import ALPHA_REGEX, PYTHON_REPLACE_REGEX
 
@@ -277,3 +293,31 @@ class IdGenerator:
             self._id_counter += 1
 
     get_next_id = __next__
+
+
+@contextmanager
+def doesnt_raise(
+    expected_exception: Union[Type[Exception], Sequence[Type[Exception]]],
+    *,
+    match: Optional[Union[str, Pattern[str]]] = None,
+    suppress_not_matched=True,
+):
+    """
+
+    :param expected_exception: Expected exception/s which don't have to be raised; If it raised - test fails
+    :param match: Message which will be count as failing test. If message is not matched - function passes
+    :param suppress_not_matched: If specified - all non-matched exceptions will be suppressed
+    :return:
+    """
+
+    try:
+        yield
+    except expected_exception:  # type:ignore[misc]
+        ex_type, ex_value, ex_traceback = sys.exc_info()
+        is_matched = True
+        if match is not None:
+            is_matched = bool(re.search(match, f"{ex_value}"))
+        if is_matched:
+            fail(f"{ex_value}")
+        elif not suppress_not_matched:
+            raise

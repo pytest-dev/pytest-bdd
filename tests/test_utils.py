@@ -1,8 +1,9 @@
 import pytest
+from _pytest.outcomes import Failed
 from attr import attrib, attrs
 from pytest import raises
 
-from pytest_bdd.utils import deepattrgetter, setdefaultattr
+from pytest_bdd.utils import deepattrgetter, doesnt_raise, setdefaultattr
 
 
 def test_get_attribute():
@@ -207,3 +208,29 @@ def test_setdefaultattr_for_both_factory_and_value():
 
     with pytest.raises(ValueError):
         setdefaultattr(Dumb(), "a", value=10, value_factory=lambda: 20)
+
+
+def test_doesnt_raise_fails_test():
+    with raises(Failed):
+        with doesnt_raise(RuntimeError):
+            raise RuntimeError
+
+
+def test_doesnt_raise_suppress_if_not_match():
+    try:
+        with doesnt_raise(RuntimeError, match="cool"):
+            raise RuntimeError("nice")
+    except Exception as e:  # pragma: no cover
+        raise AssertionError from e
+
+
+def test_doesnt_raise_not_suppress_if_not_match_explicitly():
+    with raises(RuntimeError, match="nice"):
+        with doesnt_raise(RuntimeError, match="cool", suppress_not_matched=False):
+            raise RuntimeError("nice")
+
+
+def test_doesnt_raise_passes_original_exception_if_not_suppressed():
+    with raises(ValueError):
+        with doesnt_raise(RuntimeError, suppress_not_matched=False):
+            raise ValueError("nice")
