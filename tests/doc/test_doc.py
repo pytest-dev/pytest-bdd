@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from pytest_bdd.script.bdd_tree_to_rst import convert
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.compatibility.pytest import Testdir
 
 
