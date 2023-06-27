@@ -7,3 +7,9 @@ Gherkin feature launch by pytest.feature
 
 .. include:: ../Features/Gherkin feature launch by pytest.feature
    :code: gherkin
+
+Tags for Scenario Outlines examples.feature
+###########################################
+
+.. include:: ../Features/Scenario/Outline/Tags for Scenario Outlines examples.feature
+   :code: gherkin
