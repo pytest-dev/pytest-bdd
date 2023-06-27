@@ -7,7 +7,7 @@ from pytest_httpserver import HTTPServer
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.webloc import write as webloc_write
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.compatibility.pytest import Testdir
 
 MINIMAL_FEATURE = dedent(
