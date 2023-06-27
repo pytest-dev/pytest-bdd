@@ -11,7 +11,8 @@ Planned
 
   - https://github.com/pytest-dev/pytest-bdd/issues/488
 - Check nested Rules support
-    - Review after fix https://github.com/cucumber/gherkin/issues/126
+
+  - Review after fix https://github.com/cucumber/gherkin/issues/126
 - Implement support of \*.md files
 
   - Waiting for upstream issue https://github.com/cucumber/gherkin/pull/64
@@ -23,9 +24,19 @@ Planned
   - Hide traceback for pytest code
 - Generate documentation via https://github.com/jolly-good-toolbelt/sphinx_gherkindoc instead of direct use
 
+  - Move sphinx-gherkindoc to official parser
+- Rework generation code to include new features directly
+
+  - Generate code into dir structure aligned with proposed project layout
+
+- Add support of conditional hooks https://cucumber.io/docs/cucumber/api/?lang=java#conditional-hooks
 
 Unreleased
 ----------
+
+2.0.0
+----------
+
 - Reviewed StructBdd step collection; no more ``as_test`` / ``as_test_decorator`` Step methods are needed directly used
 - Drop python 3.7
 - Move StructBDD model to Pydantic
