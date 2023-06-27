@@ -1,7 +1,7 @@
 import re
 from functools import partial
 from itertools import islice
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 
 from pytest_bdd import given, step
 from pytest_bdd.compatibility.pytest import assert_outcomes
@@ -29,13 +29,22 @@ def run_pytest(testdir, step):
         options_dict = {}
     testrunner = testdir.runpytest_inprocess if options_dict.get("subprocess", False) else testdir.runpytest
 
-    return testrunner(*options_dict.get("cli_args", []))
+    outcome = testrunner(*options_dict.get("cli_args", []))
+
+    yield outcome
 
 
-@step("pytest outcome must contain tests with statuses:", target_fixture="pytest_result")
-def check_pytest_outcome(pytest_result, step):
+@step("pytest outcome must contain tests with statuses:")
+def check_pytest_test_statuses(pytest_result, step):
     outcomes_kwargs = map(attrgetter("value"), step.data_table.rows[0].cells)
     outcomes_kwargs_values = map(compose(int, attrgetter("value")), step.data_table.rows[1].cells)
     outcome_result = dict(zip(outcomes_kwargs, outcomes_kwargs_values))
 
     assert_outcomes(pytest_result, **outcome_result)
+
+
+@step("pytest outcome must match lines:")
+def check_pytest_stdout_lines(pytest_result, step):
+    lines = list(map(compose(attrgetter("value"), itemgetter(0)), map(attrgetter("cells"), step.data_table.rows)))
+
+    pytest_result.stdout.fnmatch_lines(lines)
