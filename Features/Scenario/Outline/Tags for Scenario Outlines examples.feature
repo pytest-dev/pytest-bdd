@@ -1,5 +1,5 @@
 Feature: Scenario Outline examples could be tagged
-  Rule
+  Rule:
     Background:
       Given File "steps.feature" with content:
         """gherkin
