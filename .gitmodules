@@ -4,3 +4,6 @@
 [submodule "messages"]
 	path = messages
 	url = https://github.com/cucumber/messages
+[submodule "ci-environment"]
+	path = ci-environment
+	url = https://github.com/cucumber/ci-environment.git
