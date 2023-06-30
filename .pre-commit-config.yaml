@@ -32,7 +32,10 @@ repos:
     rev: v1.3.0
     hooks:
       - id: mypy
-        additional_dependencies: [pydantic, types-setuptools, types-certifi]
+        additional_dependencies:
+          - "pydantic>=1.0, <2.0.0"
+          - types-setuptools
+          - types-certifi
   - repo: https://github.com/tox-dev/tox-ini-fmt
     rev: "1.1.0"
     hooks:
