@@ -1,19 +1,25 @@
+import os
+import sys
 from pathlib import Path
+from platform import machine, processor, system, version
 from time import time_ns
 from typing import Union, cast
 
-from _pytest.fixtures import FixtureRequest
-from _pytest.main import Session
 from attr import attrib, attrs
-from pytest import ExitCode
+from ci_environment import detect_ci_environment
+from pytest import ExitCode, Session, hookimpl
 
 from pytest_bdd.compatibility.pytest import Config, Parser
 from pytest_bdd.model.messages import (
+    Ci,
     Duration,
     Message,
+    Meta,
+    Product,
     Status,
     TestCase,
     TestCaseFinished,
+    TestCaseStarted,
     TestRunFinished,
     TestRunStarted,
     TestStep,
@@ -22,6 +28,7 @@ from pytest_bdd.model.messages import (
     TestStepStarted,
     Timestamp,
 )
+from pytest_bdd.packaging import get_distribution_version
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.utils import PytestBDDIdGeneratorHandler, deepattrgetter
 
@@ -56,7 +63,7 @@ class MessagePlugin:
         if config.option.messages_ndjson_path is None:
             return
         with Path(self.config.option.messages_ndjson_path).open(mode="a+") as f:
-            f.write(message.json(exclude_none=True))
+            f.write(message.json(exclude_none=True, by_alias=True))
             f.write("\n")
 
     def pytest_runtestloop(self, session: Session):
@@ -65,10 +72,7 @@ class MessagePlugin:
             return
         hook_handler = config.hook
 
-        # TODO check messaging of step definitions; seems outdated
-
-        # Message plugins step definitions (test module step definitions are messaged separately)
-        for plugin in session.config.pluginmanager._plugin2hookcallers.keys():
+        for name, plugin in session.config.pluginmanager.list_name_plugin():
             registry = deepattrgetter("step_registry.__registry__.registry", default=set())(plugin)[0]
             for step_definition in registry:
                 hook_handler.pytest_bdd_message(
@@ -78,6 +82,28 @@ class MessagePlugin:
         hook_handler.pytest_bdd_message(
             config=config,
             message=Message(test_run_started=TestRunStarted(timestamp=self.get_timestamp())),
+        )
+
+    def pytest_sessionstart(self, session):
+        config = session.config
+        if config.option.messages_ndjson_path is None:
+            return
+        hook_handler = config.hook
+
+        hook_handler.pytest_bdd_message(
+            config=config,
+            message=Message(
+                meta=Meta(
+                    protocol_version="22.0.0",
+                    implementation=Product(
+                        name="pytest-bdd-ng", version=str(get_distribution_version("pytest-bdd-ng"))
+                    ),
+                    runtime=Product(name="Python", version=sys.version),
+                    os=Product(name=system(), version=version()),
+                    cpu=Product(name=machine(), version=processor()),
+                    ci=Ci.parse_obj(obj) if (obj := detect_ci_environment(os.environ)) is not None else None,
+                ),
+            ),
         )
 
     def pytest_sessionfinish(self, session, exitstatus):
@@ -97,17 +123,26 @@ class MessagePlugin:
             ),
         )
 
-    def pytest_bdd_before_scenario(self, request: FixtureRequest, feature, scenario):
+    @hookimpl(hookwrapper=True)
+    def pytest_runtest_setup(self, item):
+        outcome = yield
+        session = item.session
         config: Union[
             Config, PytestBDDIdGeneratorHandler
-        ] = request.config  # https://github.com/python/typing/issues/213
+        ] = session.config  # https://github.com/python/typing/issues/213
         if cast(Config, config).option.messages_ndjson_path is None:
             return
         hook_handler = cast(Config, config).hook
 
+        request = item._request
+        scenario = request.getfixturevalue("scenario")
+        feature = request.getfixturevalue("feature")
+
         test_steps = []
         previous_step = None
+
         self.current_test_case_step_id_to_step_mapping = {}
+
         for step in scenario.steps:
             try:
                 step_definition = hook_handler.pytest_bdd_match_step_definition_to_step(
@@ -123,7 +158,7 @@ class MessagePlugin:
                 test_step = TestStep(
                     id=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator.get_next_id(),
                     pickle_step_id=step.id,
-                    step_definition_ids=[step_definition.id]
+                    step_definition_ids=[step_definition.as_message(config).id]
                     # TODO Check step_match_arguments_lists
                 )
                 test_steps.append(test_step)
@@ -142,6 +177,26 @@ class MessagePlugin:
             message=Message(test_case=self.current_test_case),
         )
 
+    def pytest_bdd_before_scenario(self, request, feature, scenario):
+        config = request.config
+        if config.option.messages_ndjson_path is None:
+            return
+
+        hook_handler = config.hook
+
+        self.current_test_case_start = TestCaseStarted(
+            attempt=getattr(request.node, "execution_count", 0),
+            id=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator.get_next_id(),
+            test_case_id=self.current_test_case.id,
+            worker_id=os.environ.get("PYTEST_XDIST_WORKER", "master"),
+            timestamp=self.get_timestamp(),
+        )
+
+        hook_handler.pytest_bdd_message(
+            config=config,
+            message=Message(test_case_started=self.current_test_case_start),
+        )
+
     def pytest_bdd_after_scenario(self, request, feature, scenario):
         config = request.config
         if config.option.messages_ndjson_path is None:
@@ -153,7 +208,7 @@ class MessagePlugin:
             config=config,
             message=Message(
                 test_case_finished=TestCaseFinished(
-                    test_case_started_id=self.current_test_case.id,
+                    test_case_started_id=self.current_test_case_start.id,
                     timestamp=self.get_timestamp(),
                     # TODO check usage
                     will_be_retried=False,

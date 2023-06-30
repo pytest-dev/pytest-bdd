@@ -30,6 +30,11 @@ Planned
   - Generate code into dir structure aligned with proposed project layout
 
 - Add support of conditional hooks https://cucumber.io/docs/cucumber/api/?lang=java#conditional-hooks
+- Test messages against
+
+  - pytest-xdist at workers on different machines (sending back ndjson info https://codespeak.net/execnet/example/test_info.html#sending-channels-over-channels)
+  - pytest-rerunfailures
+- Messages has to write output file in async manner
 
 Unreleased
 ----------

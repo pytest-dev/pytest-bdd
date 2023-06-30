@@ -5,7 +5,7 @@ from inspect import getfile
 from itertools import chain, product, starmap, zip_longest
 from operator import attrgetter, eq, is_not
 from pathlib import Path
-from typing import Any, List, Optional, Sequence, Union
+from typing import Any, ClassVar, List, Optional, Sequence, Type, Union
 
 from attr import attrib, attrs
 from pydantic import BaseModel, Extra, Field, validator
@@ -217,7 +217,7 @@ class StepPrototype(Node):
     data: List[Union[Table, Join, SubTable]] = Field(default_factory=list, alias="Data")
     examples: List[Union[Table, Join, SubTable]] = Field(default_factory=list, alias="Examples")
 
-    Route = namedtuple("Route", ["tags", "steps", "example_table"])
+    Route: ClassVar[Type] = namedtuple("Route", ["tags", "steps", "example_table"])
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

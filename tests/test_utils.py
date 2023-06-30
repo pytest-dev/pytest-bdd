@@ -3,7 +3,7 @@ from _pytest.outcomes import Failed
 from attr import attrib, attrs
 from pytest import raises
 
-from pytest_bdd.utils import deepattrgetter, doesnt_raise, setdefaultattr
+from pytest_bdd.utils import deepattrgetter, doesnt_raise, flip, setdefaultattr
 
 
 def test_get_attribute():
@@ -234,3 +234,81 @@ def test_doesnt_raise_passes_original_exception_if_not_suppressed():
     with raises(ValueError):
         with doesnt_raise(RuntimeError, suppress_not_matched=False):
             raise ValueError("nice")
+
+
+def test_flip_no_args():
+    def func():
+        return "item"
+
+    assert flip(func)() == "item"
+
+
+def test_flip_one_arg():
+    def func(arg):
+        return arg
+
+    assert flip(func)("item") == "item"
+
+
+def test_flip_two_args():
+    def func(arg1, arg2):
+        return arg1, arg2
+
+    assert flip(func)("item1", "item2") == ("item2", "item1")
+
+
+def test_flip_many_args():
+    def func(*args):
+        return args
+
+    assert flip(func)(1, 2, 3, 4) == (4, 2, 3, 1)
+
+
+def test_flip_no_args_but_kwargs():
+    def func(**kwargs):
+        return ("item",), kwargs
+
+    assert flip(func)(a=1) == (("item",), {"a": 1})
+
+
+def test_flip_one_arg_kwargs():
+    def func(arg, **kwargs):
+        return (arg,), kwargs
+
+    assert flip(func)("item", a=1) == (("item",), {"a": 1})
+
+
+def test_flip_two_args_kwargs():
+    def func(arg1, arg2, **kwargs):
+        return (arg1, arg2), kwargs
+
+    assert flip(func)("item1", "item2", a=1) == (("item2", "item1"), {"a": 1})
+
+
+def test_flip_many_args_kwargs():
+    def func(*args, **kwargs):
+        return args, kwargs
+
+    assert flip(func)(1, 2, 3, 4, a=1) == ((4, 2, 3, 1), {"a": 1})
+
+
+def test_flip_two_args_as_named():
+    def func(arg1, arg2):
+        return arg1, arg2
+
+    assert flip(func)("item1", arg2="item2") == ("item1", "item2")
+
+
+def test_flip_two_args_as_named_by_pos_only():
+    def func(arg1, arg2, /):  # pragma: nocover
+        return arg1, arg2
+
+    with raises(TypeError, match=".*got some positional-only arguments passed as keyword arguments.*"):
+        flip(func)("item1", arg2="item2") == ("item1", "item2")
+
+
+def test_flip_two_args_using_others():
+    def func(arg, *other):
+        return arg, *other
+
+    assert flip(func)("item1", "item2") == ("item2", "item1")

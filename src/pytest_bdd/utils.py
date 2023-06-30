@@ -266,6 +266,17 @@ def compose(*funcs):
     return reduce(lambda f, g: lambda *args, **kwargs: f(g(*args, **kwargs)), funcs)
 
 
+def flip(func):
+    def wrapped(*args, **kwargs):
+        if len(args) > 1:
+            first, *other, last = args
+            return func(last, *other, first, **kwargs)
+        else:
+            return func(*args, **kwargs)
+
+    return wrapped
+
+
 def make_python_name(string: str) -> str:
     """Make python attribute name out of a given string."""
     string = re.sub(PYTHON_REPLACE_REGEX, "", string.replace(" ", "_"))
