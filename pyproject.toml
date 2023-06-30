@@ -63,7 +63,7 @@ dependencies = [
     "parse",
     "parse_type>=0.6.0",
     "py",
-    "pydantic>=1.0",
+    "pydantic>=1.0, <2.0.0",
     "pytest>=5.0",
     "setuptools>=58",
     "six>=1.16;python_version~='3.8'",
