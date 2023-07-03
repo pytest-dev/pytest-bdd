@@ -27,6 +27,7 @@ from pytest_bdd.model import Feature
 from pytest_bdd.model.messages import Pickle
 from pytest_bdd.model.messages import PickleStep as Step
 from pytest_bdd.parser import GherkinParser
+from pytest_bdd.parsers import cucumber_expression
 from pytest_bdd.reporting import ScenarioReporterPlugin
 from pytest_bdd.runner import ScenarioRunner
 from pytest_bdd.scenario import FeaturePathType, FileScenarioLocator, UrlScenarioLocator
@@ -74,6 +75,12 @@ def step_matcher(pytestconfig) -> StepHandler.Matcher:
 def steps_left() -> Deque[Step]:
     """Fixture containing steps which are left to be executed"""
     return deque()
+
+
+@pytest.fixture
+def parameter_type_registry():
+    """Fixture parameter type registry for Cucumber expressions"""
+    return cucumber_expression.parameter_type_registry
 
 
 def pytest_addoption(parser: Parser) -> None:
@@ -293,7 +300,7 @@ def pytest_bdd_match_step_definition_to_step(request, feature, scenario, step, p
     step_registry: StepHandler.Registry = request.getfixturevalue("step_registry")
     step_matcher: StepHandler.Matcher = request.getfixturevalue("step_matcher")
 
-    return step_matcher(feature, scenario, step, previous_step, step_registry)
+    return step_matcher(request, feature, scenario, step, previous_step, step_registry)
 
 
 def pytest_bdd_get_mimetype(config: Config, path: Path):

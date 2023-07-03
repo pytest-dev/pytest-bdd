@@ -16,7 +16,37 @@ Planned
 - Implement support of \*.md files
 
   - Waiting for upstream issue https://github.com/cucumber/gherkin/pull/64
-- Tests for messages and integrations
+- Support of messages:
+
+  - Done:
+
+    - meta
+    - gherkin_document
+    - pickle
+    - source
+    - step_definition
+    - test_case
+    - test_case_finished
+    - test_case_started
+    - test_run_finished
+    - test_run_started
+    - test_step_finished
+    - test_step_started
+    - parameter_type
+
+  - To implement:
+
+    - attachment
+
+  - Pending:
+
+    - hook
+
+      - Add support of conditional hooks https://cucumber.io/docs/cucumber/api/?lang=java#conditional-hooks
+
+    - parse_error
+    - undefined_parameter_type
+
 - Add support of python 3.12, PyPy at CI
 - Add mode to execute scenarios with missing/failing steps
 - Remove
@@ -29,12 +59,17 @@ Planned
 
   - Generate code into dir structure aligned with proposed project layout
 
-- Add support of conditional hooks https://cucumber.io/docs/cucumber/api/?lang=java#conditional-hooks
 - Test messages against
 
   - pytest-xdist at workers on different machines (sending back ndjson info https://codespeak.net/execnet/example/test_info.html#sending-channels-over-channels)
   - pytest-rerunfailures
 - Messages has to write output file in async manner
+- Refactor
+
+  - Poetry
+  - Tox 4
+  - Remove attrs
+  - Pydantic 2
 
 Unreleased
 ----------

@@ -3,18 +3,21 @@ import sys
 from pathlib import Path
 from platform import machine, processor, system, version
 from time import time_ns
-from typing import Union, cast
+from typing import Callable, Dict, Union, cast
 
 from attr import attrib, attrs
 from ci_environment import detect_ci_environment
+from cucumber_expressions.parameter_type import ParameterType as CucumberExpressionParameterType
+from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
 from pytest import ExitCode, Session, hookimpl
 
-from pytest_bdd.compatibility.pytest import Config, Parser
+from pytest_bdd.compatibility.pytest import Config, FixtureRequest, Parser
 from pytest_bdd.model.messages import (
     Ci,
     Duration,
     Message,
     Meta,
+    ParameterType,
     Product,
     Status,
     TestCase,
@@ -38,6 +41,7 @@ class MessagePlugin:
     config: Config = attrib()
     current_test_case = attrib(default=None)
     current_test_case_step_to_definition_mapping = attrib(default=None)
+    parameter_type_registry: Dict[int, CucumberExpressionParameterType] = dict()
 
     def get_timestamp(self):
         timestamp = time_ns()
@@ -137,6 +141,46 @@ class MessagePlugin:
         request = item._request
         scenario = request.getfixturevalue("scenario")
         feature = request.getfixturevalue("feature")
+
+        for name, plugin in session.config.pluginmanager.list_name_plugin():
+            registry = deepattrgetter("step_registry.__registry__.registry", default=set())(plugin)[0]
+            for step_definition in registry:
+                parameter_type_registry_getter: Callable[[FixtureRequest], ParameterTypeRegistry] = deepattrgetter(
+                    "_get_parameter_type_registry", default=None
+                )(step_definition.parser)[0]
+
+                if parameter_type_registry_getter is None:
+                    break
+
+                parameter_type_registry = parameter_type_registry_getter(request)
+
+                parameter_types = dict(
+                    map(
+                        lambda parameter_type: (id(parameter_type), parameter_type),
+                        parameter_type_registry.parameter_types,
+                    )
+                )
+
+                not_yet_registered_parameter_types = {
+                    key: parameter_type
+                    for key, parameter_type in parameter_types.items()
+                    if key not in self.parameter_type_registry.keys()
+                }
+
+                for parameter_type in not_yet_registered_parameter_types.values():
+                    hook_handler.pytest_bdd_message(
+                        config=config,
+                        message=Message(
+                            parameter_type=ParameterType(
+                                name=parameter_type.name,
+                                regular_expressions=parameter_type.regexps,
+                                prefer_for_regular_expression_match=parameter_type._prefer_for_regexp_match,
+                                use_for_snippets=parameter_type._use_for_snippets,
+                                id=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator.get_next_id(),
+                            ),
+                        ),
+                    )
+                self.parameter_type_registry.update(not_yet_registered_parameter_types)
 
         test_steps = []
         previous_step = None

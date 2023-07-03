@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Iterable, Type, Union
 
 from pydantic import ValidationError
 
-from pytest_bdd.model.messages import GherkinDocument, Message, Meta, Pickle, Source, StepDefinition
+from pytest_bdd.model.messages import GherkinDocument, Message, Meta, ParameterType, Pickle, Source, StepDefinition
 from pytest_bdd.model.messages import TestCase as _TestCase
 from pytest_bdd.model.messages import TestCaseFinished as _TestCaseFinished
 from pytest_bdd.model.messages import TestCaseStarted as _TestCaseStarted
@@ -48,6 +48,10 @@ def unfold_message(message: Message):
             return unfold
     else:  # pragma: nocover
         raise ValueError("Empty message was given")
+
+
+def list_filter_by_type(t: Union[Type, Iterable[Type]], items):
+    return list(filter(partial(flip(isinstance), tuple(t) if isinstance(t, Iterable) else t), items))
 
 
 def test_minimal_scenario_messages(testdir: "Testdir", tmp_path):
@@ -93,9 +97,6 @@ def test_minimal_scenario_messages(testdir: "Testdir", tmp_path):
         assert errors == [], f"Could not parse messages: {errors}"
 
     unfold_messages = list(map(unfold_message, parsed_messages))
-
-    def list_filter_by_type(t: Union[Type, Iterable[Type]], items):
-        return list(filter(partial(flip(isinstance), tuple(t) if isinstance(t, Iterable) else t), items))
 
     meta_messages = messages = list_filter_by_type(Meta, unfold_messages)
     assert len(meta_messages) == 1, f"Messages: {pformat(messages)}"
@@ -169,3 +170,96 @@ def test_minimal_scenario_messages(testdir: "Testdir", tmp_path):
     test_run_case_finish_lifetime_messages = list_filter_by_type((_TestRunFinished, _TestCaseFinished), unfold_messages)
     assert isinstance(test_run_case_finish_lifetime_messages[0], _TestCaseFinished)
     assert isinstance(test_run_case_finish_lifetime_messages[1], _TestRunFinished)
+
+
+def test_parameter_type_messages(testdir: "Testdir", tmp_path):
+    """Test comments inside scenario."""
+    testdir.makeconftest(
+        # language=python
+        """\
+        import pytest
+        from cucumber_expressions.parameter_type import ParameterType
+        from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
+
+        from pytest_bdd import given
+        from pytest_bdd.parsers import cucumber_expression
+
+
+        class Coordinate:
+            def __init__(self, x: int, y: int, z: int):
+                self.x = x
+                self.y = y
+                self.z = z
+
+            def __eq__(self, other):
+                return (
+                    isinstance(other, Coordinate)
+                    and other.x == self.x
+                    and self.y == other.y
+                    and self.z == other.z
+                )
+
+
+        @pytest.fixture
+        def parameter_type_registry():
+            _parameter_type_registry = ParameterTypeRegistry()
+            _parameter_type_registry.define_parameter_type(
+                ParameterType(
+                    "coordinate",
+                    r"(\\d+),\\s*(\\d+),\\s*(\\d+)",
+                    Coordinate,
+                    lambda x, y, z: Coordinate(int(x), int(y), int(z)),
+                    True,
+                    False,
+                )
+            )
+
+            return _parameter_type_registry
+
+
+        @given(
+            cucumber_expression(
+                "A {int} thick line from {coordinate} to {coordinate}"
+            ),
+            anonymous_group_names=['thick', 'start', 'end'],
+        )
+        def cukes_count(thick, start, end):
+            assert Coordinate(10, 20, 30) == start
+            assert Coordinate(40, 50, 60) == end
+            assert thick == 5
+
+        """
+    )
+    testdir.makefile(
+        ".feature",
+        # language=gherkin
+        balls="""
+        Feature: minimal
+
+          Scenario: Thick line
+            Given A 5 thick line from 10,20,30 to 40,50,60
+
+        """,
+    )
+
+    ndjson_path = tmp_path / "minimal.feature.ndjson"
+    result = testdir.runpytest("--messages-ndjson", str(ndjson_path))
+
+    result.assert_outcomes(passed=1)
+
+    with ndjson_path.open(mode="r") as ndjson_file:
+        ndjson_lines = ndjson_file.readlines()
+
+    errors = []
+    parsed_messages = []
+    for ndjson_line in ndjson_lines:
+        try:
+            parsed_messages.append(Message.parse_obj(json.loads(ndjson_line)))
+        except ValidationError as e:  # pragma: nocover
+            errors.append(e)
+        assert errors == [], f"Could not parse messages: {errors}"
+
+    unfold_messages = list(map(unfold_message, parsed_messages))
+
+    parameter_type_messages = messages = list_filter_by_type(ParameterType, unfold_messages)
+    assert len(parameter_type_messages) == 12, f"Messages: {pformat(messages)}"

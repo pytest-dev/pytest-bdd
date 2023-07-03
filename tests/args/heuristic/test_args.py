@@ -41,11 +41,11 @@ def test_heuristic_parser(
 
 
         @when("I pay {} Euro", anonymous_group_names=('euro',), converters=dict(euro=int))
-        def i_pay(euro, values, request):
+        def i_pay(euro, values):
             assert euro == values.pop(0)
 
         @when("I lose {euro:d} Euro", converters=dict(euro=int))
-        def i_pay(euro, values, request):
+        def i_pay(euro, values):
             assert euro == values.pop(0)
 
 

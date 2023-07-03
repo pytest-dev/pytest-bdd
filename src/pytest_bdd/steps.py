@@ -43,6 +43,7 @@ from uuid import uuid4
 from warnings import warn
 
 import pytest
+from _pytest.fixtures import FixtureRequest
 from attr import Factory, attrib, attrs
 from ordered_set import OrderedSet
 
@@ -258,12 +259,14 @@ class StepHandler:
 
         def __call__(
             self,
+            request,
             feature: Feature,
             pickle: Pickle,
             step: Step,
             previous_step: Optional[Step],
             step_registry: "StepHandler.Registry",
         ) -> "StepHandler.Definition":
+            self.request = request
             self.feature = feature
             self.pickle = pickle
             self.step = step
@@ -290,13 +293,17 @@ class StepHandler:
 
         def strict_matcher(self, step_definition):
             return step_definition.type_ == self.step_type_context and step_definition.parser.is_matching(
-                self.step.text
+                self.request,
+                self.step.text,
             )
 
         def unspecified_matcher(self, step_definition):
             return (
                 self.step_type_context == StepType.unknown or step_definition.type_ == StepType.unknown
-            ) and step_definition.parser.is_matching(self.step.text)
+            ) and step_definition.parser.is_matching(
+                self.request,
+                self.step.text,
+            )
 
         def liberal_matcher(self, step_definition):
             if step_definition.liberal is None:
@@ -312,7 +319,7 @@ class StepHandler:
                     not self.unspecified_matcher(step_definition),
                     is_step_definition_liberal,
                     step_definition.type_ != self.step_type_context,
-                    step_definition.parser.is_matching(self.step.text),
+                    step_definition.parser.is_matching(self.request, self.step.text),
                 )
             )
 
@@ -367,9 +374,9 @@ class StepHandler:
                 message = self.__cached_message
             return message
 
-        def get_parameters(self, step: Step):
+        def get_parameters(self, request: FixtureRequest, step: Step):
             parsed_arguments = (
-                self.parser.parse_arguments(step.text, anonymous_group_names=self.anonymous_group_names) or {}
+                self.parser.parse_arguments(request, step.text, anonymous_group_names=self.anonymous_group_names) or {}
             )
             return {
                 **self.param_defaults,

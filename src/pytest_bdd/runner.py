@@ -113,7 +113,7 @@ class ScenarioRunner:
             request.config.hook.pytest_bdd_before_step(**hook_kwargs)
 
             hook_kwargs["step_func_args"] = {}
-            step_params = step_definition.get_parameters(step)
+            step_params = step_definition.get_parameters(request, step)
             try:
                 self._inject_step_parameters_as_fixtures(
                     step_params=step_params, params_fixtures_mapping=step_definition.params_fixtures_mapping
