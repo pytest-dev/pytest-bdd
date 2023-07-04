@@ -76,7 +76,7 @@ def parse_and_unflold_messages(lines):
             parsed_messages.append(Message.parse_obj(json.loads(line)))
         except ValidationError as e:  # pragma: nocover
             errors.append(e)
-        if errors:
+        if errors:  # pragma: nocover
             raise ParseError(f"Could not parse messages: {errors}")
 
     return list(map(unfold_message, parsed_messages))
