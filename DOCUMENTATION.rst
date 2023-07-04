@@ -697,6 +697,8 @@ Fixtures
 pytest-bdd-ng exposes several plugin fixtures to give more testing flexibility
 
 * bdd_example - The current scenario outline parametrization.
+* attach - Fixture to allow attach files to Gherkin report
+* parameter_type_registry - Contains registry of user-defined types used in Cucumber expressions
 * step_registry - Contains registry of all user-defined steps
 * step_matcher- Contains matcher to help find step definition for selected step of scenario
 * steps_left - Current scenario steps left to execute; Allow inject steps to execute:

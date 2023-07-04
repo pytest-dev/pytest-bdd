@@ -1,6 +1,3 @@
-"""Pytest plugin entry point. Used for any fixtures needed."""
-# from __future__ import annotations
-
 from collections import deque
 from contextlib import suppress
 from functools import partial
@@ -20,7 +17,15 @@ from pytest_bdd import cucumber_json, generation, gherkin_terminal_reporter, giv
 from pytest_bdd.allure_logging import AllurePytestBDD
 from pytest_bdd.collector import FeatureFileModule as FeatureFileCollector
 from pytest_bdd.collector import Module as ModuleCollector
-from pytest_bdd.compatibility.pytest import Config, Mark, MarkDecorator, Metafunc, Parser, PytestPluginManager
+from pytest_bdd.compatibility.pytest import (
+    Config,
+    FixtureRequest,
+    Mark,
+    MarkDecorator,
+    Metafunc,
+    Parser,
+    PytestPluginManager,
+)
 from pytest_bdd.message_plugin import MessagePlugin
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.model import Feature
@@ -81,6 +86,18 @@ def steps_left() -> Deque[Step]:
 def parameter_type_registry():
     """Fixture parameter type registry for Cucumber expressions"""
     return cucumber_expression.parameter_type_registry
+
+
+@pytest.fixture
+def attach(request: FixtureRequest):
+    """Fixture parameter type registry for Cucumber expressions"""
+
+    def add_attachment(attachment, media_type: Optional[str] = None, file_name=None):
+        request.config.hook.pytest_bdd_attach(
+            request=request, attachment=attachment, media_type=media_type, file_name=file_name
+        )
+
+    return add_attachment
 
 
 def pytest_addoption(parser: Parser) -> None:

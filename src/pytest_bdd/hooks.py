@@ -1,10 +1,10 @@
+from io import BufferedIOBase, TextIOBase
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Any, Iterable, Optional, Union
 
-from _pytest.fixtures import FixtureRequest
 from pytest import hookspec
 
-from pytest_bdd.compatibility.pytest import Config, Mark
+from pytest_bdd.compatibility.pytest import Config, FixtureRequest, Mark
 from pytest_bdd.model import Feature
 from pytest_bdd.model.messages import Message, Pickle
 
@@ -89,3 +89,12 @@ def pytest_bdd_get_parser(config: Config, mimetype: str):
 @hookspec(firstresult=True)
 def pytest_bdd_get_mimetype(config: Config, path: Path):
     """Get parser for specific file path"""
+
+
+def pytest_bdd_attach(
+    request: FixtureRequest,
+    attachment: Union[str, bytes, bytearray, BufferedIOBase, TextIOBase, Any],
+    media_type: Optional[str],
+    file_name: Optional[str],
+):
+    """Internal hook to add attachment to a test case"""

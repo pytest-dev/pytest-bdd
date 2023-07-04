@@ -33,10 +33,9 @@ Planned
     - test_step_finished
     - test_step_started
     - parameter_type
+    - attachment
 
   - To implement:
-
-    - attachment
 
   - Pending:
 

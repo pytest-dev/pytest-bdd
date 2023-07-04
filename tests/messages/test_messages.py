@@ -2,11 +2,21 @@ import json
 from functools import partial
 from pathlib import Path
 from pprint import pformat
-from typing import TYPE_CHECKING, Iterable, Type, Union
+from typing import TYPE_CHECKING, Iterable, Type, Union, cast
 
 from pydantic import ValidationError
 
-from pytest_bdd.model.messages import GherkinDocument, Message, Meta, ParameterType, Pickle, Source, StepDefinition
+from pytest_bdd.model.messages import (
+    Attachment,
+    ContentEncoding,
+    GherkinDocument,
+    Message,
+    Meta,
+    ParameterType,
+    Pickle,
+    Source,
+    StepDefinition,
+)
 from pytest_bdd.model.messages import TestCase as _TestCase
 from pytest_bdd.model.messages import TestCaseFinished as _TestCaseFinished
 from pytest_bdd.model.messages import TestCaseStarted as _TestCaseStarted
@@ -54,8 +64,25 @@ def list_filter_by_type(t: Union[Type, Iterable[Type]], items):
     return list(filter(partial(flip(isinstance), tuple(t) if isinstance(t, Iterable) else t), items))
 
 
+class ParseError(RuntimeError):
+    ...
+
+
+def parse_and_unflold_messages(lines):
+    errors = []
+    parsed_messages = []
+    for line in lines:
+        try:
+            parsed_messages.append(Message.parse_obj(json.loads(line)))
+        except ValidationError as e:  # pragma: nocover
+            errors.append(e)
+        if errors:
+            raise ParseError(f"Could not parse messages: {errors}")
+
+    return list(map(unfold_message, parsed_messages))
+
+
 def test_minimal_scenario_messages(testdir: "Testdir", tmp_path):
-    """Test comments inside scenario."""
     testdir.makefile(
         ".feature",
         # language=gherkin
@@ -87,16 +114,7 @@ def test_minimal_scenario_messages(testdir: "Testdir", tmp_path):
     with ndjson_path.open(mode="r") as ndjson_file:
         ndjson_lines = ndjson_file.readlines()
 
-    errors = []
-    parsed_messages = []
-    for ndjson_line in ndjson_lines:
-        try:
-            parsed_messages.append(Message.parse_obj(json.loads(ndjson_line)))
-        except ValidationError as e:  # pragma: nocover
-            errors.append(e)
-        assert errors == [], f"Could not parse messages: {errors}"
-
-    unfold_messages = list(map(unfold_message, parsed_messages))
+    unfold_messages = parse_and_unflold_messages(ndjson_lines)
 
     meta_messages = messages = list_filter_by_type(Meta, unfold_messages)
     assert len(meta_messages) == 1, f"Messages: {pformat(messages)}"
@@ -173,7 +191,6 @@ def test_minimal_scenario_messages(testdir: "Testdir", tmp_path):
 
 
 def test_parameter_type_messages(testdir: "Testdir", tmp_path):
-    """Test comments inside scenario."""
     testdir.makeconftest(
         # language=python
         """\
@@ -250,16 +267,226 @@ def test_parameter_type_messages(testdir: "Testdir", tmp_path):
     with ndjson_path.open(mode="r") as ndjson_file:
         ndjson_lines = ndjson_file.readlines()
 
-    errors = []
-    parsed_messages = []
-    for ndjson_line in ndjson_lines:
-        try:
-            parsed_messages.append(Message.parse_obj(json.loads(ndjson_line)))
-        except ValidationError as e:  # pragma: nocover
-            errors.append(e)
-        assert errors == [], f"Could not parse messages: {errors}"
-
-    unfold_messages = list(map(unfold_message, parsed_messages))
+    unfold_messages = parse_and_unflold_messages(ndjson_lines)
 
     parameter_type_messages = messages = list_filter_by_type(ParameterType, unfold_messages)
     assert len(parameter_type_messages) == 12, f"Messages: {pformat(messages)}"
+
+
+def test_attachment_type_message_as_raw_string(testdir: "Testdir", tmp_path):
+    testdir.makeconftest(
+        # language=python
+        """\
+        from pytest_bdd import given
+
+        @given('Attach "{value}" as string')
+        def attach_as_string(attach, value):
+            attach(value)
+        """
+    )
+    testdir.makefile(
+        ".feature",
+        # language=gherkin
+        attachment="""
+        Feature: Attachment
+
+          Scenario: Add attachment
+            Given Attach "Hello world!" as string
+
+        """,
+    )
+
+    ndjson_path = tmp_path / "minimal.feature.ndjson"
+    result = testdir.runpytest("--messages-ndjson", str(ndjson_path))
+
+    result.assert_outcomes(passed=1)
+
+    with ndjson_path.open(mode="r") as ndjson_file:
+        ndjson_lines = ndjson_file.readlines()
+
+    unfold_messages = parse_and_unflold_messages(ndjson_lines)
+
+    attachment_messages = messages = list_filter_by_type(Attachment, unfold_messages)
+    assert len(attachment_messages) == 1, f"Messages: {pformat(messages)}"
+
+    attachment_message: Attachment = attachment_messages[0]
+    assert attachment_message.body == "Hello world!"
+    assert attachment_message.media_type == "text/plain;charset=UTF-8"
+    assert attachment_message.content_encoding == ContentEncoding.identity
+
+
+def test_attachment_type_messages_as_raw_string_with_content_type(testdir: "Testdir", tmp_path):
+    testdir.makeconftest(
+        # language=python
+        """\
+        from pytest_bdd import given
+
+        @given('Attach "{value}" as url')
+        def attach_as_url(attach, value):
+            attach(value, media_type='text/uri-list')
+        """
+    )
+    testdir.makefile(
+        ".feature",
+        # language=gherkin
+        attachment="""
+        Feature: Attachment
+
+          Scenario: Add attachment
+            Given Attach "http://https://example.com/" as url
+
+        """,
+    )
+
+    ndjson_path = tmp_path / "minimal.feature.ndjson"
+    result = testdir.runpytest("--messages-ndjson", str(ndjson_path))
+
+    result.assert_outcomes(passed=1)
+
+    with ndjson_path.open(mode="r") as ndjson_file:
+        ndjson_lines = ndjson_file.readlines()
+
+    unfold_messages = parse_and_unflold_messages(ndjson_lines)
+
+    attachment_messages = messages = list_filter_by_type(Attachment, unfold_messages)
+    assert len(attachment_messages) == 1, f"Messages: {pformat(messages)}"
+
+    attachment_message: Attachment = attachment_messages[0]
+    assert attachment_message.body == "http://https://example.com/"
+    assert attachment_message.media_type == "text/uri-list"
+    assert attachment_message.content_encoding == ContentEncoding.identity
+
+
+def test_attachment_type_messages_as_bytes(testdir: "Testdir", tmp_path):
+    testdir.makeconftest(
+        # language=python
+        """\
+        from pytest_bdd import given
+
+        @given('Attach "{value}" as bytes')
+        def attach_as_bytes(attach, value):
+            attach(value.encode('utf-8'))
+        """
+    )
+    testdir.makefile(
+        ".feature",
+        # language=gherkin
+        attachment="""
+        Feature: Attachment
+
+          Scenario: Add attachment
+            Given Attach "Hello world!" as bytes
+
+        """,
+    )
+
+    ndjson_path = tmp_path / "minimal.feature.ndjson"
+    result = testdir.runpytest("--messages-ndjson", str(ndjson_path))
+
+    result.assert_outcomes(passed=1)
+
+    with ndjson_path.open(mode="r") as ndjson_file:
+        ndjson_lines = ndjson_file.readlines()
+
+    unfold_messages = parse_and_unflold_messages(ndjson_lines)
+
+    attachment_messages = messages = list_filter_by_type(Attachment, unfold_messages)
+    assert len(attachment_messages) == 1, f"Messages: {pformat(messages)}"
+
+    attachment_message: Attachment = attachment_messages[0]
+    assert attachment_message.body == "SGVsbG8gd29ybGQh"
+    assert attachment_message.content_encoding is ContentEncoding.base64
+
+
+def test_attachment_type_messages_from_text_file(testdir: "Testdir", tmp_path):
+    file_path = tmp_path / "file.txt"
+    (tmp_path / "file.txt").write_text("Hello world!")
+
+    testdir.makeconftest(
+        # language=python
+        """\
+        from pytest_bdd import given
+        from pathlib import Path
+
+        @given('Attach text from {file_path} file', converters={'file_path': Path})
+        def attach_from_file(attach, file_path: Path):
+            with file_path.open(mode='r') as file:
+                attach(file)
+        """
+    )
+    testdir.makefile(
+        ".feature",
+        # language=gherkin
+        attachment=f"""
+        Feature: Attachment
+
+          Scenario: Add attachment
+            Given Attach text from {file_path} file
+
+        """,
+    )
+
+    ndjson_path = tmp_path / "minimal.feature.ndjson"
+    result = testdir.runpytest("--messages-ndjson", str(ndjson_path))
+
+    result.assert_outcomes(passed=1)
+
+    with ndjson_path.open(mode="r") as ndjson_file:
+        ndjson_lines = ndjson_file.readlines()
+
+    unfold_messages = parse_and_unflold_messages(ndjson_lines)
+
+    attachment_messages = messages = list_filter_by_type(Attachment, unfold_messages)
+    assert len(attachment_messages) == 1, f"Messages: {pformat(messages)}"
+
+    attachment_message: Attachment = attachment_messages[0]
+    assert attachment_message.body == "Hello world!"
+    assert attachment_message.content_encoding is ContentEncoding.identity
+
+
+def test_attachment_type_messages_from_binary_file(testdir: "Testdir", tmp_path):
+    file_path = tmp_path / "file.txt"
+    (tmp_path / "file.txt").write_text("Hello world!")
+
+    testdir.makeconftest(
+        # language=python
+        """\
+        from pytest_bdd import given
+        from pathlib import Path
+
+        @given('Attach bytes from {file_path} file', converters={'file_path': Path})
+        def attach_bytes_from_file(attach, file_path: Path):
+            with file_path.open(mode='rb') as file:
+                attach(file, file_name=file_path)
+        """
+    )
+    testdir.makefile(
+        ".feature",
+        # language=gherkin
+        attachment=f"""
+        Feature: Attachment
+
+          Scenario: Add attachment
+            Given Attach bytes from {file_path} file
+
+        """,
+    )
+
+    ndjson_path = tmp_path / "minimal.feature.ndjson"
+    result = testdir.runpytest("--messages-ndjson", str(ndjson_path))
+
+    result.assert_outcomes(passed=1)
+
+    with ndjson_path.open(mode="r") as ndjson_file:
+        ndjson_lines = ndjson_file.readlines()
+
+    unfold_messages = parse_and_unflold_messages(ndjson_lines)
+
+    attachment_messages = messages = list_filter_by_type(Attachment, unfold_messages)
+    assert len(attachment_messages) == 1, f"Messages: {pformat(messages)}"
+
+    attachment_message: Attachment = attachment_messages[0]
+    assert attachment_message.body == "SGVsbG8gd29ybGQh"
+    assert attachment_message.content_encoding is ContentEncoding.base64
+    assert attachment_message.media_type == "application/octet-stream"
+    assert Path(cast(str, attachment_message.file_name)).name == "file.txt"

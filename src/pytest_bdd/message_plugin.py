@@ -1,5 +1,7 @@
 import os
 import sys
+from base64 import b64encode
+from io import BufferedIOBase, TextIOBase
 from pathlib import Path
 from platform import machine, processor, system, version
 from time import time_ns
@@ -13,7 +15,9 @@ from pytest import ExitCode, Session, hookimpl
 
 from pytest_bdd.compatibility.pytest import Config, FixtureRequest, Parser
 from pytest_bdd.model.messages import (
+    Attachment,
     Ci,
+    ContentEncoding,
     Duration,
     Message,
     Meta,
@@ -355,6 +359,56 @@ class MessagePlugin:
                     timestamp=self.current_test_case_step_finish_timestamp,
                     test_step_id=step_definition.id,
                     test_step_result=TestStepResult(duration=current_test_case_step_duration, status=Status.failed),
+                )
+            ),
+        )
+
+    def pytest_bdd_attach(self, request, attachment, media_type, file_name):
+        config = request.config
+        if config.option.messages_ndjson_path is None:
+            return
+        hook_handler = config.hook
+
+        if isinstance(attachment, (str, TextIOBase)):
+            content_encoding = ContentEncoding.identity
+            _media_type = "text/plain;charset=UTF-8" if media_type is None else media_type
+        elif isinstance(attachment, (bytes, bytearray, BufferedIOBase)):
+            content_encoding = ContentEncoding.base64
+            _media_type = "application/octet-stream" if media_type is None else media_type
+        else:
+            content_encoding = ContentEncoding.identity
+            _media_type = "text/plain;charset=UTF-8" if media_type is None else media_type
+
+        if isinstance(attachment, str):
+            body = attachment
+        elif isinstance(attachment, TextIOBase):
+            body = attachment.read()
+        elif isinstance(attachment, (bytes, bytearray, BufferedIOBase)):
+            if isinstance(attachment, bytes):
+                body_bytes = attachment
+            elif isinstance(attachment, bytearray):
+                body_bytes = bytes(attachment)
+            elif isinstance(attachment, BufferedIOBase):
+                body_bytes = attachment.read()
+            else:  # pragma: no cover
+                body_bytes = b""
+
+            body = b64encode(body_bytes).decode("ascii")
+        else:
+            body = str(attachment)
+
+        hook_handler.pytest_bdd_message(
+            config=config,
+            message=Message(
+                attachment=Attachment(
+                    test_step_id=self.current_test_case.id,
+                    test_case_started_id=self.current_test_case.id,
+                    # TODO find a specification when it useful
+                    # source=,
+                    media_type=_media_type,
+                    **(dict(file_name=str(file_name)) if file_name is not None else {}),
+                    content_encoding=content_encoding,
+                    body=body,
                 )
             ),
         )
