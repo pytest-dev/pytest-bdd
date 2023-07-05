@@ -18,31 +18,9 @@ Planned
   - Waiting for upstream issue https://github.com/cucumber/gherkin/pull/64
 - Support of messages:
 
-  - Done:
-
-    - meta
-    - gherkin_document
-    - pickle
-    - source
-    - step_definition
-    - test_case
-    - test_case_finished
-    - test_case_started
-    - test_run_finished
-    - test_run_started
-    - test_step_finished
-    - test_step_started
-    - parameter_type
-    - attachment
-
-  - To implement:
-
   - Pending:
 
     - hook
-
-      - Add support of conditional hooks https://cucumber.io/docs/cucumber/api/?lang=java#conditional-hooks
-
     - parse_error
     - undefined_parameter_type
 
@@ -61,7 +39,10 @@ Planned
 - Test messages against
 
   - pytest-xdist at workers on different machines (sending back ndjson info https://codespeak.net/execnet/example/test_info.html#sending-channels-over-channels)
+
+    - Investigate https://smarie.github.io/python-pytest-harvest/
   - pytest-rerunfailures
+  - Parametrize step execution by different step realizations using https://smarie.github.io/python-pytest-cases/
 - Messages has to write output file in async manner
 - Refactor
 
@@ -72,6 +53,26 @@ Planned
 
 Unreleased
 ----------
+- Support of messages:
+
+  - Done:
+
+    - meta
+    - gherkin_document
+    - pickle
+    - source
+    - step_definition
+    - test_case
+    - test_case_finished
+    - test_case_started
+    - test_run_finished
+    - test_run_started
+    - test_step_finished
+    - test_step_started
+    - parameter_type
+    - attachment
+
+- Add support of conditional hooks https://cucumber.io/docs/cucumber/api/?lang=java#conditional-hooks
 
 2.0.0
 ----------

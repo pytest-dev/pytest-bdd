@@ -57,6 +57,7 @@ dependencies = [
     "gherkin-official>=24",
     "importlib-metadata;python_version<'3.10.0'",
     "importlib-resources",
+    "makefun",
     "Mako",
     "ordered_set",
     "packaging",
