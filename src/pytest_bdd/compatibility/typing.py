@@ -1,15 +1,16 @@
 import sys
 
 if sys.version_info >= (3, 10):
-    from typing import Literal, Protocol, TypeAlias, runtime_checkable
+    from typing import TypeAlias
 else:
-    from typing import runtime_checkable
+    from typing_extensions import TypeAlias
 
-    from typing_extensions import Literal, Protocol, TypeAlias
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 __all__ = [
-    "Literal",
-    "Protocol",
-    "runtime_checkable",
+    "Self",
     "TypeAlias",
 ]

@@ -7,7 +7,7 @@ from operator import attrgetter, contains, methodcaller
 from re import Match
 from re import Pattern as _RePattern
 from re import compile as re_compile
-from typing import Any, Dict, Iterable, Optional, Sequence, Type, Union, cast
+from typing import Any, Dict, Iterable, Optional, Protocol, Sequence, Type, Union, cast, runtime_checkable
 
 import parse as base_parse
 import parse_type.cfparse as base_cfparse
@@ -18,7 +18,6 @@ from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
 from cucumber_expressions.regular_expression import RegularExpression as CucumberRegularExpression
 
 from pytest_bdd.compatibility.pytest import FixtureRequest
-from pytest_bdd.compatibility.typing import Protocol, runtime_checkable
 from pytest_bdd.model.messages import ExpressionType
 from pytest_bdd.utils import StringableProtocol, stringify
 

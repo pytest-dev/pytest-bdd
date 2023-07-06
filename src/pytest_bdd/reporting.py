@@ -4,7 +4,7 @@ Collection of the scenario execution statuses, timing and other information
 that enriches the pytest test reporting.
 """
 import time
-from typing import Any, Callable, Dict, List, Sequence
+from typing import Any, Callable, Dict, List
 
 import pytest
 from attr import Factory, attrib, attrs

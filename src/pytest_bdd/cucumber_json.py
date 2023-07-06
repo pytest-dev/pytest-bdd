@@ -3,10 +3,9 @@ import json
 import math
 import os
 import time
-from typing import TYPE_CHECKING, Any, Dict, Sequence, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, Protocol, Sequence, Union, cast, runtime_checkable
 
 from pytest_bdd.compatibility.pytest import Parser, TerminalReporter, TestReport
-from pytest_bdd.compatibility.typing import Protocol, runtime_checkable
 
 if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.compatibility.pytest import Config as BaseConfig

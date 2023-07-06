@@ -17,19 +17,19 @@ from typing import (
     Callable,
     Collection,
     Dict,
+    Literal,
     Mapping,
     Optional,
     Pattern,
+    Protocol,
     Sequence,
     Type,
     Union,
     cast,
+    runtime_checkable,
 )
 
-from pytest import raises
-
 from pytest_bdd.compatibility.pytest import FixtureDef, fail
-from pytest_bdd.compatibility.typing import Literal, Protocol, runtime_checkable
 from pytest_bdd.const import ALPHA_REGEX, PYTHON_REPLACE_REGEX
 
 if TYPE_CHECKING:  # pragma: no cover

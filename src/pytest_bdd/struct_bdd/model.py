@@ -5,12 +5,11 @@ from inspect import getfile
 from itertools import chain, product, starmap, zip_longest
 from operator import attrgetter, eq, is_not
 from pathlib import Path
-from typing import Any, ClassVar, List, Optional, Sequence, Type, Union
+from typing import Any, ClassVar, List, Literal, Optional, Sequence, Type, Union
 
 from attr import attrib, attrs
 from pydantic import BaseModel, Extra, Field, validator
 
-from pytest_bdd.compatibility.typing import Literal
 from pytest_bdd.model.messages import KeywordType
 from pytest_bdd.utils import deepattrgetter
 

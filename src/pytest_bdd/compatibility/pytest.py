@@ -27,6 +27,34 @@ if sys.version_info >= (3, 10):
 else:
     from typing_extensions import TypeAlias
 
+__all__ = [
+    "assert_outcomes",
+    "Item",
+    "CallInfo",
+    "call_fixture_func",
+    "Config",
+    "ExitCode",
+    "FixtureDef",
+    "FixtureLookupError",
+    "FixtureRequest",
+    "get_config_root_path",
+    "Mark",
+    "MarkDecorator",
+    "Metafunc",
+    "Module",
+    "Parser",
+    "PytestPluginManager",
+    "PYTEST6",
+    "PYTEST7",
+    "RunResult",
+    "Session",
+    "TerminalReporter",
+    "Testdir",
+    "TestReport",
+    "TypeAlias",
+    "wrap_session",
+]
+
 
 # region pytest version dependent imports
 def is_pytest_version_greater(version: str):
@@ -44,7 +72,20 @@ PYTEST6, PYTEST61, PYTEST62, PYTEST7 = map(
 )
 
 if PYTEST6:
+    # noinspection PyUnresolvedReferences
     from _pytest.config import ExitCode
+
+    # noinspection PyUnresolvedReferences
+    from _pytest.mark import MarkMatcher
+
+    # noinspection PyUnresolvedReferences
+    from _pytest.mark.expression import Expression, ParseError
+
+    __all__ += [
+        "MarkMatcher",
+        "Expression",
+        "ParseError",
+    ]
 else:
     ExitCode: TypeAlias = int  # type:ignore[no-redef]
 
@@ -138,33 +179,3 @@ def fail(reason, pytrace=True):
         return _pytest_fail(reason, pytrace=pytrace)
     else:
         return _pytest_fail(msg=reason, pytrace=pytrace)
-
-
-__all__ = [
-    "assert_outcomes",
-    "Item",
-    "CallInfo",
-    "call_fixture_func",
-    "Config",
-    "ExitCode",
-    "fail",
-    "FixtureDef",
-    "FixtureLookupError",
-    "FixtureRequest",
-    "get_config_root_path",
-    "Mark",
-    "MarkDecorator",
-    "Metafunc",
-    "Module",
-    "Parser",
-    "PytestPluginManager",
-    "PYTEST6",
-    "PYTEST7",
-    "RunResult",
-    "Session",
-    "TerminalReporter",
-    "Testdir",
-    "TestReport",
-    "TypeAlias",
-    "wrap_session",
-]

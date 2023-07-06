@@ -1,8 +1,7 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Sequence, Union
+from typing import TYPE_CHECKING, Callable, Protocol, Sequence, Union, runtime_checkable
 
 from pytest_bdd.compatibility.pytest import Config
-from pytest_bdd.compatibility.typing import Protocol, runtime_checkable
 from pytest_bdd.utils import PytestBDDIdGeneratorHandler
 
 if TYPE_CHECKING:  # pragma: no cover
