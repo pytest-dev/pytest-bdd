@@ -1,5 +1,5 @@
 from itertools import cycle
-from typing import AbstractSet, Protocol, Type, TypeVar, runtime_checkable
+from typing import AbstractSet, Optional, Protocol, Type, TypeVar, runtime_checkable
 
 from attr import attrib, attrs
 from cucumber_tag_expressions import TagExpressionError, TagExpressionParser
@@ -24,37 +24,38 @@ class TagExpression(Protocol):
 
 @attrs
 class _MarksTagExpression(TagExpression):
-    expression: "Expression" = attrib()
+    expression: Optional["Expression"] = attrib()
 
     @classmethod
     def parse(cls, expression):
         try:
-            return cls(expression=Expression.compile(expression))
+            return cls(expression=Expression.compile(expression) if expression != "" else None)
         except ParseError as e:
             raise ValueError(f"Unable parse mark expression: {expression}: {e}") from e
 
     def evaluate(self, tags):
-        return self.expression.evaluate(MarkMatcher(tags))
+        return self.expression.evaluate(MarkMatcher(tags)) if self.expression is not None else True
 
 
 @attrs
 class _FallbackMarksTagExpression(TagExpression):
     """Used for pytest<6.0"""
 
-    expression: str = attrib()
+    expression: Optional[str] = attrib()
 
     @classmethod
     def parse(cls, expression):
         try:
-            eval(expression, {})
+            if expression != "":
+                eval(expression, {})
         except SyntaxError as e:
             raise ValueError(f"Unable parse mark expression: {expression}: {e}") from e
         except NameError:
             pass
-        return cls(expression=expression)
+        return cls(expression=expression if expression != "" else None)
 
     def evaluate(self, tags):
-        return eval(self.expression, {}, dict(zip(tags, cycle([True]))))
+        return eval(self.expression, {}, dict(zip(tags, cycle([True])))) if self.expression is not None else True
 
 
 MarksTagExpression = _MarksTagExpression if PYTEST6 else _FallbackMarksTagExpression

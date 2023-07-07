@@ -67,7 +67,7 @@ def step_registry() -> StepHandler.Registry:
     return __registry
 
 
-step_registry.__registry__ = __registry  # type: ignore[attr-defined]
+step_registry.__pytest_bdd_step_registry__ = __registry  # type: ignore[attr-defined]
 
 
 @pytest.fixture

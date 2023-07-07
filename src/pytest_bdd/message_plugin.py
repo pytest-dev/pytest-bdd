@@ -1,30 +1,34 @@
 import os
 import sys
 from base64 import b64encode
+from inspect import getfile, getsourcelines
 from io import BufferedIOBase, TextIOBase
 from pathlib import Path
 from platform import machine, processor, system, version
 from queue import Empty, Queue
 from threading import Event, Thread
 from time import sleep, time_ns
-from typing import Callable, Dict, Optional, Union, cast
+from typing import Callable, Optional, Set, Union, cast
 
+from _pytest.fixtures import FixtureDef
 from attr import attrib, attrs
 from ci_environment import detect_ci_environment
-from cucumber_expressions.parameter_type import ParameterType as CucumberExpressionParameterType
 from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
 from pytest import ExitCode, Session, hookimpl
 
-from pytest_bdd.compatibility.pytest import Config, FixtureRequest, Parser
+from pytest_bdd.compatibility.pytest import Config, FixtureRequest, Parser, get_config_root_path
 from pytest_bdd.model.messages import (
     Attachment,
     Ci,
     ContentEncoding,
     Duration,
+    Hook,
+    Location,
     Message,
     Meta,
     ParameterType,
     Product,
+    SourceReference,
     Status,
     TestCase,
     TestCaseFinished,
@@ -47,7 +51,8 @@ class MessagePlugin:
     config: Config = attrib()
     current_test_case = attrib(default=None)
     current_test_case_step_to_definition_mapping = attrib(default=None)
-    parameter_type_registry: Dict[int, CucumberExpressionParameterType] = dict()
+    parameter_type_registry: Set[int] = set()
+    hook_registry: Set[int] = set()
 
     def __attrs_post_init__(self):
         self.queue = Queue()
@@ -112,7 +117,7 @@ class MessagePlugin:
         hook_handler = config.hook
 
         for name, plugin in session.config.pluginmanager.list_name_plugin():
-            registry = deepattrgetter("step_registry.__registry__.registry", default=set())(plugin)[0]
+            registry = deepattrgetter("step_registry.__pytest_bdd_step_registry__.registry", default=set())(plugin)[0]
             for step_definition in registry:
                 hook_handler.pytest_bdd_message(
                     config=config, message=Message(step_definition=step_definition.as_message(config=config))
@@ -165,6 +170,44 @@ class MessagePlugin:
         self.process_messages_stop_event.set()
 
     @hookimpl(hookwrapper=True)
+    def pytest_fixture_setup(self, fixturedef: FixtureDef, request):
+        config = request.config
+        func = fixturedef.func
+        func_id = id(func)
+
+        if config.option.messages_ndjson_path is None or func_id in self.hook_registry:
+            yield
+            return
+
+        hook_handler = config.hook
+
+        if hasattr(func, "__pytest_bdd_is_hook__"):
+            self.hook_registry.add(func_id)
+
+            hook_name = getattr(func, "__pytest_bdd_hook_name__", None)
+            hook_expression = getattr(func, "__pytest_bdd_hook_expression__", None)
+
+            hook_handler.pytest_bdd_message(
+                config=config,
+                message=Message(
+                    hook=Hook(
+                        id=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator.get_next_id(),
+                        **({"name": hook_name} if hook_name is not None else {}),
+                        source_reference=SourceReference(
+                            uri=os.path.relpath(
+                                getfile(func),
+                                str(get_config_root_path(cast(Config, config))),
+                            ),
+                            location=Location(line=getsourcelines(func)[1]),
+                        ),
+                        **({"tag_expression": hook_expression} if hook_expression is not None else {}),
+                    )
+                ),
+            )
+
+        yield
+
+    @hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
         outcome = yield
         session = item.session
@@ -180,7 +223,7 @@ class MessagePlugin:
         feature = request.getfixturevalue("feature")
 
         for name, plugin in session.config.pluginmanager.list_name_plugin():
-            registry = deepattrgetter("step_registry.__registry__.registry", default=set())(plugin)[0]
+            registry = deepattrgetter("step_registry.__pytest_bdd_step_registry__.registry", default=set())(plugin)[0]
             for step_definition in registry:
                 parameter_type_registry_getter: Callable[[FixtureRequest], ParameterTypeRegistry] = deepattrgetter(
                     "_get_parameter_type_registry", default=None
@@ -201,7 +244,7 @@ class MessagePlugin:
                 not_yet_registered_parameter_types = {
                     key: parameter_type
                     for key, parameter_type in parameter_types.items()
-                    if key not in self.parameter_type_registry.keys()
+                    if key not in self.parameter_type_registry
                 }
 
                 for parameter_type in not_yet_registered_parameter_types.values():
@@ -217,7 +260,7 @@ class MessagePlugin:
                             ),
                         ),
                     )
-                self.parameter_type_registry.update(not_yet_registered_parameter_types)
+                self.parameter_type_registry |= not_yet_registered_parameter_types.keys()
 
         test_steps = []
         previous_step = None

@@ -17,14 +17,14 @@ class Module(PytestModule):
     def collect(self):
         StepHandler.Registry.inject_registry_fixture_and_register_steps(self.obj)
         try:
-            registry = self.obj.step_registry.__registry__.registry
+            registry = self.obj.step_registry.__pytest_bdd_step_registry__.registry
         except AttributeError:
             registry = set()
         config = self.session.config
         if config.option.messages_ndjson_path is not None:
             for step_definition in registry:
                 config.hook.pytest_bdd_message(
-                    config=config, message=Message(stepDefinition=step_definition.as_message(config=config))
+                    config=config, message=Message(step_definition=step_definition.as_message(config=config))
                 )
         return super().collect()
 

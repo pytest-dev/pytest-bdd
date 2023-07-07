@@ -397,7 +397,7 @@ class StepHandler:
             ]
             if steps:
                 setdefaultattr(obj, "step_registry", value_factory=lambda: StepHandler.Registry().fixture)
-                obj.step_registry.__registry__.register_steps(steps)
+                obj.step_registry.__pytest_bdd_step_registry__.register_steps(steps)
 
         def register_step_definition(self, step_definition):
             self.registry.add(step_definition)
@@ -414,7 +414,7 @@ class StepHandler:
                 self.parent = step_registry
                 return self
 
-            step_registry.__registry__ = self
+            step_registry.__pytest_bdd_step_registry__ = self
             return step_registry
 
         def __iter__(self) -> Iterator["StepHandler.Definition"]:

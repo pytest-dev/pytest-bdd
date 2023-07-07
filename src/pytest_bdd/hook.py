@@ -5,6 +5,7 @@ from itertools import count, product, starmap
 from operator import attrgetter
 from typing import Optional, Union
 
+from decopatch import function_decorator
 from makefun import wraps
 from pytest import fixture
 
@@ -29,23 +30,27 @@ def decorator_builder(conjunction: Union[str, HookConjunction], kind: Union[str,
     _conjunction = HookConjunction(conjunction) if isinstance(conjunction, str) else conjunction
     _kind = HookKind(kind) if isinstance(kind, str) else kind
 
-    def decorator_wrapper(expression: str, name: Optional[str] = None):
+    @function_decorator
+    def decorator_wrapper(expression: Optional[str] = None, name: Optional[str] = None):
+        _expression: str = expression if expression is not None else ""
+
         def decorator(func):
             func_sig = signature(func)
 
-            @fixture(
-                name=f"{_conjunction.value}_{_kind.value}_expression_{expression}_{next(expression_count_gen)}",
+            fixture_decorator = fixture(
+                name=f"{_conjunction.value}_{_kind.value}_expression_{_expression}_{next(expression_count_gen)}",
                 autouse=True,
             )
+
             @wraps(func, prepend_args="request", remove_args="request")
             def hook(request: FixtureRequest, *args, **kwargs):
-                _expression = {
+                _ExpressionType = {
                     HookKind.mark: MarksTagExpression,
                     HookKind.tag: GherkinTagExpression,
                 }[_kind]
 
                 # mypy@Python 3.8 complains "ABCMeta" has no attribute "parse"  [attr-defined] what is wrong
-                parsed_expression: TagExpression = _expression.parse(expression)  # type: ignore[attr-defined]
+                parsed_expression: TagExpression = _ExpressionType.parse(_expression)  # type: ignore[attr-defined]
 
                 get_tags = {
                     HookKind.mark: lambda: {mark.name for mark in request.node.iter_markers()},
@@ -83,7 +88,12 @@ def decorator_builder(conjunction: Union[str, HookConjunction], kind: Union[str,
                 else:
                     yield
 
-            return hook
+            hook.__pytest_bdd_is_hook__ = True
+            if name is not None:
+                hook.__pytest_bdd_hook_name__ = name
+            hook.__pytest_bdd_hook_expression__ = _expression
+
+            return fixture_decorator(hook)
 
         return decorator
 

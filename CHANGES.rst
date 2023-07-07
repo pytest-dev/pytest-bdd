@@ -20,7 +20,6 @@ Planned
 
   - Pending:
 
-    - hook
     - parse_error
     - undefined_parameter_type
 
@@ -43,7 +42,6 @@ Planned
     - Investigate https://smarie.github.io/python-pytest-harvest/
   - pytest-rerunfailures
   - Parametrize step execution by different step realizations using https://smarie.github.io/python-pytest-cases/
-- Messages has to write output file in async manner
 - Refactor
 
   - Poetry
@@ -71,6 +69,7 @@ Unreleased
     - test_step_started
     - parameter_type
     - attachment
+    - hook
 
 - Add support of conditional hooks https://cucumber.io/docs/cucumber/api/?lang=java#conditional-hooks
 
