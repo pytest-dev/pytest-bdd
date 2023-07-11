@@ -45,13 +45,19 @@ Planned
 - Refactor
 
   - Poetry
-  - Tox 4
+
+    - Wait for https://github.com/python-poetry/roadmap/issues/3
   - Remove attrs
   - Pydantic 2
+
+    - Contribute to messages repository after migration
   - testdir -> pytester
+  - ci-environment lib was accepted by cucumber community, so switch dependency there
 
 Unreleased
 ----------
+- Add tests for PyPy
+- Using tox4
 - Support of messages:
 
   - Done:
