@@ -45,6 +45,11 @@ repos:
     hooks:
       - id: yamllint
         args: [--format, parsable, --strict]
+  - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+    rev: V2.9.0
+    hooks:
+      - id: pretty-format-toml
+        args: [--autofix]
   - repo: local
     hooks:
       - id: generate-feature-doc

@@ -1,133 +1,164 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools<68", "wheel"]
+
 [project]
-name = "pytest-bdd-ng"
-description = "BDD for pytest"
-readme = {file = "README.rst", content-type = "text/x-rst"}
 authors = [
   {name = "Oleg Pidsadnyi", email = "oleg.pidsadnyi@gmail.com"},
   {name = "Anatoly Bubenkov", email = "bubenkoff@gmail.com"},
-  {name="Adam Coddington" , email = "me@adamcoddington.net"},
-  {name="Albert-Jan Nijburg" , email = "albertjan@curit.com"},
-  {name="Alessio Bogon", email = "youtux@gmail.com"},
-  {name="Andrey Makhnach" , email = "andrey.makhnach@gmail.com"},
-  {name="Aron Curzon" , email = "curzona@gmail.com"},
-  {name="Dmitrijs Milajevs" , email = "dimazest@gmail.com"},
-  {name="Dmitry Kolyagin" },
-  {name="Florian Bruhin" , email = "me@the-compiler.org"},
-  {name="Floris Bruynooghe" , email = "flub@devork.be"},
-  {name="Harro van der Klauw" , email = "hvdklauw@gmail.com"},
-  {name="Hugo van Kemenade"},
-  {name="Konstantin Goloveshko" , email = "kostya.goloveshko@gmail.com"},
-  {name="Laurence Rowe" , email = "l@lrowe.co.uk"},
-  {name="Leonardo Santagada" , email = "santagada@github.com"},
-  {name="Milosz Sliwinski", email = "sliwinski.milosz@gmail.com" },
-  {name="Michiel Holtkamp" , email = "github@elfstone.nl"},
-  {name="Robin Pedersen" , email = "ropez@github.com"},
-  {name="Sergey Kraynev" , email = "sergejyit@gmail.com"},
+  {name = "Adam Coddington", email = "me@adamcoddington.net"},
+  {name = "Albert-Jan Nijburg", email = "albertjan@curit.com"},
+  {name = "Alessio Bogon", email = "youtux@gmail.com"},
+  {name = "Andrey Makhnach", email = "andrey.makhnach@gmail.com"},
+  {name = "Aron Curzon", email = "curzona@gmail.com"},
+  {name = "Dmitrijs Milajevs", email = "dimazest@gmail.com"},
+  {name = "Dmitry Kolyagin"},
+  {name = "Florian Bruhin", email = "me@the-compiler.org"},
+  {name = "Floris Bruynooghe", email = "flub@devork.be"},
+  {name = "Harro van der Klauw", email = "hvdklauw@gmail.com"},
+  {name = "Hugo van Kemenade"},
+  {name = "Konstantin Goloveshko", email = "kostya.goloveshko@gmail.com"},
+  {name = "Laurence Rowe", email = "l@lrowe.co.uk"},
+  {name = "Leonardo Santagada", email = "santagada@github.com"},
+  {name = "Milosz Sliwinski", email = "sliwinski.milosz@gmail.com"},
+  {name = "Michiel Holtkamp", email = "github@elfstone.nl"},
+  {name = "Robin Pedersen", email = "ropez@github.com"},
+  {name = "Sergey Kraynev", email = "sergejyit@gmail.com"}
 ]
-maintainers = [
-  {name="Konstantin Goloveshko" , email = "kostya.goloveshko@gmail.com"},
-]
-license = {file = "LICENSE.txt"}
-urls = {Repository ="https://github.com/elchupanebrej/pytest-bdd-ng"}
-version = "2.0.0"
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Framework :: Pytest",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: POSIX",
-    "Operating System :: Microsoft :: Windows",
-    "Operating System :: MacOS :: MacOS X",
-    "Topic :: Software Development :: Testing",
-    "Topic :: Software Development :: Libraries",
-    "Topic :: Utilities",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
+  "Development Status :: 4 - Beta",
+  "Framework :: Pytest",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: MacOS :: MacOS X",
+  "Topic :: Software Development :: Testing",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Utilities",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11"
 ]
-requires-python = ">=3.8"
 dependencies = [
-    "aiohttp",
-    "attrs",
-    "certifi",
-    "cucumber-expressions",
-    "decopatch",
-    "docopt-ng",
-    "gherkin-official>=24",
-    "importlib-metadata;python_version<'3.10.0'",
-    "importlib-resources",
-    "makefun",
-    "Mako",
-    "ordered_set",
-    "packaging",
-    "parse",
-    "parse_type>=0.6.0",
-    "py",
-    "pydantic>=1.0, <2.0.0",
-    "pytest>=5.0",
-    "setuptools>=58",
-    "six>=1.16;python_version~='3.8'",
-    "cucumber-tag-expressions",
-    "types-docopt",
-    "typing-extensions;python_version<'3.11.0'",
-    "gherkin-ci-environment@git+https://github.com/elchupanebrej/ci-environment.git@python-impl#subdirectory=python",
+  "aiohttp",
+  "attrs",
+  "certifi",
+  "cucumber-expressions",
+  "decopatch",
+  "docopt-ng",
+  "gherkin-official>=24",
+  "importlib-metadata;python_version<'3.10.0'",
+  "importlib-resources",
+  "makefun",
+  "Mako",
+  "ordered_set",
+  "packaging",
+  "parse",
+  "parse_type>=0.6.0",
+  "py",
+  "pydantic>=1.0, <2.0.0",
+  "pytest>=5.0",
+  "setuptools>=58",
+  "six>=1.16;python_version~='3.8'",
+  "cucumber-tag-expressions",
+  "types-docopt",
+  "typing-extensions;python_version<'3.11.0'",
+  "gherkin-ci-environment@git+https://github.com/elchupanebrej/ci-environment.git@python-impl#subdirectory=python"
+]
+description = "BDD for pytest"
+license = {file = "LICENSE.txt"}
+maintainers = [
+  {name = "Konstantin Goloveshko", email = "kostya.goloveshko@gmail.com"}
+]
+name = "pytest-bdd-ng"
+readme = {file = "README.rst", content-type = "text/x-rst"}
+requires-python = ">=3.8"
+urls = {Repository = "https://github.com/elchupanebrej/pytest-bdd-ng"}
+version = "2.0.0"
+
+[project.entry-points]
+pytest11 = {"pytest-bdd" = "pytest_bdd.plugin"}
+
+[project.optional-dependencies]
+allure = [
+  "allure-python-commons",
+  "allure-pytest"
+]
+full = [
+  "pytest-bdd-ng[allure]",
+  "pytest-bdd-ng[struct-bdd]",
+  "pytest-bdd-ng[test]"
+]
+struct-bdd = [
+  "hjson",
+  "json5",
+  "pyhocon",
+  'tomli;python_version<"3.11.0"',
+  "PyYAML",
+  "types-PyYAML"
+]
+test = [
+  "allure-python-commons-test",
+  "execnet",
+  "packaging",
+  "PyHamcrest",
+  "pytest-httpserver",
+  "python-coveralls"
+]
+testenv = [
+  "tox",
+  "codecov"
 ]
 
 [project.scripts]
 bdd_tree_to_rst = "pytest_bdd.script.bdd_tree_to_rst:main"
 
-[project.entry-points]
-pytest11 = {"pytest-bdd" = "pytest_bdd.plugin"}
-
-[build-system]
-requires = ["setuptools<68", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [tool.black]
-verbose = true
 line-length = 120
 target-version = ["py38", "py39", "py310", "py311"]
+verbose = true
 
 [tool.isort]
-profile = "black"
 line_length = 120
 multi_line_output = 3
+profile = "black"
 
 [tool.mypy]
+files = "src/pytest_bdd/**/*.py"
 install_types = true
 non_interactive = true
-files = "src/pytest_bdd/**/*.py"
-show_error_codes = true
-warn_return_any = true
-warn_unused_configs = true
 plugins = [
   "pydantic.mypy"
 ]
+show_error_codes = true
+warn_return_any = true
+warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = [
-    "allure_commons.*",
-    "allure_pytest.*",
-    "attr.*",
-    "ci_environment.*",
-    "cucumber_expressions.*",
-    "cucumber_tag_expressions.*",
-    "decopatch.*",
-    "execnet.*",
-    "gherkin.*",
-    "hjson",
-    "json5",
-    "makefun",
-    "mako.*",
-    "ordered_set",
-    "parse",
-    "parse_type.*",
-    "pluggy.*",
-    "_pytest.*",
-    "pyhocon",
-    "pytest.*",
-    "yaml.*"
-]
 ignore_missing_imports = true
+module = [
+  "allure_commons.*",
+  "allure_pytest.*",
+  "attr.*",
+  "ci_environment.*",
+  "cucumber_expressions.*",
+  "cucumber_tag_expressions.*",
+  "decopatch.*",
+  "execnet.*",
+  "gherkin.*",
+  "hjson",
+  "json5",
+  "makefun",
+  "mako.*",
+  "ordered_set",
+  "parse",
+  "parse_type.*",
+  "pluggy.*",
+  "_pytest.*",
+  "pyhocon",
+  "pytest.*",
+  "yaml.*"
+]
