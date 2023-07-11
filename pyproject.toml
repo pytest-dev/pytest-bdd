@@ -90,7 +90,8 @@ allure = [
 full = [
   "pytest-bdd-ng[allure]",
   "pytest-bdd-ng[struct-bdd]",
-  "pytest-bdd-ng[test]"
+  "pytest-bdd-ng[test]",
+  "pytest-bdd-ng[testtypes]"
 ]
 struct-bdd = [
   "hjson",
@@ -111,6 +112,12 @@ test = [
 testenv = [
   "tox~=4.0",
   "codecov"
+]
+testtypes = [
+  "mypy",
+  "types-certifi",
+  "types-docopt",
+  "types-setuptools"
 ]
 
 [project.scripts]
