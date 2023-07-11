@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from _pytest.outcomes import Failed
 from attr import attrib, attrs
@@ -303,7 +305,9 @@ def test_flip_two_args_as_named_by_pos_only():
     def func(arg1, arg2, /):  # pragma: nocover
         return arg1, arg2
 
-    with raises(TypeError, match=".*got some positional-only arguments passed as keyword arguments.*"):
+    with raises(
+        TypeError, match=re.compile(r".*got (some|a) positional-only arguments? passed as keyword arguments?\.|:.*")
+    ):
         flip(func)("item1", arg2="item2") == ("item1", "item2")
 
 
