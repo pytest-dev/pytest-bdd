@@ -48,6 +48,7 @@ Planned
   - Tox 4
   - Remove attrs
   - Pydantic 2
+  - testdir -> pytester
 
 Unreleased
 ----------
