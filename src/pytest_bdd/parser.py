@@ -30,25 +30,8 @@ class GlobMixin:
     glob: Callable[..., Sequence[Union[str, Path]]] = attrib(default=methodcaller("glob", "*.feature"), kw_only=True)
 
 
-class ASTBuilderMixin:
-    def build_feature(self, gherkin_document_raw_dict, filename: str, id_generator) -> Feature:
-        gherkin_document = Feature.load_gherkin_document(gherkin_document_raw_dict)
-
-        pickles_data = PicklesCompiler(id_generator=id_generator).compile(gherkin_document_raw_dict)
-        pickles = Feature.load_pickles(pickles_data)
-
-        feature = Feature(  # type: ignore[call-arg]
-            gherkin_document=gherkin_document,
-            uri=gherkin_document.uri,
-            pickles=pickles,
-            filename=filename,
-        )
-
-        return feature
-
-
 @attrs
-class GherkinParser(ASTBuilderMixin, GlobMixin, ParserProtocol):
+class GherkinParser(GlobMixin, ParserProtocol):
     def parse(
         self, config: Union[Config, PytestBDDIdGeneratorHandler], path: Path, uri: str, *args, **kwargs
     ) -> Tuple[Feature, str]:
@@ -72,7 +55,6 @@ class GherkinParser(ASTBuilderMixin, GlobMixin, ParserProtocol):
         feature = self.build_feature(
             gherkin_document_raw_dict,
             filename=str(path.as_posix()),
-            id_generator=self.id_generator,
         )
         return feature, feature_file_data
 
@@ -105,3 +87,18 @@ class GherkinParser(ASTBuilderMixin, GlobMixin, ParserProtocol):
         features = map(itemgetter(0), features_content)
 
         return sorted(features, key=lambda feature: feature.name or feature.filename)
+
+    def build_feature(self, gherkin_document_raw_dict, filename: str) -> Feature:
+        gherkin_document = Feature.load_gherkin_document(gherkin_document_raw_dict)
+
+        pickles_data = PicklesCompiler(id_generator=self.id_generator).compile(gherkin_document_raw_dict)
+        pickles = Feature.load_pickles(pickles_data)
+
+        feature = Feature(  # type: ignore[call-arg]
+            gherkin_document=gherkin_document,
+            uri=gherkin_document.uri,
+            pickles=pickles,
+            filename=filename,
+        )
+
+        return feature
