@@ -6,7 +6,6 @@ from typing import Optional, Tuple, cast
 from uuid import uuid4
 
 from pytest_bdd.compatibility.pytest import Module as PytestModule
-from pytest_bdd.model.messages import Message
 from pytest_bdd.scenario import scenarios
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.utils import convert_str_to_python_name
@@ -16,16 +15,6 @@ from pytest_bdd.webloc import read as webloc_read
 class Module(PytestModule):
     def collect(self):
         StepHandler.Registry.inject_registry_fixture_and_register_steps(self.obj)
-        try:
-            registry = self.obj.step_registry.__pytest_bdd_step_registry__.registry
-        except AttributeError:
-            registry = set()
-        config = self.session.config
-        if config.option.messages_ndjson_path is not None:
-            for step_definition in registry:
-                config.hook.pytest_bdd_message(
-                    config=config, message=Message(step_definition=step_definition.as_message(config=config))
-                )
         return super().collect()
 
 

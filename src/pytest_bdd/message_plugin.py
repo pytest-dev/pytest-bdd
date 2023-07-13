@@ -173,13 +173,6 @@ class MessagePlugin:
         config = session.config
         hook_handler = config.hook
 
-        for name, plugin in session.config.pluginmanager.list_name_plugin():
-            registry = deepattrgetter("step_registry.__pytest_bdd_step_registry__.registry", default=set())(plugin)[0]
-            for step_definition in registry:
-                hook_handler.pytest_bdd_message(
-                    config=config, message=Message(step_definition=step_definition.as_message(config=config))
-                )
-
         hook_handler.pytest_bdd_message(
             config=config,
             message=Message(test_run_started=TestRunStarted(timestamp=self.get_timestamp())),
@@ -285,45 +278,59 @@ class MessagePlugin:
         scenario = request.getfixturevalue("scenario")
         feature = request.getfixturevalue("feature")
 
-        for name, plugin in session.config.pluginmanager.list_name_plugin():
-            registry = deepattrgetter("step_registry.__pytest_bdd_step_registry__.registry", default=set())(plugin)[0]
-            for step_definition in registry:
-                parameter_type_registry_getter: Callable[[FixtureRequest], ParameterTypeRegistry] = deepattrgetter(
-                    "_get_parameter_type_registry", default=None
-                )(step_definition.parser)[0]
-
-                if parameter_type_registry_getter is None:
-                    break
-
-                parameter_type_registry = parameter_type_registry_getter(request)
-
-                parameter_types = dict(
-                    map(
-                        lambda parameter_type: (id(parameter_type), parameter_type),
-                        parameter_type_registry.parameter_types,
+        step_registry = request.getfixturevalue("step_registry")
+        seen_steps = set()
+        while step_registry is not None:
+            for step_definition in step_registry:
+                if id(step_definition) not in seen_steps:
+                    seen_steps.add(id(step_definition))
+                    config.hook.pytest_bdd_message(
+                        config=config, message=Message(step_definition=step_definition.as_message(config=config))
                     )
-                )
+            step_registry = step_registry.parent
 
-                not_yet_registered_parameter_types = {
-                    key: parameter_type
-                    for key, parameter_type in parameter_types.items()
-                    if key not in self.parameter_type_registry
-                }
+        step_registry = request.getfixturevalue("step_registry")
+        seen_steps = set()
+        while step_registry is not None:
+            for step_definition in step_registry:
+                if id(step_definition) not in seen_steps:
+                    parameter_type_registry_getter: Callable[[FixtureRequest], ParameterTypeRegistry] = deepattrgetter(
+                        "_get_parameter_type_registry", default=None
+                    )(step_definition.parser)[0]
 
-                for parameter_type in not_yet_registered_parameter_types.values():
-                    hook_handler.pytest_bdd_message(
-                        config=config,
-                        message=Message(
-                            parameter_type=ParameterType(
-                                name=parameter_type.name,
-                                regular_expressions=parameter_type.regexps,
-                                prefer_for_regular_expression_match=parameter_type._prefer_for_regexp_match,
-                                use_for_snippets=parameter_type._use_for_snippets,
-                                id=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator.get_next_id(),
+                    if parameter_type_registry_getter is None:
+                        break
+
+                    parameter_type_registry = parameter_type_registry_getter(request)
+
+                    parameter_types = dict(
+                        map(
+                            lambda parameter_type: (id(parameter_type), parameter_type),
+                            parameter_type_registry.parameter_types,
+                        )
+                    )
+
+                    not_yet_registered_parameter_types = {
+                        key: parameter_type
+                        for key, parameter_type in parameter_types.items()
+                        if key not in self.parameter_type_registry
+                    }
+
+                    for parameter_type in not_yet_registered_parameter_types.values():
+                        hook_handler.pytest_bdd_message(
+                            config=config,
+                            message=Message(
+                                parameter_type=ParameterType(
+                                    name=parameter_type.name,
+                                    regular_expressions=parameter_type.regexps,
+                                    prefer_for_regular_expression_match=parameter_type._prefer_for_regexp_match,
+                                    use_for_snippets=parameter_type._use_for_snippets,
+                                    id=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator.get_next_id(),
+                                ),
                             ),
-                        ),
-                    )
-                self.parameter_type_registry |= not_yet_registered_parameter_types.keys()
+                        )
+                    self.parameter_type_registry |= not_yet_registered_parameter_types.keys()
+            step_registry = step_registry.parent
 
         test_steps = []
         previous_step = None
