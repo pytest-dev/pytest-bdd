@@ -353,14 +353,15 @@ class StepHandler:
         liberal: Optional[Any] = attrib()
 
         id = attrib(init=False)
-        __cached_message = attrib(init=False)
+        __cache = attrib(default=Factory(dict))
 
         def as_message(self, config: Union[Config, PytestBDDIdGeneratorHandler]):
+            id_generator = cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator
             try:
-                message = self.__cached_message
-            except AttributeError:
-                self.id = cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator.get_next_id()
-                self.__cached_message = StepDefinition(
+                message = self.__cache[id(id_generator)]
+            except KeyError:
+                self.id = id_generator.get_next_id()
+                message = self.__cache[id(id_generator)] = StepDefinition(
                     id=self.id,
                     pattern=StepDefinitionPattern(source=str(self.parser), type=self.parser.type),
                     source_reference=SourceReference(
@@ -371,7 +372,6 @@ class StepHandler:
                         location=Location(line=getsourcelines(self.func)[1]),
                     ),
                 )
-                message = self.__cached_message
             return message
 
         def get_parameters(self, request: FixtureRequest, step: Step):
