@@ -23,7 +23,6 @@ class StructBDDParser(ParserProtocol):
         TOML = "toml"
         YAML = "yaml"
 
-    id_generator = attrib()
     kind = attrib(kw_only=True)
     glob = attrib(kw_only=True)
     loader = attrib(kw_only=True)
@@ -48,7 +47,7 @@ class StructBDDParser(ParserProtocol):
         filename = str(path.as_posix())
         raw_step = self.loader(content, *args, **kwargs)
         step = Step.parse_obj(raw_step)
-        return GherkinDocumentBuilder(model=step).build_feature(filename, uri, self.id_generator)  # type: ignore[call-arg]
+        return GherkinDocumentBuilder(model=step).build_feature(filename, uri, self.id_generator), content  # type: ignore[call-arg]
 
     def build_loader(self):
         if self.kind == self.KIND.YAML.value:

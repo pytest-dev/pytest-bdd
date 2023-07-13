@@ -33,7 +33,7 @@ from pytest_bdd.compatibility.parser import ParserProtocol
 from pytest_bdd.compatibility.pytest import Config, Parser, get_config_root_path
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.model import Feature
-from pytest_bdd.model.messages import Pickle
+from pytest_bdd.model.messages import Message, Pickle, Source
 from pytest_bdd.parser import GherkinParser
 from pytest_bdd.utils import PytestBDDIdGeneratorHandler, compose, make_python_name
 
@@ -126,13 +126,25 @@ class UrlScenarioLocator:
                     filename = f.name
                     f.write(feature_content)
 
-                feature = parser.parse(
+                feature, content = parser.parse(
                     config,
                     Path(filename),
                     url,
                     *self.parse_args.args,
                     **{**dict(encoding=encoding), **self.parse_args.kwargs},
                 )
+
+                # region TODO Move higher
+                cast(Config, config).hook.pytest_bdd_message(
+                    config=config, message=Message(source=Source(uri=url, data=content, media_type=mimetype))
+                )
+
+                cast(Config, config).hook.pytest_bdd_message(
+                    config=config, message=Message(gherkin_document=feature.gherkin_document)
+                )
+                for pickle in feature.pickles:
+                    cast(Config, config).hook.pytest_bdd_message(config=config, message=Message(pickle=pickle))
+                # endregion
 
                 for pickle in feature.pickles:
                     if self.filter_ is None or self.filter_(config, feature, pickle):  # type: ignore
@@ -213,15 +225,15 @@ class FileScenarioLocator:
             hook_handler = cast(Config, config).hook
             encoding = self.encoding
 
-            if self.parser_type is None:
-                if self.mimetype is None:
-                    mimetype = hook_handler.pytest_bdd_get_mimetype(config=config, path=feature_path)
-                else:
-                    mimetype = self.mimetype
+            if self.mimetype is None:
+                media_type = hook_handler.pytest_bdd_get_mimetype(config=config, path=feature_path)
+            else:
+                media_type = self.mimetype
 
+            if self.parser_type is None:
                 parser_type = hook_handler.pytest_bdd_get_parser(
                     config=config,
-                    mimetype=mimetype,
+                    mimetype=media_type,
                 )
             else:
                 parser_type = self.parser_type
@@ -231,13 +243,25 @@ class FileScenarioLocator:
 
             parser = parser_type(id_generator=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator)
 
-            feature = parser.parse(
+            feature, feature_file_data = parser.parse(
                 config,
                 feature_path,
                 uri,
                 *self.parse_args.args,
                 **{**dict(encoding=encoding), **self.parse_args.kwargs},
             )
+
+            # region TODO Move higher
+            cast(Config, config).hook.pytest_bdd_message(
+                config=config, message=Message(source=Source(uri=uri, data=feature_file_data, media_type=media_type))
+            )
+
+            cast(Config, config).hook.pytest_bdd_message(
+                config=config, message=Message(gherkin_document=feature.gherkin_document)
+            )
+            for pickle in feature.pickles:
+                cast(Config, config).hook.pytest_bdd_message(config=config, message=Message(pickle=pickle))
+            # endregion
 
             for pickle in feature.pickles:
                 if self.filter_ is None or self.filter_(config, feature, pickle):  # type: ignore

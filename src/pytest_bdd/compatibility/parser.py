@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Optional, Protocol, Sequence, Union, runtime_checkable
+from typing import TYPE_CHECKING, Callable, Optional, Protocol, Sequence, Tuple, Union, runtime_checkable
 
 from attr import attrib, attrs
 
@@ -19,5 +19,5 @@ class ParserProtocol(Protocol):
 
     def parse(
         self, config: Union[Config, PytestBDDIdGeneratorHandler], path: Path, uri: str, *args, **kwargs
-    ) -> "Feature":  # pragma: no cover
+    ) -> Tuple["Feature", str]:  # pragma: no cover
         ...

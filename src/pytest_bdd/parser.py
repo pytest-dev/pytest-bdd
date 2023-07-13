@@ -1,10 +1,10 @@
 import linecache
 from functools import partial
 from itertools import filterfalse
-from operator import contains, methodcaller
+from operator import contains, itemgetter, methodcaller
 from os.path import relpath
 from pathlib import Path
-from typing import Callable, List, Sequence, Set, Union, cast
+from typing import Callable, List, Sequence, Set, Tuple, Union
 
 from attr import attrib, attrs
 from gherkin.ast_builder import AstBuilder
@@ -17,8 +17,7 @@ from pytest_bdd.compatibility.pytest import Config
 from pytest_bdd.compatibility.struct_bdd import STRUCT_BDD_INSTALLED
 from pytest_bdd.exceptions import FeatureError
 from pytest_bdd.model import Feature
-from pytest_bdd.model.messages import MediaType, Message, Source
-from pytest_bdd.utils import IdGenerator, PytestBDDIdGeneratorHandler
+from pytest_bdd.utils import PytestBDDIdGeneratorHandler
 
 if STRUCT_BDD_INSTALLED:  # pragma: no cover
     from pytest_bdd.struct_bdd.parser import StructBDDParser
@@ -52,22 +51,11 @@ class ASTBuilderMixin:
 class GherkinParser(ASTBuilderMixin, GlobMixin, ParserProtocol):
     def parse(
         self, config: Union[Config, PytestBDDIdGeneratorHandler], path: Path, uri: str, *args, **kwargs
-    ) -> Feature:
+    ) -> Tuple[Feature, str]:
         gherkin_parser = CucumberIOBaseParser(ast_builder=AstBuilder(id_generator=self.id_generator))
         encoding = kwargs.pop("encoding", "utf-8")
         with path.open(mode="r", encoding=encoding) as feature_file:
             feature_file_data = feature_file.read()
-
-        # TODO Use hook for this
-        if ".md" in path.suffixes:
-            media_type = MediaType.text_x_cucumber_gherkin_markdown
-        else:
-            media_type = MediaType.text_x_cucumber_gherkin_plain
-
-        # TODO move out from parse
-        cast(Config, config).hook.pytest_bdd_message(
-            config=config, message=Message(source=Source(uri=uri, data=feature_file_data, media_type=media_type))
-        )
 
         try:
             gherkin_document_raw_dict = gherkin_parser.parse(token_scanner_or_str=feature_file_data, *args, **kwargs)
@@ -81,25 +69,17 @@ class GherkinParser(ASTBuilderMixin, GlobMixin, ParserProtocol):
 
         gherkin_document_raw_dict["uri"] = uri
 
-        # TODO Move messages out of feature parsing
         feature = self.build_feature(
             gherkin_document_raw_dict,
             filename=str(path.as_posix()),
             id_generator=self.id_generator,
         )
-
-        cast(Config, config).hook.pytest_bdd_message(
-            config=config, message=Message(gherkin_document=feature.gherkin_document)
-        )
-        for pickle in feature.pickles:
-            cast(Config, config).hook.pytest_bdd_message(config=config, message=Message(pickle=pickle))
-
-        return feature
+        return feature, feature_file_data
 
     def get_from_paths(self, config: Config, paths: Sequence[Path], **kwargs) -> Sequence[Feature]:
         """Get features for given paths."""
         seen_names: Set[Path] = set()
-        features: List[Feature] = []
+        features_content: List[Tuple[Feature, str]] = []
         features_base_dir = kwargs.pop("features_base_dir", Path.cwd())
         if not features_base_dir.is_absolute():
             features_base_dir = Path.cwd() / features_base_dir
@@ -109,7 +89,7 @@ class GherkinParser(ASTBuilderMixin, GlobMixin, ParserProtocol):
 
             file_paths = list(map(Path, self.glob(path))) if path.is_dir() else [Path(path)]
 
-            features.extend(
+            features_content.extend(
                 map(
                     lambda path: self.parse(
                         config, path, "file:" + relpath(str(path), str(features_base_dir)), **kwargs
@@ -121,5 +101,7 @@ class GherkinParser(ASTBuilderMixin, GlobMixin, ParserProtocol):
             for file_path in file_paths:
                 if file_path not in seen_names:
                     seen_names.add(path)
+
+        features = map(itemgetter(0), features_content)
 
         return sorted(features, key=lambda feature: feature.name or feature.filename)

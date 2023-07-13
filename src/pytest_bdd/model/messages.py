@@ -2,7 +2,7 @@
 # Using https://github.com/cucumber/messages/releases/tag/v22.0.0 as base
 
 from enum import Enum
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Union
 
 from pydantic import BaseModel, Extra, Field
 
@@ -27,7 +27,7 @@ class Source(BaseModel):
         description="*\n The [URI](https://en.wikipedia.org/wiki/Uniform_Resource_Identifier)\n of the source, typically a file path relative to the root directory",
     )
     data: str = Field(..., description="The contents of the file")
-    media_type: MediaType = Field(
+    media_type: Union[MediaType, str] = Field(
         ...,
         alias="mediaType",
         description="The media type of the file. Can be used to specify custom types, such as\n text/x.cucumber.gherkin+plain",
