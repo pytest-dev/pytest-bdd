@@ -6,6 +6,8 @@ from typing import List, Optional, Sequence, Union
 
 from pydantic import BaseModel, Extra, Field
 
+from pytest_bdd.mimetypes import Mimetype
+
 
 class ContentEncoding(Enum):
     identity = "IDENTITY"
@@ -27,7 +29,7 @@ class Source(BaseModel):
         description="*\n The [URI](https://en.wikipedia.org/wiki/Uniform_Resource_Identifier)\n of the source, typically a file path relative to the root directory",
     )
     data: str = Field(..., description="The contents of the file")
-    media_type: Union[MediaType, str] = Field(
+    media_type: Union[MediaType, str, Mimetype] = Field(
         ...,
         alias="mediaType",
         description="The media type of the file. Can be used to specify custom types, such as\n text/x.cucumber.gherkin+plain",

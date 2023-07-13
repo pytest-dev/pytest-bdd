@@ -2,7 +2,7 @@ from collections import defaultdict, namedtuple
 from enum import Enum
 from functools import partial
 from inspect import getfile
-from itertools import chain, product, starmap, zip_longest
+from itertools import chain, product, starmap
 from operator import attrgetter, eq, is_not
 from pathlib import Path
 from typing import Any, ClassVar, List, Literal, Optional, Sequence, Type, Union
@@ -10,7 +10,9 @@ from typing import Any, ClassVar, List, Literal, Optional, Sequence, Type, Union
 from attr import attrib, attrs
 from pydantic import BaseModel, Extra, Field, validator
 
-from pytest_bdd.model.messages import KeywordType
+from pytest_bdd.mimetypes import Mimetype
+from pytest_bdd.model.messages import KeywordType, Source
+from pytest_bdd.scenario import ScenarioLocatorFilterMixin
 from pytest_bdd.utils import deepattrgetter
 
 
@@ -274,24 +276,33 @@ class StepPrototype(Node):
     convert_sub_steps_to_steps = convert_sub_steps_to_steps
 
     @attrs
-    class Locator:
+    class Locator(ScenarioLocatorFilterMixin):
         step: "StepPrototype" = attrib()
         filename = attrib()
         uri = attrib()
+        mimetype = attrib()
 
-        def resolve(self, config):
+        def resolve_features(self, config):
             from pytest_bdd.struct_bdd.model_builder import GherkinDocumentBuilder
 
             feature = GherkinDocumentBuilder(self.step).build_feature(
                 filename=self.filename, uri=self.uri, id_generator=config.pytest_bdd_id_generator
             )
-            return zip_longest((), feature.pickles, fillvalue=feature)
+            feature_source = Source(uri=self.uri, data=Path(self.filename).read_text(), media_type=self.mimetype)
+            yield feature, feature_source
 
     def as_test(self, filename):
         from pytest_bdd.scenario import scenarios
 
         return scenarios(
-            locators=[self.Locator(self, str(Path(filename).as_posix()), str(Path(filename).relative_to(Path.cwd())))],
+            locators=[
+                self.Locator(
+                    self,
+                    str(Path(filename).as_posix()),
+                    str(Path(filename).relative_to(Path.cwd())),
+                    mimetype=Mimetype.python,
+                )
+            ],
             return_test_decorator=False,
         )
 
@@ -299,7 +310,14 @@ class StepPrototype(Node):
         from pytest_bdd.scenario import scenarios
 
         return scenarios(
-            locators=[self.Locator(self, str(Path(filename).as_posix()), str(Path(filename).relative_to(Path.cwd())))],
+            locators=[
+                self.Locator(
+                    self,
+                    str(Path(filename).as_posix()),
+                    str(Path(filename).relative_to(Path.cwd())),
+                    mimetype=Mimetype.python,
+                )
+            ],
             return_test_decorator=True,
         )
 

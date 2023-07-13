@@ -73,6 +73,7 @@ PYTEST6, PYTEST61, PYTEST62, PYTEST7 = map(
 
 if PYTEST6:
     # noinspection PyUnresolvedReferences
+    from _pytest.compat import NotSetType
     from _pytest.config import ExitCode
 
     # noinspection PyUnresolvedReferences
@@ -179,3 +180,14 @@ def fail(reason, pytrace=True):
         return _pytest_fail(reason, pytrace=pytrace)
     else:
         return _pytest_fail(msg=reason, pytrace=pytrace)
+
+
+if PYTEST6:
+
+    def is_set(obj):
+        return not isinstance(obj, NotSetType)
+
+else:
+
+    def is_set(obj):
+        return type(obj) is not object

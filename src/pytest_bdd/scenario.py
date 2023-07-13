@@ -21,7 +21,7 @@ from operator import methodcaller, truediv
 from os.path import commonpath
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Callable, Iterable, Optional, Tuple, Type, Union, cast
+from typing import Callable, Iterable, Optional, Protocol, Tuple, Type, Union, cast, runtime_checkable
 from urllib.parse import urljoin
 
 import aiohttp
@@ -33,7 +33,7 @@ from pytest_bdd.compatibility.parser import ParserProtocol
 from pytest_bdd.compatibility.pytest import Config, Parser, get_config_root_path
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.model import Feature
-from pytest_bdd.model.messages import Message, Pickle, Source
+from pytest_bdd.model.messages import Pickle, Source
 from pytest_bdd.parser import GherkinParser
 from pytest_bdd.utils import PytestBDDIdGeneratorHandler, compose, make_python_name
 
@@ -58,10 +58,42 @@ def add_options(parser: Parser):
     )
 
 
+@runtime_checkable
+class ScenarioLocatorFeatureResolver(Protocol):
+    def resolve_features(
+        self, config: Union[Config, PytestBDDIdGeneratorHandler]
+    ) -> Iterable[Tuple[Feature, Source]]:  # pragma: no cover
+        ...
+
+
+@runtime_checkable
+class ScenarioLocatorResolver(Protocol):
+    def resolve(
+        self, config: Union[Config, PytestBDDIdGeneratorHandler]
+    ) -> Iterable[Tuple[Feature, Pickle, Source]]:  # pragma: no cover
+        ...
+
+
 @attrs
-class UrlScenarioLocator:
+class ScenarioLocatorFilterMixin(ScenarioLocatorFeatureResolver, ScenarioLocatorResolver):
+    filter_: Optional[Callable[[Config, Feature, Pickle], Tuple[Feature, Pickle]]] = attrib(default=None, kw_only=True)
+
+    def filter_scenarios(self, feature, config):
+        return (
+            (feature, pickle)
+            for pickle in feature.pickles
+            if self.filter_ is None or self.filter_(config, feature, pickle)
+        )  # type: ignore
+
+    def resolve(self, config: Config):
+        for feature, feature_data in self.resolve_features(config):
+            for _, pickle in self.filter_scenarios(feature, config):
+                yield feature, pickle, feature_data
+
+
+@attrs
+class UrlScenarioLocator(ScenarioLocatorFilterMixin):
     url_paths = attrib()
-    filter_ = attrib()
     encoding = attrib()
     features_base_url = attrib()
     mimetype = attrib()
@@ -77,7 +109,7 @@ class UrlScenarioLocator:
         async with aiohttp.ClientSession() as session:
             return await asyncio.gather(*[self.fetch(session, url) for url in urls], return_exceptions=True)
 
-    def resolve(self, config: Union[Config, PytestBDDIdGeneratorHandler]):
+    def resolve_features(self, config: Union[Config, PytestBDDIdGeneratorHandler]):
         urls = list(
             self.url_paths
             if self.features_base_url is None
@@ -126,7 +158,7 @@ class UrlScenarioLocator:
                     filename = f.name
                     f.write(feature_content)
 
-                feature, content = parser.parse(
+                feature, feature_data = parser.parse(
                     config,
                     Path(filename),
                     url,
@@ -134,21 +166,8 @@ class UrlScenarioLocator:
                     **{**dict(encoding=encoding), **self.parse_args.kwargs},
                 )
 
-                # region TODO Move higher
-                cast(Config, config).hook.pytest_bdd_message(
-                    config=config, message=Message(source=Source(uri=url, data=content, media_type=mimetype))
-                )
+                yield feature, Source(uri=url, data=feature_data, media_type=mimetype)
 
-                cast(Config, config).hook.pytest_bdd_message(
-                    config=config, message=Message(gherkin_document=feature.gherkin_document)
-                )
-                for pickle in feature.pickles:
-                    cast(Config, config).hook.pytest_bdd_message(config=config, message=Message(pickle=pickle))
-                # endregion
-
-                for pickle in feature.pickles:
-                    if self.filter_ is None or self.filter_(config, feature, pickle):  # type: ignore
-                        yield feature, pickle
             finally:
                 if filename is not None:
                     with suppress(Exception):
@@ -156,9 +175,8 @@ class UrlScenarioLocator:
 
 
 @attrs
-class FileScenarioLocator:
+class FileScenarioLocator(ScenarioLocatorFilterMixin):
     feature_paths = attrib(default=Factory(list))
-    filter_: Optional[Callable[[Config, Feature, Pickle], Tuple[Feature, Pickle]]] = attrib(default=None)
     encoding = attrib(default="utf-8")
     features_base_dir: Optional[Union[str, Path]] = attrib(default=None)
     mimetype: Optional[str] = attrib(default=None)
@@ -211,7 +229,7 @@ class FileScenarioLocator:
 
         return "file:" + str(rel_feature_path.as_posix())
 
-    def resolve(self, config: Union[Config, PytestBDDIdGeneratorHandler]):
+    def resolve_features(self, config: Union[Config, PytestBDDIdGeneratorHandler]):
         features_base_dir = self._resolve_features_base_dir(config)
         already_resolved_feature_paths = set()
 
@@ -243,7 +261,7 @@ class FileScenarioLocator:
 
             parser = parser_type(id_generator=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator)
 
-            feature, feature_file_data = parser.parse(
+            feature, feature_data = parser.parse(
                 config,
                 feature_path,
                 uri,
@@ -251,21 +269,7 @@ class FileScenarioLocator:
                 **{**dict(encoding=encoding), **self.parse_args.kwargs},
             )
 
-            # region TODO Move higher
-            cast(Config, config).hook.pytest_bdd_message(
-                config=config, message=Message(source=Source(uri=uri, data=feature_file_data, media_type=media_type))
-            )
-
-            cast(Config, config).hook.pytest_bdd_message(
-                config=config, message=Message(gherkin_document=feature.gherkin_document)
-            )
-            for pickle in feature.pickles:
-                cast(Config, config).hook.pytest_bdd_message(config=config, message=Message(pickle=pickle))
-            # endregion
-
-            for pickle in feature.pickles:
-                if self.filter_ is None or self.filter_(config, feature, pickle):  # type: ignore
-                    yield feature, pickle
+            yield feature, Source(uri=uri, data=feature_data, media_type=media_type)
 
 
 def get_python_name_generator(name: str) -> Iterable[str]:
@@ -368,7 +372,7 @@ def scenarios(
 
     decorator = compose(
         mark.pytest_bdd_scenario,
-        mark.usefixtures("feature", "scenario"),
+        mark.usefixtures("feature", "scenario", "feature_source"),
         mark.scenarios(
             *feature_paths,
             filter_=filter_,

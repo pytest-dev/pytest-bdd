@@ -20,7 +20,7 @@ from filelock import FileLock
 from pydantic import ValidationError
 from pytest import ExitCode, Session, hookimpl
 
-from pytest_bdd.compatibility.pytest import Config, FixtureDef, FixtureRequest, Parser, get_config_root_path
+from pytest_bdd.compatibility.pytest import Config, FixtureDef, FixtureRequest, Parser, get_config_root_path, is_set
 from pytest_bdd.model.messages import (
     Attachment,
     Ci,
@@ -32,6 +32,7 @@ from pytest_bdd.model.messages import (
     Meta,
     ParameterType,
     Product,
+    Source,
     SourceReference,
     Status,
     TestCase,
@@ -124,6 +125,39 @@ class MessagePlugin:
             default=None,
             help="messages ndjson report file at given path.",
         )
+
+    @hookimpl(hookwrapper=True)
+    def pytest_generate_tests(self, metafunc):
+        yield
+        if self.is_disabled:
+            return
+
+        if all(
+            [
+                "feature" in metafunc.fixturenames,
+                "scenario" in metafunc.fixturenames,
+                "feature_source" in metafunc.fixturenames,
+                metafunc._calls,
+            ]
+        ):
+            config = metafunc.config
+
+            feature_registry = set()
+            pickle_registry = set()
+            for call in metafunc._calls:
+                feature = call.funcargs["feature"]
+                pickle = call.funcargs["scenario"]
+                feature_source: Source = call.funcargs["feature_source"]
+
+                if is_set(feature) and feature_source.uri not in feature_registry:
+                    feature_registry.add(feature_source.uri)
+                    cast(Config, config).hook.pytest_bdd_message(config=config, message=Message(source=feature_source))
+
+                    cast(Config, config).hook.pytest_bdd_message(
+                        config=config, message=Message(gherkin_document=feature.gherkin_document)
+                    )
+                if is_set(pickle) and id(pickle) not in pickle_registry:
+                    cast(Config, config).hook.pytest_bdd_message(config=config, message=Message(pickle=pickle))
 
     def pytest_bdd_message(self, config: Config, message: Message):
         if self.is_disabled:

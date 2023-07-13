@@ -254,7 +254,7 @@ def _build_scenario_locators_from_mark(mark: Mark, config: Config) -> Iterable[A
     return chain(*locators_iterables)
 
 
-def _build_scenario_param(feature: Feature, pickle: Pickle, config: Config):
+def _build_scenario_param(feature: Feature, pickle: Pickle, feature_data: str, config: Config):
     marks = []
     for tag in feature._get_pickle_tag_names(pickle):
         tag_marks = config.hook.pytest_bdd_convert_tag_to_marks(feature=feature, scenario=pickle, tag=tag)
@@ -263,6 +263,7 @@ def _build_scenario_param(feature: Feature, pickle: Pickle, config: Config):
     return pytest.param(
         feature,
         pickle,
+        feature_data,
         id=f"{feature.uri}-{feature.name}-{pickle.name}{feature.build_pickle_table_rows_breadcrumb(pickle)}",
         marks=marks,
     )
@@ -280,11 +281,11 @@ def pytest_generate_tests(metafunc: Metafunc):
     if "pytest_bdd_scenario" in mark_names:
         scenario_marks = filter(lambda mark: mark.name == "scenarios", marks)
         locators = chain_map(partial(_build_scenario_locators_from_mark, config=config), scenario_marks)
-        resolved_locators = chain_map(methodcaller("resolve", config), locators)
+        feature_scenario_feature_source = chain_map(methodcaller("resolve", config), locators)
 
         metafunc.parametrize(
-            "feature, scenario",
-            starmap(partial(_build_scenario_param, config=config), resolved_locators),
+            "feature, scenario, feature_source",
+            starmap(partial(_build_scenario_param, config=config), feature_scenario_feature_source),
         )
 
 

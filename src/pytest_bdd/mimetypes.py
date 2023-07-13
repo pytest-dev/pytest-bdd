@@ -10,3 +10,4 @@ class Mimetype(Enum):
     struct_bdd_json = "application/x.struct_bdd+json"
     struct_bdd_hjson = "application/x.struct_bdd+hjson"
     struct_bdd_toml = "application/x.struct_bdd+toml"
+    python = "text/x-python"
