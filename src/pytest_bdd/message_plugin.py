@@ -13,7 +13,6 @@ from threading import Event, Thread
 from time import sleep, time_ns
 from typing import Callable, Set, Union, cast
 
-from _pytest.fixtures import FixtureDef
 from attr import attrib, attrs
 from ci_environment import detect_ci_environment
 from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
@@ -21,7 +20,7 @@ from filelock import FileLock
 from pydantic import ValidationError
 from pytest import ExitCode, Session, hookimpl
 
-from pytest_bdd.compatibility.pytest import Config, FixtureRequest, Parser, get_config_root_path
+from pytest_bdd.compatibility.pytest import Config, FixtureDef, FixtureRequest, Parser, get_config_root_path
 from pytest_bdd.model.messages import (
     Attachment,
     Ci,
@@ -79,32 +78,32 @@ class MessagePlugin:
 
     @staticmethod
     def process_messages(queue: Queue, stop_event: Event, messages_file_path: Union[str, Path]):
-        while not stop_event.is_set():  # give one more enter to take all left messages
-            last_enter = False
-            while not (stop_event.is_set() and last_enter):  # give one more enter to take all left messages
-                if stop_event.is_set():
-                    last_enter = True
-                lock = FileLock(f"{messages_file_path}.lock")
-                with lock:
-                    with Path(messages_file_path).open(mode="at+", buffering=1) as f:
-                        lines = []
-                        while not queue.empty():
-                            try:
-                                message_json = queue.get(timeout=1)
-                            except Empty:
-                                pass
-
-                            try:
-                                Message.parse_obj(json.loads(message_json))
-                            except ValidationError:
-                                logging.exception(f"Failed to parse:\n{pformat(message_json)}\n", exc_info=True)
-                            else:
-                                lines.append(f"{message_json}\n")
-                            finally:
-                                queue.task_done()
+        last_enter = False
+        while not (stop_event.is_set() and last_enter):  # give one more enter to take all left messages
+            if stop_event.is_set():
+                last_enter = True
+            lock = FileLock(f"{messages_file_path}.lock")
+            with lock:
+                with Path(messages_file_path).open(mode="at+", buffering=1) as f:
+                    lines = []
+                    while not queue.empty():
+                        try:
+                            message_json = queue.get(timeout=1)
+                        except Empty:
                             sleep(0)
-                        f.writelines(lines)
-                        f.flush()
+                            continue
+
+                        try:
+                            Message.parse_obj(json.loads(message_json))
+                        except ValidationError:
+                            logging.exception(f"Failed to parse:\n{pformat(message_json)}\n", exc_info=True)
+                        else:
+                            lines.append(f"{message_json}\n")
+                        finally:
+                            queue.task_done()
+                        sleep(0)
+                    f.writelines(lines)
+                    f.flush()
 
     def get_timestamp(self):
         timestamp = time_ns()
