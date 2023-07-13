@@ -6,6 +6,7 @@ import textwrap
 import typing
 from collections import OrderedDict
 from dataclasses import dataclass, field
+from functools import cached_property
 from typing import cast
 
 from . import exceptions, types
@@ -292,7 +293,6 @@ class Scenario:
 class Step:
     type: str
     _name: str
-    _full_name: str | None
     line_number: int
     indent: int
     keyword: str
@@ -312,7 +312,6 @@ class Step:
         self.scenario = None
         self.background = None
         self.lines = []
-        self._full_name = None
 
     def add_line(self, line: str) -> None:
         """Add line to the multiple step.
@@ -320,29 +319,33 @@ class Step:
         :param str line: Line of text - the continuation of the step name.
         """
         self.lines.append(line)
-        self._full_name = None
+        if "full_name" in self.__dict__:
+            del self.__dict__["full_name"]
+
+    @cached_property
+    def full_name(self) -> str:
+        multilines_content = textwrap.dedent("\n".join(self.lines)) if self.lines else ""
+
+        # Remove the multiline quotes, if present.
+        multilines_content = re.sub(
+            pattern=r'^"""\n(?P<content>.*)\n"""$',
+            repl=r"\g<content>",
+            string=multilines_content,
+            flags=re.DOTALL,  # Needed to make the "." match also new lines
+        )
+
+        lines = [self._name] + [multilines_content]
+        return "\n".join(lines).strip()
 
     @property
     def name(self) -> str:
-        if self._full_name is None:
-            multilines_content = textwrap.dedent("\n".join(self.lines)) if self.lines else ""
-
-            # Remove the multiline quotes, if present.
-            multilines_content = re.sub(
-                pattern=r'^"""\n(?P<content>.*)\n"""$',
-                repl=r"\g<content>",
-                string=multilines_content,
-                flags=re.DOTALL,  # Needed to make the "." match also new lines
-            )
-
-            lines = [self._name] + [multilines_content]
-            self._full_name = "\n".join(lines).strip()
-        return self._full_name
+        return self.full_name
 
     @name.setter
     def name(self, value: str) -> None:
         self._name = value
-        self._full_name = None
+        if "full_name" in self.__dict__:
+            del self.__dict__["full_name"]
 
     def __str__(self) -> str:
         """Full step name including the type."""
