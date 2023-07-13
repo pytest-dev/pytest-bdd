@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Callable, List, Sequence, Set, Union, cast
 
 from attr import attrib, attrs
-from attr._make import Factory
 from gherkin.ast_builder import AstBuilder
 from gherkin.errors import CompositeParserException
 from gherkin.parser import Parser as CucumberIOBaseParser  # type: ignore[import]
@@ -50,34 +49,28 @@ class ASTBuilderMixin:
 
 
 @attrs
-class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProtocol):
-    id_generator = attrib(default=Factory(IdGenerator))
-
-    def __attrs_post_init__(self):
-        CucumberIOBaseParser.__init__(self, ast_builder=AstBuilder(id_generator=self.id_generator))
-
-    @classmethod
+class GherkinParser(ASTBuilderMixin, GlobMixin, ParserProtocol):
     def parse(
-        cls, config: Union[Config, PytestBDDIdGeneratorHandler], path: Path, uri: str, *args, **kwargs
+        self, config: Union[Config, PytestBDDIdGeneratorHandler], path: Path, uri: str, *args, **kwargs
     ) -> Feature:
-        parser = cls(id_generator=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator)
+        gherkin_parser = CucumberIOBaseParser(ast_builder=AstBuilder(id_generator=self.id_generator))
         encoding = kwargs.pop("encoding", "utf-8")
         with path.open(mode="r", encoding=encoding) as feature_file:
             feature_file_data = feature_file.read()
 
+        # TODO Use hook for this
         if ".md" in path.suffixes:
             media_type = MediaType.text_x_cucumber_gherkin_markdown
         else:
             media_type = MediaType.text_x_cucumber_gherkin_plain
 
+        # TODO move out from parse
         cast(Config, config).hook.pytest_bdd_message(
             config=config, message=Message(source=Source(uri=uri, data=feature_file_data, media_type=media_type))
         )
 
         try:
-            gherkin_document_raw_dict = CucumberIOBaseParser.parse(
-                parser, token_scanner_or_str=feature_file_data, *args, **kwargs
-            )
+            gherkin_document_raw_dict = gherkin_parser.parse(token_scanner_or_str=feature_file_data, *args, **kwargs)
         except CompositeParserException as e:
             raise FeatureError(
                 e.args[0],
@@ -88,10 +81,11 @@ class GherkinParser(CucumberIOBaseParser, ASTBuilderMixin, GlobMixin, ParserProt
 
         gherkin_document_raw_dict["uri"] = uri
 
-        feature = parser.build_feature(
+        # TODO Move messages out of feature parsing
+        feature = self.build_feature(
             gherkin_document_raw_dict,
             filename=str(path.as_posix()),
-            id_generator=getattr(config, "pytest_bdd_id_generator", IdGenerator()),
+            id_generator=self.id_generator,
         )
 
         cast(Config, config).hook.pytest_bdd_message(
