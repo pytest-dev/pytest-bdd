@@ -2,8 +2,10 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
+from pytest import mark
 from pytest_httpserver import HTTPServer
 
+from pytest_bdd.compatibility.struct_bdd import STRUCT_BDD_INSTALLED
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.webloc import write as webloc_write
 
@@ -122,6 +124,7 @@ def test_feature_load_by_http_from_webloc_file(testdir: "Testdir", httpserver: H
     result.assert_outcomes(passed=1)
 
 
+@mark.skipif(not STRUCT_BDD_INSTALLED, reason="StructBDD is not installed")
 def test_struct_bdd_feature_load_by_http(testdir, httpserver: HTTPServer):
     httpserver.expect_request("/feature").respond_with_data(
         dedent(

@@ -364,7 +364,7 @@ class StepHandler:
                 message = self.__cache[id(id_generator)] = StepDefinition(
                     id=self.id,
                     pattern=StepDefinitionPattern(source=str(self.parser), type=self.parser.type),
-                    source_reference=SourceReference(
+                    source_reference=SourceReference(  # type: ignore[call-arg] # migration to pydantic2
                         uri=os.path.relpath(
                             getfile(self.func),
                             str(get_config_root_path(cast(Config, config))),

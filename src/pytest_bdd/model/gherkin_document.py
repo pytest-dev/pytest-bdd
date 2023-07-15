@@ -48,7 +48,7 @@ class Feature:
 
     @staticmethod
     def load_pickles(scenarios_data) -> Sequence[Pickle]:
-        return [*map(Pickle.parse_obj, scenarios_data)]
+        return [*map(Pickle.model_validate, scenarios_data)]  # type: ignore[attr-defined] # migration to pydantic2
 
     def fill_registry(self):
         self.registry.update(self.get_child_ids_gen(self.gherkin_document.feature))
@@ -120,7 +120,7 @@ class Feature:
         elif isinstance(obj, Step):
             yield obj.id, obj
 
-    load_gherkin_document = staticmethod(GherkinDocument.parse_obj)
+    load_gherkin_document = staticmethod(GherkinDocument.model_validate)  # type: ignore[attr-defined] # migration to pydantic2
 
     @property
     def name(self) -> Union[str, None]:

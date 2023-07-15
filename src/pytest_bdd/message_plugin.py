@@ -95,7 +95,7 @@ class MessagePlugin:
                             continue
 
                         try:
-                            Message.parse_obj(json.loads(message_json))
+                            Message.model_validate(json.loads(message_json))  # type: ignore[attr-defined] # migration to pydantic2
                         except ValidationError:
                             logging.exception(f"Failed to parse:\n{pformat(message_json)}\n", exc_info=True)
                         else:
@@ -163,7 +163,7 @@ class MessagePlugin:
         if self.is_disabled:
             return
 
-        message_json = message.json(exclude_none=True, by_alias=True)
+        message_json = message.model_dump_json(exclude_none=True, by_alias=True)  # type: ignore[attr-defined] # migration to pydantic2
         self.process_messages_io_queue.put_nowait(message_json)
 
     def pytest_runtestloop(self, session: Session):
@@ -196,7 +196,7 @@ class MessagePlugin:
                     runtime=Product(name="Python", version=sys.version),
                     os=Product(name=system(), version=version()),
                     cpu=Product(name=machine(), version=processor()),
-                    ci=Ci.parse_obj(obj) if (obj := detect_ci_environment(os.environ)) is not None else None,
+                    ci=Ci.model_validate(obj) if (obj := detect_ci_environment(os.environ)) is not None else None,
                 ),
             ),
         )

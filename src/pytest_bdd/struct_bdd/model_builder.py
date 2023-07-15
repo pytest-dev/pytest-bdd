@@ -205,7 +205,7 @@ class ExampleASTBuilder(_ASTBuilder):
                             *map(
                                 lambda parameter: TableCell(
                                     location=Location(column=0, line=0),
-                                    value=parameter,
+                                    value=str(parameter),
                                 ),
                                 row_values,
                             )

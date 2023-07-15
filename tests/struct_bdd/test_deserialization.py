@@ -3,13 +3,19 @@ from operator import contains
 from textwrap import dedent
 
 from gherkin.pickles.compiler import Compiler
+from pytest import mark
 from yaml import FullLoader
 from yaml import load as load_yaml
 
+from pytest_bdd.compatibility.struct_bdd import STRUCT_BDD_INSTALLED
 from pytest_bdd.model.messages import KeywordType
-from pytest_bdd.struct_bdd.model import Alternative, Join, Keyword, Node, Step, Table
-from pytest_bdd.struct_bdd.model_builder import GherkinDocumentBuilder
 from pytest_bdd.utils import IdGenerator, doesnt_raise
+
+if STRUCT_BDD_INSTALLED:
+    from pytest_bdd.struct_bdd.model import Alternative, Join, Keyword, Node, Step, Table
+    from pytest_bdd.struct_bdd.model_builder import GherkinDocumentBuilder
+
+pytestmark = [mark.skipif(not STRUCT_BDD_INSTALLED, reason="StructBDD is not installed")]
 
 
 def test_node_containing_data_load():

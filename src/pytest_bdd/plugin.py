@@ -26,6 +26,7 @@ from pytest_bdd.compatibility.pytest import (
     Parser,
     PytestPluginManager,
 )
+from pytest_bdd.compatibility.struct_bdd import STRUCT_BDD_INSTALLED
 from pytest_bdd.message_plugin import MessagePlugin
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.model import Feature
@@ -35,12 +36,15 @@ from pytest_bdd.parser import GherkinParser
 from pytest_bdd.parsers import cucumber_expression
 from pytest_bdd.reporting import ScenarioReporterPlugin
 from pytest_bdd.runner import ScenarioRunner
-from pytest_bdd.scenario import FeaturePathType, FileScenarioLocator, UrlScenarioLocator
+from pytest_bdd.scenario import FeaturePathType
 from pytest_bdd.scenario import add_options as scenario_add_options
 from pytest_bdd.scenario import scenarios
+from pytest_bdd.scenario_locator import FileScenarioLocator, UrlScenarioLocator
 from pytest_bdd.steps import StepHandler
-from pytest_bdd.struct_bdd.plugin import StructBDDPlugin
 from pytest_bdd.utils import IdGenerator, compose, getitemdefault, setdefaultattr
+
+if STRUCT_BDD_INSTALLED:
+    from pytest_bdd.struct_bdd.plugin import StructBDDPlugin
 
 
 def pytest_addhooks(pluginmanager: PytestPluginManager) -> None:
@@ -128,7 +132,8 @@ def pytest_configure(config: Config) -> None:
     config.pluginmanager.register(MessagePlugin(config=config), name="pytest_bdd_messages")  # type: ignore[call-arg]
     config.__allure_plugin__ = AllurePytestBDD.register_if_allure_accessible(config)  # type: ignore[attr-defined]
     setdefaultattr(config, "pytest_bdd_id_generator", value_factory=IdGenerator)
-    config.pluginmanager.register(StructBDDPlugin())
+    if STRUCT_BDD_INSTALLED:
+        config.pluginmanager.register(StructBDDPlugin())
 
 
 @pytest.hookimpl(tryfirst=True)

@@ -8,11 +8,11 @@ from pathlib import Path
 from typing import Any, ClassVar, List, Literal, Optional, Sequence, Type, Union
 
 from attr import attrib, attrs
-from pydantic import BaseModel, Extra, Field, validator
+from pydantic.v1 import BaseModel, Extra, Field, validator
 
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.model.messages import KeywordType, Source
-from pytest_bdd.scenario import ScenarioLocatorFilterMixin
+from pytest_bdd.scenario_locator import ScenarioLocatorFilterMixin
 from pytest_bdd.utils import deepattrgetter
 
 

@@ -7,3 +7,6 @@
 [submodule "ci-environment"]
 	path = ci-environment
 	url = https://github.com/cucumber/ci-environment.git
+[submodule "gherkin"]
+	path = gherkin
+	url = https://github.com/cucumber/gherkin.git

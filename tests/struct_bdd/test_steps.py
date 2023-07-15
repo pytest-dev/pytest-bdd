@@ -3,7 +3,16 @@ from textwrap import dedent
 
 from pytest import mark, param
 
-from pytest_bdd.struct_bdd.parser import StructBDDParser
+from pytest_bdd.compatibility.struct_bdd import STRUCT_BDD_INSTALLED
+
+if STRUCT_BDD_INSTALLED:
+    from pytest_bdd.struct_bdd.parser import StructBDDParser
+else:
+    from unittest.mock import Mock
+
+    StructBDDParser = Mock()  # type: ignore[misc] # just a stub
+
+pytestmark = [mark.skipif(not STRUCT_BDD_INSTALLED, reason="StructBDD is not installed")]
 
 
 @mark.parametrize(
