@@ -12,14 +12,14 @@ from pytest_bdd.model.messages import KeywordType
 from pytest_bdd.utils import IdGenerator, doesnt_raise
 
 if STRUCT_BDD_INSTALLED:
-    from pytest_bdd.struct_bdd.model import Alternative, Join, Keyword, Node, Step, Table
+    from pytest_bdd.struct_bdd.model import Alternative, Join, Keyword, Node, Step, StepPrototype, Table
     from pytest_bdd.struct_bdd.model_builder import GherkinDocumentBuilder
 
 pytestmark = [mark.skipif(not STRUCT_BDD_INSTALLED, reason="StructBDD is not installed")]
 
 
 def test_node_containing_data_load():
-    node = Node.parse_obj(
+    node = Node.model_validate(
         {
             "Tags": ["Tag A", "Tag B"],
             "Name": "Node name",
@@ -44,7 +44,7 @@ def test_node_containing_data_load():
 
 
 def test_node_non_containing_data_load():
-    node = Node.parse_obj({})
+    node = Node.model_validate({})
     assert node.tags == []
     assert node.name is None
     assert node.description is None
@@ -52,7 +52,7 @@ def test_node_non_containing_data_load():
 
 
 def test_table_columned_containing_data_load():
-    table = Table.parse_obj(
+    table = Table.model_validate(
         dict(
             Tags=["Tag A", "Tag B"],
             Name="Table name",
@@ -87,7 +87,7 @@ def test_table_columned_containing_data_load():
 
 
 def test_table_rowed_containing_data_load():
-    table = Table.parse_obj(
+    table = Table.model_validate(
         dict(
             Type="Rowed",
             Parameters=["Parameter A", "Parameter B"],
@@ -102,7 +102,7 @@ def test_table_rowed_containing_data_load():
 
 
 def test_table_non_containing_data_load():
-    table = Table.parse_obj({})
+    table = Table.model_validate({})
 
     assert table.tags == []
     assert table.name is None
@@ -134,7 +134,7 @@ def test_join_load():
         Values=[["Value B11", "Value B12"], ["Value B21", "Value B22"]],
     )
 
-    join = Join.parse_obj(dict(Join=[raw_table_a, raw_table_b]))
+    join = Join.model_validate(dict(Join=[raw_table_a, raw_table_b]))
     assert join.tags == ["Tag A1", "Tag A2", "Tag B1", "Tag B2"]
     assert join.name == "\n".join([raw_table_a["Name"], raw_table_b["Name"]])
     assert join.description == "\n".join([raw_table_a["Description"], raw_table_b["Description"]])
@@ -154,8 +154,22 @@ def test_join_load():
     ]
 
 
+def test_step_prototype_non_containing_data_load():
+    step = StepPrototype.model_validate({})
+
+    assert step.tags == []
+    assert step.name is None
+    assert step.description is None
+    assert step.comments == []
+
+    assert step.steps == []
+    assert step.type == Keyword.Star
+    assert step.data == []
+    assert step.examples == []
+
+
 def test_step_non_containing_data_load():
-    step = Step().parse_obj({})
+    step = Step.model_validate({})
 
     assert step.tags == []
     assert step.name is None
@@ -178,7 +192,7 @@ def test_step_non_containing_data_load():
 
 
 def test_load_simplest_step_with_text_steps():
-    step: Step = Step().parse_obj(dict(Steps=["Do something"]))
+    step: Step = Step().model_validate(dict(Steps=["Do something"]))
     assert step.steps[0].type == Keyword.Star
     assert step.steps[0].keyword_type == KeywordType.unknown
     assert step.steps[0].action == "Do something"
@@ -192,7 +206,7 @@ def test_load_simplest_step_with_text_steps():
 
 
 def test_load_simplest_given():
-    step = Step.parse_obj(
+    step = Step.model_validate(
         dict(
             Steps=[
                 dict(Given="Do something"),
@@ -212,7 +226,7 @@ def test_load_simplest_given():
 
 
 def test_load_actioned_step_with_text_steps():
-    step: Step = Step.parse_obj(dict(Action="First do", Steps=["Do something"]))
+    step: Step = Step.model_validate(dict(Action="First do", Steps=["Do something"]))
     assert step.steps[0].type == Keyword.Star
     assert step.steps[0].keyword_type == KeywordType.unknown
     assert step.steps[0].action == "Do something"
@@ -225,7 +239,7 @@ def test_load_actioned_step_with_text_steps():
 
 
 def test_load_alternative_step_with_text_steps():
-    alternative_step: Alternative = Alternative.parse_obj(dict(Alternative=["Do something"]))
+    alternative_step: Alternative = Alternative.model_validate(dict(Alternative=["Do something"]))
 
     routes = list(alternative_step.routes)
     assert len(routes) == 1
@@ -235,7 +249,7 @@ def test_load_alternative_step_with_text_steps():
 
 
 def test_load_actioned_step_with_alternative_text_steps():
-    step: Step = Step.parse_obj(
+    step: Step = Step.model_validate(
         dict(
             Action="First do",
             Steps=[
@@ -256,20 +270,18 @@ def test_load_actioned_step_with_alternative_text_steps():
 
 
 def test_load_simplest_step_with_keyworded_steps():
-    step: Step = Step.parse_obj(
+    step: Step = Step.model_validate(
         dict(
             Steps=[
-                dict(Given="Do something"),
-                dict(When="Do something"),
-                dict(Then="Do something"),
-                dict(And="Do something"),
-                dict(But="Do something"),
-                {"*": "Do something"},
+                dict(Given="Given Do something"),
+                dict(When="When Do something"),
+                dict(Then="Then Do something"),
+                dict(And="And Do something"),
+                dict(But="But Do something"),
+                {"*": "* Do something"},
                 "Do something",
-                dict(Type="So", Action="Do something"),
-                dict(Type="So", Action="Do something"),
-                dict(Because="Do something"),
-                dict(Step=dict(Action="Do something")),
+                dict(Because="Because Do something"),
+                dict(Step=dict(Action="Step Do something")),
             ]
         )
     )
@@ -280,7 +292,7 @@ def test_load_simplest_step_with_keyworded_steps():
 
 def test_load_step_with_single_simplest_steps():
     with doesnt_raise(Exception):
-        Step.parse_obj(dict(Steps=[dict(Step=dict())]))
+        Step.model_validate(dict(Steps=[dict(Step=dict())]))
 
 
 def test_node_module_load_for_step():
@@ -303,7 +315,7 @@ def test_node_module_load_for_step():
         )
 
         data = load_yaml(doc, Loader=FullLoader)
-        Step.parse_obj(data)
+        Step.model_validate(data)
 
 
 def test_data_load():
@@ -330,7 +342,7 @@ def test_data_load():
         )
 
         data = load_yaml(doc, Loader=FullLoader)
-        Step.parse_obj(data)
+        Step.model_validate(data)
 
 
 def test_nested_sub_join_load():
@@ -355,7 +367,7 @@ def test_nested_sub_join_load():
         )
 
         data = load_yaml(doc, Loader=FullLoader)
-        Join.parse_obj(data)
+        Join.model_validate(data)
 
 
 def test_nested_data_load():
@@ -395,7 +407,7 @@ def test_nested_data_load():
         )
 
         data = load_yaml(doc, Loader=FullLoader)
-        Step.parse_obj(data)
+        Step.model_validate(data)
 
 
 def test_nested_examples_load():
@@ -435,7 +447,7 @@ def test_nested_examples_load():
         )
 
         data = load_yaml(doc, Loader=FullLoader)
-        Step.parse_obj(data)
+        Step.model_validate(data)
 
 
 def test_tags_steps_examples_load():
@@ -475,7 +487,7 @@ def test_tags_steps_examples_load():
     )
 
     data = load_yaml(doc, Loader=FullLoader)
-    step = Step.parse_obj(data)
+    step = Step.model_validate(data)
     routes = list(step.routes)
 
     assert len(routes) == 1
@@ -575,7 +587,7 @@ def test_tags_steps_examples_load_complex():
     )
 
     data = load_yaml(doc, Loader=FullLoader)
-    step = Step.parse_obj(data)
+    step = Step.model_validate(data)
 
     routes = list(step.routes)
 
@@ -658,7 +670,7 @@ def test_tags_steps_examples_joined_by_value_load():
     )
 
     data = load_yaml(doc, Loader=FullLoader)
-    step = Step.parse_obj(data)
+    step = Step.model_validate(data)
 
     routes = list(step.routes)
 
@@ -690,4 +702,4 @@ def test_load_nested_steps():
         )
 
         data = load_yaml(doc, Loader=FullLoader)
-        Step.parse_obj(data)
+        Step.model_validate(data)

@@ -5,15 +5,25 @@ from inspect import getfile
 from itertools import chain, product, starmap
 from operator import attrgetter, eq, is_not
 from pathlib import Path
-from typing import Any, ClassVar, List, Literal, Optional, Sequence, Type, Union
+from typing import Any, ClassVar, List, Literal, Mapping, Optional, Sequence, Type, Union
 
 from attr import attrib, attrs
-from pydantic.v1 import BaseModel, Extra, Field, validator
+from pydantic import (  # type:ignore[attr-defined] # migration to pydantic 2
+    AfterValidator,
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    model_validator,
+)
 
+from pytest_bdd.compatibility.typing import Annotated
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.model.messages import KeywordType, Source
 from pytest_bdd.scenario_locator import ScenarioLocatorFilterMixin
 from pytest_bdd.utils import deepattrgetter
+
+# mypy: disable-error-code="typeddict-unknown-key, typeddict-item"
 
 
 class Keyword(Enum):
@@ -30,7 +40,7 @@ class SubKeyword(Enum):
     Alternative = "Alternative"
 
 
-KEYWORD_TO_TYPE = defaultdict(
+KEYWORD_TO_TYPE: Mapping[Union[Keyword, str, None], KeywordType] = defaultdict(
     lambda: KeywordType.unknown,
     [
         (Keyword.Given, KeywordType.context),
@@ -39,14 +49,16 @@ KEYWORD_TO_TYPE = defaultdict(
         (Keyword.And, KeywordType.conjunction),
         (Keyword.But, KeywordType.conjunction),
         (Keyword.Star, KeywordType.unknown),
+        (None, KeywordType.unknown),
     ],
 )
 
 
 class Node(BaseModel):
-    class Config:
-        extra = Extra.forbid
-        allow_population_by_field_name = True
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+    )
 
     tags: Optional[Sequence[str]] = Field(default_factory=list, alias="Tags")
     name: Optional[str] = Field(None, alias="Name")
@@ -55,39 +67,37 @@ class Node(BaseModel):
 
 
 class Table(Node):
-    class Config:
-        extra = Extra.forbid
-        allow_population_by_field_name = True
-
     type: Optional[Literal["Rowed", "Columned"]] = Field("Rowed", alias="Type")
     parameters: Optional[Sequence[str]] = Field(default_factory=list, alias="Parameters")
     values: Optional[Sequence[Sequence[Any]]] = Field(default_factory=list, alias="Values")
 
     @property
     def columned_values(self):
-        if self.type == "Columned":
-            return self.values
-        else:
-            return list(zip(*self.values))
+        return self.values if self.type == "Columned" else list(zip(*self.values))
 
     @property
     def rowed_values(self):
-        if self.type == "Rowed":
-            return self.values
-        else:
-            return list(zip(*self.values))
+        return self.values if self.type == "Rowed" else list(zip(*self.values))
 
 
 class SubTable(Node):
     sub_table: Table = Field(..., alias="Table")
 
 
-class Join(BaseModel):
-    class Config:
-        extra = Extra.forbid
-        allow_population_by_field_name = True
+@AfterValidator
+def convert_sub_tables_to_tables(value):
+    return value.sub_table if isinstance(value, SubTable) else value
 
-    tables: List[Union[Table, "Join", SubTable]] = Field(default_factory=list, alias="Join")
+
+class Join(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+    )
+
+    tables: List[Annotated[Union[Table, "Join", SubTable], convert_sub_tables_to_tables]] = Field(
+        default_factory=list, alias="Join"
+    )
 
     __hash__ = id
 
@@ -175,16 +185,9 @@ class Join(BaseModel):
     def rowed_values(self):
         return self.values
 
-    @validator("tables", each_item=True)
-    def convert_sub_tables_to_tables(cls, value):
-        if isinstance(value, SubTable):
-            return value.sub_table
-        else:
-            return value
 
-
-@validator("steps", pre=True, each_item=True)
-def convert_to_step(cls, value):
+@BeforeValidator
+def before_convert_to_step(value):
     if isinstance(value, str):
         return Step(action=value)
     elif isinstance(value, dict) and len(value) == 1 and next(iter(value)) not in SubKeyword.__members__:
@@ -193,36 +196,45 @@ def convert_to_step(cls, value):
         return value
 
 
-@validator("type")
-def select_step_keyword_type(cls, value, values, **kwargs):
+@AfterValidator
+def select_step_keyword_type(value):
     try:
         return Keyword(value)
-    except:
+    except ValueError:
         return value
 
 
-@validator("steps", each_item=True)
-def convert_sub_steps_to_steps(cls, value):
-    if isinstance(value, SubStep):
-        return value.sub_step
-    else:
-        return value
+@AfterValidator
+def after_convert_sub_steps_to_steps(value):
+    return value.sub_step if isinstance(value, SubStep) else value
+
+
+StepKeywordType = Union[Keyword, Annotated[str, select_step_keyword_type]]
 
 
 class StepPrototype(Node):
     steps: Sequence[
-        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
+        Annotated[
+            Annotated[Union["SubStep", "Alternative", "StepPrototype"], before_convert_to_step],
+            after_convert_sub_steps_to_steps,
+        ]
     ] = Field(default_factory=list, alias="Steps")
 
-    type: Optional[Union[Keyword, str]] = Field(Keyword.Star, alias="Type")
-    data: List[Union[Table, Join, SubTable]] = Field(default_factory=list, alias="Data")
-    examples: List[Union[Table, Join, SubTable]] = Field(default_factory=list, alias="Examples")
+    type: Optional[StepKeywordType] = Field(default=Keyword.Star, alias="Type")
+    data: List[Annotated[Union[Table, Join, SubTable], convert_sub_tables_to_tables]] = Field(
+        default_factory=list, alias="Data"
+    )
+    examples: List[Annotated[Union[Table, Join, SubTable], convert_sub_tables_to_tables]] = Field(
+        default_factory=list, alias="Examples"
+    )
+    keyword_type: Optional[KeywordType] = Field(KeywordType.unknown)
 
     Route: ClassVar[Type] = namedtuple("Route", ["tags", "steps", "example_table"])
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    @model_validator(mode="after")
+    def set_keyword_type(self) -> "StepPrototype":
         self.keyword_type = KEYWORD_TO_TYPE[self.type]
+        return self
 
     @property
     def routes(self):
@@ -256,24 +268,8 @@ class StepPrototype(Node):
                 )
 
     @classmethod
-    def build_action_first_arg(cls, action, *args, **kwargs):
+    def build_by_action(cls, action, *args, **kwargs):
         return cls(*args, **kwargs, action=action)
-
-    @validator("examples", each_item=True)
-    def convert_sub_tables_to_tables_at_examples(cls, value):
-        if isinstance(value, SubTable):
-            return value.sub_table
-        else:
-            return value
-
-    @validator("data", each_item=True)
-    def convert_sub_tables_to_tables_at_data(cls, value):
-        if isinstance(value, SubTable):
-            return value.sub_table
-        else:
-            return value
-
-    convert_sub_steps_to_steps = convert_sub_steps_to_steps
 
     @attrs
     class Locator(ScenarioLocatorFilterMixin):
@@ -327,37 +323,20 @@ class StepPrototype(Node):
 
 class Alternative(Node):
     steps: Sequence[
-        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
+        Annotated[
+            Annotated[Union["SubStep", "Alternative", "StepPrototype"], before_convert_to_step],
+            after_convert_sub_steps_to_steps,
+        ]
     ] = Field(default_factory=list, alias="Alternative")
-
-    class Config:
-        extra = Extra.forbid
-        allow_population_by_field_name = True
 
     @property
     def routes(self):
         yield from chain.from_iterable(map(attrgetter("routes"), self.steps))
 
-    @validator("steps", pre=True, each_item=True)
-    def convert_step(cls, value):
-        if isinstance(value, str):
-            return Step(action=value)
-        else:
-            return value
-
-    convert_sub_steps_to_steps = convert_sub_steps_to_steps
-
 
 class Step(StepPrototype):
-    steps: Sequence[
-        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
-    ] = Field(default_factory=list, alias="Steps")
-    type: Union[Keyword, Optional[str]] = Field(Keyword.Star, alias="Type")
-    keyword_type: Optional[KeywordType] = Field(KeywordType.unknown)
-    action: Optional[str] = Field(alias="Action")
-
-    convert_to_step = convert_to_step
-    select_step_keyword_type = select_step_keyword_type
+    type: Optional[StepKeywordType] = Field(default=Keyword.Star, alias="Type")
+    action: Optional[str] = Field(None, alias="Action")
 
 
 class SubStep(BaseModel):
@@ -365,90 +344,41 @@ class SubStep(BaseModel):
 
 
 class StarStep(StepPrototype):
-    steps: Sequence[
-        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
-    ] = Field(default_factory=list, alias="Steps")
-
-    type: Optional[Keyword] = Field(Keyword.Star, alias="Type")
-    keyword_type: Optional[KeywordType] = Field(KeywordType.unknown)
+    type: StepKeywordType = Field(Keyword.Star, alias="Type")
     action: Optional[str] = Field(alias=Keyword.Star.value)
-
-    convert_to_step = convert_to_step
-    select_step_keyword_type = select_step_keyword_type
 
 
 class GivenStep(StepPrototype):
-    steps: Sequence[
-        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
-    ] = Field(default_factory=list, alias="Steps")
-    type: Optional[Keyword] = Field(Keyword.Given)
-    keyword_type: Optional[KeywordType] = Field(KeywordType.context, alias="Type")
+    type: StepKeywordType = Field(Keyword.Given, alias="Type")
     action: Optional[str] = Field(alias=Keyword.Given.value)
-
-    convert_to_step = convert_to_step
-    select_step_keyword_type = select_step_keyword_type
 
 
 class WhenStep(StepPrototype):
-    steps: Sequence[
-        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
-    ] = Field(default_factory=list, alias="Steps")
-    type: Optional[Keyword] = Field(Keyword.When)
-    keyword_type: Optional[KeywordType] = Field(KeywordType.action, alias="Type")
+    type: StepKeywordType = Field(Keyword.When, alias="Type")
     action: Optional[str] = Field(alias=Keyword.When.value)
-
-    convert_to_step = convert_to_step
-    select_step_keyword_type = select_step_keyword_type
 
 
 class ThenStep(StepPrototype):
-    steps: Sequence[
-        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
-    ] = Field(default_factory=list, alias="Steps")
-    type: Optional[Keyword] = Field(Keyword.Then)
-    keyword_type: Optional[KeywordType] = Field(KeywordType.outcome, alias="Type")
+    type: StepKeywordType = Field(Keyword.Then, alias="Type")
     action: Optional[str] = Field(alias=Keyword.Then.value)
-
-    convert_to_step = convert_to_step
-    select_step_keyword_type = select_step_keyword_type
 
 
 class AndStep(StepPrototype):
-    steps: Sequence[
-        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
-    ] = Field(default_factory=list, alias="Steps")
-    type: Optional[Keyword] = Field(Keyword.And)
-    keyword_type: Optional[KeywordType] = Field(KeywordType.conjunction, alias="Type")
+    type: StepKeywordType = Field(Keyword.And, alias="Type")
     action: Optional[str] = Field(alias=Keyword.And.value)
-
-    convert_to_step = convert_to_step
-    select_step_keyword_type = select_step_keyword_type
 
 
 class ButStep(StepPrototype):
-    steps: Sequence[
-        Union["Alternative", "Step", "StarStep", "GivenStep", "WhenStep", "ThenStep", "AndStep", "ButStep", "SubStep"]
-    ] = Field(default_factory=list, alias="Steps")
-    type: Optional[Keyword] = Field(Keyword.But)
-    keyword_type: Optional[KeywordType] = Field(KeywordType.conjunction, alias="Type")
+    type: StepKeywordType = Field(Keyword.But, alias="Type")
     action: Optional[str] = Field(alias=Keyword.But.value)
 
-    convert_to_step = convert_to_step
-    select_step_keyword_type = select_step_keyword_type
 
+Join.model_rebuild()  # type:ignore[attr-defined] # migration to pydantic 2
+StepPrototype.model_rebuild()  # type:ignore[attr-defined] # migration to pydantic 2
+Alternative.model_rebuild()  # type:ignore[attr-defined] # migration to pydantic 2
 
-Join.update_forward_refs()
-Step.update_forward_refs()
-StarStep.update_forward_refs()
-GivenStep.update_forward_refs()
-WhenStep.update_forward_refs()
-ThenStep.update_forward_refs()
-AndStep.update_forward_refs()
-ButStep.update_forward_refs()
-Alternative.update_forward_refs()
-
-Given = GivenStep.build_action_first_arg
-When = WhenStep.build_action_first_arg
-Then = ThenStep.build_action_first_arg
-And = AndStep.build_action_first_arg
-But = ButStep.build_action_first_arg
+Given = GivenStep.build_by_action
+When = WhenStep.build_by_action
+Then = ThenStep.build_by_action
+And = AndStep.build_by_action
+But = ButStep.build_by_action

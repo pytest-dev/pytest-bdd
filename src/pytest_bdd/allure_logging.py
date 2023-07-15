@@ -52,7 +52,7 @@ class AllurePytestBDD:
             def patched_value_serializer(instance, field, value):
                 if isinstance(value, PydanticBaseModel):
                     # Maybe possible to speedup; Some values are not serialized when used value.dict()
-                    return json.loads(value.json())
+                    return json.loads(value.model_dump_json())
                 elif value_serializer is not patched_value_serializer:
                     return value_serializer(instance, field, value)
                 else:

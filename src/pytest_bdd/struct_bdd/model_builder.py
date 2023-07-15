@@ -49,7 +49,7 @@ class GherkinDocumentBuilder(_ASTBuilder):
         gherkin_document = self.build(id_generator=id_generator)
         gherkin_document.uri = uri
 
-        gherkin_document_serialized = gherkin_document.json(by_alias=True, exclude_none=True)
+        gherkin_document_serialized = gherkin_document.model_dump_json(by_alias=True, exclude_none=True)
 
         scenarios_data = Compiler().compile(json_loads(gherkin_document_serialized))
         pickles = GherkinDocumentFeature.load_pickles(scenarios_data)
