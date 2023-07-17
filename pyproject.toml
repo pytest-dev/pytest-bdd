@@ -65,7 +65,6 @@ dependencies = [
   "setuptools>=58",
   "six>=1.16;python_version~='3.8'",
   "cucumber-tag-expressions",
-  "types-docopt",
   "typing-extensions;python_version<'3.11.0'",
   "gherkin-ci-environment@git+https://github.com/elchupanebrej/ci-environment.git@python-impl#subdirectory=python"
 ]

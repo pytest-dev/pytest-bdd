@@ -33,7 +33,7 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies:
-          - "pydantic>=1.0, <2.0.0"
+          - "pydantic>=2.0.3"
           - types-docopt
           - types-certifi
           - types-setuptools
