@@ -10,7 +10,7 @@ Planned
 - Review report generation to be conform with official tools
 
   - https://github.com/pytest-dev/pytest-bdd/issues/488
-- Check nested Rules support
+- Nested Rules support
 
   - Review after fix https://github.com/cucumber/gherkin/issues/126
 - Implement support of \*.md files
@@ -23,7 +23,7 @@ Planned
     - parse_error
     - undefined_parameter_type
 
-- Add support of python 3.12, PyPy at CI
+- Add support of python 3.12 at CI
 - Add mode to execute scenarios with missing/failing steps
 - Remove
 
@@ -47,15 +47,14 @@ Planned
   - Poetry
 
     - Wait for https://github.com/python-poetry/roadmap/issues/3
-  - Remove attrs
-  - Pydantic 2
 
-    - Contribute to messages repository after migration
+  - Contribute to messages repository with python model
   - testdir -> pytester
   - ci-environment lib was accepted by cucumber community, so switch dependency there
 
 Unreleased
 ----------
+- Migrated to Pydantic 2
 - Add tests for PyPy
 - Using tox4
 - Support of messages:

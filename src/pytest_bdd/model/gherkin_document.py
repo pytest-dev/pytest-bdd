@@ -83,7 +83,8 @@ class Feature:
                                 lambda child: filter(
                                     None,
                                     [
-                                        # Check why we don't support nested Rules
+                                        # TODO Check why we don't support nested Rules;
+                                        # https://github.com/cucumber/gherkin/issues/126
                                         # child.rule,
                                         child.background,
                                         child.scenario,
