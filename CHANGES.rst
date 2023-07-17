@@ -27,7 +27,7 @@ Planned
 - Add mode to execute scenarios with missing/failing steps
 - Remove
 
-  - Hide traceback for pytest code
+  - Hide traceback for pytest code "__tracebackhide__ = True"
 - Generate documentation via https://github.com/jolly-good-toolbelt/sphinx_gherkindoc instead of direct use
 
   - Move sphinx-gherkindoc to official parser
@@ -42,15 +42,14 @@ Planned
     - Investigate https://smarie.github.io/python-pytest-harvest/
   - pytest-rerunfailures
   - Parametrize step execution by different step realizations using https://smarie.github.io/python-pytest-cases/
-- Refactor
+- Switch testdir to pytester after pytest<6.2 get EOL (python 3.8 and 3.9 get EOL)
+- Use Poetry
 
-  - Poetry
-
-    - Wait for https://github.com/python-poetry/roadmap/issues/3
-
-  - Contribute to messages repository with python model
-  - testdir -> pytester
-  - ci-environment lib was accepted by cucumber community, so switch dependency there
+  - Wait for https://github.com/python-poetry/roadmap/issues/3
+- Contribute to messages repository with python model
+- ci-environment lib was accepted by cucumber community, so switch dependency there
+- Add support of native legacy cucumber-json
+- Test against https://github.com/cucumber/json-formatter
 
 Unreleased
 ----------
