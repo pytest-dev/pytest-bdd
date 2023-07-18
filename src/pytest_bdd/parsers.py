@@ -19,6 +19,7 @@ from cucumber_expressions.regular_expression import RegularExpression as Cucumbe
 
 from pytest_bdd.compatibility.pytest import FixtureRequest
 from pytest_bdd.model.messages import ExpressionType
+from pytest_bdd.model.messages_extension import ExpressionType as ExpressionTypeExtension
 from pytest_bdd.utils import StringableProtocol, stringify
 
 
@@ -28,7 +29,7 @@ class ParserBuildValueError(ValueError):
 
 @runtime_checkable
 class StepParserProtocol(Protocol):
-    type: ExpressionType = ExpressionType.pytest_bdd_other_expression
+    type: Union[ExpressionType, ExpressionTypeExtension, str] = ExpressionTypeExtension.pytest_bdd_other_expression
 
     def parse_arguments(
         self, request: FixtureRequest, name: str, anonymous_group_names: Optional[Iterable[str]] = None
@@ -101,7 +102,7 @@ class StepParser(StepParserProtocol, metaclass=ABCMeta):
 class re(StepParser):
     """Regex step parser."""
 
-    type = ExpressionType.pytest_bdd_regular_expression
+    type = ExpressionTypeExtension.pytest_bdd_regular_expression
 
     # https://bugs.python.org/issue45684
     @singledispatchmethod  # type:ignore[misc]
@@ -154,7 +155,7 @@ class re(StepParser):
 class parse(StepParser):
     """parse step parser."""
 
-    type = ExpressionType.pytest_bdd_parse_expression
+    type = ExpressionTypeExtension.pytest_bdd_parse_expression
 
     # https://bugs.python.org/issue45684
     @singledispatchmethod  # type:ignore[misc]
@@ -202,7 +203,7 @@ class parse(StepParser):
 class cfparse(parse):
     """cfparse step parser."""
 
-    type = ExpressionType.pytest_bdd_cfparse_expression
+    type = ExpressionTypeExtension.pytest_bdd_cfparse_expression
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("builder", base_cfparse.Parser)
@@ -212,7 +213,7 @@ class cfparse(parse):
 class string(StepParser):
     """Exact string step parser."""
 
-    type = ExpressionType.pytest_bdd_string_expression
+    type = ExpressionTypeExtension.pytest_bdd_string_expression
 
     def __init__(self, name: Union[StringableProtocol, str, bytes]) -> None:
         self.name = stringify(name)
@@ -342,7 +343,7 @@ class cucumber_regular_expression(_CucumberExpression):
 
 
 class heuristic(StepParser):
-    type = ExpressionType.pytest_bdd_heuristic_expression
+    type = ExpressionTypeExtension.pytest_bdd_heuristic_expression
 
     def __init__(
         self,

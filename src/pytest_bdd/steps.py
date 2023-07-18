@@ -49,9 +49,10 @@ from ordered_set import OrderedSet
 
 from pytest_bdd.compatibility.pytest import Config, Parser, TypeAlias, get_config_root_path
 from pytest_bdd.model import Feature, StepType
-from pytest_bdd.model.messages import Location, Pickle
+from pytest_bdd.model.messages import ExpressionType, Location, Pickle
 from pytest_bdd.model.messages import PickleStep as Step
 from pytest_bdd.model.messages import SourceReference, StepDefinition, StepDefinitionPattern
+from pytest_bdd.model.messages_extension import ExpressionType as ExpressionTypeExtension
 from pytest_bdd.parsers import StepParser
 from pytest_bdd.utils import (
     PytestBDDIdGeneratorHandler,
@@ -361,9 +362,20 @@ class StepHandler:
                 message = self.__cache[id(id_generator)]
             except KeyError:
                 self.id = id_generator.get_next_id()
+
+                parser_expression_type = self.parser.type
+
+                expression_type: Union[ExpressionType, str]
+                if isinstance(parser_expression_type, ExpressionType):
+                    expression_type = parser_expression_type
+                elif isinstance(parser_expression_type, ExpressionTypeExtension):
+                    expression_type = parser_expression_type.value
+                else:
+                    expression_type = str(parser_expression_type)
+
                 message = self.__cache[id(id_generator)] = StepDefinition(
                     id=self.id,
-                    pattern=StepDefinitionPattern(source=str(self.parser), type=self.parser.type),
+                    pattern=StepDefinitionPattern(source=str(self.parser), type=expression_type),
                     source_reference=SourceReference(  # type: ignore[call-arg] # migration to pydantic2
                         uri=os.path.relpath(
                             getfile(self.func),

@@ -17,9 +17,9 @@ from pydantic import (  # type:ignore[attr-defined] # migration to pydantic 2
     model_validator,
 )
 
-from pytest_bdd.compatibility.typing import Annotated
+from pytest_bdd.compatibility.typing import Annotated, Self
 from pytest_bdd.mimetypes import Mimetype
-from pytest_bdd.model.messages import KeywordType, Source
+from pytest_bdd.model.messages import KeywordType, MediaType, Source
 from pytest_bdd.scenario_locator import ScenarioLocatorFilterMixin
 from pytest_bdd.utils import deepattrgetter
 
@@ -231,10 +231,10 @@ class StepPrototype(Node):
 
     Route: ClassVar[Type] = namedtuple("Route", ["tags", "steps", "example_table"])
 
-    @model_validator(mode="after")
-    def set_keyword_type(self) -> "StepPrototype":
+    @model_validator(mode="after")  # type: ignore[misc] # migration to pydantic 2
+    def set_keyword_type(self) -> Self:
         self.keyword_type = KEYWORD_TO_TYPE[self.type]
-        return self
+        return self  # type: ignore[return-value] # migration to pydantic 2
 
     @property
     def routes(self):
@@ -284,7 +284,14 @@ class StepPrototype(Node):
             feature = GherkinDocumentBuilder(self.step).build_feature(
                 filename=self.filename, uri=self.uri, id_generator=config.pytest_bdd_id_generator
             )
-            feature_source = Source(uri=self.uri, data=Path(self.filename).read_text(), media_type=self.mimetype)
+
+            if isinstance(self.mimetype, MediaType):
+                media_type = self.mimetype
+            elif isinstance(self.mimetype, Mimetype):
+                media_type = self.mimetype.value
+            else:
+                media_type = str(self.mimetype)
+            feature_source = Source(uri=self.uri, data=Path(self.filename).read_text(), media_type=media_type)
             yield feature, feature_source
 
     def as_test(self, filename):

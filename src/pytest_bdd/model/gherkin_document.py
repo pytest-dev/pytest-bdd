@@ -30,7 +30,7 @@ from gherkin.pickles.compiler import Compiler  # type: ignore[import]
 from pytest_bdd.const import TAG_PREFIX
 from pytest_bdd.model.messages import Background, Examples
 from pytest_bdd.model.messages import Feature as FeatureMessage
-from pytest_bdd.model.messages import GherkinDocument, Pickle, PickleStep, Rule, Scenario, Step, TableRow, Tag
+from pytest_bdd.model.messages import GherkinDocument, Location, Pickle, PickleStep, Rule, Scenario, Step, TableRow, Tag
 from pytest_bdd.utils import _itemgetter, deepattrgetter
 
 
@@ -175,7 +175,11 @@ class Feature:
         return cast(Scenario, next(filter(lambda node: type(node) is Scenario, self._get_linked_ast_nodes(pickle))))
 
     def _get_pickle_line_number(self, pickle: Pickle):
-        return self._get_pickle_ast_scenario(pickle).location.line
+        return (
+            cast(Location, location).line
+            if (location := self._get_pickle_ast_scenario(pickle).location) is not None
+            else -1
+        )
 
     def _get_pickle_step_model_step(self, pickle_step: PickleStep):
         return cast(Step, next(filter(lambda node: type(node) is Step, self._get_linked_ast_nodes(pickle_step)), None))
@@ -193,7 +197,7 @@ class Feature:
     def _get_step_line_number(self, step: PickleStep):
         model_step: Union[Step, None] = self._get_pickle_step_model_step(step)
         if model_step is not None:
-            return model_step.location.line
+            return location.line if (location := model_step.location) is not None else -1
 
     def _get_step_doc_string(self, step: PickleStep):
         return getattr(self._get_pickle_step_model_step(step), "doc_string", None)
