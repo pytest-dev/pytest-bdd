@@ -4,9 +4,10 @@ from typing import Any, Iterable, Optional, Union
 
 from pytest import hookspec
 
+from messages import Envelope as Message  # type:ignore[attr-defined]
+from messages import Pickle  # type:ignore[attr-defined]
 from pytest_bdd.compatibility.pytest import Config, FixtureRequest, Mark
 from pytest_bdd.model import Feature
-from pytest_bdd.model.messages import Message, Pickle
 
 """Pytest-bdd pytest hooks."""
 

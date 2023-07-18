@@ -20,15 +20,11 @@ from filelock import FileLock
 from pydantic import ValidationError
 from pytest import ExitCode, Session, hookimpl
 
-from pytest_bdd.compatibility.pytest import Config, FixtureDef, FixtureRequest, Parser, get_config_root_path, is_set
-from pytest_bdd.model.messages import (
-    Attachment,
-    Ci,
-    ContentEncoding,
-    Duration,
+from messages import Attachment, Ci, ContentEncoding, Duration  # type:ignore[attr-defined]
+from messages import Envelope as Message  # type:ignore[attr-defined]
+from messages import (  # type:ignore[attr-defined]
     Hook,
     Location,
-    Message,
     Meta,
     ParameterType,
     Product,
@@ -46,6 +42,7 @@ from pytest_bdd.model.messages import (
     TestStepStarted,
     Timestamp,
 )
+from pytest_bdd.compatibility.pytest import Config, FixtureDef, FixtureRequest, Parser, get_config_root_path, is_set
 from pytest_bdd.packaging import get_distribution_version
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.utils import PytestBDDIdGeneratorHandler, deepattrgetter

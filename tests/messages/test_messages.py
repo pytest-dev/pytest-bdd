@@ -6,25 +6,24 @@ from typing import TYPE_CHECKING, Iterable, Type, Union, cast
 
 from pydantic import ValidationError
 
-from pytest_bdd.model.messages import (
-    Attachment,
-    ContentEncoding,
+from messages import Attachment, ContentEncoding  # type:ignore[attr-defined]
+from messages import Envelope as Message  # type:ignore[attr-defined]
+from messages import (  # type:ignore[attr-defined]
     GherkinDocument,
     Hook,
-    Message,
     Meta,
     ParameterType,
     Pickle,
     Source,
     StepDefinition,
 )
-from pytest_bdd.model.messages import TestCase as _TestCase
-from pytest_bdd.model.messages import TestCaseFinished as _TestCaseFinished
-from pytest_bdd.model.messages import TestCaseStarted as _TestCaseStarted
-from pytest_bdd.model.messages import TestRunFinished as _TestRunFinished
-from pytest_bdd.model.messages import TestRunStarted as _TestRunStarted
-from pytest_bdd.model.messages import TestStepFinished as _TestStepFinished
-from pytest_bdd.model.messages import TestStepStarted as _TestStepStarted
+from messages import TestCase as _TestCase  # type:ignore[attr-defined]
+from messages import TestCaseFinished as _TestCaseFinished  # type:ignore[attr-defined]
+from messages import TestCaseStarted as _TestCaseStarted  # type:ignore[attr-defined]
+from messages import TestRunFinished as _TestRunFinished  # type:ignore[attr-defined]
+from messages import TestRunStarted as _TestRunStarted  # type:ignore[attr-defined]
+from messages import TestStepFinished as _TestStepFinished  # type:ignore[attr-defined]
+from messages import TestStepStarted as _TestStepStarted  # type:ignore[attr-defined]
 from pytest_bdd.utils import flip
 
 if TYPE_CHECKING:  # pragma: nocover

@@ -13,6 +13,8 @@ from urllib.parse import urlparse
 import pytest
 from _pytest.nodes import Collector
 
+from messages import Pickle  # type:ignore[attr-defined]
+from messages import PickleStep as Step  # type:ignore[attr-defined]
 from pytest_bdd import cucumber_json, generation, gherkin_terminal_reporter, given, steps, then, when
 from pytest_bdd.allure_logging import AllurePytestBDD
 from pytest_bdd.collector import FeatureFileModule as FeatureFileCollector
@@ -30,8 +32,6 @@ from pytest_bdd.compatibility.struct_bdd import STRUCT_BDD_INSTALLED
 from pytest_bdd.message_plugin import MessagePlugin
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.model import Feature
-from pytest_bdd.model.messages import Pickle
-from pytest_bdd.model.messages import PickleStep as Step
 from pytest_bdd.parser import GherkinParser
 from pytest_bdd.parsers import cucumber_expression
 from pytest_bdd.reporting import ScenarioReporterPlugin

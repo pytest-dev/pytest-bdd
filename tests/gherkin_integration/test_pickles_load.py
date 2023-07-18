@@ -3,7 +3,7 @@ from pathlib import Path
 
 from pytest import mark, param
 
-from pytest_bdd.model.messages import Pickle
+from messages import Pickle  # type:ignore[attr-defined]
 
 test_data = Path(__file__).parent.parent.parent / "gherkin" / "testdata"
 

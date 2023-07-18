@@ -27,10 +27,20 @@ from attr import Factory, attrib, attrs
 from gherkin.errors import CompositeParserException  # type: ignore[import]
 from gherkin.pickles.compiler import Compiler  # type: ignore[import]
 
+from messages import Background, Examples  # type:ignore[attr-defined]
+from messages import Feature as FeatureMessage  # type:ignore[attr-defined]
+from messages import (  # type:ignore[attr-defined]
+    GherkinDocument,
+    Location,
+    Pickle,
+    PickleStep,
+    Rule,
+    Scenario,
+    Step,
+    TableRow,
+    Tag,
+)
 from pytest_bdd.const import TAG_PREFIX
-from pytest_bdd.model.messages import Background, Examples
-from pytest_bdd.model.messages import Feature as FeatureMessage
-from pytest_bdd.model.messages import GherkinDocument, Location, Pickle, PickleStep, Rule, Scenario, Step, TableRow, Tag
 from pytest_bdd.utils import _itemgetter, deepattrgetter
 
 
@@ -126,7 +136,7 @@ class Feature:
     @property
     def name(self) -> Union[str, None]:
         if self.gherkin_document.feature is not None:
-            return self.gherkin_document.feature.name
+            return cast(str, self.gherkin_document.feature.name)
         else:
             return None
 
@@ -169,7 +179,7 @@ class Feature:
         )(self.registry)
 
     def _get_pickle_tag_names(self, pickle: Pickle):
-        return sorted(map(lambda tag: tag.name.lstrip(TAG_PREFIX), pickle.tags))
+        return sorted(map(lambda tag: tag.name.lstrip(TAG_PREFIX), pickle.tags))  # type: ignore[no-any-return]
 
     def _get_pickle_ast_scenario(self, pickle: Pickle) -> Scenario:
         return cast(Scenario, next(filter(lambda node: type(node) is Scenario, self._get_linked_ast_nodes(pickle))))

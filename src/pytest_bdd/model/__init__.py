@@ -1,5 +1,5 @@
+from messages import Pickle, PickleStep, Step, Tag  # type:ignore[attr-defined]
+from messages import Type as StepType  # type:ignore[attr-defined]
 from pytest_bdd.model.gherkin_document import Feature
-from pytest_bdd.model.messages import Pickle, PickleStep, Step, Tag
-from pytest_bdd.model.messages import Type as StepType
 
-__all__ = ["Feature", "Pickle", "Step", "StepType", "Tag"]
+__all__ = ["Feature", "Pickle", "PickleStep", "Step", "StepType", "Tag"]

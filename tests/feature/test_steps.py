@@ -1160,7 +1160,7 @@ def test_extend_steps_from_step(testdir):
         """\
         from collections import deque
 
-        from pytest_bdd.model.messages import PickleStep, Type
+        from messages import PickleStep, Type
         from pytest_bdd import given, when, then
 
         @when("I inject step \\"{keyword}\\" \\"{step_text}\\"")

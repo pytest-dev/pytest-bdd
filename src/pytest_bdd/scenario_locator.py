@@ -15,11 +15,11 @@ from _operator import methodcaller, truediv
 from _pytest.config import Config
 from attr import Factory, attrib, attrs
 
+from messages import Source  # type:ignore[attr-defined]
 from pytest_bdd.compatibility.parser import ParserProtocol
 from pytest_bdd.compatibility.pytest import get_config_root_path
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.model import Feature, Pickle
-from pytest_bdd.model.messages import Source
 from pytest_bdd.scenario import Args
 from pytest_bdd.utils import PytestBDDIdGeneratorHandler
 

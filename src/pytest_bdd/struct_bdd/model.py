@@ -17,9 +17,9 @@ from pydantic import (  # type:ignore[attr-defined] # migration to pydantic 2
     model_validator,
 )
 
+from messages import KeywordType, MediaType, Source  # type:ignore[attr-defined]
 from pytest_bdd.compatibility.typing import Annotated, Self
 from pytest_bdd.mimetypes import Mimetype
-from pytest_bdd.model.messages import KeywordType, MediaType, Source
 from pytest_bdd.scenario_locator import ScenarioLocatorFilterMixin
 from pytest_bdd.utils import deepattrgetter
 

@@ -17,8 +17,8 @@ from cucumber_expressions.expression import CucumberExpression
 from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
 from cucumber_expressions.regular_expression import RegularExpression as CucumberRegularExpression
 
+from messages import ExpressionType  # type:ignore[attr-defined]
 from pytest_bdd.compatibility.pytest import FixtureRequest
-from pytest_bdd.model.messages import ExpressionType
 from pytest_bdd.model.messages_extension import ExpressionType as ExpressionTypeExtension
 from pytest_bdd.utils import StringableProtocol, stringify
 

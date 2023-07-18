@@ -6,8 +6,7 @@ from typing import Any, Union, cast
 from attr import attrib, attrs
 from gherkin.pickles.compiler import Compiler
 
-from pytest_bdd.model.gherkin_document import Feature as GherkinDocumentFeature
-from pytest_bdd.model.messages import (
+from messages import (  # type:ignore[attr-defined]
     DataTable,
     DocString,
     Examples,
@@ -23,6 +22,7 @@ from pytest_bdd.model.messages import (
     Tag,
     Type,
 )
+from pytest_bdd.model.gherkin_document import Feature as GherkinDocumentFeature
 from pytest_bdd.struct_bdd.model import Join as StructJoin
 from pytest_bdd.struct_bdd.model import StepPrototype as StructStep
 from pytest_bdd.struct_bdd.model import Table as StructTable
