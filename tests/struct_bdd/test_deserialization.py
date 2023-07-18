@@ -11,7 +11,7 @@ from pytest_bdd.compatibility.struct_bdd import STRUCT_BDD_INSTALLED
 from pytest_bdd.model.messages import KeywordType
 from pytest_bdd.utils import IdGenerator, doesnt_raise
 
-if STRUCT_BDD_INSTALLED:
+if STRUCT_BDD_INSTALLED:  # pragma: no cover
     from pytest_bdd.struct_bdd.model import Alternative, Join, Keyword, Node, Step, StepPrototype, Table
     from pytest_bdd.struct_bdd.model_builder import GherkinDocumentBuilder
 

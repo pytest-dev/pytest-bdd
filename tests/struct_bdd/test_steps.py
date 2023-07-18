@@ -5,9 +5,9 @@ from pytest import mark, param
 
 from pytest_bdd.compatibility.struct_bdd import STRUCT_BDD_INSTALLED
 
-if STRUCT_BDD_INSTALLED:
+if STRUCT_BDD_INSTALLED:  # pragma: no cover
     from pytest_bdd.struct_bdd.parser import StructBDDParser
-else:
+else:  # pragma: no cover
     from unittest.mock import Mock
 
     StructBDDParser = Mock()  # type: ignore[misc] # just a stub
