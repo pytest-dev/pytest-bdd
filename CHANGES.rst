@@ -47,12 +47,12 @@ Planned
 
   - Wait for https://github.com/python-poetry/roadmap/issues/3
 - Contribute to messages repository with python model
-- ci-environment lib was accepted by cucumber community, so switch dependency there
 - Add support of native legacy cucumber-json
 - Test against https://github.com/cucumber/json-formatter
 
 Unreleased
 ----------
+- Using official cucmber ci-environment lib
 - Add validation for legacy cucumber.json output
 - Migrated to Pydantic 2
 - Add tests for PyPy
