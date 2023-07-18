@@ -3,7 +3,10 @@ import json
 import math
 import os
 import time
-from typing import TYPE_CHECKING, Any, Dict, Protocol, Sequence, Union, cast, runtime_checkable
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, Sequence, Union, cast, runtime_checkable
+
+from pydantic import BaseModel, ConfigDict
 
 from pytest_bdd.compatibility.pytest import Parser, TerminalReporter, TestReport
 
@@ -49,6 +52,140 @@ def unconfigure(config: Union[Config, "BaseConfig"]) -> None:
         _config = cast(Config, config)
         del _config._bddcucumberjson
         config.pluginmanager.unregister(xml)
+
+
+class ElementType(Enum):
+    background = "background"
+    scenario = "scenario"
+
+
+class Argument(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+    )
+    value: Optional[str] = None
+    offset: Optional[float] = None
+
+
+class Status(Enum):
+    passed = "passed"
+    failed = "failed"
+    skipped = "skipped"
+    undefined = "undefined"
+    pending = "pending"
+    unknown = "unknown"
+
+
+class DocString(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+    )
+    line: Optional[float] = None
+    value: Optional[str] = None
+    content_type: Optional[str] = None
+
+
+class DataTableRow(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+    )
+    cells: List[str]
+
+
+class Tag(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+    )
+    name: str
+    line: Optional[float] = None
+
+
+class Match(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+    )
+    location: Optional[str] = None
+    arguments: Optional[List["Argument"]] = None
+
+
+class Result(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+    )
+    duration: Optional[float] = None
+    status: "Status"
+    error_message: Optional[str] = None
+
+
+class Step(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+    )
+    keyword: Optional[str] = None
+    line: Optional[float] = None
+    match: Optional["Match"] = None
+    name: Optional[str] = None
+    result: Optional["Result"] = None
+    doc_string: Optional["DocString"] = None
+    rows: Optional[List["DataTableRow"]] = None
+
+
+class Hook(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+    )
+    match: Optional["Match"] = None
+    result: "Result"
+
+
+class Element(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+    )
+    start_timestamp: Optional[str] = None
+    line: Optional[float] = None
+    id: Optional[str] = None
+    type: Optional["ElementType"] = None
+    keyword: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    before: Optional[List["Hook"]] = None
+    steps: Optional[List["Step"]] = None
+    after: Optional[List["Hook"]] = None
+    tags: Optional[List["Tag"]] = None
+
+
+class Feature(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+    )
+    uri: Optional[str] = None
+    id: Optional[str] = None
+    line: Optional[float] = None
+    keyword: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    elements: Optional[List["Element"]] = None
+    tags: Optional[List["Tag"]] = None
+
+
+class CucumberJson(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+    )
+    implementation: Optional[str] = None
+    features: Optional[List["Feature"]] = None
 
 
 class LogBDDCucumberJSON:
@@ -148,6 +285,8 @@ class LogBDDCucumberJSON:
 
     def pytest_sessionfinish(self) -> None:
         with open(self.logfile, "w", encoding="utf-8") as logfile:
+            for feature in self.features.values():
+                Feature.model_validate(feature)
             logfile.write(json.dumps(list(self.features.values())))
 
     def pytest_terminal_summary(self, terminalreporter: TerminalReporter) -> None:

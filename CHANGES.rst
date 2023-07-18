@@ -53,6 +53,7 @@ Planned
 
 Unreleased
 ----------
+- Add validation for legacy cucumber.json output
 - Migrated to Pydantic 2
 - Add tests for PyPy
 - Using tox4
