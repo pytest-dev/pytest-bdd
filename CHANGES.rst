@@ -4,6 +4,8 @@ Changelog
 Unreleased
 ----------
 - Drop python 3.7 compatibility, as it's no longer supported. `#627 <https://github.com/pytest-dev/pytest-bdd/pull/627>`_
+- Declare support for python 3.12 `#628 <https://github.com/pytest-dev/pytest-bdd/pull/628>`_
+- Improve parser performance by 15% `#623 <https://github.com/pytest-dev/pytest-bdd/pull/623>`_ by `@dcendents <https://github.com/dcendents>`_
 - ⚠️ Backwards incompatible: - ``parsers.re`` now does a `fullmatch <https://docs.python.org/3/library/re.html#re.fullmatch>`_ instead of a partial match. This is to make it work just like the other parsers, since they don't ignore non-matching characters at the end of the string. `#539 <https://github.com/pytest-dev/pytest-bdd/pull/539>`_
 - Add support for Scenarios and Scenario Outlines to have descriptions. `#600 <https://github.com/pytest-dev/pytest-bdd/pull/600>`_
 
