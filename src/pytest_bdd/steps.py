@@ -43,7 +43,7 @@ from typing import Any, Callable, Iterable, TypeVar
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureRequest
-from typing_extensions import Literal
+from typing import Literal
 
 from .parser import Step
 from .parsers import StepParser, get_parser
