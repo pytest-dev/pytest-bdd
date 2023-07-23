@@ -4,7 +4,7 @@ from unittest import mock
 
 import pytest
 
-from pytest_bdd import given, parsers, then, when
+from pytest_bdd import given, parser, parsers, then, when
 from pytest_bdd.utils import collect_dumped_objects
 
 
@@ -316,3 +316,25 @@ def test_step_catches_all(pytester):
 
     objects = collect_dumped_objects(result)
     assert objects == ["foo", ("foo parametrized", 1), "foo", ("foo parametrized", 2), "foo", ("foo parametrized", 3)]
+
+
+def test_step_name_is_cached():
+    """Test that the step name is cached and not re-computed eache time."""
+    step = parser.Step(name="step name", type="given", indent=8, line_number=3, keyword="Given")
+    assert step.name == "step name"
+
+    # manipulate the step name directly and validate the cache value is still returned
+    step._name = "incorrect step name"
+    assert step.name == "step name"
+
+    # change the step name using the property and validate the cache has been invalidated
+    step.name = "new step name"
+    assert step.name == "new step name"
+
+    # manipulate the step lines and validate the cache value is still returned
+    step.lines.append("step line 1")
+    assert step.name == "new step name"
+
+    # add a step line and validate the cache has been invalidated
+    step.add_line("step line 2")
+    assert step.name == "new step name\nstep line 1\nstep line 2"

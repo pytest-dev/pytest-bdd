@@ -6,6 +6,7 @@ import textwrap
 import typing
 from collections import OrderedDict
 from dataclasses import dataclass, field
+from functools import cached_property
 from typing import cast
 
 from . import exceptions, types
@@ -318,9 +319,10 @@ class Step:
         :param str line: Line of text - the continuation of the step name.
         """
         self.lines.append(line)
+        self._invalidate_full_name_cache()
 
-    @property
-    def name(self) -> str:
+    @cached_property
+    def full_name(self) -> str:
         multilines_content = textwrap.dedent("\n".join(self.lines)) if self.lines else ""
 
         # Remove the multiline quotes, if present.
@@ -334,9 +336,19 @@ class Step:
         lines = [self._name] + [multilines_content]
         return "\n".join(lines).strip()
 
+    def _invalidate_full_name_cache(self) -> None:
+        """Invalidate the full_name cache."""
+        if "full_name" in self.__dict__:
+            del self.full_name
+
+    @property
+    def name(self) -> str:
+        return self.full_name
+
     @name.setter
     def name(self, value: str) -> None:
         self._name = value
+        self._invalidate_full_name_cache()
 
     def __str__(self) -> str:
         """Full step name including the type."""
