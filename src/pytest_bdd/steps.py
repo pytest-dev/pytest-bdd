@@ -39,11 +39,10 @@ from __future__ import annotations
 import enum
 from dataclasses import dataclass, field
 from itertools import count
-from typing import Any, Callable, Iterable, TypeVar
+from typing import Any, Callable, Iterable, Literal, TypeVar
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureRequest
-from typing import Literal
 
 from .parser import Step
 from .parsers import StepParser, get_parser
