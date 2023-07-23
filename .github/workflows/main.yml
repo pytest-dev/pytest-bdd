@@ -27,7 +27,7 @@ jobs:
             toxfactor: py311
             ignore-typecheck-outcome: true
             ignore-test-outcome: false
-          - python-version: "3.12.0-alpha.3"
+          - python-version: "3.12-dev"
             toxfactor: py312
             ignore-typecheck-outcome: true
             ignore-test-outcome: true
