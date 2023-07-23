@@ -20,7 +20,6 @@ classifiers = [
     "Topic :: Software Development :: Libraries",
     "Topic :: Utilities",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -34,7 +33,7 @@ classifiers = [
 "pytest-bdd" = "pytest_bdd.scripts:main"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = ">=3.8"
 Mako = "*"
 parse = "*"
 parse-type = "*"
@@ -55,7 +54,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 120
-target-version = ["py37", "py38", "py39", "py310", "py311"]
+target-version = ["py38", "py39", "py310", "py311"]
 
 [tool.isort]
 profile = "black"
@@ -87,7 +86,7 @@ source = [
 
 
 [tool.mypy]
-python_version = "3.7"
+python_version = "3.8"
 warn_return_any = true
 warn_unused_configs = true
 files = "src/pytest_bdd/**/*.py"
