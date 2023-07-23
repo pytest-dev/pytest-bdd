@@ -12,25 +12,25 @@ jobs:
       matrix:
         include:
           - python-version: "3.8"
-            toxfactor: py38
+            toxfactor: py3.8
             ignore-typecheck-outcome: true
             ignore-test-outcome: false
           - python-version: "3.9"
-            toxfactor: py39
+            toxfactor: py3.9
             ignore-typecheck-outcome: true
             ignore-test-outcome: false
           - python-version: "3.10"
-            toxfactor: py310
+            toxfactor: py3.10
             ignore-typecheck-outcome: true
             ignore-test-outcome: false
           - python-version: "3.11"
-            toxfactor: py311
+            toxfactor: py3.11
             ignore-typecheck-outcome: true
             ignore-test-outcome: false
           - python-version: "3.12-dev"
-            toxfactor: py312
+            toxfactor: py3.12
             ignore-typecheck-outcome: true
-            ignore-test-outcome: false
+            ignore-test-outcome:
 
     steps:
     - uses: actions/checkout@v3
