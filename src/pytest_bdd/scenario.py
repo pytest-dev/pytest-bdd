@@ -12,7 +12,9 @@ test_publish_article = scenario(
 """
 from __future__ import annotations
 
+import asyncio
 import contextlib
+import functools
 import logging
 import os
 import re
@@ -120,6 +122,19 @@ def get_step_function(request, step: Step) -> StepFunctionContext | None:
             return None
 
 
+def ensure_sync(fn):
+    """Convert async function to sync function."""
+    __tracebackhide__ = True
+    if not asyncio.iscoroutinefunction(fn):
+        return fn
+
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(fn(*args, **kwargs))
+
+    return wrapper
+
+
 def _execute_step_function(
     request: FixtureRequest, scenario: Scenario, step: Step, context: StepFunctionContext
 ) -> None:
@@ -156,7 +171,8 @@ def _execute_step_function(
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
         # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
-        return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
+        step_func = ensure_sync(context.step_func)
+        return_value = call_fixture_func(fixturefunc=step_func, request=request, kwargs=kwargs)
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
         raise

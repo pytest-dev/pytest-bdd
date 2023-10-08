@@ -48,6 +48,7 @@ types-setuptools = "^65.5.0.2"
 pytest-xdist = "^3.0.2"
 coverage = {extras = ["toml"], version = "^6.5.0"}
 Pygments = "^2.13.0"  # for code-block highlighting
+pytest-asyncio = "^0.21.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
