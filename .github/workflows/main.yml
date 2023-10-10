@@ -27,7 +27,7 @@ jobs:
             toxfactor: py3.11
             ignore-typecheck-outcome: true
             ignore-test-outcome: false
-          - python-version: "3.12-dev"
+          - python-version: "3.12"
             toxfactor: py3.12
             ignore-typecheck-outcome: true
             ignore-test-outcome: false
@@ -43,7 +43,7 @@ jobs:
 
     - name: Install poetry
       run: |
-        python -m pip install poetry==1.5.1
+        python -m pip install poetry==1.6.1
 
     - name: Configure poetry
       run: |
@@ -79,7 +79,7 @@ jobs:
 
     - uses: codecov/codecov-action@v3
       with:
-        # Explicitly using the token in order to avoid Codecov rate limit errors
+        # Explicitly using the token to avoid Codecov rate limit errors
         # See https://community.codecov.com/t/upload-issues-unable-to-locate-build-via-github-actions-api/3954
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: true

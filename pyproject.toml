@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-bdd"
-version = "6.1.1"
+version = "7.0.0"
 description = "BDD for pytest"
 authors = ["Oleg Pidsadnyi <oleg.pidsadnyi@gmail.com>", "Anatoly Bubenkov <bubenkoff@gmail.com>"]
 maintainers = ["Alessio Bogon <778703+youtux@users.noreply.github.com>"]
@@ -42,12 +42,12 @@ pytest = ">=6.2.0"
 typing-extensions = "*"
 
 [tool.poetry.group.dev.dependencies]
-tox = "^4.1.3"
-mypy = "^1.4.1"
-types-setuptools = "^65.5.0.2"
-pytest-xdist = "^3.0.2"
-coverage = {extras = ["toml"], version = "^6.5.0"}
-Pygments = "^2.13.0"  # for code-block highlighting
+tox = ">=4.11.3"
+mypy = ">=1.6.0"
+types-setuptools = ">=68.2.0.0"
+pytest-xdist = ">=3.3.1"
+coverage = {extras = ["toml"], version = ">=6.5.0"}
+Pygments = ">=2.13.0"  # for code-block highlighting
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -55,7 +55,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 120
-target-version = ["py38", "py39", "py310", "py311"]
+target-version = ["py38", "py39", "py310", "py311", "py312"]
 
 [tool.isort]
 profile = "black"
