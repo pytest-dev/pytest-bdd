@@ -135,3 +135,21 @@ def test_pytest_bdd_after_scenario_called_after_scenario(pytester):
 
     assert scenario_1.name == "Scenario 1"
     assert scenario_2.name == "Scenario 2"
+
+
+def test_pytest_unconfigure_without_configure(pytester):
+    """
+    Simulate a plugin forcing an exit during configuration before bdd is configured
+    https://github.com/pytest-dev/pytest-bdd/issues/362
+    """
+    pytester.makeconftest(
+        """
+    import pytest
+
+    def pytest_configure(config):
+        pytest.exit("Exit during configure", 0)
+        """
+    )
+
+    result = pytester.runpytest()
+    assert result.ret == 0

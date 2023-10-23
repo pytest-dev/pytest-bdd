@@ -21,6 +21,10 @@ if TYPE_CHECKING:
     from .parser import Feature, Scenario, Step
 
 
+# Counter to track how many times pytest initialization was started
+_INIT_COUNT = 0
+
+
 def pytest_addhooks(pluginmanager: PytestPluginManager) -> None:
     """Register plugin hooks."""
     from pytest_bdd import hooks
@@ -52,6 +56,8 @@ def _pytest_bdd_example() -> dict:
 
 def pytest_addoption(parser: Parser) -> None:
     """Add pytest-bdd options."""
+    global _INIT_COUNT
+    _INIT_COUNT += 1
     add_bdd_ini(parser)
     cucumber_json.add_options(parser)
     generation.add_options(parser)
@@ -66,14 +72,19 @@ def add_bdd_ini(parser: Parser) -> None:
 def pytest_configure(config: Config) -> None:
     """Configure all subplugins."""
     CONFIG_STACK.append(config)
+    assert _INIT_COUNT == len(CONFIG_STACK)
     cucumber_json.configure(config)
     gherkin_terminal_reporter.configure(config)
 
 
 def pytest_unconfigure(config: Config) -> None:
     """Unconfigure all subplugins."""
-    CONFIG_STACK.pop()
-    cucumber_json.unconfigure(config)
+    global _INIT_COUNT
+    assert len(CONFIG_STACK) <= _INIT_COUNT
+    if len(CONFIG_STACK) == _INIT_COUNT:
+        CONFIG_STACK.pop()
+        cucumber_json.unconfigure(config)
+    _INIT_COUNT -= 1
 
 
 @pytest.hookimpl(hookwrapper=True)
