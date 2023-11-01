@@ -1,16 +1,15 @@
 """Pytest plugin entry point. Used for any fixtures needed."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, cast
+from typing import TYPE_CHECKING, Any, Callable, Generator, TypeVar, cast
 
 import pytest
+from typing_extensions import ParamSpec
 
 from . import cucumber_json, generation, gherkin_terminal_reporter, given, reporting, then, when
 from .utils import CONFIG_STACK
 
 if TYPE_CHECKING:
-    from typing import Any, Generator
-
     from _pytest.config import Config, PytestPluginManager
     from _pytest.config.argparsing import Parser
     from _pytest.fixtures import FixtureRequest
@@ -19,6 +18,10 @@ if TYPE_CHECKING:
     from pluggy._result import _Result
 
     from .parser import Feature, Scenario, Step
+
+
+P = ParamSpec("P")
+T = TypeVar("T")
 
 
 def pytest_addhooks(pluginmanager: PytestPluginManager) -> None:
@@ -93,7 +96,7 @@ def pytest_bdd_step_error(
     feature: Feature,
     scenario: Scenario,
     step: Step,
-    step_func: Callable,
+    step_func: Callable[..., Any],
     step_func_args: dict,
     exception: Exception,
 ) -> None:
@@ -102,7 +105,11 @@ def pytest_bdd_step_error(
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_bdd_before_step(
-    request: FixtureRequest, feature: Feature, scenario: Scenario, step: Step, step_func: Callable
+    request: FixtureRequest,
+    feature: Feature,
+    scenario: Scenario,
+    step: Step,
+    step_func: Callable[..., Any],
 ) -> None:
     reporting.before_step(request, feature, scenario, step, step_func)
 
@@ -113,7 +120,7 @@ def pytest_bdd_after_step(
     feature: Feature,
     scenario: Scenario,
     step: Step,
-    step_func: Callable,
+    step_func: Callable[..., Any],
     step_func_args: dict[str, Any],
 ) -> None:
     reporting.after_step(request, feature, scenario, step, step_func, step_func_args)
@@ -123,7 +130,7 @@ def pytest_cmdline_main(config: Config) -> int | None:
     return generation.cmdline_main(config)
 
 
-def pytest_bdd_apply_tag(tag: str, function: Callable) -> Callable:
+def pytest_bdd_apply_tag(tag: str, function: Callable[P, T]) -> Callable[P, T]:
     mark = getattr(pytest.mark, tag)
     marked = mark(function)
-    return cast(Callable, marked)
+    return cast(Callable[P, T], marked)

@@ -43,13 +43,15 @@ from typing import Any, Callable, Iterable, Literal, TypeVar
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureRequest
+from typing_extensions import ParamSpec
 
 from .parser import Step
 from .parsers import StepParser, get_parser
 from .types import GIVEN, THEN, WHEN
 from .utils import get_caller_module_locals
 
-TCallable = TypeVar("TCallable", bound=Callable[..., Any])
+P = ParamSpec("P")
+T = TypeVar("T")
 
 
 @enum.unique
@@ -74,10 +76,10 @@ def get_step_fixture_name(step: Step) -> str:
 
 def given(
     name: str | StepParser,
-    converters: dict[str, Callable] | None = None,
+    converters: dict[str, Callable[[Any], Any]] | None = None,
     target_fixture: str | None = None,
     stacklevel: int = 1,
-) -> Callable:
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Given step decorator.
 
     :param name: Step name or a parser object.
@@ -93,10 +95,10 @@ def given(
 
 def when(
     name: str | StepParser,
-    converters: dict[str, Callable] | None = None,
+    converters: dict[str, Callable[[Any], Any]] | None = None,
     target_fixture: str | None = None,
     stacklevel: int = 1,
-) -> Callable:
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """When step decorator.
 
     :param name: Step name or a parser object.
@@ -112,10 +114,10 @@ def when(
 
 def then(
     name: str | StepParser,
-    converters: dict[str, Callable] | None = None,
+    converters: dict[str, Callable[[Any], Any]] | None = None,
     target_fixture: str | None = None,
     stacklevel: int = 1,
-) -> Callable:
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Then step decorator.
 
     :param name: Step name or a parser object.
@@ -132,10 +134,10 @@ def then(
 def step(
     name: str | StepParser,
     type_: Literal["given", "when", "then"] | None = None,
-    converters: dict[str, Callable] | None = None,
+    converters: dict[str, Callable[[Any], Any]] | None = None,
     target_fixture: str | None = None,
     stacklevel: int = 1,
-) -> Callable[[TCallable], TCallable]:
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Generic step decorator.
 
     :param name: Step name as in the feature file.
@@ -155,7 +157,7 @@ def step(
     if converters is None:
         converters = {}
 
-    def decorator(func: TCallable) -> TCallable:
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
         parser = get_parser(name)
 
         context = StepFunctionContext(

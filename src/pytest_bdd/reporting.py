@@ -155,7 +155,7 @@ def step_error(
     feature: Feature,
     scenario: Scenario,
     step: Step,
-    step_func: Callable,
+    step_func: Callable[..., Any],
     step_func_args: dict,
     exception: Exception,
 ) -> None:
@@ -163,7 +163,13 @@ def step_error(
     request.node.__scenario_report__.fail()
 
 
-def before_step(request: FixtureRequest, feature: Feature, scenario: Scenario, step: Step, step_func: Callable) -> None:
+def before_step(
+    request: FixtureRequest,
+    feature: Feature,
+    scenario: Scenario,
+    step: Step,
+    step_func: Callable[..., Any],
+) -> None:
     """Store step start time."""
     request.node.__scenario_report__.add_step_report(StepReport(step=step))
 
