@@ -72,7 +72,8 @@ def pytest_configure(config: Config) -> None:
 
 def pytest_unconfigure(config: Config) -> None:
     """Unconfigure all subplugins."""
-    CONFIG_STACK.pop()
+    if CONFIG_STACK:
+        CONFIG_STACK.pop()
     cucumber_json.unconfigure(config)
 
 
