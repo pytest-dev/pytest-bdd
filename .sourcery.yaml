@@ -1,0 +1,4 @@
+rule_settings:
+   disable:
+     - "assign-if-exp"
+     - "use-next"

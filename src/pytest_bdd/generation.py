@@ -184,8 +184,7 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
             if scenario in scenarios:
                 scenarios.remove(scenario)
             for step in scenario.steps:
-                fixturedefs = _find_step_fixturedef(fm, item, step=step)
-                if fixturedefs:
+                if _find_step_fixturedef(fm, item, step=step):
                     try:
                         steps.remove(step)
                     except ValueError:
