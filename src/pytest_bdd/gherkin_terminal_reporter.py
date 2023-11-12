@@ -58,45 +58,40 @@ class GherkinTerminalReporter(TerminalReporter):
 
         if isinstance(word, tuple):
             word, word_markup = word
-        else:
-            if rep.passed:
-                word_markup = {"green": True}
-            elif rep.failed:
-                word_markup = {"red": True}
-            elif rep.skipped:
-                word_markup = {"yellow": True}
+        elif rep.passed:
+            word_markup = {"green": True}
+        elif rep.failed:
+            word_markup = {"red": True}
+        elif rep.skipped:
+            word_markup = {"yellow": True}
         feature_markup = {"blue": True}
         scenario_markup = word_markup
 
-        if self.verbosity <= 0:
+        if self.verbosity <= 0 or not hasattr(report, "scenario"):
             return super().pytest_runtest_logreport(rep)
-        elif self.verbosity == 1:
-            if hasattr(report, "scenario"):
-                self.ensure_newline()
-                self._tw.write("Feature: ", **feature_markup)
-                self._tw.write(report.scenario["feature"]["name"], **feature_markup)
-                self._tw.write("\n")
-                self._tw.write("    Scenario: ", **scenario_markup)
-                self._tw.write(report.scenario["name"], **scenario_markup)
-                self._tw.write(" ")
-                self._tw.write(word, **word_markup)
-                self._tw.write("\n")
-            else:
-                return super().pytest_runtest_logreport(rep)
+
+        if self.verbosity == 1:
+            self.ensure_newline()
+            self._tw.write("Feature: ", **feature_markup)
+            self._tw.write(report.scenario["feature"]["name"], **feature_markup)
+            self._tw.write("\n")
+            self._tw.write("    Scenario: ", **scenario_markup)
+            self._tw.write(report.scenario["name"], **scenario_markup)
+            self._tw.write(" ")
+            self._tw.write(word, **word_markup)
+            self._tw.write("\n")
         elif self.verbosity > 1:
-            if hasattr(report, "scenario"):
-                self.ensure_newline()
-                self._tw.write("Feature: ", **feature_markup)
-                self._tw.write(report.scenario["feature"]["name"], **feature_markup)
-                self._tw.write("\n")
-                self._tw.write("    Scenario: ", **scenario_markup)
-                self._tw.write(report.scenario["name"], **scenario_markup)
-                self._tw.write("\n")
-                for step in report.scenario["steps"]:
-                    self._tw.write(f"        {step['keyword']} {step['name']}\n", **scenario_markup)
-                self._tw.write("    " + word, **word_markup)
-                self._tw.write("\n\n")
-            else:
-                return super().pytest_runtest_logreport(rep)
+            self.ensure_newline()
+            self._tw.write("Feature: ", **feature_markup)
+            self._tw.write(report.scenario["feature"]["name"], **feature_markup)
+            self._tw.write("\n")
+            self._tw.write("    Scenario: ", **scenario_markup)
+            self._tw.write(report.scenario["name"], **scenario_markup)
+            self._tw.write("\n")
+            for step in report.scenario["steps"]:
+                self._tw.write(f"        {step['keyword']} {step['name']}\n", **scenario_markup)
+            self._tw.write("    " + word, **word_markup)
+            self._tw.write("\n\n")
+
         self.stats.setdefault(cat, []).append(rep)
         return None
