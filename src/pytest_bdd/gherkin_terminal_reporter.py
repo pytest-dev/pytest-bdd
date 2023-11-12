@@ -90,7 +90,7 @@ class GherkinTerminalReporter(TerminalReporter):
             self._tw.write("\n")
             for step in report.scenario["steps"]:
                 self._tw.write(f"        {step['keyword']} {step['name']}\n", **scenario_markup)
-            self._tw.write("    " + word, **word_markup)
+            self._tw.write(f"    {word}", **word_markup)
             self._tw.write("\n\n")
 
         self.stats.setdefault(cat, []).append(rep)

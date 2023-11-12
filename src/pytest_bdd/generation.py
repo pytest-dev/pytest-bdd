@@ -179,8 +179,7 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
     features, scenarios, steps = parse_feature_files(config.option.features)
 
     for item in session.items:
-        scenario = getattr(item.obj, "__scenario__", None)
-        if scenario:
+        if scenario := getattr(item.obj, "__scenario__", None):
             if scenario in scenarios:
                 scenarios.remove(scenario)
             for step in scenario.steps:
