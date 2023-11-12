@@ -64,7 +64,7 @@ class LogBDDCucumberJSON:
         result: dict[str, Any] = {}
         if report.passed or not step["failed"]:  # ignore setup/teardown
             result = {"status": "passed"}
-        elif report.failed and step["failed"]:
+        elif report.failed:
             result = {"status": "failed", "error_message": str(report.longrepr) if error_message else ""}
         elif report.skipped:
             result = {"status": "skipped"}

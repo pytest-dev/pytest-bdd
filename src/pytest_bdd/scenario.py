@@ -46,7 +46,7 @@ def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, nodeid
     """Find the fixture defs that can parse a step."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     fixture_def_by_name = list(fixturemanager._arg2fixturedefs.items())
-    for i, (fixturename, fixturedefs) in enumerate(fixture_def_by_name):
+    for fixturename, fixturedefs in fixture_def_by_name:
         for pos, fixturedef in enumerate(fixturedefs):
             step_func_context = getattr(fixturedef.func, "_pytest_bdd_step_context", None)
             if step_func_context is None:
@@ -244,13 +244,10 @@ def _get_scenario_decorator(
 def collect_example_parametrizations(
     templated_scenario: ScenarioTemplate,
 ) -> list[ParameterSet] | None:
-    # We need to evaluate these iterators and store them as lists, otherwise
-    # we won't be able to do the cartesian product later (the second iterator will be consumed)
-    contexts = list(templated_scenario.examples.as_contexts())
-    if not contexts:
+    if contexts := list(templated_scenario.examples.as_contexts()):
+        return [pytest.param(context, id="-".join(context.values())) for context in contexts]
+    else:
         return None
-
-    return [pytest.param(context, id="-".join(context.values())) for context in contexts]
 
 
 def scenario(
@@ -263,7 +260,7 @@ def scenario(
     :param str encoding: Feature file encoding.
     """
     __tracebackhide__ = True
-    scenario_name = str(scenario_name)
+    scenario_name = scenario_name
     caller_module_path = get_caller_module_path()
 
     # Get the feature

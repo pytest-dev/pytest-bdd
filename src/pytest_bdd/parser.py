@@ -65,8 +65,7 @@ def strip_comments(line: str) -> str:
 
     :return: Stripped line.
     """
-    res = COMMENT_RE.search(line)
-    if res:
+    if res := COMMENT_RE.search(line):
         line = line[: res.start()]
     return line.strip()
 
@@ -189,7 +188,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
             scenario.examples.set_param_names([l for l in split_line(parsed_line) if l])
             mode = types.EXAMPLE_LINE
         elif mode == types.EXAMPLE_LINE:
-            scenario.examples.add_example([l for l in split_line(stripped_line)])
+            scenario.examples.add_example(list(split_line(stripped_line)))
         elif mode and mode not in (types.FEATURE, types.TAG):
             step = Step(name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword)
             if feature.background and not scenario:
