@@ -297,6 +297,7 @@ class Step:
     indent: int
     keyword: str
     failed: bool = field(init=False, default=False)
+    skipped: bool = field(init=False, default=False)
     scenario: ScenarioTemplate | None = field(init=False, default=None)
     background: Background | None = field(init=False, default=None)
     lines: list[str] = field(init=False, default_factory=list)
@@ -309,6 +310,7 @@ class Step:
         self.keyword = keyword
 
         self.failed = False
+        self.skipped = False
         self.scenario = None
         self.background = None
         self.lines = []

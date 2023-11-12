@@ -89,6 +89,19 @@ def pytest_bdd_before_scenario(request: FixtureRequest, feature: Feature, scenar
 
 
 @pytest.hookimpl(tryfirst=True)
+def pytest_bdd_step_skip(
+    request: FixtureRequest,
+    feature: Feature,
+    scenario: Scenario,
+    step: Step,
+    step_func: Callable,
+    step_func_args: dict,
+    exception: Exception,
+) -> None:
+    reporting.step_skip(request, feature, scenario, step, step_func, step_func_args, exception)
+
+
+@pytest.hookimpl(tryfirst=True)
 def pytest_bdd_step_error(
     request: FixtureRequest,
     feature: Feature,

@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 class StepReport:
     """Step execution report."""
 
+    skipped = False
     failed = False
     stopped = None
 
@@ -44,16 +45,19 @@ class StepReport:
             "type": self.step.type,
             "keyword": self.step.keyword,
             "line_number": self.step.line_number,
+            "skipped": self.skipped,
             "failed": self.failed,
             "duration": self.duration,
         }
 
-    def finalize(self, failed: bool) -> None:
+    def finalize(self, failed: bool, skipped=False) -> None:
         """Stop collecting information and finalize the report.
 
         :param bool failed: Whether the step execution is failed.
+        :param bool skipped: Indicates if the step execution is skipped.
         """
         self.stopped = time.perf_counter()
+        self.skipped = skipped
         self.failed = failed
 
     @property
@@ -133,6 +137,17 @@ class ScenarioReport:
             report.finalize(failed=True)
             self.add_step_report(report)
 
+    def skip(self):
+        """Stop collecting information and finalize the report as skipped."""
+        self.current_step_report.finalize(failed=False, skipped=True)
+        remaining_steps = self.scenario.steps[len(self.step_reports) :]
+
+        # Skip the rest of the steps and make reports.
+        for step in remaining_steps:
+            report = StepReport(step=step)
+            report.finalize(failed=False, skipped=True)
+            self.add_step_report(report)
+
 
 def runtest_makereport(item: Item, call: CallInfo, rep: TestReport) -> None:
     """Store item in the report object."""
@@ -148,6 +163,19 @@ def runtest_makereport(item: Item, call: CallInfo, rep: TestReport) -> None:
 def before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
     """Create scenario report for the item."""
     request.node.__scenario_report__ = ScenarioReport(scenario=scenario)
+
+
+def step_skip(
+    request: FixtureRequest,
+    feature: Feature,
+    scenario: Scenario,
+    step: Step,
+    step_func: Callable,
+    step_func_args: dict,
+    exception: Exception,
+) -> None:
+    """Finalize the step report as skipped."""
+    request.node.__scenario_report__.skip()
 
 
 def step_error(
