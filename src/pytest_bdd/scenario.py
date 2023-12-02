@@ -237,6 +237,8 @@ def _get_scenario_decorator(
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 
         scenario_wrapper.__doc__ = f"{feature_name}: {scenario_name}"
+
+        # TODO: Use a WeakKeyDictionary to store the scenario object instead of attaching it to the function
         scenario_wrapper.__scenario__ = templated_scenario
         return cast(Callable[P, T], scenario_wrapper)
 
