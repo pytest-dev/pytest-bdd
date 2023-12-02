@@ -4,6 +4,10 @@ Changelog
 Unreleased
 ----------
 
+7.0.1
+-----
+- Fix errors occurring if `pytest_unconfigure` is called before `pytest_configure`. `#362 <https://github.com/pytest-dev/pytest-bdd/issues/362>`_ `#641 <https://github.com/pytest-dev/pytest-bdd/pull/641>`_
+
 7.0.0
 ----------
 - ⚠️ Backwards incompatible: - ``parsers.re`` now does a `fullmatch <https://docs.python.org/3/library/re.html#re.fullmatch>`_ instead of a partial match. This is to make it work just like the other parsers, since they don't ignore non-matching characters at the end of the string. `#539 <https://github.com/pytest-dev/pytest-bdd/pull/539>`_
