@@ -19,7 +19,7 @@ T = TypeVar("T")
 CONFIG_STACK: list[Config] = []
 
 
-def get_args(func: Callable) -> list[str]:
+def get_args(func: Callable[..., Any]) -> list[str]:
     """Get a list of argument names for a function.
 
     :param func: The function to inspect.
