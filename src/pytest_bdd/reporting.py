@@ -63,10 +63,7 @@ class StepReport:
         :return: Step execution duration.
         :rtype: float
         """
-        if self.stopped is None:
-            return 0
-
-        return self.stopped - self.started
+        return 0 if self.stopped is None else self.stopped - self.started
 
 
 class ScenarioReport:
