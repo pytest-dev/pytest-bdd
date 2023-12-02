@@ -7,7 +7,7 @@ import pickle
 import re
 from inspect import getframeinfo, signature
 from sys import _getframe
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar, cast
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -78,8 +78,8 @@ def collect_dumped_objects(result: RunResult) -> list:
 
 def setdefault(obj: object, name: str, default: T) -> T:
     """Just like dict.setdefault, but for objects."""
-    if hasattr(obj, name):
-        return getattr(obj, name)  # type: ignore
-    else:
+    try:
+        return cast(T, getattr(obj, name))
+    except AttributeError:
         setattr(obj, name, default)
         return default
