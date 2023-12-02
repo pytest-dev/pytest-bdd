@@ -90,116 +90,144 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
     :param str filename: Relative path to the feature file.
     :param str encoding: Feature file encoding (utf-8 by default).
     """
-    __tracebackhide__ = True
-    abs_filename = os.path.abspath(os.path.join(basedir, filename))
-    rel_filename = os.path.join(os.path.basename(basedir), filename)
-    feature = Feature(
-        scenarios=OrderedDict(),
-        filename=abs_filename,
-        rel_filename=rel_filename,
-        line_number=1,
-        name=None,
-        tags=set(),
-        background=None,
-        description="",
-    )
+    return FeatureParser(basedir=basedir, filename=filename, encoding=encoding).parse()
+
+
+@dataclass
+class FeatureParser:
+    filename: str
+    encoding: str
+    feature: Feature
     scenario: ScenarioTemplate | None = None
     mode: str | None = None
-    prev_mode = None
-    description: list[str] = []
-    step = None
-    multiline_step = False
-    prev_line = None
+    prev_mode: str | None = None
+    description: list[str] = field(default_factory=list)
+    step: Step | None = None
+    multiline_step: bool = False
+    prev_line: str | None = None
 
-    with open(abs_filename, encoding=encoding) as f:
-        content = f.read()
+    def __init__(self, basedir: str, filename: str, encoding: str = "utf-8"):
+        self.filename = filename
+        self.encoding = encoding
+        self.feature = self._initialize_feature()
+        self.scenario = None
+        self.mode = None
+        self.prev_mode = None
+        self.description = []
+        self.step = None
+        self.multiline_step = False
+        self.prev_line = None
 
-    for line_number, line in enumerate(content.splitlines(), start=1):
+        abs_filename = os.path.abspath(os.path.join(basedir, self.filename))
+        rel_filename = os.path.join(os.path.basename(basedir), self.filename)
+        self.feature = Feature(
+            scenarios=OrderedDict(),
+            filename=abs_filename,
+            rel_filename=rel_filename,
+            line_number=1,
+            name=None,
+            tags=set(),
+            background=None,
+            description="",
+        )
+
+    def parse(self):
+        with open(self.feature.filename, encoding=self.encoding) as f:
+            content = f.read()
+
+        for line_number, line in enumerate(content.splitlines(), start=1):
+            self._parse_line(line_number, line)
+
+        self.feature.description = "\n".join(self.description).strip()
+        return self.feature
+
+    def _parse_line(self, line_number: int, line: str) -> None:
+        __tracebackhide__ = True
+        # ... (the rest of the code goes here, broken down into smaller methods)
         unindented_line = line.lstrip()
         line_indent = len(line) - len(unindented_line)
-        if step and (step.indent < line_indent or ((not unindented_line) and multiline_step)):
-            multiline_step = True
+        if self.step and (self.step.indent < line_indent or ((not unindented_line) and self.multiline_step)):
+            self.multiline_step = True
             # multiline step, so just add line and continue
-            step.add_line(line)
-            continue
-        else:
-            step = None
-            multiline_step = False
+            self.step.add_line(line)
+            return
+
+        self.step = None
+        self.multiline_step = False
+
         stripped_line = line.strip()
         clean_line = strip_comments(line)
-        if not clean_line and (not prev_mode or prev_mode not in TYPES_WITH_DESCRIPTIONS):
+        if not clean_line and (not self.prev_mode or self.prev_mode not in TYPES_WITH_DESCRIPTIONS):
             # Blank lines are included in feature and scenario descriptions
-            continue
-        mode = get_step_type(clean_line) or mode
+            return
+
+        self.mode = get_step_type(clean_line) or self.mode
 
         allowed_prev_mode = (types.BACKGROUND, types.GIVEN, types.WHEN)
-
-        if not scenario and prev_mode not in allowed_prev_mode and mode in types.STEP_TYPES:
+        if not self.scenario and self.prev_mode not in allowed_prev_mode and self.mode in types.STEP_TYPES:
             raise exceptions.FeatureError(
-                "Step definition outside of a Scenario or a Background", line_number, clean_line, filename
+                "Step definition outside of a Scenario or a Background", line_number, clean_line, self.filename
             )
-
-        if mode == types.FEATURE:
-            if prev_mode is None or prev_mode == types.TAG:
-                _, feature.name = parse_line(clean_line)
-                feature.line_number = line_number
-                feature.tags = get_tags(prev_line)
-            elif prev_mode == types.FEATURE:
+        if self.mode == types.FEATURE:
+            if self.prev_mode is None or self.prev_mode == types.TAG:
+                _, self.feature.name = parse_line(clean_line)
+                self.feature.line_number = line_number
+                self.feature.tags = get_tags(self.prev_line)
+            elif self.prev_mode == types.FEATURE:
                 # Do not include comments in descriptions
                 if not stripped_line.startswith("#"):
-                    description.append(clean_line)
+                    self.description.append(clean_line)
             else:
                 raise exceptions.FeatureError(
                     "Multiple features are not allowed in a single feature file",
                     line_number,
                     clean_line,
-                    filename,
+                    self.filename,
                 )
 
-        prev_mode = mode
+        self.prev_mode = self.mode
 
         # Remove Feature, Given, When, Then, And
         keyword, parsed_line = parse_line(clean_line)
 
-        if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
+        if self.mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
             # Lines between the scenario declaration
             # and the scenario's first step line
             # are considered part of the scenario description.
-            if scenario and not keyword:
+            if self.scenario and not keyword:
                 # Do not include comments in descriptions
                 if not stripped_line.startswith("#"):
-                    scenario.add_description_line(clean_line)
-                continue
-            tags = get_tags(prev_line)
-            scenario = ScenarioTemplate(
-                feature=feature,
+                    self.scenario.add_description_line(clean_line)
+                return
+            tags = get_tags(self.prev_line)
+            self.scenario = ScenarioTemplate(
+                feature=self.feature,
                 name=parsed_line,
                 line_number=line_number,
                 tags=tags,
-                templated=mode == types.SCENARIO_OUTLINE,
+                templated=self.mode == types.SCENARIO_OUTLINE,
             )
-            feature.scenarios[parsed_line] = scenario
-        elif mode == types.BACKGROUND:
-            feature.background = Background(feature=feature, line_number=line_number)
-        elif mode == types.EXAMPLES:
-            mode = types.EXAMPLES_HEADERS
-            scenario.examples.line_number = line_number
-        elif mode == types.EXAMPLES_HEADERS:
-            scenario.examples.set_param_names([l for l in split_line(parsed_line) if l])
-            mode = types.EXAMPLE_LINE
-        elif mode == types.EXAMPLE_LINE:
-            scenario.examples.add_example(list(split_line(stripped_line)))
-        elif mode and mode not in (types.FEATURE, types.TAG):
-            step = Step(name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword)
-            if feature.background and not scenario:
-                feature.background.add_step(step)
+            self.feature.scenarios[parsed_line] = self.scenario
+        elif self.mode == types.BACKGROUND:
+            self.feature.background = Background(feature=self.feature, line_number=line_number)
+        elif self.mode == types.EXAMPLES:
+            self.mode = types.EXAMPLES_HEADERS
+            self.scenario.examples.line_number = line_number
+        elif self.mode == types.EXAMPLES_HEADERS:
+            self.scenario.examples.set_param_names([l for l in split_line(parsed_line) if l])
+            self.mode = types.EXAMPLE_LINE
+        elif self.mode == types.EXAMPLE_LINE:
+            self.scenario.examples.add_example(list(split_line(stripped_line)))
+        elif self.mode and self.mode not in (types.FEATURE, types.TAG):
+            self.step = Step(
+                name=parsed_line, type=self.mode, indent=line_indent, line_number=line_number, keyword=keyword
+            )
+            if self.feature.background and not self.scenario:
+                self.feature.background.add_step(self.step)
             else:
-                scenario = cast(ScenarioTemplate, scenario)
-                scenario.add_step(step)
-        prev_line = clean_line
-
-    feature.description = "\n".join(description).strip()
-    return feature
+                self.scenario = cast(ScenarioTemplate, self.scenario)
+                self.scenario.add_step(self.step)
+        self.prev_line = clean_line
 
 
 @dataclass
