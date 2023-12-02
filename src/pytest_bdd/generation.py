@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from _pytest.config.argparsing import Parser
     from _pytest.fixtures import FixtureDef, FixtureManager
     from _pytest.main import Session
-    from _pytest.python import Function
+    from _pytest.nodes import Node
 
     from .parser import Feature, ScenarioTemplate, Step
 
@@ -123,9 +123,7 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
     tw.write(code)
 
 
-def _find_step_fixturedef(
-    fixturemanager: FixtureManager, item: Function, step: Step
-) -> Sequence[FixtureDef[Any]] | None:
+def _find_step_fixturedef(fixturemanager: FixtureManager, item: Node, step: Step) -> Sequence[FixtureDef[Any]] | None:
     """Find step fixturedef."""
     with inject_fixturedefs_for_step(step=step, fixturemanager=fixturemanager, nodeid=item.nodeid):
         bdd_name = get_step_fixture_name(step=step)
