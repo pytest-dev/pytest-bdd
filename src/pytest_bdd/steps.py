@@ -65,7 +65,7 @@ class StepFunctionContext:
     type: Literal["given", "when", "then"] | None
     step_func: Callable[..., Any]
     parser: StepParser
-    converters: dict[str, Callable[..., Any]] = field(default_factory=dict)
+    converters: dict[str, Callable[[str], Any]] = field(default_factory=dict)
     target_fixture: str | None = None
 
 
@@ -76,7 +76,7 @@ def get_step_fixture_name(step: Step) -> str:
 
 def given(
     name: str | StepParser,
-    converters: dict[str, Callable[[Any], Any]] | None = None,
+    converters: dict[str, Callable[[str], Any]] | None = None,
     target_fixture: str | None = None,
     stacklevel: int = 1,
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
@@ -95,7 +95,7 @@ def given(
 
 def when(
     name: str | StepParser,
-    converters: dict[str, Callable[[Any], Any]] | None = None,
+    converters: dict[str, Callable[[str], Any]] | None = None,
     target_fixture: str | None = None,
     stacklevel: int = 1,
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
@@ -114,7 +114,7 @@ def when(
 
 def then(
     name: str | StepParser,
-    converters: dict[str, Callable[[Any], Any]] | None = None,
+    converters: dict[str, Callable[[str], Any]] | None = None,
     target_fixture: str | None = None,
     stacklevel: int = 1,
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
@@ -134,7 +134,7 @@ def then(
 def step(
     name: str | StepParser,
     type_: Literal["given", "when", "then"] | None = None,
-    converters: dict[str, Callable[[Any], Any]] | None = None,
+    converters: dict[str, Callable[[str], Any]] | None = None,
     target_fixture: str | None = None,
     stacklevel: int = 1,
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
