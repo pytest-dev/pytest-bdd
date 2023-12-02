@@ -4,6 +4,8 @@ import typing
 
 from _pytest.terminal import TerminalReporter
 
+from pytest_bdd.registry import test_report_context
+
 if typing.TYPE_CHECKING:
     from typing import Any
 
@@ -67,28 +69,33 @@ class GherkinTerminalReporter(TerminalReporter):
         feature_markup = {"blue": True}
         scenario_markup = word_markup
 
-        if self.verbosity <= 0 or not hasattr(report, "scenario"):
+        try:
+            scenario = test_report_context[report].scenario
+        except KeyError:
+            scenario = None
+
+        if self.verbosity <= 0 or scenario is None:
             return super().pytest_runtest_logreport(rep)
 
         if self.verbosity == 1:
             self.ensure_newline()
             self._tw.write("Feature: ", **feature_markup)
-            self._tw.write(report.scenario["feature"]["name"], **feature_markup)
+            self._tw.write(scenario["feature"]["name"], **feature_markup)
             self._tw.write("\n")
             self._tw.write("    Scenario: ", **scenario_markup)
-            self._tw.write(report.scenario["name"], **scenario_markup)
+            self._tw.write(scenario["name"], **scenario_markup)
             self._tw.write(" ")
             self._tw.write(word, **word_markup)
             self._tw.write("\n")
         elif self.verbosity > 1:
             self.ensure_newline()
             self._tw.write("Feature: ", **feature_markup)
-            self._tw.write(report.scenario["feature"]["name"], **feature_markup)
+            self._tw.write(scenario["feature"]["name"], **feature_markup)
             self._tw.write("\n")
             self._tw.write("    Scenario: ", **scenario_markup)
-            self._tw.write(report.scenario["name"], **scenario_markup)
+            self._tw.write(scenario["name"], **scenario_markup)
             self._tw.write("\n")
-            for step in report.scenario["steps"]:
+            for step in scenario["steps"]:
                 self._tw.write(f"        {step['keyword']} {step['name']}\n", **scenario_markup)
             self._tw.write(f"    {word}", **word_markup)
             self._tw.write("\n\n")

@@ -226,7 +226,7 @@ class ScenarioTemplate:
     line_number: int
     templated: bool
     tags: set[str] = field(default_factory=set)
-    examples: Examples | None = field(default_factory=lambda: Examples())
+    examples: Examples = field(default_factory=lambda: Examples())
     _steps: list[Step] = field(init=False, default_factory=list)
     _description_lines: list[str] = field(init=False, default_factory=list)
 

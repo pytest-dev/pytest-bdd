@@ -25,6 +25,7 @@ from typing_extensions import ParamSpec
 
 from . import exceptions
 from .feature import get_feature, get_features
+from .registry import step_function_marker_context
 from .steps import StepFunctionContext, get_step_fixture_name, inject_fixture
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
@@ -49,7 +50,7 @@ def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, nodeid
     fixture_def_by_name = list(fixturemanager._arg2fixturedefs.items())
     for fixturename, fixturedefs in fixture_def_by_name:
         for pos, fixturedef in enumerate(fixturedefs):
-            step_func_context = getattr(fixturedef.func, "_pytest_bdd_step_context", None)
+            step_func_context = step_function_marker_context.get(fixturedef.func)
             if step_func_context is None:
                 continue
 
@@ -294,7 +295,7 @@ def get_features_base_dir(caller_module_path: str) -> str:
     return os.path.join(rootdir, d)
 
 
-def get_from_ini(key: str, default: str) -> str:
+def get_from_ini(key: str, default: T) -> str | T:
     """Get value from ini config. Return default if value has not been set.
 
     Use if the default value is dynamic. Otherwise set default on addini call.
