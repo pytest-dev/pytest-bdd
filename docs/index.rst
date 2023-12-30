@@ -20,3 +20,5 @@ Features
 .. include:: ../AUTHORS.rst
 
 .. include:: ../CHANGES.rst
+
+.. include:: ../LICENSE.rst

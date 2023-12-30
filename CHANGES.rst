@@ -50,13 +50,14 @@ Planned
 - Add support of native legacy cucumber-json
 - Test against https://github.com/cucumber/json-formatter
 
-Unreleased
+2.1.0
 ----------
 - Using official cucmber ci-environment lib
 - Add validation for legacy cucumber.json output
 - Migrated to Pydantic 2
 - Add tests for PyPy
 - Using tox4
+- Added support of conditional hooks https://cucumber.io/docs/cucumber/api/?lang=java#conditional-hooks
 - Support of messages:
 
   - Done:
@@ -76,8 +77,6 @@ Unreleased
     - parameter_type
     - attachment
     - hook
-
-- Add support of conditional hooks https://cucumber.io/docs/cucumber/api/?lang=java#conditional-hooks
 
 2.0.0
 ----------

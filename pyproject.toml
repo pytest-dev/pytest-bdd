@@ -70,7 +70,7 @@ dependencies = [
   "messages@git+https://github.com/elchupanebrej/messages.git@main#subdirectory=python"
 ]
 description = "BDD for pytest"
-license = {file = "LICENSE.txt"}
+license = {file = "LICENSE.rst"}
 maintainers = [
   {name = "Konstantin Goloveshko", email = "kostya.goloveshko@gmail.com"}
 ]
@@ -78,7 +78,7 @@ name = "pytest-bdd-ng"
 readme = {file = "README.rst", content-type = "text/x-rst"}
 requires-python = ">=3.8"
 urls = {Repository = "https://github.com/elchupanebrej/pytest-bdd-ng"}
-version = "2.0.0"
+version = "2.1.0"
 
 [project.entry-points]
 pytest11 = {"pytest-bdd" = "pytest_bdd.plugin"}

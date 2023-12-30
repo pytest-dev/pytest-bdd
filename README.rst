@@ -120,10 +120,3 @@ To make links between feature files at features directory and test directory the
 #. `.url` files
 
 .. NOTE:: Link files also could be used to load features by http://
-
-License
--------
-
-This software is licensed under the `MIT license <http://en.wikipedia.org/wiki/MIT_License>`_.
-
-© 2013-2023 Oleg Pidsadnyi, Anatoly Bubenkov, Konstantin Goloveshko and others

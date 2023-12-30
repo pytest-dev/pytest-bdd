@@ -898,8 +898,10 @@ To enable gherkin-formatted output on terminal, use
     pytest --gherkin-terminal-reporter
 
 Allure reporting is also in place https://docs.qameta.io/allure and based on
-`allure-pytest` https://pypi.org/project/allure-pytest/ plugin. Usage is same
+`allure-pytest` https://pypi.org/project/allure-pytest/ plugin. Usage is same.
+
 To install plugin
+^^^^^^^^^^^^^^^^^
 
 ::
 
@@ -963,11 +965,3 @@ The output will be like:
 
 As as side effect, the tool will validate the files for format errors, also some of the logic bugs, for example the
 ordering of the types of the steps.
-
-
-License
--------
-
-This software is licensed under the `MIT license <http://en.wikipedia.org/wiki/MIT_License>`_.
-
-© 2013-2022 Oleg Pidsadnyi, Anatoly Bubenkov, Konstantin Goloveshko and others
