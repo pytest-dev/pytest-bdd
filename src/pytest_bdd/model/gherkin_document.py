@@ -26,7 +26,6 @@ from typing import Sequence, Union, cast
 from attr import Factory, attrib, attrs
 from gherkin.errors import CompositeParserException  # type: ignore[import]
 from gherkin.pickles.compiler import Compiler  # type: ignore[import]
-
 from messages import Background, Examples  # type:ignore[attr-defined]
 from messages import Feature as FeatureMessage  # type:ignore[attr-defined]
 from messages import (  # type:ignore[attr-defined]
@@ -40,6 +39,7 @@ from messages import (  # type:ignore[attr-defined]
     TableRow,
     Tag,
 )
+
 from pytest_bdd.const import TAG_PREFIX
 from pytest_bdd.utils import _itemgetter, deepattrgetter
 

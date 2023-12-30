@@ -45,11 +45,11 @@ from warnings import warn
 import pytest
 from _pytest.fixtures import FixtureRequest
 from attr import Factory, attrib, attrs
-from ordered_set import OrderedSet
-
 from messages import ExpressionType, Location, Pickle  # type:ignore[attr-defined]
 from messages import PickleStep as Step  # type:ignore[attr-defined]
 from messages import SourceReference, StepDefinition, StepDefinitionPattern  # type:ignore[attr-defined]
+from ordered_set import OrderedSet
+
 from pytest_bdd.compatibility.pytest import Config, Parser, TypeAlias, get_config_root_path
 from pytest_bdd.model import Feature, StepType
 from pytest_bdd.model.messages_extension import ExpressionType as ExpressionTypeExtension

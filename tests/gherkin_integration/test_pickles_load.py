@@ -1,9 +1,8 @@
 import json
 from pathlib import Path
 
-from pytest import mark, param
-
 from messages import Pickle  # type:ignore[attr-defined]
+from pytest import mark, param
 
 test_data = Path(__file__).parent.parent.parent / "gherkin" / "testdata"
 

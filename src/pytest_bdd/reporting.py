@@ -8,8 +8,8 @@ from typing import Any, Callable, Dict, List
 
 import pytest
 from attr import Factory, attrib, attrs
-
 from messages import Pickle, PickleStep  # type:ignore[attr-defined]
+
 from pytest_bdd.compatibility.pytest import CallInfo, FixtureRequest, Item
 from pytest_bdd.model import Feature
 

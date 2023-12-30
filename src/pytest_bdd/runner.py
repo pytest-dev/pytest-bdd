@@ -5,10 +5,10 @@ from itertools import zip_longest
 from operator import attrgetter
 from typing import Optional
 
+from messages import PickleStep  # type:ignore[attr-defined]
 from pluggy import PluginManager
 from pytest import hookimpl
 
-from messages import PickleStep  # type:ignore[attr-defined]
 from pytest_bdd import exceptions
 from pytest_bdd.compatibility.pytest import FixtureRequest, Item, call_fixture_func
 from pytest_bdd.model import Feature

@@ -4,8 +4,6 @@ from pathlib import Path
 from pprint import pformat
 from typing import TYPE_CHECKING, Iterable, Type, Union, cast
 
-from pydantic import ValidationError
-
 from messages import Attachment, ContentEncoding  # type:ignore[attr-defined]
 from messages import Envelope as Message  # type:ignore[attr-defined]
 from messages import (  # type:ignore[attr-defined]
@@ -24,6 +22,8 @@ from messages import TestRunFinished as _TestRunFinished  # type:ignore[attr-def
 from messages import TestRunStarted as _TestRunStarted  # type:ignore[attr-defined]
 from messages import TestStepFinished as _TestStepFinished  # type:ignore[attr-defined]
 from messages import TestStepStarted as _TestStepStarted  # type:ignore[attr-defined]
+from pydantic import ValidationError
+
 from pytest_bdd.utils import flip
 
 if TYPE_CHECKING:  # pragma: nocover
