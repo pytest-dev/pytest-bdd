@@ -42,34 +42,9 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11"
 ]
-dependencies = [
-  "aiohttp",
-  "attrs",
-  "certifi",
-  "cucumber-expressions",
-  "decopatch",
-  "docopt-ng",
-  "filelock",
-  "gherkin-official>=24",
-  "importlib-metadata;python_version<'3.10.0'",
-  "importlib-resources",
-  "makefun",
-  "Mako",
-  "ordered_set",
-  "packaging",
-  "parse",
-  "parse_type>=0.6.0",
-  "py",
-  "pydantic>=2.0.3",
-  "pytest>=5.0",
-  "setuptools>=58",
-  "six>=1.16;python_version~='3.8'",
-  "cucumber-tag-expressions",
-  "typing-extensions;python_version<'3.11.0'",
-  "ci-environment@git+https://github.com/cucumber/ci-environment.git@main#subdirectory=python",
-  "messages@git+https://github.com/elchupanebrej/messages.git@main#subdirectory=python"
-]
 description = "BDD for pytest"
+# This is needed until ci-environment&messages become regular PyPi packages
+dynamic = ["dependencies"]
 license = {file = "LICENSE.rst"}
 maintainers = [
   {name = "Konstantin Goloveshko", email = "kostya.goloveshko@gmail.com"}
