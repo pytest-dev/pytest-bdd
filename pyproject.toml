@@ -42,9 +42,35 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11"
 ]
-description = "BDD for pytest"
 # This is needed until ci-environment&messages become regular PyPi packages
-dynamic = ["dependencies"]
+dependencies = [
+  "aiohttp",
+  "attrs",
+  "certifi",
+  "cuke-ci-environment==0.1.0",
+  "cuke-messages==0.1.0",
+  "cucumber-expressions",
+  "decopatch",
+  "docopt-ng",
+  "filelock",
+  "gherkin-official>=24",
+  "importlib-metadata;python_version<'3.10.0'",
+  "importlib-resources",
+  "makefun",
+  "Mako",
+  "ordered_set",
+  "packaging",
+  "parse",
+  "parse_type>=0.6.0",
+  "py",
+  "pydantic>=2.0.3",
+  "pytest>=5.0",
+  "setuptools>=58",
+  "six>=1.16;python_version~='3.8'",
+  "cucumber-tag-expressions",
+  "typing-extensions;python_version<'3.11.0'"
+]
+description = "BDD for pytest"
 license = {file = "LICENSE.rst"}
 maintainers = [
   {name = "Konstantin Goloveshko", email = "kostya.goloveshko@gmail.com"}
@@ -53,7 +79,7 @@ name = "pytest-bdd-ng"
 readme = {file = "README.rst", content-type = "text/x-rst"}
 requires-python = ">=3.8"
 urls = {Repository = "https://github.com/elchupanebrej/pytest-bdd-ng"}
-version = "2.1.0"
+version = "2.1.2"
 
 [project.entry-points]
 pytest11 = {"pytest-bdd" = "pytest_bdd.plugin"}
