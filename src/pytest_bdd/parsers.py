@@ -127,7 +127,7 @@ class re(StepParser):
         name,
         anonymous_group_names: Optional[Iterable[str]] = None,
     ):
-        match = cast(Match, self.regex.match(name))  # Can't be None because is already matched
+        match = cast(Match, self.regex.fullmatch(name))  # Can't be None because is already matched
         group_dict = match.groupdict()
         if anonymous_group_names is not None:
             group_dict.update(
