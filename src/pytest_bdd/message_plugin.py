@@ -17,6 +17,9 @@ from attr import attrib, attrs
 from ci_environment import detect_ci_environment
 from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
 from filelock import FileLock
+from pydantic import ValidationError
+from pytest import ExitCode, Session, hookimpl
+
 from messages import Attachment, Ci, ContentEncoding, Duration  # type:ignore[attr-defined]
 from messages import Envelope as Message  # type:ignore[attr-defined]
 from messages import (  # type:ignore[attr-defined]
@@ -39,9 +42,6 @@ from messages import (  # type:ignore[attr-defined]
     TestStepStarted,
     Timestamp,
 )
-from pydantic import ValidationError
-from pytest import ExitCode, Session, hookimpl
-
 from pytest_bdd.compatibility.pytest import Config, FixtureDef, FixtureRequest, Parser, get_config_root_path, is_set
 from pytest_bdd.packaging import get_distribution_version
 from pytest_bdd.steps import StepHandler

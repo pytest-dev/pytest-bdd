@@ -8,8 +8,8 @@ from typing import Iterable, Optional, Sequence, Tuple, Union, cast
 
 import py
 from mako.template import Template
-from messages import Pickle, PickleStep  # type:ignore[attr-defined]
 
+from messages import Pickle, PickleStep  # type:ignore[attr-defined]
 from pytest_bdd.compatibility.importlib.resources import as_file, files
 from pytest_bdd.compatibility.pytest import Config, ExitCode, FixtureRequest, Item, Parser, Session, wrap_session
 from pytest_bdd.model import Feature, StepType

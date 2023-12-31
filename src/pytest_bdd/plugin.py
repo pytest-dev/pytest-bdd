@@ -12,9 +12,9 @@ from urllib.parse import urlparse
 
 import pytest
 from _pytest.nodes import Collector
+
 from messages import Pickle  # type:ignore[attr-defined]
 from messages import PickleStep as Step  # type:ignore[attr-defined]
-
 from pytest_bdd import cucumber_json, generation, gherkin_terminal_reporter, given, steps, then, when
 from pytest_bdd.allure_logging import AllurePytestBDD
 from pytest_bdd.collector import FeatureFileModule as FeatureFileCollector

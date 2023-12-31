@@ -2,10 +2,10 @@ from io import BufferedIOBase, TextIOBase
 from pathlib import Path
 from typing import Any, Iterable, Optional, Union
 
-from messages import Envelope as Message  # type:ignore[attr-defined]
-from messages import Pickle  # type:ignore[attr-defined]
 from pytest import hookspec
 
+from messages import Envelope as Message  # type:ignore[attr-defined]
+from messages import Pickle  # type:ignore[attr-defined]
 from pytest_bdd.compatibility.pytest import Config, FixtureRequest, Mark
 from pytest_bdd.model import Feature
 

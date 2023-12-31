@@ -3,11 +3,11 @@ from operator import contains
 from textwrap import dedent
 
 from gherkin.pickles.compiler import Compiler
-from messages import KeywordType  # type:ignore[attr-defined]
 from pytest import mark
 from yaml import FullLoader
 from yaml import load as load_yaml
 
+from messages import KeywordType  # type:ignore[attr-defined]
 from pytest_bdd.compatibility.struct_bdd import STRUCT_BDD_INSTALLED
 from pytest_bdd.utils import IdGenerator, doesnt_raise
 

@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any, ClassVar, List, Literal, Mapping, Optional, Sequence, Type, Union
 
 from attr import attrib, attrs
-from messages import KeywordType, MediaType, Source  # type:ignore[attr-defined]
 from pydantic import (  # type:ignore[attr-defined] # migration to pydantic 2
     AfterValidator,
     BaseModel,
@@ -18,6 +17,7 @@ from pydantic import (  # type:ignore[attr-defined] # migration to pydantic 2
     model_validator,
 )
 
+from messages import KeywordType, MediaType, Source  # type:ignore[attr-defined]
 from pytest_bdd.compatibility.typing import Annotated, Self
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.scenario_locator import ScenarioLocatorFilterMixin
