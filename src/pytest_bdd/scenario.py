@@ -20,7 +20,6 @@ from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, TypeVar, ca
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
-from _pytest.nodes import iterparentnodeids
 from typing_extensions import ParamSpec
 
 from . import exceptions
@@ -43,7 +42,7 @@ PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
 
 
-def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, nodeid: str) -> Iterable[FixtureDef[Any]]:
+def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node) -> Iterable[FixtureDef[Any]]:
     """Find the fixture defs that can parse a step."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     fixture_def_by_name = list(fixturemanager._arg2fixturedefs.items())
@@ -60,14 +59,65 @@ def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, nodeid
             if not match:
                 continue
 
-            if fixturedef not in (fixturemanager.getfixturedefs(fixturename, nodeid) or []):
+            if hasattr(pytest, "version_tuple") and pytest.version_tuple >= (8, 1):
+                fixturedefs = fixturemanager.getfixturedefs(fixturename, node)
+            else:
+                fixturedefs = fixturemanager.getfixturedefs(fixturename, node.nodeid)
+            if fixturedef not in (fixturedefs or []):
                 continue
 
             yield fixturedef
 
 
+# Function copied from pytest 8.0 (removed in later versions).
+def iterparentnodeids(nodeid: str) -> Iterator[str]:
+    """Return the parent node IDs of a given node ID, inclusive.
+
+    For the node ID
+
+        "testing/code/test_excinfo.py::TestFormattedExcinfo::test_repr_source"
+
+    the result would be
+
+        ""
+        "testing"
+        "testing/code"
+        "testing/code/test_excinfo.py"
+        "testing/code/test_excinfo.py::TestFormattedExcinfo"
+        "testing/code/test_excinfo.py::TestFormattedExcinfo::test_repr_source"
+
+    Note that / components are only considered until the first ::.
+    """
+    SEP = "/"
+    pos = 0
+    first_colons: Optional[int] = nodeid.find("::")
+    if first_colons == -1:
+        first_colons = None
+    # The root Session node - always present.
+    yield ""
+    # Eagerly consume SEP parts until first colons.
+    while True:
+        at = nodeid.find(SEP, pos, first_colons)
+        if at == -1:
+            break
+        if at > 0:
+            yield nodeid[:at]
+        pos = at + len(SEP)
+    # Eagerly consume :: parts.
+    while True:
+        at = nodeid.find("::", pos)
+        if at == -1:
+            break
+        if at > 0:
+            yield nodeid[:at]
+        pos = at + len("::")
+    # The node ID itself.
+    if nodeid:
+        yield nodeid
+
+
 @contextlib.contextmanager
-def inject_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, nodeid: str) -> Iterator[None]:
+def inject_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node) -> Iterator[None]:
     """Inject fixture definitions that can parse a step.
 
     We fist iterate over all the fixturedefs that can parse the step.
@@ -78,7 +128,7 @@ def inject_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node
     """
     bdd_name = get_step_fixture_name(step=step)
 
-    fixturedefs = list(find_fixturedefs_for_step(step=step, fixturemanager=fixturemanager, nodeid=nodeid))
+    fixturedefs = list(find_fixturedefs_for_step(step=step, fixturemanager=fixturemanager, node=node))
 
     # Sort the fixture definitions by their "path", so that the `bdd_name` fixture will
     # respect the fixture scope
@@ -114,7 +164,7 @@ def get_step_function(request, step: Step) -> StepFunctionContext | None:
     __tracebackhide__ = True
     bdd_name = get_step_fixture_name(step=step)
 
-    with inject_fixturedefs_for_step(step=step, fixturemanager=request._fixturemanager, nodeid=request.node.nodeid):
+    with inject_fixturedefs_for_step(step=step, fixturemanager=request._fixturemanager, node=request.node):
         try:
             return cast(StepFunctionContext, request.getfixturevalue(bdd_name))
         except pytest.FixtureLookupError:

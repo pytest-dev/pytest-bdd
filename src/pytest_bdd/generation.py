@@ -5,6 +5,7 @@ import itertools
 import os.path
 from typing import TYPE_CHECKING, cast
 
+import pytest
 from _pytest._io import TerminalWriter
 from mako.lookup import TemplateLookup
 
@@ -127,9 +128,12 @@ def _find_step_fixturedef(
     fixturemanager: FixtureManager, item: Function, step: Step
 ) -> Sequence[FixtureDef[Any]] | None:
     """Find step fixturedef."""
-    with inject_fixturedefs_for_step(step=step, fixturemanager=fixturemanager, nodeid=item.nodeid):
+    with inject_fixturedefs_for_step(step=step, fixturemanager=fixturemanager, node=item):
         bdd_name = get_step_fixture_name(step=step)
-        return fixturemanager.getfixturedefs(bdd_name, item.nodeid)
+        if hasattr(pytest, "version_tuple") and pytest.version_tuple >= (8, 1):
+            return fixturemanager.getfixturedefs(bdd_name, item)
+        else:
+            return fixturemanager.getfixturedefs(bdd_name, item.nodeid)
 
 
 def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature], list[ScenarioTemplate], list[Step]]:
