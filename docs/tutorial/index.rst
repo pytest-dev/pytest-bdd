@@ -17,4 +17,3 @@ Set up the tutorial
 
 From the project root, activate a virtual environment and run:
 ``pip install -r docs/tutorial/requirements.txt``
-

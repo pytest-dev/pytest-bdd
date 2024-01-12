@@ -1,9 +1,9 @@
-from pytest import fixture
-from pytest_bdd_ng import given, when, then, parsers, step
-
-
 from helper_methods.library_catalog import Catalog
 from helper_methods.verification_helper_methods import verify_returned_books
+from pytest import fixture
+from pytest_bdd_ng import given, parsers, step, then, when
+
+
 @fixture
 def context()
     """ Create a placeholder object to use in place of Cucumber's context object. The context object allows us to pass state between steps. """

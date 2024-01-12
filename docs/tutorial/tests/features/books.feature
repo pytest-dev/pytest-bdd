@@ -8,4 +8,3 @@ Scenario: The catalog can be searched by author name.
     Then only these books will be returned
     | Author          | Title                       |
     | Stephen King    | The Shining                 |
-
