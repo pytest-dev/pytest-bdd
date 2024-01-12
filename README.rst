@@ -15,6 +15,7 @@ BDD library for the pytest runner
 .. _pytest: https://docs.pytest.org
 .. _Gherkin: https://cucumber.io/docs/gherkin/reference
 .. _pytest-bdd-ng: https://pytest-bdd-ng.readthedocs.io/en/default/
+.. _pytest-bdd: https://github.com/pytest-dev/pytest-bdd
 
 **pytest-bdd-ng** combine descriptive clarity of Gherkin_ language
 with power and fullness of pytest_ infrastructure.
@@ -27,7 +28,14 @@ mentioned in feature steps with dependency injection. This allows a true BDD
 just-enough specification of the requirements without obligatory maintaining any context object
 containing the side effects of Gherkin imperative declarations.
 
-.. NOTE:: Project documentation: pytest-bdd-ng_
+.. NOTE:: Project documentation on readthedocs: pytest-bdd-ng_
+
+
+Why ``NG`` ?
+------------
+
+The current pytest plugin for cucumber is pytest-bdd_ , a popular project with 1.2k stars and used in 3k public repos and maintained by the pytest community. The upstream open-cucumber project does not have an official python release, so the current cucumber specs include features not available in pytest-bdd_ . This project is an effort to bridge the gap and also make it easier for pytest users to access new cucumber features.
+
 
 Install pytest-bdd-ng
 ---------------------
@@ -38,12 +46,12 @@ Install pytest-bdd-ng
 
 Project layout
 --------------
-**pytest-bdd-ng** automatically collect `*.feature` files from pytest_ tests directory.
+**pytest-bdd-ng** automatically collects ``*.feature`` files from pytest_ tests directory.
 Important to remember, that feature files are used by other team members as live documentation,
 so it's not a very good idea to mix documentation and test code.
 
 The more features and scenarios you have, the more important becomes the question about
-their organization. So recommended way is to organize your feature files in the folders by
+their organization. So the recommended way is to organize your feature files in the folders by
 semantic groups:
 
 ::
@@ -56,7 +64,7 @@ semantic groups:
        └──auth
           └──login.feature
 
-And tests for this features could be organized in the next manner:
+And tests for these features would be organized in the following manner:
 
 ::
 
@@ -83,7 +91,7 @@ And tests for this features could be organized in the next manner:
     │     └──backend_auth.feature -> ../../features/backend/auth.feature
     ...
 
-Step definitions could be organized in the next way
+The step definitions would then be organized like this:
 
 ::
 
@@ -112,7 +120,7 @@ Step definitions could be organized in the next way
     ...
 
 To make links between feature files at features directory and test directory there are few options
-(for more information please investigate project tests):
+(for more information please examine the project's tests):
 
 #. Symlinks
 #. `.desktop` files
@@ -120,3 +128,9 @@ To make links between feature files at features directory and test directory the
 #. `.url` files
 
 .. NOTE:: Link files also could be used to load features by http://
+
+
+How to Contribute
+-----------------
+
+The project is now open to contributions. Please open an issue for more details.
