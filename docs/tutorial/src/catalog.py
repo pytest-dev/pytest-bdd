@@ -1,3 +1,4 @@
+"""This files represents simple `Application under test`"""
 from typing import List
 
 from attr import Factory, attrib, attrs
