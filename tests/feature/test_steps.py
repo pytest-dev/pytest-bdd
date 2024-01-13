@@ -1167,7 +1167,7 @@ def test_extend_steps_from_step(testdir):
         def inject_step(steps_left: deque, keyword, step_text, scenario):
             steps_left.appendleft(PickleStep(
                 id='MyStep',
-                ast_node_ids=[],
+                ast_node_ids=[''],
                 type=Type.context,
                 text=step_text,
             ))

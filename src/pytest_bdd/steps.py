@@ -46,6 +46,7 @@ import pytest
 from _pytest.fixtures import FixtureRequest
 from attr import Factory, attrib, attrs
 from ordered_set import OrderedSet
+from pydantic import ValidationError
 
 from messages import ExpressionType, Location, Pickle  # type:ignore[attr-defined]
 from messages import PickleStep as Step  # type:ignore[attr-defined]
@@ -373,9 +374,14 @@ class StepHandler:
                 else:
                     expression_type = str(parser_expression_type)
 
+                try:
+                    pattern = StepDefinitionPattern(source=str(self.parser), type=expression_type)
+                except ValidationError:
+                    # Workaround because of https://github.com/cucumber/messages/issues/160
+                    pattern = StepDefinitionPattern(source=str(self.parser), type=ExpressionType.regular_expression)
                 message = self.__cache[id(id_generator)] = StepDefinition(
                     id=self.id,
-                    pattern=StepDefinitionPattern(source=str(self.parser), type=expression_type),
+                    pattern=pattern,
                     source_reference=SourceReference(  # type: ignore[call-arg] # migration to pydantic2
                         uri=os.path.relpath(
                             getfile(self.func),

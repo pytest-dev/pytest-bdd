@@ -73,7 +73,7 @@ def parse_and_unflold_messages(lines):
     parsed_messages = []
     for line in lines:
         try:
-            parsed_messages.append(Message.parse_obj(json.loads(line)))
+            parsed_messages.append(Message.model_validate(json.loads(line)))
         except ValidationError as e:  # pragma: nocover
             errors.append(e)
         if errors:  # pragma: nocover
@@ -312,7 +312,7 @@ def test_attachment_type_message_as_raw_string(testdir: "Testdir", tmp_path):
     attachment_message: Attachment = attachment_messages[0]
     assert attachment_message.body == "Hello world!"
     assert attachment_message.media_type == "text/plain;charset=UTF-8"
-    assert attachment_message.content_encoding == ContentEncoding.identity.value
+    assert ContentEncoding(attachment_message.content_encoding) == ContentEncoding.identity
 
 
 def test_attachment_type_messages_as_raw_string_with_content_type(testdir: "Testdir", tmp_path):
@@ -354,7 +354,7 @@ def test_attachment_type_messages_as_raw_string_with_content_type(testdir: "Test
     attachment_message: Attachment = attachment_messages[0]
     assert attachment_message.body == "http://https://example.com/"
     assert attachment_message.media_type == "text/uri-list"
-    assert attachment_message.content_encoding == ContentEncoding.identity.value
+    assert ContentEncoding(attachment_message.content_encoding) == ContentEncoding.identity
 
 
 def test_attachment_type_messages_as_bytes(testdir: "Testdir", tmp_path):
@@ -395,7 +395,7 @@ def test_attachment_type_messages_as_bytes(testdir: "Testdir", tmp_path):
 
     attachment_message: Attachment = attachment_messages[0]
     assert attachment_message.body == "SGVsbG8gd29ybGQh"
-    assert attachment_message.content_encoding == ContentEncoding.base64.value
+    assert ContentEncoding(attachment_message.content_encoding) == ContentEncoding.base64
 
 
 def test_attachment_type_messages_from_text_file(testdir: "Testdir", tmp_path):
@@ -441,7 +441,7 @@ def test_attachment_type_messages_from_text_file(testdir: "Testdir", tmp_path):
 
     attachment_message: Attachment = attachment_messages[0]
     assert attachment_message.body == "Hello world!"
-    assert attachment_message.content_encoding == ContentEncoding.identity.value
+    assert ContentEncoding(attachment_message.content_encoding) == ContentEncoding.identity
 
 
 def test_attachment_type_messages_from_binary_file(testdir: "Testdir", tmp_path):
@@ -487,7 +487,7 @@ def test_attachment_type_messages_from_binary_file(testdir: "Testdir", tmp_path)
 
     attachment_message: Attachment = attachment_messages[0]
     assert attachment_message.body == "SGVsbG8gd29ybGQh"
-    assert attachment_message.content_encoding == ContentEncoding.base64.value
+    assert ContentEncoding(attachment_message.content_encoding) == ContentEncoding.base64
     assert attachment_message.media_type == "application/octet-stream"
     assert Path(cast(str, attachment_message.file_name)).name == "file.txt"
 

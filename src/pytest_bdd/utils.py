@@ -190,7 +190,7 @@ def _itemgetter(*items):
         if len(items) == 0:
             return []
         elif len(items) == 1:
-            return [obj[items[0]]]
+            return [obj[items[0]]] if items[0] != "" else []
         else:
             return itemgetter(*items)(obj)
 

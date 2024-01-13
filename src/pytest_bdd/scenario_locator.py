@@ -14,6 +14,7 @@ import certifi
 from _operator import methodcaller, truediv
 from _pytest.config import Config
 from attr import Factory, attrib, attrs
+from pydantic import ValidationError
 
 from messages import Source  # type:ignore[attr-defined]
 from pytest_bdd.compatibility.parser import ParserProtocol
@@ -131,9 +132,11 @@ class UrlScenarioLocator(ScenarioLocatorFilterMixin):
                     *self.parse_args.args,
                     **{**dict(encoding=encoding), **self.parse_args.kwargs},
                 )
-
-                yield feature, Source(uri=url, data=feature_data, media_type=mimetype)  # type: ignore[call-arg] # migration to pydantic2
-
+                try:
+                    yield feature, Source(uri=url, data=feature_data, media_type=mimetype)  # type: ignore[call-arg] # migration to pydantic2
+                except ValidationError as e:
+                    # Workaround because of https://github.com/cucumber/messages/issues/161
+                    yield feature, None
             finally:
                 if filename is not None:
                     with suppress(Exception):
@@ -234,5 +237,8 @@ class FileScenarioLocator(ScenarioLocatorFilterMixin):
                 *self.parse_args.args,
                 **{**dict(encoding=encoding), **self.parse_args.kwargs},
             )
-
-            yield feature, Source(uri=uri, data=feature_data, media_type=media_type)  # type: ignore[call-arg] # migration to pydantic2
+            try:
+                yield feature, Source(uri=uri, data=feature_data, media_type=media_type)  # type: ignore[call-arg] # migration to pydantic2
+            except ValidationError as e:
+                # Workaround because of https://github.com/cucumber/messages/issues/161
+                yield feature, None
