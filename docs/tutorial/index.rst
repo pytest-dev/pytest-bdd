@@ -9,7 +9,10 @@ Leslie's tutorial_ ...
    :glob:
 
     tests/features/*.feature
-    steps/*.py
+    src/*.py
+    tests/*.py
+    tests/*.desktop
+    tests/steps/*.py
 
 
 Set up the tutorial
