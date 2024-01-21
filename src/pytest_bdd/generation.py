@@ -6,6 +6,7 @@ import os.path
 from typing import TYPE_CHECKING, cast
 
 from _pytest._io import TerminalWriter
+from _pytest.python import Function
 from mako.lookup import TemplateLookup
 
 from .feature import get_features
@@ -183,6 +184,8 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
     features, scenarios, steps = parse_feature_files(config.option.features)
 
     for item in session.items:
+        if not isinstance(item, Function):
+            continue
         if (scenario := scenario_wrapper_template_registry.get(item.obj)) is not None:
             if scenario in scenarios:
                 scenarios.remove(scenario)
