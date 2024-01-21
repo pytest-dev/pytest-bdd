@@ -5,10 +5,10 @@ import itertools
 import os.path
 from typing import TYPE_CHECKING, cast
 
-import pytest
 from _pytest._io import TerminalWriter
 from mako.lookup import TemplateLookup
 
+from .compat import getfixturedefs
 from .feature import get_features
 from .scenario import inject_fixturedefs_for_step, make_python_docstring, make_python_name, make_string_literal
 from .steps import get_step_fixture_name
@@ -130,10 +130,7 @@ def _find_step_fixturedef(
     """Find step fixturedef."""
     with inject_fixturedefs_for_step(step=step, fixturemanager=fixturemanager, node=item):
         bdd_name = get_step_fixture_name(step=step)
-        if hasattr(pytest, "version_tuple") and pytest.version_tuple >= (8, 1):
-            return fixturemanager.getfixturedefs(bdd_name, item)
-        else:
-            return fixturemanager.getfixturedefs(bdd_name, item.nodeid)
+        return getfixturedefs(fixturemanager, bdd_name, item)
 
 
 def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature], list[ScenarioTemplate], list[Step]]:

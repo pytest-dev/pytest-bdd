@@ -40,6 +40,7 @@ parse = "*"
 parse-type = "*"
 pytest = ">=6.2.0"
 typing-extensions = "*"
+packaging = "*"
 
 [tool.poetry.group.dev.dependencies]
 tox = ">=4.11.3"
