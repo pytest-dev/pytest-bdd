@@ -4,7 +4,7 @@ import typing
 
 from _pytest.terminal import TerminalReporter
 
-from pytest_bdd.registry import test_report_context
+from .reporting import test_report_context
 
 if typing.TYPE_CHECKING:
     from typing import Any

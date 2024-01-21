@@ -3,7 +3,7 @@ import textwrap
 
 import pytest
 
-from pytest_bdd.registry import test_report_context
+from pytest_bdd.reporting import test_report_context
 
 
 class OfType:

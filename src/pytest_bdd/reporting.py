@@ -10,8 +10,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from weakref import WeakKeyDictionary
 
-from .registry import test_report_context
-
 if TYPE_CHECKING:
     from typing import Any, Callable
 
@@ -23,6 +21,7 @@ if TYPE_CHECKING:
     from .parser import Feature, Scenario, Step
 
 scenario_reports_registry: WeakKeyDictionary[Item, ScenarioReport] = WeakKeyDictionary()
+test_report_context: WeakKeyDictionary[TestReport, ReportContext] = WeakKeyDictionary()
 
 
 class StepReport:

@@ -7,7 +7,7 @@ import os
 import time
 import typing
 
-from pytest_bdd.registry import test_report_context
+from .reporting import test_report_context
 
 if typing.TYPE_CHECKING:
     from typing import Any
