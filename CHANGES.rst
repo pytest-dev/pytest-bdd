@@ -3,6 +3,7 @@ Changelog
 
 Unreleased
 ----------
+- Address compatibility issue with pytest 8.1. `#666 <https://github.com/pytest-dev/pytest-bdd/pull/666>`_
 
 7.0.1
 -----
