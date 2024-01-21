@@ -322,7 +322,7 @@ def test_complex_types(pytester, pytestconfig):
     result = pytester.inline_run("-vvl")
     report = result.matchreport("test_complex[10,20-alien0]", when="call")
     assert report.passed
-    # TODO: Use test_report_context
+
     report_context = test_report_context[report]
     assert execnet.gateway_base.dumps(report_context.name)
     assert execnet.gateway_base.dumps(report_context.scenario)
