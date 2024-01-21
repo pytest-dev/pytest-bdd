@@ -17,6 +17,7 @@ import logging
 import os
 import re
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, TypeVar, cast
+from weakref import WeakKeyDictionary
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
@@ -26,7 +27,7 @@ from typing_extensions import ParamSpec
 from . import exceptions
 from .feature import get_feature, get_features
 from .steps import StepFunctionContext, get_step_fixture_name, inject_fixture, step_function_context_registry
-from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
+from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path, registry_get_safe
 
 if TYPE_CHECKING:
     from _pytest.mark.structures import ParameterSet
@@ -41,6 +42,8 @@ logger = logging.getLogger(__name__)
 
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
+
+scenario_wrapper_template_registry: WeakKeyDictionary[Callable[..., Any], ScenarioTemplate] = WeakKeyDictionary()
 
 
 def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, nodeid: str) -> Iterable[FixtureDef[Any]]:
@@ -237,8 +240,7 @@ def _get_scenario_decorator(
 
         scenario_wrapper.__doc__ = f"{feature_name}: {scenario_name}"
 
-        # TODO: Use a WeakKeyDictionary to store the scenario object instead of attaching it to the function
-        scenario_wrapper.__scenario__ = templated_scenario
+        scenario_wrapper_template_registry[scenario_wrapper] = templated_scenario
         return cast(Callable[P, T], scenario_wrapper)
 
     return decorator
@@ -359,9 +361,9 @@ def scenarios(*feature_paths: str, **kwargs: Any) -> None:
     found = False
 
     module_scenarios = frozenset(
-        (attr.__scenario__.feature.filename, attr.__scenario__.name)
+        (s.feature.filename, s.name)
         for name, attr in caller_locals.items()
-        if hasattr(attr, "__scenario__")
+        if (s := registry_get_safe(scenario_wrapper_template_registry, attr)) is not None
     )
 
     for feature in get_features(abs_feature_paths):

@@ -9,7 +9,13 @@ from _pytest._io import TerminalWriter
 from mako.lookup import TemplateLookup
 
 from .feature import get_features
-from .scenario import inject_fixturedefs_for_step, make_python_docstring, make_python_name, make_string_literal
+from .scenario import (
+    inject_fixturedefs_for_step,
+    make_python_docstring,
+    make_python_name,
+    make_string_literal,
+    scenario_wrapper_template_registry,
+)
 from .steps import get_step_fixture_name
 from .types import STEP_TYPES
 
@@ -177,7 +183,7 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
     features, scenarios, steps = parse_feature_files(config.option.features)
 
     for item in session.items:
-        if scenario := getattr(item.obj, "__scenario__", None):
+        if (scenario := scenario_wrapper_template_registry.get(item.obj)) is not None:
             if scenario in scenarios:
                 scenarios.remove(scenario)
             for step in scenario.steps:
