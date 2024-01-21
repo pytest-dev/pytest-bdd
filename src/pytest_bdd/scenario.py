@@ -216,7 +216,7 @@ def _get_scenario_decorator(
         # We need to tell pytest that the original function requires its fixtures,
         # otherwise indirect fixtures would not work.
         @pytest.mark.usefixtures(*func_args)
-        def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> Any:
+        def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> T:
             __tracebackhide__ = True
             scenario = templated_scenario.render(_pytest_bdd_example)
             _execute_scenario(feature, scenario, request)
