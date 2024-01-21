@@ -33,6 +33,7 @@ def test_description(pytester):
             """\
         import textwrap
         from pytest_bdd import given, scenario
+        from pytest_bdd.scenario import scenario_wrapper_template_registry
 
         @scenario("description.feature", "Description")
         def test_description():
@@ -44,7 +45,8 @@ def test_description(pytester):
             return "bar"
 
         def test_feature_description():
-            assert test_description.__scenario__.feature.description == textwrap.dedent(
+            scenario = scenario_wrapper_template_registry[test_description]
+            assert scenario.feature.description == textwrap.dedent(
                 \"\"\"\\
                 In order to achieve something
                 I want something
@@ -55,7 +57,8 @@ def test_description(pytester):
             )
 
         def test_scenario_description():
-            assert test_description.__scenario__.description == textwrap.dedent(
+            scenario = scenario_wrapper_template_registry[test_description]
+            assert scenario.description == textwrap.dedent(
                 \"\"\"\\
                 Also, the scenario can have a description.
 

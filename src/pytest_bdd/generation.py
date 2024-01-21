@@ -6,10 +6,17 @@ import os.path
 from typing import TYPE_CHECKING, cast
 
 from _pytest._io import TerminalWriter
+from _pytest.python import Function
 from mako.lookup import TemplateLookup
 
 from .feature import get_features
-from .scenario import inject_fixturedefs_for_step, make_python_docstring, make_python_name, make_string_literal
+from .scenario import (
+    inject_fixturedefs_for_step,
+    make_python_docstring,
+    make_python_name,
+    make_string_literal,
+    scenario_wrapper_template_registry,
+)
 from .steps import get_step_fixture_name
 from .types import STEP_TYPES
 
@@ -20,7 +27,7 @@ if TYPE_CHECKING:
     from _pytest.config.argparsing import Parser
     from _pytest.fixtures import FixtureDef, FixtureManager
     from _pytest.main import Session
-    from _pytest.python import Function
+    from _pytest.nodes import Node
 
     from .parser import Feature, ScenarioTemplate, Step
 
@@ -123,9 +130,7 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
     tw.write(code)
 
 
-def _find_step_fixturedef(
-    fixturemanager: FixtureManager, item: Function, step: Step
-) -> Sequence[FixtureDef[Any]] | None:
+def _find_step_fixturedef(fixturemanager: FixtureManager, item: Node, step: Step) -> Sequence[FixtureDef[Any]] | None:
     """Find step fixturedef."""
     with inject_fixturedefs_for_step(step=step, fixturemanager=fixturemanager, nodeid=item.nodeid):
         bdd_name = get_step_fixture_name(step=step)
@@ -179,7 +184,9 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
     features, scenarios, steps = parse_feature_files(config.option.features)
 
     for item in session.items:
-        if scenario := getattr(item.obj, "__scenario__", None):
+        if not isinstance(item, Function):
+            continue
+        if (scenario := scenario_wrapper_template_registry.get(item.obj)) is not None:
             if scenario in scenarios:
                 scenarios.remove(scenario)
             for step in scenario.steps:

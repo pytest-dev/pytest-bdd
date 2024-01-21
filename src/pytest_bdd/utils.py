@@ -6,7 +6,8 @@ import pickle
 import re
 from inspect import getframeinfo, signature
 from sys import _getframe
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar, cast
+from weakref import WeakKeyDictionary
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -78,7 +79,17 @@ def collect_dumped_objects(result: RunResult) -> list:
 def setdefault(obj: object, name: str, default: T) -> T:
     """Just like dict.setdefault, but for objects."""
     try:
-        return getattr(obj, name)
+        return cast(T, getattr(obj, name))
     except AttributeError:
         setattr(obj, name, default)
         return default
+
+
+def registry_get_safe(registry: WeakKeyDictionary[Any, T], key: Any, default=None) -> T | None:
+    """Get a value from a registry, or None if the key is not in the registry.
+    It ensures that this works even if the key cannot be weak-referenced (normally this would raise a TypeError).
+    """
+    try:
+        return registry.get(key, default)
+    except TypeError:
+        return None

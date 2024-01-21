@@ -6,7 +6,9 @@ that enriches the pytest test reporting.
 from __future__ import annotations
 
 import time
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
+from weakref import WeakKeyDictionary
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -17,6 +19,9 @@ if TYPE_CHECKING:
     from _pytest.runner import CallInfo
 
     from .parser import Feature, Scenario, Step
+
+scenario_reports_registry: WeakKeyDictionary[Item, ScenarioReport] = WeakKeyDictionary()
+test_report_context: WeakKeyDictionary[TestReport, ReportContext] = WeakKeyDictionary()
 
 
 class StepReport:
@@ -134,20 +139,25 @@ class ScenarioReport:
             self.add_step_report(report)
 
 
+@dataclass
+class ReportContext:
+    scenario: dict[str, Any]
+    name: str
+
+
 def runtest_makereport(item: Item, call: CallInfo, rep: TestReport) -> None:
     """Store item in the report object."""
     try:
-        scenario_report: ScenarioReport = item.__scenario_report__
-    except AttributeError:
-        pass
-    else:
-        rep.scenario = scenario_report.serialize()
-        rep.item = {"name": item.name}
+        scenario_report: ScenarioReport = scenario_reports_registry[item]
+    except KeyError:
+        return
+
+    test_report_context[rep] = ReportContext(scenario=scenario_report.serialize(), name=item.name)
 
 
 def before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
     """Create scenario report for the item."""
-    request.node.__scenario_report__ = ScenarioReport(scenario=scenario)
+    scenario_reports_registry[request.node] = ScenarioReport(scenario=scenario)
 
 
 def step_error(
@@ -160,7 +170,7 @@ def step_error(
     exception: Exception,
 ) -> None:
     """Finalize the step report as failed."""
-    request.node.__scenario_report__.fail()
+    scenario_reports_registry[request.node].fail()
 
 
 def before_step(
@@ -171,7 +181,7 @@ def before_step(
     step_func: Callable[..., Any],
 ) -> None:
     """Store step start time."""
-    request.node.__scenario_report__.add_step_report(StepReport(step=step))
+    scenario_reports_registry[request.node].add_step_report(StepReport(step=step))
 
 
 def after_step(
@@ -183,4 +193,4 @@ def after_step(
     step_func_args: dict,
 ) -> None:
     """Finalize the step report as successful."""
-    request.node.__scenario_report__.current_step_report.finalize(failed=False)
+    scenario_reports_registry[request.node].current_step_report.finalize(failed=False)
