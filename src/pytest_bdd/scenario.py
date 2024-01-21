@@ -25,8 +25,7 @@ from typing_extensions import ParamSpec
 
 from . import exceptions
 from .feature import get_feature, get_features
-from .registry import step_function_marker_context
-from .steps import StepFunctionContext, get_step_fixture_name, inject_fixture
+from .steps import StepFunctionContext, get_step_fixture_name, inject_fixture, step_function_context_registry
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if TYPE_CHECKING:
@@ -50,7 +49,7 @@ def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, nodeid
     fixture_def_by_name = list(fixturemanager._arg2fixturedefs.items())
     for fixturename, fixturedefs in fixture_def_by_name:
         for pos, fixturedef in enumerate(fixturedefs):
-            step_func_context = step_function_marker_context.get(fixturedef.func)
+            step_func_context = step_function_context_registry.get(fixturedef.func)
             if step_func_context is None:
                 continue
 

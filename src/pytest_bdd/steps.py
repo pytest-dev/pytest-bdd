@@ -40,6 +40,7 @@ import enum
 from dataclasses import dataclass, field
 from itertools import count
 from typing import Any, Callable, Iterable, Literal, TypeVar
+from weakref import WeakKeyDictionary
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureRequest
@@ -47,12 +48,12 @@ from typing_extensions import ParamSpec
 
 from .parser import Step
 from .parsers import StepParser, get_parser
-from .registry import step_function_marker_context
-from .types import GIVEN, THEN, WHEN
 from .utils import get_caller_module_locals
 
 P = ParamSpec("P")
 T = TypeVar("T")
+
+step_function_context_registry: WeakKeyDictionary[Callable[..., Any], StepFunctionContext] = WeakKeyDictionary()
 
 
 @enum.unique
@@ -172,7 +173,7 @@ def step(
         def step_function_marker() -> StepFunctionContext:
             return context
 
-        step_function_marker_context[step_function_marker] = context
+        step_function_context_registry[step_function_marker] = context
 
         caller_locals = get_caller_module_locals(stacklevel=stacklevel)
         fixture_step_name = find_unique_name(
