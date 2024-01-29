@@ -2,16 +2,16 @@
           use cases of **pytest-bdd-ng** by investigation of its regression
           test suite https://github.com/elchupanebrej/pytest-bdd-ng/tree/default/tests
 
-Gherkin feature launch by pytest.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-.. include:: ../Features/Gherkin feature launch by pytest.feature
-   :code: gherkin
-
 Tutorial launch.feature
 !!!!!!!!!!!!!!!!!!!!!!!
 
 .. include:: ../Features/Tutorial launch.feature
+   :code: gherkin
+
+Gherkin feature launch by pytest.feature
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+.. include:: ../Features/Gherkin feature launch by pytest.feature
    :code: gherkin
 
 Tags for Scenario Outlines examples.feature
