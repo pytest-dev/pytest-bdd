@@ -61,13 +61,14 @@ def is_pytest_version_greater(version: str):
     return compare_distribution_version("pytest", version, ge)
 
 
-PYTEST6, PYTEST61, PYTEST62, PYTEST7 = map(
+PYTEST6, PYTEST61, PYTEST62, PYTEST7, PYTEST8 = map(
     is_pytest_version_greater,
     [
         "6.0",
         "6.1",
         "6.2",
         "7.0",
+        "8.0",
     ],
 )
 
@@ -191,3 +192,7 @@ else:
 
     def is_set(obj):
         return type(obj) is not object
+
+
+def get_metafunc_call_arg(call, arg):
+    return call.params[arg] if PYTEST8 else call.funcargs[arg]
