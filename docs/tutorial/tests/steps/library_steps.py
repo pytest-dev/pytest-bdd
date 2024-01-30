@@ -1,10 +1,10 @@
 import re
 from typing import List, Literal
 
-from src.catalog import Book, Catalog
-
 from messages import DataTable, Step  # type:ignore[attr-defined]
 from pytest_bdd import given, step, then, when
+
+from ...src.catalog import Book, Catalog
 
 
 def get_books_from_data_table(data_table: DataTable):
