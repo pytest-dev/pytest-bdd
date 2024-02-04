@@ -10,7 +10,7 @@ from pytest_bdd import given, step
 from pytest_bdd.compatibility.pytest import assert_outcomes
 from pytest_bdd.utils import compose
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.compatibility.pytest import Testdir
 
 
@@ -56,12 +56,11 @@ def check_pytest_stdout_lines(pytest_result, step):
     pytest_result.stdout.fnmatch_lines(lines)
 
 
-@given(re.compile(r"Copy path from \"(?P<initial_path>(\w|\\|.)+)\" to \"(?P<final_path>(\w|\\|.)+)\""))
+@given(re.compile(r"Copy path from \"(?P<initial_path>(\w|\\|.)+)\" to test path \"(?P<final_path>(\w|\\|.)+)\""))
 def copy_path(request, testdir: "Testdir", initial_path, final_path, step):
-    full_initial_path = Path(request.config.rootdir) / Path(initial_path).as_posix()
+    full_initial_path = (Path(request.config.rootdir) / Path(initial_path).as_posix()).resolve(strict=True)
     full_final_path = Path(testdir.tmpdir) / Path(final_path).as_posix()
     if full_initial_path.is_file():
-        full_initial_path.parent.mkdir(parents=True, exist_ok=True)
         full_final_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(full_initial_path, full_final_path)
     else:
