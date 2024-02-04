@@ -1391,3 +1391,39 @@ def test_uses_correct_step_in_the_hierarchy(testdir, tmp_path):
 
     [thing1, thing2] = collect_dumped_objects(result)
     assert thing1 == thing2 == "specific test_b_test_b"
+
+
+def test_steps_parameters_injected_as_fixtures_are_not_shared_between_scenarios(testdir):
+    testdir.makefile(
+        ".feature",
+        # language=gherkin
+        steps="""\
+            Feature: Steps parameters injected as fixtures are not shared between scenarios
+
+                Scenario: Steps parameters injected as fixture
+                    Given I have a "foo" parameter which is injected as fixture
+
+                Scenario:
+                    Then Fixture "foo" is inavailable
+            """,
+    )
+    testdir.makeconftest(
+        # language=python
+        """\
+        from pytest_bdd.compatibility.pytest import FixtureLookupError
+        from pytest import raises
+        from pytest_bdd import given, then
+
+        @given('I have a "{foo}" parameter which is injected as fixture')
+        def inject_fixture(request):
+            assert request.getfixturevalue('foo') == "foo"
+
+
+        @then('Fixture "foo" is inavailable')
+        def foo_is_foo(request):
+            with raises(FixtureLookupError):
+                request.getfixturevalue('foo')
+        """
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=2, failed=0)

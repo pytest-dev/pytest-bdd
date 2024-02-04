@@ -42,7 +42,15 @@ from messages import (  # type:ignore[attr-defined]
     TestStepStarted,
     Timestamp,
 )
-from pytest_bdd.compatibility.pytest import Config, FixtureDef, FixtureRequest, Parser, get_config_root_path, is_set
+from pytest_bdd.compatibility.pytest import (
+    Config,
+    FixtureDef,
+    FixtureRequest,
+    Parser,
+    get_config_root_path,
+    get_metafunc_call_arg,
+    is_set,
+)
 from pytest_bdd.packaging import get_distribution_version
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.utils import PytestBDDIdGeneratorHandler, deepattrgetter
@@ -142,9 +150,9 @@ class MessagePlugin:
             feature_registry = set()
             pickle_registry = set()
             for call in metafunc._calls:
-                feature = call.funcargs["feature"]
-                pickle = call.funcargs["scenario"]
-                feature_source: Source = call.funcargs["feature_source"]
+                feature = get_metafunc_call_arg(call, "feature")
+                pickle = get_metafunc_call_arg(call, "scenario")
+                feature_source: Source = get_metafunc_call_arg(call, "feature_source")
 
                 if is_set(feature) and feature_source.uri not in feature_registry:
                     feature_registry.add(feature_source.uri)

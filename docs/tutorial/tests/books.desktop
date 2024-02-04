@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Link
+URL=features/books.feature
+; Feature files are gathered as usual test modules, but also could be linked into
+; directory hierarchy by symlinks.
+; Some operation systems do not provide symlinks, so such files could replace them.
