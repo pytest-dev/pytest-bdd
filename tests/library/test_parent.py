@@ -2,6 +2,7 @@
 
 Check the parent givens are collected and overridden in the local conftest.
 """
+
 import textwrap
 
 from pytest_bdd.utils import collect_dumped_objects

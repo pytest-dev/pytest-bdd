@@ -1,4 +1,5 @@
 """Step parsers."""
+
 from __future__ import annotations
 
 import abc
@@ -103,13 +104,11 @@ TStepParser = TypeVar("TStepParser", bound=StepParser)
 
 
 @overload
-def get_parser(step_name: str) -> string:
-    ...
+def get_parser(step_name: str) -> string: ...
 
 
 @overload
-def get_parser(step_name: TStepParser) -> TStepParser:
-    ...
+def get_parser(step_name: TStepParser) -> TStepParser: ...
 
 
 def get_parser(step_name: str | StepParser) -> StepParser:

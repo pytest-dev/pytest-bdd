@@ -1,4 +1,5 @@
 """Cucumber json output formatter."""
+
 from __future__ import annotations
 
 import json
@@ -46,7 +47,6 @@ def unconfigure(config: Config) -> None:
 
 
 class LogBDDCucumberJSON:
-
     """Logging plugin for cucumber like json output."""
 
     def __init__(self, logfile: str) -> None:

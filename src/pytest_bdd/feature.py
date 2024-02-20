@@ -23,6 +23,7 @@ Syntax example:
 :note: There are no multiline steps, the description of the step must fit in
 one line.
 """
+
 from __future__ import annotations
 
 import glob

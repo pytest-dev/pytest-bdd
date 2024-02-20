@@ -3,6 +3,7 @@
 Collection of the scenario execution statuses, timing and other information
 that enriches the pytest test reporting.
 """
+
 from __future__ import annotations
 
 import time

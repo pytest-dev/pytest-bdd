@@ -1,4 +1,5 @@
 """pytest-bdd missing test code generation."""
+
 from __future__ import annotations
 
 import itertools

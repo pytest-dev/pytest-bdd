@@ -10,6 +10,7 @@ test_publish_article = scenario(
     scenario_name="Publishing the article",
 )
 """
+
 from __future__ import annotations
 
 import contextlib
