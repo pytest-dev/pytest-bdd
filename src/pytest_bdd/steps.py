@@ -42,9 +42,10 @@ from itertools import count
 from typing import Any, Callable, Iterable, Literal, TypeVar
 
 import pytest
-from _pytest.fixtures import FixtureDef, FixtureRequest
+from _pytest.fixtures import FixtureRequest
 from typing_extensions import ParamSpec
 
+from . import compat
 from .parser import Step
 from .parsers import StepParser, get_parser
 from .types import GIVEN, THEN, WHEN
@@ -210,7 +211,7 @@ def inject_fixture(request: FixtureRequest, arg: str, value: Any) -> None:
     :param value: argument value
     """
 
-    fd = FixtureDef(
+    fd = compat.FixtureDef(
         fixturemanager=request._fixturemanager,
         baseid=None,
         argname=arg,
@@ -224,6 +225,7 @@ def inject_fixture(request: FixtureRequest, arg: str, value: Any) -> None:
     add_fixturename = arg not in request.fixturenames
 
     def fin() -> None:
+        # TODO: Still required?
         request._fixturemanager._arg2fixturedefs[arg].remove(fd)
 
         if old_fd is not None:
