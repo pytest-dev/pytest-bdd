@@ -2,21 +2,75 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from importlib.metadata import version
+from typing import Any
 
-from _pytest.fixtures import FixtureDef, FixtureManager
+from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest
 from _pytest.nodes import Node
-from packaging.version import Version
 from packaging.version import parse as parse_version
 
 pytest_version = parse_version(version("pytest"))
 
+__all__ = ["getfixturedefs", "inject_fixture"]
 
-if pytest_version >= Version("8.1"):
+if pytest_version.release >= (8, 1):
 
     def getfixturedefs(fixturemanager: FixtureManager, fixturename: str, node: Node) -> Sequence[FixtureDef] | None:
         return fixturemanager.getfixturedefs(fixturename, node)
+
+    def inject_fixture(request: FixtureRequest, arg: str, value: Any) -> None:
+        """Inject fixture into pytest fixture request.
+
+        :param request: pytest fixture request
+        :param arg: argument name
+        :param value: argument value
+        """
+
+        request._fixturemanager._register_fixture(
+            name=arg,
+            func=lambda: value,
+            nodeid=request.node.nodeid,
+        )
 
 else:
 
     def getfixturedefs(fixturemanager: FixtureManager, fixturename: str, node: Node) -> Sequence[FixtureDef] | None:
         return fixturemanager.getfixturedefs(fixturename, node.nodeid)
+
+    def inject_fixture(request: FixtureRequest, arg: str, value: Any) -> None:
+        """Inject fixture into pytest fixture request.
+
+        :param request: pytest fixture request
+        :param arg: argument name
+        :param value: argument value
+        """
+        fd = FixtureDef(
+            fixturemanager=request._fixturemanager,
+            baseid=None,
+            argname=arg,
+            func=lambda: value,
+            scope="function",
+            params=None,
+        )
+        fd.cached_result = (value, 0, None)
+
+        old_fd = request._fixture_defs.get(arg)
+        add_fixturename = arg not in request.fixturenames
+
+        def fin() -> None:
+            request._fixturemanager._arg2fixturedefs[arg].remove(fd)
+
+            if old_fd is not None:
+                request._fixture_defs[arg] = old_fd
+
+            if add_fixturename:
+                request._pyfuncitem._fixtureinfo.names_closure.remove(arg)
+
+        request.addfinalizer(fin)
+
+        # inject fixture definition
+        request._fixturemanager._arg2fixturedefs.setdefault(arg, []).append(fd)
+
+        # inject fixture value in request cache
+        request._fixture_defs[arg] = fd
+        if add_fixturename:
+            request._pyfuncitem._fixtureinfo.names_closure.append(arg)

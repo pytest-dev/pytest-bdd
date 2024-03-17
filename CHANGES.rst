@@ -3,6 +3,17 @@ Changelog
 
 Unreleased
 ----------
+
+7.1.2
+----------
+- Address another compatibility issue with pytest 8.1 (fixture registration). `#680 <https://github.com/pytest-dev/pytest-bdd/pull/680>`_
+
+7.1.1
+----------
+- Address a bug introduced in pytest-bdd 7.1 caused by incorrect pytest version check.
+
+7.1
+----------
 - Address compatibility issue with pytest 8.1. `#666 <https://github.com/pytest-dev/pytest-bdd/pull/666>`_
 
 7.0.1
