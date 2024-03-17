@@ -1,4 +1,5 @@
 """Test scenario reporting."""
+
 import textwrap
 
 import pytest

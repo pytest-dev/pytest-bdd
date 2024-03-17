@@ -1,4 +1,5 @@
 """Scenario Outline tests."""
+
 import textwrap
 
 from pytest_bdd.utils import collect_dumped_objects

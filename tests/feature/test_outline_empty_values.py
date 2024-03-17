@@ -1,4 +1,5 @@
 """Scenario Outline with empty example values tests."""
+
 import textwrap
 
 from pytest_bdd.utils import collect_dumped_objects

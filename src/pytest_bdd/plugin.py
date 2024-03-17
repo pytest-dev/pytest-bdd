@@ -1,4 +1,5 @@
 """Pytest plugin entry point. Used for any fixtures needed."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Generator, TypeVar, cast

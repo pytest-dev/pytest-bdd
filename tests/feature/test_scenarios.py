@@ -1,4 +1,5 @@
 """Test scenarios shortcut."""
+
 import textwrap
 
 
