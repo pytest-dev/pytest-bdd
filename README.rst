@@ -1,7 +1,7 @@
 BDD library for the pytest runner
 =================================
 
-.. image:: http://img.shields.io/pypi/v/pytest-bdd.svg
+.. image:: https://img.shields.io/pypi/v/pytest-bdd.svg
    :target: https://pypi.python.org/pypi/pytest-bdd
 .. image:: https://codecov.io/gh/pytest-dev/pytest-bdd/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/pytest-dev/pytest-bdd
