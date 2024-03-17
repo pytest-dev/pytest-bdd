@@ -202,7 +202,7 @@ def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Featu
     return feature
 
 
-@dataclass
+@dataclass(eq=False)
 class Feature:
     scenarios: OrderedDict[str, ScenarioTemplate]
     filename: str
@@ -214,7 +214,7 @@ class Feature:
     description: str
 
 
-@dataclass
+@dataclass(eq=False)
 class ScenarioTemplate:
     """A scenario template.
 
@@ -278,7 +278,7 @@ class ScenarioTemplate:
         return "\n".join(self._description_lines)
 
 
-@dataclass
+@dataclass(eq=False)
 class Scenario:
     feature: Feature
     name: str
@@ -288,7 +288,7 @@ class Scenario:
     description: list[str] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(eq=False)
 class Step:
     type: str
     _name: str
@@ -365,7 +365,7 @@ class Step:
         return STEP_PARAM_RE.sub(replacer, self.name)
 
 
-@dataclass
+@dataclass(eq=False)
 class Background:
     feature: Feature
     line_number: int
@@ -377,7 +377,7 @@ class Background:
         self.steps.append(step)
 
 
-@dataclass
+@dataclass(eq=False)
 class Examples:
     """Example table."""
 
