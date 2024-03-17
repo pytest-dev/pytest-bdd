@@ -42,9 +42,10 @@ from itertools import count
 from typing import Any, Callable, Iterable, Literal, TypeVar
 
 import pytest
-from _pytest.fixtures import FixtureDef, FixtureRequest
+from _pytest.fixtures import FixtureRequest
 from typing_extensions import ParamSpec
 
+from . import compat
 from .parser import Step
 from .parsers import StepParser, get_parser
 from .types import GIVEN, THEN, WHEN
@@ -200,44 +201,3 @@ def find_unique_name(name: str, seen: Iterable[str]) -> str:
         new_name = f"{name}_{i}"
         if new_name not in seen:
             return new_name
-
-
-def inject_fixture(request: FixtureRequest, arg: str, value: Any) -> None:
-    """Inject fixture into pytest fixture request.
-
-    :param request: pytest fixture request
-    :param arg: argument name
-    :param value: argument value
-    """
-
-    fd = FixtureDef(
-        fixturemanager=request._fixturemanager,
-        baseid=None,
-        argname=arg,
-        func=lambda: value,
-        scope="function",
-        params=None,
-    )
-    fd.cached_result = (value, 0, None)
-
-    old_fd = request._fixture_defs.get(arg)
-    add_fixturename = arg not in request.fixturenames
-
-    def fin() -> None:
-        request._fixturemanager._arg2fixturedefs[arg].remove(fd)
-
-        if old_fd is not None:
-            request._fixture_defs[arg] = old_fd
-
-        if add_fixturename:
-            request._pyfuncitem._fixtureinfo.names_closure.remove(arg)
-
-    request.addfinalizer(fin)
-
-    # inject fixture definition
-    request._fixturemanager._arg2fixturedefs.setdefault(arg, []).append(fd)
-
-    # inject fixture value in request cache
-    request._fixture_defs[arg] = fd
-    if add_fixturename:
-        request._pyfuncitem._fixtureinfo.names_closure.append(arg)

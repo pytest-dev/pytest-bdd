@@ -23,9 +23,9 @@ from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fi
 from typing_extensions import ParamSpec
 
 from . import exceptions
-from .compat import getfixturedefs
+from .compat import getfixturedefs, inject_fixture
 from .feature import get_feature, get_features
-from .steps import StepFunctionContext, get_step_fixture_name, inject_fixture
+from .steps import StepFunctionContext, get_step_fixture_name
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if TYPE_CHECKING:
