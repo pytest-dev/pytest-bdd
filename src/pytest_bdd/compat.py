@@ -24,12 +24,40 @@ if pytest_version.release >= (8, 1):
         :param arg: argument name
         :param value: argument value
         """
-
-        request._fixturemanager._register_fixture(
-            name=arg,
+        fd = FixtureDef(
+            config=request._fixturemanager.config,
+            baseid=request.node.nodeid,
+            argname=arg,
             func=lambda: value,
-            nodeid=request.node.nodeid,
+            scope="function",
+            params=None,
+            ids=None,
+            _ispytest=True,
         )
+
+        fd.cached_result = (value, 0, None)
+
+        old_fd = request._fixture_defs.get(arg)
+        add_fixturename = arg not in request.fixturenames
+
+        def fin() -> None:
+            request._fixturemanager._arg2fixturedefs[arg].remove(fd)
+
+            if old_fd is not None:
+                request._fixture_defs[arg] = old_fd
+
+            if add_fixturename:
+                request._pyfuncitem._fixtureinfo.names_closure.remove(arg)
+
+        request.addfinalizer(fin)
+
+        # inject fixture definition
+        request._fixturemanager._arg2fixturedefs.setdefault(arg, []).append(fd)
+
+        # inject fixture value in request cache
+        request._fixture_defs[arg] = fd
+        if add_fixturename:
+            request._pyfuncitem._fixtureinfo.names_closure.append(arg)
 
 else:
 
