@@ -4,6 +4,11 @@ Changelog
 Unreleased
 ----------
 
+7.2.0
+----------
+- Fix compatibility issue with Python 3.13.
+- Declare compatibility with Python 3.13.
+
 7.1.2
 ----------
 - Address another compatibility issue with pytest 8.1 (fixture registration). `#680 <https://github.com/pytest-dev/pytest-bdd/pull/680>`_
