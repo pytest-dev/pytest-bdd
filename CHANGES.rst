@@ -32,6 +32,7 @@ Unreleased
 - Declare official support for python 3.12 `#628 <https://github.com/pytest-dev/pytest-bdd/pull/628>`_
 - Improve parser performance by 15% `#623 <https://github.com/pytest-dev/pytest-bdd/pull/623>`_ by `@dcendents <https://github.com/dcendents>`_
 - Add support for Scenarios and Scenario Outlines to have descriptions. `#600 <https://github.com/pytest-dev/pytest-bdd/pull/600>`_
+- Add support for asterisks ( ``*`` ) as continuation steps. `#??? <https://github.com/pytest-dev/pytest-bdd/pull/???>`_
 
 6.1.1
 -----
