@@ -213,7 +213,22 @@ def _execute_step_function(
         raise
 
     if context.target_fixture is not None:
-        inject_fixture(request, context.target_fixture, return_value)
+        if isinstance(return_value, Exception):
+            arg = context.target_exception if context.target_exception else "response"
+            inject_fixture(request=request, arg=arg, value=return_value)
+        else:
+            target_fixture_tokens = [token for token in context.target_fixture.split(",") if token]
+            # Single return value in target_fixture
+            if len(target_fixture_tokens) == 1:
+                inject_fixture(request=request, arg=target_fixture_tokens[0], value=return_value)
+            # Multiple comma separated return values in target_fixture
+            else:
+                return_values = (return_value,) if not isinstance(return_value, tuple) else return_value
+                assert len(target_fixture_tokens) == len(
+                    return_values
+                ), f"Return value count: {len(return_values)} are not matching target_fixture count: {len(target_fixture_tokens)}"
+                for token, value in zip(target_fixture_tokens, return_values):
+                    inject_fixture(request=request, arg=token, value=value)
 
     request.config.hook.pytest_bdd_after_step(**kw)
 
