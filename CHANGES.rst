@@ -3,6 +3,7 @@ Changelog
 
 Unreleased
 ----------
+- Update documentation to clarify that `--gherkin-terminal-reporter` needs to be used with `-v` or `-vv`.
 
 7.2.0
 ----------
