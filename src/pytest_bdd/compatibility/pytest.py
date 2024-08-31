@@ -57,18 +57,20 @@ __all__ = [
 
 
 # region pytest version dependent imports
-def is_pytest_version_greater(version: str):
+def is_pytest_version_greater_or_equal(version: str):
     return compare_distribution_version("pytest", version, ge)
 
 
-PYTEST6, PYTEST61, PYTEST62, PYTEST7, PYTEST8 = map(
-    is_pytest_version_greater,
+PYTEST6, PYTEST61, PYTEST62, PYTEST7, PYTEST8, PYTEST81, PYTEST83 = map(
+    is_pytest_version_greater_or_equal,
     [
         "6.0",
         "6.1",
         "6.2",
         "7.0",
         "8.0",
+        "8.1",
+        "8.3",
     ],
 )
 

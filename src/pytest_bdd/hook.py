@@ -5,6 +5,7 @@ from itertools import count, product, starmap
 from operator import attrgetter
 from typing import Optional, Union
 
+from _pytest.mark import Mark
 from decopatch import function_decorator
 from makefun import wraps
 from pytest import fixture
@@ -52,12 +53,17 @@ def decorator_builder(conjunction: Union[str, HookConjunction], kind: Union[str,
                 # mypy@Python 3.8 complains "ABCMeta" has no attribute "parse"  [attr-defined] what is wrong
                 parsed_expression: TagExpression = _ExpressionType.parse(_expression)  # type: ignore[attr-defined]
 
-                get_tags = {
-                    HookKind.mark: lambda: {mark.name for mark in request.node.iter_markers()},
-                    HookKind.tag: lambda: set(map(attrgetter("name"), request.getfixturevalue("scenario").tags)),
-                }[_kind]
+                get_marks = lambda: list(
+                    {
+                        HookKind.mark: request.node.iter_markers(),
+                        HookKind.tag: map(
+                            lambda tag: Mark(tag.name, args=tuple(), kwargs={}),  # type: ignore[no-any-return]
+                            request.getfixturevalue("scenario").tags,
+                        ),
+                    }[_kind]
+                )
 
-                is_matching = parsed_expression.evaluate(get_tags())
+                is_matching = parsed_expression.evaluate(get_marks())
 
                 is_function = isfunction(func)
                 is_generator_function = isgeneratorfunction(func)
