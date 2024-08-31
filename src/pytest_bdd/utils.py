@@ -29,7 +29,7 @@ from typing import (
     runtime_checkable,
 )
 
-from pytest_bdd.compatibility.pytest import FixtureDef, fail
+from pytest_bdd.compatibility.pytest import PYTEST8, PYTEST81, FixtureDef, fail
 from pytest_bdd.const import ALPHA_REGEX, PYTHON_REPLACE_REGEX
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -156,7 +156,7 @@ def inject_fixture(request, arg, value):
     """
 
     fd = FixtureDef(
-        fixturemanager=request._fixturemanager,
+        **({"config": request.config} if PYTEST81 else {"fixturemanager": request._fixturemanager}),
         baseid=None,
         argname=arg,
         func=lambda: value,

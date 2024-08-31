@@ -23,7 +23,6 @@ Planned
     - parse_error
     - undefined_parameter_type
 
-- Add support of python 3.12 at CI
 - Add mode to execute scenarios with missing/failing steps
 - Remove
 
@@ -49,6 +48,11 @@ Planned
 - Contribute to messages repository with python model
 - Add support of native legacy cucumber-json
 - Test against https://github.com/cucumber/json-formatter
+
+Unreleased
+----------
+- Add support of python 3.12 at CI
+- Add Support of pytest 8
 
 2.1.0
 ----------
