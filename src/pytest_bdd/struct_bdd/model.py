@@ -14,6 +14,7 @@ from pydantic import (  # type:ignore[attr-defined] # migration to pydantic 2
     BeforeValidator,
     ConfigDict,
     Field,
+    ValidationError,
     model_validator,
 )
 
@@ -291,8 +292,12 @@ class StepPrototype(Node):
                 media_type = self.mimetype.value
             else:
                 media_type = str(self.mimetype)
-            feature_source = Source(uri=self.uri, data=Path(self.filename).read_text(), media_type=media_type)
-            yield feature, feature_source
+            try:
+                feature_source = Source(uri=self.uri, data=Path(self.filename).read_text(), media_type=media_type)
+                yield feature, feature_source
+            except ValidationError:
+                # Workaround because of https://github.com/cucumber/messages/issues/161
+                yield feature, None
 
     def as_test(self, filename):
         from pytest_bdd.scenario import scenarios

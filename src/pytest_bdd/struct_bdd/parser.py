@@ -46,7 +46,7 @@ class StructBDDParser(ParserProtocol):
             content = feature_file.read()
         filename = str(path.as_posix())
         raw_step = self.loader(content, *args, **kwargs)
-        step = Step.parse_obj(raw_step)
+        step = Step.model_validate(raw_step)
         return GherkinDocumentBuilder(model=step).build_feature(filename, uri, self.id_generator), content  # type: ignore[call-arg]
 
     def build_loader(self):

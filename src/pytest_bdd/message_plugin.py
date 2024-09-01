@@ -154,7 +154,7 @@ class MessagePlugin:
                 pickle = get_metafunc_call_arg(call, "scenario")
                 feature_source: Source = get_metafunc_call_arg(call, "feature_source")
 
-                if is_set(feature) and feature_source.uri not in feature_registry:
+                if is_set(feature) and hasattr(feature_source, "uri") and feature_source.uri not in feature_registry:
                     feature_registry.add(feature_source.uri)
                     cast(Config, config).hook.pytest_bdd_message(config=config, message=Message(source=feature_source))
 
