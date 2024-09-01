@@ -9,6 +9,7 @@ from pluggy import HookimplMarker
 from pydantic import BaseModel as PydanticBaseModel
 
 from pytest_bdd.compatibility.allure import ALLURE_INSTALLED
+from pytest_bdd.compatibility.pytest import PYTEST81
 
 if ALLURE_INSTALLED:
     from allure_commons import hookimpl
@@ -34,7 +35,7 @@ class AllurePytestBDD:
     def register_if_allure_accessible(cls, config):
         pluginmanager = config.pluginmanager
         allure_accessible = pluginmanager.hasplugin("allure_pytest") and config.option.allure_report_dir
-        if allure_accessible:
+        if allure_accessible and not PYTEST81:
             allure_plugin_manager.get_plugins()
 
             listener = next(

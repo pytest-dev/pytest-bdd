@@ -121,7 +121,7 @@ def test_step_function_can_be_decorated_multiple_times(testdir, tmp_path):
             second_foo,
             request
         ):
-            # Original fixture values are recieved from test parameters
+            # Original fixture values are received from test parameters
             assert first_foo == 'first_foo'
             assert second_foo == 'second_foo'
 

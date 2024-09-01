@@ -2,7 +2,6 @@ from contextlib import contextmanager
 from enum import Enum
 from inspect import isfunction, isgeneratorfunction, signature
 from itertools import count, product, starmap
-from operator import attrgetter
 from typing import Optional, Union
 
 from _pytest.mark import Mark
@@ -10,7 +9,7 @@ from decopatch import function_decorator
 from makefun import wraps
 from pytest import fixture
 
-from pytest_bdd.compatibility.pytest import FixtureRequest
+from pytest_bdd.compatibility.pytest import PYTEST7, FixtureRequest
 from pytest_bdd.tag_expression import GherkinTagExpression, MarksTagExpression, TagExpression
 
 expression_count_gen = count()
@@ -57,7 +56,9 @@ def decorator_builder(conjunction: Union[str, HookConjunction], kind: Union[str,
                     {
                         HookKind.mark: request.node.iter_markers(),
                         HookKind.tag: map(
-                            lambda tag: Mark(tag.name, args=tuple(), kwargs={}),  # type: ignore[no-any-return]
+                            lambda tag: Mark(  # type: ignore[no-any-return]
+                                tag.name, args=tuple(), kwargs={}, **({"_ispytest": True} if PYTEST7 else {})
+                            ),
                             request.getfixturevalue("scenario").tags,
                         ),
                     }[_kind]

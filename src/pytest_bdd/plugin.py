@@ -20,6 +20,7 @@ from pytest_bdd.allure_logging import AllurePytestBDD
 from pytest_bdd.collector import FeatureFileModule as FeatureFileCollector
 from pytest_bdd.collector import Module as ModuleCollector
 from pytest_bdd.compatibility.pytest import (
+    PYTEST7,
     Config,
     FixtureRequest,
     Mark,
@@ -144,10 +145,22 @@ def pytest_unconfigure(config: Config) -> None:
     cucumber_json.unconfigure(config)
 
 
-@pytest.hookimpl(hookwrapper=True)
-def pytest_pycollect_makemodule(path, parent, module_path=None):
+def _pytest_pycollect_makemodule():
     with patch("_pytest.python.Module", new=ModuleCollector):
         yield
+
+
+if PYTEST7:
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_pycollect_makemodule(parent, module_path):
+        yield from _pytest_pycollect_makemodule()
+
+else:
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_pycollect_makemodule(path, parent):
+        yield from _pytest_pycollect_makemodule()
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -298,8 +311,8 @@ def pytest_cmdline_main(config: Config) -> Optional[int]:
     return generation.cmdline_main(config)
 
 
-def pytest_collect_file(parent: Collector, path, file_path=None):
-    file_path = file_path or Path(path)
+def _pytest_collect_file(parent: Collector, file_path=None):
+    file_path = Path(file_path)
     config = parent.session.config
     is_enabled_feature_autoload = config.getoption("feature_autoload")
     if is_enabled_feature_autoload is None:
@@ -312,6 +325,17 @@ def pytest_collect_file(parent: Collector, path, file_path=None):
 
     if hook.pytest_bdd_is_collectible(config=config, path=Path(file_path)):
         return FeatureFileCollector.build(parent=parent, file_path=file_path)
+
+
+if PYTEST7:  # Done intentionally because of API change
+
+    def pytest_collect_file(parent: Collector, file_path):
+        return _pytest_collect_file(parent=parent, file_path=file_path)
+
+else:
+
+    def pytest_collect_file(parent: Collector, path):  # type: ignore[misc]
+        return _pytest_collect_file(parent=parent, file_path=path)
 
 
 @pytest.mark.trylast
