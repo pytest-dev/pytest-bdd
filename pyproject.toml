@@ -43,12 +43,12 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12"
 ]
-# This is needed until ci-environment&messages become regular PyPi packages
 dependencies = [
   "aiohttp",
   "attrs",
   "certifi",
-  "cuke-ci-environment==0.1.0",
+  "ci-environment",
+  # This is needed until messages become regular PyPi package https://github.com/cucumber/messages/pull/165
   "cuke-messages==0.1.0",
   "cucumber-expressions",
   "decopatch",
