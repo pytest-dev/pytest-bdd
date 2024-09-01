@@ -2,7 +2,6 @@ import linecache
 from functools import partial
 from itertools import filterfalse
 from operator import contains, itemgetter, methodcaller
-from os.path import relpath
 from pathlib import Path
 from typing import Callable, List, Sequence, Set, Tuple, Union
 
@@ -13,6 +12,7 @@ from gherkin.parser import Parser as CucumberIOBaseParser  # type: ignore[import
 from gherkin.pickles.compiler import Compiler as PicklesCompiler
 
 from pytest_bdd.compatibility.parser import ParserProtocol
+from pytest_bdd.compatibility.path import relpath
 from pytest_bdd.compatibility.pytest import Config
 from pytest_bdd.compatibility.struct_bdd import STRUCT_BDD_INSTALLED
 from pytest_bdd.exceptions import FeatureError

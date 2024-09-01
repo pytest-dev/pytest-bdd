@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from pytest_bdd.compatibility.pytest import Config, Module
+from pytest_bdd.compatibility.pytest import PYTEST7, Config, Module
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.struct_bdd.model import StepPrototype
 from pytest_bdd.struct_bdd.parser import StructBDDParser
@@ -45,11 +45,22 @@ class StructBDDPlugin:
             if str(path).endswith(f".bdd.{extension_suffix.value}"):
                 return True
 
-    @pytest.hookimpl(hookwrapper=True)
-    def pytest_pycollect_makemodule(self, path, parent, module_path=None):
+    def _pytest_pycollect_makemodule(self):
         outcome = yield
         res = outcome.get_result()
         if isinstance(res, Module):
             for member_name, member in getmembers(res.module):
                 if isinstance(member, StepPrototype) and member_name.startswith("test_"):
                     setattr(res.module, member_name, member.as_test(res.module.__file__))
+
+    if PYTEST7:
+
+        @pytest.hookimpl(hookwrapper=True)
+        def pytest_pycollect_makemodule(self, parent, module_path):
+            yield from self._pytest_pycollect_makemodule()
+
+    else:
+
+        @pytest.hookimpl(hookwrapper=True)
+        def pytest_pycollect_makemodule(self, path, parent):
+            yield from self._pytest_pycollect_makemodule()

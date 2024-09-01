@@ -42,6 +42,7 @@ from messages import (  # type:ignore[attr-defined]
     TestStepStarted,
     Timestamp,
 )
+from pytest_bdd.compatibility.path import relpath
 from pytest_bdd.compatibility.pytest import (
     Config,
     FixtureDef,
@@ -252,7 +253,7 @@ class MessagePlugin:
                         id=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator.get_next_id(),
                         **({"name": hook_name} if hook_name is not None else {}),
                         source_reference=SourceReference(
-                            uri=os.path.relpath(
+                            uri=relpath(
                                 getfile(func),
                                 str(get_config_root_path(cast(Config, config))),
                             ),

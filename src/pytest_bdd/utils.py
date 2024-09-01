@@ -29,7 +29,9 @@ from typing import (
     runtime_checkable,
 )
 
-from pytest_bdd.compatibility.pytest import PYTEST8, PYTEST81, FixtureDef, fail
+from _pytest.fixtures import FixtureDef, FixtureRequest
+
+from pytest_bdd.compatibility.pytest import PYTEST7, PYTEST8, PYTEST81, fail
 from pytest_bdd.const import ALPHA_REGEX, PYTHON_REPLACE_REGEX
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -147,9 +149,8 @@ class DefaultMapping(defaultdict):
         return cls(bool_or_items, warm_up_keys=warm_up_keys)
 
 
-def inject_fixture(request, arg, value):
+def inject_fixture(request: FixtureRequest, arg: str, value: Any) -> None:
     """Inject fixture into pytest fixture request.
-
     :param request: pytest fixture request
     :param arg: argument name
     :param value: argument value
@@ -162,6 +163,7 @@ def inject_fixture(request, arg, value):
         func=lambda: value,
         scope="function",
         params=None,
+        **({"_ispytest": True} if PYTEST8 else {}),
     )
     fd.cached_result = (value, 0, None)
 
