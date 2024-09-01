@@ -49,11 +49,12 @@ Planned
 - Add support of native legacy cucumber-json
 - Test against https://github.com/cucumber/json-formatter
 
-Unreleased
+2.1.4
 ----------
-- Add support of python 3.12 at CI
-- Add Support of pytest 8
-- Switch to gherkin official package: https://pypi.org/project/ci-environment/
+- Add support for Python 3.12 in CI
+- Add support for pytest 8
+- Switch to the official Gherkin package: https://pypi.org/project/ci-environment/
+- Fix other compatibility issues
 
 2.1.0
 ----------
