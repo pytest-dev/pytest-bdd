@@ -51,6 +51,7 @@ from pydantic import ValidationError
 from messages import ExpressionType, Location, Pickle  # type:ignore[attr-defined]
 from messages import PickleStep as Step  # type:ignore[attr-defined]
 from messages import SourceReference, StepDefinition, StepDefinitionPattern  # type:ignore[attr-defined]
+from pytest_bdd.compatibility.path import relpath
 from pytest_bdd.compatibility.pytest import Config, Parser, TypeAlias, get_config_root_path
 from pytest_bdd.model import Feature, StepType
 from pytest_bdd.model.messages_extension import ExpressionType as ExpressionTypeExtension
@@ -383,7 +384,7 @@ class StepHandler:
                     id=self.id,
                     pattern=pattern,
                     source_reference=SourceReference(  # type: ignore[call-arg] # migration to pydantic2
-                        uri=os.path.relpath(
+                        uri=relpath(
                             getfile(self.func),
                             str(get_config_root_path(cast(Config, config))),
                         ),
