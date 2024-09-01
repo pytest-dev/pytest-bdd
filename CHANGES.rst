@@ -53,10 +53,10 @@ Unreleased
 ----------
 - Add support of python 3.12 at CI
 - Add Support of pytest 8
+- Switch to gherkin official package: https://pypi.org/project/ci-environment/
 
 2.1.0
 ----------
-- Using official cucmber ci-environment lib
 - Add validation for legacy cucumber.json output
 - Migrated to Pydantic 2
 - Add tests for PyPy
