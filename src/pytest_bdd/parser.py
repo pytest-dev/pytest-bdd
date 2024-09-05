@@ -6,7 +6,7 @@ import re
 import textwrap
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Any, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 from gherkin.errors import CompositeParserException
 from gherkin.parser import Parser
@@ -31,36 +31,6 @@ def strip_comments(line: str) -> str:
     if res := COMMENT_RE.search(line):
         line = line[: res.start()]
     return line.strip()
-
-
-def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Feature:
-    """Parse a feature file into a Feature object.
-
-    Args:
-        basedir (str): The base directory of the feature file.
-        filename (str): The name of the feature file.
-        encoding (str): The encoding of the feature file (default is "utf-8").
-
-    Returns:
-        Feature: A Feature object representing the parsed feature file.
-
-    Raises:
-        FeatureError: If there is an error parsing the feature file.
-    """
-    abs_filename = os.path.abspath(os.path.join(basedir, filename))
-    rel_filename = os.path.join(os.path.basename(basedir), filename)
-    with open(abs_filename, encoding=encoding) as f:
-        file_contents = f.read()
-    try:
-        gherkin_document = Parser().parse(TokenScanner(file_contents))
-    except CompositeParserException as e:
-        raise FeatureError(
-            e.args[0],
-            e.errors[0].location["line"],
-            linecache.getline(abs_filename, e.errors[0].location["line"]).rstrip("\n"),
-            abs_filename,
-        ) from e
-    return dict_to_feature(abs_filename, rel_filename, gherkin_document)
 
 
 @dataclass(eq=False)
@@ -293,18 +263,19 @@ class Step:
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
     def render(self, context: Mapping[str, Any]) -> str:
-        """Render the step name with the given context.
+        """Render the step name with the given context, but avoid replacing text inside angle brackets if context is missing.
 
         Args:
             context (Mapping[str, Any]): The context for rendering the step name.
 
         Returns:
-            str: The rendered step name with parameters replaced by their values from the context.
+            str: The rendered step name with parameters replaced only if they exist in the context.
         """
 
         def replacer(m: re.Match) -> str:
             varname = m.group(1)
-            return str(context.get(varname, f"<missing:{varname}>"))
+            # If the context contains the variable, replace it. Otherwise, leave it unchanged.
+            return str(context.get(varname, f"<{varname}>"))
 
         return STEP_PARAM_RE.sub(replacer, self.name)
 
@@ -333,18 +304,21 @@ class Background:
         self.steps.append(step)
 
 
-def dict_to_feature(abs_filename: str, rel_filename: str, data: dict) -> Feature:
-    """Convert a dictionary representation of a feature into a Feature object.
+class FeatureParser:
+    """Converts a feature file into a Feature object.
 
     Args:
-        abs_filename (str): The absolute path of the feature file.
-        rel_filename (str): The relative path of the feature file.
-        data (dict): The dictionary containing the feature data.
-
-    Returns:
-        Feature: A Feature object representing the parsed feature data.
+        basedir (str): The basedir for locating feature files.
+        filename (str): The filename of the feature file.
+        encoding (str): File encoding of the feature file to parse.
     """
 
+    def __init__(self, basedir: str, filename: str, encoding: str = "utf-8"):
+        self.abs_filename = os.path.abspath(os.path.join(basedir, filename))
+        self.rel_filename = os.path.join(os.path.basename(basedir), filename)
+        self.encoding = encoding
+
+    @staticmethod
     def get_tag_names(tag_data: list[dict]) -> set[str]:
         """Extract tag names from tag data.
 
@@ -356,6 +330,7 @@ def dict_to_feature(abs_filename: str, rel_filename: str, data: dict) -> Feature
         """
         return {tag["name"].lstrip("@") for tag in tag_data}
 
+    @staticmethod
     def get_step_type(keyword: str) -> str | None:
         """Map a step keyword to its corresponding type.
 
@@ -371,7 +346,7 @@ def dict_to_feature(abs_filename: str, rel_filename: str, data: dict) -> Feature
             "then": THEN,
         }.get(keyword)
 
-    def parse_steps(steps_data: list[dict]) -> list[Step]:
+    def parse_steps(self, steps_data: list[dict]) -> list[Step]:
         """Parse a list of step data into Step objects.
 
         Args:
@@ -384,7 +359,7 @@ def dict_to_feature(abs_filename: str, rel_filename: str, data: dict) -> Feature
         current_step_type = None
         for step_data in steps_data:
             keyword = step_data["keyword"].strip().lower()
-            current_step_type = get_step_type(keyword) or current_step_type
+            current_step_type = self.get_step_type(keyword) or current_step_type
             name = strip_comments(step_data["text"])
             if "docString" in step_data:
                 doc_string = textwrap.dedent(step_data["docString"]["content"])
@@ -400,7 +375,7 @@ def dict_to_feature(abs_filename: str, rel_filename: str, data: dict) -> Feature
             )
         return steps
 
-    def parse_scenario(scenario_data: dict, feature: Feature) -> ScenarioTemplate:
+    def parse_scenario(self, scenario_data: dict, feature: Feature) -> ScenarioTemplate:
         """Parse a scenario data dictionary into a ScenarioTemplate object.
 
         Args:
@@ -415,10 +390,10 @@ def dict_to_feature(abs_filename: str, rel_filename: str, data: dict) -> Feature
             name=strip_comments(scenario_data["name"]),
             line_number=scenario_data["location"]["line"],
             templated=False,
-            tags=get_tag_names(scenario_data["tags"]),
+            tags=self.get_tag_names(scenario_data["tags"]),
             description=textwrap.dedent(scenario_data.get("description", "")),
         )
-        for step in parse_steps(scenario_data["steps"]):
+        for step in self.parse_steps(scenario_data["steps"]):
             scenario.add_step(step)
 
         if "examples" in scenario_data:
@@ -436,31 +411,54 @@ def dict_to_feature(abs_filename: str, rel_filename: str, data: dict) -> Feature
 
         return scenario
 
-    def parse_background(background_data: dict, feature: Feature) -> Background:
+    def parse_background(self, background_data: dict, feature: Feature) -> Background:
         background = Background(
             feature=feature,
             line_number=background_data["location"]["line"],
         )
-        background.steps = parse_steps(background_data["steps"])
+        background.steps = self.parse_steps(background_data["steps"])
         return background
 
-    feature_data = data["feature"]
-    feature = Feature(
-        scenarios=OrderedDict(),
-        filename=abs_filename,
-        rel_filename=rel_filename,
-        name=strip_comments(feature_data["name"]),
-        tags=get_tag_names(feature_data["tags"]),
-        background=None,
-        line_number=feature_data["location"]["line"],
-        description=textwrap.dedent(feature_data.get("description", "")),
-    )
+    def _parse_feature_file(self) -> dict:
+        """Parse a feature file into a Feature object.
 
-    for child in feature_data["children"]:
-        if "background" in child:
-            feature.background = parse_background(child["background"], feature)
-        elif "scenario" in child:
-            scenario = parse_scenario(child["scenario"], feature)
-            feature.scenarios[scenario.name] = scenario
+        Returns:
+            Dict: A Gherkin document representation of the feature file.
 
-    return feature
+        Raises:
+            FeatureError: If there is an error parsing the feature file.
+        """
+        with open(self.abs_filename, encoding=self.encoding) as f:
+            file_contents = f.read()
+        try:
+            return Parser().parse(TokenScanner(file_contents))
+        except CompositeParserException as e:
+            raise FeatureError(
+                e.args[0],
+                e.errors[0].location["line"],
+                linecache.getline(self.abs_filename, e.errors[0].location["line"]).rstrip("\n"),
+                self.abs_filename,
+            ) from e
+
+    def parse(self):
+        data = self._parse_feature_file()
+        feature_data = data["feature"]
+        feature = Feature(
+            scenarios=OrderedDict(),
+            filename=self.abs_filename,
+            rel_filename=self.rel_filename,
+            name=strip_comments(feature_data["name"]),
+            tags=self.get_tag_names(feature_data["tags"]),
+            background=None,
+            line_number=feature_data["location"]["line"],
+            description=textwrap.dedent(feature_data.get("description", "")),
+        )
+
+        for child in feature_data["children"]:
+            if "background" in child:
+                feature.background = self.parse_background(child["background"], feature)
+            elif "scenario" in child:
+                scenario = self.parse_scenario(child["scenario"], feature)
+                feature.scenarios[scenario.name] = scenario
+
+        return feature

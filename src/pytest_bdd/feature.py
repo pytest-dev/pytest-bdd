@@ -29,7 +29,7 @@ from __future__ import annotations
 import glob
 import os.path
 
-from .parser import Feature, parse_feature
+from .parser import Feature, FeatureParser
 
 # Global features dictionary
 features: dict[str, Feature] = {}
@@ -52,7 +52,7 @@ def get_feature(base_path: str, filename: str, encoding: str = "utf-8") -> Featu
     full_name = os.path.abspath(os.path.join(base_path, filename))
     feature = features.get(full_name)
     if not feature:
-        feature = parse_feature(base_path, filename, encoding=encoding)
+        feature = FeatureParser(base_path, filename, encoding).parse()
         features[full_name] = feature
     return feature
 

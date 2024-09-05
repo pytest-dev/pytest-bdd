@@ -523,7 +523,7 @@ def test_step_trace(pytester):
             pass
 
         @when('foo')
-        def foo():
+        def _():
             return 'foo'
 
         @scenario('test.feature', 'When step validation error happens')
