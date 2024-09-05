@@ -354,6 +354,7 @@ def test_step_hooks(pytester):
     pytester.makefile(
         ".feature",
         test="""
+Feature: StepHandler hooks
     Scenario: When step has hook on failure
         Given I have a bar
         When it fails
@@ -471,16 +472,21 @@ def test_step_trace(pytester):
     pytester.makefile(
         ".feature",
         test="""
-    Scenario: When step has failure
-        Given I have a bar
-        When it fails
+            Feature: StepHandler hooks
+                Scenario: When step has hook on failure
+                    Given I have a bar
+                    When it fails
 
-    Scenario: When step is not found
-        Given not found
+                Scenario: When step's dependency a has failure
+                    Given I have a bar
+                    When it's dependency fails
 
-    Scenario: When step validation error happens
-        Given foo
-        And foo
+                Scenario: When step is not found
+                    Given not found
+
+                Scenario: When step validation error happens
+                    Given foo
+                    And foo
     """,
     )
     pytester.makepyfile(
@@ -489,19 +495,27 @@ def test_step_trace(pytester):
         from pytest_bdd import given, when, scenario
 
         @given('I have a bar')
-        def _():
+        def i_have_bar():
             return 'bar'
 
         @when('it fails')
-        def _():
+        def when_it_fails():
             raise Exception('when fails')
 
-        @scenario('test.feature', 'When step has failure')
-        def test_when_fails_inline():
+        @pytest.fixture
+        def dependency():
+            raise Exception('dependency fails')
+
+        @when("it's dependency fails")
+        def when_dependency_fails(dependency):
             pass
 
-        @scenario('test.feature', 'When step has failure')
-        def test_when_fails_decorated():
+        @scenario('test.feature', "When step's dependency a has failure")
+        def test_when_dependency_fails():
+            pass
+
+        @scenario('test.feature', 'When step has hook on failure')
+        def test_when_fails():
             pass
 
         @scenario('test.feature', 'When step is not found')
@@ -509,7 +523,7 @@ def test_step_trace(pytester):
             pass
 
         @when('foo')
-        def _():
+        def foo():
             return 'foo'
 
         @scenario('test.feature', 'When step validation error happens')
@@ -517,25 +531,47 @@ def test_step_trace(pytester):
             pass
     """
     )
-    result = pytester.runpytest("-k test_when_fails_inline", "-vv")
-    result.assert_outcomes(failed=1)
-    result.stdout.fnmatch_lines(["*test_when_fails_inline*FAILED"])
-    assert "INTERNALERROR" not in result.stdout.str()
+    reprec = pytester.inline_run("-k test_when_fails")
+    reprec.assertoutcome(failed=1)
 
-    result = pytester.runpytest("-k test_when_fails_decorated", "-vv")
-    result.assert_outcomes(failed=1)
-    result.stdout.fnmatch_lines(["*test_when_fails_decorated*FAILED"])
-    assert "INTERNALERROR" not in result.stdout.str()
+    calls = reprec.getcalls("pytest_bdd_before_scenario")
+    assert calls[0].request
 
-    result = pytester.runpytest("-k test_when_not_found", "-vv")
-    result.assert_outcomes(failed=1)
-    result.stdout.fnmatch_lines(["*test_when_not_found*FAILED"])
-    assert "INTERNALERROR" not in result.stdout.str()
+    calls = reprec.getcalls("pytest_bdd_after_scenario")
+    assert calls[0].request
 
-    result = pytester.runpytest("-k test_when_step_validation_error", "-vv")
-    result.assert_outcomes(failed=1)
-    result.stdout.fnmatch_lines(["*test_when_step_validation_error*FAILED"])
-    assert "INTERNALERROR" not in result.stdout.str()
+    calls = reprec.getcalls("pytest_bdd_before_step")
+    assert calls[0].request
+
+    calls = reprec.getcalls("pytest_bdd_before_step_call")
+    assert calls[0].request
+
+    calls = reprec.getcalls("pytest_bdd_after_step")
+    assert calls[0].request
+
+    calls = reprec.getcalls("pytest_bdd_step_error")
+    assert calls[0].request
+
+    reprec = pytester.inline_run("-k test_when_not_found")
+    reprec.assertoutcome(failed=1)
+
+    calls = reprec.getcalls("pytest_bdd_step_func_lookup_error")
+    assert calls[0].request
+
+    reprec = pytester.inline_run("-k test_when_step_validation_error")
+    reprec.assertoutcome(failed=1)
+
+    reprec = pytester.inline_run("-k test_when_dependency_fails", "-vv")
+    reprec.assertoutcome(failed=1)
+
+    calls = reprec.getcalls("pytest_bdd_before_step")
+    assert len(calls) == 2
+
+    calls = reprec.getcalls("pytest_bdd_before_step_call")
+    assert len(calls) == 1
+
+    calls = reprec.getcalls("pytest_bdd_step_error")
+    assert calls[0].request
 
 
 def test_steps_with_yield(pytester):

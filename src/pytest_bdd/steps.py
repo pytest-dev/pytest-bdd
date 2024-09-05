@@ -43,10 +43,8 @@ from itertools import count
 from typing import Any, Callable, Iterable, Literal, TypeVar
 
 import pytest
-from _pytest.fixtures import FixtureRequest
 from typing_extensions import ParamSpec
 
-from . import compat
 from .parser import Step
 from .parsers import StepParser, get_parser
 from .types import GIVEN, THEN, WHEN

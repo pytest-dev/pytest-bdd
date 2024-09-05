@@ -17,7 +17,7 @@ import contextlib
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, Optional, TypeVar, cast
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
@@ -90,7 +90,7 @@ def iterparentnodeids(nodeid: str) -> Iterator[str]:
     """
     SEP = "/"
     pos = 0
-    first_colons: Optional[int] = nodeid.find("::")
+    first_colons: int | None = nodeid.find("::")
     if first_colons == -1:
         first_colons = None
     # The root Session node - always present.
@@ -312,6 +312,7 @@ def scenario(
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
     :param str scenario_name: Scenario name.
     :param str encoding: Feature file encoding.
+    :param features_base_dir: Optional base dir location for locating feature files. If not set, it will try and resolve using property set in .ini file, then the caller_module_path.
     """
     __tracebackhide__ = True
     scenario_name = scenario_name
@@ -347,7 +348,7 @@ def get_features_base_dir(caller_module_path: str) -> str:
 def get_from_ini(key: str, default: str) -> str:
     """Get value from ini config. Return default if value has not been set.
 
-    Use if the default value is dynamic. Otherwise set default on addini call.
+    Use if the default value is dynamic. Otherwise, set default on addini call.
     """
     config = CONFIG_STACK[-1]
     value = config.getini(key)

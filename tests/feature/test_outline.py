@@ -171,7 +171,7 @@ def test_outline_with_escaped_pipes(pytester):
     pytester.makefile(
         ".feature",
         outline=textwrap.dedent(
-            r"""\
+            r"""
             Feature: Outline With Special characters
 
                 Scenario Outline: Outline with escaped pipe character
@@ -217,6 +217,6 @@ def test_outline_with_escaped_pipes(pytester):
         r"bork |",
         r"bork||bork",
         r"|",
-        r"bork      \\",
-        r"bork    \\|",
+        "bork      \\",
+        "bork    \\|",
     ]
