@@ -6,7 +6,7 @@ import re
 import textwrap
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Iterable, List, Mapping, Optional, Sequence
 
 from gherkin.errors import CompositeParserException
 from gherkin.parser import Parser
