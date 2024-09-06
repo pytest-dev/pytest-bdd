@@ -140,7 +140,7 @@ class GherkinDocument(BaseModel):
     comments: List[Comment]
 
 
-def _compute_given_when_then(steps: list[Step]) -> list[Step]:
+def _compute_given_when_then(steps: List[Step]) -> List[Step]:
     last_gwt = None
     for step in steps:
         if step.keyword in STEP_TYPES:

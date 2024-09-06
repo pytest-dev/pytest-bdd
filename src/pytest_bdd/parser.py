@@ -338,7 +338,7 @@ class FeatureParser:
             keyword (str): The keyword for the step (e.g., 'given', 'when', 'then').
 
         Returns:
-            str | None: The type of the step, or None if the keyword is unknown.
+            Optional[str]: The type of the step, or None if the keyword is unknown.
         """
         return {
             "given": GIVEN,
