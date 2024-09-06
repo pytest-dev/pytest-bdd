@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import linecache
 import os.path
 import re
 import textwrap
@@ -8,11 +7,12 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
-from gherkin.errors import CompositeParserException
-from gherkin.parser import Parser
-from gherkin.token_scanner import TokenScanner
-
-from .exceptions import FeatureError
+from .gherkin_parser import Background as GherkinBackground
+from .gherkin_parser import Feature as GherkinFeature
+from .gherkin_parser import GherkinDocument, GherkinParser
+from .gherkin_parser import Scenario as GherkinScenario
+from .gherkin_parser import Step as GherkinStep
+from .gherkin_parser import Tag as GherkinTag
 from .types import GIVEN, THEN, WHEN
 
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
@@ -295,7 +295,7 @@ class Background:
     steps: list[Step] = field(init=False, default_factory=list)
 
     def add_step(self, step: Step) -> None:
-        """Add a step to txhe background.
+        """Add a step to the background.
 
         Args:
             step (Step): The step to add.
@@ -319,7 +319,7 @@ class FeatureParser:
         self.encoding = encoding
 
     @staticmethod
-    def get_tag_names(tag_data: list[dict]) -> set[str]:
+    def get_tag_names(tag_data: list[GherkinTag]) -> set[str]:
         """Extract tag names from tag data.
 
         Args:
@@ -328,7 +328,7 @@ class FeatureParser:
         Returns:
             set[str]: A set of tag names.
         """
-        return {tag["name"].lstrip("@") for tag in tag_data}
+        return {tag.name.lstrip("@") for tag in tag_data}
 
     @staticmethod
     def get_step_type(keyword: str) -> str | None:
@@ -346,7 +346,7 @@ class FeatureParser:
             "then": THEN,
         }.get(keyword)
 
-    def parse_steps(self, steps_data: list[dict]) -> list[Step]:
+    def parse_steps(self, steps_data: list[GherkinStep]) -> list[Step]:
         """Parse a list of step data into Step objects.
 
         Args:
@@ -358,24 +358,24 @@ class FeatureParser:
         steps = []
         current_step_type = None
         for step_data in steps_data:
-            keyword = step_data["keyword"].strip().lower()
+            keyword = step_data.keyword.strip().lower()
             current_step_type = self.get_step_type(keyword) or current_step_type
-            name = strip_comments(step_data["text"])
-            if "docString" in step_data:
-                doc_string = textwrap.dedent(step_data["docString"]["content"])
+            name = strip_comments(step_data.text)
+            if step_data.docString:
+                doc_string = textwrap.dedent(step_data.docString.content)
                 name = f"{name}\n{doc_string}"
             steps.append(
                 Step(
                     name=name,
                     type=current_step_type,
-                    indent=step_data["location"]["column"] - 1,
-                    line_number=step_data["location"]["line"],
+                    indent=step_data.location.column - 1,
+                    line_number=step_data.location.line,
                     keyword=keyword.title(),
                 )
             )
         return steps
 
-    def parse_scenario(self, scenario_data: dict, feature: Feature) -> ScenarioTemplate:
+    def parse_scenario(self, scenario_data: GherkinScenario, feature: Feature) -> ScenarioTemplate:
         """Parse a scenario data dictionary into a ScenarioTemplate object.
 
         Args:
@@ -385,42 +385,41 @@ class FeatureParser:
         Returns:
             ScenarioTemplate: A ScenarioTemplate object representing the parsed scenario.
         """
-        templated = "examples" in scenario_data
+        templated = bool(scenario_data.examples)
         scenario = ScenarioTemplate(
             feature=feature,
-            name=strip_comments(scenario_data["name"]),
-            line_number=scenario_data["location"]["line"],
+            name=strip_comments(scenario_data.name),
+            line_number=scenario_data.location.line,
             templated=templated,
-            tags=self.get_tag_names(scenario_data["tags"]),
-            description=textwrap.dedent(scenario_data.get("description", "")),
+            tags=self.get_tag_names(scenario_data.tags),
+            description=textwrap.dedent(scenario_data.description),
         )
-        for step in self.parse_steps(scenario_data["steps"]):
+        for step in self.parse_steps(scenario_data.steps):
             scenario.add_step(step)
 
-        if templated:
-            for example_data in scenario_data["examples"]:
-                examples = Examples(
-                    line_number=example_data["location"]["line"],
-                    name=example_data["name"],
-                )
-                param_names = [cell["value"] for cell in example_data["tableHeader"]["cells"]]
-                examples.set_param_names(param_names)
-                for row in example_data["tableBody"]:
-                    values = [cell["value"] or "" for cell in row["cells"]]
-                    examples.add_example(values)
-                scenario.examples = examples
+        for example_data in scenario_data.examples:
+            examples = Examples(
+                line_number=example_data.location.line,
+                name=example_data.name,
+            )
+            param_names = [cell.value for cell in example_data.tableHeader.cells]
+            examples.set_param_names(param_names)
+            for row in example_data.tableBody:
+                values = [cell.value or "" for cell in row.cells]
+                examples.add_example(values)
+            scenario.examples = examples
 
         return scenario
 
-    def parse_background(self, background_data: dict, feature: Feature) -> Background:
+    def parse_background(self, background_data: GherkinBackground, feature: Feature) -> Background:
         background = Background(
             feature=feature,
-            line_number=background_data["location"]["line"],
+            line_number=background_data.location.line,
         )
-        background.steps = self.parse_steps(background_data["steps"])
+        background.steps = self.parse_steps(background_data.steps)
         return background
 
-    def _parse_feature_file(self) -> dict:
+    def _parse_feature_file(self) -> GherkinDocument:
         """Parse a feature file into a Feature object.
 
         Returns:
@@ -429,37 +428,27 @@ class FeatureParser:
         Raises:
             FeatureError: If there is an error parsing the feature file.
         """
-        with open(self.abs_filename, encoding=self.encoding) as f:
-            file_contents = f.read()
-        try:
-            return Parser().parse(TokenScanner(file_contents))
-        except CompositeParserException as e:
-            raise FeatureError(
-                e.args[0],
-                e.errors[0].location["line"],
-                linecache.getline(self.abs_filename, e.errors[0].location["line"]).rstrip("\n"),
-                self.abs_filename,
-            ) from e
+        return GherkinParser(self.abs_filename, self.encoding).to_gherkin_document()
 
     def parse(self):
-        data = self._parse_feature_file()
-        feature_data = data["feature"]
+        gherkin_doc: GherkinDocument = self._parse_feature_file()
+        feature_data: GherkinFeature = gherkin_doc.feature
         feature = Feature(
             scenarios=OrderedDict(),
             filename=self.abs_filename,
             rel_filename=self.rel_filename,
-            name=strip_comments(feature_data["name"]),
-            tags=self.get_tag_names(feature_data["tags"]),
+            name=strip_comments(feature_data.name),
+            tags=self.get_tag_names(feature_data.tags),
             background=None,
-            line_number=feature_data["location"]["line"],
-            description=textwrap.dedent(feature_data.get("description", "")),
+            line_number=feature_data.location.line,
+            description=textwrap.dedent(feature_data.description),
         )
 
-        for child in feature_data["children"]:
-            if "background" in child:
-                feature.background = self.parse_background(child["background"], feature)
-            elif "scenario" in child:
-                scenario = self.parse_scenario(child["scenario"], feature)
+        for child in feature_data.children:
+            if child.background:
+                feature.background = self.parse_background(child.background, feature)
+            elif child.scenario:
+                scenario = self.parse_scenario(child.scenario, feature)
                 feature.scenarios[scenario.name] = scenario
 
         return feature
