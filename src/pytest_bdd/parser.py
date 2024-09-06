@@ -295,7 +295,7 @@ class Background:
     steps: list[Step] = field(init=False, default_factory=list)
 
     def add_step(self, step: Step) -> None:
-        """Add a step to the background.
+        """Add a step to txhe background.
 
         Args:
             step (Step): The step to add.
@@ -385,18 +385,19 @@ class FeatureParser:
         Returns:
             ScenarioTemplate: A ScenarioTemplate object representing the parsed scenario.
         """
+        templated = "examples" in scenario_data
         scenario = ScenarioTemplate(
             feature=feature,
             name=strip_comments(scenario_data["name"]),
             line_number=scenario_data["location"]["line"],
-            templated=False,
+            templated=templated,
             tags=self.get_tag_names(scenario_data["tags"]),
             description=textwrap.dedent(scenario_data.get("description", "")),
         )
         for step in self.parse_steps(scenario_data["steps"]):
             scenario.add_step(step)
 
-        if "examples" in scenario_data:
+        if templated:
             for example_data in scenario_data["examples"]:
                 examples = Examples(
                     line_number=example_data["location"]["line"],
