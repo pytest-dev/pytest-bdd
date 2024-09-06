@@ -1,11 +1,15 @@
 import linecache
+import textwrap
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from gherkin.errors import CompositeParserException
 from gherkin.parser import Parser
 from gherkin.token_scanner import TokenScanner
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, model_validator
+
+from . import exceptions
+from .types import STEP_TYPES
 
 
 class Location(BaseModel):
@@ -41,6 +45,10 @@ class DocString(BaseModel):
     delimiter: str
     location: Location
 
+    @field_validator("content", mode="before")
+    def dedent_content(cls, value: str) -> str:
+        return textwrap.dedent(value)
+
 
 class Step(BaseModel):
     id: str
@@ -50,6 +58,18 @@ class Step(BaseModel):
     text: str
     dataTable: Optional[DataTable] = None
     docString: Optional[DocString] = None
+
+    @field_validator("keyword", mode="before")
+    def normalize_keyword(cls, value: str) -> str:
+        return value.lower().strip()
+
+    @property
+    def given_when_then(self) -> str:
+        return self._gwt
+
+    @given_when_then.setter
+    def given_when_then(self, gwt: str) -> None:
+        self._gwt = gwt
 
 
 class Tag(BaseModel):
@@ -67,6 +87,12 @@ class Scenario(BaseModel):
     steps: List[Step]
     tags: List[Tag]
     examples: Optional[List[DataTable]] = None
+
+    @model_validator(mode="after")
+    def process_steps(cls, instance):
+        steps = instance.steps
+        instance.steps = _compute_given_when_then(steps)
+        return instance
 
 
 class Rule(BaseModel):
@@ -86,6 +112,12 @@ class Background(BaseModel):
     name: str
     description: str
     steps: List[Step]
+
+    @model_validator(mode="after")
+    def process_steps(cls, instance):
+        steps = instance.steps
+        instance.steps = _compute_given_when_then(steps)
+        return instance
 
 
 class Child(BaseModel):
@@ -108,6 +140,15 @@ class GherkinDocument(BaseModel):
     comments: List[Comment]
 
 
+def _compute_given_when_then(steps: list[Step]) -> list[Step]:
+    last_gwt = None
+    for step in steps:
+        if step.keyword in STEP_TYPES:
+            last_gwt = step.keyword
+        step.given_when_then = last_gwt
+    return steps
+
+
 class GherkinParser:
     def __init__(self, abs_filename: str = None, encoding: str = "utf-8"):
         self.abs_filename = Path(abs_filename) if abs_filename else None
@@ -118,8 +159,6 @@ class GherkinParser:
         try:
             self.gherkin_data = Parser().parse(TokenScanner(self.feature_file_text))
         except CompositeParserException as e:
-            from src.pytest_bdd import exceptions
-
             raise exceptions.FeatureError(
                 e.args[0],
                 e.errors[0].location["line"],

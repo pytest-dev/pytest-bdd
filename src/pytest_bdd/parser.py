@@ -220,7 +220,7 @@ class Step:
     """
 
     type: str
-    _name: str
+    name: str
     line_number: int
     indent: int
     keyword: str
@@ -356,21 +356,17 @@ class FeatureParser:
             List[Step]: A list of Step objects.
         """
         steps = []
-        current_step_type = None
         for step_data in steps_data:
-            keyword = step_data.keyword.strip().lower()
-            current_step_type = self.get_step_type(keyword) or current_step_type
             name = strip_comments(step_data.text)
             if step_data.docString:
-                doc_string = textwrap.dedent(step_data.docString.content)
-                name = f"{name}\n{doc_string}"
+                name = f"{name}\n{step_data.docString.content}"
             steps.append(
                 Step(
                     name=name,
-                    type=current_step_type,
+                    type=step_data.given_when_then,
                     indent=step_data.location.column - 1,
                     line_number=step_data.location.line,
-                    keyword=keyword.title(),
+                    keyword=step_data.keyword.title(),
                 )
             )
         return steps
@@ -424,9 +420,6 @@ class FeatureParser:
 
         Returns:
             Dict: A Gherkin document representation of the feature file.
-
-        Raises:
-            FeatureError: If there is an error parsing the feature file.
         """
         return GherkinParser(self.abs_filename, self.encoding).to_gherkin_document()
 
