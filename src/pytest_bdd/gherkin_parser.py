@@ -151,7 +151,7 @@ def _compute_given_when_then(steps: list[Step]) -> list[Step]:
 
 class GherkinParser:
     def __init__(self, abs_filename: str = None, encoding: str = "utf-8"):
-        self.abs_filename = Path(abs_filename) if abs_filename else None
+        self.abs_filename = Path(abs_filename)
         self.encoding = encoding
 
         with open(self.abs_filename, encoding=self.encoding) as f:

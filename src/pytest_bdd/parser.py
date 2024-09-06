@@ -346,7 +346,8 @@ class FeatureParser:
             "then": THEN,
         }.get(keyword)
 
-    def parse_steps(self, steps_data: list[GherkinStep]) -> list[Step]:
+    @staticmethod
+    def parse_steps(steps_data: list[GherkinStep]) -> list[Step]:
         """Parse a list of step data into Step objects.
 
         Args:
