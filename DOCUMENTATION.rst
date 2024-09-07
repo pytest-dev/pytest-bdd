@@ -1,6 +1,8 @@
 Scenario decorator
 ------------------
 
+.. _pytest-bdd: https://github.com/pytest-dev/pytest-bdd
+
 Feature files auto-collection could be disabled by use `--disable-feature-autoload` cli option
 or `disable_feature_autoload` `pytest.ini` option. In this case there mechanism to use features from
 `test_*.py` pytest files: functions decorated with the `scenario` decorator behave like a normal test function,
@@ -33,6 +35,9 @@ And even more, there are several types of step parameter parsers at your disposa
 **heuristic** (default)
     Tries to select right parser between string, cucumber_expression, cfparse and re. Any object that supports `__str__`
     interface and does not support parser interface will be wrapped with this parser
+
+.. NOTE:: Important difference from pytest-bdd_
+
 **parse** (based on: pypi_parse_)
     Provides a simple parser that replaces regular expressions for
     step parameters with a readable syntax like ``{param:Type}``.
@@ -266,6 +271,9 @@ This behavior is same to:
     def step(foo, bar, fizz, buzz):
         ...
 
+
+.. NOTE:: Important difference from pytest-bdd_
+
 But this behavior could be changed; For example you want to rename some parameters and left other as-is.
 `Ellipsis <https://docs.python.org/dev/library/constants.html#Ellipsis>`_ instance means all present attributes, but not listed directly.
 
@@ -387,6 +395,8 @@ Also it's possible to override multiple fixtures in one step using `target_fixtu
 Loading whole feature files
 ---------------------------
 
+.. NOTE:: Important difference from pytest-bdd_
+
 If you have relatively large set of feature files, it's boring to manually bind scenarios to the tests using the
 scenario decorator(in case if you don't want use feature auto-load). Of course with the manual approach you get all
 the power to be able to additionally parametrize the test, give the test function a nice name, document it, etc,
@@ -478,6 +488,8 @@ other test markers, use prefix like `bdd`.
 Note that if you use pytest `--strict` option, all bdd tags mentioned in the feature files should be also in the
 `markers` setting of the `pytest.ini` config. Also for tags please use names which are python-compatible variable
 names, eg starts with a non-number, underscore alphanumeric, etc. That way you can safely use tags for tests filtering.
+
+.. NOTE:: Important difference from pytest-bdd_
 
 You can customize how tags are converted to pytest marks by implementing the
 ``pytest_bdd_convert_tag_to_marks`` hook and returning list of resulting marks from it:
@@ -625,6 +637,8 @@ then
 Feature file paths
 ------------------
 
+.. NOTE:: Important difference from pytest-bdd_
+
 By default, pytest-bdd-ng will use current module's path as base path for finding feature files, but this behaviour can
 be changed in the pytest configuration file (i.e. `pytest.ini`, `tox.ini` or `setup.cfg`) by declaring the new base
 path in the `bdd_features_base_dir` key. The path is interpreted as relative to the pytest root directory.
@@ -664,11 +678,15 @@ The `features_base_dir` parameter can also be passed to the `@scenario` decorato
 Localization
 ------------
 
+.. NOTE:: Important difference from pytest-bdd_
+
 pytest-bdd-ng supports all localizations which Gherkin `does <https://cucumber.io/docs/gherkin/languages/>`_
 
 
 Hooks
 -----
+
+.. NOTE:: Important difference from pytest-bdd_
 
 pytest-bdd-ng exposes several `pytest hooks <http://pytest.org/latest/plugins.html#well-specified-hooks>`_
 which might be helpful building useful reporting, visualization, etc on top of it:
@@ -693,6 +711,8 @@ which might be helpful building useful reporting, visualization, etc on top of i
 
 Fixtures
 --------
+
+.. NOTE:: Important difference from pytest-bdd_
 
 pytest-bdd-ng exposes several plugin fixtures to give more testing flexibility
 

@@ -36,6 +36,55 @@ Why ``NG`` ?
 
 The current pytest plugin for cucumber is pytest-bdd_ , a popular project with 1.2k stars and used in 3k public repos and maintained by the pytest community. The upstream open-cucumber project does not have an official python release, so the current cucumber specs include features not available in pytest-bdd_ . This project is an effort to bridge the gap and also make it easier for pytest users to access new cucumber features.
 
+.. list-table::
+   :widths: 30 10 10 50
+   :header-rows: 1
+
+   * - Feature
+     - original
+     - NG
+     - Description
+   * - `Official parser support <https://github.com/cucumber/gherkin>`_
+     - \-
+     - \+
+     - All features of Feature files are supported from the "box" (localisation, Rules, Examples, Data tables, etc.)
+   * - Steps definitions via `Cucumber expressions <https://github.com/cucumber/cucumber-expressions>`_
+     - \-
+     - \+
+     - Easy migration between implementations
+   * - Reporting using `Messages <https://github.com/cucumber/messages>`_
+     - \-
+     - \+
+     - Possible to use all collection of Cucumber community tools for reporting
+   * - `Pickles <https://github.com/cucumber/gherkin>`_ internal protocol
+     - \-
+     - \+
+     - Allows to implement parsers based on other file types/principles
+   * - Heuristic step matching
+     - \-/+
+     - \+
+     - Steps ease of use / amount of needed boilerplate code
+   * - Step execution context. Step types and variants of definition
+     - \-/+
+     - \+
+     - Dispatching steps by kind. Steps injecting multiple fixtures. Default injecting behaviors. Steps could be used on import automatically. It's possible to define default values for step variables.
+   * - Automatic collection of Feature files
+     - \-
+     - \+
+     - No boilerplate code / No mix between steps definition and feature files
+   * - Stability and bugfixes
+     - \+
+     - \+/-
+     -
+   * - Supported python/pytest versions
+     - \+/-
+     - \+
+     - NG supports wider and elder pytest&python version. Tested also for PyPy
+   * - Active community
+     - \+
+     - \-/+
+     -
+
 
 Install pytest-bdd-ng
 ---------------------
