@@ -29,8 +29,7 @@ from __future__ import annotations
 import glob
 import os.path
 
-from .gherkin_parser import Feature
-from .parser import FeatureParser
+from .parser import Feature, GherkinParser
 
 # Global features dictionary
 features: dict[str, Feature] = {}
@@ -50,11 +49,13 @@ def get_feature(base_path: str, filename: str, encoding: str = "utf-8") -> Featu
            when multiple scenarios are referencing the same file.
     """
     __tracebackhide__ = True
-    full_name = os.path.abspath(os.path.join(base_path, filename))
-    feature = features.get(full_name)
+    full_filename = os.path.abspath(os.path.join(base_path, filename))
+    rel_filename = os.path.join(os.path.basename(base_path), filename)
+    feature = features.get(full_filename)
     if not feature:
-        feature = FeatureParser(base_path, filename, encoding).parse()
-        features[full_name] = feature
+        gherkin_document = GherkinParser(full_filename, rel_filename, encoding).to_gherkin_document()
+        feature = gherkin_document.feature
+        features[full_filename] = feature
     return feature
 
 

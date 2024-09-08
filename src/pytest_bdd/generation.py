@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from _pytest.main import Session
     from _pytest.python import Function
 
-    from .gherkin_parser import Feature, Scenario, Step
+    from .parser import Feature, Scenario, Step
 
 
 template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
@@ -145,10 +145,10 @@ def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature],
     """
     features = get_features(paths, **kwargs)
     scenarios = sorted(
-        itertools.chain.from_iterable(feature.scenarios.values() for feature in features),
+        itertools.chain.from_iterable(feature.scenarios for feature in features),
         key=lambda scenario: (scenario.feature.name or scenario.feature.filename, scenario.name),
     )
-    steps = sorted((step for scenario in scenarios for step in scenario.steps), key=lambda step: step.name)
+    steps = sorted((step for scenario in scenarios for step in scenario.all_steps), key=lambda step: step.name)
     return features, scenarios, steps
 
 
@@ -192,10 +192,6 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
                         steps.remove(step)
                     except ValueError:
                         pass
-    for scenario in scenarios:
-        for step in scenario.steps:
-            if step.background is None:
-                steps.remove(step)
     grouped_steps = group_steps(steps)
     print_missing_code(scenarios, grouped_steps)
 

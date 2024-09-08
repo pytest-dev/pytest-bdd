@@ -45,7 +45,7 @@ from typing import Any, Callable, Iterable, Literal, TypeVar
 import pytest
 from typing_extensions import ParamSpec
 
-from .gherkin_parser import Step
+from .parser import Step
 from .parsers import StepParser, get_parser
 from .types import GIVEN, THEN, WHEN
 from .utils import get_caller_module_locals

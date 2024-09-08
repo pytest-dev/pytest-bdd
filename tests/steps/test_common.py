@@ -4,7 +4,7 @@ from unittest import mock
 
 import pytest
 
-from pytest_bdd import given, parser, parsers, then, when
+from pytest_bdd import given, parsers, then, when
 from pytest_bdd.utils import collect_dumped_objects
 
 

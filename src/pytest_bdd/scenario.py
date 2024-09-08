@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from _pytest.mark.structures import ParameterSet
     from _pytest.nodes import Node
 
-    from .gherkin_parser import Feature, Scenario, Step
+    from .parser import Feature, Scenario, Step
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -228,7 +228,7 @@ def _execute_scenario(gherkin_scenario: Scenario, request: FixtureRequest) -> No
     request.config.hook.pytest_bdd_before_scenario(request=request, scenario=gherkin_scenario)
 
     try:
-        for step in gherkin_scenario.steps:
+        for step in gherkin_scenario.all_steps:
             step_func_context = get_step_function(request=request, step=step)
             if step_func_context is None:
                 exc = exceptions.StepDefinitionNotFoundError(
@@ -420,7 +420,7 @@ def scenarios(*feature_paths: str, **kwargs: Any) -> None:
             # skip already bound scenarios
             if (feature.filename, gherkin_scenario.name) not in module_scenarios:
 
-                @scenario(feature.filename, gherkin_scenario.name, features_base_dir=features_base_dir, **kwargs)
+                @scenario(feature.filename, gherkin_scenario.name, **kwargs)
                 def _scenario() -> None:
                     pass  # pragma: no cover
 

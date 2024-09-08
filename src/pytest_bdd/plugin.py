@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from _pytest.runner import CallInfo
     from pluggy._result import _Result
 
-    from .gherkin_parser import Feature, Scenario, Step
+    from .parser import Feature, Scenario, Step
 
 
 P = ParamSpec("P")
