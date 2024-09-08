@@ -301,7 +301,6 @@ def collect_example_parametrizations(
     if not examples:
         return None
     if contexts := list(examples[0].as_contexts()):
-        print(contexts)
         return [pytest.param(context, id="-".join(context.values())) for context in contexts]
     else:
         return None
