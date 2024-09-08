@@ -29,7 +29,8 @@ from __future__ import annotations
 import glob
 import os.path
 
-from .parser import Feature, FeatureParser
+from .gherkin_parser import Feature
+from .parser import FeatureParser
 
 # Global features dictionary
 features: dict[str, Feature] = {}

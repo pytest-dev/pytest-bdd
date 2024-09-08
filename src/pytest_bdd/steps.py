@@ -45,7 +45,7 @@ from typing import Any, Callable, Iterable, Literal, TypeVar
 import pytest
 from typing_extensions import ParamSpec
 
-from .parser import Step
+from .gherkin_parser import Step
 from .parsers import StepParser, get_parser
 from .types import GIVEN, THEN, WHEN
 from .utils import get_caller_module_locals
@@ -71,7 +71,7 @@ class StepFunctionContext:
 
 def get_step_fixture_name(step: Step) -> str:
     """Get step fixture name"""
-    return f"{StepNamePrefix.step_impl.value}_{step.type}_{step.name}"
+    return f"{StepNamePrefix.step_impl.value}_{step.given_when_then}_{step.name}"
 
 
 def given(

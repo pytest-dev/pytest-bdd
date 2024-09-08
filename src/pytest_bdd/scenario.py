@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from _pytest.mark.structures import ParameterSet
     from _pytest.nodes import Node
 
-    from .parser import Feature, Scenario, ScenarioTemplate, Step
+    from .gherkin_parser import Feature, Scenario, Step
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -55,7 +55,7 @@ def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: 
             if step_func_context is None:
                 continue
 
-            if step_func_context.type is not None and step_func_context.type != step.type:
+            if step_func_context.type is not None and step_func_context.type != step.given_when_then:
                 continue
 
             match = step_func_context.parser.is_matching(step.name)
@@ -172,14 +172,14 @@ def get_step_function(request, step: Step) -> StepFunctionContext | None:
 
 
 def _execute_step_function(
-    request: FixtureRequest, scenario: Scenario, step: Step, context: StepFunctionContext
+    request: FixtureRequest, gherkin_scenario: Scenario, step: Step, context: StepFunctionContext
 ) -> None:
     """Execute step function."""
     __tracebackhide__ = True
     kw = {
         "request": request,
-        "feature": scenario.feature,
-        "scenario": scenario,
+        "feature": gherkin_scenario.feature,
+        "scenario": gherkin_scenario,
         "step": step,
         "step_func": context.step_func,
         "step_func_args": {},
@@ -218,37 +218,39 @@ def _execute_step_function(
     request.config.hook.pytest_bdd_after_step(**kw)
 
 
-def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequest) -> None:
+def _execute_scenario(gherkin_scenario: Scenario, request: FixtureRequest) -> None:
     """Execute the scenario.
 
-    :param feature: Feature.
-    :param scenario: Scenario.
+    :param gherkin_scenario: Scenario.
     :param request: request.
-    :param encoding: Encoding.
     """
     __tracebackhide__ = True
-    request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
+    request.config.hook.pytest_bdd_before_scenario(request=request, scenario=gherkin_scenario)
 
     try:
-        for step in scenario.steps:
+        for step in gherkin_scenario.steps:
             step_func_context = get_step_function(request=request, step=step)
             if step_func_context is None:
                 exc = exceptions.StepDefinitionNotFoundError(
                     f"Step definition is not found: {step}. "
-                    f'Line {step.line_number} in scenario "{scenario.name}" in the feature "{scenario.feature.filename}"'
+                    f'Line {step.location.line} in scenario "{gherkin_scenario.name}" in the feature "{gherkin_scenario.parent.filename}"'
                 )
                 request.config.hook.pytest_bdd_step_func_lookup_error(
-                    request=request, feature=feature, scenario=scenario, step=step, exception=exc
+                    request=request,
+                    feature=gherkin_scenario.parent,
+                    scenario=gherkin_scenario,
+                    step=step,
+                    exception=exc,
                 )
                 raise exc
-            _execute_step_function(request, scenario, step, step_func_context)
+            _execute_step_function(request, gherkin_scenario, step, step_func_context)
     finally:
-        request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
+        request.config.hook.pytest_bdd_after_scenario(
+            request=request, feature=gherkin_scenario.parent, scenario=gherkin_scenario
+        )
 
 
-def _get_scenario_decorator(
-    feature: Feature, feature_name: str, templated_scenario: ScenarioTemplate, scenario_name: str
-) -> Callable[[Callable[P, T]], Callable[P, T]]:
+def _get_scenario_decorator(feature: Feature, gherkin_scenario: Scenario) -> Callable[[Callable[P, T]], Callable[P, T]]:
     # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
     # when the decorator is misused.
     # Pytest inspect the signature to determine the required fixtures, and in that case it would look
@@ -268,12 +270,12 @@ def _get_scenario_decorator(
         @pytest.mark.usefixtures(*func_args)
         def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> Any:
             __tracebackhide__ = True
-            scenario = templated_scenario.render(_pytest_bdd_example)
-            _execute_scenario(feature, scenario, request)
+            gherkin_scenario.render(_pytest_bdd_example)
+            _execute_scenario(gherkin_scenario, request)
             fixture_values = [request.getfixturevalue(arg) for arg in func_args]
             return fn(*fixture_values)
 
-        example_parametrizations = collect_example_parametrizations(templated_scenario)
+        example_parametrizations = collect_example_parametrizations(gherkin_scenario)
         if example_parametrizations is not None:
             # Parametrize the scenario outlines
             scenario_wrapper = pytest.mark.parametrize(
@@ -281,21 +283,25 @@ def _get_scenario_decorator(
                 example_parametrizations,
             )(scenario_wrapper)
 
-        for tag in templated_scenario.tags.union(feature.tags):
+        for tag in list(set(gherkin_scenario.tag_names + feature.tag_names)):
             config = CONFIG_STACK[-1]
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 
-        scenario_wrapper.__doc__ = f"{feature_name}: {scenario_name}"
-        scenario_wrapper.__scenario__ = templated_scenario
+        scenario_wrapper.__doc__ = f"{feature.name}: {gherkin_scenario.name}"
+        scenario_wrapper.__scenario__ = gherkin_scenario
         return cast(Callable[P, T], scenario_wrapper)
 
     return decorator
 
 
 def collect_example_parametrizations(
-    templated_scenario: ScenarioTemplate,
+    gherkin_scenario: Scenario,
 ) -> list[ParameterSet] | None:
-    if contexts := list(templated_scenario.examples.as_contexts()):
+    examples = gherkin_scenario.examples
+    if not examples:
+        return None
+    if contexts := list(examples[0].as_contexts()):
+        print(contexts)
         return [pytest.param(context, id="-".join(context.values())) for context in contexts]
     else:
         return None
@@ -315,7 +321,6 @@ def scenario(
     :param features_base_dir: Optional base dir location for locating feature files. If not set, it will try and resolve using property set in .ini file, then the caller_module_path.
     """
     __tracebackhide__ = True
-    scenario_name = scenario_name
     caller_module_path = get_caller_module_path()
 
     # Get the feature
@@ -324,17 +329,14 @@ def scenario(
     feature = get_feature(features_base_dir, feature_name, encoding=encoding)
 
     # Get the scenario
-    try:
-        scenario = feature.scenarios[scenario_name]
-    except KeyError:
+    gherkin_scenario = feature.get_child_by_name(scenario_name)
+    if gherkin_scenario is None:
         feature_name = feature.name or "[Empty]"
         raise exceptions.ScenarioNotFound(
             f'Scenario "{scenario_name}" in feature "{feature_name}" in {feature.filename} is not found.'
         )
 
-    return _get_scenario_decorator(
-        feature=feature, feature_name=feature_name, templated_scenario=scenario, scenario_name=scenario_name
-    )
+    return _get_scenario_decorator(feature=feature, gherkin_scenario=gherkin_scenario)
 
 
 def get_features_base_dir(caller_module_path: str) -> str:
@@ -414,17 +416,17 @@ def scenarios(*feature_paths: str, **kwargs: Any) -> None:
     )
 
     for feature in get_features(abs_feature_paths):
-        for scenario_name, scenario_object in feature.scenarios.items():
+        for gherkin_scenario in feature.scenarios:
             # skip already bound scenarios
-            if (scenario_object.feature.filename, scenario_name) not in module_scenarios:
+            if (feature.filename, gherkin_scenario.name) not in module_scenarios:
 
-                @scenario(feature.filename, scenario_name, **kwargs)
+                @scenario(feature.filename, gherkin_scenario.name, features_base_dir=features_base_dir, **kwargs)
                 def _scenario() -> None:
                     pass  # pragma: no cover
 
-                for test_name in get_python_name_generator(scenario_name):
+                for test_name in get_python_name_generator(gherkin_scenario.name):
                     if test_name not in caller_locals:
-                        # found an unique test name
+                        # found a unique test name
                         caller_locals[test_name] = _scenario
                         break
             found = True

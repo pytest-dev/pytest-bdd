@@ -24,7 +24,8 @@ if TYPE_CHECKING:
     from _pytest.main import Session
     from _pytest.python import Function
 
-    from .parser import Feature, ScenarioTemplate, Step
+    from .gherkin_parser import Feature, Scenario, Step
+
 
 template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
 
@@ -57,7 +58,7 @@ def cmdline_main(config: Config) -> int | None:
     return None  # Make mypy happy
 
 
-def generate_code(features: list[Feature], scenarios: list[ScenarioTemplate], steps: list[Step]) -> str:
+def generate_code(features: list[Feature], scenarios: list[Scenario], steps: list[Step]) -> str:
     """Generate test code for the given filenames."""
     grouped_steps = group_steps(steps)
     template = template_lookup.get_template("test.py.mak")
@@ -79,7 +80,7 @@ def show_missing_code(config: Config) -> int:
     return wrap_session(config, _show_missing_code_main)
 
 
-def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> None:
+def print_missing_code(scenarios: list[Scenario], steps: list[Step]) -> None:
     """Print missing code with TerminalWriter."""
     tw = TerminalWriter()
     scenario = step = None
@@ -87,8 +88,8 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
     for scenario in scenarios:
         tw.line()
         tw.line(
-            'Scenario "{scenario.name}" is not bound to any test in the feature "{scenario.feature.name}"'
-            " in the file {scenario.feature.filename}:{scenario.line_number}".format(scenario=scenario),
+            'Scenario "{scenario.name}" is not bound to any test in the feature "{scenario.parent.name}"'
+            " in the file {scenario.parent}:{scenario.location.line}".format(scenario=scenario),
             red=True,
         )
 
@@ -99,16 +100,16 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
         tw.line()
         if step.scenario is not None:
             tw.line(
-                """Step {step} is not defined in the scenario "{step.scenario.name}" in the feature"""
-                """ "{step.scenario.feature.name}" in the file"""
-                """ {step.scenario.feature.filename}:{step.line_number}""".format(step=step),
+                """Step {step} is not defined in the scenario "{step.parent.name}" in the feature"""
+                """ "{step.parent.parent.name}" in the file"""
+                """ {step.parent.parent.filename}:{step.location.line}""".format(step=step),
                 red=True,
             )
         elif step.background is not None:
             tw.line(
                 """Step {step} is not defined in the background of the feature"""
-                """ "{step.background.feature.name}" in the file"""
-                """ {step.background.feature.filename}:{step.line_number}""".format(step=step),
+                """ "{step.background.parent.name}" in the file"""
+                """ {step.background.parent.filename}:{step.location.line}""".format(step=step),
                 red=True,
             )
 
@@ -134,7 +135,7 @@ def _find_step_fixturedef(
         return getfixturedefs(fixturemanager, bdd_name, item)
 
 
-def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature], list[ScenarioTemplate], list[Step]]:
+def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature], list[Scenario], list[Step]]:
     """Parse feature files of given paths.
 
     :param paths: `list` of paths (file or dirs)
@@ -153,16 +154,17 @@ def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature],
 
 def group_steps(steps: list[Step]) -> list[Step]:
     """Group steps by type."""
-    steps = sorted(steps, key=lambda step: step.type)
+    steps = sorted(steps, key=lambda step: step.given_when_then)
     seen_steps = set()
     grouped_steps = []
     for step in itertools.chain.from_iterable(
-        sorted(group, key=lambda step: step.name) for _, group in itertools.groupby(steps, lambda step: step.type)
+        sorted(group, key=lambda step: step.name)
+        for _, group in itertools.groupby(steps, lambda step: step.given_when_then)
     ):
         if step.name not in seen_steps:
             grouped_steps.append(step)
             seen_steps.add(step.name)
-    grouped_steps.sort(key=lambda step: STEP_TYPES.index(step.type))
+    grouped_steps.sort(key=lambda step: STEP_TYPES.index(step.given_when_then))
     return grouped_steps
 
 

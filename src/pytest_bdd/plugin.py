@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from _pytest.runner import CallInfo
     from pluggy._result import _Result
 
-    from .parser import Feature, Scenario, Step
+    from .gherkin_parser import Feature, Scenario, Step
 
 
 P = ParamSpec("P")
@@ -88,8 +88,8 @@ def pytest_runtest_makereport(item: Item, call: CallInfo) -> Generator[None, _Re
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_bdd_before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
-    reporting.before_scenario(request, feature, scenario)
+def pytest_bdd_before_scenario(request: FixtureRequest, scenario: Scenario) -> None:
+    reporting.before_scenario(request, scenario)
 
 
 @pytest.hookimpl(tryfirst=True)

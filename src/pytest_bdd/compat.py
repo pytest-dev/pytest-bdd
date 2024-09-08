@@ -24,6 +24,8 @@ if pytest_version.release >= (8, 1):
         :param arg: argument name
         :param value: argument value
         """
+        if "scenario" in arg:
+            print("Yippee!")
 
         request._fixturemanager._register_fixture(
             name=arg,
@@ -43,6 +45,9 @@ else:
         :param arg: argument name
         :param value: argument value
         """
+        if "scenario" in arg:
+            print("Yippee!")
+
         fd = FixtureDef(
             fixturemanager=request._fixturemanager,
             baseid=None,

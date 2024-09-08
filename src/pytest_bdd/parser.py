@@ -209,14 +209,11 @@ class Step:
 
     Attributes:
         type (str): The type of step (e.g., 'given', 'when', 'then').
-        _name (str): The name of the step.
+        name (str): The name of the step.
         line_number (int): The line number where the step starts in the file.
         indent (int): The indentation level of the step.
         keyword (str): The keyword used for the step (e.g., 'Given', 'When', 'Then').
         failed (bool): Whether the step has failed (internal use only).
-        scenario (Optional[ScenarioTemplate]): The scenario to which this step belongs (internal use only).
-        background (Optional[Background]): The background to which this step belongs (internal use only).
-        lines (List[str]): Additional lines for the step (internal use only).
     """
 
     type: str
@@ -225,9 +222,6 @@ class Step:
     indent: int
     keyword: str
     failed: bool = field(init=False, default=False)
-    scenario: ScenarioTemplate | None = field(init=False, default=None)
-    background: Background | None = field(init=False, default=None)
-    lines: list[str] = field(init=False, default_factory=list)
 
     def __init__(self, name: str, type: str, indent: int, line_number: int, keyword: str) -> None:
         """Initialize a step.
@@ -422,27 +416,28 @@ class FeatureParser:
         Returns:
             Dict: A Gherkin document representation of the feature file.
         """
-        return GherkinParser(self.abs_filename, self.encoding).to_gherkin_document()
+        return GherkinParser(self.abs_filename, self.rel_filename, self.encoding).to_gherkin_document()
 
     def parse(self):
         gherkin_doc: GherkinDocument = self._parse_feature_file()
         feature_data: GherkinFeature = gherkin_doc.feature
-        feature = Feature(
-            scenarios=OrderedDict(),
-            filename=self.abs_filename,
-            rel_filename=self.rel_filename,
-            name=strip_comments(feature_data.name),
-            tags=self.get_tag_names(feature_data.tags),
-            background=None,
-            line_number=feature_data.location.line,
-            description=textwrap.dedent(feature_data.description),
-        )
-
-        for child in feature_data.children:
-            if child.background:
-                feature.background = self.parse_background(child.background, feature)
-            elif child.scenario:
-                scenario = self.parse_scenario(child.scenario, feature)
-                feature.scenarios[scenario.name] = scenario
-
-        return feature
+        return feature_data
+        # feature = Feature(
+        #     scenarios=OrderedDict(),
+        #     filename=self.abs_filename,
+        #     rel_filename=self.rel_filename,
+        #     name=strip_comments(feature_data.name),
+        #     tags=self.get_tag_names(feature_data.tags),
+        #     background=None,
+        #     line_number=feature_data.location.line,
+        #     description=textwrap.dedent(feature_data.description),
+        # )
+        #
+        # for child in feature_data.children:
+        #     if child.background:
+        #         feature.background = self.parse_background(child.background, feature)
+        #     elif child.scenario:
+        #         scenario = self.parse_scenario(child.scenario, feature)
+        #         feature.scenarios[scenario.name] = scenario
+        #
+        # return feature

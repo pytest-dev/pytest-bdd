@@ -5,7 +5,7 @@ import pytest
 """Pytest-bdd pytest hooks."""
 
 
-def pytest_bdd_before_scenario(request, feature, scenario):
+def pytest_bdd_before_scenario(request, scenario):
     """Called before scenario is executed."""
 
 
@@ -29,7 +29,7 @@ def pytest_bdd_step_error(request, feature, scenario, step, step_func, step_func
     """Called when step function failed to execute."""
 
 
-def pytest_bdd_step_func_lookup_error(request, feature, scenario, step, exception):
+def pytest_bdd_step_func_lookup_error(request, scenario, step, exception):
     """Called when step lookup failed."""
 
 

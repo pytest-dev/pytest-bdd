@@ -18,7 +18,7 @@ def test_${ make_python_name(scenario.name)}():
 
 % endfor
 % for step in steps:
-@${step.type}(${ make_string_literal(step.name)})
+@${step.given_when_then}(${ make_string_literal(step.name)})
 def _():
     ${make_python_docstring(step.name)}
     raise NotImplementedError

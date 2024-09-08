@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from _pytest.reports import TestReport
     from _pytest.runner import CallInfo
 
-    from .parser import Feature, Scenario, Step
+    from .gherkin_parser import Feature, Scenario, Step
 
 
 class StepReport:
@@ -42,9 +42,9 @@ class StepReport:
         """
         return {
             "name": self.step.name,
-            "type": self.step.type,
+            "type": self.step.given_when_then,
             "keyword": self.step.keyword,
-            "line_number": self.step.line_number,
+            "line_number": self.step.location.line,
             "failed": self.failed,
             "duration": self.duration,
         }
@@ -77,7 +77,6 @@ class ScenarioReport:
         """Scenario report constructor.
 
         :param pytest_bdd.parser.Scenario scenario: Scenario.
-        :param node: pytest test node object
         """
         self.scenario: Scenario = scenario
         self.step_reports: list[StepReport] = []
@@ -106,20 +105,20 @@ class ScenarioReport:
         :rtype: dict
         """
         scenario = self.scenario
-        feature = scenario.feature
+        feature = scenario.parent
 
         return {
             "steps": [step_report.serialize() for step_report in self.step_reports],
             "name": scenario.name,
-            "line_number": scenario.line_number,
-            "tags": sorted(scenario.tags),
+            "line_number": scenario.location.line,
+            "tags": sorted(scenario.tag_names),
             "feature": {
                 "name": feature.name,
                 "filename": feature.filename,
                 "rel_filename": feature.rel_filename,
-                "line_number": feature.line_number,
+                "line_number": feature.location.line,
                 "description": feature.description,
-                "tags": sorted(feature.tags),
+                "tags": sorted(feature.tag_names),
             },
         }
 
@@ -146,7 +145,7 @@ def runtest_makereport(item: Item, call: CallInfo, rep: TestReport) -> None:
         rep.item = {"name": item.name}
 
 
-def before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
+def before_scenario(request: FixtureRequest, scenario: Scenario) -> None:
     """Create scenario report for the item."""
     request.node.__scenario_report__ = ScenarioReport(scenario=scenario)
 
