@@ -149,7 +149,7 @@ def step(
     :return: Decorator function for the step.
 
     Example:
-    >>> @step("there is an wallet", target_fixture="wallet")
+    >>> @step("there is a wallet", target_fixture="wallet")
     >>> def _() -> dict[str, int]:
     >>>     return {"eur": 0, "usd": 0}
 
