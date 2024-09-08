@@ -218,14 +218,14 @@ def _execute_step_function(
     request.config.hook.pytest_bdd_after_step(**kw)
 
 
-def _execute_scenario(gherkin_scenario: Scenario, request: FixtureRequest) -> None:
+def _execute_scenario(feature: Feature, gherkin_scenario: Scenario, request: FixtureRequest) -> None:
     """Execute the scenario.
 
     :param gherkin_scenario: Scenario.
     :param request: request.
     """
     __tracebackhide__ = True
-    request.config.hook.pytest_bdd_before_scenario(request=request, scenario=gherkin_scenario)
+    request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=gherkin_scenario)
 
     try:
         for step in gherkin_scenario.all_steps:
@@ -237,7 +237,7 @@ def _execute_scenario(gherkin_scenario: Scenario, request: FixtureRequest) -> No
                 )
                 request.config.hook.pytest_bdd_step_func_lookup_error(
                     request=request,
-                    feature=gherkin_scenario.parent,
+                    feature=feature,
                     scenario=gherkin_scenario,
                     step=step,
                     exception=exc,
@@ -245,9 +245,7 @@ def _execute_scenario(gherkin_scenario: Scenario, request: FixtureRequest) -> No
                 raise exc
             _execute_step_function(request, gherkin_scenario, step, step_func_context)
     finally:
-        request.config.hook.pytest_bdd_after_scenario(
-            request=request, feature=gherkin_scenario.parent, scenario=gherkin_scenario
-        )
+        request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=gherkin_scenario)
 
 
 def _get_scenario_decorator(feature: Feature, gherkin_scenario: Scenario) -> Callable[[Callable[P, T]], Callable[P, T]]:
@@ -271,7 +269,7 @@ def _get_scenario_decorator(feature: Feature, gherkin_scenario: Scenario) -> Cal
         def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> Any:
             __tracebackhide__ = True
             gherkin_scenario.render(_pytest_bdd_example)
-            _execute_scenario(gherkin_scenario, request)
+            _execute_scenario(feature, gherkin_scenario, request)
             fixture_values = [request.getfixturevalue(arg) for arg in func_args]
             return fn(*fixture_values)
 

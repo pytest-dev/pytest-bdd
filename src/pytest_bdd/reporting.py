@@ -73,11 +73,13 @@ class StepReport:
 class ScenarioReport:
     """Scenario execution report."""
 
-    def __init__(self, scenario: Scenario) -> None:
+    def __init__(self, feature: Feature, scenario: Scenario) -> None:
         """Scenario report constructor.
 
+        :param pytest_bdd.parser.Feature feature: Feature.
         :param pytest_bdd.parser.Scenario scenario: Scenario.
         """
+        self.feature: Feature = feature
         self.scenario: Scenario = scenario
         self.step_reports: list[StepReport] = []
 
@@ -104,21 +106,18 @@ class ScenarioReport:
         :return: Serialized report.
         :rtype: dict
         """
-        scenario = self.scenario
-        feature = scenario.parent
-
         return {
             "steps": [step_report.serialize() for step_report in self.step_reports],
-            "name": scenario.name,
-            "line_number": scenario.location.line,
-            "tags": sorted(scenario.tag_names),
+            "name": self.scenario.name,
+            "line_number": self.scenario.location.line,
+            "tags": sorted(self.scenario.tag_names),
             "feature": {
-                "name": feature.name,
-                "filename": feature.filename,
-                "rel_filename": feature.rel_filename,
-                "line_number": feature.location.line,
-                "description": feature.description,
-                "tags": sorted(feature.tag_names),
+                "name": self.feature.name,
+                "filename": self.feature.filename,
+                "rel_filename": self.feature.rel_filename,
+                "line_number": self.feature.location.line,
+                "description": self.feature.description,
+                "tags": sorted(self.feature.tag_names),
             },
         }
 
@@ -146,9 +145,9 @@ def runtest_makereport(item: Item, call: CallInfo, rep: TestReport) -> None:
         rep.item = {"name": item.name}
 
 
-def before_scenario(request: FixtureRequest, scenario: Scenario) -> None:
+def before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
     """Create scenario report for the item."""
-    request.node.__scenario_report__ = ScenarioReport(scenario=scenario)
+    request.node.__scenario_report__ = ScenarioReport(feature=feature, scenario=scenario)
 
 
 def step_error(

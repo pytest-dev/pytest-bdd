@@ -88,8 +88,8 @@ def pytest_runtest_makereport(item: Item, call: CallInfo) -> Generator[None, _Re
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_bdd_before_scenario(request: FixtureRequest, scenario: Scenario) -> None:
-    reporting.before_scenario(request, scenario)
+def pytest_bdd_before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
+    reporting.before_scenario(request, feature, scenario)
 
 
 @pytest.hookimpl(tryfirst=True)
