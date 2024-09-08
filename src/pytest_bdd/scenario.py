@@ -424,7 +424,7 @@ def scenarios(*feature_paths: str, **kwargs: Any) -> None:
 
                 for test_name in get_python_name_generator(scenario_name):
                     if test_name not in caller_locals:
-                        # found an unique test name
+                        # found a unique test name
                         caller_locals[test_name] = _scenario
                         break
             found = True
