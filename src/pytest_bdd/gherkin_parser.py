@@ -1,8 +1,8 @@
 import linecache
 import textwrap
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-import attr
 from gherkin.errors import CompositeParserException
 from gherkin.parser import Parser
 from gherkin.token_scanner import TokenScanner
@@ -11,41 +11,41 @@ from . import exceptions
 from .types import STEP_TYPES
 
 
-@attr.s
+@dataclass
 class Location:
-    column = attr.ib(type=int)
-    line = attr.ib(type=int)
+    column: int
+    line: int
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Location":
         return cls(column=data["column"], line=data["line"])
 
 
-@attr.s
+@dataclass
 class Comment:
-    location = attr.ib(type=Location)
-    text = attr.ib(type=str)
+    location: Location
+    text: str
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Comment":
         return cls(location=Location.from_dict(data["location"]), text=data["text"])
 
 
-@attr.s
+@dataclass
 class Cell:
-    location = attr.ib(type=Location)
-    value = attr.ib(type=str)
+    location: Location
+    value: str
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Cell":
         return cls(location=Location.from_dict(data["location"]), value=_convert_to_raw_string(data["value"]))
 
 
-@attr.s
+@dataclass
 class Row:
-    id = attr.ib(type=str)
-    location = attr.ib(type=Location)
-    cells = attr.ib(type=List[Cell])
+    id: str
+    location: Location
+    cells: List[Cell]
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Row":
@@ -56,12 +56,12 @@ class Row:
         )
 
 
-@attr.s
+@dataclass
 class DataTable:
-    location = attr.ib(type=Location)
-    name = attr.ib(type=Optional[str], default=None)
-    tableHeader = attr.ib(type=Optional[Row], default=None)
-    tableBody = attr.ib(type=Optional[List[Row]], factory=list)
+    location: Location
+    name: Optional[str] = None
+    tableHeader: Optional[Row] = None
+    tableBody: Optional[List[Row]] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "DataTable":
@@ -73,13 +73,13 @@ class DataTable:
         )
 
 
-@attr.s
+@dataclass
 class DocString:
-    content = attr.ib(type=str)
-    delimiter = attr.ib(type=str)
-    location = attr.ib(type=Location)
+    content: str
+    delimiter: str
+    location: Location
 
-    def __attrs_post_init__(self):
+    def __post_init__(self):
         self.content = textwrap.dedent(self.content)
 
     @classmethod
@@ -87,17 +87,17 @@ class DocString:
         return cls(content=data["content"], delimiter=data["delimiter"], location=Location.from_dict(data["location"]))
 
 
-@attr.s
+@dataclass
 class Step:
-    id = attr.ib(type=str)
-    keyword = attr.ib(type=str)
-    keywordType = attr.ib(type=str)
-    location = attr.ib(type=Location)
-    text = attr.ib(type=str)
-    dataTable = attr.ib(type=Optional[DataTable], default=None)
-    docString = attr.ib(type=Optional[DocString], default=None)
+    id: str
+    keyword: str
+    keywordType: str
+    location: Location
+    text: str
+    dataTable: Optional[DataTable] = None
+    docString: Optional[DocString] = None
 
-    def __attrs_post_init__(self):
+    def __post_init__(self):
         self.keyword = self.keyword.lower().strip()
 
     @property
@@ -121,29 +121,29 @@ class Step:
         )
 
 
-@attr.s
+@dataclass
 class Tag:
-    id = attr.ib(type=str)
-    location = attr.ib(type=Location)
-    name = attr.ib(type=str)
+    id: str
+    location: Location
+    name: str
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Tag":
         return cls(id=data["id"], location=Location.from_dict(data["location"]), name=data["name"])
 
 
-@attr.s
+@dataclass
 class Scenario:
-    id = attr.ib(type=str)
-    keyword = attr.ib(type=str)
-    location = attr.ib(type=Location)
-    name = attr.ib(type=str)
-    description = attr.ib(type=str)
-    steps = attr.ib(type=List[Step])
-    tags = attr.ib(type=List[Tag])
-    examples = attr.ib(type=Optional[List[DataTable]], factory=list)
+    id: str
+    keyword: str
+    location: Location
+    name: str
+    description: str
+    steps: List[Step]
+    tags: List[Tag]
+    examples: Optional[List[DataTable]] = field(default_factory=list)
 
-    def __attrs_post_init__(self):
+    def __post_init__(self):
         self.steps = _compute_given_when_then(self.steps)
 
     @classmethod
@@ -160,15 +160,15 @@ class Scenario:
         )
 
 
-@attr.s
+@dataclass
 class Rule:
-    id = attr.ib(type=str)
-    keyword = attr.ib(type=str)
-    location = attr.ib(type=Location)
-    name = attr.ib(type=str)
-    description = attr.ib(type=str)
-    tags = attr.ib(type=List[Tag])
-    children = attr.ib(type=List[Scenario])
+    id: str
+    keyword: str
+    location: Location
+    name: str
+    description: str
+    tags: List[Tag]
+    children: List[Scenario]
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Rule":
@@ -183,16 +183,16 @@ class Rule:
         )
 
 
-@attr.s
+@dataclass
 class Background:
-    id = attr.ib(type=str)
-    keyword = attr.ib(type=str)
-    location = attr.ib(type=Location)
-    name = attr.ib(type=str)
-    description = attr.ib(type=str)
-    steps = attr.ib(type=List[Step])
+    id: str
+    keyword: str
+    location: Location
+    name: str
+    description: str
+    steps: List[Step]
 
-    def __attrs_post_init__(self):
+    def __post_init__(self):
         self.steps = _compute_given_when_then(self.steps)
 
     @classmethod
@@ -207,11 +207,11 @@ class Background:
         )
 
 
-@attr.s
+@dataclass
 class Child:
-    background = attr.ib(type=Optional[Background], default=None)
-    rule = attr.ib(type=Optional[Rule], default=None)
-    scenario = attr.ib(type=Optional[Scenario], default=None)
+    background: Optional[Background] = None
+    rule: Optional[Rule] = None
+    scenario: Optional[Scenario] = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Child":
@@ -222,14 +222,14 @@ class Child:
         )
 
 
-@attr.s
+@dataclass
 class Feature:
-    keyword = attr.ib(type=str)
-    location = attr.ib(type=Location)
-    tags = attr.ib(type=List[Tag])
-    name = attr.ib(type=str)
-    description = attr.ib(type=str)
-    children = attr.ib(type=List[Child])
+    keyword: str
+    location: Location
+    tags: List[Tag]
+    name: str
+    description: str
+    children: List[Child]
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Feature":
@@ -243,10 +243,10 @@ class Feature:
         )
 
 
-@attr.s
+@dataclass
 class GherkinDocument:
-    feature = attr.ib(type=Feature)
-    comments = attr.ib(type=List[Comment])
+    feature: Feature
+    comments: List[Comment]
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "GherkinDocument":
@@ -283,5 +283,4 @@ def get_gherkin_document(abs_filename: str = None, encoding: str = "utf-8") -> G
             abs_filename,
         ) from e
 
-    # Assuming gherkin_data is a dictionary with the structure expected by from_dict methods
     return GherkinDocument.from_dict(gherkin_data)
