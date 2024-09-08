@@ -43,7 +43,7 @@ pytest = ">=6.2.0"
 typing-extensions = "*"
 packaging = "*"
 gherkin-official = "^29.0.0"
-pydantic = "^2.9.0"
+attrs = "^24.2.0"
 
 [tool.poetry.group.dev.dependencies]
 tox = ">=4.11.3"

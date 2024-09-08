@@ -9,10 +9,11 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 from .gherkin_parser import Background as GherkinBackground
 from .gherkin_parser import Feature as GherkinFeature
-from .gherkin_parser import GherkinDocument, GherkinParser
+from .gherkin_parser import GherkinDocument
 from .gherkin_parser import Scenario as GherkinScenario
 from .gherkin_parser import Step as GherkinStep
 from .gherkin_parser import Tag as GherkinTag
+from .gherkin_parser import get_gherkin_document
 from .types import GIVEN, THEN, WHEN
 
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
@@ -422,7 +423,7 @@ class FeatureParser:
         Returns:
             Dict: A Gherkin document representation of the feature file.
         """
-        return GherkinParser(self.abs_filename, self.encoding).to_gherkin_document()
+        return get_gherkin_document(self.abs_filename, self.encoding)
 
     def parse(self):
         gherkin_doc: GherkinDocument = self._parse_feature_file()

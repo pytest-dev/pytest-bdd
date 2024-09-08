@@ -1,143 +1,259 @@
 import linecache
 import textwrap
-from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
+import attr
 from gherkin.errors import CompositeParserException
 from gherkin.parser import Parser
 from gherkin.token_scanner import TokenScanner
-from pydantic import BaseModel, field_validator, model_validator
 
 from . import exceptions
 from .types import STEP_TYPES
 
 
-class Location(BaseModel):
-    column: int
-    line: int
+@attr.s
+class Location:
+    column = attr.ib(type=int)
+    line = attr.ib(type=int)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Location":
+        return cls(column=data["column"], line=data["line"])
 
 
-class Comment(BaseModel):
-    location: Location
-    text: str
+@attr.s
+class Comment:
+    location = attr.ib(type=Location)
+    text = attr.ib(type=str)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Comment":
+        return cls(location=Location.from_dict(data["location"]), text=data["text"])
 
 
-class Cell(BaseModel):
-    location: Location
-    value: str
+@attr.s
+class Cell:
+    location = attr.ib(type=Location)
+    value = attr.ib(type=str)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Cell":
+        return cls(location=Location.from_dict(data["location"]), value=_convert_to_raw_string(data["value"]))
 
 
-class Row(BaseModel):
-    id: str
-    location: Location
-    cells: List[Cell]
+@attr.s
+class Row:
+    id = attr.ib(type=str)
+    location = attr.ib(type=Location)
+    cells = attr.ib(type=List[Cell])
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Row":
+        return cls(
+            id=data["id"],
+            location=Location.from_dict(data["location"]),
+            cells=[Cell.from_dict(cell) for cell in data["cells"]],
+        )
 
 
-class DataTable(BaseModel):
-    name: Optional[str] = None
-    location: Location
-    tableHeader: Optional[Row] = None
-    tableBody: Optional[List[Row]] = None
+@attr.s
+class DataTable:
+    location = attr.ib(type=Location)
+    name = attr.ib(type=Optional[str], default=None)
+    tableHeader = attr.ib(type=Optional[Row], default=None)
+    tableBody = attr.ib(type=Optional[List[Row]], factory=list)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "DataTable":
+        return cls(
+            location=Location.from_dict(data["location"]),
+            name=data.get("name"),
+            tableHeader=Row.from_dict(data["tableHeader"]) if data.get("tableHeader") else None,
+            tableBody=[Row.from_dict(row) for row in data.get("tableBody", [])],
+        )
 
 
-class DocString(BaseModel):
-    content: str
-    delimiter: str
-    location: Location
+@attr.s
+class DocString:
+    content = attr.ib(type=str)
+    delimiter = attr.ib(type=str)
+    location = attr.ib(type=Location)
 
-    @field_validator("content", mode="before")
-    def dedent_content(cls, value: str) -> str:
-        return textwrap.dedent(value)
+    def __attrs_post_init__(self):
+        self.content = textwrap.dedent(self.content)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "DocString":
+        return cls(content=data["content"], delimiter=data["delimiter"], location=Location.from_dict(data["location"]))
 
 
-class Step(BaseModel):
-    id: str
-    keyword: str
-    keywordType: str
-    location: Location
-    text: str
-    dataTable: Optional[DataTable] = None
-    docString: Optional[DocString] = None
+@attr.s
+class Step:
+    id = attr.ib(type=str)
+    keyword = attr.ib(type=str)
+    keywordType = attr.ib(type=str)
+    location = attr.ib(type=Location)
+    text = attr.ib(type=str)
+    dataTable = attr.ib(type=Optional[DataTable], default=None)
+    docString = attr.ib(type=Optional[DocString], default=None)
 
-    @field_validator("keyword", mode="before")
-    def normalize_keyword(cls, value: str) -> str:
-        return value.lower().strip()
+    def __attrs_post_init__(self):
+        self.keyword = self.keyword.lower().strip()
 
     @property
     def given_when_then(self) -> str:
-        return self._gwt
+        return getattr(self, "_gwt", "")
 
     @given_when_then.setter
     def given_when_then(self, gwt: str) -> None:
         self._gwt = gwt
 
-
-class Tag(BaseModel):
-    id: str
-    location: Location
-    name: str
-
-
-class Scenario(BaseModel):
-    id: str
-    keyword: str
-    location: Location
-    name: str
-    description: str
-    steps: List[Step]
-    tags: List[Tag]
-    examples: Optional[List[DataTable]] = None
-
-    @model_validator(mode="after")
-    def process_steps(cls, instance):
-        steps = instance.steps
-        instance.steps = _compute_given_when_then(steps)
-        return instance
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Step":
+        return cls(
+            id=data["id"],
+            keyword=data["keyword"],
+            keywordType=data["keywordType"],
+            location=Location.from_dict(data["location"]),
+            text=data["text"],
+            dataTable=DataTable.from_dict(data["dataTable"]) if data.get("dataTable") else None,
+            docString=DocString.from_dict(data["docString"]) if data.get("docString") else None,
+        )
 
 
-class Rule(BaseModel):
-    id: str
-    keyword: str
-    location: Location
-    name: str
-    description: str
-    tags: List[Tag]
-    children: List[Scenario]
+@attr.s
+class Tag:
+    id = attr.ib(type=str)
+    location = attr.ib(type=Location)
+    name = attr.ib(type=str)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Tag":
+        return cls(id=data["id"], location=Location.from_dict(data["location"]), name=data["name"])
 
 
-class Background(BaseModel):
-    id: str
-    keyword: str
-    location: Location
-    name: str
-    description: str
-    steps: List[Step]
+@attr.s
+class Scenario:
+    id = attr.ib(type=str)
+    keyword = attr.ib(type=str)
+    location = attr.ib(type=Location)
+    name = attr.ib(type=str)
+    description = attr.ib(type=str)
+    steps = attr.ib(type=List[Step])
+    tags = attr.ib(type=List[Tag])
+    examples = attr.ib(type=Optional[List[DataTable]], factory=list)
 
-    @model_validator(mode="after")
-    def process_steps(cls, instance):
-        steps = instance.steps
-        instance.steps = _compute_given_when_then(steps)
-        return instance
+    def __attrs_post_init__(self):
+        self.steps = _compute_given_when_then(self.steps)
 
-
-class Child(BaseModel):
-    background: Optional[Background] = None
-    rule: Optional[Rule] = None
-    scenario: Optional[Scenario] = None
-
-
-class Feature(BaseModel):
-    keyword: str
-    location: Location
-    tags: List[Tag]
-    name: str
-    description: str
-    children: List[Child]
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Scenario":
+        return cls(
+            id=data["id"],
+            keyword=data["keyword"],
+            location=Location.from_dict(data["location"]),
+            name=data["name"],
+            description=data["description"],
+            steps=[Step.from_dict(step) for step in data["steps"]],
+            tags=[Tag.from_dict(tag) for tag in data["tags"]],
+            examples=[DataTable.from_dict(example) for example in data.get("examples", [])],
+        )
 
 
-class GherkinDocument(BaseModel):
-    feature: Feature
-    comments: List[Comment]
+@attr.s
+class Rule:
+    id = attr.ib(type=str)
+    keyword = attr.ib(type=str)
+    location = attr.ib(type=Location)
+    name = attr.ib(type=str)
+    description = attr.ib(type=str)
+    tags = attr.ib(type=List[Tag])
+    children = attr.ib(type=List[Scenario])
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Rule":
+        return cls(
+            id=data["id"],
+            keyword=data["keyword"],
+            location=Location.from_dict(data["location"]),
+            name=data["name"],
+            description=data["description"],
+            tags=[Tag.from_dict(tag) for tag in data["tags"]],
+            children=[Scenario.from_dict(child) for child in data["children"]],
+        )
+
+
+@attr.s
+class Background:
+    id = attr.ib(type=str)
+    keyword = attr.ib(type=str)
+    location = attr.ib(type=Location)
+    name = attr.ib(type=str)
+    description = attr.ib(type=str)
+    steps = attr.ib(type=List[Step])
+
+    def __attrs_post_init__(self):
+        self.steps = _compute_given_when_then(self.steps)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Background":
+        return cls(
+            id=data["id"],
+            keyword=data["keyword"],
+            location=Location.from_dict(data["location"]),
+            name=data["name"],
+            description=data["description"],
+            steps=[Step.from_dict(step) for step in data["steps"]],
+        )
+
+
+@attr.s
+class Child:
+    background = attr.ib(type=Optional[Background], default=None)
+    rule = attr.ib(type=Optional[Rule], default=None)
+    scenario = attr.ib(type=Optional[Scenario], default=None)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Child":
+        return cls(
+            background=Background.from_dict(data["background"]) if data.get("background") else None,
+            rule=Rule.from_dict(data["rule"]) if data.get("rule") else None,
+            scenario=Scenario.from_dict(data["scenario"]) if data.get("scenario") else None,
+        )
+
+
+@attr.s
+class Feature:
+    keyword = attr.ib(type=str)
+    location = attr.ib(type=Location)
+    tags = attr.ib(type=List[Tag])
+    name = attr.ib(type=str)
+    description = attr.ib(type=str)
+    children = attr.ib(type=List[Child])
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Feature":
+        return cls(
+            keyword=data["keyword"],
+            location=Location.from_dict(data["location"]),
+            tags=[Tag.from_dict(tag) for tag in data["tags"]],
+            name=data["name"],
+            description=data["description"],
+            children=[Child.from_dict(child) for child in data["children"]],
+        )
+
+
+@attr.s
+class GherkinDocument:
+    feature = attr.ib(type=Feature)
+    comments = attr.ib(type=List[Comment])
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "GherkinDocument":
+        return cls(
+            feature=Feature.from_dict(data["feature"]),
+            comments=[Comment.from_dict(comment) for comment in data["comments"]],
+        )
 
 
 def _compute_given_when_then(steps: List[Step]) -> List[Step]:
@@ -149,22 +265,23 @@ def _compute_given_when_then(steps: List[Step]) -> List[Step]:
     return steps
 
 
-class GherkinParser:
-    def __init__(self, abs_filename: str = None, encoding: str = "utf-8"):
-        self.abs_filename = Path(abs_filename)
-        self.encoding = encoding
+def _convert_to_raw_string(normal_string: str) -> str:
+    return normal_string.replace("\\", "\\\\")
 
-        with open(self.abs_filename, encoding=self.encoding) as f:
-            self.feature_file_text = f.read()
-        try:
-            self.gherkin_data = Parser().parse(TokenScanner(self.feature_file_text))
-        except CompositeParserException as e:
-            raise exceptions.FeatureError(
-                e.args[0],
-                e.errors[0].location["line"],
-                linecache.getline(str(self.abs_filename), e.errors[0].location["line"]).rstrip("\n"),
-                self.abs_filename,
-            ) from e
 
-    def to_gherkin_document(self) -> GherkinDocument:
-        return GherkinDocument(**self.gherkin_data)
+def get_gherkin_document(abs_filename: str = None, encoding: str = "utf-8") -> GherkinDocument:
+    with open(abs_filename, encoding=encoding) as f:
+        feature_file_text = f.read()
+
+    try:
+        gherkin_data = Parser().parse(TokenScanner(feature_file_text))
+    except CompositeParserException as e:
+        raise exceptions.FeatureError(
+            e.args[0],
+            e.errors[0].location["line"],
+            linecache.getline(abs_filename, e.errors[0].location["line"]).rstrip("\n"),
+            abs_filename,
+        ) from e
+
+    # Assuming gherkin_data is a dictionary with the structure expected by from_dict methods
+    return GherkinDocument.from_dict(gherkin_data)
