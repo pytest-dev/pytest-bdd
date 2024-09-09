@@ -29,7 +29,7 @@ from __future__ import annotations
 import glob
 import os.path
 
-from .parser import Feature, GherkinParser
+from .parser import Feature, get_gherkin_document
 
 # Global features dictionary
 features: dict[str, Feature] = {}
@@ -53,7 +53,7 @@ def get_feature(base_path: str, filename: str, encoding: str = "utf-8") -> Featu
     rel_filename = os.path.join(os.path.basename(base_path), filename)
     feature = features.get(full_filename)
     if not feature:
-        gherkin_document = GherkinParser(full_filename, rel_filename, encoding).to_gherkin_document()
+        gherkin_document = get_gherkin_document(full_filename, rel_filename, encoding)
         feature = gherkin_document.feature
         features[full_filename] = feature
     return feature
@@ -79,5 +79,5 @@ def get_features(paths: list[str], **kwargs) -> list[Feature]:
                 base, name = os.path.split(path)
                 feature = get_feature(base, name, **kwargs)
                 features.append(feature)
-    features.sort(key=lambda feature: feature.name or feature.filename)
+    features.sort(key=lambda feature: feature.name or feature.abs_filename)
     return features

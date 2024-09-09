@@ -217,6 +217,6 @@ def test_outline_with_escaped_pipes(pytester):
         r"bork |",
         r"bork||bork",
         r"|",
-        "bork      \\",
-        "bork    \\|",
+        r"bork      \\",
+        r"bork    \\|",
     ]

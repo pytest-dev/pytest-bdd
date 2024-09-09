@@ -233,7 +233,7 @@ def _execute_scenario(feature: Feature, gherkin_scenario: Scenario, request: Fix
             if step_func_context is None:
                 exc = exceptions.StepDefinitionNotFoundError(
                     f"Step definition is not found: {step}. "
-                    f'Line {step.location.line} in scenario "{gherkin_scenario.name}" in the feature "{gherkin_scenario.parent.filename}"'
+                    f'Line {step.location.line} in scenario "{gherkin_scenario.name}" in the feature "{gherkin_scenario.parent.abs_filename}"'
                 )
                 request.config.hook.pytest_bdd_step_func_lookup_error(
                     request=request,
@@ -281,7 +281,7 @@ def _get_scenario_decorator(feature: Feature, gherkin_scenario: Scenario) -> Cal
                 example_parametrizations,
             )(scenario_wrapper)
 
-        for tag in list(set(gherkin_scenario.tag_names + feature.tag_names)):
+        for tag in gherkin_scenario.tag_names | feature.tag_names:
             config = CONFIG_STACK[-1]
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 
@@ -330,7 +330,7 @@ def scenario(
     if gherkin_scenario is None:
         feature_name = feature.name or "[Empty]"
         raise exceptions.ScenarioNotFound(
-            f'Scenario "{scenario_name}" in feature "{feature_name}" in {feature.filename} is not found.'
+            f'Scenario "{scenario_name}" in feature "{feature_name}" in {feature.abs_filename} is not found.'
         )
 
     return _get_scenario_decorator(feature=feature, gherkin_scenario=gherkin_scenario)
@@ -407,7 +407,7 @@ def scenarios(*feature_paths: str, **kwargs: Any) -> None:
     found = False
 
     module_scenarios = frozenset(
-        (attr.__scenario__.feature.filename, attr.__scenario__.name)
+        (attr.__scenario__.feature.abs_filename, attr.__scenario__.name)
         for name, attr in caller_locals.items()
         if hasattr(attr, "__scenario__")
     )
@@ -415,9 +415,9 @@ def scenarios(*feature_paths: str, **kwargs: Any) -> None:
     for feature in get_features(abs_feature_paths):
         for gherkin_scenario in feature.scenarios:
             # skip already bound scenarios
-            if (feature.filename, gherkin_scenario.name) not in module_scenarios:
+            if (feature.abs_filename, gherkin_scenario.name) not in module_scenarios:
 
-                @scenario(feature.filename, gherkin_scenario.name, **kwargs)
+                @scenario(feature.abs_filename, gherkin_scenario.name, **kwargs)
                 def _scenario() -> None:
                     pass  # pragma: no cover
 

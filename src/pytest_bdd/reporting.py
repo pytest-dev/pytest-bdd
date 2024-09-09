@@ -113,7 +113,7 @@ class ScenarioReport:
             "tags": sorted(self.scenario.tag_names),
             "feature": {
                 "name": self.feature.name,
-                "filename": self.feature.filename,
+                "filename": self.feature.abs_filename,
                 "rel_filename": self.feature.rel_filename,
                 "line_number": self.feature.location.line,
                 "description": self.feature.description,

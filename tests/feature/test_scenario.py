@@ -28,7 +28,7 @@ def test_scenario_not_found(pytester, pytest_params):
         """
         )
     )
-    result = pytester.runpytest_subprocess(*pytest_params)
+    result = pytester.runpytest_inprocess(*pytest_params)
 
     result.assert_outcomes(errors=1)
     result.stdout.fnmatch_lines('*Scenario "NOT FOUND" in feature "Scenario is not found" in*')
@@ -111,7 +111,7 @@ def test_scenario_not_decorator(pytester, pytest_params):
         """
     )
 
-    result = pytester.runpytest_subprocess(*pytest_params)
+    result = pytester.runpytest_inprocess(*pytest_params)
 
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines("*ScenarioIsDecoratorOnly: scenario function can only be used as a decorator*")
@@ -144,7 +144,7 @@ def test_simple(pytester, pytest_params):
             pass
         """
     )
-    result = pytester.runpytest_subprocess(*pytest_params)
+    result = pytester.runpytest_inprocess(*pytest_params)
     result.assert_outcomes(passed=1)
 
 

@@ -102,14 +102,14 @@ def print_missing_code(scenarios: list[Scenario], steps: list[Step]) -> None:
             tw.line(
                 """Step {step} is not defined in the scenario "{step.parent.name}" in the feature"""
                 """ "{step.parent.parent.name}" in the file"""
-                """ {step.parent.parent.filename}:{step.location.line}""".format(step=step),
+                """ {step.parent.parent.abs_filename}:{step.location.line}""".format(step=step),
                 red=True,
             )
         elif step.background is not None:
             tw.line(
                 """Step {step} is not defined in the background of the feature"""
                 """ "{step.background.parent.name}" in the file"""
-                """ {step.background.parent.filename}:{step.location.line}""".format(step=step),
+                """ {step.background.parent.abs_filename}:{step.location.line}""".format(step=step),
                 red=True,
             )
 
@@ -120,7 +120,7 @@ def print_missing_code(scenarios: list[Scenario], steps: list[Step]) -> None:
     tw.line()
 
     features = sorted(
-        (scenario.feature for scenario in scenarios), key=lambda feature: feature.name or feature.filename
+        (scenario.feature for scenario in scenarios), key=lambda feature: feature.name or feature.abs_filename
     )
     code = generate_code(features, scenarios, steps)
     tw.write(code)
@@ -146,7 +146,7 @@ def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature],
     features = get_features(paths, **kwargs)
     scenarios = sorted(
         itertools.chain.from_iterable(feature.scenarios for feature in features),
-        key=lambda scenario: (scenario.feature.name or scenario.feature.filename, scenario.name),
+        key=lambda scenario: (scenario.feature.name or scenario.feature.abs_filename, scenario.name),
     )
     steps = sorted((step for scenario in scenarios for step in scenario.all_steps), key=lambda step: step.name)
     return features, scenarios, steps

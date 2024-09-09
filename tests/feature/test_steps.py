@@ -361,7 +361,7 @@ Feature: StepHandler hooks
 
     Scenario: When step's dependency a has failure
         Given I have a bar
-        When it's dependency fails
+        When its dependency fails
 
     Scenario: When step is not found
         Given not found
@@ -392,7 +392,7 @@ Feature: StepHandler hooks
         def dependency():
             raise Exception('dependency fails')
 
-        @when("it's dependency fails")
+        @when("its dependency fails")
         def _(dependency):
             pass
 
@@ -479,7 +479,7 @@ def test_step_trace(pytester):
 
                 Scenario: When step's dependency a has failure
                     Given I have a bar
-                    When it's dependency fails
+                    When its dependency fails
 
                 Scenario: When step is not found
                     Given not found
@@ -495,18 +495,18 @@ def test_step_trace(pytester):
         from pytest_bdd import given, when, scenario
 
         @given('I have a bar')
-        def i_have_bar():
+        def _():
             return 'bar'
 
         @when('it fails')
-        def when_it_fails():
+        def _():
             raise Exception('when fails')
 
         @pytest.fixture
         def dependency():
             raise Exception('dependency fails')
 
-        @when("it's dependency fails")
+        @when("its dependency fails")
         def when_dependency_fails(dependency):
             pass
 
