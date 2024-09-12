@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import glob
 import os.path
+from typing import Iterator
 
 from .parser import Feature, get_gherkin_document
 
@@ -67,17 +68,23 @@ def get_features(paths: list[str], **kwargs) -> list[Feature]:
     :return: `list` of `Feature` objects.
     """
     seen_names = set()
-    features = []
+    _features = []
     for path in paths:
         if path not in seen_names:
             seen_names.add(path)
             if os.path.isdir(path):
-                features.extend(
-                    get_features(glob.iglob(os.path.join(path, "**", "*.feature"), recursive=True), **kwargs)
-                )
+                for feature_file in _find_feature_files(path):
+                    base, name = os.path.split(feature_file)
+                    feature = get_feature(base, name, **kwargs)
+                    _features.append(feature)
             else:
                 base, name = os.path.split(path)
                 feature = get_feature(base, name, **kwargs)
-                features.append(feature)
-    features.sort(key=lambda feature: feature.name or feature.abs_filename)
-    return features
+                _features.append(feature)
+    _features.sort(key=lambda _feature: _feature.name or _feature.abs_filename)
+    return _features
+
+
+def _find_feature_files(path: str) -> Iterator[str]:
+    """Recursively find all `.feature` files in a given directory."""
+    return glob.iglob(os.path.join(path, "**", "*.feature"), recursive=True)

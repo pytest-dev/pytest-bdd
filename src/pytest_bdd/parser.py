@@ -239,6 +239,8 @@ class Scenario:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Scenario":
+        if "id" not in data:
+            print("Hmm...")
         return cls(
             id=data["id"],
             keyword=data["keyword"],
@@ -259,7 +261,7 @@ class Rule:
     name: str
     description: str
     tags: Set[Tag]
-    children: List[Scenario]
+    children: List["Child"]
     parent: Optional["Feature"] = None
 
     def __post_init__(self):
@@ -279,7 +281,7 @@ class Rule:
             name=data["name"],
             description=textwrap.dedent(data["description"]),
             tags={Tag.from_dict(tag) for tag in data["tags"]},
-            children=[Scenario.from_dict(child) for child in data["children"]],
+            children=[Child.from_dict(child) for child in data["children"]],
         )
 
 

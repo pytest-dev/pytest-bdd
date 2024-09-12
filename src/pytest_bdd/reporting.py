@@ -106,18 +106,20 @@ class ScenarioReport:
         :return: Serialized report.
         :rtype: dict
         """
+        feature = self.feature
+        scenario = self.scenario
         return {
             "steps": [step_report.serialize() for step_report in self.step_reports],
-            "name": self.scenario.name,
-            "line_number": self.scenario.location.line,
-            "tags": sorted(self.scenario.tag_names),
+            "name": scenario.name,
+            "line_number": scenario.location.line,
+            "tags": sorted(scenario.tag_names),
             "feature": {
-                "name": self.feature.name,
-                "filename": self.feature.abs_filename,
-                "rel_filename": self.feature.rel_filename,
-                "line_number": self.feature.location.line,
-                "description": self.feature.description,
-                "tags": sorted(self.feature.tag_names),
+                "name": feature.name,
+                "filename": feature.abs_filename,
+                "rel_filename": feature.rel_filename,
+                "line_number": feature.location.line,
+                "description": feature.description,
+                "tags": sorted(feature.tag_names),
             },
         }
 

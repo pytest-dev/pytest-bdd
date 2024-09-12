@@ -159,16 +159,15 @@ def get_step_function(request, step: Step) -> StepFunctionContext | None:
     Then we let `patch_argumented_step_functions` find out what step definition fixtures can parse the current step,
     and it will inject them for the step fixture name.
 
-    Finally we let request.getfixturevalue(...) fetch the step definition fixture.
+    Finally, we let request.getfixturevalue(...) fetch the step definition fixture.
     """
     __tracebackhide__ = True
     bdd_name = get_step_fixture_name(step=step)
 
     with inject_fixturedefs_for_step(step=step, fixturemanager=request._fixturemanager, node=request.node):
-        try:
+        with contextlib.suppress(pytest.FixtureLookupError):
             return cast(StepFunctionContext, request.getfixturevalue(bdd_name))
-        except pytest.FixtureLookupError:
-            return None
+        return None
 
 
 def _execute_step_function(

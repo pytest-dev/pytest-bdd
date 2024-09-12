@@ -31,10 +31,8 @@ def configure(config: Config) -> None:
             raise Exception(
                 "gherkin-terminal-reporter is not compatible with any other terminal reporter."
                 "You can use only one terminal reporter."
-                "Currently '{0}' is used."
-                "Please decide to use one by deactivating {0} or gherkin-terminal-reporter.".format(
-                    current_reporter.__class__
-                )
+                "Currently '{current_reporter.__class__}' is used."
+                "Please decide to use one by deactivating {current_reporter.__class__} or gherkin-terminal-reporter."
             )
         gherkin_reporter = GherkinTerminalReporter(config)
         config.pluginmanager.unregister(current_reporter)
@@ -70,23 +68,20 @@ class GherkinTerminalReporter(TerminalReporter):
         if self.verbosity <= 0 or not hasattr(report, "scenario"):
             return super().pytest_runtest_logreport(rep)
 
+        # Common logic for verbosity 1 and greater
+        self.ensure_newline()
+        self._tw.write("Feature: ", **feature_markup)
+        self._tw.write(report.scenario["feature"]["name"], **feature_markup)
+        self._tw.write("\n")
+        self._tw.write("    Scenario: ", **scenario_markup)
+        self._tw.write(report.scenario["name"], **scenario_markup)
+
         if self.verbosity == 1:
-            self.ensure_newline()
-            self._tw.write("Feature: ", **feature_markup)
-            self._tw.write(report.scenario["feature"]["name"], **feature_markup)
-            self._tw.write("\n")
-            self._tw.write("    Scenario: ", **scenario_markup)
-            self._tw.write(report.scenario["name"], **scenario_markup)
             self._tw.write(" ")
             self._tw.write(word, **word_markup)
             self._tw.write("\n")
         elif self.verbosity > 1:
             self.ensure_newline()
-            self._tw.write("Feature: ", **feature_markup)
-            self._tw.write(report.scenario["feature"]["name"], **feature_markup)
-            self._tw.write("\n")
-            self._tw.write("    Scenario: ", **scenario_markup)
-            self._tw.write(report.scenario["name"], **scenario_markup)
             self._tw.write("\n")
             for step in report.scenario["steps"]:
                 self._tw.write(f"        {step['keyword']} {step['name']}\n", **scenario_markup)
