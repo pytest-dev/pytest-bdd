@@ -171,8 +171,7 @@ def test_outline_with_escaped_pipes(pytester):
     pytester.makefile(
         ".feature",
         outline=textwrap.dedent(
-            r"""
-            Feature: Outline With Special characters
+            r"""Feature: Outline With Special characters
 
                 Scenario Outline: Outline with escaped pipe character
                     # Just print the string so that we can assert later what it was by reading the output

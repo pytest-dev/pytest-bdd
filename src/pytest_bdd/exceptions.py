@@ -27,11 +27,58 @@ class NoScenariosFound(Exception):
     """No scenarios found."""
 
 
-class FeatureError(Exception):
-    """Feature parse error."""
+class GherkinParseError(Exception):
+    """Base class for all Gherkin parsing errors."""
 
-    message = "{0}.\nLine number: {1}.\nLine: {2}.\nFile: {3}"
+    def __init__(self, message, line, line_content, filename):
+        super().__init__(message)
+        self.message = message
+        self.line = line
+        self.line_content = line_content
+        self.filename = filename
+        self.line = line
+        self.line_content = line_content
+        self.filename = filename
 
-    def __str__(self) -> str:
-        """String representation."""
-        return self.message.format(*self.args)
+    def __str__(self):
+        return f"{self.__class__.__name__}: {self.message}\nLine number: {self.line}\nLine: {self.line_content}\nFile: {self.filename}"
+
+
+class FeatureError(GherkinParseError):
+    pass
+
+
+class BackgroundError(GherkinParseError):
+    pass
+
+
+class ScenarioOutlineError(GherkinParseError):
+    pass
+
+
+class ScenarioError(GherkinParseError):
+    pass
+
+
+class ExamplesError(GherkinParseError):
+    pass
+
+
+class StepError(GherkinParseError):
+    pass
+
+
+class TagError(GherkinParseError):
+    pass
+
+
+class RuleError(GherkinParseError):
+    pass
+
+
+class DocStringError(GherkinParseError):
+    pass
+
+
+class TokenError(GherkinParseError):
+    pass

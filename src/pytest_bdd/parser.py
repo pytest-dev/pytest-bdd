@@ -14,7 +14,7 @@ from .gherkin_parser import Scenario as GherkinScenario
 from .gherkin_parser import Step as GherkinStep
 from .gherkin_parser import Tag as GherkinTag
 from .gherkin_parser import get_gherkin_document
-from .types import GIVEN, THEN, WHEN
+from .types import GIVEN, STEP_TYPES, THEN, WHEN
 
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
 COMMENT_RE = re.compile(r"(^|(?<=\s))#")
@@ -210,7 +210,7 @@ class Step:
 
     Attributes:
         type (str): The type of step (e.g., 'given', 'when', 'then').
-        _name (str): The name of the step.
+        name (str): The name of the step.
         line_number (int): The line number where the step starts in the file.
         indent (int): The indentation level of the step.
         keyword (str): The keyword used for the step (e.g., 'Given', 'When', 'Then').
@@ -358,14 +358,18 @@ class FeatureParser:
             List[Step]: A list of Step objects.
         """
         steps = []
+        current_type = None
         for step_data in steps_data:
             name = strip_comments(step_data.text)
             if step_data.docString:
                 name = f"{name}\n{step_data.docString.content}"
+            keyword = step_data.keyword.lower()
+            if keyword in STEP_TYPES:
+                current_type = keyword
             steps.append(
                 Step(
                     name=name,
-                    type=step_data.given_when_then,
+                    type=current_type,
                     indent=step_data.location.column - 1,
                     line_number=step_data.location.line,
                     keyword=step_data.keyword.title(),

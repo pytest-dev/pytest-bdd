@@ -50,4 +50,4 @@ def test_multiple_features_single_file(pytester):
     )
     result = pytester.runpytest()
     result.assert_outcomes(errors=1)
-    result.stdout.fnmatch_lines("*FeatureError: *")
+    result.stdout.fnmatch_lines("*FeatureError: Multiple features are not allowed in a single feature file.*")

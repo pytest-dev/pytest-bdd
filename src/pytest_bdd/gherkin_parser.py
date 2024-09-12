@@ -1,5 +1,9 @@
+from __future__ import annotations
+
 import linecache
+import re
 import textwrap
+import typing
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -8,7 +12,68 @@ from gherkin.parser import Parser
 from gherkin.token_scanner import TokenScanner
 
 from . import exceptions
-from .types import STEP_TYPES
+
+if typing.TYPE_CHECKING:
+    from typing import Self
+
+
+ERROR_PATTERNS = [
+    (
+        re.compile(r"expected:.*got 'Feature.*'"),
+        exceptions.FeatureError,
+        "Multiple features are not allowed in a single feature file.",
+    ),
+    (
+        re.compile(r"expected:.*got '(?:Given|When|Then|And|But).*'"),
+        exceptions.FeatureError,
+        "Step definition outside of a Scenario or a Background.",
+    ),
+    (
+        re.compile(r"expected:.*got 'Background.*'"),
+        exceptions.BackgroundError,
+        "Multiple 'Background' sections detected. Only one 'Background' is allowed per feature.",
+    ),
+    (
+        re.compile(r"expected:.*got 'Scenario Outline.*'"),
+        exceptions.ScenarioOutlineError,
+        "'Scenario Outline' requires steps before 'Examples'.",
+    ),
+    (
+        re.compile(r"expected:.*got 'Scenario.*'"),
+        exceptions.ScenarioError,
+        "Misplaced or incorrect 'Scenario' keyword. Ensure it's correctly placed.",
+    ),
+    (
+        re.compile(r"expected:.*got 'Examples.*'"),
+        exceptions.ExamplesError,
+        "'Examples' must follow a valid 'Scenario Outline' and contain table rows.",
+    ),
+    (
+        re.compile(r"expected:.*got 'Given.*'"),
+        exceptions.StepError,
+        "Improper step keyword detected. Ensure correct order and indentation for steps (Given, When, Then, etc.).",
+    ),
+    (
+        re.compile(r"expected:.*got 'TagLine.*'"),
+        exceptions.TagError,
+        "Tags are misplaced. They should be directly above features, scenarios, or outlines.",
+    ),
+    (
+        re.compile(r"expected:.*got 'Rule.*'"),
+        exceptions.RuleError,
+        "Misplaced or incorrectly formatted 'Rule'. Ensure it follows the feature structure.",
+    ),
+    (
+        re.compile(r"expected:.*got 'DocString.*'"),
+        exceptions.DocStringError,
+        'DocString must be enclosed in triple quotes ("""). Ensure proper formatting.',
+    ),
+    (
+        re.compile(r"expected:.*got '.*'"),
+        exceptions.TokenError,
+        "Unexpected token found. Check Gherkin syntax near the reported error.",
+    ),
+]
 
 
 @dataclass
@@ -17,7 +82,7 @@ class Location:
     line: int
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Location":
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(column=data["column"], line=data["line"])
 
 
@@ -27,7 +92,7 @@ class Comment:
     text: str
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Comment":
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(location=Location.from_dict(data["location"]), text=data["text"])
 
 
@@ -37,18 +102,18 @@ class Cell:
     value: str
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Cell":
-        return cls(location=Location.from_dict(data["location"]), value=_convert_to_raw_string(data["value"]))
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls(location=Location.from_dict(data["location"]), value=_to_raw_string(data["value"]))
 
 
 @dataclass
 class Row:
     id: str
     location: Location
-    cells: List[Cell]
+    cells: list[Cell]
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Row":
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
             id=data["id"],
             location=Location.from_dict(data["location"]),
@@ -59,12 +124,12 @@ class Row:
 @dataclass
 class DataTable:
     location: Location
-    name: Optional[str] = None
-    tableHeader: Optional[Row] = None
-    tableBody: Optional[List[Row]] = field(default_factory=list)
+    name: str | None = None
+    tableHeader: Row | None = None
+    tableBody: list[Row] | None = field(default_factory=list)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DataTable":
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
             location=Location.from_dict(data["location"]),
             name=data.get("name"),
@@ -79,12 +144,13 @@ class DocString:
     delimiter: str
     location: Location
 
-    def __post_init__(self):
-        self.content = textwrap.dedent(self.content)
-
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DocString":
-        return cls(content=data["content"], delimiter=data["delimiter"], location=Location.from_dict(data["location"]))
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls(
+            content=textwrap.dedent(data["content"]),
+            delimiter=data["delimiter"],
+            location=Location.from_dict(data["location"]),
+        )
 
 
 @dataclass
@@ -94,25 +160,14 @@ class Step:
     keywordType: str
     location: Location
     text: str
-    dataTable: Optional[DataTable] = None
-    docString: Optional[DocString] = None
-
-    def __post_init__(self):
-        self.keyword = self.keyword.lower().strip()
-
-    @property
-    def given_when_then(self) -> str:
-        return getattr(self, "_gwt", "")
-
-    @given_when_then.setter
-    def given_when_then(self, gwt: str) -> None:
-        self._gwt = gwt
+    dataTable: DataTable | None = None
+    docString: DocString | None = None
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Step":
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
             id=data["id"],
-            keyword=data["keyword"],
+            keyword=data["keyword"].strip(),
             keywordType=data["keywordType"],
             location=Location.from_dict(data["location"]),
             text=data["text"],
@@ -128,7 +183,7 @@ class Tag:
     name: str
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Tag":
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(id=data["id"], location=Location.from_dict(data["location"]), name=data["name"])
 
 
@@ -139,15 +194,12 @@ class Scenario:
     location: Location
     name: str
     description: str
-    steps: List[Step]
-    tags: List[Tag]
-    examples: Optional[List[DataTable]] = field(default_factory=list)
-
-    def __post_init__(self):
-        self.steps = _compute_given_when_then(self.steps)
+    steps: list[Step]
+    tags: list[Tag]
+    examples: list[DataTable] | None = field(default_factory=list)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Scenario":
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
             id=data["id"],
             keyword=data["keyword"],
@@ -167,11 +219,11 @@ class Rule:
     location: Location
     name: str
     description: str
-    tags: List[Tag]
-    children: List[Scenario]
+    tags: list[Tag]
+    children: list[Child]
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Rule":
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
             id=data["id"],
             keyword=data["keyword"],
@@ -179,7 +231,7 @@ class Rule:
             name=data["name"],
             description=data["description"],
             tags=[Tag.from_dict(tag) for tag in data["tags"]],
-            children=[Scenario.from_dict(child) for child in data["children"]],
+            children=[Child.from_dict(child) for child in data["children"]],
         )
 
 
@@ -190,13 +242,10 @@ class Background:
     location: Location
     name: str
     description: str
-    steps: List[Step]
-
-    def __post_init__(self):
-        self.steps = _compute_given_when_then(self.steps)
+    steps: list[Step]
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Background":
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
             id=data["id"],
             keyword=data["keyword"],
@@ -209,12 +258,12 @@ class Background:
 
 @dataclass
 class Child:
-    background: Optional[Background] = None
-    rule: Optional[Rule] = None
-    scenario: Optional[Scenario] = None
+    background: Background | None = None
+    rule: Rule | None = None
+    scenario: Scenario | None = None
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Child":
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
             background=Background.from_dict(data["background"]) if data.get("background") else None,
             rule=Rule.from_dict(data["rule"]) if data.get("rule") else None,
@@ -226,13 +275,13 @@ class Child:
 class Feature:
     keyword: str
     location: Location
-    tags: List[Tag]
+    tags: list[Tag]
     name: str
     description: str
-    children: List[Child]
+    children: list[Child]
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Feature":
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
             keyword=data["keyword"],
             location=Location.from_dict(data["location"]),
@@ -246,26 +295,17 @@ class Feature:
 @dataclass
 class GherkinDocument:
     feature: Feature
-    comments: List[Comment]
+    comments: list[Comment]
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "GherkinDocument":
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
             feature=Feature.from_dict(data["feature"]),
             comments=[Comment.from_dict(comment) for comment in data["comments"]],
         )
 
 
-def _compute_given_when_then(steps: List[Step]) -> List[Step]:
-    last_gwt = None
-    for step in steps:
-        if step.keyword in STEP_TYPES:
-            last_gwt = step.keyword
-        step.given_when_then = last_gwt
-    return steps
-
-
-def _convert_to_raw_string(normal_string: str) -> str:
+def _to_raw_string(normal_string: str) -> str:
     return normal_string.replace("\\", "\\\\")
 
 
@@ -276,11 +316,30 @@ def get_gherkin_document(abs_filename: str = None, encoding: str = "utf-8") -> G
     try:
         gherkin_data = Parser().parse(TokenScanner(feature_file_text))
     except CompositeParserException as e:
-        raise exceptions.FeatureError(
-            e.args[0],
-            e.errors[0].location["line"],
-            linecache.getline(abs_filename, e.errors[0].location["line"]).rstrip("\n"),
-            abs_filename,
-        ) from e
+        message = e.args[0]
+        line = e.errors[0].location["line"]
+        line_content = linecache.getline(abs_filename, e.errors[0].location["line"]).rstrip("\n")
+        filename = abs_filename
+        gherkin_error_handler = GherkinParserErrorHandler()
+        gherkin_error_handler(message, line, line_content, filename)
+        # If no patterns matched, raise a generic GherkinParserError
+        raise exceptions.GherkinParseError(f"Unknown parsing error: {message}", line, line_content, filename)
 
+    # At this point, the `gherkin_data` should be valid if no exception was raised
     return GherkinDocument.from_dict(gherkin_data)
+
+
+class GherkinParserErrorHandler:
+    """Parses raw Gherkin parser errors and converts them to human-readable exceptions."""
+
+    def __call__(self, raw_error: str, line: int, line_content: str, filename: str):
+        """Map the error message to a specific exception type and raise it."""
+        # Split the raw_error into individual lines
+        error_lines = raw_error.splitlines()
+
+        # Check each line against all error patterns
+        for error_line in error_lines:
+            for pattern, exception_class, message in ERROR_PATTERNS:
+                if pattern.search(error_line):
+                    # If a match is found, raise the corresponding exception with the formatted message
+                    raise exception_class(message, line, line_content, filename)
