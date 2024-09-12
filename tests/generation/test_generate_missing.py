@@ -29,8 +29,10 @@ def test_generate_missing(pytester):
                 Scenario: Scenario tests which are already bound to the tests stay as is
                     Given I have a bar
 
+
                 Scenario: Code is generated for scenarios which are not bound to any tests
                     Given I have a bar
+
 
                 Scenario: Code is generated for scenario steps which are not yet defined(implemented)
                     Given I have a custom bar
@@ -76,6 +78,10 @@ def test_generate_missing(pytester):
             'Step Given "I have a custom bar" is not defined in the scenario '
             '"Code is generated for scenario steps which are not yet defined(implemented)" *'
         ]
+    )
+
+    result.stdout.fnmatch_lines(
+        ['Step Given "I have a foobar" is not defined in the background of the feature "Missing code generation" *']
     )
 
     result.stdout.fnmatch_lines(["Please place the code above to the test file(s):"])

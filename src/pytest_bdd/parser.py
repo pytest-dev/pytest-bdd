@@ -419,6 +419,8 @@ class FeatureParser:
             line_number=background_data.location.line,
         )
         background.steps = self.parse_steps(background_data.steps)
+        for step in background.steps:
+            step.background = background
         return background
 
     def _parse_feature_file(self) -> GherkinDocument:
