@@ -5,7 +5,7 @@ import re
 import textwrap
 import typing
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from gherkin.errors import CompositeParserException
 from gherkin.parser import Parser
@@ -14,7 +14,7 @@ from gherkin.token_scanner import TokenScanner
 from . import exceptions
 
 if typing.TYPE_CHECKING:
-    from typing import Self
+    from typing_extensions import Self
 
 
 ERROR_PATTERNS = [
