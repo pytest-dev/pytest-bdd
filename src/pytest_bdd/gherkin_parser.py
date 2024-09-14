@@ -309,7 +309,7 @@ def _to_raw_string(normal_string: str) -> str:
     return normal_string.replace("\\", "\\\\")
 
 
-def get_gherkin_document(abs_filename: str = None, encoding: str = "utf-8") -> GherkinDocument:
+def get_gherkin_document(abs_filename: str, encoding: str = "utf-8") -> GherkinDocument:
     with open(abs_filename, encoding=encoding) as f:
         feature_file_text = f.read()
 
