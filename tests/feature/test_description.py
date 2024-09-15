@@ -30,39 +30,29 @@ def test_description(pytester):
 
     pytester.makepyfile(
         textwrap.dedent(
-            """\
-        import textwrap
-        from pytest_bdd import given, scenario
+            r'''
+            import textwrap
+            from pytest_bdd import given, scenario
 
-        @scenario("description.feature", "Description")
-        def test_description():
-            pass
-
-
-        @given("I have a bar")
-        def _():
-            return "bar"
-
-        def test_feature_description():
-            assert test_description.__scenario__.feature.description == textwrap.dedent(
-                \"\"\"\\
-                In order to achieve something
-                I want something
-                Because it will be cool
+            @scenario("description.feature", "Description")
+            def test_description():
+                pass
 
 
-                Some description goes here.\"\"\"
-            )
+            @given("I have a bar")
+            def _():
+                return "bar"
 
-        def test_scenario_description():
-            assert test_description.__scenario__.description == textwrap.dedent(
-                \"\"\"\\
-                Also, the scenario can have a description.
+            def test_feature_description():
+                assert test_description.__scenario__.feature.description == textwrap.dedent(
+                    "In order to achieve something\nI want something\nBecause it will be cool\n\n\nSome description goes here."
+                )
 
-                It goes here between the scenario name
-                and the first step.\"\"\"
-            )
-        """
+            def test_scenario_description():
+                assert test_description.__scenario__.description == textwrap.dedent(
+                    "Also, the scenario can have a description.\n\nIt goes here between the scenario name\nand the first step."""
+                )
+        '''
         )
     )
 

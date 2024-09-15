@@ -2,16 +2,16 @@
 
 import textwrap
 
-FEATURE = """\
+FEATURE = '''\
 Feature: Background support
 
     Background:
         Given foo has a value "bar"
         And a background step with multiple lines:
-        \"\"\"
+        """
             one
             two
-        \"\"\"
+        """
 
 
     Scenario: Basic usage
@@ -23,7 +23,7 @@ Feature: Background support
 
         Then foo should have value "dummy"
         And foo should not have value "bar"
-"""
+'''
 
 STEPS = r"""\
 import re
