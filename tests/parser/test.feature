@@ -1,5 +1,4 @@
 # This is a comment
-
 Feature: User login
 
   As a registered user

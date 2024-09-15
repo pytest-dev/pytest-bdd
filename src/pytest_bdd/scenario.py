@@ -17,7 +17,7 @@ import contextlib
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, List, Optional, TypeVar, cast
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
@@ -62,8 +62,8 @@ def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: 
             if not match:
                 continue
 
-            fixturedefs = getfixturedefs(fixturemanager, fixturename, node)
-            if fixturedef not in (fixturedefs or []):
+            fixturedefs = cast(List[FixtureDef[Any]], getfixturedefs(fixturemanager, fixturename, node) or [])
+            if fixturedef not in fixturedefs:
                 continue
 
             yield fixturedef
@@ -295,6 +295,8 @@ def _get_scenario_decorator(
 def collect_example_parametrizations(
     templated_scenario: ScenarioTemplate,
 ) -> list[ParameterSet] | None:
+    if templated_scenario.examples is None:
+        return None
     if contexts := list(templated_scenario.examples.as_contexts()):
         return [pytest.param(context, id="-".join(context.values())) for context in contexts]
     else:
@@ -338,14 +340,14 @@ def scenario(
 
 
 def get_features_base_dir(caller_module_path: str) -> str:
-    d = get_from_ini("bdd_features_base_dir", None)
+    d = get_from_ini("bdd_features_base_dir")
     if d is None:
         return os.path.dirname(caller_module_path)
     rootdir = CONFIG_STACK[-1].rootpath
     return os.path.join(rootdir, d)
 
 
-def get_from_ini(key: str, default: str) -> str:
+def get_from_ini(key: str, default: str | None = None) -> str | None:
     """Get value from ini config. Return default if value has not been set.
 
     Use if the default value is dynamic. Otherwise, set default on addini call.

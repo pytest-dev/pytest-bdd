@@ -7,7 +7,7 @@ import os.path
 from typing import TYPE_CHECKING, cast
 
 from _pytest._io import TerminalWriter
-from mako.lookup import TemplateLookup
+from mako.lookup import TemplateLookup  # type: ignore
 
 from .compat import getfixturedefs
 from .feature import get_features
@@ -181,11 +181,11 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
     features, scenarios, steps = parse_feature_files(config.option.features)
 
     for item in session.items:
-        if scenario := getattr(item.obj, "__scenario__", None):
+        if scenario := getattr(item.obj, "__scenario__", None):  # type: ignore
             if scenario in scenarios:
                 scenarios.remove(scenario)
             for step in scenario.steps:
-                if _find_step_fixturedef(fm, item, step=step):
+                if _find_step_fixturedef(fm, item, step=step):  # type: ignore
                     try:
                         steps.remove(step)
                     except ValueError:

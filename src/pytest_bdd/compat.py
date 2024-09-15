@@ -34,7 +34,7 @@ if pytest_version.release >= (8, 1):
 else:
 
     def getfixturedefs(fixturemanager: FixtureManager, fixturename: str, node: Node) -> Sequence[FixtureDef] | None:
-        return fixturemanager.getfixturedefs(fixturename, node.nodeid)
+        return fixturemanager.getfixturedefs(fixturename, node.nodeid)  # type: ignore
 
     def inject_fixture(request: FixtureRequest, arg: str, value: Any) -> None:
         """Inject fixture into pytest fixture request.
@@ -44,7 +44,7 @@ else:
         :param value: argument value
         """
         fd = FixtureDef(
-            fixturemanager=request._fixturemanager,
+            fixturemanager=request._fixturemanager,  # type: ignore
             baseid=None,
             argname=arg,
             func=lambda: value,

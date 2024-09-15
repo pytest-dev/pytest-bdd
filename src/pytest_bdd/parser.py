@@ -7,6 +7,7 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
+from .exceptions import StepError
 from .gherkin_parser import Background as GherkinBackground
 from .gherkin_parser import Feature as GherkinFeature
 from .gherkin_parser import GherkinDocument
@@ -347,8 +348,7 @@ class FeatureParser:
             "then": THEN,
         }.get(keyword)
 
-    @staticmethod
-    def parse_steps(steps_data: list[GherkinStep]) -> list[Step]:
+    def parse_steps(self, steps_data: list[GherkinStep]) -> list[Step]:
         """Parse a list of step data into Step objects.
 
         Args:
@@ -357,22 +357,39 @@ class FeatureParser:
         Returns:
             List[Step]: A list of Step objects.
         """
+
+        def get_step_content(_gherkin_step):
+            step_name = strip_comments(_gherkin_step.text)
+            if _gherkin_step.docString:
+                step_name = f"{step_name}\n{_gherkin_step.docString.content}"
+            return step_name
+
+        if not steps_data:
+            return []
+
+        first_step = steps_data[0]
+        if first_step.keyword.lower() not in STEP_TYPES:
+            raise StepError(
+                message=f"First step in a scenario or background must start with 'Given', 'When' or 'Then', but got {first_step.keyword}.",
+                line=first_step.location.line,
+                line_content=get_step_content(first_step),
+                filename=self.abs_filename,
+            )
+
         steps = []
-        current_type = None
-        for step_data in steps_data:
-            name = strip_comments(step_data.text)
-            if step_data.docString:
-                name = f"{name}\n{step_data.docString.content}"
-            keyword = step_data.keyword.lower()
+        current_type = first_step.keyword.lower()
+        for step in steps_data:
+            name = get_step_content(step)
+            keyword = step.keyword.lower()
             if keyword in STEP_TYPES:
                 current_type = keyword
             steps.append(
                 Step(
                     name=name,
                     type=current_type,
-                    indent=step_data.location.column - 1,
-                    line_number=step_data.location.line,
-                    keyword=step_data.keyword.title(),
+                    indent=step.location.column - 1,
+                    line_number=step.location.line,
+                    keyword=step.keyword.title(),
                 )
             )
         return steps
@@ -404,12 +421,14 @@ class FeatureParser:
                 line_number=example_data.location.line,
                 name=example_data.name,
             )
-            param_names = [cell.value for cell in example_data.tableHeader.cells]
-            examples.set_param_names(param_names)
-            for row in example_data.tableBody:
-                values = [cell.value or "" for cell in row.cells]
-                examples.add_example(values)
-            scenario.examples = examples
+            if example_data.tableHeader is not None:
+                param_names = [cell.value for cell in example_data.tableHeader.cells]
+                examples.set_param_names(param_names)
+                if example_data.tableBody is not None:
+                    for row in example_data.tableBody:
+                        values = [cell.value or "" for cell in row.cells]
+                        examples.add_example(values)
+                    scenario.examples = examples
 
         return scenario
 
@@ -431,7 +450,7 @@ class FeatureParser:
         """
         return get_gherkin_document(self.abs_filename, self.encoding)
 
-    def parse(self):
+    def parse(self) -> Feature:
         gherkin_doc: GherkinDocument = self._parse_feature_file()
         feature_data: GherkinFeature = gherkin_doc.feature
         feature = Feature(

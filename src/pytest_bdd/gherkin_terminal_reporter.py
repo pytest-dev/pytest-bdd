@@ -43,7 +43,7 @@ def configure(config: Config) -> None:
             raise Exception("gherkin-terminal-reporter is not compatible with 'xdist' plugin.")
 
 
-class GherkinTerminalReporter(TerminalReporter):
+class GherkinTerminalReporter(TerminalReporter):  # type: ignore
     def __init__(self, config: Config) -> None:
         super().__init__(config)
 

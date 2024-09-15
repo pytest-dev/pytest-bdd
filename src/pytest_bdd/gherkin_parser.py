@@ -5,16 +5,15 @@ import re
 import textwrap
 import typing
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from gherkin.errors import CompositeParserException
-from gherkin.parser import Parser
-from gherkin.token_scanner import TokenScanner
+from gherkin.errors import CompositeParserException  # type: ignore
+from gherkin.parser import Parser  # type: ignore
 
 from . import exceptions
 
 if typing.TYPE_CHECKING:
-    from typing import Self
+    from typing_extensions import Self
 
 
 ERROR_PATTERNS = [
@@ -34,19 +33,9 @@ ERROR_PATTERNS = [
         "Multiple 'Background' sections detected. Only one 'Background' is allowed per feature.",
     ),
     (
-        re.compile(r"expected:.*got 'Scenario Outline.*'"),
-        exceptions.ScenarioOutlineError,
-        "'Scenario Outline' requires steps before 'Examples'.",
-    ),
-    (
         re.compile(r"expected:.*got 'Scenario.*'"),
         exceptions.ScenarioError,
-        "Misplaced or incorrect 'Scenario' keyword. Ensure it's correctly placed.",
-    ),
-    (
-        re.compile(r"expected:.*got 'Examples.*'"),
-        exceptions.ExamplesError,
-        "'Examples' must follow a valid 'Scenario Outline' and contain table rows.",
+        "Misplaced or incorrect 'Scenario' keyword. Ensure it's correctly placed. There might be a missing Feature section.",
     ),
     (
         re.compile(r"expected:.*got 'Given.*'"),
@@ -54,19 +43,9 @@ ERROR_PATTERNS = [
         "Improper step keyword detected. Ensure correct order and indentation for steps (Given, When, Then, etc.).",
     ),
     (
-        re.compile(r"expected:.*got 'TagLine.*'"),
-        exceptions.TagError,
-        "Tags are misplaced. They should be directly above features, scenarios, or outlines.",
-    ),
-    (
         re.compile(r"expected:.*got 'Rule.*'"),
         exceptions.RuleError,
         "Misplaced or incorrectly formatted 'Rule'. Ensure it follows the feature structure.",
-    ),
-    (
-        re.compile(r"expected:.*got 'DocString.*'"),
-        exceptions.DocStringError,
-        'DocString must be enclosed in triple quotes ("""). Ensure proper formatting.',
     ),
     (
         re.compile(r"expected:.*got '.*'"),
@@ -196,7 +175,7 @@ class Scenario:
     description: str
     steps: list[Step]
     tags: list[Tag]
-    examples: list[DataTable] | None = field(default_factory=list)
+    examples: list[DataTable] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
@@ -208,7 +187,7 @@ class Scenario:
             description=data["description"],
             steps=[Step.from_dict(step) for step in data["steps"]],
             tags=[Tag.from_dict(tag) for tag in data["tags"]],
-            examples=[DataTable.from_dict(example) for example in data.get("examples", [])],
+            examples=[DataTable.from_dict(example) for example in data["examples"]],
         )
 
 
@@ -309,37 +288,38 @@ def _to_raw_string(normal_string: str) -> str:
     return normal_string.replace("\\", "\\\\")
 
 
-def get_gherkin_document(abs_filename: str = None, encoding: str = "utf-8") -> GherkinDocument:
+def get_gherkin_document(abs_filename: str, encoding: str = "utf-8") -> GherkinDocument:
     with open(abs_filename, encoding=encoding) as f:
         feature_file_text = f.read()
 
     try:
-        gherkin_data = Parser().parse(TokenScanner(feature_file_text))
+        gherkin_data = Parser().parse(feature_file_text)
     except CompositeParserException as e:
         message = e.args[0]
         line = e.errors[0].location["line"]
         line_content = linecache.getline(abs_filename, e.errors[0].location["line"]).rstrip("\n")
         filename = abs_filename
-        gherkin_error_handler = GherkinParserErrorHandler()
-        gherkin_error_handler(message, line, line_content, filename)
+        handle_gherkin_parser_error(message, line, line_content, filename, e)
         # If no patterns matched, raise a generic GherkinParserError
-        raise exceptions.GherkinParseError(f"Unknown parsing error: {message}", line, line_content, filename)
+        raise exceptions.GherkinParseError(f"Unknown parsing error: {message}", line, line_content, filename) from e
 
     # At this point, the `gherkin_data` should be valid if no exception was raised
     return GherkinDocument.from_dict(gherkin_data)
 
 
-class GherkinParserErrorHandler:
-    """Parses raw Gherkin parser errors and converts them to human-readable exceptions."""
+def handle_gherkin_parser_error(
+    raw_error: str, line: int, line_content: str, filename: str, original_exception: Exception | None = None
+):
+    """Map the error message to a specific exception type and raise it."""
+    # Split the raw_error into individual lines
+    error_lines = raw_error.splitlines()
 
-    def __call__(self, raw_error: str, line: int, line_content: str, filename: str):
-        """Map the error message to a specific exception type and raise it."""
-        # Split the raw_error into individual lines
-        error_lines = raw_error.splitlines()
-
-        # Check each line against all error patterns
-        for error_line in error_lines:
-            for pattern, exception_class, message in ERROR_PATTERNS:
-                if pattern.search(error_line):
-                    # If a match is found, raise the corresponding exception with the formatted message
+    # Check each line against all error patterns
+    for error_line in error_lines:
+        for pattern, exception_class, message in ERROR_PATTERNS:
+            if pattern.search(error_line):
+                # If a match is found, raise the corresponding exception with the formatted message
+                if original_exception:
+                    raise exception_class(message, line, line_content, filename) from original_exception
+                else:
                     raise exception_class(message, line, line_content, filename)

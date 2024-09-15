@@ -35,14 +35,14 @@ def configure(config: Config) -> None:
     cucumber_json_path = config.option.cucumber_json_path
     # prevent opening json log on worker nodes (xdist)
     if cucumber_json_path and not hasattr(config, "workerinput"):
-        config._bddcucumberjson = LogBDDCucumberJSON(cucumber_json_path)
-        config.pluginmanager.register(config._bddcucumberjson)
+        config._bddcucumberjson = LogBDDCucumberJSON(cucumber_json_path)  # type: ignore[attr-defined]
+        config.pluginmanager.register(config._bddcucumberjson)  # type: ignore[attr-defined]
 
 
 def unconfigure(config: Config) -> None:
-    xml = getattr(config, "_bddcucumberjson", None)
+    xml = getattr(config, "_bddcucumberjson", None)  # type: ignore[attr-defined]
     if xml is not None:
-        del config._bddcucumberjson
+        del config._bddcucumberjson  # type: ignore[attr-defined]
         config.pluginmanager.unregister(xml)
 
 

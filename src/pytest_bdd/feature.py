@@ -65,17 +65,16 @@ def get_features(paths: list[str], **kwargs) -> list[Feature]:
     :return: `list` of `Feature` objects.
     """
     seen_names = set()
-    features = []
+    _features = []
     for path in paths:
         if path not in seen_names:
             seen_names.add(path)
             if os.path.isdir(path):
-                features.extend(
-                    get_features(glob.iglob(os.path.join(path, "**", "*.feature"), recursive=True), **kwargs)
-                )
+                file_paths = list(glob.iglob(os.path.join(path, "**", "*.feature"), recursive=True))
+                _features.extend(get_features(file_paths, **kwargs))
             else:
                 base, name = os.path.split(path)
                 feature = get_feature(base, name, **kwargs)
-                features.append(feature)
-    features.sort(key=lambda feature: feature.name or feature.filename)
-    return features
+                _features.append(feature)
+    _features.sort(key=lambda _feature: _feature.name or _feature.filename)
+    return _features
