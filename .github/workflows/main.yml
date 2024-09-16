@@ -81,10 +81,10 @@ jobs:
         coverage combine
         coverage xml
 
-    - uses: codecov/codecov-action@v3
+    - uses: codecov/codecov-action@v4
       with:
         # Explicitly using the token to avoid Codecov rate limit errors
         # See https://community.codecov.com/t/upload-issues-unable-to-locate-build-via-github-actions-api/3954
         token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: true
+        fail_ci_if_error: false
         verbose: true # optional (default = false)
