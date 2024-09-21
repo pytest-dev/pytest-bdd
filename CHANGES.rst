@@ -3,6 +3,10 @@ Changelog
 
 Unreleased
 ----------
+
+
+7.3.0
+----------
 - Fix an issue when only the first Step would inject a fixture, while later steps would not be able to.
 - Test against the latest versions of pytest (8.2, 8.3).
 
