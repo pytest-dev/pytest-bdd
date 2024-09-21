@@ -78,6 +78,48 @@ def test_step_function_multiple_target_fixtures(pytester):
     assert bar == "test bar"
 
 
+def test_step_function_target_fixture_redefined(pytester):
+    pytester.makefile(
+        ".feature",
+        target_fixture=textwrap.dedent(
+            """\
+            Feature: Redefine a target fixture
+                Scenario: Redefine the target fixture after it has been injected once in the same scenario
+                    Given there is a foo with value "test foo"
+                    Then foo should be "test foo"
+                    Given there is a foo with value "test bar"
+                    Then foo should be "test bar"
+            """
+        ),
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        import pytest
+        from pytest_bdd import given, when, then, scenarios, parsers
+        from pytest_bdd.utils import dump_obj
+
+        scenarios("target_fixture.feature")
+
+        @given(parsers.parse('there is a foo with value "{value}"'), target_fixture="foo")
+        def _(value):
+            return value
+
+        @then(parsers.parse('foo should be "{expected_value}"'))
+        def _(foo, expected_value):
+            dump_obj(foo)
+            assert foo == expected_value
+        """
+        )
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=1)
+
+    [foo1, foo2] = collect_dumped_objects(result)
+    assert foo1 == "test foo"
+    assert foo2 == "test bar"
+
+
 def test_step_functions_same_parser(pytester):
     pytester.makefile(
         ".feature",

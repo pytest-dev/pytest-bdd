@@ -3,6 +3,7 @@ Changelog
 
 Unreleased
 ----------
+- Fix an issue when only the first Step would inject a fixture, while later steps would not be able to.
 
 7.2.0
 ----------
