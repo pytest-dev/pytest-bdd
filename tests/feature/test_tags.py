@@ -157,7 +157,7 @@ def test_apply_tag_hook(pytester):
     )
     result = pytester.runpytest("-rsx")
     result.stdout.fnmatch_lines(["SKIP*: Not implemented yet"])
-    result.stdout.fnmatch_lines(["*= 1 skipped, 1 xpassed * =*"])
+    result.stdout.fnmatch_lines(["*= 1 skipped, 1 xpassed*=*"])
 
 
 def test_at_in_scenario(pytester):
