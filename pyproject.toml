@@ -6,6 +6,10 @@ authors = ["Oleg Pidsadnyi <oleg.pidsadnyi@gmail.com>", "Anatoly Bubenkov <buben
 maintainers = ["Alessio Bogon <778703+youtux@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.rst"
+packages = [
+    { include = "pytest_bdd", from = "src" },
+    { include = "tests", format = "sdist" },
+]
 homepage = "https://pytest-bdd.readthedocs.io/"
 documentation = "https://pytest-bdd.readthedocs.io/"
 repository = "https://github.com/pytest-dev/pytest-bdd"
