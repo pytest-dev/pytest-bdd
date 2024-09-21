@@ -218,7 +218,6 @@ class Step:
         failed (bool): Whether the step has failed (internal use only).
         scenario (Optional[ScenarioTemplate]): The scenario to which this step belongs (internal use only).
         background (Optional[Background]): The background to which this step belongs (internal use only).
-        lines (List[str]): Additional lines for the step (internal use only).
     """
 
     type: str
@@ -229,7 +228,6 @@ class Step:
     failed: bool = field(init=False, default=False)
     scenario: ScenarioTemplate | None = field(init=False, default=None)
     background: Background | None = field(init=False, default=None)
-    lines: list[str] = field(init=False, default_factory=list)
 
     def __init__(self, name: str, type: str, indent: int, line_number: int, keyword: str) -> None:
         """Initialize a step.
