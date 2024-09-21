@@ -330,22 +330,6 @@ class FeatureParser:
         """
         return {tag.name.lstrip("@") for tag in tag_data}
 
-    @staticmethod
-    def get_step_type(keyword: str) -> str | None:
-        """Map a step keyword to its corresponding type.
-
-        Args:
-            keyword (str): The keyword for the step (e.g., 'given', 'when', 'then').
-
-        Returns:
-            Optional[str]: The type of the step, or None if the keyword is unknown.
-        """
-        return {
-            "given": GIVEN,
-            "when": WHEN,
-            "then": THEN,
-        }.get(keyword)
-
     def parse_steps(self, steps_data: list[GherkinStep]) -> list[Step]:
         """Parse a list of step data into Step objects.
 
