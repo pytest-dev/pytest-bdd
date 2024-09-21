@@ -32,9 +32,6 @@ class GherkinParseError(Exception):
         self.line = line
         self.line_content = line_content
         self.filename = filename
-        self.line = line
-        self.line_content = line_content
-        self.filename = filename
 
     def __str__(self) -> str:
         return f"{self.message}\nLine number: {self.line}\nLine: {self.line_content}\nFile: {self.filename}"
