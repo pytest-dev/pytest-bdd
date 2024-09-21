@@ -1,6 +1,7 @@
 """Test scenario reporting."""
 
 import textwrap
+from typing import Optional
 
 import pytest
 
@@ -8,7 +9,7 @@ import pytest
 class OfType:
     """Helper object comparison to which is always 'equal'."""
 
-    def __init__(self, type: type = None) -> None:
+    def __init__(self, type: Optional[type] = None) -> None:
         self.type = type
 
     def __eq__(self, other: object) -> bool:

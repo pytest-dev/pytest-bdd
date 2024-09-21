@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-FEATURE = "feature"
-SCENARIO_OUTLINE = "scenario outline"
-EXAMPLES = "examples"
-EXAMPLES_HEADERS = "example headers"
-EXAMPLE_LINE = "example line"
-SCENARIO = "scenario"
-BACKGROUND = "background"
-GIVEN = "given"
-WHEN = "when"
-THEN = "then"
-TAG = "tag"
+import typing
+
+if typing.TYPE_CHECKING:
+    from typing_extensions import Literal
+
+GIVEN: Literal["given"] = "given"
+WHEN: Literal["when"] = "when"
+THEN: Literal["then"] = "then"
 
 STEP_TYPES = (GIVEN, WHEN, THEN)

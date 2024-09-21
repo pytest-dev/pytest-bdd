@@ -3,7 +3,10 @@ Changelog
 
 Unreleased
 ----------
-
+- Use `gherkin-official` parser to replace custom parsing logic.
+- Multiline steps must now always use triple-quotes for the additional lines.
+- All feature files must now use the keyword `Feature:` to be considered valid.
+- Tags can no longer have spaces (e.g. "@tag one" "@tag two" are no longer valid).
 
 7.3.0
 ----------

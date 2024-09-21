@@ -34,12 +34,12 @@ if pytest_version.release >= (8, 1):
         # if there was already one registered, so we need to force its value
         # to the one we want to inject.
         fixture_def = request._get_active_fixturedef(arg)
-        fixture_def.cached_result = (value, None, None)
+        fixture_def.cached_result = (value, None, None)  # type: ignore
 
 else:
 
     def getfixturedefs(fixturemanager: FixtureManager, fixturename: str, node: Node) -> Sequence[FixtureDef] | None:
-        return fixturemanager.getfixturedefs(fixturename, node.nodeid)
+        return fixturemanager.getfixturedefs(fixturename, node.nodeid)  # type: ignore
 
     def inject_fixture(request: FixtureRequest, arg: str, value: Any) -> None:
         """Inject fixture into pytest fixture request.
@@ -49,7 +49,7 @@ else:
         :param value: argument value
         """
         fd = FixtureDef(
-            fixturemanager=request._fixturemanager,
+            fixturemanager=request._fixturemanager,  # type: ignore
             baseid=None,
             argname=arg,
             func=lambda: value,

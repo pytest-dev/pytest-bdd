@@ -8,6 +8,8 @@ import textwrap
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from typing import Optional
+
     from _pytest.pytester import Pytester, RunResult
 
 
@@ -23,7 +25,7 @@ def runandparse(pytester: Pytester, *args: Any) -> tuple[RunResult, list[dict[st
 class OfType:
     """Helper object to help compare object type to initialization type"""
 
-    def __init__(self, type: type = None) -> None:
+    def __init__(self, type: type | None = None) -> None:
         self.type = type
 
     def __eq__(self, other: object) -> bool:

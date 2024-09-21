@@ -78,8 +78,8 @@ def collect_dumped_objects(result: RunResult) -> list:
 
 def setdefault(obj: object, name: str, default: T) -> T:
     """Just like dict.setdefault, but for objects."""
-    try:
-        return getattr(obj, name)
-    except AttributeError:
+    if hasattr(obj, name):
+        return getattr(obj, name)  # type: ignore
+    else:
         setattr(obj, name, default)
         return default

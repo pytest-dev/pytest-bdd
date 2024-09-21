@@ -17,7 +17,7 @@ import contextlib
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, List, TypeVar, cast
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
@@ -62,8 +62,8 @@ def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: 
             if not match:
                 continue
 
-            fixturedefs = getfixturedefs(fixturemanager, fixturename, node)
-            if fixturedef not in (fixturedefs or []):
+            fixturedefs = cast(List[FixtureDef[Any]], getfixturedefs(fixturemanager, fixturename, node) or [])
+            if fixturedef not in fixturedefs:
                 continue
 
             yield fixturedef
@@ -90,7 +90,7 @@ def iterparentnodeids(nodeid: str) -> Iterator[str]:
     """
     SEP = "/"
     pos = 0
-    first_colons: Optional[int] = nodeid.find("::")
+    first_colons: int | None = nodeid.find("::")
     if first_colons == -1:
         first_colons = None
     # The root Session node - always present.
@@ -151,7 +151,7 @@ def inject_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node
         del fixturemanager._arg2fixturedefs[bdd_name]
 
 
-def get_step_function(request, step: Step) -> StepFunctionContext | None:
+def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContext | None:
     """Get the step function (context) for the given step.
 
     We first figure out what's the step fixture name that we have to inject.
@@ -295,6 +295,8 @@ def _get_scenario_decorator(
 def collect_example_parametrizations(
     templated_scenario: ScenarioTemplate,
 ) -> list[ParameterSet] | None:
+    if templated_scenario.examples is None:
+        return None
     if contexts := list(templated_scenario.examples.as_contexts()):
         return [pytest.param(context, id="-".join(context.values())) for context in contexts]
     else:
@@ -312,6 +314,7 @@ def scenario(
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
     :param str scenario_name: Scenario name.
     :param str encoding: Feature file encoding.
+    :param features_base_dir: Optional base dir location for locating feature files. If not set, it will try and resolve using property set in .ini file, then the caller_module_path.
     """
     __tracebackhide__ = True
     scenario_name = scenario_name
@@ -337,17 +340,17 @@ def scenario(
 
 
 def get_features_base_dir(caller_module_path: str) -> str:
-    d = get_from_ini("bdd_features_base_dir", None)
+    d = get_from_ini("bdd_features_base_dir")
     if d is None:
         return os.path.dirname(caller_module_path)
     rootdir = CONFIG_STACK[-1].rootpath
     return os.path.join(rootdir, d)
 
 
-def get_from_ini(key: str, default: str) -> str:
+def get_from_ini(key: str, default: str | None = None) -> str | None:
     """Get value from ini config. Return default if value has not been set.
 
-    Use if the default value is dynamic. Otherwise set default on addini call.
+    Use if the default value is dynamic. Otherwise, set default on addini call.
     """
     config = CONFIG_STACK[-1]
     value = config.getini(key)
@@ -423,7 +426,7 @@ def scenarios(*feature_paths: str, **kwargs: Any) -> None:
 
                 for test_name in get_python_name_generator(scenario_name):
                     if test_name not in caller_locals:
-                        # found an unique test name
+                        # found a unique test name
                         caller_locals[test_name] = _scenario
                         break
             found = True

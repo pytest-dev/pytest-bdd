@@ -29,7 +29,7 @@ from __future__ import annotations
 import glob
 import os.path
 
-from .parser import Feature, parse_feature
+from .parser import Feature, FeatureParser
 
 # Global features dictionary
 features: dict[str, Feature] = {}
@@ -52,12 +52,12 @@ def get_feature(base_path: str, filename: str, encoding: str = "utf-8") -> Featu
     full_name = os.path.abspath(os.path.join(base_path, filename))
     feature = features.get(full_name)
     if not feature:
-        feature = parse_feature(base_path, filename, encoding=encoding)
+        feature = FeatureParser(base_path, filename, encoding).parse()
         features[full_name] = feature
     return feature
 
 
-def get_features(paths: list[str], **kwargs) -> list[Feature]:
+def get_features(paths: list[str], encoding: str = "utf-8") -> list[Feature]:
     """Get features for given paths.
 
     :param list paths: `list` of paths (file or dirs)
@@ -65,17 +65,16 @@ def get_features(paths: list[str], **kwargs) -> list[Feature]:
     :return: `list` of `Feature` objects.
     """
     seen_names = set()
-    features = []
+    _features = []
     for path in paths:
         if path not in seen_names:
             seen_names.add(path)
             if os.path.isdir(path):
-                features.extend(
-                    get_features(glob.iglob(os.path.join(path, "**", "*.feature"), recursive=True), **kwargs)
-                )
+                file_paths = list(glob.iglob(os.path.join(path, "**", "*.feature"), recursive=True))
+                _features.extend(get_features(file_paths, encoding=encoding))
             else:
                 base, name = os.path.split(path)
-                feature = get_feature(base, name, **kwargs)
-                features.append(feature)
-    features.sort(key=lambda feature: feature.name or feature.filename)
-    return features
+                feature = get_feature(base, name, encoding=encoding)
+                _features.append(feature)
+    _features.sort(key=lambda _feature: _feature.name or _feature.filename)
+    return _features
