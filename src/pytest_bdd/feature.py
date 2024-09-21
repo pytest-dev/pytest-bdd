@@ -57,7 +57,7 @@ def get_feature(base_path: str, filename: str, encoding: str = "utf-8") -> Featu
     return feature
 
 
-def get_features(paths: list[str], **kwargs) -> list[Feature]:
+def get_features(paths: list[str], encoding: str = "utf-8") -> list[Feature]:
     """Get features for given paths.
 
     :param list paths: `list` of paths (file or dirs)
@@ -71,10 +71,10 @@ def get_features(paths: list[str], **kwargs) -> list[Feature]:
             seen_names.add(path)
             if os.path.isdir(path):
                 file_paths = list(glob.iglob(os.path.join(path, "**", "*.feature"), recursive=True))
-                _features.extend(get_features(file_paths, **kwargs))
+                _features.extend(get_features(file_paths, encoding=encoding))
             else:
                 base, name = os.path.split(path)
-                feature = get_feature(base, name, **kwargs)
+                feature = get_feature(base, name, encoding=encoding)
                 _features.append(feature)
     _features.sort(key=lambda _feature: _feature.name or _feature.filename)
     return _features

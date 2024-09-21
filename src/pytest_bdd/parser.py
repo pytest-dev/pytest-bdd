@@ -358,7 +358,7 @@ class FeatureParser:
             List[Step]: A list of Step objects.
         """
 
-        def get_step_content(_gherkin_step):
+        def get_step_content(_gherkin_step: GherkinStep) -> str:
             step_name = strip_comments(_gherkin_step.text)
             if _gherkin_step.docString:
                 step_name = f"{step_name}\n{_gherkin_step.docString.content}"

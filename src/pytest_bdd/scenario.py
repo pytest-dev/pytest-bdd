@@ -17,7 +17,7 @@ import contextlib
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, List, Optional, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, List, TypeVar, cast
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
@@ -151,7 +151,7 @@ def inject_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node
         del fixturemanager._arg2fixturedefs[bdd_name]
 
 
-def get_step_function(request, step: Step) -> StepFunctionContext | None:
+def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContext | None:
     """Get the step function (context) for the given step.
 
     We first figure out what's the step fixture name that we have to inject.

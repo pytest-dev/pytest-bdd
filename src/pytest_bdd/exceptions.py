@@ -26,7 +26,7 @@ class NoScenariosFound(Exception):
 class GherkinParseError(Exception):
     """Base class for all Gherkin parsing errors."""
 
-    def __init__(self, message: str, line: int, line_content: str, filename: str):
+    def __init__(self, message: str, line: int, line_content: str, filename: str) -> None:
         super().__init__(message)
         self.message = message
         self.line = line
