@@ -620,3 +620,49 @@ Feature: A feature
             "*Tearing down...*",
         ]
     )
+
+
+def test_when_exception(pytester):
+    pytester.makefile(
+        ".feature",
+        when_exception=textwrap.dedent(
+            """\
+            Feature: When exception
+                Scenario: Test when exception is generated
+                    When I have injected exception
+                    Then Exception object should be received as default 'response' param
+                    When I have injected exception with target_exception='exception_ret'
+                    Then Exception object should be received as target_exception='exception_ret'
+            """
+        ),
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        import pytest
+        from pytest_bdd import when, then, scenario
+
+        @scenario("when_exception.feature", "Test when exception is generated")
+        def test_when_exception():
+            pass
+
+        @when("I have injected exception", target_fixture="foo")
+        def _():
+            return Exception("Dummy Exception obj")
+
+        @when("I have injected exception with target_exception='exception_ret'", target_fixture="foo", target_exception="exception_ret")
+        def _():
+            return Exception("Dummy Exception obj")
+
+        @then("Exception object should be received as default 'response' param")
+        def _(response):
+            assert isinstance(response, Exception), "response is not Exception object"
+
+        @then("Exception object should be received as target_exception='exception_ret'")
+        def _(exception_ret):
+            assert isinstance(exception_ret, Exception), "response is not Exception object"
+        """
+        )
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
