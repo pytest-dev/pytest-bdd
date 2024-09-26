@@ -626,14 +626,12 @@ def test_right_aligned_steps(pytester):
     """Parser correctly handles steps that are not left-aligned"""
     pytester.makefile(
         ".feature",
-        right_aligned_steps=textwrap.dedent(
-            """\
-            Feature: Non-standard step indentation
-                Scenario: Indent my steps
-                    Given I indent with 4 spaces
-                     Then I indent with 5 spaces to line up
-            """
-        ),
+        right_aligned_steps="""\
+Feature: Non-standard step indentation
+    Scenario: Indent my steps
+        Given I indent with 4 spaces
+         Then I indent with 5 spaces to line up
+         """,
     )
     pytester.makepyfile(
         textwrap.dedent(
