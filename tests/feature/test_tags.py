@@ -2,8 +2,6 @@
 
 import textwrap
 
-import pytest
-
 
 def test_tags_selector(pytester):
     """Test tests selection by tags."""
@@ -191,3 +189,40 @@ def test_at_in_scenario(pytester):
     strict_option = "--strict-markers"
     result = pytester.runpytest_subprocess(strict_option)
     result.stdout.fnmatch_lines(["*= 2 passed * =*"])
+
+
+def test_multiline_tags(pytester):
+    pytester.makefile(
+        ".feature",
+        test="""
+    Feature: Scenario with multiple tags over multiple lines
+
+        @tag1
+        @tag2
+        Scenario: Tags
+            Given I have a foo
+
+        Scenario: Second
+            Given I have a baz
+    """,
+    )
+    pytester.makepyfile(
+        """
+        from pytest_bdd import given, scenarios
+
+        @given('I have a foo')
+        def _():
+            pass
+
+        @given('I have a baz')
+        def _():
+            pass
+
+        scenarios('test.feature')
+    """
+    )
+    result = pytester.runpytest("-m", "tag1", "-vv")
+    result.assert_outcomes(passed=1, deselected=1)
+
+    result = pytester.runpytest("-m", "tag2", "-vv")
+    result.assert_outcomes(passed=1, deselected=1)
