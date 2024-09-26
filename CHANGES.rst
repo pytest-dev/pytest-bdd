@@ -7,6 +7,8 @@ Unreleased
 - Multiline steps must now always use triple-quotes for the additional lines.
 - All feature files must now use the keyword `Feature:` to be considered valid.
 - Tags can no longer have spaces (e.g. "@tag one" "@tag two" are no longer valid).
+- Tags can now be on multiple lines (stacked)
+- Minimum supported pytest version is now 7.0.0
 
 7.3.0
 ----------
