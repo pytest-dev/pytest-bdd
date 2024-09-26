@@ -623,7 +623,7 @@ Feature: A feature
 
 
 def test_right_aligned_steps(pytester):
-    """Using the same given fixture raises an error."""
+    """Parser correctly handles steps that are not left-aligned"""
     pytester.makefile(
         ".feature",
         right_aligned_steps=textwrap.dedent(
