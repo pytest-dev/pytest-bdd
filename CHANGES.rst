@@ -3,12 +3,18 @@ Changelog
 
 Unreleased
 ----------
-- Fix an issue when only the first Step would inject a fixture, while later steps would not be able to.
-- Test against the latest versions of pytest (8.2, 8.3).
-- Use `gherkin-official` parser to replace custom parsing logic.
+
+8.0.0b1
+----------
+- Use `gherkin-official` parser to replace custom parsing logic. This will make pytest-bdd more compatible with the Gherkin specification.
 - Multiline steps must now always use triple-quotes for the additional lines.
 - All feature files must now use the keyword `Feature:` to be considered valid.
 - Tags can no longer have spaces (e.g. "@tag one" "@tag two" are no longer valid).
+
+7.3.0
+----------
+- Fix an issue when only the first Step would inject a fixture, while later steps would not be able to.
+- Test against the latest versions of pytest (8.2, 8.3).
 
 7.2.0
 ----------

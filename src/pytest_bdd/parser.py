@@ -218,7 +218,6 @@ class Step:
         failed (bool): Whether the step has failed (internal use only).
         scenario (Optional[ScenarioTemplate]): The scenario to which this step belongs (internal use only).
         background (Optional[Background]): The background to which this step belongs (internal use only).
-        lines (List[str]): Additional lines for the step (internal use only).
     """
 
     type: str
@@ -229,7 +228,6 @@ class Step:
     failed: bool = field(init=False, default=False)
     scenario: ScenarioTemplate | None = field(init=False, default=None)
     background: Background | None = field(init=False, default=None)
-    lines: list[str] = field(init=False, default_factory=list)
 
     def __init__(self, name: str, type: str, indent: int, line_number: int, keyword: str) -> None:
         """Initialize a step.
@@ -332,22 +330,6 @@ class FeatureParser:
         """
         return {tag.name.lstrip("@") for tag in tag_data}
 
-    @staticmethod
-    def get_step_type(keyword: str) -> str | None:
-        """Map a step keyword to its corresponding type.
-
-        Args:
-            keyword (str): The keyword for the step (e.g., 'given', 'when', 'then').
-
-        Returns:
-            Optional[str]: The type of the step, or None if the keyword is unknown.
-        """
-        return {
-            "given": GIVEN,
-            "when": WHEN,
-            "then": THEN,
-        }.get(keyword)
-
     def parse_steps(self, steps_data: list[GherkinStep]) -> list[Step]:
         """Parse a list of step data into Step objects.
 
@@ -358,7 +340,7 @@ class FeatureParser:
             List[Step]: A list of Step objects.
         """
 
-        def get_step_content(_gherkin_step):
+        def get_step_content(_gherkin_step: GherkinStep) -> str:
             step_name = strip_comments(_gherkin_step.text)
             if _gherkin_step.docString:
                 step_name = f"{step_name}\n{_gherkin_step.docString.content}"

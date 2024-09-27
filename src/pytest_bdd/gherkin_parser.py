@@ -309,7 +309,7 @@ def get_gherkin_document(abs_filename: str, encoding: str = "utf-8") -> GherkinD
 
 def handle_gherkin_parser_error(
     raw_error: str, line: int, line_content: str, filename: str, original_exception: Exception | None = None
-):
+) -> None:
     """Map the error message to a specific exception type and raise it."""
     # Split the raw_error into individual lines
     error_lines = raw_error.splitlines()
