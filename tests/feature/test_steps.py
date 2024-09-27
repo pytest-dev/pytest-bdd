@@ -1,5 +1,4 @@
 import textwrap
-from idlelib.iomenu import errors
 
 
 def test_steps(pytester):
