@@ -653,3 +653,42 @@ Feature: Non-standard step indentation
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=1, failed=0)
+
+
+def test_keywords_used_outside_steps(pytester):
+    """Correctly identify when keyword is used for steps and when it's used for other cases."""
+    pytester.makefile(
+        ".feature",
+        keywords="""\
+        Feature: Given this is a Description
+
+            In order to achieve something
+            I want something
+            Because it will be cool
+            Given it is valid description
+            When it starts working
+            Then I will be happy
+
+
+            Some description goes here.
+
+            Scenario: When I set a Description
+                Given I have a bar
+                """,
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, scenarios
+
+        scenarios("keywords.feature")
+
+        @given("I have a bar")
+        def _():
+            pass
+
+        """
+        )
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
