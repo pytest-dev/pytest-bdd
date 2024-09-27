@@ -620,3 +620,36 @@ Feature: A feature
             "*Tearing down...*",
         ]
     )
+
+
+def test_right_aligned_steps(pytester):
+    """Parser correctly handles steps that are not left-aligned"""
+    pytester.makefile(
+        ".feature",
+        right_aligned_steps="""\
+Feature: Non-standard step indentation
+    Scenario: Indent my steps
+        Given I indent with 4 spaces
+         Then I indent with 5 spaces to line up
+         """,
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, then, scenarios
+
+        scenarios("right_aligned_steps.feature")
+
+        @given("I indent with 4 spaces")
+        def _():
+            pass
+
+        @then("I indent with 5 spaces to line up")
+        def _():
+            pass
+
+        """
+        )
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
