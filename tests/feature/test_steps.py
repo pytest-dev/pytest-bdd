@@ -1,4 +1,5 @@
 import textwrap
+from idlelib.iomenu import errors
 
 
 def test_steps(pytester):
@@ -620,3 +621,48 @@ Feature: A feature
             "*Tearing down...*",
         ]
     )
+
+
+def test_lower_case_and(pytester):
+    pytester.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Step keywords need to be capitalised
+
+                Scenario: Step keywords must be capitalised
+                    Given that I'm writing an example
+                    and that I like the lowercase 'and'
+                    Then it should fail to parse
+            """
+        ),
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        import pytest
+        from pytest_bdd import given, when, then, scenarios
+
+        scenarios("steps.feature")
+
+
+        @given("that I'm writing an example")
+        def _():
+            pass
+
+
+        @given("that I like the lowercase 'and'")
+        def _():
+            pass
+
+
+        @then("it should fail to parse")
+        def _():
+            pass
+
+        """
+        )
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines("*TokenError*")
