@@ -354,13 +354,14 @@ def test_step_hooks(pytester):
     pytester.makefile(
         ".feature",
         test="""
+Feature: StepHandler hooks
     Scenario: When step has hook on failure
         Given I have a bar
         When it fails
 
     Scenario: When step's dependency a has failure
         Given I have a bar
-        When it's dependency fails
+        When its dependency fails
 
     Scenario: When step is not found
         Given not found
@@ -391,7 +392,7 @@ def test_step_hooks(pytester):
         def dependency():
             raise Exception('dependency fails')
 
-        @when("it's dependency fails")
+        @when("its dependency fails")
         def _(dependency):
             pass
 
@@ -471,16 +472,21 @@ def test_step_trace(pytester):
     pytester.makefile(
         ".feature",
         test="""
-    Scenario: When step has failure
-        Given I have a bar
-        When it fails
+            Feature: StepHandler hooks
+                Scenario: When step has hook on failure
+                    Given I have a bar
+                    When it fails
 
-    Scenario: When step is not found
-        Given not found
+                Scenario: When step's dependency a has failure
+                    Given I have a bar
+                    When its dependency fails
 
-    Scenario: When step validation error happens
-        Given foo
-        And foo
+                Scenario: When step is not found
+                    Given not found
+
+                Scenario: When step validation error happens
+                    Given foo
+                    And foo
     """,
     )
     pytester.makepyfile(
@@ -496,12 +502,20 @@ def test_step_trace(pytester):
         def _():
             raise Exception('when fails')
 
-        @scenario('test.feature', 'When step has failure')
-        def test_when_fails_inline():
+        @pytest.fixture
+        def dependency():
+            raise Exception('dependency fails')
+
+        @when("its dependency fails")
+        def when_dependency_fails(dependency):
             pass
 
-        @scenario('test.feature', 'When step has failure')
-        def test_when_fails_decorated():
+        @scenario('test.feature', "When step's dependency a has failure")
+        def test_when_dependency_fails():
+            pass
+
+        @scenario('test.feature', 'When step has hook on failure')
+        def test_when_fails():
             pass
 
         @scenario('test.feature', 'When step is not found')
@@ -517,25 +531,47 @@ def test_step_trace(pytester):
             pass
     """
     )
-    result = pytester.runpytest("-k test_when_fails_inline", "-vv")
-    result.assert_outcomes(failed=1)
-    result.stdout.fnmatch_lines(["*test_when_fails_inline*FAILED"])
-    assert "INTERNALERROR" not in result.stdout.str()
+    reprec = pytester.inline_run("-k test_when_fails")
+    reprec.assertoutcome(failed=1)
 
-    result = pytester.runpytest("-k test_when_fails_decorated", "-vv")
-    result.assert_outcomes(failed=1)
-    result.stdout.fnmatch_lines(["*test_when_fails_decorated*FAILED"])
-    assert "INTERNALERROR" not in result.stdout.str()
+    calls = reprec.getcalls("pytest_bdd_before_scenario")
+    assert calls[0].request
 
-    result = pytester.runpytest("-k test_when_not_found", "-vv")
-    result.assert_outcomes(failed=1)
-    result.stdout.fnmatch_lines(["*test_when_not_found*FAILED"])
-    assert "INTERNALERROR" not in result.stdout.str()
+    calls = reprec.getcalls("pytest_bdd_after_scenario")
+    assert calls[0].request
 
-    result = pytester.runpytest("-k test_when_step_validation_error", "-vv")
-    result.assert_outcomes(failed=1)
-    result.stdout.fnmatch_lines(["*test_when_step_validation_error*FAILED"])
-    assert "INTERNALERROR" not in result.stdout.str()
+    calls = reprec.getcalls("pytest_bdd_before_step")
+    assert calls[0].request
+
+    calls = reprec.getcalls("pytest_bdd_before_step_call")
+    assert calls[0].request
+
+    calls = reprec.getcalls("pytest_bdd_after_step")
+    assert calls[0].request
+
+    calls = reprec.getcalls("pytest_bdd_step_error")
+    assert calls[0].request
+
+    reprec = pytester.inline_run("-k test_when_not_found")
+    reprec.assertoutcome(failed=1)
+
+    calls = reprec.getcalls("pytest_bdd_step_func_lookup_error")
+    assert calls[0].request
+
+    reprec = pytester.inline_run("-k test_when_step_validation_error")
+    reprec.assertoutcome(failed=1)
+
+    reprec = pytester.inline_run("-k test_when_dependency_fails", "-vv")
+    reprec.assertoutcome(failed=1)
+
+    calls = reprec.getcalls("pytest_bdd_before_step")
+    assert len(calls) == 2
+
+    calls = reprec.getcalls("pytest_bdd_before_step_call")
+    assert len(calls) == 1
+
+    calls = reprec.getcalls("pytest_bdd_step_error")
+    assert calls[0].request
 
 
 def test_steps_with_yield(pytester):
@@ -584,3 +620,120 @@ Feature: A feature
             "*Tearing down...*",
         ]
     )
+
+
+def test_lower_case_and(pytester):
+    pytester.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Step keywords need to be capitalised
+
+                Scenario: Step keywords must be capitalised
+                    Given that I'm writing an example
+                    and that I like the lowercase 'and'
+                    Then it should fail to parse
+            """
+        ),
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        import pytest
+        from pytest_bdd import given, when, then, scenarios
+
+        scenarios("steps.feature")
+
+
+        @given("that I'm writing an example")
+        def _():
+            pass
+
+
+        @given("that I like the lowercase 'and'")
+        def _():
+            pass
+
+
+        @then("it should fail to parse")
+        def _():
+            pass
+
+        """
+        )
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines("*TokenError*")
+
+
+def test_right_aligned_steps(pytester):
+    """Parser correctly handles steps that are not left-aligned"""
+    pytester.makefile(
+        ".feature",
+        right_aligned_steps="""\
+Feature: Non-standard step indentation
+    Scenario: Indent my steps
+        Given I indent with 4 spaces
+         Then I indent with 5 spaces to line up
+         """,
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, then, scenarios
+
+        scenarios("right_aligned_steps.feature")
+
+        @given("I indent with 4 spaces")
+        def _():
+            pass
+
+        @then("I indent with 5 spaces to line up")
+        def _():
+            pass
+
+        """
+        )
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
+
+
+def test_keywords_used_outside_steps(pytester):
+    """Correctly identify when keyword is used for steps and when it's used for other cases."""
+    pytester.makefile(
+        ".feature",
+        keywords="""\
+        Feature: Given this is a Description
+
+            In order to achieve something
+            I want something
+            Because it will be cool
+            Given it is valid description
+            When it starts working
+            Then I will be happy
+
+
+            Some description goes here.
+
+            Scenario: When I set a Description
+                Given I have a bar
+                """,
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, scenarios
+
+        scenarios("keywords.feature")
+
+        @given("I have a bar")
+        def _():
+            pass
+
+        """
+        )
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1, failed=0)

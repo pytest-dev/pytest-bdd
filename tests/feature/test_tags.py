@@ -4,8 +4,6 @@ import textwrap
 
 import pytest
 
-from pytest_bdd.parser import get_tags
-
 
 def test_tags_selector(pytester):
     """Test tests selection by tags."""
@@ -159,52 +157,7 @@ def test_apply_tag_hook(pytester):
     )
     result = pytester.runpytest("-rsx")
     result.stdout.fnmatch_lines(["SKIP*: Not implemented yet"])
-    result.stdout.fnmatch_lines(["*= 1 skipped, 1 xpassed * =*"])
-
-
-def test_tag_with_spaces(pytester):
-    pytester.makefile(
-        ".ini",
-        pytest=textwrap.dedent(
-            """
-    [pytest]
-    markers =
-        test with spaces
-    """
-        ),
-    )
-    pytester.makeconftest(
-        """
-        import pytest
-
-        @pytest.hookimpl(tryfirst=True)
-        def pytest_bdd_apply_tag(tag, function):
-            assert tag == 'test with spaces'
-    """
-    )
-    pytester.makefile(
-        ".feature",
-        test="""
-    Feature: Tag with spaces
-
-        @test with spaces
-        Scenario: Tags
-            Given I have a bar
-    """,
-    )
-    pytester.makepyfile(
-        """
-        from pytest_bdd import given, scenarios
-
-        @given('I have a bar')
-        def _():
-            return 'bar'
-
-        scenarios('test.feature')
-    """
-    )
-    result = pytester.runpytest_subprocess()
-    result.stdout.fnmatch_lines(["*= 1 passed * =*"])
+    result.stdout.fnmatch_lines(["*= 1 skipped, 1 xpassed*=*"])
 
 
 def test_at_in_scenario(pytester):
@@ -238,19 +191,3 @@ def test_at_in_scenario(pytester):
     strict_option = "--strict-markers"
     result = pytester.runpytest_subprocess(strict_option)
     result.stdout.fnmatch_lines(["*= 2 passed * =*"])
-
-
-@pytest.mark.parametrize(
-    "line, expected",
-    [
-        ("@foo @bar", {"foo", "bar"}),
-        ("@with spaces @bar", {"with spaces", "bar"}),
-        ("@double @double", {"double"}),
-        ("    @indented", {"indented"}),
-        (None, set()),
-        ("foobar", set()),
-        ("", set()),
-    ],
-)
-def test_get_tags(line, expected):
-    assert get_tags(line) == expected

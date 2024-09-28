@@ -13,27 +13,27 @@ jobs:
         include:
           - python-version: "3.8"
             toxfactor: py3.8
-            ignore-typecheck-outcome: true
+            ignore-typecheck-outcome: false
             ignore-test-outcome: false
           - python-version: "3.9"
             toxfactor: py3.9
-            ignore-typecheck-outcome: true
+            ignore-typecheck-outcome: false
             ignore-test-outcome: false
           - python-version: "3.10"
             toxfactor: py3.10
-            ignore-typecheck-outcome: true
+            ignore-typecheck-outcome: false
             ignore-test-outcome: false
           - python-version: "3.11"
             toxfactor: py3.11
-            ignore-typecheck-outcome: true
+            ignore-typecheck-outcome: false
             ignore-test-outcome: false
           - python-version: "3.12"
             toxfactor: py3.12
-            ignore-typecheck-outcome: true
+            ignore-typecheck-outcome: false
             ignore-test-outcome: false
           - python-version: "3.13-dev"
             toxfactor: py3.13
-            ignore-typecheck-outcome: true
+            ignore-typecheck-outcome: false
             ignore-test-outcome: false
 
     steps:
@@ -47,7 +47,7 @@ jobs:
 
     - name: Install poetry
       run: |
-        python -m pip install poetry==1.8.2
+        python -m pip install poetry==1.8.3
 
     - name: Configure poetry
       run: |
@@ -81,10 +81,35 @@ jobs:
         coverage combine
         coverage xml
 
-    - uses: codecov/codecov-action@v3
+    - uses: codecov/codecov-action@v4
       with:
         # Explicitly using the token to avoid Codecov rate limit errors
         # See https://community.codecov.com/t/upload-issues-unable-to-locate-build-via-github-actions-api/3954
         token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: true
+        fail_ci_if_error: false
         verbose: true # optional (default = false)
+
+  pypi-publish:
+    name: Upload release to PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pytest-bdd
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+    needs: test-run
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+      - name: Install pypa/build
+        run: >-
+          python3 -m
+          pip install
+          build
+          --user
+      - name: Build a binary wheel and a source tarball
+        run: python3 -m build
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

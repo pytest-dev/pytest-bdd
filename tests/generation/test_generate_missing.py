@@ -137,7 +137,7 @@ def test_generate_missing_with_step_parsers(pytester):
     assert not result.stderr.str()
     assert result.ret == 0
 
-    output = result.stdout.str()
+    output = str(result.stdout)
 
     assert "I use the string parser" not in output
     assert "I use parsers.parse" not in output

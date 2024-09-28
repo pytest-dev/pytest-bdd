@@ -71,15 +71,15 @@ def collect_dumped_objects(result: RunResult) -> list:
     Note: You must run the result with output to stdout enabled.
     For example, using ``pytester.runpytest("-s")``.
     """
-    stdout = result.stdout.str()  # pytest < 6.2, otherwise we could just do str(result.stdout)
+    stdout = str(result.stdout)
     payloads = re.findall(rf"{_DUMP_START}(.*?){_DUMP_END}", stdout)
     return [pickle.loads(base64.b64decode(payload)) for payload in payloads]
 
 
 def setdefault(obj: object, name: str, default: T) -> T:
     """Just like dict.setdefault, but for objects."""
-    try:
-        return getattr(obj, name)
-    except AttributeError:
+    if hasattr(obj, name):
+        return getattr(obj, name)  # type: ignore
+    else:
         setattr(obj, name, default)
         return default

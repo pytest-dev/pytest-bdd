@@ -137,13 +137,10 @@ class ScenarioReport:
 
 def runtest_makereport(item: Item, call: CallInfo, rep: TestReport) -> None:
     """Store item in the report object."""
-    try:
-        scenario_report: ScenarioReport = item.__scenario_report__
-    except AttributeError:
-        pass
-    else:
-        rep.scenario = scenario_report.serialize()
-        rep.item = {"name": item.name}
+    scenario_report = getattr(item, "__scenario_report__", None)
+    if scenario_report is not None:
+        rep.scenario = scenario_report.serialize()  # type: ignore
+        rep.item = {"name": item.name}  # type: ignore
 
 
 def before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:

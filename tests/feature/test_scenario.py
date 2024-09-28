@@ -148,7 +148,7 @@ def test_simple(pytester, pytest_params):
     result.assert_outcomes(passed=1)
 
 
-def test_angular_brakets_are_not_parsed(pytester):
+def test_angular_brackets_are_not_parsed(pytester):
     """Test that angular brackets are not parsed for "Scenario"s.
 
     (They should be parsed only when used in "Scenario Outline")

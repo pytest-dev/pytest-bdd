@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-bdd"
-version = "7.2.0"
+version = "8.0.0b1"
 description = "BDD for pytest"
 authors = ["Oleg Pidsadnyi <oleg.pidsadnyi@gmail.com>", "Anatoly Bubenkov <bubenkoff@gmail.com>"]
 maintainers = ["Alessio Bogon <778703+youtux@users.noreply.github.com>"]
@@ -39,9 +39,10 @@ python = ">=3.8"
 Mako = "*"
 parse = "*"
 parse-type = "*"
-pytest = ">=6.2.0"
+pytest = ">=7.0.0"
 typing-extensions = "*"
 packaging = "*"
+gherkin-official = "^29.0.0"
 
 [tool.poetry.group.dev.dependencies]
 tox = ">=4.11.3"
@@ -93,6 +94,7 @@ python_version = "3.8"
 warn_return_any = true
 warn_unused_configs = true
 files = "src/pytest_bdd/**/*.py"
+disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
 module = ["parse", "parse_type"]
