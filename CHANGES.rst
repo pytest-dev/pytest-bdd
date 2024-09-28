@@ -3,6 +3,7 @@ Changelog
 
 Unreleased
 ----------
+- Drop compatibility with pytest < 7.0.0.
 
 8.0.0b1
 ----------
