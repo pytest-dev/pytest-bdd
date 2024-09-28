@@ -622,6 +622,51 @@ Feature: A feature
     )
 
 
+def test_lower_case_and(pytester):
+    pytester.makefile(
+        ".feature",
+        steps=textwrap.dedent(
+            """\
+            Feature: Step keywords need to be capitalised
+
+                Scenario: Step keywords must be capitalised
+                    Given that I'm writing an example
+                    and that I like the lowercase 'and'
+                    Then it should fail to parse
+            """
+        ),
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        import pytest
+        from pytest_bdd import given, when, then, scenarios
+
+        scenarios("steps.feature")
+
+
+        @given("that I'm writing an example")
+        def _():
+            pass
+
+
+        @given("that I like the lowercase 'and'")
+        def _():
+            pass
+
+
+        @then("it should fail to parse")
+        def _():
+            pass
+
+        """
+        )
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(errors=1)
+    result.stdout.fnmatch_lines("*TokenError*")
+
+
 def test_right_aligned_steps(pytester):
     """Parser correctly handles steps that are not left-aligned"""
     pytester.makefile(
@@ -645,6 +690,45 @@ Feature: Non-standard step indentation
             pass
 
         @then("I indent with 5 spaces to line up")
+        def _():
+            pass
+
+        """
+        )
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1, failed=0)
+
+
+def test_keywords_used_outside_steps(pytester):
+    """Correctly identify when keyword is used for steps and when it's used for other cases."""
+    pytester.makefile(
+        ".feature",
+        keywords="""\
+        Feature: Given this is a Description
+
+            In order to achieve something
+            I want something
+            Because it will be cool
+            Given it is valid description
+            When it starts working
+            Then I will be happy
+
+
+            Some description goes here.
+
+            Scenario: When I set a Description
+                Given I have a bar
+                """,
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, scenarios
+
+        scenarios("keywords.feature")
+
+        @given("I have a bar")
         def _():
             pass
 
