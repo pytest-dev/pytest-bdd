@@ -1054,11 +1054,11 @@ To have an output in json format:
 
 This will output an expanded (meaning scenario outlines will be expanded to several scenarios) Cucumber format.
 
-To enable gherkin-formatted output on terminal, use
+To enable gherkin-formatted output on terminal, use `--gherkin-terminal-reporter` in conjunction with the `-v` or `-vv` options:
 
 ::
 
-    pytest --gherkin-terminal-reporter
+    pytest -v --gherkin-terminal-reporter
 
 
 Test code generation helpers

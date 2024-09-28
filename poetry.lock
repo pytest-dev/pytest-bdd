@@ -161,18 +161,18 @@ testing = ["hatch", "pre-commit", "pytest", "tox"]
 
 [[package]]
 name = "filelock"
-version = "3.16.0"
+version = "3.16.1"
 description = "A platform independent file lock."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "filelock-3.16.0-py3-none-any.whl", hash = "sha256:f6ed4c963184f4c84dd5557ce8fece759a3724b37b80c6c4f20a2f63a4dc6609"},
-    {file = "filelock-3.16.0.tar.gz", hash = "sha256:81de9eb8453c769b63369f87f11131a7ab04e367f8d97ad39dc230daa07e3bec"},
+    {file = "filelock-3.16.1-py3-none-any.whl", hash = "sha256:2082e5703d51fbf98ea75855d9d5527e33d8ff23099bec374a134febee6946b0"},
+    {file = "filelock-3.16.1.tar.gz", hash = "sha256:c249fbfcd5db47e5e2d6d62198e565475ee65e4831e2561c8e313fa7eb961435"},
 ]
 
 [package.extras]
-docs = ["furo (>=2024.8.6)", "sphinx (>=8.0.2)", "sphinx-autodoc-typehints (>=2.4)"]
-testing = ["covdefaults (>=2.3)", "coverage (>=7.6.1)", "diff-cover (>=9.1.1)", "pytest (>=8.3.2)", "pytest-asyncio (>=0.24)", "pytest-cov (>=5)", "pytest-mock (>=3.14)", "pytest-timeout (>=2.3.1)", "virtualenv (>=20.26.3)"]
+docs = ["furo (>=2024.8.6)", "sphinx (>=8.0.2)", "sphinx-autodoc-typehints (>=2.4.1)"]
+testing = ["covdefaults (>=2.3)", "coverage (>=7.6.1)", "diff-cover (>=9.2)", "pytest (>=8.3.3)", "pytest-asyncio (>=0.24)", "pytest-cov (>=5)", "pytest-mock (>=3.14)", "pytest-timeout (>=2.3.1)", "virtualenv (>=20.26.4)"]
 typing = ["typing-extensions (>=4.12.2)"]
 
 [[package]]
@@ -387,13 +387,13 @@ testing = ["pytest (<5.0)", "pytest (>=5.0)", "pytest-html (>=1.19.0)"]
 
 [[package]]
 name = "platformdirs"
-version = "4.3.2"
+version = "4.3.6"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "platformdirs-4.3.2-py3-none-any.whl", hash = "sha256:eb1c8582560b34ed4ba105009a4badf7f6f85768b30126f351328507b2beb617"},
-    {file = "platformdirs-4.3.2.tar.gz", hash = "sha256:9e5e27a08aa095dd127b9f2e764d74254f482fef22b0970773bfba79d091ab8c"},
+    {file = "platformdirs-4.3.6-py3-none-any.whl", hash = "sha256:73e575e1408ab8103900836b97580d5307456908a03e92031bab39e4554cc3fb"},
+    {file = "platformdirs-4.3.6.tar.gz", hash = "sha256:357fb2acbc885b0419afd3ce3ed34564c13c9b95c89360cd9563f73aa5e2b907"},
 ]
 
 [package.extras]
@@ -432,13 +432,13 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyproject-api"
-version = "1.7.1"
+version = "1.8.0"
 description = "API to interact with the python pyproject.toml based projects"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pyproject_api-1.7.1-py3-none-any.whl", hash = "sha256:2dc1654062c2b27733d8fd4cdda672b22fe8741ef1dde8e3a998a9547b071eeb"},
-    {file = "pyproject_api-1.7.1.tar.gz", hash = "sha256:7ebc6cd10710f89f4cf2a2731710a98abce37ebff19427116ff2174c9236a827"},
+    {file = "pyproject_api-1.8.0-py3-none-any.whl", hash = "sha256:3d7d347a047afe796fd5d1885b1e391ba29be7169bd2f102fcd378f04273d228"},
+    {file = "pyproject_api-1.8.0.tar.gz", hash = "sha256:77b8049f2feb5d33eefcc21b57f1e279636277a8ac8ad6b5871037b243778496"},
 ]
 
 [package.dependencies]
@@ -446,18 +446,18 @@ packaging = ">=24.1"
 tomli = {version = ">=2.0.1", markers = "python_version < \"3.11\""}
 
 [package.extras]
-docs = ["furo (>=2024.5.6)", "sphinx-autodoc-typehints (>=2.2.1)"]
-testing = ["covdefaults (>=2.3)", "pytest (>=8.2.2)", "pytest-cov (>=5)", "pytest-mock (>=3.14)", "setuptools (>=70.1)"]
+docs = ["furo (>=2024.8.6)", "sphinx-autodoc-typehints (>=2.4.1)"]
+testing = ["covdefaults (>=2.3)", "pytest (>=8.3.3)", "pytest-cov (>=5)", "pytest-mock (>=3.14)", "setuptools (>=75.1)"]
 
 [[package]]
 name = "pytest"
-version = "8.3.2"
+version = "8.3.3"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-8.3.2-py3-none-any.whl", hash = "sha256:4ba08f9ae7dcf84ded419494d229b48d0903ea6407b030eaec46df5e6a73bba5"},
-    {file = "pytest-8.3.2.tar.gz", hash = "sha256:c132345d12ce551242c87269de812483f5bcc87cdbb4722e48487ba194f9fdce"},
+    {file = "pytest-8.3.3-py3-none-any.whl", hash = "sha256:a6853c7375b2663155079443d2e45de913a911a11d669df02a50814944db57b2"},
+    {file = "pytest-8.3.3.tar.gz", hash = "sha256:70b98107bd648308a7952b06e6ca9a50bc660be218d53c257cc1fc94fda10181"},
 ]
 
 [package.dependencies]
@@ -515,13 +515,13 @@ files = [
 
 [[package]]
 name = "tox"
-version = "4.18.1"
+version = "4.20.0"
 description = "tox is a generic virtualenv management and test command line tool"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "tox-4.18.1-py3-none-any.whl", hash = "sha256:35d472032ee1f73fe20c3e0e73d7073a4e85075c86ff02c576f9fc7c6a15a578"},
-    {file = "tox-4.18.1.tar.gz", hash = "sha256:3c0c96bc3a568a5c7e66387a4cfcf8c875b52e09f4d47c9f7a277ec82f1a0b11"},
+    {file = "tox-4.20.0-py3-none-any.whl", hash = "sha256:21a8005e3d3fe5658a8e36b8ca3ed13a4230429063c5cc2a2fdac6ee5aa0de34"},
+    {file = "tox-4.20.0.tar.gz", hash = "sha256:5b78a49b6eaaeab3ae4186415e7c97d524f762ae967c63562687c3e5f0ec23d5"},
 ]
 
 [package.dependencies]
@@ -542,13 +542,13 @@ testing = ["build[virtualenv] (>=1.2.2)", "covdefaults (>=2.3)", "detect-test-po
 
 [[package]]
 name = "types-setuptools"
-version = "74.1.0.20240907"
+version = "75.1.0.20240917"
 description = "Typing stubs for setuptools"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "types-setuptools-74.1.0.20240907.tar.gz", hash = "sha256:0abdb082552ca966c1e5fc244e4853adc62971f6cd724fb1d8a3713b580e5a65"},
-    {file = "types_setuptools-74.1.0.20240907-py3-none-any.whl", hash = "sha256:15b38c8e63ca34f42f6063ff4b1dd662ea20086166d5ad6a102e670a52574120"},
+    {file = "types-setuptools-75.1.0.20240917.tar.gz", hash = "sha256:12f12a165e7ed383f31def705e5c0fa1c26215dd466b0af34bd042f7d5331f55"},
+    {file = "types_setuptools-75.1.0.20240917-py3-none-any.whl", hash = "sha256:06f78307e68d1bbde6938072c57b81cf8a99bc84bd6dc7e4c5014730b097dc0c"},
 ]
 
 [[package]]
@@ -564,13 +564,13 @@ files = [
 
 [[package]]
 name = "virtualenv"
-version = "20.26.4"
+version = "20.26.6"
 description = "Virtual Python Environment builder"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "virtualenv-20.26.4-py3-none-any.whl", hash = "sha256:48f2695d9809277003f30776d155615ffc11328e6a0a8c1f0ec80188d7874a55"},
-    {file = "virtualenv-20.26.4.tar.gz", hash = "sha256:c17f4e0f3e6036e9f26700446f85c76ab11df65ff6d8a9cbfad9f71aabfcf23c"},
+    {file = "virtualenv-20.26.6-py3-none-any.whl", hash = "sha256:7345cc5b25405607a624d8418154577459c3e0277f5466dd79c49d5e492995f2"},
+    {file = "virtualenv-20.26.6.tar.gz", hash = "sha256:280aede09a2a5c317e409a00102e7077c6432c5a38f0ef938e643805a7ad2c48"},
 ]
 
 [package.dependencies]
