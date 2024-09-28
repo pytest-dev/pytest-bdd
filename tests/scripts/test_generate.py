@@ -100,7 +100,7 @@ def test_generate_with_quotes(pytester):
     )
 
     result = pytester.run("pytest-bdd", "generate", "generate_with_quotes.feature")
-    assert result.stdout.str() == textwrap.dedent(
+    assert str(result.stdout) == textwrap.dedent(
         '''\
     """Handling quotes in code generation feature tests."""
 
@@ -211,4 +211,4 @@ def test_unicode_characters(pytester, monkeypatch):
                 raise NotImplementedError
             '''
     )
-    assert result.stdout.str() == expected_output
+    assert str(result.stdout) == expected_output
