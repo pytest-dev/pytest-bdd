@@ -195,7 +195,7 @@ def test_multiline_tags(pytester):
     pytester.makefile(
         ".feature",
         test="""
-    Feature: Scenario with multiple tags over multiple lines
+    Feature: Scenario with tags over multiple lines
 
         @tag1
         @tag2
