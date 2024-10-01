@@ -52,6 +52,7 @@ Planned
 Unreleased
 ----------
 - Fixed pytest.ini option "disable_feature_autoload"
+- Improved fixture injection by adding seamless fixtures on plugin/module collection
 
 2.1.4
 ----------

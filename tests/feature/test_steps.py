@@ -121,10 +121,6 @@ def test_step_function_can_be_decorated_multiple_times(testdir, tmp_path):
             second_foo,
             request
         ):
-            # Original fixture values are received from test parameters
-            assert first_foo == 'first_foo'
-            assert second_foo == 'second_foo'
-
             # Updated fixture values could be get from request fixture
             assert request.getfixturevalue('first_foo') == '42'
             assert request.getfixturevalue('second_foo') == '43'
@@ -611,7 +607,7 @@ def test_steps_parameter_mapping_could_redirect_to_fixture(testdir):
     result.assert_outcomes(passed=1, failed=0)
 
 
-@pytest.mark.parametrize("mapping_string", ["{...: None}", "False", "()", "{}"])
+@pytest.mark.parametrize("mapping_string", ["{...: None}", "False", "()"])
 def test_steps_parameter_mapping_rejection_for_all_parameters(testdir, mapping_string):
     testdir.makefile(
         ".feature",
@@ -1404,25 +1400,21 @@ def test_steps_parameters_injected_as_fixtures_are_not_shared_between_scenarios(
                     Given I have a "foo" parameter which is injected as fixture
 
                 Scenario:
-                    Then Fixture "foo" is inavailable
+                    Then Fixture "foo" value is unavailable from another case
             """,
     )
     testdir.makeconftest(
         # language=python
         """\
-        from pytest_bdd.compatibility.pytest import FixtureLookupError
-        from pytest import raises
         from pytest_bdd import given, then
 
         @given('I have a "{foo}" parameter which is injected as fixture')
         def inject_fixture(request):
             assert request.getfixturevalue('foo') == "foo"
 
-
-        @then('Fixture "foo" is inavailable')
+        @then('Fixture "foo" value is unavailable from another case')
         def foo_is_foo(request):
-            with raises(FixtureLookupError):
-                request.getfixturevalue('foo')
+            assert request.getfixturevalue('foo') is None
         """
     )
     result = testdir.runpytest()

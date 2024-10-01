@@ -1,5 +1,5 @@
 from collections import deque
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager
 from functools import partial
 from itertools import zip_longest
 from operator import attrgetter
@@ -24,6 +24,7 @@ class ScenarioRunner:
         self.scenario = None
         self.plugin_manager: Optional[PluginManager] = None
 
+    @hookimpl(tryfirst=True)
     def pytest_runtest_call(self, item: Item):
         if "pytest_bdd_scenario" in list(map(attrgetter("name"), item.iter_markers())):
             self.request = item._request
@@ -43,6 +44,11 @@ class ScenarioRunner:
                 self.plugin_manager.pytest_bdd_after_scenario(
                     request=self.request, feature=self.feature, scenario=self.scenario
                 )
+
+            # Allow to test function use updated fixtures directly
+            fixturenames = getattr(item, "fixturenames", [])
+            for argname in fixturenames:
+                item.funcargs[argname] = item._request.getfixturevalue(argname)
 
     def pytest_bdd_run_scenario(self, request: FixtureRequest, feature: Feature, scenario: Scenario):
         """Execute the scenarios.
@@ -151,9 +157,9 @@ class ScenarioRunner:
         )
 
         for param, fixture_name in params_fixtures_mapping.items():
-            if fixture_name is not None:
-                with suppress(KeyError):
-                    inject_fixture(self.request, fixture_name, step_params[param])
+            if fixture_name is None or fixture_name is ...:
+                continue
+            inject_fixture(self.request, fixture_name, step_params[param])
 
     def _get_step_function_kwargs(self, step, step_definition, step_params):
         for param in get_args(step_definition.func):

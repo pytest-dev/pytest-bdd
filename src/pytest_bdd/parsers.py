@@ -2,12 +2,12 @@
 from abc import ABCMeta, abstractmethod
 from enum import Enum
 from functools import partial, singledispatchmethod
-from itertools import filterfalse
+from itertools import chain, filterfalse
 from operator import attrgetter, contains, methodcaller
 from re import Match
 from re import Pattern as _RePattern
 from re import compile as re_compile
-from typing import Any, Dict, Iterable, Optional, Protocol, Sequence, Type, Union, cast, runtime_checkable
+from typing import Any, Collection, Dict, Iterable, Optional, Protocol, Sequence, Type, Union, cast, runtime_checkable
 
 import parse as base_parse
 import parse_type.cfparse as base_cfparse
@@ -36,6 +36,10 @@ class StepParserProtocol(Protocol):
     ) -> Optional[Dict[str, Any]]:
         ...  # pragma: no cover
 
+    @property
+    def arguments(self) -> Collection[str]:
+        ...  # pragma: no cover
+
     def is_matching(self, request: FixtureRequest, name: str) -> bool:
         ...  # pragma: no cover
 
@@ -61,6 +65,12 @@ class StepParser(StepParserProtocol, metaclass=ABCMeta):
 
         :return: `dict` of step arguments
         """
+        raise NotImplementedError()  # pragma: no cover
+
+    @property
+    @abstractmethod
+    def arguments(self) -> Collection[str]:
+        """Get step argument names from the given step name."""
         raise NotImplementedError()  # pragma: no cover
 
     @abstractmethod
@@ -143,7 +153,11 @@ class re(StepParser):
                 )
             )
 
-        return group_dict
+        return {k: v for k, v in group_dict.items() if v is not None}
+
+    @property
+    def arguments(self):
+        return [*self.regex.groupindex.keys()]
 
     def is_matching(self, request: FixtureRequest, name):
         return bool(self.regex.fullmatch(name))
@@ -190,6 +204,10 @@ class parse(StepParser):
             group_dict.update(dict(zip(anonymous_group_names, match.fixed)))
         return group_dict
 
+    @property
+    def arguments(self) -> Collection[str]:
+        return [*self.parser._match_re.groupindex.keys()]
+
     def is_matching(self, request: FixtureRequest, name):
         try:
             return bool(self.parser.parse(name))
@@ -227,6 +245,10 @@ class string(StepParser):
         """
         return {}
 
+    @property
+    def arguments(self):
+        return []
+
     def is_matching(self, request: FixtureRequest, name: str) -> bool:
         """Match given name with the step name."""
         return bool(self.name == name)
@@ -250,7 +272,7 @@ class _CucumberExpression(StepParser):
 
     def is_matching(self, request: FixtureRequest, name: str) -> bool:
         try:
-            return bool(self.rebuild_expression_in_test_context(request).match(name))
+            return bool(self.rebuild_expression_in_test_context(request).tree_regexp.match(name))
         except (UndefinedParameterTypeError, CantEscape):
             return False
 
@@ -314,6 +336,10 @@ class cucumber_expression(_CucumberExpression):
         self.pattern = expression.expression
         self.parameter_type_registry_like = expression.parameter_type_registry
 
+    @property
+    def arguments(self):
+        return []
+
 
 class cucumber_regular_expression(_CucumberExpression):
     type = ExpressionType.regular_expression
@@ -341,6 +367,10 @@ class cucumber_regular_expression(_CucumberExpression):
         self.pattern = expression.expression_regexp.pattern
         self.parameter_type_registry_like = expression.parameter_type_registry
 
+    @property
+    def arguments(self) -> Collection[str]:
+        return [*re_compile(self.pattern).groupindex.keys()]
+
 
 class heuristic(StepParser):
     type = ExpressionTypeExtension.pytest_bdd_heuristic_expression
@@ -356,6 +386,7 @@ class heuristic(StepParser):
             self.format = format
         self.parameter_type_registry = parameter_type_registry
         self.parsers_are_built = False
+        self.build_parsers()
 
     def build_parsers(self):
         if self.parsers_are_built:
@@ -399,13 +430,11 @@ class heuristic(StepParser):
         return [self.string_parser, self.cucumber_expression_parser, self.cfparse_parser, self.re_parser]
 
     def is_matching(self, request: FixtureRequest, name: str) -> bool:
-        self.build_parsers()
         return any(map(methodcaller("is_matching", request, name), filter(bool, self.parser_by_priorities)))
 
     def parse_arguments(
         self, request: FixtureRequest, name: str, anonymous_group_names: Optional[Iterable[str]] = None
     ) -> Optional[Dict[str, Any]]:
-        self.build_parsers()
         for parser in self.parser_by_priorities:
             if parser is not None and parser.is_matching(request, name):
                 arguments = parser.parse_arguments(request, name, anonymous_group_names=anonymous_group_names)
@@ -413,6 +442,19 @@ class heuristic(StepParser):
         else:
             arguments = None
         return arguments
+
+    @property
+    def arguments(self) -> Collection[str]:
+        return [
+            *chain.from_iterable(
+                map(
+                    lambda parser: []  # type:ignore[no-any-return]
+                    if (args := getattr(parser, "arguments")) is None
+                    else args,
+                    self.parser_by_priorities,
+                )
+            )
+        ]
 
     def __str__(self):
         return self.format
