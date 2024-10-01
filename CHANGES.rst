@@ -7,7 +7,13 @@ In-progress
 
 Planned
 -------
+- API doc
+- Add struct_bdd autoload
+- Move tox.ini, pytest.ini into pyproject.toml
 - Review report generation to be conform with official tools
+- Add tests about linked files and features autoload (feature autoload must not be disabled on linked files)
+- Check using Path globs on the feature loading via scenario/scenarios
+- Remove tests targeting Feature parsing
 
   - https://github.com/pytest-dev/pytest-bdd/issues/488
 - Nested Rules support
@@ -16,6 +22,7 @@ Planned
 - Implement support of \*.md files
 
   - Waiting for upstream issue https://github.com/cucumber/gherkin/pull/64
+  - Use js implementation for such feature
 - Support of messages:
 
   - Pending:
@@ -30,6 +37,8 @@ Planned
 - Generate documentation via https://github.com/jolly-good-toolbelt/sphinx_gherkindoc instead of direct use
 
   - Move sphinx-gherkindoc to official parser
+
+    - Documentation is ugly when contains injected code
 - Rework generation code to include new features directly
 
   - Generate code into dir structure aligned with proposed project layout
