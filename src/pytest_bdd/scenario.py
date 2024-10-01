@@ -32,12 +32,12 @@ def add_options(parser: Parser):
         "--disable-feature-autoload",
         action="store_false",
         dest="feature_autoload",
-        default=True,
+        default=None,
         help="Turn off feature files autoload",
     )
     parser.addini(
         "disable_feature_autoload",
-        default=True,
+        default=False,
         type="bool",
         help="Turn off feature files autoload",
     )

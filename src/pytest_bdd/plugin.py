@@ -316,7 +316,7 @@ def _pytest_collect_file(parent: Collector, file_path=None):
     config = parent.session.config
     is_enabled_feature_autoload = config.getoption("feature_autoload")
     if is_enabled_feature_autoload is None:
-        is_enabled_feature_autoload = config.getini("feature_autoload")
+        is_enabled_feature_autoload = not config.getini("disable_feature_autoload")
     if not is_enabled_feature_autoload:
         return
 

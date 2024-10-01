@@ -49,6 +49,10 @@ Planned
 - Add support of native legacy cucumber-json
 - Test against https://github.com/cucumber/json-formatter
 
+Unreleased
+----------
+- Fixed pytest.ini option "disable_feature_autoload"
+
 2.1.4
 ----------
 - Add support for Python 3.12 in CI
