@@ -219,3 +219,50 @@ def test_outline_with_escaped_pipes(pytester):
         r"bork      \\",
         r"bork    \\|",
     ]
+
+
+def test_forward_slash_in_params(pytester):
+    """Test parametrised scenario when the parameter contains a slash, such in a URL."""
+
+    pytester.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Scenario Outline: Outlined with slashes
+                    Given I am in <Country>
+                    Then I visit <Site>
+
+                    Examples:
+                        | Country  | Site                 |
+                        | US       | https://my-site.com  |
+
+            """
+        ),
+    )
+    pytester.makeconftest(textwrap.dedent(STEPS))
+
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+            from pytest_bdd import given, parsers, scenarios, then
+            from pytest_bdd.utils import dump_obj
+
+            scenarios('outline.feature')
+
+
+            @given(parsers.parse("I am in {country}"))
+            def _(country):
+                pass
+
+
+            @then(parsers.parse("I visit {site}"))
+            def _(site):
+                dump_obj(site)
+
+        """
+        )
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=1)
+    assert collect_dumped_objects(result) == ["https://my-site.com"]
