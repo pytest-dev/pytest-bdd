@@ -222,7 +222,7 @@ def test_outline_with_escaped_pipes(pytester):
 
 
 def test_forward_slash_in_params(pytester):
-    """Test parametrized scenario when the parameter contains a slash, such in a URL."""
+    """Test parametrised scenario when the parameter contains a slash, such in a URL."""
 
     pytester.makefile(
         ".feature",
