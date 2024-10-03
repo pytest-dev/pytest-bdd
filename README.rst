@@ -397,8 +397,8 @@ As Gherkin, pytest-bdd supports multiline steps
                 """
             Then the text should be parsed with correct indentation
 
-A step is considered as a multiline one, if the **next** line(s) after it's first line is encapsulated by
-triple quotes. The step name is then simply extended by adding further lines with newlines.
+A step is considered as a multiline one, if the **next** line(s) after its first line is encapsulated by
+triple quotes. The step name is then simply extended by adding further lines inside the triple quotes.
 In the example above, the Given step name will be:
 
 .. code-block:: python
@@ -1101,7 +1101,7 @@ which might be helpful building useful reporting, visualization, etc. on top of 
   (even if one of steps has failed)
 
 * `pytest_bdd_before_step(request, feature, scenario, step, step_func)` - Called before step function
-  is executed and it's arguments evaluated
+  is executed and its arguments evaluated
 
 * `pytest_bdd_before_step_call(request, feature, scenario, step, step_func, step_func_args)` - Called before step
   function is executed with evaluated arguments
