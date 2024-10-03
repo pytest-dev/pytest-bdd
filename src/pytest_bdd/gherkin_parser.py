@@ -130,8 +130,6 @@ class DataTable:
 
     def transpose(self) -> DataTable:
         # Transpose the cells, turning rows into columns
-        if not self.rows:
-            return self  # Return itself if there are no rows to transpose
 
         # Get the list of lists of cell values (i.e., extract all row cells)
         cells_matrix = [row.cells for row in self.rows]
@@ -146,10 +144,7 @@ class DataTable:
             # Create a new list for each transposed column
             transposed_column = []
             for row in cells_matrix:
-                if col_idx < len(row):  # Ensure we don't go out of bounds
-                    transposed_column.append(row[col_idx])
-                else:
-                    transposed_column.append(Cell(location=Location(0, 0), value=""))  # Empty cell
+                transposed_column.append(row[col_idx])
 
             # Create a new row from the transposed column
             transposed_row = Row(id=str(col_idx), location=self.location, cells=transposed_column)

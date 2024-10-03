@@ -152,7 +152,13 @@ def inject_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node
 
 
 def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContext | None:
-    """Get the step function (context) for the given step, considering data_table."""
+    """Get the step function (context) for the given step.
+    We first figure out what's the step fixture name that we have to inject.
+    Then we let `patch_argumented_step_functions` find out what step definition fixtures can parse the current step,
+    and it will inject them for the step fixture name.
+    Finally, we let request.getfixturevalue(...) fetch the step definition fixture.
+    Data tables are considered if the step has them defined.
+    """
     __tracebackhide__ = True
     bdd_name = get_step_fixture_name(step=step)
 
@@ -221,11 +227,6 @@ def _execute_step_function(
 
     request.config.hook.pytest_bdd_after_step(**kw)
 
-    if context.target_fixture is not None:
-        inject_fixture(request, context.target_fixture, return_value)
-
-    request.config.hook.pytest_bdd_after_step(**kw)
-
 
 def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequest) -> None:
     """Execute the scenario.
@@ -233,7 +234,6 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequ
     :param feature: Feature.
     :param scenario: Scenario.
     :param request: request.
-    :param encoding: Encoding.
     """
     __tracebackhide__ = True
     request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)

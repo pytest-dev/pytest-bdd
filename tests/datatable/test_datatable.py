@@ -27,7 +27,7 @@ DATA_TABLE_FEATURE = """\
 
 
 DATA_TABLE_STEPS = """\
-        from pytest_bdd import given, when, then, parsers
+        from pytest_bdd import given, when, then
         from pytest_bdd.utils import dump_obj
 
 
@@ -56,7 +56,7 @@ DATA_TABLE_TEST_FILE = """\
         from pytest_bdd import scenario
 
         @scenario("data_table.feature", "Creating a new user with roles and permissions")
-        def test_outline():
+        def test_data_table():
             pass
         """
 
@@ -165,7 +165,7 @@ def test_steps_with_missing_data_tables(pytester):
     pytester.makeconftest(
         textwrap.dedent(
             """\
-        from pytest_bdd import given, when, then, parsers
+        from pytest_bdd import given, when, then
         from pytest_bdd.utils import dump_obj
 
 
@@ -196,7 +196,7 @@ def test_steps_with_missing_data_tables(pytester):
         from pytest_bdd import scenario
 
         @scenario("missing_data_table.feature", "Data table is missing for a step")
-        def test_outline():
+        def test_data_table():
             pass
         """
         )
@@ -204,3 +204,48 @@ def test_steps_with_missing_data_tables(pytester):
     result = pytester.runpytest("-s")
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["*fixture 'data_table' not found*"])
+
+
+def test_steps_with_data_tables_too_short_for_to_dict(pytester):
+    pytester.makefile(
+        ".feature",
+        too_short_data_table=textwrap.dedent(
+            """\
+            Feature: Short data table
+
+              Scenario: Data table too short for transforming to dict
+                Given this step has a data table:
+                  | name  | email             | age |
+
+            """
+        ),
+    )
+    pytester.makeconftest(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, when, then
+
+
+        @given("this step has a data table:")
+        def _(data_table):
+            data_table.to_dict()
+
+    """
+        )
+    )
+
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd.utils import dump_obj
+        from pytest_bdd import scenario
+
+        @scenario("too_short_data_table.feature", "Data table too short for transforming to dict")
+        def test_data_table():
+            pass
+        """
+        )
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(failed=1)
+    result.stdout.fnmatch_lines(["*ValueError: DataTable needs at least two rows: one for headers and one for values*"])
