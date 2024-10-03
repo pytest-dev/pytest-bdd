@@ -464,7 +464,43 @@ def test_parser():
                                 keyword_type="Context",
                                 location=Location(column=5, line=62),
                                 text="the following users are registered:",
-                                data_table=DataTable(location=Location(column=7, line=63), rows=[]),
+                                data_table=DataTable(
+                                    location=Location(column=7, line=63),
+                                    rows=[
+                                        Row(
+                                            id="40",
+                                            location=Location(column=7, line=63),
+                                            cells=[
+                                                Cell(location=Location(column=9, line=63), value="username"),
+                                                Cell(location=Location(column=20, line=63), value="password"),
+                                            ],
+                                        ),
+                                        Row(
+                                            id="41",
+                                            location=Location(column=7, line=64),
+                                            cells=[
+                                                Cell(location=Location(column=9, line=64), value="user1"),
+                                                Cell(location=Location(column=20, line=64), value="pass1"),
+                                            ],
+                                        ),
+                                        Row(
+                                            id="42",
+                                            location=Location(column=7, line=65),
+                                            cells=[
+                                                Cell(location=Location(column=9, line=65), value="user2"),
+                                                Cell(location=Location(column=20, line=65), value="pass2"),
+                                            ],
+                                        ),
+                                        Row(
+                                            id="43",
+                                            location=Location(column=7, line=66),
+                                            cells=[
+                                                Cell(location=Location(column=9, line=66), value="user3"),
+                                                Cell(location=Location(column=20, line=66), value="pass3"),
+                                            ],
+                                        ),
+                                    ],
+                                ),
                                 doc_string=None,
                             ),
                             Step(
@@ -473,7 +509,35 @@ def test_parser():
                                 keyword_type="Action",
                                 location=Location(column=5, line=67),
                                 text="the user tries to log in with the following credentials:",
-                                data_table=DataTable(location=Location(column=7, line=68), rows=[]),
+                                data_table=DataTable(
+                                    location=Location(column=7, line=68),
+                                    rows=[
+                                        Row(
+                                            id="45",
+                                            location=Location(column=7, line=68),
+                                            cells=[
+                                                Cell(location=Location(column=9, line=68), value="username"),
+                                                Cell(location=Location(column=20, line=68), value="password"),
+                                            ],
+                                        ),
+                                        Row(
+                                            id="46",
+                                            location=Location(column=7, line=69),
+                                            cells=[
+                                                Cell(location=Location(column=9, line=69), value="user1"),
+                                                Cell(location=Location(column=20, line=69), value="pass1"),
+                                            ],
+                                        ),
+                                        Row(
+                                            id="47",
+                                            location=Location(column=7, line=70),
+                                            cells=[
+                                                Cell(location=Location(column=9, line=70), value="user2"),
+                                                Cell(location=Location(column=20, line=70), value="wrongPass"),
+                                            ],
+                                        ),
+                                    ],
+                                ),
                                 doc_string=None,
                             ),
                             Step(
@@ -482,7 +546,35 @@ def test_parser():
                                 keyword_type="Outcome",
                                 location=Location(column=5, line=71),
                                 text="the login attempts should result in:",
-                                data_table=DataTable(location=Location(column=7, line=72), rows=[]),
+                                data_table=DataTable(
+                                    location=Location(column=7, line=72),
+                                    rows=[
+                                        Row(
+                                            id="49",
+                                            location=Location(column=7, line=72),
+                                            cells=[
+                                                Cell(location=Location(column=9, line=72), value="username"),
+                                                Cell(location=Location(column=20, line=72), value="result"),
+                                            ],
+                                        ),
+                                        Row(
+                                            id="50",
+                                            location=Location(column=7, line=73),
+                                            cells=[
+                                                Cell(location=Location(column=9, line=73), value="user1"),
+                                                Cell(location=Location(column=20, line=73), value="success"),
+                                            ],
+                                        ),
+                                        Row(
+                                            id="51",
+                                            location=Location(column=7, line=74),
+                                            cells=[
+                                                Cell(location=Location(column=9, line=74), value="user2"),
+                                                Cell(location=Location(column=20, line=74), value="failure"),
+                                            ],
+                                        ),
+                                    ],
+                                ),
                                 doc_string=None,
                             ),
                         ],
