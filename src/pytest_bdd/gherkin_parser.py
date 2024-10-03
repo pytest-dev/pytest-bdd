@@ -101,20 +101,81 @@ class Row:
 
 
 @dataclass
-class DataTable:
+class ExamplesTable:
     location: Location
     name: str | None = None
-    tableHeader: Row | None = None
-    tableBody: list[Row] | None = field(default_factory=list)
+    table_header: Row | None = None
+    table_body: list[Row] | None = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
             location=Location.from_dict(data["location"]),
             name=data.get("name"),
-            tableHeader=Row.from_dict(data["tableHeader"]) if data.get("tableHeader") else None,
-            tableBody=[Row.from_dict(row) for row in data.get("tableBody", [])],
+            table_header=Row.from_dict(data["tableHeader"]) if data.get("tableHeader") else None,
+            table_body=[Row.from_dict(row) for row in data.get("tableBody", [])],
         )
+
+
+@dataclass
+class DataTable:
+    location: Location
+    rows: list[Row]
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        return cls(
+            location=Location.from_dict(data["location"]), rows=[Row.from_dict(row) for row in data.get("rows", [])]
+        )
+
+    def transpose(self) -> Self:
+        # Transpose the cells, turning rows into columns
+        if not self.rows:
+            return self  # Return itself if there are no rows to transpose
+
+        # Get the list of lists of cell values (i.e., extract all row cells)
+        cells_matrix = [row.cells for row in self.rows]
+
+        # Check the maximum number of columns (to handle different row lengths)
+        max_columns = max(len(row) for row in cells_matrix)
+
+        # Create a list to store the transposed cells
+        transposed_cells = []
+
+        for col_idx in range(max_columns):
+            # Create a new list for each transposed column
+            transposed_column = []
+            for row in cells_matrix:
+                if col_idx < len(row):  # Ensure we don't go out of bounds
+                    transposed_column.append(row[col_idx])
+                else:
+                    transposed_column.append(Cell(location=Location(0, 0), value=""))  # Empty cell
+
+            # Create a new row from the transposed column
+            transposed_row = Row(id=str(col_idx), location=self.location, cells=transposed_column)
+            transposed_cells.append(transposed_row)
+
+        # Return a new DataTable with transposed rows
+        return DataTable(location=self.location, rows=transposed_cells)
+
+    def to_dict(self) -> dict[str, list[str]]:
+        # Ensure there are at least two rows: one for the header and one for the values
+        if len(self.rows) < 2:
+            raise ValueError("DataTable needs at least two rows: one for headers and one for values")
+
+        # Extract the header row (first row)
+        header = [cell.value for cell in self.rows[0].cells]
+
+        # Extract the values from subsequent rows
+        values_rows = [[cell.value for cell in row.cells] for row in self.rows[1:]]
+
+        # Transpose the values so that each column corresponds to a header key
+        transposed_values = list(zip(*values_rows))
+
+        # Map each header to the corresponding list of values
+        result_dict = {header[i]: list(transposed_values[i]) for i in range(len(header))}
+
+        return result_dict
 
 
 @dataclass
@@ -136,22 +197,22 @@ class DocString:
 class Step:
     id: str
     keyword: str
-    keywordType: str
+    keyword_type: str
     location: Location
     text: str
-    dataTable: DataTable | None = None
-    docString: DocString | None = None
+    data_table: DataTable | None = None
+    doc_string: DocString | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
             id=data["id"],
             keyword=data["keyword"].strip(),
-            keywordType=data["keywordType"],
+            keyword_type=data["keywordType"],
             location=Location.from_dict(data["location"]),
             text=data["text"],
-            dataTable=DataTable.from_dict(data["dataTable"]) if data.get("dataTable") else None,
-            docString=DocString.from_dict(data["docString"]) if data.get("docString") else None,
+            data_table=DataTable.from_dict(data["dataTable"]) if data.get("dataTable") else None,
+            doc_string=DocString.from_dict(data["docString"]) if data.get("docString") else None,
         )
 
 
@@ -175,7 +236,7 @@ class Scenario:
     description: str
     steps: list[Step]
     tags: list[Tag]
-    examples: list[DataTable] = field(default_factory=list)
+    examples: list[ExamplesTable] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
@@ -187,7 +248,7 @@ class Scenario:
             description=data["description"],
             steps=[Step.from_dict(step) for step in data["steps"]],
             tags=[Tag.from_dict(tag) for tag in data["tags"]],
-            examples=[DataTable.from_dict(example) for example in data["examples"]],
+            examples=[ExamplesTable.from_dict(example) for example in data["examples"]],
         )
 
 

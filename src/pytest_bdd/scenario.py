@@ -152,21 +152,19 @@ def inject_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node
 
 
 def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContext | None:
-    """Get the step function (context) for the given step.
-
-    We first figure out what's the step fixture name that we have to inject.
-
-    Then we let `patch_argumented_step_functions` find out what step definition fixtures can parse the current step,
-    and it will inject them for the step fixture name.
-
-    Finally we let request.getfixturevalue(...) fetch the step definition fixture.
-    """
+    """Get the step function (context) for the given step, considering data_table."""
     __tracebackhide__ = True
     bdd_name = get_step_fixture_name(step=step)
 
     with inject_fixturedefs_for_step(step=step, fixturemanager=request._fixturemanager, node=request.node):
         try:
-            return cast(StepFunctionContext, request.getfixturevalue(bdd_name))
+            context = cast(StepFunctionContext, request.getfixturevalue(bdd_name))
+
+            # Attach data_table if present
+            if step.data_table:
+                context.data_table = step.data_table
+
+            return context
         except pytest.FixtureLookupError:
             return None
 
@@ -174,7 +172,7 @@ def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContex
 def _execute_step_function(
     request: FixtureRequest, scenario: Scenario, step: Step, context: StepFunctionContext
 ) -> None:
-    """Execute step function."""
+    """Execute step function, with support for data_table."""
     __tracebackhide__ = True
     kw = {
         "request": request,
@@ -193,10 +191,16 @@ def _execute_step_function(
     args = get_args(context.step_func)
 
     try:
+        # Parse arguments, including handling for data_table
         parsed_args = context.parser.parse_arguments(step.name)
         assert parsed_args is not None, (
             f"Unexpected `NoneType` returned from " f"parse_arguments(...) in parser: {context.parser!r}"
         )
+
+        # Handle data_table if it exists
+        if step.data_table:
+            kwargs["data_table"] = step.data_table
+
         for arg, value in parsed_args.items():
             if arg in converters:
                 value = converters[arg](value)
@@ -211,6 +215,11 @@ def _execute_step_function(
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
         raise
+
+    if context.target_fixture is not None:
+        inject_fixture(request, context.target_fixture, return_value)
+
+    request.config.hook.pytest_bdd_after_step(**kw)
 
     if context.target_fixture is not None:
         inject_fixture(request, context.target_fixture, return_value)
