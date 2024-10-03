@@ -128,7 +128,7 @@ class DataTable:
             location=Location.from_dict(data["location"]), rows=[Row.from_dict(row) for row in data.get("rows", [])]
         )
 
-    def transpose(self) -> Self:
+    def transpose(self) -> DataTable:
         # Transpose the cells, turning rows into columns
         if not self.rows:
             return self  # Return itself if there are no rows to transpose

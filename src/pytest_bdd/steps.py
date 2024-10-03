@@ -45,6 +45,7 @@ from typing import Any, Callable, Iterable, Literal, TypeVar
 import pytest
 from typing_extensions import ParamSpec
 
+from .gherkin_parser import DataTable
 from .parser import Step
 from .parsers import StepParser, get_parser
 from .types import GIVEN, THEN, WHEN
@@ -67,6 +68,7 @@ class StepFunctionContext:
     parser: StepParser
     converters: dict[str, Callable[[str], Any]] = field(default_factory=dict)
     target_fixture: str | None = None
+    data_table: DataTable | None = None
 
 
 def get_step_fixture_name(step: Step) -> str:
