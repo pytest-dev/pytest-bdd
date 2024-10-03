@@ -384,20 +384,21 @@ Multiline steps
 
 As Gherkin, pytest-bdd supports multiline steps
 (a.k.a. `Doc Strings <https://cucumber.io/docs/gherkin/reference/#doc-strings>`_).
-But in much cleaner and powerful way:
 
 .. code-block:: gherkin
 
     Feature: Multiline steps
         Scenario: Multiline step using sub indentation
             Given I have a step with:
+                """
                 Some
                 Extra
                 Lines
+                """
             Then the text should be parsed with correct indentation
 
-A step is considered as a multiline one, if the **next** line(s) after it's first line is indented relatively
-to the first line. The step name is then simply extended by adding further lines with newlines.
+A step is considered as a multiline one, if the **next** line(s) after it's first line is encapsulated by
+triple quotes. The step name is then simply extended by adding further lines with newlines.
 In the example above, the Given step name will be:
 
 .. code-block:: python
@@ -509,6 +510,90 @@ Example:
     @then(parsers.parse("I should have {left:d} cucumbers"))
     def should_have_left_cucumbers(cucumbers, left):
         assert cucumbers["start"] - cucumbers["eat"] == left
+
+
+Using the data_table Fixture
+----------------------------
+
+The ``data_table`` fixture allows you to utilise data tables defined in your Gherkin scenarios
+directly within your test functions. This is particularly useful for scenarios that require tabular data as input,
+enabling you to manage and manipulate this data conveniently.
+
+.. NOTE:: When using the data_table fixture, it is essential to ensure that the step to which it is applied
+          actually has an associated data table. If the step does not have an associated data table,
+          attempting to use the data_table fixture will raise an error.
+          Make sure that your Gherkin steps correctly reference the data table when defined.
+
+Example:
+
+.. code-block:: python
+
+        import pytest
+        from pytest_bdd import scenario, given, when, then, data_table
+
+        # Define a Gherkin scenario in a feature file.
+        @scenario('my_feature.feature', 'Process a data table')
+        def test_process_data_table():
+            pass
+
+        @given('I have the following data')
+        def step_with_data(data_table):
+            # The data_table fixture provides access to the data in a tabular format.
+            data_dict = data_table.to_dict()
+            print(data_dict)  # Prints the data in dictionary format.
+
+        @then('I can transpose the data')
+        def step_transpose(data_table):
+            transposed_table = data_table.transpose()
+            transposed_dict = transposed_table.to_dict()
+            print(transposed_dict)  # Prints the transposed data in dictionary format.
+
+
+The ``to_dict()`` method converts the data table into a dictionary format
+where the keys are the headers from the first row of the data table,
+and the values are lists of values from each subsequent row.
+
+Example:
+
+.. code-block:: python
+
+        # Assuming your data table looks like this:
+        # | Name  | Age |
+        # | Alice | 30  |
+        # | Bob   | 25  |
+
+        data_dict = data_table.to_dict()
+        # The output will be:
+        # {
+        #     'Name': ['Alice', 'Bob'],
+        #     'Age': ['30', '25']
+        # }
+
+
+The ``transpose()`` method converts rows of the data table into columns, effectively flipping the data structure.
+The first row will become the first column, the second row becomes the second column, and so on.
+
+Example:
+
+.. code-block:: python
+
+        # Assuming your data table looks like this:
+        # | Name  | Age |
+        # | Alice | 30  |
+        # | Bob   | 25  |
+
+        # When you call the transpose method:
+        transposed_table = data_table.transpose()
+
+        # The transposed data will look like this:
+        # [
+        #     ["Name", "Alice", "Bob"],
+        #     ["Age", 30, 25]
+        # ]
+
+        # Printing the transposed data:
+        for row in transposed_table.rows:
+            print([cell.value for cell in row.cells])
 
 
 Organizing your scenarios
