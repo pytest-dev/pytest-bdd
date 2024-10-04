@@ -130,25 +130,12 @@ class DataTable:
 
     def transpose(self) -> DataTable:
         # Transpose the cells, turning rows into columns
-
-        # Get the list of lists of cell values (i.e., extract all row cells)
         cells_matrix = [row.cells for row in self.rows]
 
-        # Check the maximum number of columns (to handle different row lengths)
-        max_columns = max(len(row) for row in cells_matrix)
-
-        # Create a list to store the transposed cells
-        transposed_cells = []
-
-        for col_idx in range(max_columns):
-            # Create a new list for each transposed column
-            transposed_column = []
-            for row in cells_matrix:
-                transposed_column.append(row[col_idx])
-
-            # Create a new row from the transposed column
-            transposed_row = Row(id=str(col_idx), location=self.location, cells=transposed_column)
-            transposed_cells.append(transposed_row)
+        # Use zip to transpose the matrix and create transposed rows
+        transposed_cells = [
+            Row(id=str(i), location=self.location, cells=list(col)) for i, col in enumerate(zip(*cells_matrix))
+        ]
 
         # Return a new DataTable with transposed rows
         return DataTable(location=self.location, rows=transposed_cells)
@@ -158,19 +145,12 @@ class DataTable:
         if len(self.rows) < 2:
             raise ValueError("DataTable needs at least two rows: one for headers and one for values")
 
-        # Extract the header row (first row)
+        # Extract the header row and the value rows
         header = [cell.value for cell in self.rows[0].cells]
-
-        # Extract the values from subsequent rows
         values_rows = [[cell.value for cell in row.cells] for row in self.rows[1:]]
 
-        # Transpose the values so that each column corresponds to a header key
-        transposed_values = list(zip(*values_rows))
-
-        # Map each header to the corresponding list of values
-        result_dict = {header[i]: list(transposed_values[i]) for i in range(len(header))}
-
-        return result_dict
+        # Transpose values and map headers to columns
+        return {key: list(values) for key, values in zip(header, zip(*values_rows))}
 
 
 @dataclass
