@@ -35,6 +35,7 @@ jobs:
             toxfactor: py3.13
             ignore-typecheck-outcome: false
             ignore-test-outcome: false
+      max-parallel: 1
 
     steps:
     - uses: actions/checkout@v3
