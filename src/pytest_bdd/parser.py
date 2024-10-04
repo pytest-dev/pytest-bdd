@@ -359,7 +359,7 @@ class FeatureParser:
         if first_step.keyword.lower() not in STEP_TYPES:
             raise StepError(
                 message=f"First step in a scenario or background must start with 'Given', 'When' or 'Then', but got {first_step.keyword}.",
-                line=first_step.location.line,
+                line=first_step._location.line,
                 line_content=get_step_content(first_step),
                 filename=self.abs_filename,
             )
@@ -375,8 +375,8 @@ class FeatureParser:
                 Step(
                     name=name,
                     type=current_type,
-                    indent=step.location.column - 1,
-                    line_number=step.location.line,
+                    indent=step._location.column - 1,
+                    line_number=step._location.line,
                     keyword=step.keyword.title(),
                     data_table=step.data_table,
                 )
@@ -397,7 +397,7 @@ class FeatureParser:
         scenario = ScenarioTemplate(
             feature=feature,
             name=strip_comments(scenario_data.name),
-            line_number=scenario_data.location.line,
+            line_number=scenario_data._location.line,
             templated=templated,
             tags=self.get_tag_names(scenario_data.tags),
             description=textwrap.dedent(scenario_data.description),
@@ -407,7 +407,7 @@ class FeatureParser:
 
         for example_data in scenario_data.examples:
             examples = Examples(
-                line_number=example_data.location.line,
+                line_number=example_data._location.line,
                 name=example_data.name,
             )
             if example_data.table_header is not None:
@@ -424,7 +424,7 @@ class FeatureParser:
     def parse_background(self, background_data: GherkinBackground, feature: Feature) -> Background:
         background = Background(
             feature=feature,
-            line_number=background_data.location.line,
+            line_number=background_data._location.line,
         )
         background.steps = self.parse_steps(background_data.steps)
         for step in background.steps:
@@ -449,7 +449,7 @@ class FeatureParser:
             name=strip_comments(feature_data.name),
             tags=self.get_tag_names(feature_data.tags),
             background=None,
-            line_number=feature_data.location.line,
+            line_number=feature_data._location.line,
             description=textwrap.dedent(feature_data.description),
         )
 
