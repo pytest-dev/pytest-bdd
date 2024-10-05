@@ -30,12 +30,10 @@ def write_file_with_extras(name, extension, testdir, step, request, extra_opts, 
 
 @given(
     re.compile('File "(?P<name>\\w+)(?P<extension>\\.\\w+)" in the temporary path with content:'),
-    target_fixture="bypass_tmp_path",
 )
 def write_file(name, extension, tmp_path: Path, step):
     content = step.doc_string.content
     (tmp_path / f"{name}{extension}").write_text(content)
-    yield tmp_path
 
 
 @given(re.compile("Set pytest.ini content to:"))

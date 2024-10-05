@@ -23,7 +23,7 @@ Feature: Gherkin features load by scenario and scenarios functions
         from pytest_bdd import scenario
         from pathlib import Path
 
-        @scenario(Path(r"{bypass_tmp_path}") / "Passing.feature")
+        @scenario(Path(r"{tmp_path}") / "Passing.feature")
         def test_passing_feature():
           # It is however encouraged to try as much as possible to have your logic only inside the Given, When, Then steps.
           ...
@@ -35,7 +35,7 @@ Feature: Gherkin features load by scenario and scenarios functions
         from pytest_bdd import scenarios
         from pathlib import Path
 
-        @scenarios(Path(r"{bypass_tmp_path}") / "Passing.feature", return_test_decorator=True)
+        @scenarios(Path(r"{tmp_path}") / "Passing.feature", return_test_decorator=True)
         def test_passing_feature():
           # It is however encouraged to try as much as possible to have your logic only inside the Given, When, Then steps.
           ...
@@ -52,7 +52,7 @@ Feature: Gherkin features load by scenario and scenarios functions
         from pytest_bdd import scenario
         from pathlib import Path
 
-        test_passing_feature = scenario(Path(r"{bypass_tmp_path}") / "Passing.feature", return_test_decorator=False)
+        test_passing_feature = scenario(Path(r"{tmp_path}") / "Passing.feature", return_test_decorator=False)
         """
 
       When run pytest
@@ -66,7 +66,7 @@ Feature: Gherkin features load by scenario and scenarios functions
         from pytest_bdd import scenarios
         from pathlib import Path
 
-        test_passing_feature = scenarios(Path(r"{bypass_tmp_path}") / "Passing.feature")
+        test_passing_feature = scenarios(Path(r"{tmp_path}") / "Passing.feature")
         """
 
       When run pytest
