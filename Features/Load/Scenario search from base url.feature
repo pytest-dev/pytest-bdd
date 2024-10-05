@@ -30,9 +30,9 @@ Feature: Feature files search is started from base directory
         """
       And File "test_feature.py" with content:
         """python
-        from pytest_bdd import scenarios
+        from pytest_bdd import scenarios,FeaturePathType
 
-        test = scenarios('Passing.feature')
+        test = scenarios('Passing.feature', features_path_type=FeaturePathType.URL)
         """
     Scenario:
       Given File "pytest.ini" with fixture templated content:

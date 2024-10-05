@@ -48,7 +48,7 @@ def test_feature_load_by_http(testdir: "Testdir", httpserver: HTTPServer):
     testdir.makepyfile(
         # language=python
         test_http=f"""\
-            from pytest_bdd import given, scenarios
+            from pytest_bdd import given, scenarios, FeaturePathType
             from pytest_bdd.mimetypes import Mimetype
 
             @given("I have {{cuckes_count}} cukes in my belly")
@@ -57,7 +57,8 @@ def test_feature_load_by_http(testdir: "Testdir", httpserver: HTTPServer):
 
             test_cuckes = scenarios(
                 f"http://localhost:{httpserver.port}/feature",
-                features_mimetype=Mimetype.gherkin_plain
+                features_mimetype=Mimetype.gherkin_plain,
+                features_path_type=FeaturePathType.URL
             )
         """
     )
@@ -149,7 +150,7 @@ def test_struct_bdd_feature_load_by_http(testdir, httpserver: HTTPServer):
     testdir.makepyfile(
         # language=python
         test_http=f"""\
-            from pytest_bdd import given, scenarios
+            from pytest_bdd import given, scenarios, FeaturePathType
 
             @given("I have {{cuckes_count}} cukes in my belly")
             def results(cuckes_count):
@@ -157,6 +158,7 @@ def test_struct_bdd_feature_load_by_http(testdir, httpserver: HTTPServer):
 
             test_cuckes = scenarios(
                 f"http://localhost:{httpserver.port}/feature",
+                features_path_type=FeaturePathType.URL
             )
         """
     )
@@ -174,7 +176,6 @@ def test_feature_load_by_http_with_base_url(testdir, httpserver: HTTPServer):
         test_http=f"""\
             from pytest_bdd import given, scenarios
             from pytest_bdd.mimetypes import Mimetype
-            from pytest_bdd.scenario import FeaturePathType
 
             @given("I have {{cuckes_count}} cukes in my belly")
             def results(cuckes_count):
@@ -184,7 +185,6 @@ def test_feature_load_by_http_with_base_url(testdir, httpserver: HTTPServer):
                 f"/feature",
                 features_mimetype=Mimetype.gherkin_plain,
                 features_base_url="http://localhost:{httpserver.port}",
-                features_path_type=FeaturePathType.URL
             )
         """
     )
@@ -209,8 +209,7 @@ def test_feature_load_by_http_with_base_url_from_ini(testdir, httpserver: HTTPSe
     testdir.makepyfile(
         # language=python
         test_http=f"""\
-            from pytest_bdd import given, scenarios
-            from pytest_bdd.scenario import FeaturePathType
+            from pytest_bdd import given, scenarios, FeaturePathType
 
             @given("I have {{cuckes_count}} cukes in my belly")
             def results(cuckes_count):
