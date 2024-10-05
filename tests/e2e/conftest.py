@@ -1,39 +1,73 @@
 import re
 import shutil
-from functools import partial
-from itertools import islice
+import string
 from operator import attrgetter, itemgetter
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from pytest import fixture
+from pytest_httpserver import HTTPServer
+
 from pytest_bdd import given, step
 from pytest_bdd.compatibility.pytest import assert_outcomes
+from pytest_bdd.mimetypes import Mimetype
+from pytest_bdd.testing_utils import data_table_to_dicts
 from pytest_bdd.utils import compose
 
 if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.compatibility.pytest import Testdir
 
 
-@given(re.compile('File "(?P<name>\\w+)(?P<extension>\\.\\w+)" with content:'))
-def write_file(name, extension, testdir, step):
+@fixture
+def httpserver_port(httpserver):
+    return httpserver.port
+
+
+@given(re.compile('File "(?P<name>\\w+)(?P<extension>\\.\\w+)" with (?P<extra_opts>.*|\\s)content:'))
+def write_file_with_extras(name, extension, testdir, step, request, extra_opts, tmp_path):
     content = step.doc_string.content
-    testdir.makefile(extension, **dict([(name, content)]))
+    is_fixture_templated = "fixture templated" in extra_opts
+    if is_fixture_templated:
+        template_fields = [field_name for _, field_name, _, _ in string.Formatter().parse(content) if field_name]
+
+        format_options = dict(
+            map(lambda fixture_name: (fixture_name, str(request.getfixturevalue(fixture_name))), template_fields)
+        )
+    makefile_arg = {name: str(content).format_map(format_options) if is_fixture_templated else content}
+    testdir.makefile(extension, **makefile_arg)
+
+
+@given(
+    re.compile('File "(?P<name>\\w+)(?P<extension>\\.\\w+)" in the temporary path with content:'),
+)
+def write_file(name, extension, tmp_path: Path, step):
+    content = step.doc_string.content
+    (tmp_path / f"{name}{extension}").write_text(content)
+
+
+@given(
+    re.compile(r'Localserver endpoint "(?P<endpoint>.+)" responding content:'),
+)
+def test_feature_load_by_http_with_base_url(testdir, endpoint, httpserver: HTTPServer, step):
+    httpserver.expect_request(endpoint).respond_with_data(
+        step.doc_string.content,
+        content_type=Mimetype.gherkin_plain.value,
+    )
+    yield
+
+
+@given(re.compile("Set pytest.ini content to:"))
+def _(testdir, step):
+    content = step.doc_string.content
+    testdir.makeini(content)
 
 
 @step("run pytest", target_fixture="pytest_result")
 def run_pytest(testdir, step):
-    if step.data_table is not None:
-        data_table_keys = map(
-            attrgetter("value"), map(compose(next, iter), map(attrgetter("cells"), step.data_table.rows))
-        )
-        data_table_values = map(
-            compose(list, compose(partial(map, attrgetter("value")), lambda items: islice(items, 1, None), iter)),
-            map(attrgetter("cells"), step.data_table.rows),
-        )
-        options_dict = dict(zip(data_table_keys, data_table_values))
-    else:
-        options_dict = {}
-    testrunner = testdir.runpytest_inprocess if options_dict.get("subprocess", False) else testdir.runpytest
+    options_dict = data_table_to_dicts(step.data_table)
+    testrunner = (
+        testdir.runpytest_inprocess if options_dict.get("subprocess", [False])[0] == "true" else testdir.runpytest
+    )
 
     outcome = testrunner(*options_dict.get("cli_args", []))
 

@@ -34,11 +34,24 @@ def given_beautiful_article(article):
     pass
 
 """
-import os
 import warnings
 from contextlib import suppress
 from inspect import getfile, getsourcelines
-from typing import Any, Callable, Dict, Iterable, Iterator, Optional, Sequence, Set, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Dict,
+    Iterable,
+    Iterator,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+    Type,
+    Union,
+    cast,
+)
 from uuid import uuid4
 from warnings import warn
 
@@ -52,7 +65,7 @@ from messages import ExpressionType, Location, Pickle  # type:ignore[attr-define
 from messages import PickleStep as Step  # type:ignore[attr-defined]
 from messages import SourceReference, StepDefinition, StepDefinitionPattern  # type:ignore[attr-defined]
 from pytest_bdd.compatibility.path import relpath
-from pytest_bdd.compatibility.pytest import Config, Parser, TypeAlias, get_config_root_path
+from pytest_bdd.compatibility.pytest import Config, FixtureLookupError, Parser, TypeAlias, get_config_root_path
 from pytest_bdd.model import Feature, StepType
 from pytest_bdd.model.messages_extension import ExpressionType as ExpressionTypeExtension
 from pytest_bdd.parsers import StepParser
@@ -60,6 +73,7 @@ from pytest_bdd.utils import (
     PytestBDDIdGeneratorHandler,
     convert_str_to_python_name,
     get_caller_module_locals,
+    getitemdefault,
     setdefaultattr,
 )
 from pytest_bdd.warning_types import PytestBDDStepDefinitionWarning
@@ -348,15 +362,51 @@ class StepHandler:
         func: Callable = attrib()
         type_: Optional[Union[str, StepType]] = attrib()
         parser: StepParser = attrib()
-        anonymous_group_names: Optional[Iterable[str]] = attrib()
+        anonymous_group_names: Optional[Collection[str]] = attrib()
         converters: Dict[str, Callable] = attrib()
-        params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = attrib()
+        params_fixtures_mapping: Union[  # type: ignore[valid-type]
+            Collection[str], Mapping[Union[str, Any], Union[str, Any, None]], Any
+        ] = attrib()
         param_defaults: dict = attrib()
         target_fixtures: Sequence[str] = attrib()
         liberal: Optional[Any] = attrib()
 
         id = attrib(init=False)
         __cache = attrib(default=Factory(dict))
+
+        @property
+        def fixtures_mapped_from_step_definition(self):
+            known_params = {
+                *([] if self.anonymous_group_names is None else self.anonymous_group_names),
+                *([] if self.parser.arguments is None else self.parser.arguments),
+            }
+
+            fixture_names = {*self.target_fixtures}
+
+            if isinstance(self.params_fixtures_mapping, Mapping):
+                converted_params = {*filter(lambda param: param is not ..., self.params_fixtures_mapping.keys())}
+                fixture_names.update(
+                    filter(
+                        lambda fixture_name: fixture_name is not None and fixture_name is not ...,
+                        self.params_fixtures_mapping.values(),
+                    )
+                )
+                wildcard_params_strategy = getitemdefault(self.params_fixtures_mapping, ..., default=...)
+            elif isinstance(self.params_fixtures_mapping, Collection):
+                converted_params = set()
+                wildcard_params_strategy = None
+                fixture_names.update(self.params_fixtures_mapping)
+            elif bool(self.params_fixtures_mapping):
+                converted_params = set()
+                wildcard_params_strategy = ...
+            else:
+                converted_params = set()
+                wildcard_params_strategy = None
+
+            if wildcard_params_strategy is ...:
+                bypassed_params = known_params.difference(converted_params)
+                fixture_names.update(bypassed_params)
+            return fixture_names
 
         def as_message(self, config: Union[Config, PytestBDDIdGeneratorHandler]):
             id_generator = cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator
@@ -414,9 +464,24 @@ class StepHandler:
                 for step_candidate in obj.__dict__.values()
                 if hasattr(step_candidate, "__pytest_bdd_step_definitions__")
             ]
-            if steps:
-                setdefaultattr(obj, "step_registry", value_factory=lambda: StepHandler.Registry().fixture)
-                obj.step_registry.__pytest_bdd_step_registry__.register_steps(steps)
+            if not steps:
+                return
+            setdefaultattr(obj, "step_registry", value_factory=lambda: StepHandler.Registry().fixture)
+            obj.step_registry.__pytest_bdd_step_registry__.register_steps(steps)
+
+            for step_func in steps:
+                for step_definition in step_func.__pytest_bdd_step_definitions__:
+                    step_definition: StepHandler.Definition = step_definition
+                    for fixture_name in step_definition.fixtures_mapped_from_step_definition:
+
+                        @pytest.fixture
+                        def _(request):
+                            try:
+                                return request.getfixturevalue(fixture_name)
+                            except FixtureLookupError:
+                                ...
+
+                        setdefaultattr(obj, fixture_name, value_factory=lambda: (_))
 
         def register_step_definition(self, step_definition):
             self.registry.add(step_definition)

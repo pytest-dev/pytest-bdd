@@ -45,7 +45,6 @@ def prepare_testdir(testdir, ini_base_dir):
         f"""\
         import pytest
         from pathlib import Path
-        from pytest_bdd.parser import GherkinParser
 
         from pytest_bdd import scenario, scenarios
 
@@ -64,9 +63,9 @@ def prepare_testdir(testdir, ini_base_dir):
         def test_not_found_by_ini(scenario_name, multiple):
             with pytest.raises(IOError) as exc:
                 if multiple:
-                    scenarios(FEATURE, parser_type=GherkinParser)
+                    scenarios(FEATURE)
                 else:
-                    scenario(FEATURE, scenario_name, parser_type=GherkinParser)
+                    scenario(FEATURE, scenario_name, return_test_decorator=False)
             assert str((Path('{ini_base_dir}') / FEATURE).resolve().as_posix()) in str(Path(str(exc.value.filename)).as_posix())
 
 
@@ -76,9 +75,9 @@ def prepare_testdir(testdir, ini_base_dir):
         def test_ok_by_ini(scenario_name, multiple):
             # Shouldn't raise any exception
             if multiple:
-                scenarios(FEATURE, parser_type=GherkinParser)
+                scenarios(FEATURE)
             else:
-                scenario(FEATURE, scenario_name, parser_type=GherkinParser)
+                scenario(FEATURE, scenario_name, return_test_decorator=False)
 
         @pytest.mark.parametrize(
             'multiple', [True, False]

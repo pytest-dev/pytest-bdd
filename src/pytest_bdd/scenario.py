@@ -1,15 +1,3 @@
-"""Scenario implementation.
-
-The pytest will collect the test case and the steps will be executed
-line by line.
-
-Example:
-
-test_publish_article = scenario(
-    feature_name="publish_article.feature",
-    scenario_name="Publishing the article",
-)
-"""
 import collections
 from enum import Enum
 from pathlib import Path
@@ -32,12 +20,12 @@ def add_options(parser: Parser):
         "--disable-feature-autoload",
         action="store_false",
         dest="feature_autoload",
-        default=True,
+        default=None,
         help="Turn off feature files autoload",
     )
     parser.addini(
         "disable_feature_autoload",
-        default=True,
+        default=False,
         type="bool",
         help="Turn off feature files autoload",
     )
@@ -73,7 +61,7 @@ def scenario(
     encoding: str = "utf-8",
     features_base_dir: Optional[Union[Path, str]] = None,
     features_base_url=None,
-    features_path_type: Optional[Union[FeaturePathType, str]] = None,
+    features_path_type: Optional[Union[FeaturePathType, str]] = FeaturePathType.PATH,
     features_mimetype: Optional[Mimetype] = None,
     return_test_decorator=True,
     parser_type: Optional[Type[ParserProtocol]] = None,
@@ -117,7 +105,7 @@ def scenarios(
     encoding: str = "utf-8",
     features_base_dir: Optional[Union[Path, str]] = None,
     features_base_url: Optional[str] = None,
-    features_path_type: Optional[Union[FeaturePathType, str]] = None,
+    features_path_type: Optional[Union[FeaturePathType, str]] = FeaturePathType.PATH,
     features_mimetype: Optional[Mimetype] = None,
     parser_type: Optional[Type[ParserProtocol]] = None,
     parse_args=Args((), {}),
@@ -135,11 +123,16 @@ def scenarios(
     :param features_mimetype: Helps to select appropriate parser if non-standard file extension is used
     :param return_test_decorator; Return test decorator or generated test
     :param parser_type: Parser used to parse feature-like file
-    :param parser_type: Parser used to parse feature-like file
     :param parse_args: args consumed by parser during parsing
     :param return_test_decorator; Return test decorator or generated test
     :param locators: Feature locators to load Features; Could be custom
     """
+    if features_base_dir and features_base_url:
+        raise ValueError('Both "features_base_dir" and "features_base_url" were specified')
+    if features_base_dir:
+        features_path_type = FeaturePathType.PATH
+    elif features_base_url:
+        features_path_type = FeaturePathType.URL
 
     decorator = compose(
         mark.pytest_bdd_scenario,

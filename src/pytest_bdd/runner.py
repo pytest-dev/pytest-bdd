@@ -1,5 +1,5 @@
 from collections import deque
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager
 from functools import partial
 from itertools import zip_longest
 from operator import attrgetter
@@ -24,7 +24,9 @@ class ScenarioRunner:
         self.scenario = None
         self.plugin_manager: Optional[PluginManager] = None
 
+    @hookimpl(tryfirst=True)
     def pytest_runtest_call(self, item: Item):
+        __tracebackhide__ = True
         if "pytest_bdd_scenario" in list(map(attrgetter("name"), item.iter_markers())):
             self.request = item._request
             self.feature = self.request.getfixturevalue("feature")
@@ -44,6 +46,11 @@ class ScenarioRunner:
                     request=self.request, feature=self.feature, scenario=self.scenario
                 )
 
+            # Allow to test function use updated fixtures directly
+            fixturenames = getattr(item, "fixturenames", [])
+            for argname in fixturenames:
+                item.funcargs[argname] = item._request.getfixturevalue(argname)
+
     def pytest_bdd_run_scenario(self, request: FixtureRequest, feature: Feature, scenario: Scenario):
         """Execute the scenarios.
 
@@ -51,6 +58,7 @@ class ScenarioRunner:
         :param scenario: Scenario.
         :param request: request.
         """
+        __tracebackhide__ = True
         steps: deque = request.getfixturevalue("steps_left")
         steps.extend(scenario.steps)
         step_dispatcher = request.config.hook.pytest_bdd_get_step_dispatcher(
@@ -61,8 +69,10 @@ class ScenarioRunner:
     @hookimpl(trylast=True)
     def pytest_bdd_get_step_dispatcher(self, request: FixtureRequest, feature: Feature, scenario: Scenario):
         """Provide alternative approach to execute steps"""
+        __tracebackhide__ = True
 
         def dispatcher(left_steps):
+            __tracebackhide__ = True
             previous_step = None
             while left_steps:
                 step = left_steps.popleft()
@@ -75,22 +85,24 @@ class ScenarioRunner:
 
     @contextmanager
     def extended_step_context(self, feature: Feature, scenario, step):
-        if isinstance(step, PickleStep):
-            try:
+        try:
+            if isinstance(step, PickleStep):
                 step.__dict__["doc_string"] = feature._get_step_doc_string(step)
                 step.__dict__["data_table"] = feature._get_step_data_table(step)
                 step.__dict__["keyword"] = feature._get_step_keyword(step)
                 step.__dict__["line_number"] = feature._get_step_line_number(step)
-                yield
-            finally:
+            scenario.__dict__["description"] = feature.registry[scenario.ast_node_ids[0]].description
+            yield
+        finally:
+            if isinstance(step, PickleStep):
                 step.__dict__.pop("doc_string", None)
                 step.__dict__.pop("data_table", None)
                 step.__dict__.pop("keyword", None)
                 step.__dict__.pop("line_number", None)
-        else:
-            yield
+            scenario.__dict__["description"] = None
 
     def pytest_bdd_run_step(self, request, feature: Feature, scenario, step, previous_step):
+        __tracebackhide__ = True
         with self.extended_step_context(feature, scenario, step):
             hook_kwargs = dict(
                 request=request,
@@ -151,9 +163,9 @@ class ScenarioRunner:
         )
 
         for param, fixture_name in params_fixtures_mapping.items():
-            if fixture_name is not None:
-                with suppress(KeyError):
-                    inject_fixture(self.request, fixture_name, step_params[param])
+            if fixture_name is None or fixture_name is ...:
+                continue
+            inject_fixture(self.request, fixture_name, step_params[param])
 
     def _get_step_function_kwargs(self, step, step_definition, step_params):
         for param in get_args(step_definition.func):
