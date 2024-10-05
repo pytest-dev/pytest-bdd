@@ -2,6 +2,12 @@
           use cases of **pytest-bdd-ng** by investigation of its regression
           test suite https://github.com/elchupanebrej/pytest-bdd-ng/tree/default/tests
 
+Feature localization.feature
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+.. include:: ../Features/Feature localization.feature
+   :code: gherkin
+
 Feature tag conversion.feature
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

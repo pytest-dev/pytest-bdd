@@ -1,11 +1,3 @@
-Localization
-------------
-
-.. NOTE:: Important difference from pytest-bdd_
-
-pytest-bdd-ng supports all localizations which Gherkin `does <https://cucumber.io/docs/gherkin/languages/>`_
-
-
 Hooks
 -----
 
@@ -48,8 +40,6 @@ then
 
 Fixtures
 --------
-
-.. NOTE:: Important difference from pytest-bdd_
 
 pytest-bdd-ng exposes several plugin fixtures to give more testing flexibility
 
