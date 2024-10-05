@@ -157,7 +157,7 @@ def test_steps_with_missing_data_tables(pytester):
                   | John  | john@example.com  | 30  |
                   | Alice | alice@example.com | 25  |
 
-                When this step has no data table
+                When this step has no data table but tries to use the data_table fixture
                 Then an error is thrown
             """
         ),
@@ -175,7 +175,7 @@ def test_steps_with_missing_data_tables(pytester):
             dump_obj(given_data_table)
 
 
-        @when("this step has no data table")
+        @when("this step has no data table but tries to use the data_table fixture")
         def _(data_table):
             when_data_table = data_table
             dump_obj(when_data_table)
