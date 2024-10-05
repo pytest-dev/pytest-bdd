@@ -52,7 +52,6 @@ DATA_TABLE_STEPS = """\
 
 
 DATA_TABLE_TEST_FILE = """\
-        from pytest_bdd.utils import dump_obj
         from pytest_bdd import scenario
 
         @scenario("data_table.feature", "Creating a new user with roles and permissions")
@@ -192,7 +191,6 @@ def test_steps_with_missing_data_tables(pytester):
     pytester.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd.utils import dump_obj
         from pytest_bdd import scenario
 
         @scenario("missing_data_table.feature", "Data table is missing for a step")
@@ -237,7 +235,6 @@ def test_steps_with_data_tables_too_short_for_to_dict(pytester):
     pytester.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd.utils import dump_obj
         from pytest_bdd import scenario
 
         @scenario("too_short_data_table.feature", "Data table too short for transforming to dict")
