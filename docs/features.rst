@@ -26,6 +26,12 @@ Feature tags.feature
 .. include:: ../Features/Feature tags.feature
    :code: gherkin
 
+Steps could have doc strings.feature
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+.. include:: ../Features/Steps could have doc strings.feature
+   :code: gherkin
+
 Steps to step definition bounding.feature
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
