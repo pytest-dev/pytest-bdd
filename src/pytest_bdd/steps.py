@@ -37,7 +37,21 @@ def given_beautiful_article(article):
 import warnings
 from contextlib import suppress
 from inspect import getfile, getsourcelines
-from typing import Any, Callable, Collection, Dict, Iterable, Iterator, Mapping, Optional, Sequence, Set, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Dict,
+    Iterable,
+    Iterator,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+    Type,
+    Union,
+    cast,
+)
 from uuid import uuid4
 from warnings import warn
 
@@ -51,7 +65,7 @@ from messages import ExpressionType, Location, Pickle  # type:ignore[attr-define
 from messages import PickleStep as Step  # type:ignore[attr-defined]
 from messages import SourceReference, StepDefinition, StepDefinitionPattern  # type:ignore[attr-defined]
 from pytest_bdd.compatibility.path import relpath
-from pytest_bdd.compatibility.pytest import Config, Parser, TypeAlias, get_config_root_path
+from pytest_bdd.compatibility.pytest import Config, FixtureLookupError, Parser, TypeAlias, get_config_root_path
 from pytest_bdd.model import Feature, StepType
 from pytest_bdd.model.messages_extension import ExpressionType as ExpressionTypeExtension
 from pytest_bdd.parsers import StepParser
@@ -351,7 +365,7 @@ class StepHandler:
         anonymous_group_names: Optional[Collection[str]] = attrib()
         converters: Dict[str, Callable] = attrib()
         params_fixtures_mapping: Union[  # type: ignore[valid-type]
-            Collection[str], Mapping[Union[str, type[Ellipsis]], Union[str, type[Ellipsis], None]], Any
+            Collection[str], Mapping[Union[str, Any], Union[str, Any, None]], Any
         ] = attrib()
         param_defaults: dict = attrib()
         target_fixtures: Sequence[str] = attrib()
@@ -464,7 +478,7 @@ class StepHandler:
                         def _(request):
                             try:
                                 return request.getfixturevalue(fixture_name)
-                            except pytest.FixtureLookupError:
+                            except FixtureLookupError:
                                 ...
 
                         setdefaultattr(obj, fixture_name, value_factory=lambda: (_))

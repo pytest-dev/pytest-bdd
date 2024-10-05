@@ -22,7 +22,6 @@ Feature: Gherkin steps bounding to steps definitions
     And File "conftest.py" with content:
       """python
       from pytest_bdd import given, when, then, step
-      from cucumber_messages import DataTable
       from pytest import fixture
 
       # pytest fixtures could be used from step definitions, so some
@@ -54,7 +53,7 @@ Feature: Gherkin steps bounding to steps definitions
       @then('there are passed steps by kind:')
       def check_step_counter(step, step_counter):
         # Step datatables data could be accessed in the next manner
-        step_data_table: DataTable = step.data_table
+        step_data_table = step.data_table
         oracle_results_header = [cell.value for cell in step_data_table.rows[0].cells]
         oracle_results_values = [int(cell.value) for cell in step_data_table.rows[1].cells]
         oracle_result = dict(zip(oracle_results_header, oracle_results_values))

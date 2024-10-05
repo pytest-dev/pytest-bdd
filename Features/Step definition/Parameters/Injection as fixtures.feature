@@ -86,11 +86,11 @@ Feature: Step definitions parameters injection as fixtures
       """python
       import pytest
       from pytest_bdd import scenario
-
+      from pytest_bdd.compatibility.pytest import FixtureLookupError
       @scenario("Freshness.feature")
       def test_passing_feature(request, cuke_taste):
         assert cuke_taste == 'salted'
-        with pytest.raises(pytest.FixtureLookupError):
+        with pytest.raises(FixtureLookupError):
           request.getfixturevalue('freshness')
       """
     When run pytest
@@ -127,11 +127,12 @@ Feature: Step definitions parameters injection as fixtures
       """python
       import pytest
       from pytest_bdd import scenario
+      from pytest_bdd.compatibility.pytest import FixtureLookupError
 
       @scenario("Freshness.feature")
       def test_passing_feature(request, cuke_taste):
         assert cuke_taste == 'salted'
-        with pytest.raises(pytest.FixtureLookupError):
+        with pytest.raises(FixtureLookupError):
           request.getfixturevalue('freshness')
       """
     When run pytest
@@ -160,11 +161,12 @@ Feature: Step definitions parameters injection as fixtures
       """python
       import pytest
       from pytest_bdd import scenario
+      from pytest_bdd.compatibility.pytest import FixtureLookupError
 
       @scenario("Freshness.feature")
       def test_passing_feature(request, freshness):
         assert freshness == 'salted'
-        with pytest.raises(pytest.FixtureLookupError):
+        with pytest.raises(FixtureLookupError):
           request.getfixturevalue('age')
       """
     When run pytest

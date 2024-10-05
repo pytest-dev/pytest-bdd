@@ -1,14 +1,15 @@
 from functools import partial
 from itertools import islice
 from operator import attrgetter
-from typing import Optional
-
-from cucumber_messages import DataTable
+from typing import TYPE_CHECKING, Optional
 
 from pytest_bdd.utils import compose
 
+if TYPE_CHECKING:  # pragma: no cover
+    from cucumber_messages import DataTable
 
-def data_table_to_dicts(data_table: Optional[DataTable]):
+
+def data_table_to_dicts(data_table: Optional["DataTable"]):
     if data_table is None:
         return {}
 
