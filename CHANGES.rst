@@ -13,6 +13,7 @@ Planned
 - Review report generation to be conform with official tools
 - Add tests about linked files and features autoload (feature autoload must not be disabled on linked files)
 - Check using Path globs on the feature loading via scenario/scenarios
+- Rework extended_step_context method usage
 - Remove tests targeting Feature parsing
 
   - https://github.com/pytest-dev/pytest-bdd/issues/488

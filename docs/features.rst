@@ -2,6 +2,12 @@
           use cases of **pytest-bdd-ng** by investigation of its regression
           test suite https://github.com/elchupanebrej/pytest-bdd-ng/tree/default/tests
 
+Feature and scenario could have descriptions.feature
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+.. include:: ../Features/Feature and scenario could have descriptions.feature
+   :code: gherkin
+
 Feature localization.feature
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

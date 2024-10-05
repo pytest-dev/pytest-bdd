@@ -85,20 +85,21 @@ class ScenarioRunner:
 
     @contextmanager
     def extended_step_context(self, feature: Feature, scenario, step):
-        if isinstance(step, PickleStep):
-            try:
+        try:
+            if isinstance(step, PickleStep):
                 step.__dict__["doc_string"] = feature._get_step_doc_string(step)
                 step.__dict__["data_table"] = feature._get_step_data_table(step)
                 step.__dict__["keyword"] = feature._get_step_keyword(step)
                 step.__dict__["line_number"] = feature._get_step_line_number(step)
-                yield
-            finally:
+            scenario.__dict__["description"] = feature.registry[scenario.ast_node_ids[0]].description
+            yield
+        finally:
+            if isinstance(step, PickleStep):
                 step.__dict__.pop("doc_string", None)
                 step.__dict__.pop("data_table", None)
                 step.__dict__.pop("keyword", None)
                 step.__dict__.pop("line_number", None)
-        else:
-            yield
+            scenario.__dict__["description"] = None
 
     def pytest_bdd_run_step(self, request, feature: Feature, scenario, step, previous_step):
         __tracebackhide__ = True
