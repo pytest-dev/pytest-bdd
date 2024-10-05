@@ -26,6 +26,12 @@ Feature tags.feature
 .. include:: ../Features/Feature tags.feature
    :code: gherkin
 
+Steps could have data tables.feature
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+.. include:: ../Features/Steps could have data tables.feature
+   :code: gherkin
+
 Steps could have doc strings.feature
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
