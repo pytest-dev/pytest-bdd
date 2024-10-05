@@ -2,16 +2,22 @@
           use cases of **pytest-bdd-ng** by investigation of its regression
           test suite https://github.com/elchupanebrej/pytest-bdd-ng/tree/default/tests
 
+Feature tags.feature
+!!!!!!!!!!!!!!!!!!!!
+
+.. include:: ../Features/Feature tags.feature
+   :code: gherkin
+
 Feature and scenario could have descriptions.feature
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 .. include:: ../Features/Feature and scenario could have descriptions.feature
    :code: gherkin
 
-Feature localization.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Tutorial launch.feature
+!!!!!!!!!!!!!!!!!!!!!!!
 
-.. include:: ../Features/Feature localization.feature
+.. include:: ../Features/Tutorial launch.feature
    :code: gherkin
 
 Feature tag conversion.feature
@@ -20,22 +26,16 @@ Feature tag conversion.feature
 .. include:: ../Features/Feature tag conversion.feature
    :code: gherkin
 
-Feature tags.feature
-!!!!!!!!!!!!!!!!!!!!
-
-.. include:: ../Features/Feature tags.feature
-   :code: gherkin
-
 Steps could have data tables.feature
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 .. include:: ../Features/Steps could have data tables.feature
    :code: gherkin
 
-Steps could have doc strings.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Feature localization.feature
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-.. include:: ../Features/Steps could have doc strings.feature
+.. include:: ../Features/Feature localization.feature
    :code: gherkin
 
 Steps to step definition bounding.feature
@@ -44,10 +44,28 @@ Steps to step definition bounding.feature
 .. include:: ../Features/Steps to step definition bounding.feature
    :code: gherkin
 
-Tutorial launch.feature
-!!!!!!!!!!!!!!!!!!!!!!!
+Steps could have doc strings.feature
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-.. include:: ../Features/Tutorial launch.feature
+.. include:: ../Features/Steps could have doc strings.feature
+   :code: gherkin
+
+Step define target fixtures.feature
+"""""""""""""""""""""""""""""""""""
+
+.. include:: ../Features/Step definition/Step define target fixtures.feature
+   :code: gherkin
+
+Step utilize fixtures.feature
+"""""""""""""""""""""""""""""
+
+.. include:: ../Features/Step definition/Step utilize fixtures.feature
+   :code: gherkin
+
+Scenario search from base url.feature
+"""""""""""""""""""""""""""""""""""""
+
+.. include:: ../Features/Load/Scenario search from base url.feature
    :code: gherkin
 
 Autoload.feature
@@ -68,40 +86,10 @@ Scenario search from base directory.feature
 .. include:: ../Features/Load/Scenario search from base directory.feature
    :code: gherkin
 
-Scenario search from base url.feature
-"""""""""""""""""""""""""""""""""""""
-
-.. include:: ../Features/Load/Scenario search from base url.feature
-   :code: gherkin
-
 Scenario tags.feature
 """""""""""""""""""""
 
 .. include:: ../Features/Scenario/Scenario tags.feature
-   :code: gherkin
-
-Step define target fixtures.feature
-"""""""""""""""""""""""""""""""""""
-
-.. include:: ../Features/Step definition/Step define target fixtures.feature
-   :code: gherkin
-
-Step utilize fixtures.feature
-"""""""""""""""""""""""""""""
-
-.. include:: ../Features/Step definition/Step utilize fixtures.feature
-   :code: gherkin
-
-Tags for Scenario Outlines examples.feature
-###########################################
-
-.. include:: ../Features/Scenario/Outline/Tags for Scenario Outlines examples.feature
-   :code: gherkin
-
-Conversion.feature
-##################
-
-.. include:: ../Features/Step definition/Parameters/Conversion.feature
    :code: gherkin
 
 Defaults.feature
@@ -116,6 +104,12 @@ Injection as fixtures.feature
 .. include:: ../Features/Step definition/Parameters/Injection as fixtures.feature
    :code: gherkin
 
+Conversion.feature
+##################
+
+.. include:: ../Features/Step definition/Parameters/Conversion.feature
+   :code: gherkin
+
 Parsing by custom parser.feature
 ################################
 
@@ -126,4 +120,10 @@ Parsing.feature
 ###############
 
 .. include:: ../Features/Step definition/Parameters/Parsing.feature
+   :code: gherkin
+
+Tags for Scenario Outlines examples.feature
+###########################################
+
+.. include:: ../Features/Scenario/Outline/Tags for Scenario Outlines examples.feature
    :code: gherkin
