@@ -38,6 +38,18 @@ Scenario function loader.feature
 .. include:: ../Features/Load/Scenario function loader.feature
    :code: gherkin
 
+Scenario search from base directory.feature
+"""""""""""""""""""""""""""""""""""""""""""
+
+.. include:: ../Features/Load/Scenario search from base directory.feature
+   :code: gherkin
+
+Scenario search from base url.feature
+"""""""""""""""""""""""""""""""""""""
+
+.. include:: ../Features/Load/Scenario search from base url.feature
+   :code: gherkin
+
 Scenario tags.feature
 """""""""""""""""""""
 

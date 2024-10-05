@@ -5,13 +5,22 @@ from operator import attrgetter, itemgetter
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from pytest import fixture
+from pytest_httpserver import HTTPServer
+
 from pytest_bdd import given, step
 from pytest_bdd.compatibility.pytest import assert_outcomes
+from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.testing_utils import data_table_to_dicts
 from pytest_bdd.utils import compose
 
 if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.compatibility.pytest import Testdir
+
+
+@fixture
+def httpserver_port(httpserver):
+    return httpserver.port
 
 
 @given(re.compile('File "(?P<name>\\w+)(?P<extension>\\.\\w+)" with (?P<extra_opts>.*|\\s)content:'))
@@ -34,6 +43,17 @@ def write_file_with_extras(name, extension, testdir, step, request, extra_opts, 
 def write_file(name, extension, tmp_path: Path, step):
     content = step.doc_string.content
     (tmp_path / f"{name}{extension}").write_text(content)
+
+
+@given(
+    re.compile(r'Localserver endpoint "(?P<endpoint>.+)" responding content:'),
+)
+def test_feature_load_by_http_with_base_url(testdir, endpoint, httpserver: HTTPServer, step):
+    httpserver.expect_request(endpoint).respond_with_data(
+        step.doc_string.content,
+        content_type=Mimetype.gherkin_plain.value,
+    )
+    yield
 
 
 @given(re.compile("Set pytest.ini content to:"))

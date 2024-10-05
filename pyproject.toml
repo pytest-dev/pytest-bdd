@@ -63,6 +63,7 @@ dependencies = [
   "packaging",
   "parse",
   "parse_type>=0.6.0",
+  "pathvalidate",
   "py",
   "pydantic>=2.0.3",
   "pytest>=5.0",

@@ -3,6 +3,8 @@ import os
 import ssl
 from contextlib import suppress
 from functools import partial, reduce
+from itertools import filterfalse
+from operator import methodcaller, truediv
 from os.path import commonpath
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -11,7 +13,6 @@ from urllib.parse import urljoin
 
 import aiohttp
 import certifi
-from _operator import methodcaller, truediv
 from _pytest.config import Config
 from attr import Factory, attrib, attrs
 from pydantic import ValidationError
@@ -22,7 +23,7 @@ from pytest_bdd.compatibility.pytest import get_config_root_path
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.model import Feature, Pickle
 from pytest_bdd.scenario import Args
-from pytest_bdd.utils import PytestBDDIdGeneratorHandler
+from pytest_bdd.utils import PytestBDDIdGeneratorHandler, is_local_url
 
 
 @runtime_checkable
@@ -77,11 +78,9 @@ class UrlScenarioLocator(ScenarioLocatorFilterMixin):
             return await asyncio.gather(*[self.fetch(session, url) for url in urls], return_exceptions=True)
 
     def resolve_features(self, config: Union[Config, PytestBDDIdGeneratorHandler]):
-        urls = list(
-            self.url_paths
-            if self.features_base_url is None
-            else map(partial(urljoin, self.features_base_url), self.url_paths)
-        )
+        urls = [*filterfalse(is_local_url, self.url_paths)]
+        if self.features_base_url is not None:
+            urls.extend(map(partial(urljoin, f"{self.features_base_url}/"), filter(is_local_url, self.url_paths)))
         if not urls:
             return
         loop = asyncio.new_event_loop()

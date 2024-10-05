@@ -28,10 +28,11 @@ from typing import (
     cast,
     runtime_checkable,
 )
+from urllib.parse import urlparse
 
 from _pytest.fixtures import FixtureDef, FixtureRequest
 
-from pytest_bdd.compatibility.pytest import PYTEST7, PYTEST8, PYTEST81, fail
+from pytest_bdd.compatibility.pytest import PYTEST8, PYTEST81, fail
 from pytest_bdd.const import ALPHA_REGEX, PYTHON_REPLACE_REGEX
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -334,3 +335,18 @@ def doesnt_raise(
             fail(f"{ex_value}")
         elif not suppress_not_matched:
             raise
+
+
+def is_local_url(urllike):
+    try:
+        return not any(attrgetter("scheme", "netloc")(urlparse(urllike)))
+    except Exception:
+        return False
+
+
+def is_url_parsable(urllike):
+    try:
+        urlparse(str(urllike))
+        return True
+    except ValueError:
+        return False
