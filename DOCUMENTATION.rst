@@ -1,3 +1,6 @@
+Advanced Features
+=================
+
 Hooks
 -----
 
