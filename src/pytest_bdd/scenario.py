@@ -157,7 +157,6 @@ def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContex
     Then we let `patch_argumented_step_functions` find out what step definition fixtures can parse the current step,
     and it will inject them for the step fixture name.
     Finally, we let request.getfixturevalue(...) fetch the step definition fixture.
-    Data tables are considered if the step has them defined.
     """
     __tracebackhide__ = True
     bdd_name = get_step_fixture_name(step=step)
@@ -173,7 +172,7 @@ def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContex
 def _execute_step_function(
     request: FixtureRequest, scenario: Scenario, step: Step, context: StepFunctionContext
 ) -> None:
-    """Execute step function"""
+    """Execute step function."""
     __tracebackhide__ = True
     kw = {
         "request": request,
