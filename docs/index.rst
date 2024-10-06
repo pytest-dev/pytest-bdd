@@ -1,14 +1,14 @@
+.. toctree::
+   :glob:
+
+   *
+
 Welcome to Pytest-BDD-NextGeneration's documentation!
 =====================================================
 
 .. include:: ../README.rst
 
 .. contents::
-
-.. toctree::
-   :glob:
-
-   *
 
 .. include:: features.rst
 
