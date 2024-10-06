@@ -620,18 +620,16 @@ Full example:
     from pytest_bdd import given, when, then
 
     @given("the following user details:")
-    def given_user_details(datatable):
+    def _(datatable):
         assert datatable == [["name", "email"], ["John", "john@example.com"]]
 
-    # When step to capture assigned roles
     @when("the user is assigned the following roles:")
-    def when_user_roles(datatable):
+    def _(datatable):
         assert datatable == [["role"], ["Admin"], ["Editor"]]
 
-    # Then step to validate permissions
     @then("the user should have the following permissions:")
-    def then_user_permissions(datatable):
-        permissions = [
+    def _(datatable):
+        expected_permissions = [
             ["permission", "allowed"],
             ["view content", "true"],
             ["edit content", "true"],
