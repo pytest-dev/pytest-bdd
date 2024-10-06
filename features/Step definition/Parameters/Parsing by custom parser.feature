@@ -14,7 +14,11 @@ Feature: Step definitions parameters parsing by custom parser
       class Parser(parsers.StepParser):
           def __init__(self, name, *args,**kwargs):
               self.name = name
-              self.regex = re.compile(re.sub("%(.+)%", r"(?P<\1>.+)", name), *args, **kwargs)
+              self.regex = re.compile(
+                re.sub("%(.+)%", r"(?P<\1>.+)", name),
+                *args,
+                **kwargs
+              )
 
           def parse_arguments(self, request, name, **kwargs):
               __doc__ = "Parse step arguments"
@@ -31,7 +35,11 @@ Feature: Step definitions parameters parsing by custom parser
           def __str__(self):
             return self.name
 
-      @given(Parser("there are %start% cucumbers"), target_fixture="start_cucumbers", converters=dict(start=int))
+      @given(
+        Parser("there are %start% cucumbers"),
+        target_fixture="start_cucumbers",
+        converters=dict(start=int)
+      )
       def start_cucumbers(start):
           assert start == 10
       """

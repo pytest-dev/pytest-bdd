@@ -15,7 +15,7 @@ from textwrap import dedent
 
 from docopt import docopt
 
-SECTION_SYMBOLS = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+SECTION_SYMBOLS = "-#!\"$%&'()*+,./:;<=>?@[\\]^_`{|}~="
 
 
 def convert(features_path: Path, output_file_path: Path):
@@ -32,15 +32,27 @@ def convert(features_path: Path, output_file_path: Path):
     content += dedent(
         # language=rst
         """\
+            Features
+            ========
+
             .. NOTE:: Features below are part of end-to-end test suite; You always could find most specific
                       use cases of **pytest-bdd-ng** by investigation of its regression
                       test suite https://github.com/elchupanebrej/pytest-bdd-ng/tree/default/tests
-
         """
     )
 
     while processable_paths:
         processable_path = processable_paths.popleft()
+
+        processable_rel_path = processable_path.relative_to(features_path)
+        content += dedent(
+            # language=rst
+            f"""\
+                {processable_rel_path.name}
+                {SECTION_SYMBOLS[len(processable_rel_path.parts) - 1] * len(processable_rel_path.name)}
+
+            """
+        )
 
         gherkin_file_paths = chain(processable_path.glob("*.gherkin"), processable_path.glob("*.feature"))
         struct_bdd_file_paths = processable_path.glob("*.bdd.yaml")
@@ -52,8 +64,8 @@ def convert(features_path: Path, output_file_path: Path):
             content += dedent(
                 # language=rst
                 f"""\
-                    {rel_path.as_posix()}
-                    {SECTION_SYMBOLS[len(rel_path.parts)-1]*len(str(rel_path))}
+                    {rel_path.name}
+                    {SECTION_SYMBOLS[len(rel_path.parts)-1]*len(rel_path.name)}
 
                     .. include:: {(output_path_rel_to_features_path / path.relative_to(features_path)).as_posix()}
                        :code: gherkin
@@ -75,7 +87,7 @@ def convert(features_path: Path, output_file_path: Path):
                 """
             )
 
-        processable_paths.extend(sub_processable_paths)
+        processable_paths.extendleft(sub_processable_paths)
     return content.rstrip("\n") + "\n"
 
 
