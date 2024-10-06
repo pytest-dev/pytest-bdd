@@ -156,6 +156,55 @@ default author.
             And there's an article
 
 
+Using Asterisks in Place of Keywords
+------------------------------------
+
+To avoid redundancy or unnecessary repetition of keywords
+such as "And" or "But" in Gherkin scenarios,
+you can use an asterisk (*) as a shorthand.
+The asterisk acts as a wildcard, allowing for the same functionality
+without repeating the keyword explicitly.
+It improves readability by making the steps easier to follow,
+especially when the specific keyword does not add value to the scenario's clarity.
+
+The asterisk will work the same as other step keywords - Given, When, Then - it follows.
+
+For example:
+
+.. code-block:: gherkin
+
+    Feature: Resource owner
+        Scenario: I'm the author
+            Given I'm an author
+            * I have an article
+            * I have a pen
+
+
+.. code-block:: python
+
+    from pytest_bdd import given
+
+    @given("I'm an author")
+    def _():
+        pass
+
+    @given("I have an article")
+    def _():
+        pass
+
+    @given("I have a pen")
+    def _():
+        pass
+
+
+In the scenario above, the asterisk (*) replaces the And or Given keywords.
+This allows for cleaner scenarios while still linking related steps together in the context of the scenario.
+
+This approach is particularly useful when you have a series of steps
+that do not require explicitly stating whether they are part of the "Given", "When", or "Then" context
+but are part of the logical flow of the scenario.
+
+
 Step arguments
 --------------
 
