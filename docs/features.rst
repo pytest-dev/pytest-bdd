@@ -7,17 +7,14 @@ Features
 
 
 
-Tutrorial
----------
+Tutorial
+--------
 
 Launch.feature
 ##############
 
-.. include:: ../features/Tutrorial/Launch.feature
+.. include:: ../features/Tutorial/Launch.feature
    :code: gherkin
-
-Tutorial
---------
 
 Step definition
 ---------------
