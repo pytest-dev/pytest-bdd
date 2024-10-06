@@ -57,7 +57,7 @@ repos:
         name: generate-feature-doc
         entry: >
           python src/pytest_bdd/script/bdd_tree_to_rst.py
-          Features
+          features
           docs/features.rst
         language: python
         types: [python]

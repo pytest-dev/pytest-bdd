@@ -2,128 +2,134 @@
           use cases of **pytest-bdd-ng** by investigation of its regression
           test suite https://github.com/elchupanebrej/pytest-bdd-ng/tree/default/tests
 
-Feature tags.feature
-!!!!!!!!!!!!!!!!!!!!
+Tutrorial/Launch.feature
+""""""""""""""""""""""""
 
-.. include:: ../Features/Feature tags.feature
+.. include:: ../features/Tutrorial/Launch.feature
    :code: gherkin
 
-Feature and scenario could have descriptions.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Feature/Localization.feature
+""""""""""""""""""""""""""""
 
-.. include:: ../Features/Feature and scenario could have descriptions.feature
+.. include:: ../features/Feature/Localization.feature
    :code: gherkin
 
-Tutorial launch.feature
-!!!!!!!!!!!!!!!!!!!!!!!
+Feature/Description.feature
+"""""""""""""""""""""""""""
 
-.. include:: ../Features/Tutorial launch.feature
+.. include:: ../features/Feature/Description.feature
    :code: gherkin
 
-Feature tag conversion.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Feature/Tag conversion.feature
+""""""""""""""""""""""""""""""
 
-.. include:: ../Features/Feature tag conversion.feature
+.. include:: ../features/Feature/Tag conversion.feature
    :code: gherkin
 
-Steps could have data tables.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Feature/Tag.feature
+"""""""""""""""""""
 
-.. include:: ../Features/Steps could have data tables.feature
+.. include:: ../features/Feature/Tag.feature
    :code: gherkin
 
-Feature localization.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Step/Doc string.feature
+"""""""""""""""""""""""
 
-.. include:: ../Features/Feature localization.feature
+.. include:: ../features/Step/Doc string.feature
    :code: gherkin
 
-Steps to step definition bounding.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Step/Data table.feature
+"""""""""""""""""""""""
 
-.. include:: ../Features/Steps to step definition bounding.feature
+.. include:: ../features/Step/Data table.feature
    :code: gherkin
 
-Steps could have doc strings.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-.. include:: ../Features/Steps could have doc strings.feature
-   :code: gherkin
-
-Step define target fixtures.feature
-"""""""""""""""""""""""""""""""""""
-
-.. include:: ../Features/Step definition/Step define target fixtures.feature
-   :code: gherkin
-
-Step utilize fixtures.feature
-"""""""""""""""""""""""""""""
-
-.. include:: ../Features/Step definition/Step utilize fixtures.feature
-   :code: gherkin
-
-Scenario search from base url.feature
+Step/Step definition bounding.feature
 """""""""""""""""""""""""""""""""""""
 
-.. include:: ../Features/Load/Scenario search from base url.feature
+.. include:: ../features/Step/Step definition bounding.feature
    :code: gherkin
 
-Autoload.feature
-""""""""""""""""
+Step definition/Target fixtures specification.feature
+"""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-.. include:: ../Features/Load/Autoload.feature
+.. include:: ../features/Step definition/Target fixtures specification.feature
    :code: gherkin
 
-Scenario function loader.feature
-""""""""""""""""""""""""""""""""
+Step definition/Pytest fixtures substitution.feature
+""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-.. include:: ../Features/Load/Scenario function loader.feature
+.. include:: ../features/Step definition/Pytest fixtures substitution.feature
    :code: gherkin
 
-Scenario search from base directory.feature
-"""""""""""""""""""""""""""""""""""""""""""
+Scenario/Description.feature
+""""""""""""""""""""""""""""
 
-.. include:: ../Features/Load/Scenario search from base directory.feature
+.. include:: ../features/Scenario/Description.feature
    :code: gherkin
 
-Scenario tags.feature
-"""""""""""""""""""""
+Scenario/Tag.feature
+""""""""""""""""""""
 
-.. include:: ../Features/Scenario/Scenario tags.feature
+.. include:: ../features/Scenario/Tag.feature
    :code: gherkin
 
-Defaults.feature
-################
+Feature/Load/Scenario search from base url.feature
+##################################################
 
-.. include:: ../Features/Step definition/Parameters/Defaults.feature
+.. include:: ../features/Feature/Load/Scenario search from base url.feature
    :code: gherkin
 
-Injection as fixtures.feature
+Feature/Load/Autoload.feature
 #############################
 
-.. include:: ../Features/Step definition/Parameters/Injection as fixtures.feature
+.. include:: ../features/Feature/Load/Autoload.feature
    :code: gherkin
 
-Conversion.feature
-##################
+Feature/Load/Scenario function loader.feature
+#############################################
 
-.. include:: ../Features/Step definition/Parameters/Conversion.feature
+.. include:: ../features/Feature/Load/Scenario function loader.feature
    :code: gherkin
 
-Parsing by custom parser.feature
-################################
+Feature/Load/Scenario search from base directory.feature
+########################################################
 
-.. include:: ../Features/Step definition/Parameters/Parsing by custom parser.feature
+.. include:: ../features/Feature/Load/Scenario search from base directory.feature
    :code: gherkin
 
-Parsing.feature
-###############
-
-.. include:: ../Features/Step definition/Parameters/Parsing.feature
-   :code: gherkin
-
-Tags for Scenario Outlines examples.feature
+Step definition/Parameters/Defaults.feature
 ###########################################
 
-.. include:: ../Features/Scenario/Outline/Tags for Scenario Outlines examples.feature
+.. include:: ../features/Step definition/Parameters/Defaults.feature
+   :code: gherkin
+
+Step definition/Parameters/Injection as fixtures.feature
+########################################################
+
+.. include:: ../features/Step definition/Parameters/Injection as fixtures.feature
+   :code: gherkin
+
+Step definition/Parameters/Conversion.feature
+#############################################
+
+.. include:: ../features/Step definition/Parameters/Conversion.feature
+   :code: gherkin
+
+Step definition/Parameters/Parsing by custom parser.feature
+###########################################################
+
+.. include:: ../features/Step definition/Parameters/Parsing by custom parser.feature
+   :code: gherkin
+
+Step definition/Parameters/Parsing.feature
+##########################################
+
+.. include:: ../features/Step definition/Parameters/Parsing.feature
+   :code: gherkin
+
+Scenario/Outline/Examples Tag.feature
+#####################################
+
+.. include:: ../features/Scenario/Outline/Examples Tag.feature
    :code: gherkin

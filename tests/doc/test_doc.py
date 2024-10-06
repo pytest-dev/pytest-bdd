@@ -42,8 +42,8 @@ def test_doc_generation(testdir: "Testdir"):
             .. include:: features/simple.gherkin
                :code: gherkin
 
-            other_simple.gherkin
-            """"""""""""""""""""
+            extra/other_simple.gherkin
+            """"""""""""""""""""""""""
 
             .. include:: features/extra/other_simple.gherkin
                :code: gherkin

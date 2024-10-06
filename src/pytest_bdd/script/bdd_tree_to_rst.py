@@ -48,11 +48,12 @@ def convert(features_path: Path, output_file_path: Path):
         sub_processable_paths = list(filter(methodcaller("is_dir"), processable_path.iterdir()))
 
         for path in gherkin_file_paths:
+            rel_path = path.relative_to(features_path)
             content += dedent(
                 # language=rst
                 f"""\
-                    {path.name}
-                    {SECTION_SYMBOLS[len(path.relative_to(features_path).parts)-1]*len(path.name)}
+                    {rel_path.as_posix()}
+                    {SECTION_SYMBOLS[len(rel_path.parts)-1]*len(str(rel_path))}
 
                     .. include:: {(output_path_rel_to_features_path / path.relative_to(features_path)).as_posix()}
                        :code: gherkin
@@ -61,11 +62,12 @@ def convert(features_path: Path, output_file_path: Path):
             )
 
         for path in struct_bdd_file_paths:
+            rel_path = path.relative_to(features_path)
             content += dedent(
                 # language=rst
                 f"""\
-                    {path.name}
-                    {SECTION_SYMBOLS[len(path.relative_to(features_path).parts)-1]*len(path.name)}
+                    {rel_path.as_posix()}
+                    {SECTION_SYMBOLS[len(rel_path.parts)-1]*len(str(rel_path))}
 
                     .. include:: {(output_path_rel_to_features_path / path.relative_to(features_path)).as_posix()}
                        :code: yaml
