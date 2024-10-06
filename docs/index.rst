@@ -5,9 +5,6 @@ Welcome to Pytest-BDD-NextGeneration's documentation!
 
 .. contents::
 
-Features
-========
-
 .. toctree::
    :glob:
 
