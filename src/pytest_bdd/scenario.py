@@ -153,9 +153,12 @@ def inject_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node
 
 def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContext | None:
     """Get the step function (context) for the given step.
+
     We first figure out what's the step fixture name that we have to inject.
+
     Then we let `patch_argumented_step_functions` find out what step definition fixtures can parse the current step,
     and it will inject them for the step fixture name.
+
     Finally, we let request.getfixturevalue(...) fetch the step definition fixture.
     """
     __tracebackhide__ = True
