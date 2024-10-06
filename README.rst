@@ -561,88 +561,83 @@ Example:
         assert cucumbers["start"] - cucumbers["eat"] == left
 
 
-Using the data_table Fixture
+Using the datatable Fixture
 ----------------------------
 
-The ``data_table`` fixture allows you to utilise data tables defined in your Gherkin scenarios
+The ``datatable`` fixture allows you to utilise data tables defined in your Gherkin scenarios
 directly within your test functions. This is particularly useful for scenarios that require tabular data as input,
 enabling you to manage and manipulate this data conveniently.
 
-.. NOTE:: When using the data_table fixture, it is essential to ensure that the step to which it is applied
+The ``datatable`` fixture in pytest-bdd allows you to access the data tables defined in your Gherkin scenarios.
+When you use the ``datatable`` fixture in a step definition, it will return the table as a list of lists,
+where each inner list represents a row from the table.
+
+For example, the Gherkin table:
+
+.. code-block:: gherkin
+
+    | name  | email            |
+    | John  | john@example.com |
+
+Will be returned by the ``datatable`` fixture as:
+
+.. code-block:: python
+
+    [
+        ["name", "email"],
+        ["John", "john@example.com"]
+    ]
+
+.. NOTE:: When using the datatable fixture, it is essential to ensure that the step to which it is applied
           actually has an associated data table. If the step does not have an associated data table,
-          attempting to use the data_table fixture will raise an error.
+          attempting to use the datatable fixture will raise an error.
           Make sure that your Gherkin steps correctly reference the data table when defined.
 
-Example:
+Full example:
+
+.. code-block:: gherkin
+
+    Feature: User roles and permissions
+
+      Scenario: Assigning roles to a user
+        Given the following user details:
+          | name  | email            |
+          | John  | john@example.com |
+
+        When the user is assigned the following roles:
+          | role  |
+          | Admin |
+          | Editor |
+
+        Then the user should have the following permissions:
+          | permission    | allowed |
+          | view content  | true    |
+          | edit content  | true    |
+          | delete content| false   |
 
 .. code-block:: python
 
-        import pytest
-        from pytest_bdd import scenario, given, when, then, data_table
+    from pytest_bdd import given, when, then
 
-        # Define a Gherkin scenario in a feature file.
-        @scenario('my_feature.feature', 'Process a data table')
-        def test_process_data_table():
-            pass
+    @given("the following user details:")
+    def given_user_details(datatable):
+        assert datatable == [["name", "email"], ["John", "john@example.com"]]
 
-        @given('I have the following data')
-        def step_with_data(data_table):
-            # The data_table fixture provides access to the data in a tabular format.
-            data_dict = data_table.to_dict()
-            print(data_dict)  # Prints the data in dictionary format.
+    # When step to capture assigned roles
+    @when("the user is assigned the following roles:")
+    def when_user_roles(datatable):
+        assert datatable == [["role"], ["Admin"], ["Editor"]]
 
-        @then('I can transpose the data')
-        def step_transpose(data_table):
-            transposed_table = data_table.transpose()
-            transposed_dict = transposed_table.to_dict()
-            print(transposed_dict)  # Prints the transposed data in dictionary format.
-
-
-The ``to_dict()`` method converts the data table into a dictionary format
-where the keys are the headers from the first row of the data table,
-and the values are lists of values from each subsequent row.
-
-Example:
-
-.. code-block:: python
-
-        # Assuming your data table looks like this:
-        # | Name  | Age |
-        # | Alice | 30  |
-        # | Bob   | 25  |
-
-        data_dict = data_table.to_dict()
-        # The output will be:
-        # {
-        #     'Name': ['Alice', 'Bob'],
-        #     'Age': ['30', '25']
-        # }
-
-
-The ``transpose()`` method converts rows of the data table into columns, effectively flipping the data structure.
-The first row will become the first column, the second row becomes the second column, and so on.
-
-Example:
-
-.. code-block:: python
-
-        # Assuming your data table looks like this:
-        # | Name  | Age |
-        # | Alice | 30  |
-        # | Bob   | 25  |
-
-        # When you call the transpose method:
-        transposed_table = data_table.transpose()
-
-        # The transposed data will look like this:
-        # [
-        #     ["Name", "Alice", "Bob"],
-        #     ["Age", 30, 25]
-        # ]
-
-        # Printing the transposed data:
-        for row in transposed_table.rows:
-            print([cell.value for cell in row.cells])
+    # Then step to validate permissions
+    @then("the user should have the following permissions:")
+    def then_user_permissions(datatable):
+        permissions = [
+            ["permission", "allowed"],
+            ["view content", "true"],
+            ["edit content", "true"],
+            ["delete content", "false"]
+        ]
+        assert datatable == expected_permissions
 
 
 Organizing your scenarios

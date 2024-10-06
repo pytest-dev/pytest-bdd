@@ -18,6 +18,8 @@ DATA_TABLE_FEATURE = """\
                   | Admin       | Full access to the system |
                   | Contributor | Can add content           |
 
+                And this step has no datatable
+
                 Then the user should have the following permissions:
                   | permission     | allowed |
                   | view dashboard | true    |
@@ -32,21 +34,26 @@ DATA_TABLE_STEPS = """\
 
 
         @given("the following user details:")
-        def _(data_table):
-            given_data_table = data_table
-            dump_obj(given_data_table)
+        def _(datatable):
+            given_datatable = datatable
+            dump_obj(given_datatable)
 
 
         @when("the user is assigned the following roles:")
-        def _(data_table):
-            when_data_table = data_table
-            dump_obj(when_data_table)
+        def _(datatable):
+            when_datatable = datatable
+            dump_obj(when_datatable)
+
+
+        @when("this step has no datatable")
+        def _():
+            pass
 
 
         @then("the user should have the following permissions:")
-        def _(data_table):
-            then_data_table = data_table
-            dump_obj(then_data_table)
+        def _(datatable):
+            then_datatable = datatable
+            dump_obj(then_datatable)
 
     """
 
@@ -54,35 +61,32 @@ DATA_TABLE_STEPS = """\
 DATA_TABLE_TEST_FILE = """\
         from pytest_bdd import scenario
 
-        @scenario("data_table.feature", "Creating a new user with roles and permissions")
-        def test_data_table():
+        @scenario("datatable.feature", "Creating a new user with roles and permissions")
+        def test_datatable():
             pass
         """
 
 
-def test_steps_with_data_tables(pytester):
-    pytester.makefile(".feature", data_table=textwrap.dedent(DATA_TABLE_FEATURE))
+def test_steps_with_datatables(pytester):
+    pytester.makefile(".feature", datatable=textwrap.dedent(DATA_TABLE_FEATURE))
     pytester.makeconftest(textwrap.dedent(DATA_TABLE_STEPS))
     pytester.makepyfile(textwrap.dedent(DATA_TABLE_TEST_FILE))
 
     result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
 
-    def get_row_values(data_table: DataTable) -> List[List[str]]:
-        return [[cell.value for cell in row.cells] for row in data_table.rows]
-
-    data_tables: List[DataTable] = collect_dumped_objects(result)
-    assert get_row_values(data_tables[0]) == [
+    datatables: List[DataTable] = collect_dumped_objects(result)
+    assert datatables[0] == [
         ["name", "email", "age"],
         ["John", "john@example.com", "30"],
         ["Alice", "alice@example.com", "25"],
     ]
-    assert get_row_values(data_tables[1]) == [
+    assert datatables[1] == [
         ["role", "description"],
         ["Admin", "Full access to the system"],
         ["Contributor", "Can add content"],
     ]
-    assert get_row_values(data_tables[2]) == [
+    assert datatables[2] == [
         ["permission", "allowed"],
         ["view dashboard", "true"],
         ["edit content", "true"],
@@ -90,63 +94,10 @@ def test_steps_with_data_tables(pytester):
     ]
 
 
-def test_steps_with_data_tables_as_dict(pytester):
-    pytester.makefile(".feature", data_table=textwrap.dedent(DATA_TABLE_FEATURE))
-    pytester.makeconftest(textwrap.dedent(DATA_TABLE_STEPS))
-    pytester.makepyfile(textwrap.dedent(DATA_TABLE_TEST_FILE))
-
-    result = pytester.runpytest("-s")
-    result.assert_outcomes(passed=1)
-
-    data_tables: List[DataTable] = collect_dumped_objects(result)
-    assert data_tables[0].to_dict() == {
-        "age": ["30", "25"],
-        "email": ["john@example.com", "alice@example.com"],
-        "name": ["John", "Alice"],
-    }
-    assert data_tables[1].to_dict() == {
-        "description": ["Full access to the system", "Can add content"],
-        "role": ["Admin", "Contributor"],
-    }
-    assert data_tables[2].to_dict() == {
-        "allowed": ["true", "true", "false"],
-        "permission": ["view dashboard", "edit content", "delete content"],
-    }
-
-
-def test_steps_with_data_tables_transposed(pytester):
-    pytester.makefile(".feature", data_table=textwrap.dedent(DATA_TABLE_FEATURE))
-    pytester.makeconftest(textwrap.dedent(DATA_TABLE_STEPS))
-    pytester.makepyfile(textwrap.dedent(DATA_TABLE_TEST_FILE))
-
-    result = pytester.runpytest("-s")
-    result.assert_outcomes(passed=1)
-
-    def get_row_values(data_table: DataTable) -> List[List[str]]:
-        return [[cell.value for cell in row.cells] for row in data_table.rows]
-
-    data_tables: List[DataTable] = collect_dumped_objects(result)
-    assert get_row_values(data_tables[0].transpose()) == [
-        ["name", "John", "Alice"],
-        ["email", "john@example.com", "alice@example.com"],
-        ["age", "30", "25"],
-    ]
-
-    assert get_row_values(data_tables[1].transpose()) == [
-        ["role", "Admin", "Contributor"],
-        ["description", "Full access to the system", "Can add content"],
-    ]
-
-    assert get_row_values(data_tables[2].transpose()) == [
-        ["permission", "view dashboard", "edit content", "delete content"],
-        ["allowed", "true", "true", "false"],
-    ]
-
-
-def test_steps_with_missing_data_tables(pytester):
+def test_steps_with_missing_datatables(pytester):
     pytester.makefile(
         ".feature",
-        missing_data_table=textwrap.dedent(
+        missing_datatable=textwrap.dedent(
             """\
             Feature: Missing data table
 
@@ -156,7 +107,7 @@ def test_steps_with_missing_data_tables(pytester):
                   | John  | john@example.com  | 30  |
                   | Alice | alice@example.com | 25  |
 
-                When this step has no data table but tries to use the data_table fixture
+                When this step has no data table but tries to use the datatable fixture
                 Then an error is thrown
             """
         ),
@@ -169,19 +120,19 @@ def test_steps_with_missing_data_tables(pytester):
 
 
         @given("this step has a data table:")
-        def _(data_table):
-            given_data_table = data_table
-            dump_obj(given_data_table)
+        def _(datatable):
+            given_datatable = datatable
+            dump_obj(given_datatable)
 
 
-        @when("this step has no data table but tries to use the data_table fixture")
-        def _(data_table):
-            when_data_table = data_table
-            dump_obj(when_data_table)
+        @when("this step has no data table but tries to use the datatable fixture")
+        def _(datatable):
+            when_datatable = datatable
+            dump_obj(when_datatable)
 
 
         @then("an error is thrown")
-        def _(data_table):
+        def _(datatable):
             pass
 
     """
@@ -193,56 +144,12 @@ def test_steps_with_missing_data_tables(pytester):
             """\
         from pytest_bdd import scenario
 
-        @scenario("missing_data_table.feature", "Data table is missing for a step")
-        def test_data_table():
+        @scenario("missing_datatable.feature", "Data table is missing for a step")
+        def test_datatable():
             pass
         """
         )
     )
     result = pytester.runpytest("-s")
     result.assert_outcomes(failed=1)
-    result.stdout.fnmatch_lines(["*fixture 'data_table' not found*"])
-
-
-def test_steps_with_data_tables_too_short_for_to_dict(pytester):
-    pytester.makefile(
-        ".feature",
-        too_short_data_table=textwrap.dedent(
-            """\
-            Feature: Short data table
-
-              Scenario: Data table too short for transforming to dict
-                Given this step has a data table:
-                  | name  | email             | age |
-
-            """
-        ),
-    )
-    pytester.makeconftest(
-        textwrap.dedent(
-            """\
-        from pytest_bdd import given, when, then
-
-
-        @given("this step has a data table:")
-        def _(data_table):
-            data_table.to_dict()
-
-    """
-        )
-    )
-
-    pytester.makepyfile(
-        textwrap.dedent(
-            """\
-        from pytest_bdd import scenario
-
-        @scenario("too_short_data_table.feature", "Data table too short for transforming to dict")
-        def test_data_table():
-            pass
-        """
-        )
-    )
-    result = pytester.runpytest("-s")
-    result.assert_outcomes(failed=1)
-    result.stdout.fnmatch_lines(["*ValueError: DataTable needs at least two rows: one for headers and one for values*"])
+    result.stdout.fnmatch_lines(["*fixture 'datatable' not found*"])

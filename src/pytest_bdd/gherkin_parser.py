@@ -13,6 +13,8 @@ from gherkin.parser import Parser  # type: ignore
 from . import exceptions
 
 if typing.TYPE_CHECKING:
+    from typing import Sequence
+
     from typing_extensions import Self
 
 
@@ -67,42 +69,42 @@ class Location:
 
 @dataclass
 class Comment:
-    _location: Location
+    location: Location
     text: str
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
-        return cls(_location=Location.from_dict(data["location"]), text=data["text"])
+        return cls(location=Location.from_dict(data["location"]), text=data["text"])
 
 
 @dataclass
 class Cell:
-    _location: Location
+    location: Location
     value: str
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
-        return cls(_location=Location.from_dict(data["location"]), value=_to_raw_string(data["value"]))
+        return cls(location=Location.from_dict(data["location"]), value=_to_raw_string(data["value"]))
 
 
 @dataclass
 class Row:
-    _id: str
-    _location: Location
+    id: str
+    location: Location
     cells: list[Cell]
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
-            _id=data["id"],
-            _location=Location.from_dict(data["location"]),
+            id=data["id"],
+            location=Location.from_dict(data["location"]),
             cells=[Cell.from_dict(cell) for cell in data["cells"]],
         )
 
 
 @dataclass
 class ExamplesTable:
-    _location: Location
+    location: Location
     name: str | None = None
     table_header: Row | None = None
     table_body: list[Row] | None = field(default_factory=list)
@@ -110,7 +112,7 @@ class ExamplesTable:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
-            _location=Location.from_dict(data["location"]),
+            location=Location.from_dict(data["location"]),
             name=data.get("name"),
             table_header=Row.from_dict(data["tableHeader"]) if data.get("tableHeader") else None,
             table_body=[Row.from_dict(row) for row in data.get("tableBody", [])],
@@ -119,93 +121,72 @@ class ExamplesTable:
 
 @dataclass
 class DataTable:
-    _location: Location
+    location: Location
     rows: list[Row]
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
-            _location=Location.from_dict(data["location"]), rows=[Row.from_dict(row) for row in data.get("rows", [])]
+            location=Location.from_dict(data["location"]), rows=[Row.from_dict(row) for row in data.get("rows", [])]
         )
 
-    def transpose(self) -> DataTable:
-        # Transpose the cells, turning rows into columns
-        cells_matrix = [row.cells for row in self.rows]
-
-        # Use zip to transpose the matrix and create transposed rows
-        transposed_cells = [
-            Row(_id=str(i), _location=self._location, cells=list(col)) for i, col in enumerate(zip(*cells_matrix))
-        ]
-
-        # Return a new DataTable with transposed rows
-        return DataTable(_location=self._location, rows=transposed_cells)
-
-    def to_dict(self) -> dict[str, list[str]]:
-        # Ensure there are at least two rows: one for the header and one for the values
-        if len(self.rows) < 2:
-            raise ValueError("DataTable needs at least two rows: one for headers and one for values")
-
-        # Extract the header row and the value rows
-        header = [cell.value for cell in self.rows[0].cells]
-        values_rows = [[cell.value for cell in row.cells] for row in self.rows[1:]]
-
-        # Transpose values and map headers to columns
-        return {key: list(values) for key, values in zip(header, zip(*values_rows))}
+    def raw(self) -> Sequence[Sequence[object]]:
+        return [[cell.value for cell in row.cells] for row in self.rows]
 
 
 @dataclass
 class DocString:
     content: str
     delimiter: str
-    _location: Location
+    location: Location
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
             content=textwrap.dedent(data["content"]),
             delimiter=data["delimiter"],
-            _location=Location.from_dict(data["location"]),
+            location=Location.from_dict(data["location"]),
         )
 
 
 @dataclass
 class Step:
-    _id: str
-    _location: Location
+    id: str
+    location: Location
     keyword: str
     keyword_type: str
     text: str
-    data_table: DataTable | None = None
-    doc_string: DocString | None = None
+    datatable: DataTable | None = None
+    docstring: DocString | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
-            _id=data["id"],
-            _location=Location.from_dict(data["location"]),
+            id=data["id"],
+            location=Location.from_dict(data["location"]),
             keyword=data["keyword"].strip(),
             keyword_type=data["keywordType"],
             text=data["text"],
-            data_table=DataTable.from_dict(data["dataTable"]) if data.get("dataTable") else None,
-            doc_string=DocString.from_dict(data["docString"]) if data.get("docString") else None,
+            datatable=DataTable.from_dict(data["dataTable"]) if data.get("dataTable") else None,
+            docstring=DocString.from_dict(data["docString"]) if data.get("docString") else None,
         )
 
 
 @dataclass
 class Tag:
-    _id: str
-    _location: Location
+    id: str
+    location: Location
     name: str
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
-        return cls(_id=data["id"], _location=Location.from_dict(data["location"]), name=data["name"])
+        return cls(id=data["id"], location=Location.from_dict(data["location"]), name=data["name"])
 
 
 @dataclass
 class Scenario:
-    _id: str
-    _location: Location
+    id: str
+    location: Location
     keyword: str
     name: str
     description: str
@@ -216,8 +197,8 @@ class Scenario:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
-            _id=data["id"],
-            _location=Location.from_dict(data["location"]),
+            id=data["id"],
+            location=Location.from_dict(data["location"]),
             keyword=data["keyword"],
             name=data["name"],
             description=data["description"],
@@ -229,8 +210,8 @@ class Scenario:
 
 @dataclass
 class Rule:
-    _id: str
-    _location: Location
+    id: str
+    location: Location
     keyword: str
     name: str
     description: str
@@ -240,8 +221,8 @@ class Rule:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
-            _id=data["id"],
-            _location=Location.from_dict(data["location"]),
+            id=data["id"],
+            location=Location.from_dict(data["location"]),
             keyword=data["keyword"],
             name=data["name"],
             description=data["description"],
@@ -252,8 +233,8 @@ class Rule:
 
 @dataclass
 class Background:
-    _id: str
-    _location: Location
+    id: str
+    location: Location
     keyword: str
     name: str
     description: str
@@ -262,8 +243,8 @@ class Background:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
-            _id=data["id"],
-            _location=Location.from_dict(data["location"]),
+            id=data["id"],
+            location=Location.from_dict(data["location"]),
             keyword=data["keyword"],
             name=data["name"],
             description=data["description"],
@@ -288,7 +269,7 @@ class Child:
 
 @dataclass
 class Feature:
-    _location: Location
+    location: Location
     keyword: str
     tags: list[Tag]
     name: str
@@ -298,7 +279,7 @@ class Feature:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
-            _location=Location.from_dict(data["location"]),
+            location=Location.from_dict(data["location"]),
             keyword=data["keyword"],
             tags=[Tag.from_dict(tag) for tag in data["tags"]],
             name=data["name"],

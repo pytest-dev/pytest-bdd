@@ -165,11 +165,6 @@ def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContex
     with inject_fixturedefs_for_step(step=step, fixturemanager=request._fixturemanager, node=request.node):
         try:
             context = cast(StepFunctionContext, request.getfixturevalue(bdd_name))
-
-            # Attach data_table if present
-            if step.data_table:
-                context.data_table = step.data_table
-
             return context
         except pytest.FixtureLookupError:
             return None
@@ -178,7 +173,7 @@ def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContex
 def _execute_step_function(
     request: FixtureRequest, scenario: Scenario, step: Step, context: StepFunctionContext
 ) -> None:
-    """Execute step function, with support for data_table."""
+    """Execute step function"""
     __tracebackhide__ = True
     kw = {
         "request": request,
@@ -197,15 +192,13 @@ def _execute_step_function(
     args = get_args(context.step_func)
 
     try:
-        # Parse arguments, including handling for data_table
         parsed_args = context.parser.parse_arguments(step.name)
         assert parsed_args is not None, (
             f"Unexpected `NoneType` returned from " f"parse_arguments(...) in parser: {context.parser!r}"
         )
 
-        # Handle data_table if it exists
-        if step.data_table:
-            kwargs["data_table"] = step.data_table
+        if step.datatable is not None:
+            kwargs["datatable"] = step.datatable.raw()
 
         for arg, value in parsed_args.items():
             if arg in converters:
