@@ -30,7 +30,8 @@ Feature: Step definitions parameters conversion
       |     1|
 
   Rule: for anonymous groups
-    Step definitions parameters could not have a name, so we have to name them before conversion
+    Step definitions parameters could not have a name, so
+    we have to name them before conversion
 
     Scenario:
       Given File "conftest.py" with content:
@@ -42,7 +43,11 @@ Feature: Step definitions parameters conversion
         class Item(Enum):
           CUCUMBER = 'cucumber'
 
-        @given(parse(r"I have a (\w+)"), anonymous_group_names=('item',), converters=dict(item=Item))
+        @given(
+          parse(r"I have a (\w+)"),
+          anonymous_group_names=('item',),
+          converters=dict(item=Item)
+        )
         def i_have_item(item):
             assert item == Item.CUCUMBER
         """
@@ -60,12 +65,19 @@ Feature: Step definitions parameters conversion
         from cucumber_expressions.expression import CucumberExpression
         from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
 
-        parse = partial(CucumberExpression, parameter_type_registry = ParameterTypeRegistry())
+        parse = partial(
+          CucumberExpression,
+          parameter_type_registry = ParameterTypeRegistry()
+        )
 
         class Item(Enum):
           CUCUMBER = 'cucumber'
 
-        @given(parse(r"I have a {word}"), anonymous_group_names=('item',), converters=dict(item=Item))
+        @given(
+          parse(r"I have a {word}"),
+          anonymous_group_names=('item',),
+          converters=dict(item=Item)
+        )
         def i_have_item(item):
             assert item == Item.CUCUMBER
         """

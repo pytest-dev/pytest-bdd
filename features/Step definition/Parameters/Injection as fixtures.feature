@@ -1,8 +1,9 @@
 Feature: Step definitions parameters injection as fixtures
-  Step arguments are injected into step context and could be used
-  as normal fixtures with the names equal to the names of the arguments by default.
+  Step arguments are injected into step context and could be used as normal
+  fixtures with the names equal to the names of the arguments by default.
 
-  Step's argument are accessible as a fixture in other step function just by mentioning it as an argument
+  Step's argument are accessible as a fixture in other step function just
+  by mentioning it as an argument
 
   If the name of the step argument clashes with existing fixture,
   it will be overridden by step's argument value.
@@ -16,7 +17,10 @@ Feature: Step definitions parameters injection as fixtures
       from pytest_bdd import given, then
 
       @given("I have a pickle", param_defaults=dict(freshness='salted'))
-      @given(parse(r"I have a ((?P<freshness>\w+)\s)?cucumber"), param_defaults=dict(freshness='fresh'))
+      @given(
+        parse(r"I have a ((?P<freshness>\w+)\s)?cucumber"),
+        param_defaults=dict(freshness='fresh')
+      )
       def i_have_cucumber(freshness):
           ...
 
@@ -65,8 +69,18 @@ Feature: Step definitions parameters injection as fixtures
       from re import compile as parse
       from pytest_bdd import given, then
 
-      @given("I have a pickle", param_defaults=dict(freshness='salted'), params_fixtures_mapping={...:None}, target_fixtures=['cuke_taste'])
-      @given(parse(r"I have a ((?P<freshness>\w+)\s)?cucumber"), param_defaults=dict(freshness='fresh'), params_fixtures_mapping=False, target_fixture='cuke_taste')
+      @given(
+        "I have a pickle",
+        param_defaults=dict(freshness='salted'),
+        params_fixtures_mapping={...:None},
+        target_fixtures=['cuke_taste']
+      )
+      @given(
+        parse(r"I have a ((?P<freshness>\w+)\s)?cucumber"),
+        param_defaults=dict(freshness='fresh'),
+        params_fixtures_mapping=False,
+        target_fixture='cuke_taste'
+      )
       def i_have_cucumber(freshness):
           assert freshness is not None
           yield freshness
@@ -105,8 +119,16 @@ Feature: Step definitions parameters injection as fixtures
       from re import compile as parse
       from pytest_bdd import given, then
 
-      @given("I have a pickle", param_defaults=dict(freshness='salted'), params_fixtures_mapping={"freshness":"cuke_taste"})
-      @given(parse(r"I have a ((?P<freshness>\w+)\s)?cucumber"), param_defaults=dict(freshness='fresh'), params_fixtures_mapping={"freshness":"cuke_taste"})
+      @given(
+        "I have a pickle",
+        param_defaults=dict(freshness='salted'),
+        params_fixtures_mapping={"freshness":"cuke_taste"}
+      )
+      @given(
+        parse(r"I have a ((?P<freshness>\w+)\s)?cucumber"),
+        param_defaults=dict(freshness='fresh'),
+        params_fixtures_mapping={"freshness":"cuke_taste"}
+      )
       def i_have_cucumber(cuke_taste, freshness):
           assert cuke_taste is not None
           assert freshness == cuke_taste
@@ -146,7 +168,11 @@ Feature: Step definitions parameters injection as fixtures
       """python
       from pytest_bdd import given
 
-      @given("I have an old pickle", param_defaults=dict(freshness='salted', age='old'), params_fixtures_mapping={"freshness"})
+      @given(
+        "I have an old pickle",
+        param_defaults=dict(freshness='salted', age='old'),
+        params_fixtures_mapping={"freshness"}
+      )
       def i_have_cucumber(age, freshness):
           assert age == 'old'
           assert freshness == 'salted'

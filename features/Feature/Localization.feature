@@ -1,5 +1,6 @@
 Feature: Scenarios tags could be localized
-  pytest-bdd-ng supports all localizations which Gherkin does: https://cucumber.io/docs/gherkin/languages/
+  pytest-bdd-ng supports all localizations which
+  Gherkin does: https://cucumber.io/docs/gherkin/languages/
 
   Scenario:
       Given File "Localized.feature" with content:

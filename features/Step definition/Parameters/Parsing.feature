@@ -22,8 +22,9 @@ Feature: Step definitions parameters parsing
         """
 
     Scenario: Heuristic parser guesses a type and builds particular parser to be applied
-      Tries to select right parser between string, cucumber_expression, cfparse and re. Any object that supports `__str__`
-      interface and does not support parser interface will be wrapped with this parser
+      Tries to select right parser between string, cucumber_expression, cfparse and re.
+      Any object that supports `__str__` interface and does not support parser interface
+      will be wrapped with this parser
 
       Given File "conftest.py" with content:
         """python
@@ -40,12 +41,19 @@ Feature: Step definitions parameters parsing
             assert wallet == 'wallet'
 
         # cucumber expressions parser
-        @given("I have {int} Euro", anonymous_group_names=('euro',), converters=dict(euro=int))
+        @given("I have {int} Euro",
+          anonymous_group_names=('euro',),
+          converters=dict(euro=int)
+        )
         def i_have(euro, values):
             assert euro == values.pop(0)
 
         # parse parser
-        @when("I pay {} Euro", anonymous_group_names=('euro',), converters=dict(euro=int))
+        @when(
+          "I pay {} Euro",
+          anonymous_group_names=('euro',),
+          converters=dict(euro=int)
+        )
         def i_pay(euro, values):
             assert euro == values.pop(0)
 
@@ -55,7 +63,11 @@ Feature: Step definitions parameters parsing
             assert euro == values.pop(0)
 
         # regular expression parser
-        @then(r"I should have (\d+) Euro", anonymous_group_names=('euro',), converters=dict(euro=int))
+        @then(
+          r"I should have (\d+) Euro",
+          anonymous_group_names=('euro',),
+          converters=dict(euro=int)
+        )
         def i_should_have(euro, values):
             assert euro == values.pop(0)
         """
@@ -98,11 +110,19 @@ Feature: Step definitions parameters parsing
         def i_pay(euro, values):
             assert euro == values.pop(0)
 
-        @when(parse("I lose {} Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
+        @when(
+          parse("I lose {} Euro"),
+          anonymous_group_names=('euro',),
+          converters=dict(euro=int)
+        )
         def i_pay(euro, values):
             assert euro == values.pop(0)
 
-        @then(parse(r"I should have {:d} Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
+        @then(
+          parse(r"I should have {:d} Euro"),
+          anonymous_group_names=('euro',),
+          converters=dict(euro=int)
+        )
         def i_should_have(euro, values):
             assert euro == values.pop(0)
         """
@@ -145,11 +165,19 @@ Feature: Step definitions parameters parsing
         def i_pay(euro, values):
             assert euro == values.pop(0)
 
-        @when(parse("I lose {} Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
+        @when(
+          parse("I lose {} Euro"),
+          anonymous_group_names=('euro',),
+          converters=dict(euro=int)
+        )
         def i_pay(euro, values):
             assert euro == values.pop(0)
 
-        @then(parse(r"I should have {:d} Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
+        @then(
+          parse(r"I should have {:d} Euro"),
+          anonymous_group_names=('euro',),
+          converters=dict(euro=int)
+        )
         def i_should_have(euro, values):
             assert euro == values.pop(0)
 
@@ -161,7 +189,8 @@ Feature: Step definitions parameters parsing
 
     Scenario: by "cucumber-expressions"
       https://github.com/cucumber/cucumber-expressions
-      Cucumber Expressions is an alternative to Regular Expressions with a more intuitive syntax.
+      Cucumber Expressions is an alternative to Regular Expressions
+      with a more intuitive syntax.
 
       And File "conftest.py" with content:
         """python
@@ -171,7 +200,10 @@ Feature: Step definitions parameters parsing
         from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
         from cucumber_expressions.expression import CucumberExpression
 
-        parse = partial(CucumberExpression, parameter_type_registry = ParameterTypeRegistry())
+        parse = partial(
+          CucumberExpression,
+          parameter_type_registry = ParameterTypeRegistry()
+        )
 
         @pytest.fixture
         def values():
@@ -181,19 +213,35 @@ Feature: Step definitions parameters parsing
         def i_have_wallet(wallet):
             assert wallet == 'wallet'
 
-        @given(parse("I have {int} Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
+        @given(
+          parse("I have {int} Euro"),
+          anonymous_group_names=('euro',),
+          converters=dict(euro=int)
+        )
         def i_have(euro, values):
             assert euro == values.pop(0)
 
-        @when(parse("I pay {} Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
+        @when(
+          parse("I pay {} Euro"),
+          anonymous_group_names=('euro',),
+          converters=dict(euro=int)
+        )
         def i_pay(euro, values, request):
             assert euro == values.pop(0)
 
-        @when(parse(r"I lose {int} Dollar/Euro(s)"), anonymous_group_names=('euro',), converters=dict(euro=int))
+        @when(
+          parse(r"I lose {int} Dollar/Euro(s)"),
+          anonymous_group_names=('euro',),
+          converters=dict(euro=int)
+        )
         def i_lose(euro, values):
             assert euro == values.pop(0)
 
-        @then(parse("I should have {int} Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
+        @then(
+          parse("I should have {int} Euro"),
+          anonymous_group_names=('euro',),
+          converters=dict(euro=int)
+        )
         def i_should_have(euro, values):
             assert euro == values.pop(0)
         """
@@ -204,7 +252,8 @@ Feature: Step definitions parameters parsing
 
     Scenario: by "cucumber-regular-expressions"
       https://github.com/cucumber/cucumber-expressions
-      Cucumber Expressions is an alternative to Regular Expressions with a more intuitive syntax.
+      Cucumber Expressions is an alternative
+    to Regular Expressions with a more intuitive syntax.
 
       And File "conftest.py" with content:
         """python
@@ -213,9 +262,14 @@ Feature: Step definitions parameters parsing
         from functools import partial
 
         from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
-        from cucumber_expressions.regular_expression import RegularExpression as CucumberRegularExpression
+        from cucumber_expressions.regular_expression import (
+          RegularExpression as CucumberRegularExpression
+        )
 
-        parse = partial(CucumberRegularExpression, parameter_type_registry = ParameterTypeRegistry())
+        parse = partial(
+          CucumberRegularExpression,
+          parameter_type_registry = ParameterTypeRegistry()
+        )
 
         @pytest.fixture
         def values():
@@ -225,19 +279,35 @@ Feature: Step definitions parameters parsing
         def i_have_wallet(wallet):
             assert wallet == 'wallet'
 
-        @given(parse(r"I have (\d+) Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
+        @given(
+          parse(r"I have (\d+) Euro"),
+          anonymous_group_names=('euro',),
+          converters=dict(euro=int)
+        )
         def i_have(euro, values):
             assert euro == values.pop(0)
 
-        @when(parse("I pay (.*) Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
+        @when(
+          parse("I pay (.*) Euro"),
+          anonymous_group_names=('euro',),
+          converters=dict(euro=int)
+        )
         def i_pay(euro, values, request):
             assert euro == values.pop(0)
 
-        @when(parse(r"I lose (.+) Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
+        @when(
+          parse(r"I lose (.+) Euro"),
+          anonymous_group_names=('euro',),
+          converters=dict(euro=int)
+        )
         def i_lose(euro, values):
             assert euro == values.pop(0)
 
-        @then(parse(r"I should have (\d+) Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
+        @then(
+          parse(r"I should have (\d+) Euro"),
+          anonymous_group_names=('euro',),
+          converters=dict(euro=int)
+        )
         def i_should_have(euro, values):
             assert euro == values.pop(0)
         """
@@ -250,7 +320,8 @@ Feature: Step definitions parameters parsing
     This uses full regular expressions to parse the clause text. You will
     need to use named groups "(?P<name>...)" to define the variables pulled
     from the text and passed to your "step()" function.
-    Type conversion can only be done via "converters" step decorator argument (see example in according feature).
+    Type conversion can only be done via "converters" step decorator
+    argument (see example in according feature).
 
     Given File "conftest.py" with content:
       """python
@@ -270,11 +341,18 @@ Feature: Step definitions parameters parsing
       def i_have(euro, values):
           assert euro == values.pop(0)
 
-      @when(parse(r"I pay (\d+) Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
+      @when(
+        parse(r"I pay (\d+) Euro"),
+        anonymous_group_names=('euro',),
+        converters=dict(euro=int)
+      )
       def i_pay(euro, values):
           assert euro == values.pop(0)
 
-      @when(parse(r"I lose (.+) Euro"), anonymous_group_names=('euro',), converters=dict(euro=int))
+      @when(parse(r"I lose (.+) Euro"),
+        anonymous_group_names=('euro',),
+        converters=dict(euro=int)
+      )
       def i_lose(euro, values):
           assert euro == values.pop(0)
 

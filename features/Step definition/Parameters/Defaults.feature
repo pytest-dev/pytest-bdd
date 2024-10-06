@@ -27,7 +27,11 @@ Feature: Step definitions parameters could have default values
         return [Freshness.FRESH, Freshness.ROTTEN, Freshness.FRESH, Freshness.SALTED]
 
       @given("I have a pickle", param_defaults=dict(freshness=Freshness.SALTED))
-      @given(parse(r"I have a ((?P<freshness>\w+)\s)?cucumber"), converters=dict(freshness=Freshness), param_defaults=dict(freshness=Freshness.FRESH))
+      @given(
+        parse(r"I have a ((?P<freshness>\w+)\s)?cucumber"),
+        converters=dict(freshness=Freshness),
+        param_defaults=dict(freshness=Freshness.FRESH)
+      )
       def i_have_cucumber(freshness, oracle_freshness):
           assert freshness == oracle_freshness.pop(0)
       """
