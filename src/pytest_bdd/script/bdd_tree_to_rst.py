@@ -64,8 +64,8 @@ def convert(features_path: Path, output_file_path: Path):
             content += dedent(
                 # language=rst
                 f"""\
-                    {rel_path.name}
-                    {SECTION_SYMBOLS[len(rel_path.parts)-1]*len(rel_path.name)}
+                    {rel_path.stem}
+                    {SECTION_SYMBOLS[len(rel_path.parts)-1]*len(rel_path.stem)}
 
                     .. include:: {(output_path_rel_to_features_path / path.relative_to(features_path)).as_posix()}
                        :code: gherkin
@@ -78,8 +78,8 @@ def convert(features_path: Path, output_file_path: Path):
             content += dedent(
                 # language=rst
                 f"""\
-                    {rel_path.as_posix()}
-                    {SECTION_SYMBOLS[len(rel_path.parts)-1]*len(str(rel_path))}
+                    {rel_path.stem}
+                    {SECTION_SYMBOLS[len(rel_path.parts)-1]*len(rel_path.stem)}
 
                     .. include:: {(output_path_rel_to_features_path / path.relative_to(features_path)).as_posix()}
                        :code: yaml

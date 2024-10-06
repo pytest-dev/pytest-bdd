@@ -72,6 +72,10 @@ The current pytest plugin for cucumber is pytest-bdd_ , a popular project with 1
      - \-
      - \+
      - No boilerplate code / No mix between steps definition and feature files
+   * - Load of Feature files by HTTP
+     - \-
+     - \+
+     - Allows to integrate the library into external Feature storages
    * - Stability and bugfixes
      - \+
      - \+/-

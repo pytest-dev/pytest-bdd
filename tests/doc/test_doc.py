@@ -41,8 +41,8 @@ def test_doc_generation(testdir: "Testdir"):
 
 
 
-            simple.gherkin
-            --------------
+            simple
+            ------
 
             .. include:: features/simple.gherkin
                :code: gherkin
@@ -50,8 +50,8 @@ def test_doc_generation(testdir: "Testdir"):
             extra
             -----
 
-            other_simple.gherkin
-            ####################
+            other_simple
+            ############
 
             .. include:: features/extra/other_simple.gherkin
                :code: gherkin
