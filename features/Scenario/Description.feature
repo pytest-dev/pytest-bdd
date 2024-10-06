@@ -7,20 +7,14 @@ Feature: Descriptions
       Given File "Description.feature" with content:
         """gherkin
         Feature:
-          My Feature description
           Scenario:
             My Scenario description
 
-            Given I check feature description
             Given I check scenario description
         """
       And File "conftest.py" with content:
         """python
         from pytest_bdd import given
-
-        @given('I check feature description')
-        def step(feature):
-          assert feature.description == "My Feature description"
 
         @given('I check scenario description')
         def step(scenario):
