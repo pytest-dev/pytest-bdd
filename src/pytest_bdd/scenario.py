@@ -166,8 +166,7 @@ def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContex
 
     with inject_fixturedefs_for_step(step=step, fixturemanager=request._fixturemanager, node=request.node):
         try:
-            context = cast(StepFunctionContext, request.getfixturevalue(bdd_name))
-            return context
+            return cast(StepFunctionContext, request.getfixturevalue(bdd_name))
         except pytest.FixtureLookupError:
             return None
 
