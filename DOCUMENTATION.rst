@@ -1,3 +1,6 @@
+.. toctree::
+   :hidden:
+
 Advanced Features
 =================
 
@@ -251,7 +254,7 @@ Allure reporting is also in place https://docs.qameta.io/allure and based on
 `allure-pytest` https://pypi.org/project/allure-pytest/ plugin. Usage is same.
 
 To install plugin
-^^^^^^^^^^^^^^^^^
+#################
 
 ::
 

@@ -1,21 +1,8 @@
+Welcome to Pytest-BDD-NextGeneration's documentation!
+=====================================================
 .. toctree::
    :glob:
 
-   *
+   include.rst
 
-Welcome to Pytest-BDD-NextGeneration's documentation!
-=====================================================
-
-.. include:: ../README.rst
-
-.. contents::
-
-.. include:: features.rst
-
-.. include:: ../DOCUMENTATION.rst
-
-.. include:: ../AUTHORS.rst
-
-.. include:: ../CHANGES.rst
-
-.. include:: ../LICENSE.rst
+.. include:: include

@@ -7,35 +7,11 @@ Features
 
 
 
-Scenario
---------
-
-Description.feature
-###################
-
-.. include:: ../features/Scenario/Description.feature
-   :code: gherkin
-
-Tag.feature
-###########
-
-.. include:: ../features/Scenario/Tag.feature
-   :code: gherkin
-
-Outline
-#######
-
-Examples Tag.feature
-!!!!!!!!!!!!!!!!!!!!
-
-.. include:: ../features/Scenario/Outline/Examples Tag.feature
-   :code: gherkin
-
 Tutorial
 --------
 
-Launch.feature
-##############
+Launch
+######
 
 .. include:: ../features/Tutorial/Launch.feature
    :code: gherkin
@@ -43,47 +19,47 @@ Launch.feature
 Step definition
 ---------------
 
-Target fixtures specification.feature
-#####################################
-
-.. include:: ../features/Step definition/Target fixtures specification.feature
-   :code: gherkin
-
-Pytest fixtures substitution.feature
-####################################
+Pytest fixtures substitution
+############################
 
 .. include:: ../features/Step definition/Pytest fixtures substitution.feature
+   :code: gherkin
+
+Target fixtures specification
+#############################
+
+.. include:: ../features/Step definition/Target fixtures specification.feature
    :code: gherkin
 
 Parameters
 ##########
 
-Defaults.feature
-!!!!!!!!!!!!!!!!
-
-.. include:: ../features/Step definition/Parameters/Defaults.feature
-   :code: gherkin
-
-Injection as fixtures.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-.. include:: ../features/Step definition/Parameters/Injection as fixtures.feature
-   :code: gherkin
-
-Conversion.feature
-!!!!!!!!!!!!!!!!!!
+Conversion
+!!!!!!!!!!
 
 .. include:: ../features/Step definition/Parameters/Conversion.feature
    :code: gherkin
 
-Parsing by custom parser.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Defaults
+!!!!!!!!
+
+.. include:: ../features/Step definition/Parameters/Defaults.feature
+   :code: gherkin
+
+Injection as fixtures
+!!!!!!!!!!!!!!!!!!!!!
+
+.. include:: ../features/Step definition/Parameters/Injection as fixtures.feature
+   :code: gherkin
+
+Parsing by custom parser
+!!!!!!!!!!!!!!!!!!!!!!!!
 
 .. include:: ../features/Step definition/Parameters/Parsing by custom parser.feature
    :code: gherkin
 
-Parsing.feature
-!!!!!!!!!!!!!!!
+Parsing
+!!!!!!!
 
 .. include:: ../features/Step definition/Parameters/Parsing.feature
    :code: gherkin
@@ -91,47 +67,71 @@ Parsing.feature
 Step
 ----
 
-Doc string.feature
-##################
-
-.. include:: ../features/Step/Doc string.feature
-   :code: gherkin
-
-Data table.feature
-##################
+Data table
+##########
 
 .. include:: ../features/Step/Data table.feature
    :code: gherkin
 
-Step definition bounding.feature
-################################
+Doc string
+##########
+
+.. include:: ../features/Step/Doc string.feature
+   :code: gherkin
+
+Step definition bounding
+########################
 
 .. include:: ../features/Step/Step definition bounding.feature
+   :code: gherkin
+
+Scenario
+--------
+
+Description
+###########
+
+.. include:: ../features/Scenario/Description.feature
+   :code: gherkin
+
+Tag
+###
+
+.. include:: ../features/Scenario/Tag.feature
+   :code: gherkin
+
+Outline
+#######
+
+Examples Tag
+!!!!!!!!!!!!
+
+.. include:: ../features/Scenario/Outline/Examples Tag.feature
    :code: gherkin
 
 Feature
 -------
 
-Localization.feature
-####################
-
-.. include:: ../features/Feature/Localization.feature
-   :code: gherkin
-
-Description.feature
-###################
+Description
+###########
 
 .. include:: ../features/Feature/Description.feature
    :code: gherkin
 
-Tag conversion.feature
-######################
+Localization
+############
+
+.. include:: ../features/Feature/Localization.feature
+   :code: gherkin
+
+Tag conversion
+##############
 
 .. include:: ../features/Feature/Tag conversion.feature
    :code: gherkin
 
-Tag.feature
-###########
+Tag
+###
 
 .. include:: ../features/Feature/Tag.feature
    :code: gherkin
@@ -139,26 +139,26 @@ Tag.feature
 Load
 ####
 
-Scenario search from base url.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-.. include:: ../features/Feature/Load/Scenario search from base url.feature
-   :code: gherkin
-
-Autoload.feature
-!!!!!!!!!!!!!!!!
+Autoload
+!!!!!!!!
 
 .. include:: ../features/Feature/Load/Autoload.feature
    :code: gherkin
 
-Scenario function loader.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Scenario function loader
+!!!!!!!!!!!!!!!!!!!!!!!!
 
 .. include:: ../features/Feature/Load/Scenario function loader.feature
    :code: gherkin
 
-Scenario search from base directory.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Scenario search from base directory
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 .. include:: ../features/Feature/Load/Scenario search from base directory.feature
+   :code: gherkin
+
+Scenario search from base url
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+.. include:: ../features/Feature/Load/Scenario search from base url.feature
    :code: gherkin

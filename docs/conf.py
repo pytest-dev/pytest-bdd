@@ -101,6 +101,8 @@ html_theme = "alabaster"
 # documentation.
 html_theme_options = {
     "page_width": "100%",
+    "sidebar_width": "270px",
+    "body_max_width": "1200%",
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
