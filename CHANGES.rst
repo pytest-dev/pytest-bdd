@@ -6,7 +6,6 @@ Changelog
 
 In-progress
 -----------
-- Move documentation to Gherkin itself
 
 Planned
 -------
@@ -64,6 +63,10 @@ Planned
 
 Unreleased
 ----------
+
+2.2.0
+-----
+- Move documentation to Gherkin itself
 - Fixed pytest.ini option "disable_feature_autoload"
 - Improved fixture injection by adding seamless fixtures on plugin/module collection
 
