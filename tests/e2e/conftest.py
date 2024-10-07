@@ -1,6 +1,8 @@
+import json
 import re
 import shutil
 import string
+from functools import reduce
 from operator import attrgetter, itemgetter
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -8,7 +10,8 @@ from typing import TYPE_CHECKING
 from pytest import fixture
 from pytest_httpserver import HTTPServer
 
-from pytest_bdd import given, step
+from messages import Envelope  # type:ignore[attr-defined]
+from pytest_bdd import given, step, then
 from pytest_bdd.compatibility.pytest import assert_outcomes
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.testing_utils import data_table_to_dicts
@@ -99,3 +102,23 @@ def copy_path(request, testdir: "Testdir", initial_path, final_path, step):
         shutil.copy(full_initial_path, full_final_path)
     else:
         shutil.copytree(full_initial_path, full_final_path, dirs_exist_ok=True)
+
+
+@then(
+    re.compile(r"File \"(?P<file_path>(\w|\\|.)+)\" has \"(?P<line_count>(\w|\\|.)+)\" lines"),
+    converters=dict(line_count=int, file_path=Path),
+)
+def _(file_path: Path, line_count: int):
+    with file_path.open("r") as fp:
+        real_line_count = reduce(lambda _, last: last, map(itemgetter(0), enumerate(fp, start=1)))
+    assert line_count == real_line_count
+
+
+@then(re.compile(r"Report \"(?P<file_path>(\w|\\|.)+)\" parsable into messages"), converters=dict(file_path=Path))
+def _(file_path: Path):
+    with file_path.open(mode="r") as ast_file:
+        try:
+            for raw_datum in ast_file:
+                Envelope.model_validate(json.loads(raw_datum))
+        except Exception as e:
+            raise AssertionError from e

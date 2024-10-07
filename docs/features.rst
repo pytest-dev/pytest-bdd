@@ -162,3 +162,12 @@ Scenario search from base directory
 
 .. include:: ../features/Feature/Load/Scenario search from base directory.feature
    :code: gherkin
+
+Report
+------
+
+New line delimited JSON
+#######################
+
+.. include:: ../features/Report/New line delimited JSON.feature
+   :code: gherkin
