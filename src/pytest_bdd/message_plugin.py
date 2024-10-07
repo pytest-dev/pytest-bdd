@@ -91,7 +91,7 @@ class MessagePlugin:
                 last_enter = True
             lock = FileLock(f"{messages_file_path}.lock")
             with lock:
-                with Path(messages_file_path).open(mode="at+", buffering=1) as f:
+                with Path(messages_file_path).open(mode="at+", buffering=1, encoding="utf-8") as f:
                     lines = []
                     while not queue.empty():
                         try:
