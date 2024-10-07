@@ -4,6 +4,7 @@ import linecache
 import re
 import textwrap
 import typing
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -13,8 +14,6 @@ from gherkin.parser import Parser  # type: ignore
 from . import exceptions
 
 if typing.TYPE_CHECKING:
-    from typing import Sequence
-
     from typing_extensions import Self
 
 

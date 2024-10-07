@@ -561,15 +561,15 @@ Example:
         assert cucumbers["start"] - cucumbers["eat"] == left
 
 
-Using the datatable Fixture
-----------------------------
+Step Definitions and Accessing the Datatable
+--------------------------------------------
 
-The ``datatable`` fixture allows you to utilise data tables defined in your Gherkin scenarios
+The ``datatable`` argument allows you to utilise data tables defined in your Gherkin scenarios
 directly within your test functions. This is particularly useful for scenarios that require tabular data as input,
 enabling you to manage and manipulate this data conveniently.
 
-The ``datatable`` fixture in pytest-bdd allows you to access the data tables defined in your Gherkin scenarios.
-When you use the ``datatable`` fixture in a step definition, it will return the table as a list of lists,
+The ``datatable`` argument in pytest-bdd allows you to access the datatables defined in your Gherkin scenarios.
+When you use the ``datatable`` argument in a step definition, it will return the table as a list of lists,
 where each inner list represents a row from the table.
 
 For example, the Gherkin table:
@@ -579,7 +579,7 @@ For example, the Gherkin table:
     | name  | email            |
     | John  | john@example.com |
 
-Will be returned by the ``datatable`` fixture as:
+Will be returned by the ``datatable`` argument as:
 
 .. code-block:: python
 
@@ -588,54 +588,70 @@ Will be returned by the ``datatable`` fixture as:
         ["John", "john@example.com"]
     ]
 
-.. NOTE:: When using the datatable fixture, it is essential to ensure that the step to which it is applied
+.. NOTE:: When using the datatable argument, it is essential to ensure that the step to which it is applied
           actually has an associated data table. If the step does not have an associated data table,
-          attempting to use the datatable fixture will raise an error.
+          attempting to use the datatable argument will raise an error.
           Make sure that your Gherkin steps correctly reference the data table when defined.
 
 Full example:
 
 .. code-block:: gherkin
 
-    Feature: User roles and permissions
+    Feature: Manage user accounts
 
-      Scenario: Assigning roles to a user
+      Scenario: Creating a new user with roles and permissions
         Given the following user details:
-          | name  | email            |
-          | John  | john@example.com |
+          | name  | email             | age |
+          | John  | john@example.com  | 30  |
+          | Alice | alice@example.com | 25  |
 
-        When the user is assigned the following roles:
-          | role  |
-          | Admin |
-          | Editor |
+        When each user is assigned the following roles:
+          | Admin       | Full access to the system |
+          | Contributor | Can add content           |
+
+        And the page is saved
 
         Then the user should have the following permissions:
-          | permission    | allowed |
-          | view content  | true    |
-          | edit content  | true    |
-          | delete content| false   |
+          | permission     | allowed |
+          | view dashboard | true    |
+          | edit content   | true    |
+          | delete content | false   |
 
 .. code-block:: python
 
     from pytest_bdd import given, when, then
 
-    @given("the following user details:")
-    def _(datatable):
-        assert datatable == [["name", "email"], ["John", "john@example.com"]]
 
-    @when("the user is assigned the following roles:")
+    @given("the following user details:", target_fixture="users")
     def _(datatable):
-        assert datatable == [["role"], ["Admin"], ["Editor"]]
+        users = []
+        for row in datatable[1:]:
+            users.append(row)
+
+        print(users)
+        return users
+
+
+    @when("each user is assigned the following roles:")
+    def _(datatable, users):
+        roles = datatable
+        for user in users:
+            for role_row in datatable:
+                assign_role(user, role_row)
+
+
+    @when("the page is saved")
+    def _():
+        save_page()
+
 
     @then("the user should have the following permissions:")
-    def _(datatable):
-        expected_permissions = [
-            ["permission", "allowed"],
-            ["view content", "true"],
-            ["edit content", "true"],
-            ["delete content", "false"]
-        ]
-        assert datatable == expected_permissions
+    def _(datatable, users):
+        expected_permissions = []
+        for row in datatable[1:]:
+            expected_permissions.append(row)
+
+        assert users_have_correct_permissions(users, expected_permissions)
 
 
 Organizing your scenarios

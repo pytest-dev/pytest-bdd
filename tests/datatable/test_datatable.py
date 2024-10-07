@@ -1,10 +1,14 @@
 import textwrap
 from typing import List
 
-from src.pytest_bdd.gherkin_parser import DataTable
 from src.pytest_bdd.utils import collect_dumped_objects
 
-DATA_TABLE_FEATURE = """\
+
+def test_steps_with_datatables(pytester):
+    pytester.makefile(
+        ".feature",
+        datatable=textwrap.dedent(
+            """\
             Feature: Manage user accounts
 
               Scenario: Creating a new user with roles and permissions
@@ -26,9 +30,11 @@ DATA_TABLE_FEATURE = """\
                   | edit content   | true    |
                   | delete content | false   |
             """
-
-
-DATA_TABLE_STEPS = """\
+        ),
+    )
+    pytester.makeconftest(
+        textwrap.dedent(
+            """\
         from pytest_bdd import given, when, then
         from pytest_bdd.utils import dump_obj
 
@@ -56,21 +62,19 @@ DATA_TABLE_STEPS = """\
             dump_obj(then_datatable)
 
     """
-
-
-DATA_TABLE_TEST_FILE = """\
+        )
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
         from pytest_bdd import scenario
 
         @scenario("datatable.feature", "Creating a new user with roles and permissions")
         def test_datatable():
             pass
         """
-
-
-def test_steps_with_datatables(pytester):
-    pytester.makefile(".feature", datatable=textwrap.dedent(DATA_TABLE_FEATURE))
-    pytester.makeconftest(textwrap.dedent(DATA_TABLE_STEPS))
-    pytester.makepyfile(textwrap.dedent(DATA_TABLE_TEST_FILE))
+        )
+    )
 
     result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
@@ -116,19 +120,16 @@ def test_steps_with_missing_datatables(pytester):
         textwrap.dedent(
             """\
         from pytest_bdd import given, when, then
-        from pytest_bdd.utils import dump_obj
 
 
         @given("this step has a data table:")
         def _(datatable):
-            given_datatable = datatable
-            dump_obj(given_datatable)
+            print(datatable)
 
 
         @when("this step has no data table but tries to use the datatable fixture")
         def _(datatable):
-            when_datatable = datatable
-            dump_obj(when_datatable)
+            print(datatable)
 
 
         @then("an error is thrown")
