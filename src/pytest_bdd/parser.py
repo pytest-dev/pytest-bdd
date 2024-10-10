@@ -9,6 +9,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 from .exceptions import StepError
 from .gherkin_parser import Background as GherkinBackground
+from .gherkin_parser import DataTable, ExamplesTable
 from .gherkin_parser import Feature as GherkinFeature
 from .gherkin_parser import GherkinDocument
 from .gherkin_parser import Scenario as GherkinScenario
@@ -170,6 +171,7 @@ class ScenarioTemplate:
                 indent=step.indent,
                 line_number=step.line_number,
                 keyword=step.keyword,
+                datatable=step.datatable,
             )
             for step in self._steps
         ]
@@ -225,11 +227,14 @@ class Step:
     line_number: int
     indent: int
     keyword: str
+    datatable: DataTable | None = None
     failed: bool = field(init=False, default=False)
     scenario: ScenarioTemplate | None = field(init=False, default=None)
     background: Background | None = field(init=False, default=None)
 
-    def __init__(self, name: str, type: str, indent: int, line_number: int, keyword: str) -> None:
+    def __init__(
+        self, name: str, type: str, indent: int, line_number: int, keyword: str, datatable: DataTable | None = None
+    ) -> None:
         """Initialize a step.
 
         Args:
@@ -244,6 +249,7 @@ class Step:
         self.indent = indent
         self.line_number = line_number
         self.keyword = keyword
+        self.datatable = datatable
 
     def __str__(self) -> str:
         """Return a string representation of the step.
@@ -342,8 +348,8 @@ class FeatureParser:
 
         def get_step_content(_gherkin_step: GherkinStep) -> str:
             step_name = strip_comments(_gherkin_step.text)
-            if _gherkin_step.docString:
-                step_name = f"{step_name}\n{_gherkin_step.docString.content}"
+            if _gherkin_step.docstring:
+                step_name = f"{step_name}\n{_gherkin_step.docstring.content}"
             return step_name
 
         if not steps_data:
@@ -372,6 +378,7 @@ class FeatureParser:
                     indent=step.location.column - 1,
                     line_number=step.location.line,
                     keyword=step.keyword.title(),
+                    datatable=step.datatable,
                 )
             )
         return steps
@@ -403,11 +410,11 @@ class FeatureParser:
                 line_number=example_data.location.line,
                 name=example_data.name,
             )
-            if example_data.tableHeader is not None:
-                param_names = [cell.value for cell in example_data.tableHeader.cells]
+            if example_data.table_header is not None:
+                param_names = [cell.value for cell in example_data.table_header.cells]
                 examples.set_param_names(param_names)
-                if example_data.tableBody is not None:
-                    for row in example_data.tableBody:
+                if example_data.table_body is not None:
+                    for row in example_data.table_body:
                         values = [cell.value or "" for cell in row.cells]
                         examples.add_example(values)
                     scenario.examples = examples
