@@ -79,7 +79,7 @@ def test_steps_with_datatables(pytester):
     result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
 
-    datatables: List[DataTable] = collect_dumped_objects(result)
+    datatables = collect_dumped_objects(result)
     assert datatables[0] == [
         ["name", "email", "age"],
         ["John", "john@example.com", "30"],
