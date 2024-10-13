@@ -433,20 +433,21 @@ Multiline steps
 
 As Gherkin, pytest-bdd supports multiline steps
 (a.k.a. `Doc Strings <https://cucumber.io/docs/gherkin/reference/#doc-strings>`_).
-But in much cleaner and powerful way:
 
 .. code-block:: gherkin
 
     Feature: Multiline steps
         Scenario: Multiline step using sub indentation
             Given I have a step with:
+                """
                 Some
                 Extra
                 Lines
+                """
             Then the text should be parsed with correct indentation
 
-A step is considered as a multiline one, if the **next** line(s) after it's first line is indented relatively
-to the first line. The step name is then simply extended by adding further lines with newlines.
+A step is considered as a multiline one, if the **next** line(s) after its first line is encapsulated by
+triple quotes. The step name is then simply extended by adding further lines inside the triple quotes.
 In the example above, the Given step name will be:
 
 .. code-block:: python
@@ -558,6 +559,98 @@ Example:
     @then(parsers.parse("I should have {left:d} cucumbers"))
     def should_have_left_cucumbers(cucumbers, left):
         assert cucumbers["start"] - cucumbers["eat"] == left
+
+
+Step Definitions and Accessing the Datatable
+--------------------------------------------
+
+The ``datatable`` argument allows you to utilise data tables defined in your Gherkin scenarios
+directly within your test functions. This is particularly useful for scenarios that require tabular data as input,
+enabling you to manage and manipulate this data conveniently.
+
+When you use the ``datatable`` argument in a step definition, it will return the table as a list of lists,
+where each inner list represents a row from the table.
+
+For example, the Gherkin table:
+
+.. code-block:: gherkin
+
+    | name  | email            |
+    | John  | john@example.com |
+
+Will be returned by the ``datatable`` argument as:
+
+.. code-block:: python
+
+    [
+        ["name", "email"],
+        ["John", "john@example.com"]
+    ]
+
+.. NOTE:: When using the datatable argument, it is essential to ensure that the step to which it is applied
+          actually has an associated data table. If the step does not have an associated data table,
+          attempting to use the datatable argument will raise an error.
+          Make sure that your Gherkin steps correctly reference the data table when defined.
+
+Full example:
+
+.. code-block:: gherkin
+
+    Feature: Manage user accounts
+
+      Scenario: Creating a new user with roles and permissions
+        Given the following user details:
+          | name  | email             | age |
+          | John  | john@example.com  | 30  |
+          | Alice | alice@example.com | 25  |
+
+        When each user is assigned the following roles:
+          | Admin       | Full access to the system |
+          | Contributor | Can add content           |
+
+        And the page is saved
+
+        Then the user should have the following permissions:
+          | permission     | allowed |
+          | view dashboard | true    |
+          | edit content   | true    |
+          | delete content | false   |
+
+.. code-block:: python
+
+    from pytest_bdd import given, when, then
+
+
+    @given("the following user details:", target_fixture="users")
+    def _(datatable):
+        users = []
+        for row in datatable[1:]:
+            users.append(row)
+
+        print(users)
+        return users
+
+
+    @when("each user is assigned the following roles:")
+    def _(datatable, users):
+        roles = datatable
+        for user in users:
+            for role_row in datatable:
+                assign_role(user, role_row)
+
+
+    @when("the page is saved")
+    def _():
+        save_page()
+
+
+    @then("the user should have the following permissions:")
+    def _(datatable, users):
+        expected_permissions = []
+        for row in datatable[1:]:
+            expected_permissions.append(row)
+
+        assert users_have_correct_permissions(users, expected_permissions)
 
 
 Organizing your scenarios
@@ -1065,7 +1158,7 @@ which might be helpful building useful reporting, visualization, etc. on top of 
   (even if one of steps has failed)
 
 * `pytest_bdd_before_step(request, feature, scenario, step, step_func)` - Called before step function
-  is executed and it's arguments evaluated
+  is executed and its arguments evaluated
 
 * `pytest_bdd_before_step_call(request, feature, scenario, step, step_func, step_func_args)` - Called before step
   function is executed with evaluated arguments

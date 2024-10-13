@@ -159,7 +159,7 @@ def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContex
     Then we let `patch_argumented_step_functions` find out what step definition fixtures can parse the current step,
     and it will inject them for the step fixture name.
 
-    Finally we let request.getfixturevalue(...) fetch the step definition fixture.
+    Finally, we let request.getfixturevalue(...) fetch the step definition fixture.
     """
     __tracebackhide__ = True
     bdd_name = get_step_fixture_name(step=step)
@@ -197,6 +197,10 @@ def _execute_step_function(
         assert parsed_args is not None, (
             f"Unexpected `NoneType` returned from " f"parse_arguments(...) in parser: {context.parser!r}"
         )
+
+        if step.datatable is not None:
+            kwargs["datatable"] = step.datatable.raw()
+
         for arg, value in parsed_args.items():
             if arg in converters:
                 value = converters[arg](value)
@@ -224,7 +228,6 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequ
     :param feature: Feature.
     :param scenario: Scenario.
     :param request: request.
-    :param encoding: Encoding.
     """
     __tracebackhide__ = True
     request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
