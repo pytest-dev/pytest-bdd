@@ -6,6 +6,7 @@ Unreleased
 - Update documentation to clarify that `--gherkin-terminal-reporter` needs to be used with `-v` or `-vv`.
 - Drop compatibility with pytest < 7.0.0.
 - Continuation of steps using asterisks instead of And/But supported.
+- Added `datatable` argument for steps that contain a datatable.
 
 8.0.0b1
 ----------
