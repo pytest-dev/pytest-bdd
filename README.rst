@@ -568,7 +568,6 @@ The ``datatable`` argument allows you to utilise data tables defined in your Ghe
 directly within your test functions. This is particularly useful for scenarios that require tabular data as input,
 enabling you to manage and manipulate this data conveniently.
 
-The ``datatable`` argument in pytest-bdd allows you to access the datatables defined in your Gherkin scenarios.
 When you use the ``datatable`` argument in a step definition, it will return the table as a list of lists,
 where each inner list represents a row from the table.
 
