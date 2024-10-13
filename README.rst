@@ -1,4 +1,4 @@
-BDD library for the pytest runner
+BDD Library for the pytest Runner
 =================================
 
 .. image:: https://img.shields.io/pypi/v/pytest-bdd.svg
@@ -11,123 +11,123 @@ BDD library for the pytest runner
    :target: https://readthedocs.org/projects/pytest-bdd/
    :alt: Documentation Status
 
-pytest-bdd implements a subset of the Gherkin language to enable automating project
-requirements testing and to facilitate behavioral driven development.
+`pytest-bdd` is a Behavior-Driven Development (BDD) library for the `pytest` runner. It uses files written in `Gherkin <https://cucumber.io/docs/gherkin/reference/>`_ to automate project requirements testing and facilitate BDD.
 
-Unlike many other BDD tools, it does not require a separate runner and benefits from
-the power and flexibility of pytest. It enables unifying unit and functional
-tests, reduces the burden of continuous integration server configuration and allows the reuse of
-test setups.
+Unlike many other BDD tools, `pytest-bdd` does not require a separate runner and benefits from the power and flexibility of `pytest`. It unifies unit and functional tests, reduces the burden of continuous integration server configuration, and allows the reuse of test setups.
 
-Pytest fixtures written for unit tests can be reused for setup and actions
-mentioned in feature steps with dependency injection. This allows a true BDD
-just-enough specification of the requirements without maintaining any context object
-containing the side effects of Gherkin imperative declarations.
+`pytest` fixtures written for unit tests can be reused for setup and actions mentioned in feature steps with dependency injection. This allows a true BDD just-enough specification of the requirements without maintaining any context object containing the side effects of Gherkin imperative declarations.
 
 .. _behave: https://pypi.python.org/pypi/behave
 .. _pytest-splinter: https://github.com/pytest-dev/pytest-splinter
 
-Install pytest-bdd
-------------------
+Installation
+------------
 
-::
+Install `pytest-bdd` using `pip`:
+
+.. code-block:: bash
 
     pip install pytest-bdd
-
 
 Example
 -------
 
-An example test for a blog hosting software could look like this.
-Note that pytest-splinter_ is used to get the browser fixture.
+An example test for a blog hosting software could look like this. Note that pytest-splinter_ is used to get the browser fixture.
 
 .. code-block:: gherkin
 
     # content of publish_article.feature
 
     Feature: Blog
-        A site where you can publish your articles.
-
         Scenario: Publishing the article
             Given I'm an author user
             And I have an article
-
             When I go to the article page
             And I press the publish button
-
             Then I should not see the error message
-            And the article should be published  # Note: will query the database
-
-Note that only one feature is allowed per feature file.
+            And the article should be published
 
 .. code-block:: python
 
-    # content of test_publish_article.py
+    # test_publish_article.py
 
-    from pytest_bdd import scenario, given, when, then
+    from pytest_bdd import scenarios, given, when, then
 
-    @scenario('publish_article.feature', 'Publishing the article')
-    def test_publish():
-        pass
-
+    # Load all the scenarios
+    scenarios('publish_article.feature')
 
     @given("I'm an author user")
-    def author_user(auth, author):
+    def _(auth, author):
         auth['user'] = author.user
 
-
     @given("I have an article", target_fixture="article")
-    def article(author):
+    def _(author):
         return create_test_article(author=author)
 
-
     @when("I go to the article page")
-    def go_to_article(article, browser):
+    def _(article, browser):
         browser.visit(urljoin(browser.url, '/manage/articles/{0}/'.format(article.id)))
 
-
     @when("I press the publish button")
-    def publish_article(browser):
+    def _(browser):
         browser.find_by_css('button[name=publish]').first.click()
 
-
     @then("I should not see the error message")
-    def no_error_message(browser):
+    def _(browser):
         with pytest.raises(ElementDoesNotExist):
             browser.find_by_css('.message.error').first
 
-
     @then("the article should be published")
-    def article_is_published(article):
-        article.refresh()  # Refresh the object in the SQLAlchemy session
+    def _(article):
+        article.refresh_from_db()
         assert article.is_published
 
-
-Scenario decorator
-------------------
-
-Functions decorated with the `scenario` decorator behave like a normal test function,
-and they will be executed after all scenario steps.
-
+Declaring tests in python files
+-------------------------------
+The recommended approach to run tests defined by feature files is to create a python test module for each feature file, and define the step implementation within the module:
 
 .. code-block:: python
+
+    # test_foo.py
+
+    from pytest_bdd import scenarios, given, when, then
+
+    scenarios("features/foo.feature")
+
+    @given("There is an article")
+    def _():
+        ...
+
+    ...
+
+You can also decide to collect all the feature files found in a directory. For example, this will collect all the feature files from the `features` folder recursively:
+
+.. code-block:: python
+
+    # test_features.py
+
+    from pytest_bdd import scenarios
+
+    scenarios("features")
+
+If you need fine-grained control over which scenarios to execute within a feature file, you can use the `scenario` decorator:
+
+.. code-block:: python
+
+    # test_feature.py
 
     from pytest_bdd import scenario, given, when, then
 
     @scenario('publish_article.feature', 'Publishing the article')
-    def test_publish(browser):
+    def _(browser):
         assert article.title in browser.html
 
-
-.. NOTE:: It is however encouraged to try as much as possible to have your logic only inside the Given, When, Then steps.
-
+.. note:: It is encouraged to have your logic only inside the Given, When, Then steps.
 
 Step aliases
 ------------
 
-Sometimes, one has to declare the same fixtures or steps with
-different names for better readability. In order to use the same step
-function with multiple step names simply decorate it multiple times:
+To declare the same fixtures or steps with different names for better readability, simply decorate the step function multiple times:
 
 .. code-block:: python
 
@@ -136,131 +136,85 @@ function with multiple step names simply decorate it multiple times:
     def article(author, target_fixture="article"):
         return create_test_article(author=author)
 
-Note that the given step aliases are independent and will be executed
-when mentioned.
-
-For example if you associate your resource to some owner or not. Admin
-user can’t be an author of the article, but articles should have a
-default author.
-
-.. code-block:: gherkin
-
-    Feature: Resource owner
-        Scenario: I'm the author
-            Given I'm an author
-            And I have an article
-
-
-        Scenario: I'm the admin
-            Given I'm the admin
-            And there's an article
-
-
-Using Asterisks in Place of Keywords
-------------------------------------
-
-To avoid redundancy or unnecessary repetition of keywords
-such as "And" or "But" in Gherkin scenarios,
-you can use an asterisk (*) as a shorthand.
-The asterisk acts as a wildcard, allowing for the same functionality
-without repeating the keyword explicitly.
-It improves readability by making the steps easier to follow,
-especially when the specific keyword does not add value to the scenario's clarity.
-
-The asterisk will work the same as other step keywords - Given, When, Then - it follows.
-
-For example:
-
-.. code-block:: gherkin
-
-    Feature: Resource owner
-        Scenario: I'm the author
-            Given I'm an author
-            * I have an article
-            * I have a pen
-
-
-.. code-block:: python
-
-    from pytest_bdd import given
-
-    @given("I'm an author")
-    def _():
-        pass
-
-    @given("I have an article")
-    def _():
-        pass
-
-    @given("I have a pen")
-    def _():
-        pass
-
-
-In the scenario above, the asterisk (*) replaces the And or Given keywords.
-This allows for cleaner scenarios while still linking related steps together in the context of the scenario.
-
-This approach is particularly useful when you have a series of steps
-that do not require explicitly stating whether they are part of the "Given", "When", or "Then" context
-but are part of the logical flow of the scenario.
-
-
 Step arguments
 --------------
 
-Often it's possible to reuse steps giving them a parameter(s).
-This allows to have single implementation and multiple use, so less code.
-Also opens the possibility to use same step twice in single scenario and with different arguments!
-And even more, there are several types of step parameter parsers at your disposal
-(idea taken from behave_ implementation):
+You can reuse steps by giving them parameters. This allows for single implementation and multiple uses, reducing code duplication.
 
-.. _pypi_parse: http://pypi.python.org/pypi/parse
-.. _pypi_parse_type: http://pypi.python.org/pypi/parse_type
+Example
+~~~~~~~
 
-**string** (the default)
-    This is the default and can be considered as a `null` or `exact` parser. It parses no parameters
-    and matches the step name by equality of strings.
-**parse** (based on: pypi_parse_)
-    Provides a simple parser that replaces regular expressions for
-    step parameters with a readable syntax like ``{param:Type}``.
-    The syntax is inspired by the Python builtin ``string.format()``
-    function.
-    Step parameters must use the named fields syntax of pypi_parse_
-    in step definitions. The named fields are extracted,
-    optionally type converted and then used as step function arguments.
-    Supports type conversions by using type converters passed via `extra_types`
-**cfparse** (extends: pypi_parse_, based on: pypi_parse_type_)
-    Provides an extended parser with "Cardinality Field" (CF) support.
-    Automatically creates missing type converters for related cardinality
-    as long as a type converter for cardinality=1 is provided.
-    Supports parse expressions like:
-    * ``{values:Type+}`` (cardinality=1..N, many)
-    * ``{values:Type*}`` (cardinality=0..N, many0)
-    * ``{value:Type?}``  (cardinality=0..1, optional)
-    Supports type conversions (as above).
-**re**
-    This uses full regular expressions to parse the clause text. You will
-    need to use named groups "(?P<name>...)" to define the variables pulled
-    from the text and passed to your ``step()`` function.
-    Type conversion can only be done via `converters` step decorator argument (see example below).
+Consider the following feature file:
 
-The default parser is `string`, so just plain one-to-one match to the keyword definition.
-Parsers except `string`, as well as their optional arguments are specified like:
+.. code-block:: gherkin
 
-for `cfparse` parser
+    Feature: Cucumber management
+        Scenario: Eating cucumbers
+            Given there are 12 cucumbers
+            When I eat 5 cucumbers
+            Then I should have 7 cucumbers
+
+You can implement the steps with parameters as follows:
+
+.. code-block:: python
+
+    from pytest_bdd import scenarios, given, when, then, parsers
+
+    # Load the feature file
+    scenarios("cucumber_management.feature")
+
+    # Define the Given step with a parameter
+    @given(
+        parsers.parse("there are {start:d} cucumbers"),
+        target_fixture="cucumbers"
+    )
+    def given_cucumbers(start):
+        return {"count": start}
+
+    # Define the When step with a parameter
+    @when(parsers.parse("I eat {eat:d} cucumbers"))
+    def eat_cucumbers(cucumbers, eat):
+        cucumbers["count"] -= eat
+
+    # Define the Then step with a parameter
+    @then(parsers.parse("I should have {left:d} cucumbers"))
+    def should_have_left_cucumbers(cucumbers, left):
+        assert cucumbers["count"] == left
+
+In this example:
+- The `given_cucumbers` function initializes the number of cucumbers.
+- The `eat_cucumbers` function reduces the number of cucumbers.
+- The `should_have_left_cucumbers` function checks the remaining number of cucumbers.
+
+By using parameters in your step definitions, you can easily adapt the steps for different scenarios without duplicating code.
+
+Available Parsers
+~~~~~~~~~~~~~~~~~
+
+There are several types of step parameter parsers at your disposal:
+
+- **string** (the default): Matches the step name by equality of strings.
+- **parse**: (`parse <http://pypi.python.org/pypi/parse>`_ library) Uses a readable syntax like ``{param:Type}`` for step parameters.
+- **cfparse** (`parse_type <http://pypi.python.org/pypi/parse_type>`_ library): Extends `parse` with Cardinality Field support, allowing expressions like ``{values:Type+}``.
+- **re**: Uses full regular expressions with named groups to define variables.
+
+Example with `cfparse` parser
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
     from pytest_bdd import parsers
 
     @given(
-        parsers.cfparse("there are {start:Number} cucumbers", extra_types={"Number": int}),
+        parsers.cfparse("there are {start:Number} cucumbers",
+        extra_types={"Number": int}),
         target_fixture="cucumbers",
     )
     def given_cucumbers(start):
-        return {"start": start, "eat": 0}
+        return {"count": start}
 
-for `re` parser
+Example with `re` parser
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -272,51 +226,12 @@ for `re` parser
         target_fixture="cucumbers",
     )
     def given_cucumbers(start):
-        return {"start": start, "eat": 0}
+        return {"count": start}
 
+Implementing a custom step parser
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Example:
-
-.. code-block:: gherkin
-
-    Feature: Step arguments
-        Scenario: Arguments for given, when, then
-            Given there are 5 cucumbers
-
-            When I eat 3 cucumbers
-            And I eat 2 cucumbers
-
-            Then I should have 0 cucumbers
-
-
-The code will look like:
-
-.. code-block:: python
-
-    from pytest_bdd import scenarios, given, when, then, parsers
-
-
-    scenarios("arguments.feature")
-
-
-    @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="cucumbers")
-    def given_cucumbers(start):
-        return {"start": start, "eat": 0}
-
-
-    @when(parsers.parse("I eat {eat:d} cucumbers"))
-    def eat_cucumbers(cucumbers, eat):
-        cucumbers["eat"] += eat
-
-
-    @then(parsers.parse("I should have {left:d} cucumbers"))
-    def should_have_left_cucumbers(cucumbers, left):
-        assert cucumbers["start"] - cucumbers["eat"] == left
-
-Example code also shows possibility to pass argument converters which may be useful if you need to postprocess step
-arguments after the parser.
-
-You can implement your own step parser. It's interface is quite simple. The code can look like:
+You can implement your own step parser. Its interface is quite simple. The code can look like:
 
 .. code-block:: python
 
@@ -325,69 +240,57 @@ You can implement your own step parser. It's interface is quite simple. The code
 
 
     class MyParser(parsers.StepParser):
-        """Custom parser."""
-
-        def __init__(self, name, **kwargs):
-            """Compile regex."""
+        """Parser that uses %-interpolated strings, like `%foo%`"""
+        def __init__(self, name: str) -> None:
             super().__init__(name)
-            self.regex = re.compile(re.sub("%(.+)%", "(?P<\1>.+)", self.name), **kwargs)
+            self.regex = re.compile(re.sub(r"%(.+)%", r"(?P<\1>.+)", self.name))
 
-        def parse_arguments(self, name):
-            """Get step arguments.
-
-            :return: `dict` of step arguments
-            """
+        def parse_arguments(self, name: str) -> dict[str, object]:
             return self.regex.match(name).groupdict()
 
-        def is_matching(self, name):
-            """Match given name with the step name."""
+        def is_matching(self, name: str) -> bool:
             return bool(self.regex.match(name))
 
 
     @given(parsers.parse("there are %start% cucumbers"), target_fixture="cucumbers")
-    def given_cucumbers(start):
-        return {"start": start, "eat": 0}
+    def given_cucumbers(start: str) -> dict[str, int]:
+        return {"count": int(start)}
+
+Override fixtures (injection)
+-----------------------------
+
+To imperatively change a fixture only for certain tests (scenarios), use the ``target_fixture`` parameter in the `given` decorator:
 
 
-Override fixtures via given steps
----------------------------------
+.. code-block:: gherkin
 
-Dependency injection is not a panacea if you have complex structure of your test setup data. Sometimes there's a need
-such a given step which would imperatively change the fixture only for certain test (scenario), while for other tests
-it will stay untouched. To allow this, special parameter `target_fixture` exists in the `given` decorator:
+    Feature: Target fixture override
+        Scenario: Test given fixture injection
+            Given I have injecting given
+            Then foo should be "injected foo"
 
 .. code-block:: python
 
     from pytest_bdd import given
 
     @pytest.fixture
-    def foo():
+    def _():
         return "foo"
 
-
     @given("I have injecting given", target_fixture="foo")
-    def injecting_given():
+    def _():
         return "injected foo"
 
-
     @then('foo should be "injected foo"')
-    def foo_is_foo(foo):
-        assert foo == 'injected foo'
+    def _(foo):
+        assert foo == "injected foo"
 
 
-.. code-block:: gherkin
 
-    Feature: Target fixture
-        Scenario: Test given fixture injection
-            Given I have injecting given
-            Then foo should be "injected foo"
-
-
-In this example, the existing fixture `foo` will be overridden by given step `I have injecting given` only for the scenario it's
-used in.
+In this example, the existing fixture `foo` is overridden by given step `I have injecting given` only for the scenario it's used in.
 
 Sometimes it is also useful to let `when` and `then` steps provide a fixture as well.
-A common use case is when we have to assert the outcome of an HTTP request:
+A common use case is when we want to access the result of an HTTP request in later steps:
 
 .. code-block:: python
 
@@ -399,11 +302,9 @@ A common use case is when we have to assert the outcome of an HTTP request:
 
     scenarios("blog.feature")
 
-
     @given("there is an article", target_fixture="article")
     def there_is_an_article():
         return Article()
-
 
     @when("I request the deletion of the article", target_fixture="request_result")
     def there_should_be_a_new_article(article, http_client):
@@ -427,139 +328,45 @@ A common use case is when we have to assert the outcome of an HTTP request:
 
             Then the request should be successful
 
-
-Multiline steps
----------------
-
-As Gherkin, pytest-bdd supports multiline steps
-(a.k.a. `Doc Strings <https://cucumber.io/docs/gherkin/reference/#doc-strings>`_).
-
-.. code-block:: gherkin
-
-    Feature: Multiline steps
-        Scenario: Multiline step using sub indentation
-            Given I have a step with:
-                """
-                Some
-                Extra
-                Lines
-                """
-            Then the text should be parsed with correct indentation
-
-A step is considered as a multiline one, if the **next** line(s) after its first line is encapsulated by
-triple quotes. The step name is then simply extended by adding further lines inside the triple quotes.
-In the example above, the Given step name will be:
-
-.. code-block:: python
-
-    'I have a step with:\nSome\nExtra\nLines'
-
-You can of course register a step using the full name (including the newlines), but it seems more practical to use
-step arguments and capture lines after first line (or some subset of them) into the argument:
-
-.. code-block:: python
-
-    from pytest_bdd import given, then, scenario, parsers
-
-
-    scenarios("multiline.feature")
-
-
-    @given(parsers.parse("I have a step with:\n{content}"), target_fixture="text")
-    def given_text(content):
-        return content
-
-
-    @then("the text should be parsed with correct indentation")
-    def text_should_be_correct(text):
-        assert text == "Some\nExtra\nLines"
-
-
-Scenarios shortcut
-------------------
-
-If you have a relatively large set of feature files, it's boring to manually bind scenarios to the tests using the scenario decorator. Of course with the manual approach you get all the power to be able to additionally parametrize the test, give the test function a nice name, document it, etc, but in the majority of the cases you don't need that.
-Instead, you want to bind all the scenarios found in the ``features`` folder(s) recursively automatically, by using the ``scenarios`` helper.
-
-.. code-block:: python
-
-    from pytest_bdd import scenarios
-
-    # assume 'features' subfolder is in this file's directory
-    scenarios('features')
-
-That's all you need to do to bind all scenarios found in the ``features`` folder!
-Note that you can pass multiple paths, and those paths can be either feature files or feature folders.
-
-
-.. code-block:: python
-
-    from pytest_bdd import scenarios
-
-    # pass multiple paths/files
-    scenarios('features', 'other_features/some.feature', 'some_other_features')
-
-But what if you need to manually bind a certain scenario, leaving others to be automatically bound?
-Just write your scenario in a "normal" way, but ensure you do it **before** the call of ``scenarios`` helper.
-
-
-.. code-block:: python
-
-    from pytest_bdd import scenario, scenarios
-
-    @scenario('features/some.feature', 'Test something')
-    def test_something():
-        pass
-
-    # assume 'features' subfolder is in this file's directory
-    scenarios('features')
-
-In the example above, the ``test_something`` scenario binding will be kept manual, other scenarios found in the ``features`` folder will be bound automatically.
-
-
-Scenario outlines
+Scenario Outlines
 -----------------
 
-Scenarios can be parametrized to cover multiple cases. These are called `Scenario Outlines <https://cucumber.io/docs/gherkin/reference/#scenario-outline>`_ in Gherkin, and the variable templates are written using angular brackets (e.g. ``<var_name>``).
-
-Example:
+Scenarios can be parameterized to cover multiple cases using `Scenario Outlines <https://cucumber.io/docs/gherkin/reference/#scenario-outline>`_.
 
 .. code-block:: gherkin
 
     # content of scenario_outlines.feature
 
     Feature: Scenario outlines
-        Scenario Outline: Outlined given, when, then
+        Scenario Outline: Eating cucumbers
             Given there are <start> cucumbers
             When I eat <eat> cucumbers
             Then I should have <left> cucumbers
 
             Examples:
-            | start | eat | left |
-            |  12   |  5  |  7   |
+                | start | eat | left |
+                |  12   |  5  |  7   |
+                |  20   |  5  |  15  |
 
 .. code-block:: python
 
-    from pytest_bdd import scenarios, given, when, then, parsers
+    # test_scenario_outlines.py
 
+    from pytest_bdd import scenarios, given, when, then, parsers
 
     scenarios("scenario_outlines.feature")
 
-
     @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="cucumbers")
     def given_cucumbers(start):
-        return {"start": start, "eat": 0}
-
+        return {"count": start}
 
     @when(parsers.parse("I eat {eat:d} cucumbers"))
     def eat_cucumbers(cucumbers, eat):
-        cucumbers["eat"] += eat
-
+        cucumbers["count"] -= eat
 
     @then(parsers.parse("I should have {left:d} cucumbers"))
     def should_have_left_cucumbers(cucumbers, left):
-        assert cucumbers["start"] - cucumbers["eat"] == left
-
+        assert cucumbers["count"] == left
 
 Step Definitions and Accessing the Datatable
 --------------------------------------------
@@ -843,7 +650,7 @@ features.
 
       Scenario: Greg posts to a client's blog
         Given I am logged in as Greg
-        When I try to post to "Expensive Therapy"
+        When        I try to post to "Expensive Therapy"
         Then I should see "Your article was published."
 
 In this example, all steps from the background will be executed before all the scenario's own given
