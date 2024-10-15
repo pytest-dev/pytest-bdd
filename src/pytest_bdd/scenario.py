@@ -201,6 +201,9 @@ def _execute_step_function(
         if step.datatable is not None:
             kwargs["datatable"] = step.datatable.raw()
 
+        if step.docstring is not None:
+            kwargs["docstring"] = step.docstring
+
         for arg, value in parsed_args.items():
             if arg in converters:
                 value = converters[arg](value)

@@ -7,7 +7,7 @@ Feature: Background support
 
     Background:
         Given foo has a value "bar"
-        And a background step with multiple lines:
+        And a background step with docstring:
         """
             one
             two
@@ -35,9 +35,9 @@ def foo():
     return {}
 
 
-@given(parsers.re(r"a background step with multiple lines:\n(?P<data>.+)", flags=re.DOTALL))
-def _(foo, data):
-    assert data == "one\ntwo"
+@given("a background step with docstring:")
+def _(foo, docstring):
+    assert docstring == "one\ntwo"
 
 
 @given('foo has a value "bar"')

@@ -561,7 +561,7 @@ Example:
         assert cucumbers["start"] - cucumbers["eat"] == left
 
 
-Step Definitions and Accessing the Datatable
+Datatable Argument and Accessing the Datatable
 --------------------------------------------
 
 The ``datatable`` argument allows you to utilise data tables defined in your Gherkin scenarios
@@ -652,6 +652,78 @@ Full example:
 
         assert users_have_correct_permissions(users, expected_permissions)
 
+
+Docstring Argument and Accessing the Docstring
+---------------------------------------------
+
+The `docstring` argument allows you to access the Gherkin docstring defined in your steps as a multiline string.
+The content of the docstring is passed as a single string, with each line separated by `\n`.
+Leading indentation are stripped.
+
+For example, the Gherkin docstring:
+
+.. code-block:: gherkin
+    """
+    This is a sample docstring.
+    It spans multiple lines.
+    """
+
+
+Will be returned as:
+
+.. code-block:: python
+    "This is a sample docstring.\nIt spans multiple lines."
+
+
+Full example:
+
+.. code-block:: gherkin
+
+    Feature: Docstring
+
+      Scenario: Step with docstrings
+        Given a step has a docstring
+        """
+        This is a given docstring
+        """
+
+        When a step provides a docstring with lower indentation
+        """
+    This is a when docstring
+        """
+
+        And this step has no docstring
+
+        Then this step has a greater indentation
+        """
+            This is a then docstring
+        """
+
+        And this step has no docstring
+
+.. code-block:: python
+
+        from pytest_bdd import given, when, then
+
+        @given("a step has a docstring")
+        def _(docstring):
+            print(docstring)
+
+        @when("a step provides a docstring with lower indentation")
+        def _(docstring):
+            print(docstring)
+
+        @then("this step has a greater indentation")
+        def _(docstring):
+            print(docstring)
+
+        @then("this step has no docstring")
+        def _():
+            pass
+
+
+.. NOTE::   The docstring argument can only be used for steps that have an associated docstring.
+            Otherwise, an error will be thrown.
 
 Organizing your scenarios
 -------------------------
