@@ -17,7 +17,8 @@ import contextlib
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, List, TypeVar, cast
+from collections.abc import Iterable, Iterator
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
@@ -62,7 +63,7 @@ def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: 
             if not match:
                 continue
 
-            fixturedefs = cast(List[FixtureDef[Any]], getfixturedefs(fixturemanager, fixturename, node) or [])
+            fixturedefs = cast(list[FixtureDef[Any]], getfixturedefs(fixturemanager, fixturename, node) or [])
             if fixturedef not in fixturedefs:
                 continue
 

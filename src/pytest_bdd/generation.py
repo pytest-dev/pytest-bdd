@@ -16,7 +16,8 @@ from .steps import get_step_fixture_name
 from .types import STEP_TYPES
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from collections.abc import Sequence
+    from typing import Any
 
     from _pytest.config import Config
     from _pytest.config.argparsing import Parser

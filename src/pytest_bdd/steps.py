@@ -38,9 +38,10 @@ def _(article):
 from __future__ import annotations
 
 import enum
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from itertools import count
-from typing import Any, Callable, Iterable, Literal, TypeVar
+from typing import Any, Callable, Literal, TypeVar
 
 import pytest
 from typing_extensions import ParamSpec
