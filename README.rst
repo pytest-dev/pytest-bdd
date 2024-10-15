@@ -514,8 +514,8 @@ Example:
         assert cucumbers["start"] - cucumbers["eat"] == left
 
 
-Datatable Argument and Accessing the Datatable
---------------------------------------------
+Datatables
+----------
 
 The ``datatable`` argument allows you to utilise data tables defined in your Gherkin scenarios
 directly within your test functions. This is particularly useful for scenarios that require tabular data as input,
@@ -606,8 +606,8 @@ Full example:
         assert users_have_correct_permissions(users, expected_permissions)
 
 
-Docstring Argument and Accessing the Docstring
----------------------------------------------
+Docstrings
+----------
 
 The `docstring` argument allows you to access the Gherkin docstring defined in your steps as a multiline string.
 The content of the docstring is passed as a single string, with each line separated by `\\n`.
@@ -635,48 +635,54 @@ Full example:
     Feature: Docstring
 
       Scenario: Step with docstrings
-        Given a step has a docstring
+        Given some steps will have docstrings
+
+        Then a step has a docstring
         """
-        This is a given docstring
+        This is a docstring
         on two lines
         """
 
-        When a step provides a docstring with lower indentation
+        And a step provides a docstring with lower indentation
         """
     This is a when docstring
         """
 
         And this step has no docstring
 
-        Then this step has a greater indentation
+        And this step has a greater indentation
         """
-            This is a then docstring
+            This is a docstring
         """
 
         And this step has no docstring
 
 .. code-block:: python
 
-        from pytest_bdd import given, when, then
+        from pytest_bdd import given, then
 
-        @given("a step has a docstring")
+        @given("some steps will have docstrings")
+        def _():
+            pass
+
+        @then("a step has a docstring")
         def _(docstring):
             assert docstring == "This is a given docstring\non two lines"
 
-        @when("a step provides a docstring with lower indentation")
+        @then("a step provides a docstring with lower indentation")
         def _(docstring):
-            print(docstring)
+            assert docstring == "This is a when docstring"
 
         @then("this step has a greater indentation")
         def _(docstring):
-            print(docstring)
+            assert docstring == "This is a when docstring"
 
         @then("this step has no docstring")
         def _():
             pass
 
 
-.. NOTE::   The docstring argument can only be used for steps that have an associated docstring.
+.. note::   The ``docstring`` argument can only be used for steps that have an associated docstring.
             Otherwise, an error will be thrown.
 
 Organizing your scenarios

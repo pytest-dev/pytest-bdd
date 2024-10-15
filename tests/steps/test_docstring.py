@@ -34,9 +34,8 @@ def test_steps_with_docstrings(pytester):
     pytester.makeconftest(
         textwrap.dedent(
             r"""
-        from pytest_bdd import given, when, then, parsers
+        from pytest_bdd import given, when, then
         from pytest_bdd.utils import dump_obj
-        import re
 
 
         @given("a step has a docstring")
@@ -80,9 +79,7 @@ def test_steps_with_docstrings(pytester):
     result.assert_outcomes(passed=1)
 
     docstrings = collect_dumped_objects(result)
-    assert docstrings[0] == "This is a given docstring"
-    assert docstrings[1] == "This is a when docstring"
-    assert docstrings[2] == "This is a then docstring"
+    assert docstrings == ["This is a given docstring", "This is a when docstring", "This is a then docstring"]
 
 
 def test_steps_with_missing_docstring(pytester):
@@ -106,8 +103,7 @@ def test_steps_with_missing_docstring(pytester):
     pytester.makeconftest(
         textwrap.dedent(
             """\
-        from pytest_bdd import given, when, then, parsers
-        from re import DOTALL
+        from pytest_bdd import given, when, then
 
 
         @given("this step has a docstring")
@@ -142,3 +138,64 @@ def test_steps_with_missing_docstring(pytester):
     result = pytester.runpytest("-s")
     result.assert_outcomes(failed=1)
     result.stdout.fnmatch_lines(["*fixture 'docstring' not found*"])
+
+
+def test_steps_with_docstring_missing_argument_in_step_def(pytester):
+    pytester.makefile(
+        ".feature",
+        missing_docstring_arg=textwrap.dedent(
+            '''\
+            Feature: Missing docstring
+
+              Scenario: Docstring arg is missing for a step definition
+                Given this step has a docstring
+                """
+                This is a given docstring
+                """
+
+                When this step has a docstring but no docstring argument
+                """
+                This is a when docstring
+                """
+
+                Then the test passes
+            '''
+        ),
+    )
+    pytester.makeconftest(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, when, then
+
+
+        @given("this step has a docstring")
+        def _(docstring):
+            print(docstring)
+
+
+        @when("this step has a docstring but no docstring argument")
+        def _():
+            pass
+
+
+        @then("the test passes")
+        def _():
+            pass
+
+    """
+        )
+    )
+
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario
+
+        @scenario("missing_docstring_arg.feature", "Docstring arg is missing for a step definition")
+        def test_docstring():
+            pass
+        """
+        )
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=1)
