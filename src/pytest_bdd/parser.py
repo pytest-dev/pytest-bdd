@@ -17,7 +17,7 @@ from .gherkin_parser import Scenario as GherkinScenario
 from .gherkin_parser import Step as GherkinStep
 from .gherkin_parser import Tag as GherkinTag
 from .gherkin_parser import get_gherkin_document
-from .types import GIVEN, STEP_TYPES, THEN, WHEN
+from .types import STEP_TYPES
 
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
 COMMENT_RE = re.compile(r"(^|(?<=\s))#")
