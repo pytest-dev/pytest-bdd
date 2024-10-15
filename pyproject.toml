@@ -59,6 +59,10 @@ build-backend = "poetry.core.masonry.api"
 line-length = 120
 target-version = ["py39", "py310", "py311", "py312"]
 
+[tool.flake8]
+# E: indentation erros; ignore all, since we already use `black`
+extend-ignore = "E"
+
 [tool.isort]
 profile = "black"
 line_length = 120
