@@ -6,8 +6,9 @@ Unreleased
 - Update documentation to clarify that `--gherkin-terminal-reporter` needs to be used with `-v` or `-vv`.
 - Drop compatibility with pytest < 7.0.0.
 - Continuation of steps using asterisks instead of And/But supported.
-- Added `datatable` argument for steps that contain a datatable (see Data Tables section at https://cucumber.io/docs/gherkin/reference/)
-- Added `docstring` argument for steps that contain a docstring (see Doc Strings section at https://cucumber.io/docs/gherkin/reference/).
+- Added `datatable` argument for steps that contain a datatable (see `Data Tables <https://cucumber.io/docs/gherkin/reference/#data-tables>`).
+- Added `docstring` argument for steps that contain a docstring (see `Doc Strings <https://cucumber.io/docs/gherkin/reference/#doc-strings>`).
+- Multiline strings no longer match name based on multiple lines - only on the actual step text on the step line.
 
 8.0.0b1
 ----------

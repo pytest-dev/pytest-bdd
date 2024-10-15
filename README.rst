@@ -428,53 +428,6 @@ A common use case is when we have to assert the outcome of an HTTP request:
             Then the request should be successful
 
 
-Multiline steps
----------------
-
-As Gherkin, pytest-bdd supports multiline steps
-(a.k.a. `Doc Strings <https://cucumber.io/docs/gherkin/reference/#doc-strings>`_).
-
-.. code-block:: gherkin
-
-    Feature: Multiline steps
-        Scenario: Multiline step using sub indentation
-            Given I have a step with:
-                """
-                Some
-                Extra
-                Lines
-                """
-            Then the text should be parsed with correct indentation
-
-A step is considered as a multiline one, if the **next** line(s) after its first line is encapsulated by
-triple quotes. The step name is then simply extended by adding further lines inside the triple quotes.
-In the example above, the Given step name will be:
-
-.. code-block:: python
-
-    'I have a step with:\nSome\nExtra\nLines'
-
-You can of course register a step using the full name (including the newlines), but it seems more practical to use
-step arguments and capture lines after first line (or some subset of them) into the argument:
-
-.. code-block:: python
-
-    from pytest_bdd import given, then, scenario, parsers
-
-
-    scenarios("multiline.feature")
-
-
-    @given(parsers.parse("I have a step with:\n{content}"), target_fixture="text")
-    def given_text(content):
-        return content
-
-
-    @then("the text should be parsed with correct indentation")
-    def text_should_be_correct(text):
-        assert text == "Some\nExtra\nLines"
-
-
 Scenarios shortcut
 ------------------
 
@@ -685,6 +638,7 @@ Full example:
         Given a step has a docstring
         """
         This is a given docstring
+        on two lines
         """
 
         When a step provides a docstring with lower indentation
@@ -707,7 +661,7 @@ Full example:
 
         @given("a step has a docstring")
         def _(docstring):
-            print(docstring)
+            assert docstring == "This is a given docstring\non two lines"
 
         @when("a step provides a docstring with lower indentation")
         def _(docstring):
