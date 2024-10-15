@@ -615,7 +615,9 @@ Leading indentation are stripped.
 
 For example, the Gherkin docstring:
 
+
 .. code-block:: gherkin
+
     """
     This is a sample docstring.
     It spans multiple lines.
@@ -625,6 +627,7 @@ For example, the Gherkin docstring:
 Will be returned as:
 
 .. code-block:: python
+
     "This is a sample docstring.\nIt spans multiple lines."
 
 
@@ -645,7 +648,7 @@ Full example:
 
         And a step provides a docstring with lower indentation
         """
-    This is a when docstring
+    This is a docstring
         """
 
         And this step has no docstring
@@ -661,21 +664,22 @@ Full example:
 
         from pytest_bdd import given, then
 
+
         @given("some steps will have docstrings")
         def _():
             pass
 
         @then("a step has a docstring")
         def _(docstring):
-            assert docstring == "This is a given docstring\non two lines"
+            assert docstring == "This is a docstring\non two lines"
 
         @then("a step provides a docstring with lower indentation")
         def _(docstring):
-            assert docstring == "This is a when docstring"
+            assert docstring == "This is a docstring"
 
         @then("this step has a greater indentation")
         def _(docstring):
-            assert docstring == "This is a when docstring"
+            assert docstring == "This is a docstring"
 
         @then("this step has no docstring")
         def _():

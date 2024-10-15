@@ -14,6 +14,7 @@ test_publish_article = scenario(
 from __future__ import annotations
 
 import contextlib
+import inspect
 import logging
 import os
 import re
@@ -191,6 +192,7 @@ def _execute_step_function(
     converters = context.converters
     kwargs = {}
     args = get_args(context.step_func)
+    signature = inspect.signature(context.step_func)  # Get function signature
 
     try:
         parsed_args = context.parser.parse_arguments(step.name)
@@ -209,7 +211,13 @@ def _execute_step_function(
                 value = converters[arg](value)
             kwargs[arg] = value
 
-        kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
+        step_func_explicit_args = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
+
+        if any(param.kind == param.VAR_KEYWORD for param in signature.parameters.values()):
+            kwargs = {**kwargs, **step_func_explicit_args}
+        else:
+            kwargs = step_func_explicit_args
+
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
