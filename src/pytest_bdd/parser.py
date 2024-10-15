@@ -4,12 +4,13 @@ import os.path
 import re
 import textwrap
 from collections import OrderedDict
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Any
 
 from .exceptions import StepError
 from .gherkin_parser import Background as GherkinBackground
-from .gherkin_parser import DataTable, ExamplesTable
+from .gherkin_parser import DataTable
 from .gherkin_parser import Feature as GherkinFeature
 from .gherkin_parser import GherkinDocument
 from .gherkin_parser import Scenario as GherkinScenario
