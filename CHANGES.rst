@@ -3,6 +3,7 @@ Changelog
 
 Unreleased
 ----------
+- Dropped support for python 3.8. Supported python versions: 3.9, 3.10, 3.11, 3.12, 3.13.
 
 8.0.0b2
 ----------
