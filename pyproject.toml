@@ -60,8 +60,11 @@ line-length = 120
 target-version = ["py39", "py310", "py311", "py312"]
 
 [tool.flake8]
-# E: indentation erros; ignore all, since we already use `black`
-extend-ignore = "E"
+# E1: indentation: already covered by `black`
+# E2: whitespace: already covered by `black`
+# E3: blank line: already covered by `black`
+# E501: line length: already covered by `black`
+extend-ignore = "E1,E2,E3,E501"
 
 [tool.isort]
 profile = "black"
