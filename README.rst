@@ -657,7 +657,7 @@ Docstring Argument and Accessing the Docstring
 ---------------------------------------------
 
 The `docstring` argument allows you to access the Gherkin docstring defined in your steps as a multiline string.
-The content of the docstring is passed as a single string, with each line separated by `\n`.
+The content of the docstring is passed as a single string, with each line separated by `\\n`.
 Leading indentation are stripped.
 
 For example, the Gherkin docstring:
