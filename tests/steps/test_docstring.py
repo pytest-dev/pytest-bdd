@@ -140,51 +140,6 @@ def test_steps_with_missing_docstring(pytester):
     result.stdout.fnmatch_lines(["*fixture 'docstring' not found*"])
 
 
-def test_steps_with_docstring_in_kwargs(pytester):
-    pytester.makefile(
-        ".feature",
-        docstring_kwarg=textwrap.dedent(
-            '''\
-            Feature: Docstring in kwargs
-
-              Scenario: Docstring is in step kwargs
-                Given this step has a docstring
-                """
-                This is a given docstring
-                """
-            '''
-        ),
-    )
-    pytester.makeconftest(
-        textwrap.dedent(
-            """\
-        from pytest_bdd import given
-
-
-        @given("this step has a docstring")
-        def _(**kwargs):
-            print(kwargs['docstring'])
-
-
-    """
-        )
-    )
-
-    pytester.makepyfile(
-        textwrap.dedent(
-            """\
-        from pytest_bdd import scenario
-
-        @scenario("docstring_kwarg.feature", "Docstring is in step kwargs")
-        def test_docstring():
-            pass
-        """
-        )
-    )
-    result = pytester.runpytest("-s")
-    result.assert_outcomes(passed=1)
-
-
 def test_steps_with_docstring_missing_argument_in_step_def(pytester):
     pytester.makefile(
         ".feature",

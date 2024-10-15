@@ -14,7 +14,6 @@ test_publish_article = scenario(
 from __future__ import annotations
 
 import contextlib
-import inspect
 import logging
 import os
 import re
@@ -192,7 +191,6 @@ def _execute_step_function(
     converters = context.converters
     kwargs = {}
     args = get_args(context.step_func)
-    signature = inspect.signature(context.step_func)  # Get function signature
 
     try:
         parsed_args = context.parser.parse_arguments(step.name)
@@ -200,23 +198,18 @@ def _execute_step_function(
             f"Unexpected `NoneType` returned from " f"parse_arguments(...) in parser: {context.parser!r}"
         )
 
+        for arg, value in parsed_args.items():
+            if arg in converters:
+                value = converters[arg](value)
+            kwargs[arg] = value
+
         if step.datatable is not None:
             kwargs["datatable"] = step.datatable.raw()
 
         if step.docstring is not None:
             kwargs["docstring"] = step.docstring
 
-        for arg, value in parsed_args.items():
-            if arg in converters:
-                value = converters[arg](value)
-            kwargs[arg] = value
-
-        step_func_explicit_args = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
-
-        if any(param.kind == param.VAR_KEYWORD for param in signature.parameters.values()):
-            kwargs = {**kwargs, **step_func_explicit_args}
-        else:
-            kwargs = step_func_explicit_args
+        kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
 
         kw["step_func_args"] = kwargs
 
