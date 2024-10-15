@@ -3,6 +3,9 @@ Changelog
 
 Unreleased
 ----------
+
+8.0.0b2
+----------
 - Update documentation to clarify that `--gherkin-terminal-reporter` needs to be used with `-v` or `-vv`.
 - Drop compatibility with pytest < 7.0.0.
 - Continuation of steps using asterisks instead of And/But supported.
