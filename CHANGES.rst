@@ -19,6 +19,7 @@ Unreleased
 - All feature files must now use the keyword `Feature:` to be considered valid.
 - Tags can no longer have spaces (e.g. "@tag one" and "@tag two" are no longer valid).
 - Tags can now be on multiple lines (stacked)
+- Step names no longer strip what we considered comments (text after the `#` character).
 
 7.3.0
 ----------

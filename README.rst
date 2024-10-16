@@ -56,7 +56,7 @@ Note that pytest-splinter_ is used to get the browser fixture.
             And I press the publish button
 
             Then I should not see the error message
-            And the article should be published  # Note: will query the database
+            And the article should be published
 
 Note that only one feature is allowed per feature file.
 
