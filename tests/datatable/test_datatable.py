@@ -1,5 +1,4 @@
 import textwrap
-from typing import List
 
 from src.pytest_bdd.utils import collect_dumped_objects
 

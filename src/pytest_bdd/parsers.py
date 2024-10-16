@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import abc
 import re as base_re
-from typing import Any, Dict, TypeVar, cast, overload
+from typing import Any, TypeVar, cast, overload
 
 import parse as base_parse
 from parse_type import cfparse as base_cfparse
@@ -66,7 +66,7 @@ class parse(StepParser):
 
         :return: `dict` of step arguments
         """
-        return cast(Dict[str, Any], self.parser.parse(name).named)
+        return cast(dict[str, Any], self.parser.parse(name).named)
 
     def is_matching(self, name: str) -> bool:
         """Match given name with the step name."""

@@ -8,8 +8,6 @@ import textwrap
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from typing import Optional
-
     from _pytest.pytester import Pytester, RunResult
 
 

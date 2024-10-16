@@ -4,8 +4,9 @@ import os.path
 import re
 import textwrap
 from collections import OrderedDict
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Any
 
 from .exceptions import StepError
 from .gherkin_parser import Background as GherkinBackground
