@@ -173,6 +173,7 @@ class ScenarioTemplate:
                 line_number=step.line_number,
                 keyword=step.keyword,
                 datatable=step.datatable,
+                docstring=step.docstring,
             )
             for step in self._steps
         ]
@@ -228,13 +229,21 @@ class Step:
     line_number: int
     indent: int
     keyword: str
+    docstring: str | None = None
     datatable: DataTable | None = None
     failed: bool = field(init=False, default=False)
     scenario: ScenarioTemplate | None = field(init=False, default=None)
     background: Background | None = field(init=False, default=None)
 
     def __init__(
-        self, name: str, type: str, indent: int, line_number: int, keyword: str, datatable: DataTable | None = None
+        self,
+        name: str,
+        type: str,
+        indent: int,
+        line_number: int,
+        keyword: str,
+        datatable: DataTable | None = None,
+        docstring: str | None = None,
     ) -> None:
         """Initialize a step.
 
@@ -251,6 +260,7 @@ class Step:
         self.line_number = line_number
         self.keyword = keyword
         self.datatable = datatable
+        self.docstring = docstring
 
     def __str__(self) -> str:
         """Return a string representation of the step.
@@ -347,12 +357,6 @@ class FeatureParser:
             List[Step]: A list of Step objects.
         """
 
-        def get_step_content(_gherkin_step: GherkinStep) -> str:
-            step_name = strip_comments(_gherkin_step.text)
-            if _gherkin_step.docstring:
-                step_name = f"{step_name}\n{_gherkin_step.docstring.content}"
-            return step_name
-
         if not steps_data:
             return []
 
@@ -361,25 +365,25 @@ class FeatureParser:
             raise StepError(
                 message=f"First step in a scenario or background must start with 'Given', 'When' or 'Then', but got {first_step.keyword}.",
                 line=first_step.location.line,
-                line_content=get_step_content(first_step),
+                line_content=first_step.text,
                 filename=self.abs_filename,
             )
 
         steps = []
         current_type = first_step.keyword.lower()
         for step in steps_data:
-            name = get_step_content(step)
             keyword = step.keyword.lower()
             if keyword in STEP_TYPES:
                 current_type = keyword
             steps.append(
                 Step(
-                    name=name,
+                    name=strip_comments(step.text),
                     type=current_type,
                     indent=step.location.column - 1,
                     line_number=step.location.line,
                     keyword=step.keyword.title(),
                     datatable=step.datatable,
+                    docstring=step.docstring.content if step.docstring else None,
                 )
             )
         return steps

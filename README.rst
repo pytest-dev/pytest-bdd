@@ -428,53 +428,6 @@ A common use case is when we have to assert the outcome of an HTTP request:
             Then the request should be successful
 
 
-Multiline steps
----------------
-
-As Gherkin, pytest-bdd supports multiline steps
-(a.k.a. `Doc Strings <https://cucumber.io/docs/gherkin/reference/#doc-strings>`_).
-
-.. code-block:: gherkin
-
-    Feature: Multiline steps
-        Scenario: Multiline step using sub indentation
-            Given I have a step with:
-                """
-                Some
-                Extra
-                Lines
-                """
-            Then the text should be parsed with correct indentation
-
-A step is considered as a multiline one, if the **next** line(s) after its first line is encapsulated by
-triple quotes. The step name is then simply extended by adding further lines inside the triple quotes.
-In the example above, the Given step name will be:
-
-.. code-block:: python
-
-    'I have a step with:\nSome\nExtra\nLines'
-
-You can of course register a step using the full name (including the newlines), but it seems more practical to use
-step arguments and capture lines after first line (or some subset of them) into the argument:
-
-.. code-block:: python
-
-    from pytest_bdd import given, then, scenario, parsers
-
-
-    scenarios("multiline.feature")
-
-
-    @given(parsers.parse("I have a step with:\n{content}"), target_fixture="text")
-    def given_text(content):
-        return content
-
-
-    @then("the text should be parsed with correct indentation")
-    def text_should_be_correct(text):
-        assert text == "Some\nExtra\nLines"
-
-
 Scenarios shortcut
 ------------------
 
@@ -561,8 +514,8 @@ Example:
         assert cucumbers["start"] - cucumbers["eat"] == left
 
 
-Step Definitions and Accessing the Datatable
---------------------------------------------
+Datatables
+----------
 
 The ``datatable`` argument allows you to utilise data tables defined in your Gherkin scenarios
 directly within your test functions. This is particularly useful for scenarios that require tabular data as input,
@@ -652,6 +605,89 @@ Full example:
 
         assert users_have_correct_permissions(users, expected_permissions)
 
+
+Docstrings
+----------
+
+The `docstring` argument allows you to access the Gherkin docstring defined in your steps as a multiline string.
+The content of the docstring is passed as a single string, with each line separated by `\\n`.
+Leading indentation are stripped.
+
+For example, the Gherkin docstring:
+
+
+.. code-block:: gherkin
+
+    """
+    This is a sample docstring.
+    It spans multiple lines.
+    """
+
+
+Will be returned as:
+
+.. code-block:: python
+
+    "This is a sample docstring.\nIt spans multiple lines."
+
+
+Full example:
+
+.. code-block:: gherkin
+
+    Feature: Docstring
+
+      Scenario: Step with docstrings
+        Given some steps will have docstrings
+
+        Then a step has a docstring
+        """
+        This is a docstring
+        on two lines
+        """
+
+        And a step provides a docstring with lower indentation
+        """
+    This is a docstring
+        """
+
+        And this step has no docstring
+
+        And this step has a greater indentation
+        """
+            This is a docstring
+        """
+
+        And this step has no docstring
+
+.. code-block:: python
+
+        from pytest_bdd import given, then
+
+
+        @given("some steps will have docstrings")
+        def _():
+            pass
+
+        @then("a step has a docstring")
+        def _(docstring):
+            assert docstring == "This is a docstring\non two lines"
+
+        @then("a step provides a docstring with lower indentation")
+        def _(docstring):
+            assert docstring == "This is a docstring"
+
+        @then("this step has a greater indentation")
+        def _(docstring):
+            assert docstring == "This is a docstring"
+
+        @then("this step has no docstring")
+        def _():
+            pass
+
+
+.. note::   The ``docstring`` argument can only be used for steps that have an associated docstring.
+            Otherwise, an error will be thrown.
 
 Organizing your scenarios
 -------------------------
