@@ -97,10 +97,10 @@ def test_steps_with_datatables(pytester):
     ]
 
 
-def test_steps_with_missing_datatables(pytester):
+def test_datatable_argument_in_step_impl_is_optional(pytester):
     pytester.makefile(
         ".feature",
-        missing_datatable=textwrap.dedent(
+        optional_arg_datatable=textwrap.dedent(
             """\
             Feature: Missing data table
 
@@ -142,11 +142,9 @@ def test_steps_with_missing_datatables(pytester):
     pytester.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd import scenario
+        from pytest_bdd import scenarios
 
-        @scenario("missing_datatable.feature", "Data table is missing for a step")
-        def test_datatable():
-            pass
+        scenarios("optional_arg_datatable.feature")
         """
         )
     )

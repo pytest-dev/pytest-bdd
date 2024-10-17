@@ -40,13 +40,13 @@ def test_steps_with_docstrings(pytester):
 
         @given("a step has a docstring")
         def _(docstring):
-            given_docstring = docstring.strip()
+            given_docstring = docstring
             dump_obj(given_docstring)
 
 
         @when("a step provides a docstring with lower indentation")
         def _(docstring):
-            when_docstring = docstring.strip()
+            when_docstring = docstring
             dump_obj(when_docstring)
 
 
@@ -57,7 +57,7 @@ def test_steps_with_docstrings(pytester):
 
         @then("this step has a greater indentation")
         def _(docstring):
-            then_docstring = docstring.strip()
+            then_docstring = docstring
             dump_obj(then_docstring)
             """
         )
@@ -66,11 +66,9 @@ def test_steps_with_docstrings(pytester):
     pytester.makepyfile(
         textwrap.dedent(
             """\
-            from pytest_bdd import scenario
+            from pytest_bdd import scenarios
 
-            @scenario("docstring.feature", "Step with plain docstring as multiline step")
-            def test_docstring():
-                pass
+            scenarios("docstring.feature")
             """
         )
     )
@@ -127,11 +125,9 @@ def test_steps_with_missing_docstring(pytester):
     pytester.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd import scenario
+        from pytest_bdd import scenarios
 
-        @scenario("missing_docstring.feature", "Docstring is missing for a step")
-        def test_docstring():
-            pass
+        scenarios("missing_docstring.feature")
         """
         )
     )
@@ -140,10 +136,10 @@ def test_steps_with_missing_docstring(pytester):
     result.stdout.fnmatch_lines(["*fixture 'docstring' not found*"])
 
 
-def test_steps_with_docstring_missing_argument_in_step_def(pytester):
+def test_docstring_argument_in_step_impl_is_optional(pytester):
     pytester.makefile(
         ".feature",
-        missing_docstring_arg=textwrap.dedent(
+        optional_docstring_arg=textwrap.dedent(
             '''\
             Feature: Missing docstring
 
@@ -189,11 +185,9 @@ def test_steps_with_docstring_missing_argument_in_step_def(pytester):
     pytester.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd import scenario
+        from pytest_bdd import scenarios
 
-        @scenario("missing_docstring_arg.feature", "Docstring arg is missing for a step definition")
-        def test_docstring():
-            pass
+        scenarios("optional_docstring_arg.feature")
         """
         )
     )
