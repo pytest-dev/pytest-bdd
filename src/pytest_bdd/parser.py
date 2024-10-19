@@ -20,21 +20,6 @@ from .gherkin_parser import get_gherkin_document
 from .types import STEP_TYPES
 
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
-COMMENT_RE = re.compile(r"(^|(?<=\s))#")
-
-
-def strip_comments(line: str) -> str:
-    """Remove comments from a line of text.
-
-    Args:
-        line (str): The line of text from which to remove comments.
-
-    Returns:
-        str: The line of text without comments, with leading and trailing whitespace removed.
-    """
-    if res := COMMENT_RE.search(line):
-        line = line[: res.start()]
-    return line.strip()
 
 
 @dataclass(eq=False)
@@ -377,7 +362,7 @@ class FeatureParser:
                 current_type = keyword
             steps.append(
                 Step(
-                    name=strip_comments(step.text),
+                    name=step.text,
                     type=current_type,
                     indent=step.location.column - 1,
                     line_number=step.location.line,
@@ -401,7 +386,7 @@ class FeatureParser:
         templated = bool(scenario_data.examples)
         scenario = ScenarioTemplate(
             feature=feature,
-            name=strip_comments(scenario_data.name),
+            name=scenario_data.name,
             line_number=scenario_data.location.line,
             templated=templated,
             tags=self.get_tag_names(scenario_data.tags),
@@ -451,7 +436,7 @@ class FeatureParser:
             scenarios=OrderedDict(),
             filename=self.abs_filename,
             rel_filename=self.rel_filename,
-            name=strip_comments(feature_data.name),
+            name=feature_data.name,
             tags=self.get_tag_names(feature_data.tags),
             background=None,
             line_number=feature_data.location.line,

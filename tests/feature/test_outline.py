@@ -90,7 +90,6 @@ def test_unused_params(pytester):
                 Scenario Outline: Outlined with unused params
                     Given there are <start> cucumbers
                     When I eat <eat> cucumbers
-                    # And commented out step with <unused_param>
                     Then I should have <left> cucumbers
 
                     Examples:
