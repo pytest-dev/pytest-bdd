@@ -892,8 +892,6 @@ About best practices for Background, please read Gherkin's
           related to actions and consuming outcomes; that is in conflict with the
           aim of "Background" - to prepare the system for tests or "put the system
           in a known state" as "Given" does it.
-          The statement above applies to strict Gherkin mode, which is
-          enabled by default.
 
 
 Reusing fixtures
