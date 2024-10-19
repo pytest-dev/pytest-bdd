@@ -4,6 +4,7 @@ Changelog
 Unreleased
 ----------
 - Dropped support for python 3.8. Supported python versions: 3.9, 3.10, 3.11, 3.12, 3.13.
+- Text after the `#` character is no longer stripped from the Scenario and Feature name.
 
 8.0.0b2
 ----------
@@ -21,7 +22,7 @@ Unreleased
 - All feature files must now use the keyword `Feature:` to be considered valid.
 - Tags can no longer have spaces (e.g. "@tag one" and "@tag two" are no longer valid).
 - Tags can now be on multiple lines (stacked)
-- Step names no longer strip what we considered comments (text after the `#` character).
+- Text after the `#` character is no longer stripped from the Step name.
 
 7.3.0
 ----------
