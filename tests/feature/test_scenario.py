@@ -45,9 +45,10 @@ def test_scenario_comments(pytester):
                     # Comment
                     Given I have a bar
 
-                Scenario: Strings that are not comments
+                Scenario: Strings that are not #comments
                     Given comments should be at the start of words
                     Then this is not a#comment
+                    And this is not a # comment
                     And this is not "#acomment"
 
             """
@@ -65,7 +66,7 @@ def test_scenario_comments(pytester):
         def test_1():
             pass
 
-        @scenario("comments.feature", "Strings that are not comments")
+        @scenario("comments.feature", "Strings that are not #comments")
         def test_2():
             pass
 
@@ -80,9 +81,11 @@ def test_scenario_comments(pytester):
             pass
 
 
-        @then(parsers.parse("this is not {acomment}"))
-        def _(acomment):
-            assert re.search("a.*comment", acomment)
+        @then("this is not a#comment")
+        @then("this is not a # comment")
+        @then('this is not "#acomment"')
+        def _():
+            pass
 
         """
         )
