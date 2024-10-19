@@ -231,8 +231,53 @@ def test_step_parameters_should_be_replaced_by_their_values(pytester):
 
     result = pytester.runpytest("--gherkin-terminal-reporter", "-vv")
     result.assert_outcomes(passed=1, failed=0)
-    result.stdout.fnmatch_lines("*Scenario: Scenario example 2")
+    result.stdout.fnmatch_lines("*Scenario Outline: Scenario example 2")
     result.stdout.fnmatch_lines("*Given there are {start} cucumbers".format(**example))
     result.stdout.fnmatch_lines("*When I eat {eat} cucumbers".format(**example))
     result.stdout.fnmatch_lines("*Then I should have {left} cucumbers".format(**example))
     result.stdout.fnmatch_lines("*PASSED")
+
+
+def test_rule_example_format_uses_correct_keywords(pytester):
+    pytester.makefile(
+        ".feature",
+        test=textwrap.dedent(
+            """\
+        Feature: Gherkin terminal output with rules and examples
+            Rule: Rule 1
+                Example: Example 1
+                    Given this is a step
+                    When this is a step
+                    Then this is a step
+
+                Scenario: Scenario 2
+                    Given this is a step
+                    When this is a step
+                    Then this is a step
+
+            Rule: Rule 2
+                Example: Example 3
+                    Given this is a step
+                    When this is a step
+                    Then this is a step
+        """
+        ),
+    )
+    pytester.makepyfile(
+        test_gherkin=textwrap.dedent(
+            """\
+            from pytest_bdd import given, when, scenarios, then
+
+            @given("this is a step")
+            @when("this is a step")
+            @then("this is a step")
+            def _():
+                pass
+
+            scenarios('test.feature')
+        """
+        )
+    )
+
+    result = pytester.runpytest("--gherkin-terminal-reporter", "-vv")
+    result.assert_outcomes(passed=3, failed=0)

@@ -33,7 +33,7 @@ def test_parser():
         feature=Feature(
             keyword="Feature",
             location=Location(column=1, line=2),
-            tags=[],
+            tags=set(),
             name="User login",
             description="  As a registered user\n  I want to be able to log in\n  So that I can access my account",
             children=[
@@ -106,7 +106,7 @@ def test_parser():
                                 docstring=None,
                             ),
                         ],
-                        tags=[],
+                        tags=set(),
                         examples=[],
                     ),
                 ),
@@ -157,7 +157,7 @@ def test_parser():
                                 docstring=None,
                             ),
                         ],
-                        tags=[],
+                        tags=set(),
                         examples=[
                             ExamplesTable(
                                 location=Location(column=5, line=26),
@@ -269,7 +269,7 @@ def test_parser():
                                 docstring=None,
                             ),
                         ],
-                        tags=[],
+                        tags=set(),
                         examples=[],
                     ),
                 ),
@@ -320,7 +320,7 @@ def test_parser():
                                 docstring=None,
                             ),
                         ],
-                        tags=[],
+                        tags=set(),
                         examples=[],
                     ),
                 ),
@@ -371,7 +371,7 @@ def test_parser():
                                 docstring=None,
                             ),
                         ],
-                        tags=[],
+                        tags=set(),
                         examples=[],
                     ),
                 ),
@@ -404,14 +404,14 @@ def test_parser():
                                 docstring=None,
                             ),
                         ],
-                        tags=[
+                        tags={
                             Tag(id="33", location=Location(column=3, line=49), name="@login"),
                             Tag(
                                 id="34",
                                 location=Location(column=10, line=49),
                                 name="@critical",
                             ),
-                        ],
+                        },
                         examples=[],
                     ),
                 ),
@@ -444,7 +444,7 @@ def test_parser():
                                 docstring=None,
                             ),
                         ],
-                        tags=[Tag(id="38", location=Location(column=3, line=55), name="@smoke")],
+                        tags={Tag(id="38", location=Location(column=3, line=55), name="@smoke")},
                         examples=[],
                     ),
                 ),
@@ -578,7 +578,7 @@ def test_parser():
                                 docstring=None,
                             ),
                         ],
-                        tags=[],
+                        tags=set(),
                         examples=[],
                     ),
                 ),
@@ -624,7 +624,7 @@ def test_parser():
                                 ),
                             ),
                         ],
-                        tags=[],
+                        tags=set(),
                         examples=[],
                     ),
                 ),
@@ -636,13 +636,13 @@ def test_parser():
                         location=Location(column=3, line=88),
                         name="a sale cannot happen if there is no stock",
                         description="",
-                        tags=[
+                        tags={
                             Tag(
                                 id="63",
                                 location=Location(column=3, line=87),
                                 name="@some-tag",
                             )
-                        ],
+                        },
                         children=[
                             Child(
                                 background=None,
@@ -691,7 +691,7 @@ def test_parser():
                                             docstring=None,
                                         ),
                                     ],
-                                    tags=[],
+                                    tags=set(),
                                     examples=[],
                                 ),
                             )
@@ -707,7 +707,7 @@ def test_parser():
                         location=Location(column=3, line=96),
                         name="A sale cannot happen if the customer does not have enough money",
                         description="",
-                        tags=[],
+                        tags=set(),
                         children=[
                             Child(
                                 background=None,
@@ -756,7 +756,7 @@ def test_parser():
                                             docstring=None,
                                         ),
                                     ],
-                                    tags=[],
+                                    tags=set(),
                                     examples=[],
                                 ),
                             ),
@@ -807,7 +807,7 @@ def test_parser():
                                             docstring=None,
                                         ),
                                     ],
-                                    tags=[],
+                                    tags=set(),
                                     examples=[],
                                 ),
                             ),

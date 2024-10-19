@@ -75,7 +75,7 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore
             self._tw.write("Feature: ", **feature_markup)
             self._tw.write(report.scenario["feature"]["name"], **feature_markup)
             self._tw.write("\n")
-            self._tw.write("    Scenario: ", **scenario_markup)
+            self._tw.write(f"    {report.scenario['keyword']}: ", **scenario_markup)
             self._tw.write(report.scenario["name"], **scenario_markup)
             self._tw.write(" ")
             self._tw.write(word, **word_markup)
@@ -85,7 +85,7 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore
             self._tw.write("Feature: ", **feature_markup)
             self._tw.write(report.scenario["feature"]["name"], **feature_markup)
             self._tw.write("\n")
-            self._tw.write("    Scenario: ", **scenario_markup)
+            self._tw.write(f"    {report.scenario['keyword']}: ", **scenario_markup)
             self._tw.write(report.scenario["name"], **scenario_markup)
             self._tw.write("\n")
             for step in report.scenario["steps"]:
