@@ -199,15 +199,19 @@ def _execute_step_function(
             f"Unexpected `NoneType` returned from " f"parse_arguments(...) in parser: {context.parser!r}"
         )
 
-        if step.datatable is not None:
-            kwargs["datatable"] = step.datatable.raw()
-
         for arg, value in parsed_args.items():
             if arg in converters:
                 value = converters[arg](value)
             kwargs[arg] = value
 
+        if step.datatable is not None:
+            kwargs["datatable"] = step.datatable.raw()
+
+        if step.docstring is not None:
+            kwargs["docstring"] = step.docstring
+
         kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
+
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
