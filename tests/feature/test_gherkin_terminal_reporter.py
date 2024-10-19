@@ -297,3 +297,48 @@ def test_scenario_alias_keywords_are_accepted(pytester):
     result.stdout.fnmatch_lines("*Example: Simple example*")
     result.stdout.fnmatch_lines("*Scenario: Simple scenario*")
     result.stdout.fnmatch_lines("*Scenario Outline: Outlined scenario*")
+
+
+def test_rule_example_format_uses_correct_keywords(pytester):
+    pytester.makefile(
+        ".feature",
+        test=textwrap.dedent(
+            """\
+        Feature: Gherkin terminal output with rules and examples
+            Rule: Rule 1
+                Example: Example 1
+                    Given this is a step
+                    When this is a step
+                    Then this is a step
+
+                Scenario: Scenario 2
+                    Given this is a step
+                    When this is a step
+                    Then this is a step
+
+            Rule: Rule 2
+                Example: Example 3
+                    Given this is a step
+                    When this is a step
+                    Then this is a step
+        """
+        ),
+    )
+    pytester.makepyfile(
+        test_gherkin=textwrap.dedent(
+            """\
+            from pytest_bdd import given, when, scenarios, then
+
+            @given("this is a step")
+            @when("this is a step")
+            @then("this is a step")
+            def _():
+                pass
+
+            scenarios('test.feature')
+        """
+        )
+    )
+
+    result = pytester.runpytest("--gherkin-terminal-reporter", "-vv")
+    result.assert_outcomes(passed=3, failed=0)
