@@ -322,12 +322,12 @@ class Background:
     """Represents the background steps for a feature.
 
     Attributes:
-        feature_or_rule (Feature | Rule): The feature or rule to which this background belongs.
+        parent (Feature | Rule): The feature or rule to which this background belongs.
         line_number (int): The line number where the background starts in the file.
         steps (List[Step]): The list of steps in the background.
     """
 
-    feature_or_rule: Feature | Rule
+    parent: Feature | Rule
     line_number: int
     steps: list[Step] = field(init=False, default_factory=list)
 
@@ -339,6 +339,12 @@ class Background:
         """
         step.background = self
         self.steps.append(step)
+
+    def is_from_feature(self):
+        return isinstance(self.parent, Feature)
+
+    def is_from_rule(self):
+        return isinstance(self.parent, Rule)
 
 
 class FeatureParser:
@@ -451,9 +457,9 @@ class FeatureParser:
 
         return scenario
 
-    def parse_background(self, background_data: GherkinBackground, feature_or_rule: Feature | Rule) -> Background:
+    def parse_background(self, background_data: GherkinBackground, parent: Feature | Rule) -> Background:
         background = Background(
-            feature_or_rule=feature_or_rule,
+            parent=parent,
             line_number=background_data.location.line,
         )
         background.steps = self.parse_steps(background_data.steps)
