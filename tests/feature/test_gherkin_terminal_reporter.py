@@ -236,3 +236,64 @@ def test_step_parameters_should_be_replaced_by_their_values(pytester):
     result.stdout.fnmatch_lines("*When I eat {eat} cucumbers".format(**example))
     result.stdout.fnmatch_lines("*Then I should have {left} cucumbers".format(**example))
     result.stdout.fnmatch_lines("*PASSED")
+
+
+def test_scenario_alias_keywords_are_accepted(pytester):
+    """
+    Test that aliases for various keywords are accepted and reported correctly.
+    see https://cucumber.io/docs/gherkin/reference/
+    """
+    pytester.makefile(
+        ".feature",
+        simple="""
+        Feature: Simple feature
+            Scenario: Simple scenario
+                Given I have a <tag>
+                Then pass
+
+            Example: Simple example
+                Given I have a <tag>
+                Then pass
+
+            Scenario Outline: Outlined scenario
+                Given I have a templated <foo>
+                Then pass
+
+            Examples:
+                | foo |
+                | bar |
+
+            Scenario Template: Templated scenario
+                Given I have a templated <foo>
+                Then pass
+
+            Scenarios:
+                | foo |
+                | bar |
+        """,
+    )
+    pytester.makepyfile(
+        """
+        from pytest_bdd import scenarios, given, then, parsers
+
+        scenarios("simple.feature")
+
+        @given("I have a <tag>")
+        def _():
+            return "tag"
+
+        @given(parsers.parse("I have a templated {foo}"))
+        def _(foo):
+            return "foo"
+
+        @then("pass")
+        def _():
+            pass
+        """
+    )
+    result = pytester.runpytest("--gherkin-terminal-reporter", "-vv")
+    result.assert_outcomes(passed=4, failed=0)
+    result.stdout.fnmatch_lines("*Feature: Simple feature*")
+    result.stdout.fnmatch_lines("*Example: Simple example*")
+    result.stdout.fnmatch_lines("*Scenario: Simple scenario*")
+    result.stdout.fnmatch_lines("*Scenario Outline: Outlined scenario*")
