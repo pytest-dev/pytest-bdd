@@ -21,23 +21,25 @@ def get_indent(level: int) -> str:
 
 
 def add_options(parser: Parser) -> None:
+    """Add command line option to enable Gherkin terminal reporter."""
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group._addoption(
         "--gherkin-terminal-reporter",
         action="store_true",
         dest="gherkin_terminal_reporter",
         default=False,
-        help="enable gherkin output",
+        help="Enable Gherkin style output for terminal reporting.",
     )
 
 
 def configure(config: Config) -> None:
+    """Configure the terminal reporter to use GherkinTerminalReporter if enabled."""
     if config.option.gherkin_terminal_reporter:
         current_reporter = config.pluginmanager.getplugin("terminalreporter")
         # Get the standard terminal reporter plugin and replace it with ours
         if current_reporter.__class__ != TerminalReporter:
             raise Exception(
-                "gherkin-terminal-reporter is not compatible with any other terminal reporter."
+                f"gherkin-terminal-reporter is not compatible with any other terminal reporter."
                 f"Currently '{current_reporter.__class__}' is used."
                 f"Please deactivate either {current_reporter.__class__} or gherkin-terminal-reporter."
             )
@@ -45,17 +47,19 @@ def configure(config: Config) -> None:
         gherkin_reporter = GherkinTerminalReporter(config)
         config.pluginmanager.unregister(current_reporter)
         config.pluginmanager.register(gherkin_reporter, "terminalreporter")
+
         if config.pluginmanager.getplugin("dsession"):
             raise Exception("gherkin-terminal-reporter is not compatible with 'xdist' plugin.")
 
 
 class GherkinTerminalReporter(TerminalReporter):  # type: ignore
     def __init__(self, config: Config) -> None:
+        """Initialize GherkinTerminalReporter."""
         super().__init__(config)
 
     def pytest_runtest_logreport(self, report: TestReport) -> Any:
-        rep = report
-        res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
+        """Override log reporting to display Gherkin-style output."""
+        res = self.config.hook.pytest_report_teststatus(report=report, config=self.config)
         cat, letter, word = res
 
         if not letter and not word:

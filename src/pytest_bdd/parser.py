@@ -477,6 +477,7 @@ class FeatureParser:
         gherkin_doc: GherkinDocument = self._parse_feature_file()
         feature_data: GherkinFeature = gherkin_doc.feature
         feature = Feature(
+            keyword=feature_data.keyword,
             scenarios=OrderedDict(),
             keyword=feature_data.keyword,
             filename=self.abs_filename,
