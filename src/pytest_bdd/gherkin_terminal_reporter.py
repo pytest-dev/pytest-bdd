@@ -72,20 +72,20 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore
 
         if self.verbosity == 1:
             self.ensure_newline()
-            self._tw.write("Feature: ", **feature_markup)
+            self._tw.write(f"{report.scenario['feature']['keyword']}: ", **feature_markup)
             self._tw.write(report.scenario["feature"]["name"], **feature_markup)
             self._tw.write("\n")
-            self._tw.write("    Scenario: ", **scenario_markup)
+            self._tw.write(f"    {report.scenario['keyword']}: ", **scenario_markup)
             self._tw.write(report.scenario["name"], **scenario_markup)
             self._tw.write(" ")
             self._tw.write(word, **word_markup)
             self._tw.write("\n")
         elif self.verbosity > 1:
             self.ensure_newline()
-            self._tw.write("Feature: ", **feature_markup)
+            self._tw.write(f"{report.scenario['feature']['keyword']}: ", **feature_markup)
             self._tw.write(report.scenario["feature"]["name"], **feature_markup)
             self._tw.write("\n")
-            self._tw.write("    Scenario: ", **scenario_markup)
+            self._tw.write(f"    {report.scenario['keyword']}: ", **scenario_markup)
             self._tw.write(report.scenario["name"], **scenario_markup)
             self._tw.write("\n")
             for step in report.scenario["steps"]:

@@ -110,10 +110,12 @@ class ScenarioReport:
 
         return {
             "steps": [step_report.serialize() for step_report in self.step_reports],
+            "keyword": scenario.keyword,
             "name": scenario.name,
             "line_number": scenario.line_number,
             "tags": sorted(scenario.tags),
             "feature": {
+                "keyword": feature.keyword,
                 "name": feature.name,
                 "filename": feature.filename,
                 "rel_filename": feature.rel_filename,

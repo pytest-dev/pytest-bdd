@@ -231,7 +231,7 @@ def test_step_parameters_should_be_replaced_by_their_values(pytester):
 
     result = pytester.runpytest("--gherkin-terminal-reporter", "-vv")
     result.assert_outcomes(passed=1, failed=0)
-    result.stdout.fnmatch_lines("*Scenario: Scenario example 2")
+    result.stdout.fnmatch_lines("*Scenario Outline: Scenario example 2")
     result.stdout.fnmatch_lines("*Given there are {start} cucumbers".format(**example))
     result.stdout.fnmatch_lines("*When I eat {eat} cucumbers".format(**example))
     result.stdout.fnmatch_lines("*Then I should have {left} cucumbers".format(**example))

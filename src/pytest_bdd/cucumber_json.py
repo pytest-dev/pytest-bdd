@@ -114,7 +114,7 @@ class LogBDDCucumberJSON:
 
         if scenario["feature"]["filename"] not in self.features:
             self.features[scenario["feature"]["filename"]] = {
-                "keyword": "Feature",
+                "keyword": scenario["feature"]["keyword"],
                 "uri": scenario["feature"]["rel_filename"],
                 "name": scenario["feature"]["name"] or scenario["feature"]["rel_filename"],
                 "id": scenario["feature"]["rel_filename"].lower().replace(" ", "-"),
@@ -126,7 +126,7 @@ class LogBDDCucumberJSON:
 
         self.features[scenario["feature"]["filename"]]["elements"].append(
             {
-                "keyword": "Scenario",
+                "keyword": scenario["keyword"],
                 "id": report.item["name"],
                 "name": scenario["name"],
                 "line": scenario["line_number"],

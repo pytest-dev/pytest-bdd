@@ -40,6 +40,7 @@ class Feature:
     scenarios: OrderedDict[str, ScenarioTemplate]
     filename: str
     rel_filename: str
+    keyword: str
     name: str | None
     tags: set[str]
     background: Background | None
@@ -104,6 +105,7 @@ class ScenarioTemplate:
 
     Attributes:
         feature (Feature): The feature to which this scenario belongs.
+        keyword (str): The keyword used to define the scenario.
         name (str): The name of the scenario.
         line_number (int): The line number where the scenario starts in the file.
         templated (bool): Whether the scenario is templated.
@@ -114,6 +116,7 @@ class ScenarioTemplate:
     """
 
     feature: Feature
+    keyword: str
     name: str
     line_number: int
     templated: bool
@@ -165,6 +168,7 @@ class ScenarioTemplate:
         steps = background_steps + scenario_steps
         return Scenario(
             feature=self.feature,
+            keyword=self.keyword,
             name=self.name,
             line_number=self.line_number,
             steps=steps,
@@ -179,6 +183,7 @@ class Scenario:
 
     Attributes:
         feature (Feature): The feature to which this scenario belongs.
+        keyword (str): The keyword used to define the scenario.
         name (str): The name of the scenario.
         line_number (int): The line number where the scenario starts in the file.
         steps (List[Step]): The list of steps in the scenario.
@@ -187,6 +192,7 @@ class Scenario:
     """
 
     feature: Feature
+    keyword: str
     name: str
     line_number: int
     steps: list[Step]
@@ -386,6 +392,7 @@ class FeatureParser:
         templated = bool(scenario_data.examples)
         scenario = ScenarioTemplate(
             feature=feature,
+            keyword=scenario_data.keyword,
             name=scenario_data.name,
             line_number=scenario_data.location.line,
             templated=templated,
@@ -434,6 +441,7 @@ class FeatureParser:
         feature_data: GherkinFeature = gherkin_doc.feature
         feature = Feature(
             scenarios=OrderedDict(),
+            keyword=feature_data.keyword,
             filename=self.abs_filename,
             rel_filename=self.rel_filename,
             name=feature_data.name,
