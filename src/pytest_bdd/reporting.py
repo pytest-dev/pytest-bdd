@@ -1,15 +1,17 @@
 """Reporting functionality.
 
-Collection of the scenario execution statuses, timing, and other information
+Collection of the scenario execution statuses, timing and other information
 that enriches the pytest test reporting.
 """
 
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from typing import Any, Callable
+
     from _pytest.fixtures import FixtureRequest
     from _pytest.nodes import Item
     from _pytest.reports import TestReport
@@ -22,9 +24,9 @@ class StepReport:
     """Step execution report."""
 
     def __init__(self, step: Step) -> None:
-        """Initialize StepReport.
+        """Step report constructor.
 
-        :param step: Step object.
+        :param pytest_bdd.parser.Step step: Step.
         """
         self.step: Step = step
         self.started: float = time.perf_counter()
@@ -32,9 +34,10 @@ class StepReport:
         self.stopped: float | None = None
 
     def serialize(self) -> dict[str, Any]:
-        """Serialize the step report.
+        """Serialize the step execution report.
 
         :return: Serialized step execution report.
+        :rtype: dict
         """
         return {
             "name": self.step.name,
@@ -46,18 +49,19 @@ class StepReport:
         }
 
     def finalize(self, failed: bool) -> None:
-        """Finalize the step report.
+        """Stop collecting information and finalize the report.
 
-        :param failed: Whether the step failed.
+        :param bool failed: Whether the step execution is failed.
         """
         self.stopped = time.perf_counter()
         self.failed = failed
 
     @property
     def duration(self) -> float:
-        """Return step execution duration.
+        """Step execution duration.
 
-        :return: Execution duration.
+        :return: Step execution duration.
+        :rtype: float
         """
         if self.stopped is None:
             return 0
@@ -68,32 +72,36 @@ class ScenarioReport:
     """Scenario execution report."""
 
     def __init__(self, scenario: Scenario) -> None:
-        """Initialize ScenarioReport.
+        """Scenario report constructor.
 
-        :param scenario: Scenario object.
+        :param pytest_bdd.parser.Scenario scenario: Scenario.
+        :param node: pytest test node object
         """
-        self.scenario = scenario
+        self.scenario: Scenario = scenario
         self.step_reports: list[StepReport] = []
 
     @property
     def current_step_report(self) -> StepReport:
-        """Return the current step report.
+        """Get current step report.
 
-        :return: The current step report.
+        :return: Last or current step report.
+        :rtype: pytest_bdd.reporting.StepReport
         """
         return self.step_reports[-1]
 
     def add_step_report(self, step_report: StepReport) -> None:
-        """Add a new step report.
+        """Add new step report.
 
-        :param step_report: StepReport object.
+        :param step_report: New current step report.
+        :type step_report: pytest_bdd.reporting.StepReport
         """
         self.step_reports.append(step_report)
 
     def serialize(self) -> dict[str, Any]:
-        """Serialize the scenario report.
+        """Serialize scenario execution report in order to transfer reporting from nodes in the distributed mode.
 
-        :return: Serialized scenario report.
+        :return: Serialized report.
+        :rtype: dict
         """
         scenario = self.scenario
         feature = scenario.feature
@@ -115,7 +123,6 @@ class ScenarioReport:
             },
         }
 
-        # Include rule information if present
         if scenario.rule:
             serialized["rule"] = {
                 "keyword": scenario.rule.keyword,
@@ -127,30 +134,27 @@ class ScenarioReport:
         return serialized
 
     def fail(self) -> None:
-        """Mark the scenario as failed and finalize remaining steps."""
+        """Stop collecting information and finalize the report as failed."""
         self.current_step_report.finalize(failed=True)
         remaining_steps = self.scenario.steps[len(self.step_reports) :]
 
-        # Fail the rest of the steps and create reports
+        # Fail the rest of the steps and make reports.
         for step in remaining_steps:
             report = StepReport(step=step)
             report.finalize(failed=True)
             self.add_step_report(report)
 
 
-# Reporting Hooks
-
-
 def runtest_makereport(item: Item, call: CallInfo, rep: TestReport) -> None:
-    """Store scenario report in the test report."""
+    """Store item in the report object."""
     scenario_report = getattr(item, "__scenario_report__", None)
-    if scenario_report:
+    if scenario_report is not None:
         rep.scenario = scenario_report.serialize()  # type: ignore
         rep.item = {"name": item.name}  # type: ignore
 
 
 def before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
-    """Create a new scenario report before running the scenario."""
+    """Create scenario report for the item."""
     request.node.__scenario_report__ = ScenarioReport(scenario=scenario)
 
 
@@ -163,7 +167,7 @@ def step_error(
     step_func_args: dict,
     exception: Exception,
 ) -> None:
-    """Finalize the step report as failed in case of an error."""
+    """Finalize the step report as failed."""
     request.node.__scenario_report__.fail()
 
 
@@ -174,7 +178,7 @@ def before_step(
     step: Step,
     step_func: Callable[..., Any],
 ) -> None:
-    """Start a new step report before running the step."""
+    """Store step start time."""
     request.node.__scenario_report__.add_step_report(StepReport(step=step))
 
 
@@ -186,5 +190,5 @@ def after_step(
     step_func: Callable,
     step_func_args: dict,
 ) -> None:
-    """Finalize the step report as successful after the step is executed."""
+    """Finalize the step report as successful."""
     request.node.__scenario_report__.current_step_report.finalize(failed=False)
