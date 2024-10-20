@@ -87,9 +87,12 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
 
     for scenario in scenarios:
         tw.line()
+        # Change the outer quotes to single quotes to avoid needing escapes
         tw.line(
-            'Scenario "{scenario.name}" is not bound to any test in the feature "{scenario.feature.name}"'
-            " in the file {scenario.feature.filename}:{scenario.line_number}".format(scenario=scenario),
+            (
+                f'Scenario "{scenario.name}" is not bound to any test in the feature "{scenario.feature.name}" '
+                f"in the file {scenario.feature.filename}:{scenario.line_number}"
+            ),
             red=True,
         )
 
@@ -99,17 +102,24 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
     for step in steps:
         tw.line()
         if step.scenario is not None:
+            # Again, use single quotes for the outer string
             tw.line(
-                """Step {step} is not defined in the scenario "{step.scenario.name}" in the feature"""
-                """ "{step.scenario.feature.name}" in the file"""
-                """ {step.scenario.feature.filename}:{step.line_number}""".format(step=step),
+                (
+                    f'Step {step} is not defined in the scenario "{step.scenario.name}" '
+                    f'in the feature "{step.scenario.feature.name}" in the file '
+                    f"{step.scenario.feature.filename}:{step.line_number}"
+                ),
                 red=True,
             )
         elif step.background is not None:
+            # Again, use single quotes for the outer string
             tw.line(
-                """Step {step} is not defined in the background of the feature"""
-                """ "{step.background.feature.name}" in the file"""
-                """ {step.background.feature.filename}:{step.line_number}""".format(step=step),
+                (
+                    f"Step {step} is not defined in the background of the "
+                    f'{"rule" if step.background.is_from_rule() else "feature"} '
+                    f'"{step.background.parent.name}" in the file '
+                    f"{step.background.parent.filename}:{step.line_number}"
+                ),
                 red=True,
             )
 
