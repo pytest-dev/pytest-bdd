@@ -289,7 +289,8 @@ def _get_scenario_decorator(
                 example_parametrizations,
             )(scenario_wrapper)
 
-        for tag in templated_scenario.tags.union(feature.tags):
+        rule_tags = set() if templated_scenario.rule is None else templated_scenario.rule.tags
+        for tag in templated_scenario.tags.union(feature.tags).union(rule_tags):
             config = CONFIG_STACK[-1]
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 

@@ -11,6 +11,7 @@ from mako.lookup import TemplateLookup  # type: ignore
 
 from .compat import getfixturedefs
 from .feature import get_features
+from .parser import Feature, Rule
 from .scenario import inject_fixturedefs_for_step, make_python_docstring, make_python_name, make_string_literal
 from .steps import get_step_fixture_name
 from .types import STEP_TYPES
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
     from _pytest.main import Session
     from _pytest.python import Function
 
-    from .parser import Feature, ScenarioTemplate, Step
+    from .parser import ScenarioTemplate, Step
 
 template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
 
@@ -88,8 +89,10 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
     for scenario in scenarios:
         tw.line()
         tw.line(
-            'Scenario "{scenario.name}" is not bound to any test in the feature "{scenario.feature.name}"'
-            " in the file {scenario.feature.filename}:{scenario.line_number}".format(scenario=scenario),
+            (
+                f'Scenario "{scenario.name}" is not bound to any test in the feature "{scenario.feature.name}" '
+                f"in the file {scenario.feature.filename}:{scenario.line_number}"
+            ),
             red=True,
         )
 
@@ -100,18 +103,34 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
         tw.line()
         if step.scenario is not None:
             tw.line(
-                """Step {step} is not defined in the scenario "{step.scenario.name}" in the feature"""
-                """ "{step.scenario.feature.name}" in the file"""
-                """ {step.scenario.feature.filename}:{step.line_number}""".format(step=step),
+                (
+                    f'Step {step} is not defined in the scenario "{step.scenario.name}" '
+                    f'in the feature "{step.scenario.feature.name}" in the file '
+                    f"{step.scenario.feature.filename}:{step.line_number}"
+                ),
                 red=True,
             )
         elif step.background is not None:
-            tw.line(
-                """Step {step} is not defined in the background of the feature"""
-                """ "{step.background.feature.name}" in the file"""
-                """ {step.background.feature.filename}:{step.line_number}""".format(step=step),
-                red=True,
-            )
+            feature_or_rule = step.background.parent
+            if isinstance(feature_or_rule, Feature):
+                tw.line(
+                    (
+                        f"Step {step} is not defined in the background of the feature "
+                        f'"{feature_or_rule.name}" in the file '
+                        f"{feature_or_rule.filename}:{step.line_number}"
+                    ),
+                    red=True,
+                )
+            elif isinstance(feature_or_rule, Rule):
+                _feature: Feature = feature_or_rule.feature
+                tw.line(
+                    (
+                        f"Step {step} is not defined in the background of the rule "
+                        f'"{feature_or_rule.name}" in the file '
+                        f"{_feature.filename}:{step.line_number}"
+                    ),
+                    red=True,
+                )
 
     if step:
         tw.sep("-", red=True)

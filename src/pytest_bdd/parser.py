@@ -100,6 +100,19 @@ class Examples:
 
 
 @dataclass(eq=False)
+class Rule:
+    keyword: str
+    name: str
+    description: str
+    tags: set[str]
+    feature: Feature
+    background: Background | None = None
+
+    def add_background(self, background: Background) -> None:
+        self.background = background
+
+
+@dataclass(eq=False)
 class ScenarioTemplate:
     """Represents a scenario template within a feature.
 
@@ -113,6 +126,7 @@ class ScenarioTemplate:
         tags (set[str]): A set of tags associated with the scenario.
         _steps (List[Step]): The list of steps in the scenario (internal use only).
         examples (Optional[Examples]): The examples used for parameterization in the scenario.
+        rule (Optional[Rule]): The rule to which the scenario may belong (None = no rule).
     """
 
     feature: Feature
@@ -124,6 +138,7 @@ class ScenarioTemplate:
     tags: set[str] = field(default_factory=set)
     _steps: list[Step] = field(init=False, default_factory=list)
     examples: Examples | None = field(default_factory=Examples)
+    rule: Rule | None = None
 
     def add_step(self, step: Step) -> None:
         """Add a step to the scenario.
@@ -135,13 +150,30 @@ class ScenarioTemplate:
         self._steps.append(step)
 
     @property
+    def all_background_steps(self) -> list[Step]:
+        steps = []
+        # Add background steps from the feature
+        if self.feature.background:
+            steps.extend(self.feature.background.steps)
+        if self.rule and self.rule.background:
+            # Add background steps from the rule
+            steps.extend(self.rule.background.steps)
+        return steps
+
+    @property
     def steps(self) -> list[Step]:
         """Get all steps for the scenario, including background steps.
 
         Returns:
             List[Step]: A list of steps, including any background steps from the feature.
         """
-        return (self.feature.background.steps if self.feature.background else []) + self._steps
+        steps = []
+        # Add all background steps
+        steps.extend(self.all_background_steps)
+        # Add the scenario's own steps
+        steps.extend(self._steps)
+
+        return steps
 
     def render(self, context: Mapping[str, Any]) -> Scenario:
         """Render the scenario with the given context.
@@ -152,7 +184,6 @@ class ScenarioTemplate:
         Returns:
             Scenario: A Scenario object with steps rendered based on the context.
         """
-        background_steps = self.feature.background.steps if self.feature.background else []
         scenario_steps = [
             Step(
                 name=step.render(context),
@@ -165,7 +196,7 @@ class ScenarioTemplate:
             )
             for step in self._steps
         ]
-        steps = background_steps + scenario_steps
+        steps = self.all_background_steps + scenario_steps
         return Scenario(
             feature=self.feature,
             keyword=self.keyword,
@@ -174,6 +205,7 @@ class ScenarioTemplate:
             steps=steps,
             tags=self.tags,
             description=self.description,
+            rule=self.rule,
         )
 
 
@@ -198,6 +230,7 @@ class Scenario:
     steps: list[Step]
     description: str | None = None
     tags: set[str] = field(default_factory=set)
+    rule: Rule | None = None
 
 
 @dataclass(eq=False)
@@ -293,12 +326,12 @@ class Background:
     """Represents the background steps for a feature.
 
     Attributes:
-        feature (Feature): The feature to which this background belongs.
+        parent (Feature | Rule): The feature or rule to which this background belongs.
         line_number (int): The line number where the background starts in the file.
         steps (List[Step]): The list of steps in the background.
     """
 
-    feature: Feature
+    parent: Feature | Rule
     line_number: int
     steps: list[Step] = field(init=False, default_factory=list)
 
@@ -379,12 +412,15 @@ class FeatureParser:
             )
         return steps
 
-    def parse_scenario(self, scenario_data: GherkinScenario, feature: Feature) -> ScenarioTemplate:
+    def parse_scenario(
+        self, scenario_data: GherkinScenario, feature: Feature, rule: Rule | None = None
+    ) -> ScenarioTemplate:
         """Parse a scenario data dictionary into a ScenarioTemplate object.
 
         Args:
             scenario_data (dict): The dictionary containing scenario data.
             feature (Feature): The feature to which this scenario belongs.
+            rule (Optional[Rule]): The rule to which this scenario may belong. (None = no rule)
 
         Returns:
             ScenarioTemplate: A ScenarioTemplate object representing the parsed scenario.
@@ -398,6 +434,7 @@ class FeatureParser:
             templated=templated,
             tags=self.get_tag_names(scenario_data.tags),
             description=textwrap.dedent(scenario_data.description),
+            rule=rule,
         )
         for step in self.parse_steps(scenario_data.steps):
             scenario.add_step(step)
@@ -418,9 +455,9 @@ class FeatureParser:
 
         return scenario
 
-    def parse_background(self, background_data: GherkinBackground, feature: Feature) -> Background:
+    def parse_background(self, background_data: GherkinBackground, parent: Feature | Rule) -> Background:
         background = Background(
-            feature=feature,
+            parent=parent,
             line_number=background_data.location.line,
         )
         background.steps = self.parse_steps(background_data.steps)
@@ -454,6 +491,22 @@ class FeatureParser:
         for child in feature_data.children:
             if child.background:
                 feature.background = self.parse_background(child.background, feature)
+            if child.rule:
+                _backgrounds = [c.background for c in child.rule.children if c.background]
+                _rule = Rule(
+                    keyword=child.rule.keyword,
+                    name=child.rule.name,
+                    description=child.rule.description,
+                    tags=self.get_tag_names(child.rule.tags),
+                    feature=feature,
+                )
+                if _backgrounds:
+                    _rule.add_background(self.parse_background(_backgrounds[0], _rule))
+                rule_scenarios = [c.scenario for c in child.rule.children if c.scenario]
+                if rule_scenarios:
+                    for rule_scenario in rule_scenarios:
+                        scenario = self.parse_scenario(rule_scenario, feature, _rule)
+                        feature.scenarios[scenario.name] = scenario
             elif child.scenario:
                 scenario = self.parse_scenario(child.scenario, feature)
                 feature.scenarios[scenario.name] = scenario

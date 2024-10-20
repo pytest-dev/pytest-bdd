@@ -513,6 +513,43 @@ Example:
     def should_have_left_cucumbers(cucumbers, left):
         assert cucumbers["start"] - cucumbers["eat"] == left
 
+Rules
+-----
+
+In Gherkin, `Rules` allow you to group related scenarios or examples under a shared context.
+This is useful when you want to define different conditions or behaviours
+for multiple examples that follow a similar structure.
+You can use either `Scenario` or `Example` to define individual cases, as they are aliases and function identically.
+
+Additionally, **tags** applied to a rule will be automatically applied to all the **examples or scenarios**
+under that rule, making it easier to organize and filter tests during execution.
+
+Example:
+
+.. code-block:: gherkin
+
+    Feature: Rules and examples
+
+        @feature_tag
+        Rule: A rule for valid cases
+
+            @rule_tag
+            Example: Valid case 1
+                Given I have a valid input
+                When I process the input
+                Then the result should be successful
+
+        Rule: A rule for invalid cases
+            Example: Invalid case
+                Given I have an invalid input
+                When I process the input
+                Then the result should be an error
+
+In Gherkin, `Scenario` and `Example` are interchangeable.
+You can use either keyword to define individual test cases.
+For example, the previous rule could have been written with the `Scenario` keyword instead of `Example`,
+and the behaviour would remain the same.
+
 
 Datatables
 ----------
