@@ -26,10 +26,10 @@ class StepReport:
 
         :param step: Step object.
         """
-        self.step = step
-        self.started = time.perf_counter()
-        self.failed = False
-        self.stopped = None
+        self.step: Step = step
+        self.started: float = time.perf_counter()
+        self.failed: bool = False
+        self.stopped: float | None = None
 
     def serialize(self) -> dict[str, Any]:
         """Serialize the step report.

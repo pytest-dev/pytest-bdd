@@ -108,6 +108,9 @@ class Rule:
     feature: Feature
     background: Background | None = None
 
+    def add_background(self, background: Background) -> None:
+        self.background = background
+
 
 @dataclass(eq=False)
 class ScenarioTemplate:
@@ -339,12 +342,6 @@ class Background:
         step.background = self
         self.steps.append(step)
 
-    def is_from_feature(self):
-        return isinstance(self.parent, Feature)
-
-    def is_from_rule(self):
-        return isinstance(self.parent, Rule)
-
 
 class FeatureParser:
     """Converts a feature file into a Feature object.
@@ -500,8 +497,9 @@ class FeatureParser:
                     description=child.rule.description,
                     tags=self.get_tag_names(child.rule.tags),
                     feature=feature,
-                    background=self.parse_background(_backgrounds[0], child.rule) if _backgrounds else None,
                 )
+                if _backgrounds:
+                    _rule.add_background(self.parse_background(_backgrounds[0], _rule))
                 rule_scenarios = [c.scenario for c in child.rule.children if c.scenario]
                 if rule_scenarios:
                     for rule_scenario in rule_scenarios:
