@@ -87,7 +87,6 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
 
     for scenario in scenarios:
         tw.line()
-        # Change the outer quotes to single quotes to avoid needing escapes
         tw.line(
             (
                 f'Scenario "{scenario.name}" is not bound to any test in the feature "{scenario.feature.name}" '
@@ -102,7 +101,6 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
     for step in steps:
         tw.line()
         if step.scenario is not None:
-            # Again, use single quotes for the outer string
             tw.line(
                 (
                     f'Step {step} is not defined in the scenario "{step.scenario.name}" '
@@ -112,13 +110,17 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
                 red=True,
             )
         elif step.background is not None:
-            # Again, use single quotes for the outer string
+            if step.background.is_from_rule():
+                step_type = "rule"
+                filename = step.background.parent.feature.filename
+            else:
+                step_type = "feature"
+                filename = step.background.parent.filename
             tw.line(
                 (
-                    f"Step {step} is not defined in the background of the "
-                    f'{"rule" if step.background.is_from_rule() else "feature"} '
+                    f"Step {step} is not defined in the background of the {step_type} "
                     f'"{step.background.parent.name}" in the file '
-                    f"{step.background.parent.filename}:{step.line_number}"
+                    f"{filename}:{step.line_number}"
                 ),
                 red=True,
             )

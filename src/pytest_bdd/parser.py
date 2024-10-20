@@ -105,6 +105,7 @@ class Rule:
     name: str
     description: str
     tags: set[str]
+    feature: Feature
     background: Background | None = None
 
 
@@ -498,6 +499,7 @@ class FeatureParser:
                     name=child.rule.name,
                     description=child.rule.description,
                     tags=self.get_tag_names(child.rule.tags),
+                    feature=feature,
                     background=self.parse_background(_backgrounds[0], child.rule) if _backgrounds else None,
                 )
                 rule_scenarios = [c.scenario for c in child.rule.children if c.scenario]
