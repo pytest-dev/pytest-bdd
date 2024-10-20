@@ -56,7 +56,7 @@ ERROR_PATTERNS = [
 ]
 
 
-@dataclass(frozen=True)
+@dataclass
 class Location:
     column: int
     line: int
@@ -76,7 +76,7 @@ class Comment:
         return cls(location=Location.from_dict(data["location"]), text=data["text"])
 
 
-@dataclass(frozen=True)
+@dataclass
 class Cell:
     location: Location
     value: str
@@ -86,7 +86,7 @@ class Cell:
         return cls(location=Location.from_dict(data["location"]), value=_to_raw_string(data["value"]))
 
 
-@dataclass(frozen=True)
+@dataclass
 class Row:
     id: str
     location: Location
@@ -101,7 +101,7 @@ class Row:
         )
 
 
-@dataclass(frozen=True)
+@dataclass
 class ExamplesTable:
     location: Location
     name: str | None = None
@@ -118,7 +118,7 @@ class ExamplesTable:
         )
 
 
-@dataclass(frozen=True)
+@dataclass
 class DataTable:
     location: Location
     rows: list[Row]
@@ -133,7 +133,7 @@ class DataTable:
         return [[cell.value for cell in row.cells] for row in self.rows]
 
 
-@dataclass(frozen=True)
+@dataclass
 class DocString:
     content: str
     delimiter: str
@@ -148,7 +148,7 @@ class DocString:
         )
 
 
-@dataclass(frozen=True)
+@dataclass
 class Step:
     id: str
     location: Location
@@ -171,7 +171,7 @@ class Step:
         )
 
 
-@dataclass(frozen=True)
+@dataclass
 class Tag:
     id: str
     location: Location
@@ -182,7 +182,7 @@ class Tag:
         return cls(id=data["id"], location=Location.from_dict(data["location"]), name=data["name"])
 
 
-@dataclass(frozen=True)
+@dataclass
 class Scenario:
     id: str
     location: Location
@@ -190,7 +190,7 @@ class Scenario:
     name: str
     description: str
     steps: list[Step]
-    tags: set[Tag]
+    tags: list[Tag]
     examples: list[ExamplesTable] = field(default_factory=list)
 
     @classmethod
@@ -202,19 +202,19 @@ class Scenario:
             name=data["name"],
             description=data["description"],
             steps=[Step.from_dict(step) for step in data["steps"]],
-            tags={Tag.from_dict(tag) for tag in data["tags"]},
+            tags=[Tag.from_dict(tag) for tag in data["tags"]],
             examples=[ExamplesTable.from_dict(example) for example in data["examples"]],
         )
 
 
-@dataclass(frozen=True)
+@dataclass
 class Rule:
     id: str
     location: Location
     keyword: str
     name: str
     description: str
-    tags: set[Tag]
+    tags: list[Tag]
     children: list[Child]
 
     @classmethod
@@ -225,12 +225,12 @@ class Rule:
             keyword=data["keyword"],
             name=data["name"],
             description=data["description"],
-            tags={Tag.from_dict(tag) for tag in data["tags"]},
+            tags=[Tag.from_dict(tag) for tag in data["tags"]],
             children=[Child.from_dict(child) for child in data["children"]],
         )
 
 
-@dataclass(frozen=True)
+@dataclass
 class Background:
     id: str
     location: Location
@@ -251,7 +251,7 @@ class Background:
         )
 
 
-@dataclass(frozen=True)
+@dataclass
 class Child:
     background: Background | None = None
     rule: Rule | None = None
@@ -266,11 +266,11 @@ class Child:
         )
 
 
-@dataclass(frozen=True)
+@dataclass
 class Feature:
     location: Location
     keyword: str
-    tags: set[Tag]
+    tags: list[Tag]
     name: str
     description: str
     children: list[Child]
@@ -280,14 +280,14 @@ class Feature:
         return cls(
             location=Location.from_dict(data["location"]),
             keyword=data["keyword"],
-            tags={Tag.from_dict(tag) for tag in data["tags"]},
+            tags=[Tag.from_dict(tag) for tag in data["tags"]],
             name=data["name"],
             description=data["description"],
             children=[Child.from_dict(child) for child in data["children"]],
         )
 
 
-@dataclass(frozen=True)
+@dataclass
 class GherkinDocument:
     feature: Feature
     comments: list[Comment]

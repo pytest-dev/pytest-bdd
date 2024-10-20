@@ -15,6 +15,10 @@ def test_rule_example_format(pytester):
               Background:
                 Given I have got my calculator ready
 
+              Scenario: I check the calculator powers on
+                Given I press the power button
+                Then the screen turns on
+
               Rule: Addition
                 In order to add two numbers
                 As a user, I want the calculator to give me the sum.
@@ -70,6 +74,14 @@ def test_rule_example_format(pytester):
         @given("I check the add button is working")
         def _():
             print("Add button check.")
+
+        @given("I press the power button")
+        def _():
+            pass
+
+        @then("the screen turns on")
+        def _():
+            pass
 
         @given(parsers.parse("the first number is {first_number}"), target_fixture="first_number")
         def _(first_number):
