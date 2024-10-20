@@ -5,6 +5,7 @@ Unreleased
 ----------
 - Dropped support for python 3.8. Supported python versions: 3.9, 3.10, 3.11, 3.12, 3.13.
 - Text after the `#` character is no longer stripped from the Scenario and Feature name.
+- All gherkin-compliant keywords permitted in feature-files and correctly reported in json and terminal output.
 
 8.0.0b2
 ----------
