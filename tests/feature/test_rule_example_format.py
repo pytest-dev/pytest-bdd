@@ -106,6 +106,10 @@ def test_rule_example_format(pytester):
         )
     )
     result = pytester.runpytest("-s")
-    result.assert_outcomes(passed=4)
-    # Get all the lines from stdout
-    assert result.stdout.lines.count("Calculator ready!")
+    result.assert_outcomes(passed=5)
+
+    def get_line_partial_match_count(pattern: str):
+        return len([line for line in result.stdout.lines if pattern in line])
+
+    assert get_line_partial_match_count("Calculator ready!") == 5
+    assert get_line_partial_match_count("Add button check.") == 2

@@ -148,7 +148,8 @@ class ScenarioTemplate:
     def all_background_steps(self) -> list[Step]:
         steps = []
         # Add background steps from the feature
-        steps.extend(self.feature.background.steps)
+        if self.feature.background:
+            steps.extend(self.feature.background.steps)
         if self.rule and self.rule.background:
             # Add background steps from the rule
             steps.extend(self.rule.background.steps)
@@ -199,6 +200,7 @@ class ScenarioTemplate:
             steps=steps,
             tags=self.tags,
             description=self.description,
+            rule=self.rule,
         )
 
 
@@ -222,6 +224,7 @@ class Scenario:
     steps: list[Step]
     description: str | None = None
     tags: set[str] = field(default_factory=set)
+    rule: Rule | None = None
 
 
 @dataclass(eq=False)
