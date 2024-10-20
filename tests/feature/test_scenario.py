@@ -2,6 +2,8 @@
 
 import textwrap
 
+from pytest_bdd.utils import collect_dumped_objects
+
 
 def test_scenario_not_found(pytester, pytest_params):
     """Test the situation when scenario is not found."""
@@ -195,3 +197,85 @@ def test_angular_brackets_are_not_parsed(pytester):
     )
     result = pytester.runpytest()
     result.assert_outcomes(passed=2)
+
+
+def test_multilanguage_support(pytester):
+    """Test multilanguage support."""
+    pytester.makefile(
+        ".feature",
+        simple="""
+            # language: it
+
+            Funzionalità: Funzionalità semplice
+
+                Contesto:
+                    Dato che uso uno step nel contesto
+                    Allora va tutto bene
+
+                Scenario: Scenario semplice
+                    Dato che uso uno step con "Dato"
+                    E che uso uno step con "E"
+                    Ma che uso uno step con "Ma"
+                    * che uso uno step con "*"
+                    Allora va tutto bene
+
+                Schema dello scenario: Scenario con schema
+                    Dato che uso uno step con "<nome esempio>"
+                    Allora va tutto bene
+
+                    Esempi:
+                    | nome esempio  |
+                    | esempio 1     |
+                    | esempio 2     |
+        """,
+    )
+    pytester.makepyfile(
+        """
+        from pytest_bdd import scenario, given, then, parsers
+        from pytest_bdd.utils import dump_obj
+
+        @scenario("simple.feature", "Scenario semplice")
+        def test_scenario_semplice():
+            pass
+
+        @scenario("simple.feature", "Scenario con schema")
+        def test_scenario_con_schema():
+            pass
+
+        @given("che uso uno step nel contesto")
+        def _():
+            return dump_obj(("given", "che uso uno step nel contesto"))
+
+        @given(parsers.parse('che uso uno step con "{step_name}"'))
+        def _(step_name):
+            return dump_obj(("given", "che uso uno step con ", step_name))
+
+        @then("va tutto bene")
+        def _():
+            dump_obj(("then", "va tutto bene"))
+        """
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=3)
+
+    assert collect_dumped_objects(result) == [
+        # 1st scenario
+        ("given", "che uso uno step nel contesto"),
+        ("then", "va tutto bene"),
+        ("given", "che uso uno step con ", "Dato"),
+        ("given", "che uso uno step con ", "E"),
+        ("given", "che uso uno step con ", "Ma"),
+        ("given", "che uso uno step con ", "*"),
+        ("then", "va tutto bene"),
+        # 2nd scenario
+        # 1st example
+        ("given", "che uso uno step nel contesto"),
+        ("then", "va tutto bene"),
+        ("given", "che uso uno step con ", "esempio 1"),
+        ("then", "va tutto bene"),
+        # 2nd example
+        ("given", "che uso uno step nel contesto"),
+        ("then", "va tutto bene"),
+        ("given", "che uso uno step con ", "esempio 2"),
+        ("then", "va tutto bene"),
+    ]
