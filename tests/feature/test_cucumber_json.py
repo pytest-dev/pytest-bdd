@@ -170,7 +170,7 @@ def test_step_trace(pytester):
                 },
                 {
                     "description": "",
-                    "keyword": "Scenario",
+                    "keyword": "Scenario Outline",
                     "tags": [{"line": 14, "name": "scenario-outline-passing-tag"}],
                     "steps": [
                         {
@@ -188,7 +188,7 @@ def test_step_trace(pytester):
                 },
                 {
                     "description": "",
-                    "keyword": "Scenario",
+                    "keyword": "Scenario Outline",
                     "tags": [{"line": 14, "name": "scenario-outline-passing-tag"}],
                     "steps": [
                         {
@@ -206,7 +206,7 @@ def test_step_trace(pytester):
                 },
                 {
                     "description": "",
-                    "keyword": "Scenario",
+                    "keyword": "Scenario Outline",
                     "tags": [{"line": 14, "name": "scenario-outline-passing-tag"}],
                     "steps": [
                         {
