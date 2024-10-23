@@ -1,6 +1,7 @@
 import asyncio
 import os
 import ssl
+import sys
 from contextlib import suppress
 from functools import partial, reduce
 from itertools import filterfalse
@@ -177,8 +178,8 @@ class FileScenarioLocator(ScenarioLocatorFilterMixin):
                     yield feature_path
             else:
                 try:
-                    yield from filter(methodcaller("is_file"), features_base_dir.glob(str(feature_pathlike)))
-                except IndexError:
+                    yield from filter(methodcaller("is_file"), features_base_dir.glob(os.fspath(feature_pathlike)))
+                except IndexError if sys.version_info < (3, 13) else ValueError:
                     yield from filter(methodcaller("is_file"), features_base_dir.glob("**/*"))
 
     @staticmethod

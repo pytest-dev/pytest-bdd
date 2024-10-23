@@ -318,3 +318,8 @@ The output will be like:
 
 As as side effect, the tool will validate the files for format errors, also some of the logic bugs, for example the
 ordering of the types of the steps.
+
+Known limitations
+=================
+
+- Unable fully collect messages report if tests were launched using xdist plugin

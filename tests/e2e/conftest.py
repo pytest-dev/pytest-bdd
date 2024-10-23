@@ -66,7 +66,7 @@ def _(testdir, step):
 
 
 @step("run pytest", target_fixture="pytest_result")
-def run_pytest(testdir, step):
+def run_pytest(testdir: "Testdir", step):
     options_dict = data_table_to_dicts(step.data_table)
     testrunner = (
         testdir.runpytest_inprocess if options_dict.get("subprocess", [False])[0] == "true" else testdir.runpytest
@@ -75,6 +75,12 @@ def run_pytest(testdir, step):
     outcome = testrunner(*options_dict.get("cli_args", []))
 
     yield outcome
+
+
+@given("Install npm packages")
+def _(testdir: "Testdir", step):
+    options_dict = data_table_to_dicts(step.data_table)
+    yield testdir.run(shutil.which("npm"), "install", "--silent", *options_dict.get("packages", []))
 
 
 @step("pytest outcome must contain tests with statuses:")
@@ -110,8 +116,16 @@ def copy_path(request, testdir: "Testdir", initial_path, final_path, step):
 )
 def _(file_path: Path, line_count: int):
     with file_path.open("r") as fp:
-        real_line_count = reduce(lambda _, last: last, map(itemgetter(0), enumerate(fp, start=1)))
+        real_line_count = reduce(lambda _, last: last, map(itemgetter(0), enumerate(fp, start=1)), 0)  # type: ignore[no-any-return]
     assert line_count == real_line_count
+
+
+@then(
+    re.compile(r"File \"(?P<file_path>(\w|\\|.)+)\" is not empty"),
+    converters=dict(file_path=Path),
+)
+def _(file_path: Path, testdir):
+    assert (Path(str(testdir.tmpdir)) / file_path).stat().st_size != 0
 
 
 @then(re.compile(r"Report \"(?P<file_path>(\w|\\|.)+)\" parsable into messages"), converters=dict(file_path=Path))

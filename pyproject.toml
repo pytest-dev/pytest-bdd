@@ -47,6 +47,7 @@ dependencies = [
   "aiohttp",
   "attrs",
   "certifi",
+  "chevron",
   "ci-environment",
   # This is needed until messages become regular PyPi package https://github.com/cucumber/messages/pull/165
   "cuke-messages==0.1.0",
