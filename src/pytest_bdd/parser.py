@@ -40,6 +40,7 @@ class Feature:
     scenarios: OrderedDict[str, ScenarioTemplate]
     filename: str
     rel_filename: str
+    language: str
     keyword: str
     name: str | None
     tags: set[str]
@@ -447,6 +448,7 @@ class FeatureParser:
             background=None,
             line_number=feature_data.location.line,
             description=textwrap.dedent(feature_data.description),
+            language=feature_data.language,
         )
 
         for child in feature_data.children:
