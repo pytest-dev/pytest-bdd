@@ -519,7 +519,7 @@ Rules
 In Gherkin, `Rules` allow you to group related scenarios or examples under a shared context.
 This is useful when you want to define different conditions or behaviours
 for multiple examples that follow a similar structure.
-You can use either `Scenario` or `Example` to define individual cases, as they are aliases and function identically.
+You can use either ``Scenario`` or ``Example`` to define individual cases, as they are aliases and function identically.
 
 Additionally, **tags** applied to a rule will be automatically applied to all the **examples or scenarios**
 under that rule, making it easier to organize and filter tests during execution.
