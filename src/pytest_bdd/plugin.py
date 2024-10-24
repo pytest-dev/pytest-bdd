@@ -8,7 +8,8 @@ from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 import pytest
 from typing_extensions import ParamSpec
 
-from . import cucumber_json, generation, gherkin_terminal_reporter, given, reporting, then, when
+from . import generation, given, then, when
+from .reports import cucumber_json, gherkin_terminal_reporter, reporting
 from .utils import CONFIG_STACK
 
 if TYPE_CHECKING:

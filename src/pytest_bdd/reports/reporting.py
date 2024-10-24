@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from _pytest.reports import TestReport
     from _pytest.runner import CallInfo
 
-    from .parser import Feature, Scenario, Step
+    from ..parser import Feature, Scenario, Step
 
 
 class StepReport:
