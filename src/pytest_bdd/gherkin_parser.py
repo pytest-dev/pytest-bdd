@@ -269,6 +269,7 @@ class Child:
 @dataclass
 class Feature:
     location: Location
+    language: str
     keyword: str
     tags: list[Tag]
     name: str
@@ -279,6 +280,7 @@ class Feature:
     def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
             location=Location.from_dict(data["location"]),
+            language=data["language"],
             keyword=data["keyword"],
             tags=[Tag.from_dict(tag) for tag in data["tags"]],
             name=data["name"],

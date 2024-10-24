@@ -17,7 +17,7 @@ from .gherkin_parser import Scenario as GherkinScenario
 from .gherkin_parser import Step as GherkinStep
 from .gherkin_parser import Tag as GherkinTag
 from .gherkin_parser import get_gherkin_document
-from .types import STEP_TYPES
+from .types import STEP_TYPE_BY_PARSER_KEYWORD
 
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
 
@@ -40,6 +40,7 @@ class Feature:
     scenarios: OrderedDict[str, ScenarioTemplate]
     filename: str
     rel_filename: str
+    language: str
     keyword: str
     name: str | None
     tags: set[str]
@@ -352,7 +353,7 @@ class FeatureParser:
             return []
 
         first_step = steps_data[0]
-        if first_step.keyword.lower() not in STEP_TYPES:
+        if first_step.keyword_type not in STEP_TYPE_BY_PARSER_KEYWORD:
             raise StepError(
                 message=f"First step in a scenario or background must start with 'Given', 'When' or 'Then', but got {first_step.keyword}.",
                 line=first_step.location.line,
@@ -361,11 +362,9 @@ class FeatureParser:
             )
 
         steps = []
-        current_type = first_step.keyword.lower()
+        current_type = STEP_TYPE_BY_PARSER_KEYWORD[first_step.keyword_type]
         for step in steps_data:
-            keyword = step.keyword.lower()
-            if keyword in STEP_TYPES:
-                current_type = keyword
+            current_type = STEP_TYPE_BY_PARSER_KEYWORD.get(step.keyword_type, current_type)
             steps.append(
                 Step(
                     name=step.text,
@@ -449,6 +448,7 @@ class FeatureParser:
             background=None,
             line_number=feature_data.location.line,
             description=textwrap.dedent(feature_data.description),
+            language=feature_data.language,
         )
 
         for child in feature_data.children:

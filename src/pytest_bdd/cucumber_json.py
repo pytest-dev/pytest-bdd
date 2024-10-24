@@ -120,6 +120,7 @@ class LogBDDCucumberJSON:
                 "id": scenario["feature"]["rel_filename"].lower().replace(" ", "-"),
                 "line": scenario["feature"]["line_number"],
                 "description": scenario["feature"]["description"],
+                "language": scenario["feature"]["language"],
                 "tags": self._serialize_tags(scenario["feature"]),
                 "elements": [],
             }

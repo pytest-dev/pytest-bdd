@@ -12,3 +12,9 @@ WHEN: Literal["when"] = "when"
 THEN: Literal["then"] = "then"
 
 STEP_TYPES = (GIVEN, WHEN, THEN)
+
+STEP_TYPE_BY_PARSER_KEYWORD = {
+    "Context": GIVEN,
+    "Action": WHEN,
+    "Outcome": THEN,
+}
