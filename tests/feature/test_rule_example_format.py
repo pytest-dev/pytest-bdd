@@ -87,9 +87,9 @@ def test_rule_example_format(pytester):
         def _(first_number):
             return first_number
 
-        @given(parsers.parse("the second number is {second_number}"), target_fixture="second_number")
+        @given(parsers.parse("the second number is {second_number:d}"), target_fixture="second_number")
         def _(second_number):
-            return int(second_number)
+            return second_number
 
         @when("I press add", target_fixture="result")
         def _(first_number, second_number):
