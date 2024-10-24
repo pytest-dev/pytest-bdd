@@ -99,9 +99,9 @@ def test_rule_example_format(pytester):
         def _(first_number, second_number):
             return first_number - second_number
 
-        @then(parsers.parse("the result should be {expected_result}"))
+        @then(parsers.parse("the result should be {expected_result:d}"))
         def _(result, expected_result):
-            assert result == int(expected_result)
+            assert result == expected_result
         """
         )
     )
