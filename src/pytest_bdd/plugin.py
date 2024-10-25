@@ -9,7 +9,7 @@ import pytest
 from typing_extensions import ParamSpec
 
 from . import generation, given, then, when
-from .reports import cucumber_json, gherkin_terminal_reporter, reporting
+from .reports import cucumber_json, cucumber_junit, gherkin_terminal_reporter, reporting
 from .utils import CONFIG_STACK
 
 if TYPE_CHECKING:
@@ -60,6 +60,7 @@ def pytest_addoption(parser: Parser) -> None:
     """Add pytest-bdd options."""
     add_bdd_ini(parser)
     cucumber_json.add_options(parser)
+    cucumber_junit.add_options(parser)
     generation.add_options(parser)
     gherkin_terminal_reporter.add_options(parser)
 
@@ -73,6 +74,7 @@ def pytest_configure(config: Config) -> None:
     """Configure all subplugins."""
     CONFIG_STACK.append(config)
     cucumber_json.configure(config)
+    cucumber_junit.configure(config)
     gherkin_terminal_reporter.configure(config)
 
 
@@ -81,6 +83,7 @@ def pytest_unconfigure(config: Config) -> None:
     if CONFIG_STACK:
         CONFIG_STACK.pop()
     cucumber_json.unconfigure(config)
+    cucumber_junit.unconfigure(config)
 
 
 @pytest.hookimpl(hookwrapper=True)
