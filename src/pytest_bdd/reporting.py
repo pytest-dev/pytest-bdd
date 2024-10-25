@@ -119,6 +119,7 @@ class ScenarioReport:
                 "name": feature.name,
                 "filename": feature.filename,
                 "rel_filename": feature.rel_filename,
+                "language": feature.language,
                 "line_number": feature.line_number,
                 "description": feature.description,
                 "tags": sorted(feature.tags),

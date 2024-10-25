@@ -6,6 +6,7 @@ Unreleased
 - Dropped support for python 3.8. Supported python versions: 3.9, 3.10, 3.11, 3.12, 3.13.
 - Text after the `#` character is no longer stripped from the Scenario and Feature name.
 - Gherkin keyword aliases can now be used and correctly reported in json and terminal output (see `Keywords <https://cucumber.io/docs/gherkin/reference/#keywords>` for permitted list).
+- Added localization support. The language of the feature file can be specified using the `# language: <language>` directive at the beginning of the file.
 
 8.0.0b2
 ----------

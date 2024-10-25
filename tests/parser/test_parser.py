@@ -36,6 +36,7 @@ def test_parser():
             tags=[],
             name="User login",
             description="  As a registered user\n  I want to be able to log in\n  So that I can access my account",
+            language="en",
             children=[
                 Child(
                     background=Background(

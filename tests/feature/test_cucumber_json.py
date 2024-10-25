@@ -225,6 +225,7 @@ def test_step_trace(pytester):
             ],
             "id": os.path.join("test_step_trace0", "test.feature"),
             "keyword": "Feature",
+            "language": "en",
             "line": 2,
             "name": "One passing scenario, one failing scenario",
             "tags": [{"name": "feature-tag", "line": 1}],
