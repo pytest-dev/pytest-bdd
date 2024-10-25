@@ -1230,6 +1230,14 @@ To have an output in json format:
 
 This will output an expanded (meaning scenario outlines will be expanded to several scenarios) Cucumber format.
 
+A similar report is the junit format. It follows this schema from `Jenkins Junit Schema <https://github.com/cucumber/junit-xml-formatter/blob/main/jenkins-junit.xsd>`_
+
+To have an output in junit format:
+
+::
+
+    pytest --cucumberjunit=<path to junit report>
+
 To enable gherkin-formatted output on terminal, use `--gherkin-terminal-reporter` in conjunction with the `-v` or `-vv` options:
 
 ::
