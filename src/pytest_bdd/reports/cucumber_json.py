@@ -62,12 +62,13 @@ class LogBDDCucumberJSON:
         :return: `dict` in form {"status": "<passed|failed|skipped>", ["error_message": "<error_message>"]}
         """
         result: dict[str, Any] = {}
-        if report.passed or not step["failed"]:  # ignore setup/teardown
+        if report.skipped:
+            reason = report.longrepr[2][report.longrepr[2].find(":") + 2 :]
+            result = {"status": "skipped", "skipped_message": reason}
+        elif report.passed or not step["failed"]:  # ignore setup/teardown
             result = {"status": "passed"}
         elif report.failed:
             result = {"status": "failed", "error_message": str(report.longrepr) if error_message else ""}
-        elif report.skipped:
-            result = {"status": "skipped"}
         result["duration"] = int(math.floor((10**9) * step["duration"]))  # nanosec
         return result
 

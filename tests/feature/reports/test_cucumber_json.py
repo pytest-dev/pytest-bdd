@@ -24,7 +24,7 @@ def test_step_trace(pytester):
     """Test step trace."""
     create_test(pytester)
     result, jsonobject = run_and_parse(pytester)
-    result.assert_outcomes(passed=4, failed=1)
+    result.assert_outcomes(passed=4, failed=1, skipped=1)
 
     assert result.ret
     expected = [
@@ -134,6 +134,24 @@ def test_step_trace(pytester):
                     "type": "scenario",
                     "id": "test_passing_outline[float-1.0]",
                     "name": "Passing outline",
+                },
+                {
+                    "description": "",
+                    "id": "test_skipping",
+                    "keyword": "Scenario",
+                    "line": 24,
+                    "name": "Skipping test",
+                    "steps": [
+                        {
+                            "keyword": "Given",
+                            "line": 25,
+                            "match": {"location": ""},
+                            "name": "a skipping step",
+                            "result": {"skipped_message": "skipping", "status": "skipped", "duration": OfType(int)},
+                        }
+                    ],
+                    "tags": [],
+                    "type": "scenario",
                 },
             ],
             "id": os.path.join("test_step_trace0", "test.feature"),

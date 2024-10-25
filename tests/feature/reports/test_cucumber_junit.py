@@ -25,7 +25,7 @@ def test_step_trace(pytester):
     """Test step trace."""
     create_test(pytester)
     result, xmlobject = run_and_parse(pytester)
-    result.assert_outcomes(passed=4, failed=1)
+    result.assert_outcomes(passed=4, failed=1, skipped=1)
 
     assert result.ret
 
@@ -34,8 +34,8 @@ def test_step_trace(pytester):
 
     test_suite_attributes = dict(test_suite.attributes.items())
     assert test_suite_attributes["name"] == "pytest-bdd.cucumber.junit"
-    assert test_suite_attributes["tests"] == "5"
-    assert test_suite_attributes["skipped"] == "0"
+    assert test_suite_attributes["tests"] == "4"
+    assert test_suite_attributes["skipped"] == "1"
     assert test_suite_attributes["errors"] == "0"
     assert test_suite_attributes["failures"] == "1"
     assert isinstance(float(test_suite_attributes["time"]), float)

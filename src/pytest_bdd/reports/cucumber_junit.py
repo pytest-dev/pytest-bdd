@@ -82,7 +82,9 @@ class LogBDDCucumberJUNIT(LogBDDCucumberJSON):
                 test_case_doc.setAttribute("name", name)
 
                 failure = False
+                skipped = False
                 failure_doc = document.createElement("failure")
+                skipped_doc = document.createElement("skipped")
                 case_time = 0
 
                 text = "\n"
@@ -92,10 +94,18 @@ class LogBDDCucumberJUNIT(LogBDDCucumberJSON):
                     if step["result"]["status"] == "failed":
                         failure = True
                         failure_doc.appendChild(document.createTextNode(step["result"]["error_message"]))
+                    elif step["result"]["status"] == "skipped":
+                        skipped = True
+                        skipped_doc.appendChild(document.createTextNode(step["result"]["skipped_message"]))
                 test_case_doc.setAttribute("time", str(case_time))
                 if failure:
                     test_case_doc.appendChild(failure_doc)
                     no_of_failures += 1
+                    no_of_tests -= 1
+                elif skipped:
+                    test_case_doc.appendChild(skipped_doc)
+                    no_of_skipped += 1
+                    no_of_tests -= 1
 
                 system_out = document.createElement("system-out")
                 system_out.appendChild(document.createTextNode(text + "\n"))

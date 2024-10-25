@@ -51,6 +51,9 @@ def create_test(pytester):
             | str     | hello  |
             | int     | 42     |
             | float   | 1.0    |
+
+        Scenario: Skipping test
+            Given a skipping step
     """
         ),
     )
@@ -72,6 +75,10 @@ def create_test(pytester):
         def _():
             raise Exception('Error')
 
+        @given('a skipping step')
+        def _():
+            pytest.skip('skipping')
+
         @given(parsers.parse('type {type} and value {value}'))
         def _():
             return 'pass'
@@ -86,6 +93,10 @@ def create_test(pytester):
 
         @scenario('test.feature', 'Passing outline')
         def test_passing_outline():
+            pass
+
+        @scenario('test.feature', 'Skipping test')
+        def test_skipping():
             pass
     """
         )
