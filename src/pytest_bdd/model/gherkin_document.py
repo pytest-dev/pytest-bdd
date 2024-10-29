@@ -19,17 +19,19 @@ Syntax example:
 :note: There are no multiline steps, the description of the step must fit in
 one line.
 """
+
+from collections.abc import Sequence
 from itertools import chain
 from textwrap import dedent
-from typing import Sequence, Union, cast
+from typing import Union, cast
 
 from attr import Factory, attrib, attrs
 from gherkin.errors import CompositeParserException  # type: ignore[import]
 from gherkin.pickles.compiler import Compiler  # type: ignore[import]
 
-from messages import Background, Examples  # type:ignore[attr-defined]
+from messages import Background, Examples  # type:ignore[attr-defined, import-untyped]
 from messages import Feature as FeatureMessage  # type:ignore[attr-defined]
-from messages import (  # type:ignore[attr-defined]
+from messages import (  # type:ignore[attr-defined, import-untyped]
     GherkinDocument,
     Location,
     Pickle,

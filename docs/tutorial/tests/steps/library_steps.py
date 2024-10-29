@@ -51,7 +51,7 @@ def these_books_in_the_catalog(
 def a_search_type_is_performed_for_search_term(
     # `search_results` is a usual pytest fixture defined somewhere else (at conftest.py, plugin or module) and injected by pytest dependency injection mechanism.
     # In this case it will be provided by conftest.py
-    search_results: List[Book],
+    search_results: list[Book],
     # `search_type` and `search_term` are parameters of this step and are injected by step definition
     search_type: Literal["name", "title"],
     search_term: str,
@@ -74,7 +74,7 @@ def a_search_type_is_performed_for_search_term(
 def only_these_books_will_be_returned(
     # Fixtures persist during step execution, so usual `context` common for behave users is not required,
     # so if you define fixture dependencies debugging becomes much easier.
-    search_results: List[Book],
+    search_results: list[Book],
     step: Step,
     catalog: Catalog,
 ):

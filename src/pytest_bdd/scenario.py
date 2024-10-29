@@ -1,7 +1,8 @@
 import collections
+from collections.abc import Iterable
 from enum import Enum
 from pathlib import Path
-from typing import Callable, Iterable, Optional, Type, Union
+from typing import Callable, Optional, Type, Union
 
 from pytest import mark
 
@@ -64,7 +65,7 @@ def scenario(
     features_path_type: Optional[Union[FeaturePathType, str]] = FeaturePathType.PATH,
     features_mimetype: Optional[Mimetype] = None,
     return_test_decorator=True,
-    parser_type: Optional[Type[ParserProtocol]] = None,
+    parser_type: Optional[type[ParserProtocol]] = None,
     parse_args=Args((), {}),
     locators=(),
 ):
@@ -107,7 +108,7 @@ def scenarios(
     features_base_url: Optional[str] = None,
     features_path_type: Optional[Union[FeaturePathType, str]] = FeaturePathType.PATH,
     features_mimetype: Optional[Mimetype] = None,
-    parser_type: Optional[Type[ParserProtocol]] = None,
+    parser_type: Optional[type[ParserProtocol]] = None,
     parse_args=Args((), {}),
     locators=(),
 ):
@@ -156,8 +157,7 @@ def scenarios(
     else:
 
         @decorator
-        def test():
-            ...
+        def test(): ...
 
         test.__name__ = next(iter(test_names))
 

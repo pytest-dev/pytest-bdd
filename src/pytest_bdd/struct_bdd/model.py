@@ -1,11 +1,12 @@
 from collections import defaultdict, namedtuple
+from collections.abc import Mapping, Sequence
 from enum import Enum
 from functools import partial
 from inspect import getfile
 from itertools import chain, product, starmap
 from operator import attrgetter, eq, is_not
 from pathlib import Path
-from typing import Any, ClassVar, List, Literal, Mapping, Optional, Sequence, Type, Union
+from typing import Annotated, Any, ClassVar, List, Literal, NamedTuple, Optional, Type, Union
 
 from attr import attrib, attrs
 from pydantic import (  # type:ignore[attr-defined] # migration to pydantic 2
@@ -18,8 +19,8 @@ from pydantic import (  # type:ignore[attr-defined] # migration to pydantic 2
     model_validator,
 )
 
-from messages import KeywordType, MediaType, Source  # type:ignore[attr-defined]
-from pytest_bdd.compatibility.typing import Annotated, Self
+from messages import KeywordType, MediaType, Source  # type:ignore[attr-defined, import-untyped]
+from pytest_bdd.compatibility.typing import Self
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.scenario_locator import ScenarioLocatorFilterMixin
 from pytest_bdd.utils import deepattrgetter
@@ -96,7 +97,7 @@ class Join(BaseModel):
         populate_by_name=True,
     )
 
-    tables: List[Annotated[Union[Table, "Join", SubTable], convert_sub_tables_to_tables]] = Field(
+    tables: list[Annotated[Union[Table, "Join", SubTable], convert_sub_tables_to_tables]] = Field(
         default_factory=list, alias="Join"
     )
 
@@ -222,15 +223,18 @@ class StepPrototype(Node):
     ] = Field(default_factory=list, alias="Steps")
 
     type: Optional[StepKeywordType] = Field(default=Keyword.Star, alias="Type")
-    data: List[Annotated[Union[Table, Join, SubTable], convert_sub_tables_to_tables]] = Field(
+    data: list[Annotated[Union[Table, Join, SubTable], convert_sub_tables_to_tables]] = Field(
         default_factory=list, alias="Data"
     )
-    examples: List[Annotated[Union[Table, Join, SubTable], convert_sub_tables_to_tables]] = Field(
+    examples: list[Annotated[Union[Table, Join, SubTable], convert_sub_tables_to_tables]] = Field(
         default_factory=list, alias="Examples"
     )
     keyword_type: Optional[KeywordType] = Field(KeywordType.unknown)
 
-    Route: ClassVar[Type] = namedtuple("Route", ["tags", "steps", "example_table"])
+    class Route(NamedTuple):
+        tags: Optional[Sequence[str]]
+        steps: list["StepPrototype"]
+        example_table: Union[Table, "Join", SubTable]
 
     @model_validator(mode="after")  # type: ignore[misc] # migration to pydantic 2
     def set_keyword_type(self) -> Self:

@@ -1,4 +1,5 @@
 """pytest-bdd public API."""
+
 from pytest_bdd.packaging import get_distribution_version
 from pytest_bdd.scenario import FeaturePathType, scenario, scenarios
 from pytest_bdd.steps import given, step, then, when

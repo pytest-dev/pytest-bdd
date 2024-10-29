@@ -1,33 +1,20 @@
 """Various utility functions."""
+
 import base64
 import pickle
 import re
 import sys
 from collections import defaultdict
+from collections.abc import Collection, Mapping, Sequence
 from contextlib import contextmanager, nullcontext, suppress
 from enum import Enum
 from functools import reduce
 from inspect import getframeinfo, signature
 from itertools import tee
 from operator import attrgetter, getitem, itemgetter
+from re import Pattern
 from sys import _getframe
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Collection,
-    Dict,
-    Literal,
-    Mapping,
-    Optional,
-    Pattern,
-    Protocol,
-    Sequence,
-    Type,
-    Union,
-    cast,
-    runtime_checkable,
-)
+from typing import TYPE_CHECKING, Any, Callable, Dict, Literal, Optional, Protocol, Type, Union, cast, runtime_checkable
 from urllib.parse import urlparse
 
 from _pytest.fixtures import FixtureDef, FixtureRequest
@@ -56,7 +43,7 @@ def get_args(func: Callable) -> Sequence[str]:
     return [param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD]
 
 
-def get_caller_module_locals(stacklevel: int = 1) -> Dict[str, Any]:
+def get_caller_module_locals(stacklevel: int = 1) -> dict[str, Any]:
     """Get the caller module locals dictionary.
 
     We use sys._getframe instead of inspect.stack(0) because the latter is way slower, since it iterates over
@@ -140,7 +127,7 @@ class DefaultMapping(defaultdict):
 
     @classmethod
     def instantiate_from_collection_or_bool(
-        cls, bool_or_items: Union[Collection[str], Dict[str, Any], Any] = True, *, warm_up_keys=()
+        cls, bool_or_items: Union[Collection[str], dict[str, Any], Any] = True, *, warm_up_keys=()
     ):
         if isinstance(bool_or_items, Collection):
             if not isinstance(bool_or_items, Mapping):
@@ -158,13 +145,15 @@ def inject_fixture(request: FixtureRequest, arg: str, value: Any) -> None:
     """
 
     fd = FixtureDef(
-        **({"config": request.config} if PYTEST81 else {"fixturemanager": request._fixturemanager}),
+        **(
+            {"config": request.config} if PYTEST81 else {"fixturemanager": request._fixturemanager}  # type:ignore
+        ),
         baseid=None,
         argname=arg,
         func=lambda: value,
         scope="function",
         params=None,
-        **({"_ispytest": True} if PYTEST8 else {}),
+        **({"_ispytest": True} if PYTEST8 else {}),  # type:ignore[arg-type]
     )
     fd.cached_result = (value, 0, None)
 
@@ -200,8 +189,7 @@ def _itemgetter(*items):
     return func
 
 
-class _NoneException(Exception):
-    ...
+class _NoneException(Exception): ...
 
 
 class Empty(Enum):
@@ -288,8 +276,7 @@ def make_python_name(string: str) -> str:
 
 @runtime_checkable
 class StringableProtocol(Protocol):
-    def __str__(self) -> str:
-        ...  # pragma: no cover
+    def __str__(self) -> str: ...  # pragma: no cover
 
 
 def stringify(value: Union[StringableProtocol, str, bytes]) -> str:
@@ -311,7 +298,7 @@ class IdGenerator:
 
 @contextmanager
 def doesnt_raise(
-    expected_exception: Union[Type[Exception], Sequence[Type[Exception]]],
+    expected_exception: Union[type[Exception], Sequence[type[Exception]]],
     *,
     match: Optional[Union[str, Pattern[str]]] = None,
     suppress_not_matched=True,

@@ -37,11 +37,11 @@ classifiers = [
   "Topic :: Software Development :: Libraries",
   "Topic :: Utilities",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12"
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13"
 ]
 dependencies = [
   "aiohttp",
@@ -67,9 +67,8 @@ dependencies = [
   "pathvalidate",
   "py",
   "pydantic>=2.0.3",
-  "pytest>=5.0",
+  "pytest>=5.2",
   "setuptools>=58",
-  "six>=1.16;python_version~='3.8'",
   "cucumber-tag-expressions",
   "typing-extensions;python_version<'3.11.0'"
 ]
@@ -80,7 +79,7 @@ maintainers = [
 ]
 name = "pytest-bdd-ng"
 readme = {file = "README.rst", content-type = "text/x-rst"}
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 urls = {Repository = "https://github.com/elchupanebrej/pytest-bdd-ng"}
 version = "2.2.0"
 
@@ -130,7 +129,7 @@ bdd_tree_to_rst = "pytest_bdd.script.bdd_tree_to_rst:main"
 
 [tool.black]
 line-length = 120
-target-version = ["py38", "py39", "py310", "py311"]
+target-version = ["py39", "py310", "py311", "py312", "py313"]
 verbose = true
 
 [tool.isort]

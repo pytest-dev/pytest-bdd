@@ -3,7 +3,8 @@ from functools import partial
 from itertools import filterfalse
 from operator import contains, itemgetter, methodcaller
 from pathlib import Path
-from typing import Callable, List, Sequence, Set, Tuple, Union
+from typing import Callable, List, Set, Tuple, Union
+from collections.abc import Sequence
 
 from attr import attrib, attrs
 from gherkin.ast_builder import AstBuilder
@@ -34,7 +35,7 @@ class GlobMixin:
 class GherkinParser(GlobMixin, ParserProtocol):
     def parse(
         self, config: Union[Config, PytestBDDIdGeneratorHandler], path: Path, uri: str, *args, **kwargs
-    ) -> Tuple[Feature, str]:
+    ) -> tuple[Feature, str]:
         gherkin_parser = CucumberIOBaseParser(ast_builder=AstBuilder(id_generator=self.id_generator))
         encoding = kwargs.pop("encoding", "utf-8")
         with path.open(mode="r", encoding=encoding) as feature_file:
@@ -60,8 +61,8 @@ class GherkinParser(GlobMixin, ParserProtocol):
 
     def get_from_paths(self, config: Config, paths: Sequence[Path], **kwargs) -> Sequence[Feature]:
         """Get features for given paths."""
-        seen_names: Set[Path] = set()
-        features_content: List[Tuple[Feature, str]] = []
+        seen_names: set[Path] = set()
+        features_content: list[tuple[Feature, str]] = []
         features_base_dir = kwargs.pop("features_base_dir", Path.cwd())
         if not features_base_dir.is_absolute():
             features_base_dir = Path.cwd() / features_base_dir

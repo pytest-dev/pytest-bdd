@@ -3,12 +3,12 @@ from contextlib import contextmanager
 from functools import partial
 from itertools import zip_longest
 from operator import attrgetter
-from typing import Optional
+from typing import Optional, cast
 
 from pluggy import PluginManager
 from pytest import hookimpl
 
-from messages import PickleStep  # type:ignore[attr-defined]
+from messages import PickleStep  # type:ignore[attr-defined, import-untyped]
 from pytest_bdd import exceptions
 from pytest_bdd.compatibility.pytest import FixtureRequest, Item, call_fixture_func
 from pytest_bdd.model import Feature
@@ -31,25 +31,25 @@ class ScenarioRunner:
             self.request = item._request
             self.feature = self.request.getfixturevalue("feature")
             self.scenario = self.request.getfixturevalue("scenario")
-            self.plugin_manager = self.request.config.hook
-            self.plugin_manager.pytest_bdd_before_scenario(
+            self.plugin_manager = cast(PluginManager, self.request.config.hook)
+            self.plugin_manager.pytest_bdd_before_scenario(  # type:ignore[attr-defined]
                 request=self.request, feature=self.feature, scenario=self.scenario
             )
             try:
-                self.plugin_manager.pytest_bdd_run_scenario(
+                self.plugin_manager.pytest_bdd_run_scenario(  # type:ignore[attr-defined]
                     request=self.request,
                     feature=self.feature,
                     scenario=self.scenario,
                 )
             finally:
-                self.plugin_manager.pytest_bdd_after_scenario(
+                self.plugin_manager.pytest_bdd_after_scenario(  # type:ignore[attr-defined]
                     request=self.request, feature=self.feature, scenario=self.scenario
                 )
 
             # Allow to test function use updated fixtures directly
             fixturenames = getattr(item, "fixturenames", [])
             for argname in fixturenames:
-                item.funcargs[argname] = item._request.getfixturevalue(argname)
+                item.funcargs[argname] = item._request.getfixturevalue(argname)  # type:ignore[attr-defined]
 
     def pytest_bdd_run_scenario(self, request: FixtureRequest, feature: Feature, scenario: Scenario):
         """Execute the scenarios.
@@ -165,7 +165,7 @@ class ScenarioRunner:
         for param, fixture_name in params_fixtures_mapping.items():
             if fixture_name is None or fixture_name is ...:
                 continue
-            inject_fixture(self.request, fixture_name, step_params[param])
+            inject_fixture(cast(FixtureRequest, self.request), fixture_name, step_params[param])
 
     def _get_step_function_kwargs(self, step, step_definition, step_params):
         for param in get_args(step_definition.func):

@@ -1,4 +1,5 @@
 """Code generation and assertion tests."""
+
 import itertools
 import textwrap
 

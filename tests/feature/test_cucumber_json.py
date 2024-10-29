@@ -1,13 +1,14 @@
 """Test cucumber json output."""
 
 import json
-from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+from collections.abc import Sequence
 
 if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.compatibility.pytest import RunResult
 
 
-def runandparse(testdir, *args: Any) -> Tuple["RunResult", Sequence[Dict[str, Any]]]:
+def runandparse(testdir, *args: Any) -> tuple["RunResult", Sequence[dict[str, Any]]]:
     """Run tests in testdir and parse json output."""
     resultpath = testdir.tmpdir.join("cucumber.json")
     result = testdir.runpytest(f"--cucumberjson={resultpath}", "-s", *args)

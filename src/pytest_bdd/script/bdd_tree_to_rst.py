@@ -4,6 +4,7 @@ Usage:
     bdd_tree_to_rst.py <features_dir> <output_file>
 
 """
+
 import sys
 from collections import deque
 from functools import reduce

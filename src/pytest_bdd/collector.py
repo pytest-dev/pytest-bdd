@@ -51,7 +51,7 @@ class FeatureFileModule(Module):
         return module
 
     @staticmethod
-    def detect_uri_pathtype(path) -> Tuple[str, PathType]:
+    def detect_uri_pathtype(path) -> tuple[str, PathType]:
         try:
             parsed_url = urlparse(path)
         except Exception:
@@ -67,7 +67,7 @@ class FeatureFileModule(Module):
         return path, features_path_type
 
     @classmethod
-    def get_feature_pathlike_from_url_file(cls, path: Path) -> Tuple[str, PathType, Optional[str]]:
+    def get_feature_pathlike_from_url_file(cls, path: Path) -> tuple[str, PathType, Optional[str]]:
         config_parser = ConfigParser()
         config_parser.read(path)
 

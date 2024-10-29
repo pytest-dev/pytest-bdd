@@ -1,8 +1,9 @@
 import json
+from collections.abc import Iterable
 from functools import partial
 from pathlib import Path
 from pprint import pformat
-from typing import TYPE_CHECKING, Iterable, Type, Union, cast
+from typing import TYPE_CHECKING, Type, Union, cast
 
 from pydantic import ValidationError
 
@@ -60,12 +61,11 @@ def unfold_message(message: Message):
         raise ValueError("Empty message was given")
 
 
-def list_filter_by_type(t: Union[Type, Iterable[Type]], items):
+def list_filter_by_type(t: Union[type, Iterable[type]], items):
     return list(filter(partial(flip(isinstance), tuple(t) if isinstance(t, Iterable) else t), items))
 
 
-class ParseError(RuntimeError):
-    ...
+class ParseError(RuntimeError): ...
 
 
 def parse_and_unflold_messages(lines):

@@ -1,4 +1,5 @@
 """Test tags."""
+
 from operator import ge
 
 from pytest_bdd.packaging import compare_distribution_version

@@ -23,7 +23,7 @@ class StructBDDPlugin:
 
     def pytest_bdd_get_parser(self, config: Config, mimetype: str):
         with suppress(KeyError):
-            return partial(
+            return partial(  # type:ignore[call-arg]
                 StructBDDParser,
                 kind={
                     Mimetype.struct_bdd_yaml.value: StructBDDParser.KIND.YAML.value,

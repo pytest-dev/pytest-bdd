@@ -1,6 +1,7 @@
 """
 Compatibility module for pytest
 """
+
 from __future__ import annotations
 
 import sys
@@ -20,12 +21,8 @@ from _pytest.terminal import TerminalReporter
 from pytest import Module as PytestModule
 from pytest import fail as _pytest_fail
 
+from pytest_bdd.compatibility.typing import TypeAlias
 from pytest_bdd.packaging import compare_distribution_version
-
-if sys.version_info >= (3, 10):
-    from typing import TypeAlias
-else:
-    from typing_extensions import TypeAlias
 
 __all__ = [
     "assert_outcomes",
@@ -51,7 +48,6 @@ __all__ = [
     "TerminalReporter",
     "Testdir",
     "TestReport",
-    "TypeAlias",
     "wrap_session",
 ]
 

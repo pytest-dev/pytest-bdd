@@ -24,9 +24,9 @@ from filelock import FileLock
 from pydantic import ValidationError
 from pytest import ExitCode, Session, hookimpl
 
-from messages import Attachment, Ci, ContentEncoding, Duration  # type:ignore[attr-defined]
+from messages import Attachment, Ci, ContentEncoding, Duration  # type:ignore[attr-defined, import-untyped]
 from messages import Envelope as Message  # type:ignore[attr-defined]
-from messages import (  # type:ignore[attr-defined]
+from messages import (  # type:ignore[attr-defined, import-untyped]
     Hook,
     Location,
     Meta,
@@ -67,8 +67,8 @@ class MessagePlugin:
     config: Config = attrib()
     current_test_case = attrib(default=None)
     current_test_case_step_to_definition_mapping = attrib(default=None)
-    parameter_type_registry: Set[int] = set()
-    hook_registry: Set[int] = set()
+    parameter_type_registry: set[int] = set()
+    hook_registry: set[int] = set()
     npm_formatter_package = "@cucumber/html-formatter"
 
     def __attrs_post_init__(self):
@@ -349,9 +349,9 @@ class MessagePlugin:
             return
 
         session = item.session
-        config: Union[
-            Config, PytestBDDIdGeneratorHandler
-        ] = session.config  # https://github.com/python/typing/issues/213
+        config: Union[Config, PytestBDDIdGeneratorHandler] = (
+            session.config
+        )  # https://github.com/python/typing/issues/213
 
         hook_handler = cast(Config, config).hook
 
@@ -433,7 +433,7 @@ class MessagePlugin:
                 test_step = TestStep(
                     id=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator.get_next_id(),
                     pickle_step_id=step.id,
-                    step_definition_ids=[step_definition.as_message(config).id]
+                    step_definition_ids=[step_definition.as_message(config).id],
                     # TODO Check step_match_arguments_lists
                 )
                 test_steps.append(test_step)

@@ -1,4 +1,5 @@
 """Test feature base dir."""
+
 import pytest
 
 NOT_EXISTING_FEATURE_PATHS = [".", "/does/not/exist/"]
