@@ -1,8 +1,8 @@
 """Test cucumber json output."""
 
 import json
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 if TYPE_CHECKING:  # pragma: no cover
     from pytest_bdd.compatibility.pytest import RunResult

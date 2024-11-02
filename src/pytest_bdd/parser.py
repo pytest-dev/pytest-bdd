@@ -1,10 +1,10 @@
 import linecache
+from collections.abc import Sequence
 from functools import partial
 from itertools import filterfalse
 from operator import contains, itemgetter, methodcaller
 from pathlib import Path
 from typing import Callable, List, Set, Tuple, Union
-from collections.abc import Sequence
 
 from attr import attrib, attrs
 from gherkin.ast_builder import AstBuilder

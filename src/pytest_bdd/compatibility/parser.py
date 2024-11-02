@@ -1,6 +1,6 @@
+from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Optional, Protocol, Tuple, Union, runtime_checkable
-from collections.abc import Sequence
 
 from attr import attrib, attrs
 
