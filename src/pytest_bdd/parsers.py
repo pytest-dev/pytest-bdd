@@ -1,5 +1,7 @@
 """StepHandler parsers."""
+
 from abc import ABCMeta, abstractmethod
+from collections.abc import Collection, Iterable, Sequence
 from enum import Enum
 from functools import partial, singledispatchmethod
 from itertools import chain, filterfalse
@@ -7,7 +9,7 @@ from operator import attrgetter, contains, methodcaller
 from re import Match
 from re import Pattern as _RePattern
 from re import compile as re_compile
-from typing import Any, Collection, Dict, Iterable, Optional, Protocol, Sequence, Type, Union, cast, runtime_checkable
+from typing import Any, Dict, Optional, Protocol, Type, Union, cast, runtime_checkable
 
 import parse as base_parse
 import parse_type.cfparse as base_cfparse
@@ -17,14 +19,13 @@ from cucumber_expressions.expression import CucumberExpression
 from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
 from cucumber_expressions.regular_expression import RegularExpression as CucumberRegularExpression
 
-from messages import ExpressionType  # type:ignore[attr-defined]
+from messages import ExpressionType  # type:ignore[attr-defined, import-untyped]
 from pytest_bdd.compatibility.pytest import FixtureRequest
 from pytest_bdd.model.messages_extension import ExpressionType as ExpressionTypeExtension
 from pytest_bdd.utils import StringableProtocol, stringify
 
 
-class ParserBuildValueError(ValueError):
-    ...
+class ParserBuildValueError(ValueError): ...
 
 
 @runtime_checkable
@@ -33,18 +34,14 @@ class StepParserProtocol(Protocol):
 
     def parse_arguments(
         self, request: FixtureRequest, name: str, anonymous_group_names: Optional[Iterable[str]] = None
-    ) -> Optional[Dict[str, Any]]:
-        ...  # pragma: no cover
+    ) -> Optional[dict[str, Any]]: ...  # pragma: no cover
 
     @property
-    def arguments(self) -> Collection[str]:
-        ...  # pragma: no cover
+    def arguments(self) -> Collection[str]: ...  # pragma: no cover
 
-    def is_matching(self, request: FixtureRequest, name: str) -> bool:
-        ...  # pragma: no cover
+    def is_matching(self, request: FixtureRequest, name: str) -> bool: ...  # pragma: no cover
 
-    def __str__(self) -> str:
-        ...  # pragma: no cover
+    def __str__(self) -> str: ...  # pragma: no cover
 
 
 class RegistryMode(Enum):
@@ -60,7 +57,7 @@ class StepParser(StepParserProtocol, metaclass=ABCMeta):
     @abstractmethod
     def parse_arguments(
         self, request: FixtureRequest, name: str, anonymous_group_names: Optional[Iterable[str]] = None
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         """Get step arguments from the given step name.
 
         :return: `dict` of step arguments
@@ -197,7 +194,7 @@ class parse(StepParser):
 
     def parse_arguments(
         self, request: FixtureRequest, name: str, anonymous_group_names: Optional[Iterable[str]] = None
-    ) -> Union[Dict[str, Any]]:
+    ) -> Union[dict[str, Any]]:
         match = self.parser.parse(name)
         group_dict = cast(dict, match.named)
         if anonymous_group_names is not None:
@@ -238,7 +235,7 @@ class string(StepParser):
 
     def parse_arguments(
         self, request: FixtureRequest, name: str, anonymous_group_names: Optional[Iterable[str]] = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """No parameters are available for simple string step.
 
         :return: `dict` of step arguments
@@ -259,14 +256,13 @@ class string(StepParser):
 
 @runtime_checkable
 class _CucumberExpressionProtocol(Protocol):
-    def match(self, text: str) -> Optional[Sequence[CucumberExpressionArgument]]:
-        ...  # pragma: no cover
+    def match(self, text: str) -> Optional[Sequence[CucumberExpressionArgument]]: ...  # pragma: no cover
 
 
 class _CucumberExpression(StepParser):
     pattern: str
 
-    expression_type: Type[Union[CucumberExpression, CucumberRegularExpression]]
+    expression_type: type[Union[CucumberExpression, CucumberRegularExpression]]
     parameter_type_registry_like: Union[ParameterTypeRegistry, Any]
     parameter_type_registry = ParameterTypeRegistry()  # default registry
 
@@ -278,7 +274,7 @@ class _CucumberExpression(StepParser):
 
     def parse_arguments(
         self, request: FixtureRequest, name: str, anonymous_group_names: Optional[Iterable[str]] = None
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         return dict(
             zip(
                 anonymous_group_names or [],
@@ -434,7 +430,7 @@ class heuristic(StepParser):
 
     def parse_arguments(
         self, request: FixtureRequest, name: str, anonymous_group_names: Optional[Iterable[str]] = None
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         for parser in self.parser_by_priorities:
             if parser is not None and parser.is_matching(request, name):
                 arguments = parser.parse_arguments(request, name, anonymous_group_names=anonymous_group_names)
@@ -448,9 +444,11 @@ class heuristic(StepParser):
         return [
             *chain.from_iterable(
                 map(
-                    lambda parser: []  # type:ignore[no-any-return]
-                    if (args := getattr(parser, "arguments")) is None
-                    else args,
+                    lambda parser: (
+                        []  # type:ignore[no-any-return]
+                        if (args := getattr(parser, "arguments")) is None
+                        else args
+                    ),
                     self.parser_by_priorities,
                 )
             )

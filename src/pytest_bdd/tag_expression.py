@@ -17,10 +17,10 @@ TagExpressionType = TypeVar("TagExpressionType", bound="TagExpression")
 @runtime_checkable
 class TagExpression(Protocol):
     @classmethod
-    def parse(cls: Type[TagExpressionType], expression: str) -> TagExpressionType:
+    def parse(cls: type[TagExpressionType], expression: str) -> TagExpressionType:
         raise NotImplementedError  # pragma: no cover
 
-    def evaluate(self, marks: List[Mark]) -> bool:
+    def evaluate(self, marks: list[Mark]) -> bool:
         raise NotImplementedError  # pragma: no cover
 
 
@@ -81,7 +81,7 @@ class _FallbackMarksTagExpression(TagExpression):
         )
 
 
-MarksTagExpression: Type[Union[_EnhancedMarksTagExpression, _MarksTagExpression, _FallbackMarksTagExpression]]
+MarksTagExpression: type[Union[_EnhancedMarksTagExpression, _MarksTagExpression, _FallbackMarksTagExpression]]
 if PYTEST83:
     MarksTagExpression = _EnhancedMarksTagExpression
 elif PYTEST6:

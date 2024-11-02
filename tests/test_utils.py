@@ -30,8 +30,7 @@ def test_get_multi_attribute():
 
 
 def test_get_default_for_attribute():
-    class Foo:
-        ...
+    class Foo: ...
 
     item = Foo()
 
@@ -39,8 +38,7 @@ def test_get_default_for_attribute():
 
 
 def test_get_default_for_multi_attribute():
-    class Foo:
-        ...
+    class Foo: ...
 
     item = Foo()
 
@@ -48,8 +46,7 @@ def test_get_default_for_multi_attribute():
 
 
 def test_raise_on_missing_attribute():
-    class Foo:
-        ...
+    class Foo: ...
 
     item = Foo()
 
@@ -58,8 +55,7 @@ def test_raise_on_missing_attribute():
 
 
 def test_raise_on_missing_multi_attribute():
-    class Foo:
-        ...
+    class Foo: ...
 
     item = Foo()
 
@@ -68,8 +64,7 @@ def test_raise_on_missing_multi_attribute():
 
 
 def test_raise_on_missing_nested_attribute():
-    class Foo:
-        ...
+    class Foo: ...
 
     item = Foo()
 
@@ -78,8 +73,7 @@ def test_raise_on_missing_nested_attribute():
 
 
 def test_raise_on_missing_multi_nested_attribute():
-    class Foo:
-        ...
+    class Foo: ...
 
     item = Foo()
 
@@ -163,8 +157,7 @@ def test_skip_missing_and_default_attributes():
 
 
 def test_setdefaultattr_set_nonexisting_attr_value():
-    class Dumb:
-        ...
+    class Dumb: ...
 
     dumb = Dumb()
     setdefaultattr(dumb, "foo", value=10)
@@ -173,8 +166,7 @@ def test_setdefaultattr_set_nonexisting_attr_value():
 
 
 def test_setdefaultattr_set_nonexisting_attr_value_factory():
-    class Dumb:
-        ...
+    class Dumb: ...
 
     dumb = Dumb()
     setdefaultattr(dumb, "foo", value_factory=lambda: 10)
@@ -183,8 +175,7 @@ def test_setdefaultattr_set_nonexisting_attr_value_factory():
 
 
 def test_setdefaultattr_not_set_existing_attr_value():
-    class Dumb:
-        ...
+    class Dumb: ...
 
     dumb = Dumb()
     dumb.foo = 20
@@ -194,8 +185,7 @@ def test_setdefaultattr_not_set_existing_attr_value():
 
 
 def test_setdefaultattr_not_set_existing_attr_value_factory():
-    class Dumb:
-        ...
+    class Dumb: ...
 
     dumb = Dumb()
     dumb.foo = 20
@@ -205,8 +195,7 @@ def test_setdefaultattr_not_set_existing_attr_value_factory():
 
 
 def test_setdefaultattr_for_both_factory_and_value():
-    class Dumb:
-        ...
+    class Dumb: ...
 
     with pytest.raises(ValueError):
         setdefaultattr(Dumb(), "a", value=10, value_factory=lambda: 20)

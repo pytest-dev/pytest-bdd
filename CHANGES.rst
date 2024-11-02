@@ -6,6 +6,7 @@ Changelog
 
 In-progress
 -----------
+- Move documentation to Gherkin itself
 
 Planned
 -------
@@ -63,6 +64,13 @@ Planned
 
 Unreleased
 ----------
+- Update versions:
+ - Drop python 3.8
+ - Add python 3.13
+ - Drop pytest<5.2
+- Added dummy html reporter
+- Fixed pytest.ini option "disable_feature_autoload"
+- Improved fixture injection by adding seamless fixtures on plugin/module collection
 
 2.2.0
 -----

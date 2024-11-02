@@ -93,9 +93,17 @@ The current pytest plugin for cucumber is pytest-bdd_ , a popular project with 1
 Install pytest-bdd-ng
 ---------------------
 
-::
+.. code-block:: console
 
     pip install pytest-bdd-ng
+
+Install extra packages for reporting
+####################################
+
+.. code-block:: console
+
+    npm install @cucumber/html-formatter
+
 
 Project layout
 --------------

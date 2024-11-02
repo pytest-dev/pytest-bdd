@@ -6,7 +6,7 @@ from typing import Any, Union, cast
 from attr import attrib, attrs
 from gherkin.pickles.compiler import Compiler
 
-from messages import (  # type:ignore[attr-defined]
+from messages import (  # type:ignore[attr-defined, import-untyped]
     DataTable,
     DocString,
     Examples,
@@ -102,14 +102,16 @@ class StepToFeatureASTBuilder(_ASTBuilder):
                                 keyword_type=step_keyword_type.value,
                                 **(
                                     (
-                                        lambda rows: dict(
-                                            data_table=DataTable(
-                                                rows=rows,
-                                                location=Location(column=0, line=0),  # type: ignore[call-arg]
-                                            )  # type: ignore[call-arg]
+                                        lambda rows: (
+                                            dict(
+                                                data_table=DataTable(
+                                                    rows=rows,
+                                                    location=Location(column=0, line=0),  # type: ignore[call-arg]
+                                                )  # type: ignore[call-arg]
+                                            )
+                                            if rows
+                                            else {}
                                         )
-                                        if rows
-                                        else {}
                                     )(
                                         [
                                             *filterfalse(
@@ -117,13 +119,15 @@ class StepToFeatureASTBuilder(_ASTBuilder):
                                                 map(
                                                     lambda row_values: (
                                                         (
-                                                            lambda cells: TableRow(
-                                                                id=next(id_generator),
-                                                                location=Location(column=0, line=0),  # type: ignore[call-arg]
-                                                                cells=cells,
-                                                            )  # type: ignore[call-arg]
-                                                            if cells
-                                                            else None
+                                                            lambda cells: (
+                                                                TableRow(
+                                                                    id=next(id_generator),
+                                                                    location=Location(column=0, line=0),  # type: ignore[call-arg]
+                                                                    cells=cells,
+                                                                )  # type: ignore[call-arg]
+                                                                if cells
+                                                                else None
+                                                            )
                                                         )(
                                                             [
                                                                 *map(
@@ -161,9 +165,11 @@ class StepToFeatureASTBuilder(_ASTBuilder):
                     yield FeatureChild(
                         scenario=Scenario(
                             description=route.steps[0].description or "",
-                            examples=[ExampleASTBuilder(route.example_table).build(id_generator=id_generator)]
-                            if route.example_table.values
-                            else [],
+                            examples=(
+                                [ExampleASTBuilder(route.example_table).build(id_generator=id_generator)]
+                                if route.example_table.values
+                                else []
+                            ),
                             id=next(id_generator),
                             keyword="Scenario",
                             location=Location(column=0, line=0),

@@ -1,7 +1,9 @@
 import json
 import logging
 import os
+import re
 import sys
+import tempfile
 from base64 import b64encode
 from inspect import getfile, getsourcelines
 from io import BufferedIOBase, TextIOBase
@@ -11,8 +13,10 @@ from pprint import pformat
 from queue import Empty, Queue
 from threading import Event, Thread
 from time import sleep, time_ns
-from typing import Callable, Set, Union, cast
+from typing import Callable, Union, cast
 
+import chevron
+import pytest
 from attr import attrib, attrs
 from ci_environment import detect_ci_environment
 from cucumber_expressions.parameter_type_registry import ParameterTypeRegistry
@@ -20,9 +24,9 @@ from filelock import FileLock
 from pydantic import ValidationError
 from pytest import ExitCode, Session, hookimpl
 
-from messages import Attachment, Ci, ContentEncoding, Duration  # type:ignore[attr-defined]
+from messages import Attachment, Ci, ContentEncoding, Duration  # type:ignore[attr-defined, import-untyped]
 from messages import Envelope as Message  # type:ignore[attr-defined]
-from messages import (  # type:ignore[attr-defined]
+from messages import (  # type:ignore[attr-defined, import-untyped]
     Hook,
     Location,
     Meta,
@@ -52,6 +56,7 @@ from pytest_bdd.compatibility.pytest import (
     get_metafunc_call_arg,
     is_set,
 )
+from pytest_bdd.npm_resource import check_npm, check_npm_package, find_resource
 from pytest_bdd.packaging import get_distribution_version
 from pytest_bdd.steps import StepHandler
 from pytest_bdd.utils import PytestBDDIdGeneratorHandler, deepattrgetter
@@ -62,57 +67,85 @@ class MessagePlugin:
     config: Config = attrib()
     current_test_case = attrib(default=None)
     current_test_case_step_to_definition_mapping = attrib(default=None)
-    parameter_type_registry: Set[int] = set()
-    hook_registry: Set[int] = set()
+    parameter_type_registry: set[int] = set()
+    hook_registry: set[int] = set()
+    npm_formatter_package = "@cucumber/html-formatter"
 
     def __attrs_post_init__(self):
-        self.is_disabled = self.config.option.messages_ndjson_path is None
+        self.is_disabled = all(
+            [
+                self.config.option.messages_ndjson_path is None,
+                self.config.option.cucumber_html_path is None,
+            ]
+        )
 
-        if not self.is_disabled:
-            self.process_messages_io_queue = Queue()
-            self.process_messages_stop_event = Event()
-            self.process_messages_thread = Thread(
-                target=type(self).process_messages,
-                args=(
-                    self.process_messages_io_queue,
-                    self.process_messages_stop_event,
-                    self.config.option.messages_ndjson_path,
-                ),
-                daemon=True,
-            )
-            self.process_messages_thread.start()
-            sleep(0)
+        if self.is_disabled:
+            return
+
+        self.is_messages_file_temp = self.config.option.messages_ndjson_path is None
+        if self.is_messages_file_temp:
+            handle, messages_file_path_raw = tempfile.mkstemp()
+            os.close(handle)
+            self.messages_file_path = Path(messages_file_path_raw)
+        else:
+            self.messages_file_path = Path(self.config.option.messages_ndjson_path)
+
+        if self.config.option.cucumber_html_path is not None:
+            self.check_npm_and_cucumber_packages()
+
+    def start_process_messages_thread(self):
+        self.process_messages_io_queue = Queue()
+        self.process_messages_stop_event = Event()
+        self.process_messages_thread = Thread(
+            target=type(self).process_messages,
+            args=(
+                self.process_messages_io_queue,
+                self.process_messages_stop_event,
+                self.messages_file_path,
+            ),
+            daemon=True,
+        )
+        self.process_messages_thread.start()
+        sleep(0)
+
+    def finish_process_messages_thread(self):
+        self.process_messages_io_queue.join()
+        self.process_messages_stop_event.set()
+        self.process_messages_thread.join()
 
     @staticmethod
     def process_messages(queue: Queue, stop_event: Event, messages_file_path: Union[str, Path]):
-        last_enter = False
-        while not (stop_event.is_set() and last_enter):  # give one more enter to take all left messages
-            if stop_event.is_set():
-                last_enter = True
-            lock = FileLock(f"{messages_file_path}.lock")
-            with lock:
-                with Path(messages_file_path).open(mode="at+", buffering=1, encoding="utf-8") as f:
-                    lines = []
-                    while not queue.empty():
-                        try:
-                            message_json = queue.get(timeout=1)
-                        except Empty:
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            last_enter = False
+            while not (stop_event.is_set() and last_enter):  # give one more enter to take all left messages
+                if stop_event.is_set():
+                    last_enter = True
+
+                lock_file = os.path.join(tmpdirname, f"{messages_file_path}.lock")
+                with FileLock(lock_file):
+                    with Path(messages_file_path).open(mode="at+", buffering=1, encoding="utf-8") as f:
+                        lines = []
+                        while not queue.empty():
+                            try:
+                                message_json = queue.get(timeout=1)
+                            except Empty:
+                                sleep(0)
+                                continue
+
+                            try:
+                                Message.model_validate(json.loads(message_json))  # type: ignore[attr-defined] # migration to pydantic2
+                            except ValidationError:
+                                logging.exception(f"Failed to parse:\n{pformat(message_json)}\n", exc_info=True)
+                            else:
+                                lines.append(f"{message_json}\n")
+                            finally:
+                                queue.task_done()
                             sleep(0)
-                            continue
+                        f.writelines(lines)
+                        f.flush()
 
-                        try:
-                            Message.model_validate(json.loads(message_json))  # type: ignore[attr-defined] # migration to pydantic2
-                        except ValidationError:
-                            logging.exception(f"Failed to parse:\n{pformat(message_json)}\n", exc_info=True)
-                        else:
-                            lines.append(f"{message_json}\n")
-                        finally:
-                            queue.task_done()
-                        sleep(0)
-                    f.writelines(lines)
-                    f.flush()
-
-    def get_timestamp(self):
+    @staticmethod
+    def get_timestamp():
         timestamp = time_ns()
         test_run_started_seconds = timestamp // 10**9
         test_run_started_nanos = timestamp - test_run_started_seconds * 10**9
@@ -125,11 +158,48 @@ class MessagePlugin:
         group.addoption(
             "--messagesndjson",
             "--messages-ndjson",
+            "--messagesjsonl",
+            "--messages-jsonl",
             action="store",
             dest="messages_ndjson_path",
             metavar="path",
             default=None,
             help="messages ndjson report file at given path.",
+        )
+        group = parser.getgroup("bdd", "Cucumber HTML")
+        group.addoption(
+            "--cucumber-html",
+            "--cucumberhtml",
+            action="store",
+            dest="cucumber_html_path",
+            metavar="path",
+            default=None,
+            help="cucumber html report at given path.",
+        )
+
+    def generate_html_report(self):
+        if self.is_disabled:
+            return
+        script_path = Path(next(find_resource(self.npm_formatter_package, Path("dist") / "main.js")))
+        css_path = Path(next(find_resource(self.npm_formatter_package, Path("dist") / "main.css")))
+        template_path = Path(next(find_resource(self.npm_formatter_package, Path("src") / "index.mustache.html")))
+
+        template_raw = template_path.read_text(encoding="utf-8")
+        template = re.sub(r"\{\{", "{{&", template_raw)  # It is not completely in agree with documentation
+
+        with self.messages_file_path.open(mode="r", encoding="utf-8") as f:
+            messages = ",".join(f.readlines())
+
+        Path(self.config.option.cucumber_html_path).write_text(
+            chevron.render(
+                template,
+                {
+                    "css": css_path.read_text(encoding="utf-8"),
+                    "script": script_path.read_text(encoding="utf-8"),
+                    "messages": messages,
+                },
+            ),
+            encoding="utf-8",
         )
 
     @hookimpl(hookwrapper=True)
@@ -168,14 +238,12 @@ class MessagePlugin:
     def pytest_bdd_message(self, config: Config, message: Message):
         if self.is_disabled:
             return
-
         message_json = message.model_dump_json(exclude_none=True, by_alias=True)  # type: ignore[attr-defined] # migration to pydantic2
         self.process_messages_io_queue.put_nowait(message_json)
 
     def pytest_runtestloop(self, session: Session):
         if self.is_disabled:
             return
-
         config = session.config
         hook_handler = config.hook
 
@@ -188,6 +256,8 @@ class MessagePlugin:
         if self.is_disabled:
             return
 
+        self.start_process_messages_thread()
+
         config = session.config
         hook_handler = config.hook
 
@@ -195,6 +265,7 @@ class MessagePlugin:
             config=config,
             message=Message(
                 meta=Meta(
+                    # TODO: Get from environment
                     protocol_version="22.0.0",
                     implementation=Product(
                         name="pytest-bdd-ng", version=str(get_distribution_version("pytest-bdd-ng"))
@@ -210,7 +281,6 @@ class MessagePlugin:
     def pytest_sessionfinish(self, session, exitstatus):
         if self.is_disabled:
             return
-
         config = session.config
         hook_handler = config.hook
 
@@ -224,16 +294,22 @@ class MessagePlugin:
                 )
             ),
         )
-        self.process_messages_io_queue.join()
-        self.process_messages_stop_event.set()
-        self.process_messages_thread.join()
+
+        self.finish_process_messages_thread()
+        if self.config.option.cucumber_html_path is not None:
+            self.generate_html_report()
+        if self.is_messages_file_temp:
+            os.unlink(self.messages_file_path)
 
     @hookimpl(hookwrapper=True)
     def pytest_fixture_setup(self, fixturedef: FixtureDef, request):
+        if self.is_disabled:
+            yield
+            return
         func = fixturedef.func
         func_id = id(func)
 
-        if self.is_disabled or func_id in self.hook_registry:
+        if func_id in self.hook_registry:
             yield
             return
 
@@ -269,14 +345,13 @@ class MessagePlugin:
     @hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
         yield
-
         if self.is_disabled:
             return
 
         session = item.session
-        config: Union[
-            Config, PytestBDDIdGeneratorHandler
-        ] = session.config  # https://github.com/python/typing/issues/213
+        config: Union[Config, PytestBDDIdGeneratorHandler] = (
+            session.config
+        )  # https://github.com/python/typing/issues/213
 
         hook_handler = cast(Config, config).hook
 
@@ -358,7 +433,7 @@ class MessagePlugin:
                 test_step = TestStep(
                     id=cast(PytestBDDIdGeneratorHandler, config).pytest_bdd_id_generator.get_next_id(),
                     pickle_step_id=step.id,
-                    step_definition_ids=[step_definition.as_message(config).id]
+                    step_definition_ids=[step_definition.as_message(config).id],
                     # TODO Check step_match_arguments_lists
                 )
                 test_steps.append(test_step)
@@ -380,7 +455,6 @@ class MessagePlugin:
     def pytest_bdd_before_scenario(self, request, feature, scenario):
         if self.is_disabled:
             return
-
         config = request.config
         hook_handler = config.hook
 
@@ -400,7 +474,6 @@ class MessagePlugin:
     def pytest_bdd_after_scenario(self, request, feature, scenario):
         if self.is_disabled:
             return
-
         config = request.config
 
         hook_handler = config.hook
@@ -421,7 +494,6 @@ class MessagePlugin:
     def pytest_bdd_before_step(self, request, feature, scenario, step, step_func):
         if self.is_disabled:
             return
-
         config = request.config
         hook_handler = config.hook
 
@@ -444,7 +516,6 @@ class MessagePlugin:
     def pytest_bdd_after_step(self, request, feature, scenario, step, step_func):
         if self.is_disabled:
             return
-
         config = request.config
         hook_handler = config.hook
 
@@ -484,7 +555,6 @@ class MessagePlugin:
     ):
         if self.is_disabled:
             return
-
         config = request.config
         hook_handler = config.hook
 
@@ -522,7 +592,6 @@ class MessagePlugin:
     def pytest_bdd_attach(self, request, attachment, media_type, file_name):
         if self.is_disabled:
             return
-
         config = request.config
         hook_handler = config.hook
 
@@ -569,3 +638,15 @@ class MessagePlugin:
                 )
             ),
         )
+
+    def check_npm_and_cucumber_packages(self):
+        if not check_npm():
+            pytest.exit(f"Npm wasn't found in the environment so unable generate html report")
+
+        if not any(
+            [
+                check_npm_package(self.npm_formatter_package, global_install=True),
+                check_npm_package(self.npm_formatter_package),
+            ]
+        ):
+            pytest.exit(f"Npm package '{self.npm_formatter_package}' wasn't found so unable generate html report")

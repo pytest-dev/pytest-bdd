@@ -14,12 +14,11 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
-          - "pypy3.8"
+          - "3.13"
           - "pypy3.9"
           - "pypy3.10"
         os:
@@ -35,19 +34,30 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "*"
+      - name: Install PyPi dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -U setuptools
           pip install "tox>=4.0" "tox-gh-actions>=3.2" codecov
+      - name: Install npm dependencies
+        run: npm install --global
       - name: Test with tox
+        if: >
+          !((matrix.python-version == '3.12' ||
+             matrix.python-version == '3.11' ||
+             matrix.python-version == '3.10') &&
+          (matrix.os =='macos-latest' || matrix.os =='windows-latest'))
         run: |
           tox
       - name: Gather codecov
         run: |
           codecov
       - name: Build checking
-        if: "matrix.python-version == '3.12'"
+        if: "matrix.python-version == '3.13'"
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}

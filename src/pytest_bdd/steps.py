@@ -34,24 +34,12 @@ def given_beautiful_article(article):
     pass
 
 """
+
 import warnings
+from collections.abc import Collection, Iterable, Iterator, Mapping, Sequence
 from contextlib import suppress
 from inspect import getfile, getsourcelines
-from typing import (
-    Any,
-    Callable,
-    Collection,
-    Dict,
-    Iterable,
-    Iterator,
-    Mapping,
-    Optional,
-    Sequence,
-    Set,
-    Type,
-    Union,
-    cast,
-)
+from typing import Any, Callable, Dict, Optional, Set, Type, Union, cast
 from uuid import uuid4
 from warnings import warn
 
@@ -61,11 +49,12 @@ from attr import Factory, attrib, attrs
 from ordered_set import OrderedSet
 from pydantic import ValidationError
 
-from messages import ExpressionType, Location, Pickle  # type:ignore[attr-defined]
+from messages import ExpressionType, Location, Pickle  # type:ignore[attr-defined, import-untyped]
 from messages import PickleStep as Step  # type:ignore[attr-defined]
-from messages import SourceReference, StepDefinition, StepDefinitionPattern  # type:ignore[attr-defined]
+from messages import SourceReference, StepDefinition, StepDefinitionPattern  # type:ignore[attr-defined, import-untyped]
 from pytest_bdd.compatibility.path import relpath
-from pytest_bdd.compatibility.pytest import Config, FixtureLookupError, Parser, TypeAlias, get_config_root_path
+from pytest_bdd.compatibility.pytest import Config, FixtureLookupError, Parser, get_config_root_path
+from pytest_bdd.compatibility.typing import TypeAlias
 from pytest_bdd.model import Feature, StepType
 from pytest_bdd.model.messages_extension import ExpressionType as ExpressionTypeExtension
 from pytest_bdd.parsers import StepParser
@@ -100,10 +89,10 @@ def add_options(parser: Parser):
 def given(
     parserlike: Any,
     anonymous_group_names: Optional[Iterable[str]] = None,
-    converters: Optional[Dict[str, Callable]] = None,
+    converters: Optional[dict[str, Callable]] = None,
     target_fixture: Optional[str] = None,
     target_fixtures: Optional[Sequence[str]] = None,
-    params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+    params_fixtures_mapping: Union[set[str], dict[str, str], Any] = True,
     param_defaults: Optional[dict] = None,
     liberal: Optional[bool] = None,
     stacklevel=1,
@@ -141,10 +130,10 @@ def given(
 def when(
     parserlike: Any,
     anonymous_group_names: Optional[Iterable[str]] = None,
-    converters: Optional[Dict[str, Callable]] = None,
+    converters: Optional[dict[str, Callable]] = None,
     target_fixture: Optional[str] = None,
     target_fixtures: Optional[Sequence[str]] = None,
-    params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+    params_fixtures_mapping: Union[set[str], dict[str, str], Any] = True,
     param_defaults: Optional[dict] = None,
     liberal: Optional[bool] = None,
     stacklevel=1,
@@ -181,10 +170,10 @@ def when(
 def then(
     parserlike: Any,
     anonymous_group_names: Optional[Iterable[str]] = None,
-    converters: Optional[Dict[str, Callable]] = None,
+    converters: Optional[dict[str, Callable]] = None,
     target_fixture: Optional[str] = None,
     target_fixtures: Optional[Sequence[str]] = None,
-    params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+    params_fixtures_mapping: Union[set[str], dict[str, str], Any] = True,
     param_defaults: Optional[dict] = None,
     liberal: Optional[bool] = None,
     stacklevel=1,
@@ -221,10 +210,10 @@ def then(
 def step(
     parserlike: Any,
     anonymous_group_names: Optional[Iterable[str]] = None,
-    converters: Optional[Dict[str, Callable]] = None,
+    converters: Optional[dict[str, Callable]] = None,
     target_fixture: Optional[str] = None,
     target_fixtures: Optional[Sequence[str]] = None,
-    params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+    params_fixtures_mapping: Union[set[str], dict[str, str], Any] = True,
     param_defaults: Optional[dict] = None,
     liberal: Optional[bool] = None,
     stacklevel=1,
@@ -362,8 +351,8 @@ class StepHandler:
         func: Callable = attrib()
         type_: Optional[Union[str, StepType]] = attrib()
         parser: StepParser = attrib()
-        anonymous_group_names: Optional[Collection[str]] = attrib()
-        converters: Dict[str, Callable] = attrib()
+        anonymous_group_names: Optional[Iterable[str]] = attrib()
+        converters: dict[str, Callable] = attrib()
         params_fixtures_mapping: Union[  # type: ignore[valid-type]
             Collection[str], Mapping[Union[str, Any], Union[str, Any, None]], Any
         ] = attrib()
@@ -372,7 +361,7 @@ class StepHandler:
         liberal: Optional[Any] = attrib()
 
         id = attrib(init=False)
-        __cache = attrib(default=Factory(dict))
+        __cache: dict[int, StepDefinition] = attrib(default=Factory(dict))
 
         @property
         def fixtures_mapped_from_step_definition(self):
@@ -454,7 +443,7 @@ class StepHandler:
 
     @attrs
     class Registry:
-        registry: Set["StepHandler.Definition"] = attrib(default=Factory(set))
+        registry: set["StepHandler.Definition"] = attrib(default=Factory(set))
         parent: "StepHandler.Registry" = attrib(default=None, init=False)
 
         @classmethod
@@ -509,10 +498,10 @@ class StepHandler:
         step_type: Optional[Union[str, StepType]],
         step_parserlike: Any,
         anonymous_group_names: Optional[Iterable[str]] = None,
-        converters: Optional[Dict[str, Callable]] = None,
+        converters: Optional[dict[str, Callable]] = None,
         target_fixture: Optional[str] = None,
         target_fixtures: Optional[Sequence[str]] = None,
-        params_fixtures_mapping: Union[Set[str], Dict[str, str], Any] = True,
+        params_fixtures_mapping: Union[set[str], dict[str, str], Any] = True,
         param_defaults: Optional[dict] = None,
         liberal: Optional[Any] = None,
         stacklevel=2,

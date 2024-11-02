@@ -1,6 +1,8 @@
 """This files represents simple `Application under test`"""
+
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Iterable, List
+from typing import List
 
 
 @dataclass  # Easy way to not write redundant __init__ https://docs.python.org/3/library/dataclasses.html
@@ -11,7 +13,7 @@ class Book:
 
 @dataclass
 class Catalog:
-    storage: List[Book] = field(default_factory=list)
+    storage: list[Book] = field(default_factory=list)
 
     def add_books_to_catalog(self, books: Iterable[Book]):
         self.storage.extend(books)

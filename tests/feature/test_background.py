@@ -1,4 +1,5 @@
 """Test feature background."""
+
 from textwrap import dedent
 
 # language=gherkin

@@ -57,7 +57,10 @@ def decorator_builder(conjunction: Union[str, HookConjunction], kind: Union[str,
                         HookKind.mark: request.node.iter_markers(),
                         HookKind.tag: map(
                             lambda tag: Mark(  # type: ignore[no-any-return]
-                                tag.name, args=tuple(), kwargs={}, **({"_ispytest": True} if PYTEST7 else {})
+                                tag.name,
+                                args=tuple(),
+                                kwargs={},
+                                **({"_ispytest": True} if PYTEST7 else {}),  # type:ignore[arg-type]
                             ),
                             request.getfixturevalue("scenario").tags,
                         ),

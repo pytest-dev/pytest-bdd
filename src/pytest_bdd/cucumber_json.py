@@ -1,10 +1,12 @@
 """Cucumber json output formatter."""
+
 import json
 import math
 import os
 import time
+from collections.abc import Sequence
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, Sequence, Union, cast, runtime_checkable
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, Union, cast, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict
 
@@ -92,7 +94,7 @@ class DataTableRow(BaseModel):
         extra="forbid",
         populate_by_name=True,
     )
-    cells: List[str]
+    cells: list[str]
 
 
 class Tag(BaseModel):
@@ -110,7 +112,7 @@ class Match(BaseModel):
         populate_by_name=True,
     )
     location: Optional[str] = None
-    arguments: Optional[List["Argument"]] = None
+    arguments: Optional[list["Argument"]] = None
 
 
 class Result(BaseModel):
@@ -134,7 +136,7 @@ class Step(BaseModel):
     name: Optional[str] = None
     result: Optional["Result"] = None
     doc_string: Optional["DocString"] = None
-    rows: Optional[List["DataTableRow"]] = None
+    rows: Optional[list["DataTableRow"]] = None
 
 
 class Hook(BaseModel):
@@ -158,10 +160,10 @@ class Element(BaseModel):
     keyword: Optional[str] = None
     name: Optional[str] = None
     description: Optional[str] = None
-    before: Optional[List["Hook"]] = None
-    steps: Optional[List["Step"]] = None
-    after: Optional[List["Hook"]] = None
-    tags: Optional[List["Tag"]] = None
+    before: Optional[list["Hook"]] = None
+    steps: Optional[list["Step"]] = None
+    after: Optional[list["Hook"]] = None
+    tags: Optional[list["Tag"]] = None
 
 
 class Feature(BaseModel):
@@ -175,8 +177,8 @@ class Feature(BaseModel):
     keyword: Optional[str] = None
     name: Optional[str] = None
     description: Optional[str] = None
-    elements: Optional[List["Element"]] = None
-    tags: Optional[List["Tag"]] = None
+    elements: Optional[list["Element"]] = None
+    tags: Optional[list["Tag"]] = None
 
 
 class CucumberJson(BaseModel):
@@ -185,26 +187,25 @@ class CucumberJson(BaseModel):
         populate_by_name=True,
     )
     implementation: Optional[str] = None
-    features: Optional[List["Feature"]] = None
+    features: Optional[list["Feature"]] = None
 
 
 class LogBDDCucumberJSON:
-
     """Logging plugin for cucumber like json output."""
 
     def __init__(self, logfile: str) -> None:
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
-        self.features: Dict[str, dict] = {}
+        self.features: dict[str, dict] = {}
 
-    def _get_result(self, step: Dict[str, Any], report: TestReport, error_message: bool = False) -> Dict[str, Any]:
+    def _get_result(self, step: dict[str, Any], report: TestReport, error_message: bool = False) -> dict[str, Any]:
         """Get scenario test run result.
 
         :param step: `StepHandler` step we get result for
         :param report: pytest `Report` object
         :return: `dict` in form {"status": "<passed|failed|skipped>", ["error_message": "<error_message>"]}
         """
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
         if report.passed or not step["failed"]:  # ignore setup/teardown
             result = {"status": "passed"}
         elif report.failed and step["failed"]:
@@ -214,7 +215,7 @@ class LogBDDCucumberJSON:
         result["duration"] = int(math.floor((10**9) * step["duration"]))  # nanosec
         return result
 
-    def _serialize_tags(self, item: Dict[str, Any]) -> Sequence[Dict[str, Any]]:
+    def _serialize_tags(self, item: dict[str, Any]) -> Sequence[dict[str, Any]]:
         """Serialize item's tags.
 
         :param item: json-serialized `Scenario` or `Feature`.
@@ -239,7 +240,7 @@ class LogBDDCucumberJSON:
             # skip if there isn't a result or scenario has no steps
             return
 
-        def stepmap(step: Dict[str, Any]) -> Dict[str, Any]:
+        def stepmap(step: dict[str, Any]) -> dict[str, Any]:
             error_message = False
             if step["failed"] and not scenario.setdefault("failed", False):
                 scenario["failed"] = True

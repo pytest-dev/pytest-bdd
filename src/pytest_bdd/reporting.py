@@ -3,13 +3,14 @@
 Collection of the scenario execution statuses, timing and other information
 that enriches the pytest test reporting.
 """
+
 import time
 from typing import Any, Callable, Dict, List
 
 import pytest
 from attr import Factory, attrib, attrs
 
-from messages import Pickle, PickleStep  # type:ignore[attr-defined]
+from messages import Pickle, PickleStep  # type:ignore[attr-defined, import-untyped]
 from pytest_bdd.compatibility.pytest import CallInfo, FixtureRequest, Item
 from pytest_bdd.model import Feature
 
@@ -28,7 +29,7 @@ class StepReport:
         self.step = step
         self.started = time.perf_counter()
 
-    def serialize(self, feature: Feature) -> Dict[str, Any]:
+    def serialize(self, feature: Feature) -> dict[str, Any]:
         """Serialize the step execution report.
 
         :return: Serialized step execution report.
@@ -70,7 +71,7 @@ class ScenarioReport:
 
     feature: Feature = attrib()
     scenario: Pickle = attrib()
-    step_reports: List[StepReport] = attrib(default=Factory(list))
+    step_reports: list[StepReport] = attrib(default=Factory(list))
 
     @property
     def current_step_report(self) -> StepReport:
@@ -89,7 +90,7 @@ class ScenarioReport:
         """
         self.step_reports.append(step_report)
 
-    def serialize(self) -> Dict[str, Any]:
+    def serialize(self) -> dict[str, Any]:
         """Serialize scenario execution report in order to transfer reporting from nodes in the distributed mode.
 
         :return: Serialized report.

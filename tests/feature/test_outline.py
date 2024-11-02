@@ -1,4 +1,5 @@
 """Scenario Outline tests."""
+
 from operator import lt
 from textwrap import dedent
 
@@ -224,9 +225,11 @@ def test_outlined_with_other_fixtures(testdir, tmp_path):
     [
         param(
             "GherkinParser",
-            marks=[mark.xfail(reason="https://github.com/cucumber/common/issues/1954")]
-            if compare_distribution_version("gherkin-official", "24.1", lt)
-            else [],
+            marks=(
+                [mark.xfail(reason="https://github.com/cucumber/common/issues/1954")]
+                if compare_distribution_version("gherkin-official", "24.1", lt)
+                else []
+            ),
         ),
     ],
 )

@@ -1,4 +1,5 @@
 from collections import deque
+from collections.abc import Collection, Iterable, Sequence
 from contextlib import suppress
 from functools import partial
 from inspect import signature
@@ -6,14 +7,14 @@ from itertools import chain, starmap
 from operator import attrgetter, contains, methodcaller
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Collection, Deque, Iterable, Optional, Sequence, Union
+from typing import Any, Deque, Optional, Union
 from unittest.mock import patch
 
 import pytest
 from _pytest.nodes import Collector
 from pathvalidate import is_valid_filepath
 
-from messages import Pickle  # type:ignore[attr-defined]
+from messages import Pickle  # type:ignore[attr-defined, import-untyped]
 from messages import PickleStep as Step  # type:ignore[attr-defined]
 from pytest_bdd import cucumber_json, generation, gherkin_terminal_reporter, given, steps, then, when
 from pytest_bdd.allure_logging import AllurePytestBDD

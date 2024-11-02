@@ -1,6 +1,8 @@
 import asyncio
 import os
 import ssl
+import sys
+from collections.abc import Iterable
 from contextlib import suppress
 from functools import partial, reduce
 from itertools import filterfalse
@@ -8,7 +10,7 @@ from operator import methodcaller, truediv
 from os.path import commonpath
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Callable, Iterable, Optional, Protocol, Tuple, Type, Union, cast, runtime_checkable
+from typing import Callable, Optional, Protocol, Tuple, Type, Union, cast, runtime_checkable
 from urllib.parse import urljoin
 
 import aiohttp
@@ -17,7 +19,7 @@ from _pytest.config import Config
 from attr import Factory, attrib, attrs
 from pydantic import ValidationError
 
-from messages import Source  # type:ignore[attr-defined]
+from messages import Source  # type:ignore[attr-defined, import-untyped]
 from pytest_bdd.compatibility.parser import ParserProtocol
 from pytest_bdd.compatibility.pytest import get_config_root_path
 from pytest_bdd.mimetypes import Mimetype
@@ -30,7 +32,7 @@ from pytest_bdd.utils import PytestBDDIdGeneratorHandler, is_local_url
 class ScenarioLocatorFeatureResolver(Protocol):
     def resolve_features(
         self, config: Union[Config, PytestBDDIdGeneratorHandler]
-    ) -> Iterable[Tuple[Feature, Source]]:  # pragma: no cover
+    ) -> Iterable[tuple[Feature, Source]]:  # pragma: no cover
         ...
 
 
@@ -38,13 +40,13 @@ class ScenarioLocatorFeatureResolver(Protocol):
 class ScenarioLocatorResolver(Protocol):
     def resolve(
         self, config: Union[Config, PytestBDDIdGeneratorHandler]
-    ) -> Iterable[Tuple[Feature, Pickle, Source]]:  # pragma: no cover
+    ) -> Iterable[tuple[Feature, Pickle, Source]]:  # pragma: no cover
         ...
 
 
 @attrs
 class ScenarioLocatorFilterMixin(ScenarioLocatorFeatureResolver, ScenarioLocatorResolver):
-    filter_: Optional[Callable[[Config, Feature, Pickle], Tuple[Feature, Pickle]]] = attrib(default=None, kw_only=True)
+    filter_: Optional[Callable[[Config, Feature, Pickle], tuple[Feature, Pickle]]] = attrib(default=None, kw_only=True)
 
     def filter_scenarios(self, feature, config):
         return (
@@ -53,7 +55,7 @@ class ScenarioLocatorFilterMixin(ScenarioLocatorFeatureResolver, ScenarioLocator
             if self.filter_ is None or self.filter_(config, feature, pickle)
         )  # type: ignore
 
-    def resolve(self, config: Config):
+    def resolve(self, config):
         for feature, feature_data in self.resolve_features(config):
             for _, pickle in self.filter_scenarios(feature, config):
                 yield feature, pickle, feature_data
@@ -144,11 +146,11 @@ class UrlScenarioLocator(ScenarioLocatorFilterMixin):
 
 @attrs
 class FileScenarioLocator(ScenarioLocatorFilterMixin):
-    feature_paths = attrib(default=Factory(list))
+    feature_paths: list[Union[str, Path]] = attrib(default=Factory(list))
     encoding = attrib(default="utf-8")
     features_base_dir: Optional[Union[str, Path]] = attrib(default=None)
     mimetype: Optional[str] = attrib(default=None)
-    parser_type: Optional[Type[ParserProtocol]] = attrib(default=None)
+    parser_type: Optional[type[ParserProtocol]] = attrib(default=None)
     parse_args: Args = attrib(default=Factory(lambda: Args((), {})))
 
     def _resolve_features_base_dir(self, config: Union[Config, PytestBDDIdGeneratorHandler]):
@@ -177,8 +179,8 @@ class FileScenarioLocator(ScenarioLocatorFilterMixin):
                     yield feature_path
             else:
                 try:
-                    yield from filter(methodcaller("is_file"), features_base_dir.glob(str(feature_pathlike)))
-                except IndexError:
+                    yield from filter(methodcaller("is_file"), features_base_dir.glob(os.fspath(feature_pathlike)))
+                except IndexError if sys.version_info < (3, 13) else ValueError:
                     yield from filter(methodcaller("is_file"), features_base_dir.glob("**/*"))
 
     @staticmethod

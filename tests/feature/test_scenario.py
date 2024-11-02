@@ -1,4 +1,5 @@
 """Test scenario decorator."""
+
 from textwrap import dedent
 
 from pytest_bdd.compatibility.pytest import assert_outcomes
