@@ -34,7 +34,7 @@ classifiers = [
 "pytest-bdd" = "pytest_bdd.scripts:main"
 
 [tool.poetry.dependencies]
-python = ">=3.8"
+python = ">=3.9"
 Mako = "*"
 parse = "*"
 parse-type = "*"
