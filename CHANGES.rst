@@ -10,6 +10,9 @@ In-progress
 
 Planned
 -------
+- Refactor internal parser API: split loader and parser APIs
+- Add mobile readthedocs site support theme
+- Convert e2e test features definitions to markdown
 - API doc
 - Add struct_bdd autoload
 - Move tox.ini, pytest.ini into pyproject.toml
@@ -23,10 +26,9 @@ Planned
 - Nested Rules support
 
   - Review after fix https://github.com/cucumber/gherkin/issues/126
-- Implement support of \*.md files
+- Continue support of \*.md files
 
   - Waiting for upstream issue https://github.com/cucumber/gherkin/pull/64
-  - Use js implementation for such feature
 - Support of messages:
 
   - Pending:
@@ -64,6 +66,7 @@ Planned
 
 Unreleased
 ----------
+- Implement support of `Markdown <https://github.com/cucumber/gherkin/blob/main/MARKDOWN_WITH_GHERKIN.md>`_ using js based parser
 - Update versions:
  - Drop python 3.8
  - Add python 3.13

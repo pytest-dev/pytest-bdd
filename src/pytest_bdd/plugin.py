@@ -34,7 +34,8 @@ from pytest_bdd.compatibility.struct_bdd import STRUCT_BDD_INSTALLED
 from pytest_bdd.message_plugin import MessagePlugin
 from pytest_bdd.mimetypes import Mimetype
 from pytest_bdd.model import Feature
-from pytest_bdd.parser import GherkinParser
+from pytest_bdd.npm_resource import check_npm, check_npm_package
+from pytest_bdd.parser import GherkinParser, MarkdownGherkinParser
 from pytest_bdd.parsers import cucumber_expression
 from pytest_bdd.reporting import ScenarioReporterPlugin
 from pytest_bdd.runner import ScenarioRunner
@@ -344,14 +345,31 @@ def pytest_bdd_match_step_definition_to_step(request, feature, scenario, step, p
 
 
 def pytest_bdd_get_mimetype(config: Config, path: Path):
+    # TODO use mimetypes module
     if str(path).endswith(".gherkin") or str(path).endswith(".feature"):
         return Mimetype.gherkin_plain.value
+    elif str(path).endswith(".gherkin.md") or str(path).endswith(".feature.md"):
+        if not check_npm():
+            return
+
+        if not any(
+            [
+                check_npm_package("@cucumber/gherkin", global_install=True),
+                check_npm_package("@cucumber/gherkin"),
+            ]
+        ):
+            return
+        return Mimetype.markdown.value
 
 
 def pytest_bdd_get_parser(config: Config, mimetype: str):
-    return {Mimetype.gherkin_plain.value: GherkinParser}.get(mimetype)
+    return {
+        Mimetype.gherkin_plain.value: GherkinParser,
+        Mimetype.markdown.value: MarkdownGherkinParser,
+    }.get(mimetype)
 
 
 def pytest_bdd_is_collectible(config: Config, path: Path):
+    # TODO add more extensions
     if any(map(partial(contains, {".gherkin", ".feature", ".url", ".desktop", ".webloc"}), path.suffixes)):
         return True

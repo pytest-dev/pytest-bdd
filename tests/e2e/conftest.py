@@ -26,7 +26,7 @@ def httpserver_port(httpserver):
     return httpserver.port
 
 
-@given(re.compile('File "(?P<name>\\w+)(?P<extension>\\.\\w+)" with (?P<extra_opts>.*|\\s)content:'))
+@given(re.compile(r"File \"(?P<name>(\.|\w)+)(?P<extension>\.\w+)\" with (?P<extra_opts>.*|\s)content:"))
 def write_file_with_extras(name, extension, testdir, step, request, extra_opts, tmp_path):
     content = step.doc_string.content
     is_fixture_templated = "fixture templated" in extra_opts
@@ -36,8 +36,8 @@ def write_file_with_extras(name, extension, testdir, step, request, extra_opts, 
         format_options = dict(
             map(lambda fixture_name: (fixture_name, str(request.getfixturevalue(fixture_name))), template_fields)
         )
-    makefile_arg = {name: str(content).format_map(format_options) if is_fixture_templated else content}
-    testdir.makefile(extension, **makefile_arg)
+    file_data = str(content).format_map(format_options) if is_fixture_templated else content
+    (Path(testdir.tmpdir.strpath) / f"{name}{extension}").write_text(file_data, encoding="utf-8")
 
 
 @given(
