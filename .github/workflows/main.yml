@@ -7,7 +7,7 @@ on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
 
 jobs:
-  build:
+  test:
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -25,7 +25,19 @@ jobs:
           - ubuntu-latest
           - windows-latest
           - macos-latest
-
+        exclude:
+          - python-version: "3.10"
+            os: windows-latest
+          - python-version: "3.11"
+            os: windows-latest
+          - python-version: "3.12"
+            os: windows-latest
+          - python-version: "3.10"
+            os: macos-latest
+          - python-version: "3.11"
+            os: macos-latest
+          - python-version: "3.12"
+            os: macos-latest
     steps:
       - uses: actions/checkout@v3
         with:
@@ -50,11 +62,6 @@ jobs:
           npm install cucumber-html-reporter
           npm list
       - name: Test with tox
-        if: >
-          !((matrix.python-version == '3.12' ||
-             matrix.python-version == '3.11' ||
-             matrix.python-version == '3.10') &&
-          (matrix.os =='macos-latest' || matrix.os =='windows-latest'))
         run: |
           tox
       - name: Gather codecov
