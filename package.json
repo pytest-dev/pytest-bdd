@@ -1,7 +1,0 @@
-{
-  "name": "pytest_bdd_ng",
-  "dependencies": {
-    "@cucumber/html-formatter": "*",
-    "cucumber-html-reporter": "*"
-  }
-}

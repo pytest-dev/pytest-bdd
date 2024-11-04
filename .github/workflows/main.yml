@@ -44,7 +44,11 @@ jobs:
           pip install -U setuptools
           pip install "tox>=4.0" "tox-gh-actions>=3.2" codecov
       - name: Install npm dependencies
-        run: npm install --global
+        run: |
+          npm install "@cucumber/gherkin"
+          npm install "@cucumber/html-formatter"
+          npm install cucumber-html-reporter
+          npm list
       - name: Test with tox
         if: >
           !((matrix.python-version == '3.12' ||

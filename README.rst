@@ -97,6 +97,13 @@ Install pytest-bdd-ng
 
     pip install pytest-bdd-ng
 
+Install extra packages for parsing Markdown defined features
+############################################################
+
+.. code-block:: console
+
+    npm install @cucumber/gherkin
+
 Install extra packages for reporting
 ####################################
 

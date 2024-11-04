@@ -1,10 +1,14 @@
+import json
 import linecache
 from collections.abc import Sequence
+from contextlib import ExitStack
 from functools import partial
 from itertools import filterfalse
-from operator import contains, itemgetter, methodcaller
+from operator import contains, itemgetter
 from pathlib import Path
-from typing import Callable, List, Set, Tuple, Union
+from shutil import which
+from subprocess import check_output
+from typing import Callable, Union
 
 from attr import attrib, attrs
 from gherkin.ast_builder import AstBuilder
@@ -12,6 +16,7 @@ from gherkin.errors import CompositeParserException
 from gherkin.parser import Parser as CucumberIOBaseParser  # type: ignore[import]
 from gherkin.pickles.compiler import Compiler as PicklesCompiler
 
+from pytest_bdd.compatibility.importlib.resources import as_file, files
 from pytest_bdd.compatibility.parser import ParserProtocol
 from pytest_bdd.compatibility.path import relpath
 from pytest_bdd.compatibility.pytest import Config
@@ -26,13 +31,29 @@ if STRUCT_BDD_INSTALLED:  # pragma: no cover
     assert StructBDDParser  # type: ignore[truthy-function]
 
 
-@attrs
-class GlobMixin:
-    glob: Callable[..., Sequence[Union[str, Path]]] = attrib(default=methodcaller("glob", "*.feature"), kw_only=True)
+class BaseParser(ParserProtocol):
+    def build_feature(self, gherkin_document_raw_dict, filename: str) -> Feature:
+        gherkin_document = Feature.load_gherkin_document(gherkin_document_raw_dict)
+
+        pickles_data = PicklesCompiler(id_generator=self.id_generator).compile(gherkin_document_raw_dict)
+        pickles = Feature.load_pickles(pickles_data)
+
+        feature = Feature(  # type: ignore[call-arg]
+            gherkin_document=gherkin_document,
+            uri=gherkin_document.uri,
+            pickles=pickles,
+            filename=filename,
+        )
+
+        return feature
 
 
 @attrs
-class GherkinParser(GlobMixin, ParserProtocol):
+class GherkinParser(BaseParser):
+    glob: Callable[..., Sequence[Union[str, Path]]] = attrib(
+        default=lambda path: path.glob("*.feature") + path.glob("*.gherkin"), kw_only=True
+    )
+
     def parse(
         self, config: Union[Config, PytestBDDIdGeneratorHandler], path: Path, uri: str, *args, **kwargs
     ) -> tuple[Feature, str]:
@@ -59,6 +80,7 @@ class GherkinParser(GlobMixin, ParserProtocol):
         )
         return feature, feature_file_data
 
+    # TODO Move out of parser to loader component
     def get_from_paths(self, config: Config, paths: Sequence[Path], **kwargs) -> Sequence[Feature]:
         """Get features for given paths."""
         seen_names: set[Path] = set()
@@ -89,17 +111,26 @@ class GherkinParser(GlobMixin, ParserProtocol):
 
         return sorted(features, key=lambda feature: feature.name or feature.filename)
 
-    def build_feature(self, gherkin_document_raw_dict, filename: str) -> Feature:
-        gherkin_document = Feature.load_gherkin_document(gherkin_document_raw_dict)
 
-        pickles_data = PicklesCompiler(id_generator=self.id_generator).compile(gherkin_document_raw_dict)
-        pickles = Feature.load_pickles(pickles_data)
+@attrs
+class MarkdownGherkinParser(BaseParser):
+    glob: Callable[..., Sequence[Union[str, Path]]] = attrib(
+        default=lambda path: path.glob("*.feature.md") + path.glob("*.gherkin.md"), kw_only=True
+    )
 
-        feature = Feature(  # type: ignore[call-arg]
-            gherkin_document=gherkin_document,
-            uri=gherkin_document.uri,
-            pickles=pickles,
-            filename=filename,
+    def parse(
+        self, config: Union[Config, PytestBDDIdGeneratorHandler], path: Path, uri: str, *args, **kwargs
+    ) -> tuple[Feature, str]:
+        with ExitStack() as stack:
+            feature_file, script_path = [
+                stack.enter_context(path.open(mode="rb")),
+                stack.enter_context(as_file(files("pytest_bdd").joinpath("markdown_parser.js"))),
+            ]
+            gherkin_document_raw_dict = json.loads(check_output([which("node") or "", script_path], stdin=feature_file))
+        gherkin_document_raw_dict["uri"] = uri
+
+        feature = self.build_feature(
+            gherkin_document_raw_dict,
+            filename=str(path.as_posix()),
         )
-
-        return feature
+        return feature, path.read_text()
