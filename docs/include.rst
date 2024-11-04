@@ -2,5 +2,5 @@
 .. include:: features.rst
 .. include:: ../DOCUMENTATION.rst
 .. include:: ../AUTHORS.rst
-.. include:: ../CHANGES.rst
 .. include:: ../LICENSE.rst
+.. include:: ../CHANGES.rst

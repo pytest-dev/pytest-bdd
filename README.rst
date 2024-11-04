@@ -93,19 +93,49 @@ Install pytest-bdd-ng
 
     pip install pytest-bdd-ng
 
-Install extra packages for parsing Markdown defined features
-############################################################
+Packages for parsing Markdown defined features
+##############################################
 
 .. code-block:: console
 
     npm install @cucumber/gherkin
 
-Install extra packages for reporting
+Packages for reporting
 ####################################
 
 .. code-block:: console
 
     npm install @cucumber/html-formatter
+
+
+TLDR;
+-----
+
+.. code-block:: gherkin
+
+    Feature: Simplest example
+      Scenario:
+        # https://cucumber.io/docs/gherkin/reference/
+        Given File "Passing.feature" with content:
+          """gherkin
+          Feature: Passing feature
+            Scenario: Passing scenario
+              * Passing step
+          """
+        # https://docs.pytest.org/en/stable/reference/fixtures.html#conftest-py-sharing-fixtures-across-multiple-files
+        And File "conftest.py" with content:
+          """python
+          from pytest_bdd import step
+
+          @step('Passing step')
+          def _():
+            ...
+          """
+        # https://docs.pytest.org/en/stable/how-to/usage.html
+        When run pytest
+        Then pytest outcome must contain tests with statuses:
+          |passed|
+          |     1|
 
 
 Project layout
