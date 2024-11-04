@@ -80,7 +80,6 @@ maintainers = [
 name = "pytest-bdd-ng"
 readme = {file = "README.rst", content-type = "text/x-rst"}
 requires-python = ">=3.9"
-urls = {Repository = "https://github.com/elchupanebrej/pytest-bdd-ng"}
 version = "2.2.0"
 
 [project.entry-points]
@@ -126,6 +125,10 @@ testtypes = [
 
 [project.scripts]
 bdd_tree_to_rst = "pytest_bdd.script.bdd_tree_to_rst:main"
+
+[project.urls]
+Documentation = "https://pytest-bdd-ng.readthedocs.io/en/default/"
+Repository = "https://github.com/elchupanebrej/pytest-bdd-ng"
 
 [tool.black]
 line-length = 120

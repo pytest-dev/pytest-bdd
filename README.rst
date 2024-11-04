@@ -14,7 +14,6 @@ BDD library for the pytest runner
 .. _behave: https://pypi.python.org/pypi/behave
 .. _pytest: https://docs.pytest.org
 .. _Gherkin: https://cucumber.io/docs/gherkin/reference
-.. _pytest-bdd-ng: https://pytest-bdd-ng.readthedocs.io/en/default/
 .. _pytest-bdd: https://github.com/pytest-dev/pytest-bdd
 
 **pytest-bdd-ng** combine descriptive clarity of Gherkin_ language
@@ -27,9 +26,6 @@ Pytest fixtures written for unit tests can be reused for setup and actions
 mentioned in feature steps with dependency injection. This allows a true BDD
 just-enough specification of the requirements without obligatory maintaining any context object
 containing the side effects of Gherkin imperative declarations.
-
-.. NOTE:: Project documentation on readthedocs: pytest-bdd-ng_
-
 
 Why ``NG`` ?
 ------------
