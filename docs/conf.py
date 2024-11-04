@@ -100,9 +100,12 @@ html_theme = "alabaster"
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    "page_width": "100%",
-    "sidebar_width": "270px",
-    "body_max_width": "1200%",
+    "page_width": "1440px",
+    "fixed_sidebar": True,
+    "github_banner": True,
+    "github_user": "elchupanebrej",
+    "github_repo": "pytest-bdd-ng",
+    "body_max_width": "max-content",
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
