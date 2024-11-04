@@ -14,7 +14,6 @@ BDD library for the pytest runner
 .. _behave: https://pypi.python.org/pypi/behave
 .. _pytest: https://docs.pytest.org
 .. _Gherkin: https://cucumber.io/docs/gherkin/reference
-.. _pytest-bdd-ng: https://pytest-bdd-ng.readthedocs.io/en/default/
 .. _pytest-bdd: https://github.com/pytest-dev/pytest-bdd
 
 **pytest-bdd-ng** combine descriptive clarity of Gherkin_ language
@@ -27,9 +26,6 @@ Pytest fixtures written for unit tests can be reused for setup and actions
 mentioned in feature steps with dependency injection. This allows a true BDD
 just-enough specification of the requirements without obligatory maintaining any context object
 containing the side effects of Gherkin imperative declarations.
-
-.. NOTE:: Project documentation on readthedocs: pytest-bdd-ng_
-
 
 Why ``NG`` ?
 ------------
@@ -97,19 +93,49 @@ Install pytest-bdd-ng
 
     pip install pytest-bdd-ng
 
-Install extra packages for parsing Markdown defined features
-############################################################
+Packages for parsing Markdown defined features
+##############################################
 
 .. code-block:: console
 
     npm install @cucumber/gherkin
 
-Install extra packages for reporting
+Packages for reporting
 ####################################
 
 .. code-block:: console
 
     npm install @cucumber/html-formatter
+
+
+TLDR;
+-----
+
+.. code-block:: gherkin
+
+    Feature: Simplest example
+      Scenario:
+        # https://cucumber.io/docs/gherkin/reference/
+        Given File "Passing.feature" with content:
+          """gherkin
+          Feature: Passing feature
+            Scenario: Passing scenario
+              * Passing step
+          """
+        # https://docs.pytest.org/en/stable/reference/fixtures.html#conftest-py-sharing-fixtures-across-multiple-files
+        And File "conftest.py" with content:
+          """python
+          from pytest_bdd import step
+
+          @step('Passing step')
+          def _():
+            ...
+          """
+        # https://docs.pytest.org/en/stable/how-to/usage.html
+        When run pytest
+        Then pytest outcome must contain tests with statuses:
+          |passed|
+          |     1|
 
 
 Project layout

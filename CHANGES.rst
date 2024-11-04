@@ -68,9 +68,11 @@ Unreleased
 ----------
 - Implement support of `Markdown <https://github.com/cucumber/gherkin/blob/main/MARKDOWN_WITH_GHERKIN.md>`_ using js based parser
 - Update versions:
+
  - Drop python 3.8
  - Add python 3.13
  - Drop pytest<5.2
+
 - Added dummy html reporter
 - Fixed pytest.ini option "disable_feature_autoload"
 - Improved fixture injection by adding seamless fixtures on plugin/module collection
