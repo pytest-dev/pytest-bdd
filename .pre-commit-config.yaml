@@ -56,10 +56,8 @@ repos:
       - id: generate-feature-doc
         name: generate-feature-doc
         entry: >
-          python src/pytest_bdd/script/bdd_tree_to_rst.py
-          features
-          docs/features.rst
+          python src/pytest_bdd/script/bdd_tree_to_rst.py features docs/features
         language: python
         types: [python]
         pass_filenames: false
-        additional_dependencies: ['docopt-ng']
+        additional_dependencies: ['docopt-ng', 'pycmarkgfm']

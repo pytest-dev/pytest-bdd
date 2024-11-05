@@ -33,7 +33,11 @@ class NoScenariosFound(Exception):
     """No scenarios found."""
 
 
-class FeatureError(Exception):
+class FeatureParseError(Exception):
+    """Feature parse error."""
+
+
+class FeatureConcreteParseError(FeatureParseError):
     """Feature parse error."""
 
     message = "{0}.\nLine number: {1}.\nLine: {2}.\nFile: {3}"

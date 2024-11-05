@@ -66,6 +66,7 @@ dependencies = [
   "parse_type>=0.6.0",
   "pathvalidate",
   "py",
+  "pycmarkgfm",
   "pydantic>=2.0.3",
   "pytest>=5.2",
   "setuptools>=58",

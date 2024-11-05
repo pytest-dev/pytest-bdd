@@ -7,167 +7,167 @@ Features
 
 
 
-Feature
--------
-
-Tag conversion
-##############
-
-.. include:: ../features/Feature/Tag conversion.feature
-   :code: gherkin
-
-Tag
-###
-
-.. include:: ../features/Feature/Tag.feature
-   :code: gherkin
-
-Description
-###########
-
-.. include:: ../features/Feature/Description.feature
-   :code: gherkin
-
-Localization
-############
-
-.. include:: ../features/Feature/Localization.feature
-   :code: gherkin
-
-Load
-####
-
-Autoload
-!!!!!!!!
-
-.. include:: ../features/Feature/Load/Autoload.feature
-   :code: gherkin
-
-Scenario function loader
-!!!!!!!!!!!!!!!!!!!!!!!!
-
-.. include:: ../features/Feature/Load/Scenario function loader.feature
-   :code: gherkin
-
-Scenario search from base directory
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-.. include:: ../features/Feature/Load/Scenario search from base directory.feature
-   :code: gherkin
-
-Scenario search from base url
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-.. include:: ../features/Feature/Load/Scenario search from base url.feature
-   :code: gherkin
-
-Scenario
---------
-
-Tag
-###
-
-.. include:: ../features/Scenario/Tag.feature
-   :code: gherkin
-
-Description
-###########
-
-.. include:: ../features/Scenario/Description.feature
-   :code: gherkin
-
-Outline
-#######
-
-Examples Tag
-!!!!!!!!!!!!
-
-.. include:: ../features/Scenario/Outline/Examples Tag.feature
-   :code: gherkin
-
-Report
-------
-
-Gathering
-#########
-
-.. include:: ../features/Report/Gathering.feature
-   :code: gherkin
-
 Tutorial
 --------
 
-Launch
-######
+Launch.feature
+##############
 
-.. include:: ../features/Tutorial/Launch.feature
-   :code: gherkin
-
-Step
-----
-
-Data table
-##########
-
-.. include:: ../features/Step/Data table.feature
-   :code: gherkin
-
-Step definition bounding
-########################
-
-.. include:: ../features/Step/Step definition bounding.feature
-   :code: gherkin
-
-Doc string
-##########
-
-.. include:: ../features/Step/Doc string.feature
-   :code: gherkin
+.. include:: ../features/Tutorial/Launch.feature.md
+   :code: markdown
 
 Step definition
 ---------------
 
-Target fixtures specification
-#############################
+Pytest fixtures substitution.feature
+####################################
 
-.. include:: ../features/Step definition/Target fixtures specification.feature
-   :code: gherkin
+.. include:: ../features/Step definition/Pytest fixtures substitution.feature.md
+   :code: markdown
 
-Pytest fixtures substitution
-############################
+Target fixtures specification.feature
+#####################################
 
-.. include:: ../features/Step definition/Pytest fixtures substitution.feature
-   :code: gherkin
+.. include:: ../features/Step definition/Target fixtures specification.feature.md
+   :code: markdown
 
 Parameters
 ##########
 
-Injection as fixtures
-!!!!!!!!!!!!!!!!!!!!!
+Conversion.feature
+!!!!!!!!!!!!!!!!!!
 
-.. include:: ../features/Step definition/Parameters/Injection as fixtures.feature
-   :code: gherkin
+.. include:: ../features/Step definition/Parameters/Conversion.feature.md
+   :code: markdown
 
-Parsing
-!!!!!!!
+Defaults.feature
+!!!!!!!!!!!!!!!!
 
-.. include:: ../features/Step definition/Parameters/Parsing.feature
-   :code: gherkin
+.. include:: ../features/Step definition/Parameters/Defaults.feature.md
+   :code: markdown
 
-Parsing by custom parser
-!!!!!!!!!!!!!!!!!!!!!!!!
+Injection as fixtures.feature
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-.. include:: ../features/Step definition/Parameters/Parsing by custom parser.feature
-   :code: gherkin
+.. include:: ../features/Step definition/Parameters/Injection as fixtures.feature.md
+   :code: markdown
 
-Conversion
-!!!!!!!!!!
+Parsing by custom parser.feature
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-.. include:: ../features/Step definition/Parameters/Conversion.feature
-   :code: gherkin
+.. include:: ../features/Step definition/Parameters/Parsing by custom parser.feature.md
+   :code: markdown
 
-Defaults
-!!!!!!!!
+Parsing.feature
+!!!!!!!!!!!!!!!
 
-.. include:: ../features/Step definition/Parameters/Defaults.feature
-   :code: gherkin
+.. include:: ../features/Step definition/Parameters/Parsing.feature.md
+   :code: markdown
+
+Step
+----
+
+Data table.feature
+##################
+
+.. include:: ../features/Step/Data table.feature.md
+   :code: markdown
+
+Doc string.feature
+##################
+
+.. include:: ../features/Step/Doc string.feature.md
+   :code: markdown
+
+Step definition bounding.feature
+################################
+
+.. include:: ../features/Step/Step definition bounding.feature.md
+   :code: markdown
+
+Scenario
+--------
+
+Description.feature
+###################
+
+.. include:: ../features/Scenario/Description.feature.md
+   :code: markdown
+
+Tag.feature
+###########
+
+.. include:: ../features/Scenario/Tag.feature.md
+   :code: markdown
+
+Outline
+#######
+
+Examples Tag.feature
+!!!!!!!!!!!!!!!!!!!!
+
+.. include:: ../features/Scenario/Outline/Examples Tag.feature.md
+   :code: markdown
+
+Report
+------
+
+Gathering.feature
+#################
+
+.. include:: ../features/Report/Gathering.feature.md
+   :code: markdown
+
+Feature
+-------
+
+Description.feature
+###################
+
+.. include:: ../features/Feature/Description.feature.md
+   :code: markdown
+
+Localization.feature
+####################
+
+.. include:: ../features/Feature/Localization.feature.md
+   :code: markdown
+
+Tag conversion.feature
+######################
+
+.. include:: ../features/Feature/Tag conversion.feature.md
+   :code: markdown
+
+Tag.feature
+###########
+
+.. include:: ../features/Feature/Tag.feature.md
+   :code: markdown
+
+Load
+####
+
+Autoload.feature
+!!!!!!!!!!!!!!!!
+
+.. include:: ../features/Feature/Load/Autoload.feature.md
+   :code: markdown
+
+Scenario function loader.feature
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+.. include:: ../features/Feature/Load/Scenario function loader.feature.md
+   :code: markdown
+
+Scenario search from base directory.feature
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+.. include:: ../features/Feature/Load/Scenario search from base directory.feature.md
+   :code: markdown
+
+Scenario search from base url.feature
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+.. include:: ../features/Feature/Load/Scenario search from base url.feature.md
+   :code: markdown

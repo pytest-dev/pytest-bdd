@@ -1,0 +1,62 @@
+<h1>Feature: Step definitions parameters parsing by custom parser</h1>
+<h2>Scenario:</h2>
+<ul>
+<li>Given File &quot;Example.feature&quot; with content:
+<pre><code class="language-gherkin">Feature:
+  Scenario:
+    Given there are 10 cucumbers
+</code></pre>
+</li>
+<li>Given File &quot;conftest.py&quot; with content:
+<pre><code class="language-python">import re
+from pytest_bdd import given, parsers
+
+class Parser(parsers.StepParser):
+    def __init__(self, name, *args,**kwargs):
+        self.name = name
+        self.regex = re.compile(
+          re.sub(&quot;%(.+)%&quot;, r&quot;(?P&lt;\1&gt;.+)&quot;, name),
+          *args,
+          **kwargs
+        )
+
+    def parse_arguments(self, request, name, **kwargs):
+        __doc__ = &quot;Parse step arguments&quot;
+        return self.regex.match(name).groupdict()
+
+    @property
+    def arguments(self):
+        return [*self.regex.groupindex.keys()]
+
+    def is_matching(self, request ,name):
+        __doc__ = &quot;Match given name with the step name.&quot;
+        return bool(self.regex.match(name))
+
+    def __str__(self):
+      return self.name
+
+@given(
+  Parser(&quot;there are %start% cucumbers&quot;),
+  target_fixture=&quot;start_cucumbers&quot;,
+  converters=dict(start=int)
+)
+def start_cucumbers(start):
+    assert start == 10
+</code></pre>
+</li>
+<li>When run pytest</li>
+<li>Then pytest outcome must contain tests with statuses:
+<table>
+<thead>
+<tr>
+<th>passed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>

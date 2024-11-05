@@ -1,0 +1,38 @@
+<h1>Feature: Steps could have docstrings</h1>
+<h2>Scenario:</h2>
+<ul>
+<li>Given File &quot;Steps.feature&quot; with content:
+<pre><code class="language-gherkin">Feature:
+  Scenario:
+    Given I check step docstring
+      ```
+      Step docstring
+      ```
+</code></pre>
+</li>
+<li>And File &quot;conftest.py&quot; with content:
+<pre><code class="language-python">from pytest_bdd import given
+
+@given('I check step docstring')
+def _(step):
+  assert step.doc_string.content == &quot;Step docstring&quot;
+</code></pre>
+</li>
+<li>When run pytest</li>
+<li>Then pytest outcome must contain tests with statuses:
+<table>
+<thead>
+<tr>
+<th>passed</th>
+<th>failed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>

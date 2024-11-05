@@ -1,0 +1,300 @@
+<h1>Feature: Step definitions parameters injection as fixtures</h1>
+<p>Step arguments are injected into step context and could be used as normal
+fixtures with the names equal to the names of the arguments by default.</p>
+<p>Step's argument are accessible as a fixture in other step function just
+by mentioning it as an argument</p>
+<p>If the name of the step argument clashes with existing fixture,
+it will be overridden by step's argument value.
+Value for some fixture deeply inside of the fixture tree could be set/override
+in a ad-hoc way by just choosing the proper name for the step argument.</p>
+<h2>Scenario: Step parameters are injected as fixtures by default</h2>
+<ul>
+<li>
+<p>Given File &quot;conftest.py&quot; with content:</p>
+<pre><code class="language-python">from re import compile as parse
+from pytest_bdd import given, then
+
+@given(&quot;I have a pickle&quot;, param_defaults=dict(freshness='salted'))
+@given(
+  parse(r&quot;I have a ((?P&lt;freshness&gt;\w+)\s)?cucumber&quot;),
+  param_defaults=dict(freshness='fresh')
+)
+def i_have_cucumber(freshness):
+    ...
+
+@then(&quot;Taste of cucumber is salt&quot;)
+def i_check_salted_cucumber(freshness):
+    assert freshness=='salted'
+</code></pre>
+</li>
+<li>
+<p>Given File &quot;Freshness.feature&quot; with content:</p>
+<pre><code class="language-gherkin">Feature:
+  Scenario:
+    Given I have a salted cucumber
+    Then Taste of cucumber is salt
+</code></pre>
+</li>
+<li>
+<p>Given File &quot;test_freshness.py&quot; with content:</p>
+<pre><code class="language-python">from enum import Enum
+from pytest import fixture
+from pytest_bdd import scenario
+class Freshness(Enum):
+  FRESH = 'fresh'
+  ROTTEN = 'rotten'
+  SALTED = 'salted'
+
+@fixture
+def oracle_freshness():
+  return Freshness.SALTED
+
+@scenario(&quot;Freshness.feature&quot;)
+def test_passing_feature(request, oracle_freshness):
+  assert Freshness(request.getfixturevalue('freshness'))==oracle_freshness
+
+@scenario(&quot;Freshness.feature&quot;)
+def test_another_passing_feature(freshness, oracle_freshness):
+  assert Freshness(freshness)==oracle_freshness
+</code></pre>
+</li>
+<li>
+<p>When run pytest</p>
+<table>
+<thead>
+<tr>
+<th>cli_args</th>
+<th>--disable-feature-autoload</th>
+</tr>
+</thead>
+</table>
+</li>
+<li>
+<p>Then pytest outcome must contain tests with statuses:</p>
+<table>
+<thead>
+<tr>
+<th>passed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+<h2>Scenario: Step parameters injection as fixtures could be disabled</h2>
+<ul>
+<li>
+<p>Given File &quot;conftest.py&quot; with content:</p>
+<pre><code class="language-python">from re import compile as parse
+from pytest_bdd import given, then
+
+@given(
+  &quot;I have a pickle&quot;,
+  param_defaults=dict(freshness='salted'),
+  params_fixtures_mapping={...:None},
+  target_fixtures=['cuke_taste']
+)
+@given(
+  parse(r&quot;I have a ((?P&lt;freshness&gt;\w+)\s)?cucumber&quot;),
+  param_defaults=dict(freshness='fresh'),
+  params_fixtures_mapping=False,
+  target_fixture='cuke_taste'
+)
+def i_have_cucumber(freshness):
+    assert freshness is not None
+    yield freshness
+
+@then(&quot;Taste of cucumber is salt&quot;)
+def i_check_salted_cucumber(cuke_taste):
+    assert cuke_taste=='salted'
+</code></pre>
+</li>
+<li>
+<p>Given File &quot;Freshness.feature&quot; with content:</p>
+<pre><code class="language-gherkin">Feature:
+  Scenario:
+    Given I have a pickle
+    Then Taste of cucumber is salt
+</code></pre>
+</li>
+<li>
+<p>Given File &quot;test_freshness.py&quot; with content:</p>
+<pre><code class="language-python">import pytest
+from pytest_bdd import scenario
+from pytest_bdd.compatibility.pytest import FixtureLookupError
+@scenario(&quot;Freshness.feature&quot;)
+def test_passing_feature(request, cuke_taste):
+  assert cuke_taste == 'salted'
+  with pytest.raises(FixtureLookupError):
+    request.getfixturevalue('freshness')
+</code></pre>
+</li>
+<li>
+<p>When run pytest</p>
+<table>
+<thead>
+<tr>
+<th>cli_args</th>
+<th>--disable-feature-autoload</th>
+</tr>
+</thead>
+</table>
+</li>
+<li>
+<p>Then pytest outcome must contain tests with statuses:</p>
+<table>
+<thead>
+<tr>
+<th>passed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+<h2>Scenario: Step parameters renaming on injection as fixtures</h2>
+<ul>
+<li>
+<p>Given File &quot;conftest.py&quot; with content:</p>
+<pre><code class="language-python">from re import compile as parse
+from pytest_bdd import given, then
+
+@given(
+  &quot;I have a pickle&quot;,
+  param_defaults=dict(freshness='salted'),
+  params_fixtures_mapping={&quot;freshness&quot;:&quot;cuke_taste&quot;}
+)
+@given(
+  parse(r&quot;I have a ((?P&lt;freshness&gt;\w+)\s)?cucumber&quot;),
+  param_defaults=dict(freshness='fresh'),
+  params_fixtures_mapping={&quot;freshness&quot;:&quot;cuke_taste&quot;}
+)
+def i_have_cucumber(cuke_taste, freshness):
+    assert cuke_taste is not None
+    assert freshness == cuke_taste
+    yield cuke_taste
+
+@then(&quot;Taste of cucumber is salt&quot;)
+def i_check_salted_cucumber(cuke_taste):
+    assert cuke_taste=='salted'
+</code></pre>
+</li>
+<li>
+<p>Given File &quot;Freshness.feature&quot; with content:</p>
+<pre><code class="language-gherkin">Feature:
+  Scenario:
+    Given I have a pickle
+    Then Taste of cucumber is salt
+</code></pre>
+</li>
+<li>
+<p>Given File &quot;test_freshness.py&quot; with content:</p>
+<pre><code class="language-python">import pytest
+from pytest_bdd import scenario
+from pytest_bdd.compatibility.pytest import FixtureLookupError
+
+@scenario(&quot;Freshness.feature&quot;)
+def test_passing_feature(request, cuke_taste):
+  assert cuke_taste == 'salted'
+  with pytest.raises(FixtureLookupError):
+    request.getfixturevalue('freshness')
+</code></pre>
+</li>
+<li>
+<p>When run pytest</p>
+<table>
+<thead>
+<tr>
+<th>cli_args</th>
+<th>--disable-feature-autoload</th>
+</tr>
+</thead>
+</table>
+</li>
+<li>
+<p>Then pytest outcome must contain tests with statuses:</p>
+<table>
+<thead>
+<tr>
+<th>passed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+<h2>Scenario: Only allowed step parameters injection as fixtures</h2>
+<ul>
+<li>
+<p>Given File &quot;conftest.py&quot; with content:</p>
+<pre><code class="language-python">from pytest_bdd import given
+
+@given(
+  &quot;I have an old pickle&quot;,
+  param_defaults=dict(freshness='salted', age='old'),
+  params_fixtures_mapping={&quot;freshness&quot;}
+)
+def i_have_cucumber(age, freshness):
+    assert age == 'old'
+    assert freshness == 'salted'
+</code></pre>
+</li>
+<li>
+<p>Given File &quot;Freshness.feature&quot; with content:</p>
+<pre><code class="language-gherkin">Feature:
+  Scenario:
+    Given I have an old pickle
+</code></pre>
+</li>
+<li>
+<p>Given File &quot;test_freshness.py&quot; with content:</p>
+<pre><code class="language-python">import pytest
+from pytest_bdd import scenario
+from pytest_bdd.compatibility.pytest import FixtureLookupError
+
+@scenario(&quot;Freshness.feature&quot;)
+def test_passing_feature(request, freshness):
+  assert freshness == 'salted'
+  with pytest.raises(FixtureLookupError):
+    request.getfixturevalue('age')
+</code></pre>
+</li>
+<li>
+<p>When run pytest</p>
+<table>
+<thead>
+<tr>
+<th>cli_args</th>
+<th>--disable-feature-autoload</th>
+</tr>
+</thead>
+</table>
+</li>
+<li>
+<p>Then pytest outcome must contain tests with statuses:</p>
+<table>
+<thead>
+<tr>
+<th>passed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>

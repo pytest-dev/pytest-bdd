@@ -1,0 +1,113 @@
+<h1>Feature: Gherkin features autoload</h1>
+<p>By default gherkin features are autoloaded and treated as usual pytest tests
+if are placed in the tests hierarchy proposed by pytest.
+This behavior could be disabled</p>
+<h2>Rule: Feature autoload</h2>
+<h3>Background:</h3>
+<ul>
+<li>
+<p>Given File &quot;Passing.feature&quot; with content:</p>
+<pre><code class="language-gherkin">Feature: Passing feature
+  Scenario: Passing scenario
+    * Passing step
+</code></pre>
+</li>
+<li>
+<p>Given File &quot;Another.passing.feature.md&quot; with content:</p>
+<pre><code class="language-markdown"># Feature: Passing feature
+## Scenario: Passing scenario
+* Given Passing step
+</code></pre>
+</li>
+<li>
+<p>Given Install npm packages</p>
+<table>
+<thead>
+<tr>
+<th>packages</th>
+<th>@cucumber/gherkin</th>
+</tr>
+</thead>
+</table>
+</li>
+<li>
+<p>Given File &quot;conftest.py&quot; with content:</p>
+<pre><code class="language-python">from pytest_bdd import step
+
+@step('Passing step')
+
+def _():
+  ...
+</code></pre>
+</li>
+</ul>
+<h3>Scenario: Feature is loaded by default</h3>
+<ul>
+<li>When run pytest</li>
+<li>Then pytest outcome must contain tests with statuses:
+<table>
+<thead>
+<tr>
+<th>passed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+<h3>Scenario: Feature autoload could be disabled via command line</h3>
+<ul>
+<li>
+<p>When run pytest</p>
+<table>
+<thead>
+<tr>
+<th>cli_args</th>
+<th>--disable-feature-autoload</th>
+</tr>
+</thead>
+</table>
+</li>
+<li>
+<p>Then pytest outcome must contain tests with statuses:</p>
+<table>
+<thead>
+<tr>
+<th>passed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+<h3>Scenario: Feature autoload could be disabled via pytest.ini</h3>
+<ul>
+<li>Given Set pytest.ini content to:
+<pre><code class="language-ini">[pytest]
+disable_feature_autoload=true
+</code></pre>
+</li>
+<li>When run pytest</li>
+<li>Then pytest outcome must contain tests with statuses:
+<table>
+<thead>
+<tr>
+<th>passed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>

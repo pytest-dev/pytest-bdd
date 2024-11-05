@@ -1,0 +1,264 @@
+<h1>Feature: Gherkin steps bounding to steps definitions</h1>
+<h2>Scenario: Steps are executed by corresponding step keyword decorator</h2>
+<ul>
+<li>Given File &quot;steps.feature&quot; with content:
+<pre><code class="language-gherkin">Feature: Steps are executed by corresponding step keyword decorator
+
+  Scenario:
+      Step execution definitions are pytest fixtures by their nature
+      and are stored at pytest &quot;conftest.py&quot; files (or any other place
+      where pytest fixtures could be placed)
+
+      * Step is executed by plain step decorator
+      Given Step is executed by given step decorator
+      When Step is executed by when step decorator
+      Then Step is executed by then step decorator
+
+      Then there are passed steps by kind:
+        |step|given|when|then|
+        |   1|    1|   1|   1|
+</code></pre>
+</li>
+<li>And File &quot;conftest.py&quot; with content:
+<pre><code class="language-python">from pytest_bdd import given, when, then, step
+from pytest import fixture
+
+# pytest fixtures could be used from step definitions, so some
+# test preconditions could be stored on the pytest level
+@fixture
+def step_counter():
+  yield {'step': 0, 'given': 0,'when': 0,'then': 0,}
+
+# Step with any kind of keyword could be bounded to step decorated with &quot;step&quot; definition
+@step('Step is executed by plain step decorator')
+def plain_step(step_counter):
+  step_counter['step'] += 1
+
+# Step with &quot;Given&quot; keyword could be bounded to step decorated with &quot;given&quot; definition
+@given('Step is executed by given step decorator')
+def given_step(step_counter):
+  step_counter['given'] += 1
+
+# Same as &quot;given&quot;
+@when('Step is executed by when step decorator')
+def when_step(step_counter):
+  step_counter['when'] += 1
+
+# Same as &quot;given&quot;
+@then('Step is executed by then step decorator')
+def then_step(step_counter):
+  step_counter['then'] += 1
+
+@then('there are passed steps by kind:')
+def check_step_counter(step, step_counter):
+  # Step datatables data could be accessed in the next manner
+  step_data_table = step.data_table
+  oracle_results_header = [cell.value for cell in step_data_table.rows[0].cells]
+  oracle_results_values = [int(cell.value) for cell in step_data_table.rows[1].cells]
+  oracle_result = dict(zip(oracle_results_header, oracle_results_values))
+
+  assert oracle_result == step_counter
+</code></pre>
+</li>
+<li>When run pytest</li>
+<li>Then pytest outcome must contain tests with statuses:
+<table>
+<thead>
+<tr>
+<th>passed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+<h2>Scenario: Steps could be executed by aliased step keyword decorator</h2>
+<pre><code>Could be useful to declare the same fixtures or steps with
+different names for better readability. In order to use the same step
+function with multiple step names simply decorate it multiple times.
+</code></pre>
+<ul>
+<li>Given File &quot;steps.feature&quot; with content:
+<pre><code class="language-gherkin">Feature: Steps could be executed by aliased step keyword decorator
+  Scenario:
+      Given Step counter
+
+      * Step is executed by aliased step decorator
+      Given Step is executed by aliased step decorator
+      When Step is executed by aliased step decorator
+      Then Step is executed by aliased step decorator
+
+      Then there are &quot;4&quot; passed aliased steps
+</code></pre>
+</li>
+<li>And File &quot;conftest.py&quot; with content:
+<pre><code class="language-python">from pytest_bdd import given, when, then, step
+
+@given('Step counter', target_fixture='step_counter')
+def step_counter():
+  yield {'steps_count': 0}
+
+@step('Step is executed by aliased step decorator')
+@given('Step is executed by aliased step decorator')
+@when('Step is executed by aliased step decorator')
+@then('Step is executed by aliased step decorator')
+def aliased_step(step_counter):
+  step_counter['steps_count'] += 1
+
+@then(
+  'there are &quot;{int}&quot; passed aliased steps',
+  anonymous_group_names=('oracle_steps',),
+)
+def then_step(step_counter, oracle_steps):
+  assert step_counter['steps_count'] == oracle_steps
+</code></pre>
+</li>
+<li>When run pytest</li>
+<li>Then pytest outcome must contain tests with statuses:
+<table>
+<thead>
+<tr>
+<th>passed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+<h2>Rule: Steps could be executed by liberal step keyword decorator</h2>
+<pre><code>Step definition decorator could be &quot;liberal&quot;
+- so it could be bound to any kind of keyword
+</code></pre>
+<h3>Background:</h3>
+<ul>
+<li>Given File &quot;steps.feature&quot; with content:
+<pre><code class="language-gherkin">Feature: Steps could be executed by liberal step keyword decorator
+  Scenario:
+    Given Step counter
+
+    * Step is executed by liberal step decorator
+    Given Step is executed by liberal step decorator
+    When Step is executed by liberal step decorator
+    Then Step is executed by liberal step decorator
+
+    * Step is executed by liberal given decorator
+    Given Step is executed by liberal given decorator
+    When Step is executed by liberal given decorator
+    Then Step is executed by liberal given decorator
+
+    * Step is executed by liberal when decorator
+    Given Step is executed by liberal when decorator
+    When Step is executed by liberal when decorator
+    Then Step is executed by liberal when decorator
+
+    * Step is executed by liberal then decorator
+    Given Step is executed by liberal then decorator
+    When Step is executed by liberal then decorator
+    Then Step is executed by liberal then decorator
+
+    Then there are &quot;16&quot; passed liberal steps
+</code></pre>
+</li>
+</ul>
+<h3>Scenario: Same step is used with different keywords</h3>
+<ul>
+<li>Given File &quot;conftest.py&quot; with content:
+<pre><code class="language-python">from pytest_bdd import given, when, then, step
+
+@given('Step counter', target_fixture='step_counter')
+def step_counter():
+  yield {'steps_count': 0}
+
+@step('Step is executed by liberal step decorator', liberal=True)
+@given('Step is executed by liberal given decorator', liberal=True)
+@when('Step is executed by liberal when decorator', liberal=True)
+@then('Step is executed by liberal then decorator', liberal=True)
+def liberal_step(step_counter):
+  step_counter['steps_count'] += 1
+
+@then(
+  'there are &quot;{int}&quot; passed liberal steps',
+  anonymous_group_names=('oracle_steps',),
+)
+def then_step(step_counter, oracle_steps):
+  assert step_counter['steps_count'] == oracle_steps
+</code></pre>
+</li>
+<li>When run pytest</li>
+<li>Then pytest outcome must contain tests with statuses:
+<table>
+<thead>
+<tr>
+<th>passed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+<h3>Scenario: Keyworded steps could be treated as liberal by pytest command line option</h3>
+<ul>
+<li>
+<p>Given File &quot;conftest.py&quot; with content:</p>
+<pre><code class="language-python">from pytest_bdd import given, when, then, step
+
+@given('Step counter', target_fixture='step_counter')
+def step_counter():
+  yield {'steps_count': 0}
+
+@step('Step is executed by liberal step decorator')
+@given('Step is executed by liberal given decorator')
+@when('Step is executed by liberal when decorator')
+@then('Step is executed by liberal then decorator')
+def liberal_step(step_counter):
+  step_counter['steps_count'] += 1
+
+@then(
+  'there are &quot;{int}&quot; passed liberal steps',
+  anonymous_group_names=('oracle_steps',),
+)
+def then_step(step_counter, oracle_steps):
+  assert step_counter['steps_count'] == oracle_steps
+</code></pre>
+</li>
+<li>
+<p>When run pytest</p>
+<table>
+<thead>
+<tr>
+<th>cli_args</th>
+<th>--liberal-steps</th>
+</tr>
+</thead>
+</table>
+</li>
+<li>
+<p>Then pytest outcome must contain tests with statuses:</p>
+<table>
+<thead>
+<tr>
+<th>passed</th>
+<th>failed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>

@@ -1,0 +1,117 @@
+<h1>Feature: Step definition could override or setup new fixture</h1>
+<p>Dependency injection is not a panacea if you have complex structure of your test setup data.
+Sometimes there's a need such a given step which would imperatively change
+the fixture only for certain test (scenario), while for other tests
+it will stay untouched. To allow this, special parameter <code>target_fixture</code> exists in the decorator:</p>
+<h2>Scenario: Single fixture injection</h2>
+<ul>
+<li>
+<p>Given File &quot;conftest.py&quot; with content:</p>
+<pre><code class="language-python">from pytest_bdd import given
+
+@given(&quot;I have an old pickle&quot;, param_defaults={&quot;age&quot;: &quot;old&quot;}, target_fixture='pickle_age', params_fixtures_mapping=False)
+def i_have_cucumber(age):
+    yield age
+</code></pre>
+</li>
+<li>
+<p>Given File &quot;Freshness.feature&quot; with content:</p>
+<pre><code class="language-gherkin">Feature:
+  Scenario:
+    Given I have an old pickle
+</code></pre>
+</li>
+<li>
+<p>Given File &quot;test_freshness.py&quot; with content:</p>
+<pre><code class="language-python">from pytest_bdd import scenario
+
+@scenario(&quot;Freshness.feature&quot;)
+def test_passing_feature(pickle_age, request):
+  assert pickle_age == 'old'
+  assert request.getfixturevalue('pickle_age') == pickle_age
+</code></pre>
+</li>
+<li>
+<p>When run pytest</p>
+<table>
+<thead>
+<tr>
+<th>cli_args</th>
+<th>--disable-feature-autoload</th>
+</tr>
+</thead>
+</table>
+</li>
+<li>
+<p>Then pytest outcome must contain tests with statuses:</p>
+<table>
+<thead>
+<tr>
+<th>passed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+<h2>Scenario: Multiple fixtures injection</h2>
+<ul>
+<li>
+<p>Given File &quot;conftest.py&quot; with content:</p>
+<pre><code class="language-python">from pytest_bdd import given
+
+@given(&quot;I have an old pickle&quot;, target_fixtures=['pickle_age', 'cucumber_kind'])
+def i_have_cucumber():
+    yield ['old', 'pickle']
+</code></pre>
+</li>
+<li>
+<p>Given File &quot;Freshness.feature&quot; with content:</p>
+<pre><code class="language-gherkin">Feature:
+  Scenario:
+    Given I have an old pickle
+</code></pre>
+</li>
+<li>
+<p>Given File &quot;test_freshness.py&quot; with content:</p>
+<pre><code class="language-python">from pytest_bdd import scenario
+
+@scenario(&quot;Freshness.feature&quot;)
+def test_passing_feature(request, pickle_age, cucumber_kind):
+  assert pickle_age == 'old'
+  assert cucumber_kind == 'pickle'
+  assert request.getfixturevalue('pickle_age') == pickle_age
+  assert request.getfixturevalue('cucumber_kind') == cucumber_kind
+</code></pre>
+</li>
+<li>
+<p>When run pytest</p>
+<table>
+<thead>
+<tr>
+<th>cli_args</th>
+<th>--disable-feature-autoload</th>
+</tr>
+</thead>
+</table>
+</li>
+<li>
+<p>Then pytest outcome must contain tests with statuses:</p>
+<table>
+<thead>
+<tr>
+<th>passed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
