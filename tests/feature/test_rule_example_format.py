@@ -48,11 +48,11 @@ def test_rule_example_format(pytester):
                         When I press subtract
                         Then the result should be 6
 
-                        Example: Subtracting a larger number from a smaller number
-                            Given the first number is 3
-                            And the second number is 7
-                            When I press subtract
-                            Then the result should be -4
+                    Example: Subtracting a larger number from a smaller number
+                        Given the first number is 3
+                        And the second number is 7
+                        When I press subtract
+                        Then the result should be -4
             """
         ),
     )
