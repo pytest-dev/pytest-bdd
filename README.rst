@@ -1,5 +1,5 @@
-BDD library for the pytest runner
-=================================
+Pytest-BDD: the BDD framework for pytest
+========================================
 
 .. image:: https://img.shields.io/pypi/v/pytest-bdd.svg
    :target: https://pypi.python.org/pypi/pytest-bdd

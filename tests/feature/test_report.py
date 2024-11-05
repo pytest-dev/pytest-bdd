@@ -107,6 +107,7 @@ def test_step_trace(pytester):
         "feature": {
             "description": "",
             "keyword": "Feature",
+            "language": "en",
             "filename": str(feature),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
@@ -144,6 +145,7 @@ def test_step_trace(pytester):
         "feature": {
             "description": "",
             "keyword": "Feature",
+            "language": "en",
             "filename": str(feature),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
@@ -180,6 +182,7 @@ def test_step_trace(pytester):
         "feature": {
             "description": "",
             "keyword": "Feature",
+            "language": "en",
             "filename": str(feature),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
@@ -224,6 +227,7 @@ def test_step_trace(pytester):
         "feature": {
             "description": "",
             "keyword": "Feature",
+            "language": "en",
             "filename": str(feature),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",

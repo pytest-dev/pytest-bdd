@@ -34,7 +34,7 @@ classifiers = [
 "pytest-bdd" = "pytest_bdd.scripts:main"
 
 [tool.poetry.dependencies]
-python = ">=3.8"
+python = ">=3.9"
 Mako = "*"
 parse = "*"
 parse-type = "*"
@@ -50,6 +50,8 @@ types-setuptools = ">=68.2.0.0"
 pytest-xdist = ">=3.3.1"
 coverage = {extras = ["toml"], version = ">=6.5.0"}
 Pygments = ">=2.13.0"  # for code-block highlighting
+sphinx = "*"
+sphinx-autobuild = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
