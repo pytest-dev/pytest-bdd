@@ -325,10 +325,12 @@ def test_rule_example_format_uses_correct_keywords(pytester):
     pytester.makepyfile(
         test_gherkin=textwrap.dedent(
             """\
-            from pytest_bdd import given, when, scenarios, then
+            from pytest_bdd import step, scenarios
+
             @step("this is a step")
             def _():
                 pass
+
             scenarios('test.feature')
         """
         )

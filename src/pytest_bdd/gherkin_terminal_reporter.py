@@ -12,14 +12,6 @@ if typing.TYPE_CHECKING:
     from _pytest.reports import TestReport
 
 
-INDENT_UNIT = "  "
-
-
-def get_indent(level: int) -> str:
-    """Get the indentation for a given level."""
-    return INDENT_UNIT * level
-
-
 def add_options(parser: Parser) -> None:
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group._addoption(
@@ -54,6 +46,7 @@ def configure(config: Config) -> None:
 class GherkinTerminalReporter(TerminalReporter):  # type: ignore
     def __init__(self, config: Config) -> None:
         super().__init__(config)
+        self.current_rule = None
 
     def pytest_runtest_logreport(self, report: TestReport) -> Any:
         rep = report
@@ -64,77 +57,60 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore
             # probably passed setup/teardown
             return None
 
-        # Determine color markup based on test outcome
-        word_markup = self._get_markup_for_result(report)
+        if isinstance(word, tuple):
+            word, word_markup = word
+        elif rep.passed:
+            word_markup = {"green": True}
+        elif rep.failed:
+            word_markup = {"red": True}
+        elif rep.skipped:
+            word_markup = {"yellow": True}
+        feature_markup = {"blue": True}
+        scenario_markup = word_markup
+        rule_markup = {"purple": True}
 
         if self.verbosity <= 0 or not hasattr(report, "scenario"):
             return super().pytest_runtest_logreport(rep)
 
-        feature_markup = {"blue": True}
-        scenario_markup = word_markup
-
-        self.ensure_newline()
+        rule = report.scenario.get("rule")
+        indent = "    " if rule else ""
 
         if self.verbosity == 1:
-            self._print_summary_report(report, word, feature_markup, scenario_markup, word_markup)
+            self.ensure_newline()
+            self._tw.write(f"{report.scenario['feature']['keyword']}: ", **feature_markup)
+            self._tw.write(report.scenario["feature"]["name"], **feature_markup)
+            self._tw.write("\n")
+
+            if rule and rule["name"] != self.current_rule:
+                self._tw.write(f"  {rule['keyword']}: ", **rule_markup)
+                self._tw.write(rule["name"], **rule_markup)
+                self._tw.write("\n")
+                self.current_rule = rule["name"]
+
+            self._tw.write(f"{indent}    {report.scenario['keyword']}: ", **scenario_markup)
+            self._tw.write(report.scenario["name"], **scenario_markup)
+            self._tw.write(" ")
+            self._tw.write(word, **word_markup)
+            self._tw.write("\n")
         elif self.verbosity > 1:
-            self._print_detailed_report(report, word, feature_markup, scenario_markup, word_markup)
+            self.ensure_newline()
+            self._tw.write(f"{report.scenario['feature']['keyword']}: ", **feature_markup)
+            self._tw.write(report.scenario["feature"]["name"], **feature_markup)
+            self._tw.write("\n")
 
-        self.stats.setdefault(cat, []).append(report)
+            if rule and rule["name"] != self.current_rule:
+                self._tw.write(f"  {rule['keyword']}: ", **rule_markup)
+                self._tw.write(rule["name"], **rule_markup)
+                self._tw.write("\n")
+                self.current_rule = rule["name"]
+
+            self._tw.write(f"{indent}    {report.scenario['keyword']}: ", **scenario_markup)
+            self._tw.write(report.scenario["name"], **scenario_markup)
+            self._tw.write("\n")
+            for step in report.scenario["steps"]:
+                self._tw.write(f"{indent}        {step['keyword']} {step['name']}\n", **scenario_markup)
+            self._tw.write(f"{indent}    {word}", **word_markup)
+            self._tw.write("\n\n")
+
+        self.stats.setdefault(cat, []).append(rep)
         return None
-
-    @staticmethod
-    def _get_markup_for_result(report: TestReport) -> dict[str, bool]:
-        """Get color markup based on test result."""
-        if report.passed:
-            return {"green": True}
-        elif report.failed:
-            return {"red": True}
-        elif report.skipped:
-            return {"yellow": True}
-        return {}
-
-    def _print_summary_report(
-        self, report: TestReport, word: str, feature_markup: dict, scenario_markup: dict, word_markup: dict
-    ) -> None:
-        """Print a summary-style Gherkin report for a test."""
-        base_indent = self._get_indent_for_scenario(report)
-
-        self._tw.write(f"{report.scenario['feature']['keyword']}: ", **feature_markup)
-        self._tw.write(report.scenario["feature"]["name"], **feature_markup)
-        self._tw.write("\n")
-
-        if "rule" in report.scenario:
-            self._tw.write(f"{base_indent}{report.scenario['rule']['keyword']}: {report.scenario['rule']['name']}\n")
-
-        self._tw.write(f"{base_indent}{get_indent(1)}{report.scenario['keyword']}: ", **scenario_markup)
-        self._tw.write(report.scenario["name"], **scenario_markup)
-        self._tw.write(f" {word}\n", **word_markup)
-
-    def _print_detailed_report(
-        self, report: TestReport, word: str, feature_markup: dict, scenario_markup: dict, word_markup: dict
-    ) -> None:
-        """Print a detailed Gherkin report for a test."""
-        base_indent = self._get_indent_for_scenario(report)
-
-        self._tw.write(f"{report.scenario['feature']['keyword']}: ", **feature_markup)
-        self._tw.write(report.scenario["feature"]["name"], **feature_markup)
-        self._tw.write("\n")
-
-        if "rule" in report.scenario:
-            self._tw.write(f"{base_indent}{report.scenario['rule']['keyword']}: {report.scenario['rule']['name']}\n")
-
-        self._tw.write(f"{base_indent}{get_indent(1)}{report.scenario['keyword']}: ", **scenario_markup)
-        self._tw.write(report.scenario["name"], **scenario_markup)
-        self._tw.write("\n")
-
-        for step in report.scenario["steps"]:
-            self._tw.write(f"{base_indent}{get_indent(2)}{step['keyword']} {step['name']}\n", **scenario_markup)
-
-        self._tw.write(f"{word}\n", **word_markup)
-        self._tw.write("\n")
-
-    @staticmethod
-    def _get_indent_for_scenario(report: TestReport) -> str:
-        """Get the correct indentation based on whether a rule exists."""
-        return get_indent(2) if "rule" in report.scenario else get_indent(1)

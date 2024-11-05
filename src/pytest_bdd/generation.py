@@ -11,7 +11,7 @@ from mako.lookup import TemplateLookup  # type: ignore
 
 from .compat import getfixturedefs
 from .feature import get_features
-from .parser import Feature, Rule
+from .parser import Feature, Rule, ScenarioTemplate, Step
 from .scenario import inject_fixturedefs_for_step, make_python_docstring, make_python_name, make_string_literal
 from .steps import get_step_fixture_name
 from .types import STEP_TYPES
@@ -26,7 +26,6 @@ if TYPE_CHECKING:
     from _pytest.main import Session
     from _pytest.python import Function
 
-    from .parser import ScenarioTemplate, Step
 
 template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
 
@@ -111,26 +110,22 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
                 red=True,
             )
         elif step.background is not None:
-            feature_or_rule = step.background.parent
-            if isinstance(feature_or_rule, Feature):
-                tw.line(
-                    (
-                        f"Step {step} is not defined in the background of the feature "
-                        f'"{feature_or_rule.name}" in the file '
-                        f"{feature_or_rule.filename}:{step.line_number}"
-                    ),
-                    red=True,
-                )
-            elif isinstance(feature_or_rule, Rule):
-                _feature: Feature = feature_or_rule.feature
-                tw.line(
-                    (
-                        f"Step {step} is not defined in the background of the rule "
-                        f'"{feature_or_rule.name}" in the file '
-                        f"{_feature.filename}:{step.line_number}"
-                    ),
-                    red=True,
-                )
+            parent = step.background.parent
+
+            if isinstance(parent, Rule):
+                parent_type = "rule"
+                filename = parent.feature.filename
+            elif isinstance(parent, Feature):
+                parent_type = "feature"
+                filename = parent.filename
+            else:
+                raise NotImplementedError(f"Unhandled parent type: {type(parent)}")
+
+            message = (
+                f"Step {step} is not defined in the background of the {parent_type} "
+                f'"{parent.name}" in the file {filename}:{step.line_number}'
+            )
+            tw.line(message, red=True)
 
     if step:
         tw.sep("-", red=True)

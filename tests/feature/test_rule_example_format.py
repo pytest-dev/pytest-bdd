@@ -8,51 +8,51 @@ def test_rule_example_format(pytester):
             """\
             Feature: Calculator
 
-              In order to perform basic arithmetic operations
-              As a user
-              I want to use a calculator
-
-              Background:
-                Given I have got my calculator ready
-
-              Scenario: I check the calculator powers on
-                Given I press the power button
-                Then the screen turns on
-
-              Rule: Addition
-                In order to add two numbers
-                As a user, I want the calculator to give me the sum.
+                In order to perform basic arithmetic operations
+                As a user
+                I want to use a calculator
 
                 Background:
-                  Given I check the add button is working
+                    Given I have got my calculator ready
 
-                Example: Adding two positive numbers
-                  Given the first number is 3
-                  And the second number is 5
-                  When I press add
-                  Then the result should be 8
+                Scenario: I check the calculator powers on
+                    Given I press the power button
+                    Then the screen turns on
 
-                Example: Adding a positive number and a negative number
-                  Given the first number is 7
-                  And the second number is -2
-                  When I press add
-                  Then the result should be 5
+                Rule: Addition
+                    In order to add two numbers
+                    As a user, I want the calculator to give me the sum.
 
-              Rule: Subtraction
-                In order to subtract one number from another
-                As a user, I want the calculator to give me the difference.
+                    Background:
+                        Given I check the add button is working
 
-                Example: Subtracting a smaller number from a larger number
-                  Given the first number is 10
-                  And the second number is 4
-                  When I press subtract
-                  Then the result should be 6
+                    Example: Adding two positive numbers
+                        Given the first number is 3
+                        And the second number is 5
+                        When I press add
+                        Then the result should be 8
 
-                Example: Subtracting a larger number from a smaller number
-                  Given the first number is 3
-                  And the second number is 7
-                  When I press subtract
-                  Then the result should be -4
+                    Example: Adding a positive number and a negative number
+                        Given the first number is 7
+                        And the second number is -2
+                        When I press add
+                        Then the result should be 5
+
+                Rule: Subtraction
+                    In order to subtract one number from another
+                    As a user, I want the calculator to give me the difference.
+
+                    Example: Subtracting a smaller number from a larger number
+                        Given the first number is 10
+                        And the second number is 4
+                        When I press subtract
+                        Then the result should be 6
+
+                        Example: Subtracting a larger number from a smaller number
+                            Given the first number is 3
+                            And the second number is 7
+                            When I press subtract
+                            Then the result should be -4
             """
         ),
     )

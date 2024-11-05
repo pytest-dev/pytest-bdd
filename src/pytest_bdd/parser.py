@@ -156,7 +156,7 @@ class ScenarioTemplate:
         # Add background steps from the feature
         if self.feature.background:
             steps.extend(self.feature.background.steps)
-        if self.rule and self.rule.background:
+        if self.rule is not None and self.rule.background is not None:
             # Add background steps from the rule
             steps.extend(self.rule.background.steps)
         return steps
@@ -473,6 +473,7 @@ class FeatureParser:
         return get_gherkin_document(self.abs_filename, self.encoding)
 
     def parse(self) -> Feature:
+        """Parse the feature file and return a Feature object with its backgrounds, rules, and scenarios."""
         gherkin_doc: GherkinDocument = self._parse_feature_file()
         feature_data: GherkinFeature = gherkin_doc.feature
         feature = Feature(
@@ -491,24 +492,48 @@ class FeatureParser:
         for child in feature_data.children:
             if child.background:
                 feature.background = self.parse_background(child.background, feature)
-            if child.rule:
-                _backgrounds = [c.background for c in child.rule.children if c.background]
-                _rule = Rule(
-                    keyword=child.rule.keyword,
-                    name=child.rule.name,
-                    description=child.rule.description,
-                    tags=self.get_tag_names(child.rule.tags),
-                    feature=feature,
-                )
-                if _backgrounds:
-                    _rule.add_background(self.parse_background(_backgrounds[0], _rule))
-                rule_scenarios = [c.scenario for c in child.rule.children if c.scenario]
-                if rule_scenarios:
-                    for rule_scenario in rule_scenarios:
-                        scenario = self.parse_scenario(rule_scenario, feature, _rule)
-                        feature.scenarios[scenario.name] = scenario
+            elif child.rule:
+                self._parse_and_add_rule(child.rule, feature)
             elif child.scenario:
-                scenario = self.parse_scenario(child.scenario, feature)
-                feature.scenarios[scenario.name] = scenario
+                self._parse_and_add_scenario(child.scenario, feature)
 
         return feature
+
+    def _parse_and_add_rule(self, rule_data, feature):
+        """Parse a rule, including its background and scenarios, and add to the feature."""
+        rule = Rule(
+            keyword=rule_data.keyword,
+            name=rule_data.name,
+            description=rule_data.description,
+            tags=self.get_tag_names(rule_data.tags),
+            feature=feature,
+        )
+
+        # Add background if present within the rule
+        background = self._extract_rule_background(rule_data, rule)
+        if background:
+            rule.add_background(background)
+
+        # Parse and add scenarios under the rule
+        for rule_scenario in self._extract_rule_scenarios(rule_data):
+            scenario = self.parse_scenario(rule_scenario, feature, rule)
+            feature.scenarios[scenario.name] = scenario
+
+    def _extract_rule_background(self, rule_data, rule):
+        """Extract the first background from rule children if it exists."""
+        for child in rule_data.children:
+            if child.background:
+                return self.parse_background(child.background, rule)
+        return None
+
+    @staticmethod
+    def _extract_rule_scenarios(rule_data):
+        """Yield each scenario under a rule."""
+        for child in rule_data.children:
+            if child.scenario:
+                yield child.scenario
+
+    def _parse_and_add_scenario(self, scenario_data, feature, rule=None):
+        """Parse an individual scenario and add it to the feature's scenarios."""
+        scenario = self.parse_scenario(scenario_data, feature, rule)
+        feature.scenarios[scenario.name] = scenario

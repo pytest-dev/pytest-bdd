@@ -545,11 +545,6 @@ Example:
                 When I process the input
                 Then the result should be an error
 
-In Gherkin, `Scenario` and `Example` are interchangeable.
-You can use either keyword to define individual test cases.
-For example, the previous rule could have been written with the `Scenario` keyword instead of `Example`,
-and the behaviour would remain the same.
-
 
 Datatables
 ----------
