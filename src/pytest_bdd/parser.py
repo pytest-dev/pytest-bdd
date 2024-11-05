@@ -4,7 +4,7 @@ import os.path
 import re
 import textwrap
 from collections import OrderedDict
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Generator, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -13,6 +13,7 @@ from .gherkin_parser import Background as GherkinBackground
 from .gherkin_parser import DataTable
 from .gherkin_parser import Feature as GherkinFeature
 from .gherkin_parser import GherkinDocument
+from .gherkin_parser import Rule as GherkinRule
 from .gherkin_parser import Scenario as GherkinScenario
 from .gherkin_parser import Step as GherkinStep
 from .gherkin_parser import Tag as GherkinTag
@@ -499,7 +500,7 @@ class FeatureParser:
 
         return feature
 
-    def _parse_and_add_rule(self, rule_data, feature):
+    def _parse_and_add_rule(self, rule_data: GherkinRule, feature: Feature) -> None:
         """Parse a rule, including its background and scenarios, and add to the feature."""
         rule = Rule(
             keyword=rule_data.keyword,
@@ -519,7 +520,7 @@ class FeatureParser:
             scenario = self.parse_scenario(rule_scenario, feature, rule)
             feature.scenarios[scenario.name] = scenario
 
-    def _extract_rule_background(self, rule_data, rule):
+    def _extract_rule_background(self, rule_data: GherkinRule, rule: Rule) -> Background | None:
         """Extract the first background from rule children if it exists."""
         for child in rule_data.children:
             if child.background:
@@ -527,13 +528,15 @@ class FeatureParser:
         return None
 
     @staticmethod
-    def _extract_rule_scenarios(rule_data):
+    def _extract_rule_scenarios(rule_data: GherkinRule) -> Generator[GherkinScenario]:
         """Yield each scenario under a rule."""
         for child in rule_data.children:
             if child.scenario:
                 yield child.scenario
 
-    def _parse_and_add_scenario(self, scenario_data, feature, rule=None):
+    def _parse_and_add_scenario(
+        self, scenario_data: GherkinScenario, feature: Feature, rule: Rule | None = None
+    ) -> None:
         """Parse an individual scenario and add it to the feature's scenarios."""
         scenario = self.parse_scenario(scenario_data, feature, rule)
         feature.scenarios[scenario.name] = scenario
