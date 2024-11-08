@@ -210,7 +210,9 @@ def _execute_step_function(
         if step.docstring is not None:
             kwargs["docstring"] = step.docstring
 
-        kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
+        for arg in args:
+            if arg not in kwargs:
+                kwargs[arg] = request.getfixturevalue(arg)
 
         kw["step_func_args"] = kwargs
 
