@@ -276,8 +276,9 @@ def _get_scenario_decorator(
         @pytest.mark.usefixtures(*func_args)
         def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> Any:
             __tracebackhide__ = True
-            scenario = templated_scenario.render(_pytest_bdd_example)
-            _execute_scenario(feature, scenario, request)
+            rendered_scenarios = templated_scenario.render(_pytest_bdd_example)
+            for scenario in rendered_scenarios:
+                _execute_scenario(feature, scenario, request)
             fixture_values = [request.getfixturevalue(arg) for arg in func_args]
             return fn(*fixture_values)
 
@@ -289,7 +290,7 @@ def _get_scenario_decorator(
                 example_parametrizations,
             )(scenario_wrapper)
 
-        for tag in templated_scenario.tags.union(feature.tags):
+        for tag in templated_scenario.tags | feature.tags:
             config = CONFIG_STACK[-1]
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 
@@ -303,12 +304,14 @@ def _get_scenario_decorator(
 def collect_example_parametrizations(
     templated_scenario: ScenarioTemplate,
 ) -> list[ParameterSet] | None:
-    if templated_scenario.examples is None:
+    if not templated_scenario.examples:
         return None
-    if contexts := list(templated_scenario.examples.as_contexts()):
-        return [pytest.param(context, id="-".join(context.values())) for context in contexts]
-    else:
+    contexts = []
+    for _examples in templated_scenario.examples:
+        contexts.extend(_examples.as_contexts())
+    if not contexts:
         return None
+    return [pytest.param(context, id="-".join(context.values())) for context in contexts]
 
 
 def scenario(

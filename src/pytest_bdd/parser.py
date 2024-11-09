@@ -124,7 +124,7 @@ class ScenarioTemplate:
     description: str | None = None
     tags: set[str] = field(default_factory=set)
     _steps: list[Step] = field(init=False, default_factory=list)
-    examples: Examples | None = field(default_factory=Examples)
+    examples: list[Examples] = field(default_factory=list)
 
     def add_step(self, step: Step) -> None:
         """Add a step to the scenario.
@@ -144,19 +144,20 @@ class ScenarioTemplate:
         """
         return (self.feature.background.steps if self.feature.background else []) + self._steps
 
-    def render(self, context: Mapping[str, Any]) -> Scenario:
+    def render(self, context: Mapping[str, Any]) -> list[Scenario]:
         """Render the scenario with the given context.
 
         Args:
             context (Mapping[str, Any]): The context for rendering steps.
 
         Returns:
-            Scenario: A Scenario object with steps rendered based on the context.
+            list[Scenario]: A list of Scenario objects with steps rendered based on the context.
         """
-        background_steps = self.feature.background.steps if self.feature.background else []
-        scenario_steps = [
+        scenarios = []
+        base_context = context or {}
+        base_steps = [
             Step(
-                name=step.render(context),
+                name=step.render(base_context),
                 type=step.type,
                 indent=step.indent,
                 line_number=step.line_number,
@@ -166,16 +167,52 @@ class ScenarioTemplate:
             )
             for step in self._steps
         ]
-        steps = background_steps + scenario_steps
-        return Scenario(
-            feature=self.feature,
-            keyword=self.keyword,
-            name=self.name,
-            line_number=self.line_number,
-            steps=steps,
-            tags=self.tags,
-            description=self.description,
-        )
+        background_steps = self.feature.background.steps if self.feature.background else []
+
+        if not self.examples:
+            # Render a single scenario without examples
+            scenarios.append(
+                Scenario(
+                    feature=self.feature,
+                    keyword=self.keyword,
+                    name=self.name,
+                    line_number=self.line_number,
+                    steps=background_steps + base_steps,
+                    tags=self.tags,
+                    description=self.description,
+                )
+            )
+        else:
+            # Render multiple scenarios with each example context
+            for examples in self.examples:
+                for example_context in examples.as_contexts():
+                    full_context = {**base_context, **example_context}
+                    example_steps = [
+                        Step(
+                            name=step.render(full_context),
+                            type=step.type,
+                            indent=step.indent,
+                            line_number=step.line_number,
+                            keyword=step.keyword,
+                            datatable=step.datatable,
+                            docstring=step.docstring,
+                        )
+                        for step in self._steps
+                    ]
+                    example_tags = self.tags.union(examples.tags if hasattr(examples, "tags") else set())
+                    scenarios.append(
+                        Scenario(
+                            feature=self.feature,
+                            keyword=self.keyword,
+                            name=self.name,
+                            line_number=self.line_number,
+                            steps=background_steps + example_steps,
+                            tags=example_tags,
+                            description=self.description,
+                        )
+                    )
+
+        return scenarios
 
 
 @dataclass(eq=False)
@@ -401,6 +438,7 @@ class FeatureParser:
         for step in self.parse_steps(scenario_data.steps):
             scenario.add_step(step)
 
+        # Loop over multiple example tables if they exist
         for example_data in scenario_data.examples:
             examples = Examples(
                 line_number=example_data.location.line,
@@ -413,7 +451,7 @@ class FeatureParser:
                     for row in example_data.table_body:
                         values = [cell.value or "" for cell in row.cells]
                         examples.add_example(values)
-                    scenario.examples = examples
+                scenario.examples.append(examples)
 
         return scenario
 
