@@ -32,7 +32,6 @@ from .steps import StepFunctionContext, get_step_fixture_name
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
 
 if TYPE_CHECKING:
-    from _pytest.mark.structures import ParameterSet
     from _pytest.nodes import Node
 
     from .parser import Feature, Scenario, ScenarioTemplate, Step
@@ -303,13 +302,17 @@ def _get_scenario_decorator(
 
 def collect_example_parametrizations(
     templated_scenario: ScenarioTemplate,
-) -> list[ParameterSet] | None:
+) -> list[pytest.ParameterSet] | None:
     parametrizations = []
     has_multiple_examples = len(templated_scenario.examples) > 1
 
     for example_id, examples in enumerate(templated_scenario.examples):
-        with warns(PytestUnknownMarkWarning, match=r"Unknown pytest\.mark\.tag"):
-            example_marks = [pytest.mark.tag(tag) for tag in examples.tags]
+        _tags = examples.tags or []
+        example_marks = []
+        if _tags:
+            with warns(PytestUnknownMarkWarning, match=r"Unknown pytest\.mark\.\w+"):
+                example_marks = [pytest.mark.__getattr__(tag) for tag in _tags]
+
         for context in examples.as_contexts() or [{}]:
             test_id = "-".join((str(example_id), *context.values())) if has_multiple_examples else "-".join(
                 context.values())
@@ -322,7 +325,6 @@ def collect_example_parametrizations(
             )
 
     return parametrizations or None
-
 
 def scenario(
     feature_name: str,

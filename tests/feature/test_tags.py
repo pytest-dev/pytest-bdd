@@ -226,3 +226,47 @@ def test_multiline_tags(pytester):
 
     result = pytester.runpytest("-m", "tag2", "-vv")
     result.assert_outcomes(passed=1, deselected=1)
+
+
+def test_tags_against_multiple_examples_tables(pytester):
+    pytester.makefile(
+        ".feature",
+        test="""\
+    Feature: Scenario with tags over multiple lines
+
+        Scenario Outline: Tags
+            Given I have a <item>
+        
+        @food
+        Examples: Food
+            | item |
+            | bun  |
+            | ice  |
+            
+        @drink
+        Examples: Drinks
+            | item  |
+            | water |
+            | juice |
+    """,
+    )
+    pytester.makepyfile(
+        """
+        from pytest_bdd import given, scenarios, parsers
+
+        scenarios('test.feature')
+
+        @given(parsers.parse('I have a {item}'))
+        def _(item: str):
+            pass
+    """
+    )
+
+    result = pytester.runpytest("-m", "food", "-vv")
+    result.assert_outcomes(passed=2, deselected=2)
+
+    result = pytester.runpytest("-m", "drink", "-vv")
+    result.assert_outcomes(passed=2, deselected=2)
+
+    result = pytester.runpytest("-m", "food or drink", "-vv")
+    result.assert_outcomes(passed=4, deselected=0)

@@ -82,22 +82,22 @@ def test_outlined(pytester):
 def test_multiple_outlined(pytester):
     pytester.makefile(
         ".feature",
-        outline=textwrap.dedent(
+        outline_multi_example=textwrap.dedent(
             """\
-            Feature: Outline
+            Feature: Outline With Multiple Examples
                 Scenario Outline: Outlined given, when, thens with multiple examples tables
                     Given there are <start> cucumbers
                     When I eat <eat> cucumbers
                     Then I should have <left> cucumbers
 
                     @positive
-                    Examples: Positive result
+                    Examples: Positive results
                         | start | eat | left |
                         |  12   |  5  |  7   |
                         |  5    |  4  |  1   |
                     
                     @negative
-                    Examples: Negative result
+                    Examples: Negative results
                         | start | eat | left |
                         |  3    |  9  |  -6  |
                         |  1    |  4  |  -3  |
@@ -110,15 +110,10 @@ def test_multiple_outlined(pytester):
     pytester.makepyfile(
         textwrap.dedent(
             """\
-        from pytest_bdd import scenario
+        from pytest_bdd import scenarios
 
-        @scenario(
-            "outline.feature",
-            "Outlined given, when, thens with multiple examples tables",
-        )
-        def test_outline(request):
-            pass
-
+        scenarios('outline_multi_example.feature')
+        
         """
         )
     )
