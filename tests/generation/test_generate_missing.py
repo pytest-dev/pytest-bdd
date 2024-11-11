@@ -84,7 +84,7 @@ def test_generate_missing(pytester):
         ['Step Given "I have a foobar" is not defined in the background of the feature "Missing code generation" *']
     )
 
-    result.stdout.fnmatch_lines(["Please place the code above to the test file(s):"])
+    result.stdout.fnmatch_lines(["Please place the code above into the test file(s):"])
 
 
 def test_generate_missing_with_step_parsers(pytester):

@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
+from pytest import warns, PytestUnknownMarkWarning
 from typing_extensions import ParamSpec
 
 from . import exceptions
@@ -276,9 +277,8 @@ def _get_scenario_decorator(
         @pytest.mark.usefixtures(*func_args)
         def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> Any:
             __tracebackhide__ = True
-            rendered_scenarios = templated_scenario.render(_pytest_bdd_example)
-            for scenario in rendered_scenarios:
-                _execute_scenario(feature, scenario, request)
+            scenario = templated_scenario.render(_pytest_bdd_example)
+            _execute_scenario(feature, scenario, request)
             fixture_values = [request.getfixturevalue(arg) for arg in func_args]
             return fn(*fixture_values)
 
@@ -304,14 +304,24 @@ def _get_scenario_decorator(
 def collect_example_parametrizations(
     templated_scenario: ScenarioTemplate,
 ) -> list[ParameterSet] | None:
-    if not templated_scenario.examples:
-        return None
-    contexts = []
-    for _examples in templated_scenario.examples:
-        contexts.extend(_examples.as_contexts())
-    if not contexts:
-        return None
-    return [pytest.param(context, id="-".join(context.values())) for context in contexts]
+    parametrizations = []
+    has_multiple_examples = len(templated_scenario.examples) > 1
+
+    for example_id, examples in enumerate(templated_scenario.examples):
+        with warns(PytestUnknownMarkWarning, match=r"Unknown pytest\.mark\.tag"):
+            example_marks = [pytest.mark.tag(tag) for tag in examples.tags]
+        for context in examples.as_contexts() or [{}]:
+            test_id = "-".join((str(example_id), *context.values())) if has_multiple_examples else "-".join(
+                context.values())
+            parametrizations.append(
+                pytest.param(
+                    context,
+                    id=test_id,
+                    marks=example_marks,
+                ),
+            )
+
+    return parametrizations or None
 
 
 def scenario(

@@ -22,6 +22,18 @@ from .types import STEP_TYPE_BY_PARSER_KEYWORD
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
 
 
+def get_tag_names(tag_data: list[GherkinTag]) -> set[str]:
+    """Extract tag names from tag data.
+
+    Args:
+        tag_data (List[dict]): The tag data to extract names from.
+
+    Returns:
+        set[str]: A set of tag names.
+    """
+    return {tag.name.lstrip("@") for tag in tag_data}
+
+
 @dataclass(eq=False)
 class Feature:
     """Represents a feature parsed from a feature file.
@@ -64,6 +76,7 @@ class Examples:
     name: str | None = None
     example_params: list[str] = field(default_factory=list)
     examples: list[Sequence[str]] = field(default_factory=list)
+    tags: set[str] = field(default_factory=set)
 
     def set_param_names(self, keys: Iterable[str]) -> None:
         """Set the parameter names for the examples.
@@ -144,20 +157,19 @@ class ScenarioTemplate:
         """
         return (self.feature.background.steps if self.feature.background else []) + self._steps
 
-    def render(self, context: Mapping[str, Any]) -> list[Scenario]:
+    def render(self, context: Mapping[str, Any]) -> Scenario:
         """Render the scenario with the given context.
 
         Args:
             context (Mapping[str, Any]): The context for rendering steps.
 
         Returns:
-            list[Scenario]: A list of Scenario objects with steps rendered based on the context.
+            Scenario: A Scenario object with steps rendered based on the context.
         """
-        scenarios = []
-        base_context = context or {}
-        base_steps = [
+        background_steps = self.feature.background.steps if self.feature.background else []
+        scenario_steps = [
             Step(
-                name=step.render(base_context),
+                name=step.render(context),
                 type=step.type,
                 indent=step.indent,
                 line_number=step.line_number,
@@ -167,52 +179,16 @@ class ScenarioTemplate:
             )
             for step in self._steps
         ]
-        background_steps = self.feature.background.steps if self.feature.background else []
-
-        if not self.examples:
-            # Render a single scenario without examples
-            scenarios.append(
-                Scenario(
-                    feature=self.feature,
-                    keyword=self.keyword,
-                    name=self.name,
-                    line_number=self.line_number,
-                    steps=background_steps + base_steps,
-                    tags=self.tags,
-                    description=self.description,
-                )
-            )
-        else:
-            # Render multiple scenarios with each example context
-            for examples in self.examples:
-                for example_context in examples.as_contexts():
-                    full_context = {**base_context, **example_context}
-                    example_steps = [
-                        Step(
-                            name=step.render(full_context),
-                            type=step.type,
-                            indent=step.indent,
-                            line_number=step.line_number,
-                            keyword=step.keyword,
-                            datatable=step.datatable,
-                            docstring=step.docstring,
-                        )
-                        for step in self._steps
-                    ]
-                    example_tags = self.tags.union(examples.tags if hasattr(examples, "tags") else set())
-                    scenarios.append(
-                        Scenario(
-                            feature=self.feature,
-                            keyword=self.keyword,
-                            name=self.name,
-                            line_number=self.line_number,
-                            steps=background_steps + example_steps,
-                            tags=example_tags,
-                            description=self.description,
-                        )
-                    )
-
-        return scenarios
+        steps = background_steps + scenario_steps
+        return Scenario(
+            feature=self.feature,
+            keyword=self.keyword,
+            name=self.name,
+            line_number=self.line_number,
+            steps=steps,
+            tags=self.tags,
+            description=self.description,
+        )
 
 
 @dataclass(eq=False)
@@ -364,18 +340,6 @@ class FeatureParser:
         self.rel_filename = os.path.join(os.path.basename(basedir), filename)
         self.encoding = encoding
 
-    @staticmethod
-    def get_tag_names(tag_data: list[GherkinTag]) -> set[str]:
-        """Extract tag names from tag data.
-
-        Args:
-            tag_data (List[dict]): The tag data to extract names from.
-
-        Returns:
-            set[str]: A set of tag names.
-        """
-        return {tag.name.lstrip("@") for tag in tag_data}
-
     def parse_steps(self, steps_data: list[GherkinStep]) -> list[Step]:
         """Parse a list of step data into Step objects.
 
@@ -432,7 +396,7 @@ class FeatureParser:
             name=scenario_data.name,
             line_number=scenario_data.location.line,
             templated=templated,
-            tags=self.get_tag_names(scenario_data.tags),
+            tags=get_tag_names(scenario_data.tags),
             description=textwrap.dedent(scenario_data.description),
         )
         for step in self.parse_steps(scenario_data.steps):
@@ -443,6 +407,7 @@ class FeatureParser:
             examples = Examples(
                 line_number=example_data.location.line,
                 name=example_data.name,
+                tags=get_tag_names(example_data.tags),
             )
             if example_data.table_header is not None:
                 param_names = [cell.value for cell in example_data.table_header.cells]
@@ -482,7 +447,7 @@ class FeatureParser:
             filename=self.abs_filename,
             rel_filename=self.rel_filename,
             name=feature_data.name,
-            tags=self.get_tag_names(feature_data.tags),
+            tags=get_tag_names(feature_data.tags),
             background=None,
             line_number=feature_data.location.line,
             description=textwrap.dedent(feature_data.description),

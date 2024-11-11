@@ -104,10 +104,10 @@ class Row:
 @dataclass
 class ExamplesTable:
     location: Location
+    tags: list[Tag]
     name: str | None = None
     table_header: Row | None = None
     table_body: list[Row] | None = field(default_factory=list)
-    tags: list[str] = field(default_factory=set)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
