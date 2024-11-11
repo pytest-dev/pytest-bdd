@@ -95,7 +95,7 @@ def test_multiple_outlined(pytester):
                         | start | eat | left |
                         |  12   |  5  |  7   |
                         |  5    |  4  |  1   |
-                    
+
                     @negative
                     Examples: Negative results
                         | start | eat | left |
@@ -113,7 +113,7 @@ def test_multiple_outlined(pytester):
         from pytest_bdd import scenarios
 
         scenarios('outline_multi_example.feature')
-        
+
         """
         )
     )

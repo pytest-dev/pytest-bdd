@@ -236,13 +236,13 @@ def test_tags_against_multiple_examples_tables(pytester):
 
         Scenario Outline: Tags
             Given I have a <item>
-        
+
         @food
         Examples: Food
             | item |
             | bun  |
             | ice  |
-            
+
         @drink
         Examples: Drinks
             | item  |

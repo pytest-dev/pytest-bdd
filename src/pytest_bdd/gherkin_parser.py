@@ -116,7 +116,7 @@ class ExamplesTable:
             name=data.get("name"),
             table_header=Row.from_dict(data["tableHeader"]) if data.get("tableHeader") else None,
             table_body=[Row.from_dict(row) for row in data.get("tableBody", [])],
-            tags=[Tag.from_dict(tag) for tag in data["tags"]]
+            tags=[Tag.from_dict(tag) for tag in data["tags"]],
         )
 
 

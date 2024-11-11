@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
-from pytest import warns, PytestUnknownMarkWarning
+from pytest import PytestUnknownMarkWarning, warns
 from typing_extensions import ParamSpec
 
 from . import exceptions
@@ -314,8 +314,9 @@ def collect_example_parametrizations(
                 example_marks = [pytest.mark.__getattr__(tag) for tag in _tags]
 
         for context in examples.as_contexts() or [{}]:
-            test_id = "-".join((str(example_id), *context.values())) if has_multiple_examples else "-".join(
-                context.values())
+            test_id = (
+                "-".join((str(example_id), *context.values())) if has_multiple_examples else "-".join(context.values())
+            )
             parametrizations.append(
                 pytest.param(
                     context,
@@ -325,6 +326,7 @@ def collect_example_parametrizations(
             )
 
     return parametrizations or None
+
 
 def scenario(
     feature_name: str,
