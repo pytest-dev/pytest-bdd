@@ -17,13 +17,11 @@ import contextlib
 import logging
 import os
 import re
-import warnings
 from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
-from pytest import PytestUnknownMarkWarning
 from typing_extensions import ParamSpec
 
 from . import exceptions
@@ -310,9 +308,7 @@ def collect_example_parametrizations(
     for examples in templated_scenario.examples:
         tags: set = examples.tags or set()
 
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=PytestUnknownMarkWarning)
-            example_marks = [getattr(pytest.mark, tag) for tag in tags]
+        example_marks = [getattr(pytest.mark, tag) for tag in tags]
 
         for context in examples.as_contexts() or [{}]:
             param_id = "-".join(context.values())
