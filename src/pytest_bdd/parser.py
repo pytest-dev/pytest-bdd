@@ -137,7 +137,7 @@ class ScenarioTemplate:
     description: str | None = None
     tags: set[str] = field(default_factory=set)
     _steps: list[Step] = field(init=False, default_factory=list)
-    examples: list[Examples] | None = field(default_factory=list[Examples])
+    examples: list[Examples] = field(default_factory=list[Examples])
 
     def add_step(self, step: Step) -> None:
         """Add a step to the scenario.
