@@ -127,6 +127,11 @@ def test_multiple_outlined(pytester):
         1, 4.0, "-3",
     ]
     # fmt: on
+    result = pytester.runpytest("-k", "positive", "-vv")
+    result.assert_outcomes(passed=2, deselected=2)
+
+    result = pytester.runpytest("-k", "positive or negative", "-vv")
+    result.assert_outcomes(passed=4, deselected=0)
 
 
 def test_unused_params(pytester):

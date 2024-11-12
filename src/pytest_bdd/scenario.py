@@ -17,12 +17,13 @@ import contextlib
 import logging
 import os
 import re
+import warnings
 from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
-from pytest import PytestUnknownMarkWarning, warns
+from pytest import PytestUnknownMarkWarning
 from typing_extensions import ParamSpec
 
 from . import exceptions
@@ -305,23 +306,20 @@ def collect_example_parametrizations(
     templated_scenario: ScenarioTemplate,
 ) -> list[ParameterSet] | None:
     parametrizations = []
-    has_multiple_examples = len(templated_scenario.examples) > 1
 
-    for example_id, examples in enumerate(templated_scenario.examples):
-        _tags: set = examples.tags or set()
-        example_marks = []
-        if _tags:
-            with warns(PytestUnknownMarkWarning, match=r"Unknown pytest\.mark\.\w+"):
-                example_marks = [pytest.mark.__getattr__(tag) for tag in _tags]
+    for examples in templated_scenario.examples:
+        tags: set = examples.tags or set()
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=PytestUnknownMarkWarning)
+            example_marks = [getattr(pytest.mark, tag) for tag in tags]
 
         for context in examples.as_contexts() or [{}]:
-            test_id = (
-                "-".join((str(example_id), *context.values())) if has_multiple_examples else "-".join(context.values())
-            )
+            param_id = "-".join(context.values())
             parametrizations.append(
                 pytest.param(
                     context,
-                    id=test_id,
+                    id=param_id,
                     marks=example_marks,
                 ),
             )

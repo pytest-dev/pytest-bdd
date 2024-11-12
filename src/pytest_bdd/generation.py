@@ -62,7 +62,6 @@ def generate_code(features: list[Feature], scenarios: list[ScenarioTemplate], st
     """Generate test code for the given filenames."""
     grouped_steps = group_steps(steps)
     template = template_lookup.get_template("test.py.mak")
-
     code = template.render(
         features=features,
         scenarios=scenarios,
@@ -84,39 +83,42 @@ def show_missing_code(config: Config) -> int:
 def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> None:
     """Print missing code with TerminalWriter."""
     tw = TerminalWriter()
+    scenario = step = None
 
     for scenario in scenarios:
         tw.line()
         tw.line(
-            f'Scenario "{scenario.name}" is not bound to any test in the feature "{scenario.feature.name}"'
-            f" in the file {scenario.feature.filename}:{scenario.line_number}",
+            'Scenario "{scenario.name}" is not bound to any test in the feature "{scenario.feature.name}"'
+            " in the file {scenario.feature.filename}:{scenario.line_number}".format(scenario=scenario),
             red=True,
         )
 
-    tw.sep("-", red=True)
+    if scenario:
+        tw.sep("-", red=True)
 
     for step in steps:
         tw.line()
         if step.scenario is not None:
             tw.line(
-                f"""Step {step} is not defined in the scenario "{step.scenario.name}" in the feature"""
-                f""" "{step.scenario.feature.name}" in the file"""
-                f" {step.scenario.feature.filename}:{step.line_number}",
+                """Step {step} is not defined in the scenario "{step.scenario.name}" in the feature"""
+                """ "{step.scenario.feature.name}" in the file"""
+                """ {step.scenario.feature.filename}:{step.line_number}""".format(step=step),
                 red=True,
             )
         elif step.background is not None:
             tw.line(
-                f"""Step {step} is not defined in the background of the feature"""
-                f""" "{step.background.feature.name}" in the file"""
-                f" {step.background.feature.filename}:{step.line_number}",
+                """Step {step} is not defined in the background of the feature"""
+                """ "{step.background.feature.name}" in the file"""
+                """ {step.background.feature.filename}:{step.line_number}""".format(step=step),
                 red=True,
             )
 
-    tw.sep("-", red=True)
-    tw.line("Please place the code above into the test file(s):")
+    if step:
+        tw.sep("-", red=True)
+
+    tw.line("Please place the code above to the test file(s):")
     tw.line()
 
-    # Group features and generate the test code
     features = sorted(
         (scenario.feature for scenario in scenarios), key=lambda feature: feature.name or feature.filename
     )
