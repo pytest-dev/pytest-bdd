@@ -169,13 +169,7 @@ class ScenarioTemplate:
         Returns:
             List[Step]: A list of steps, including any background steps from the feature.
         """
-        steps = []
-        # Add all background steps
-        steps.extend(self.all_background_steps)
-        # Add the scenario's own steps
-        steps.extend(self._steps)
-
-        return steps
+        return self.all_background_steps + self._steps
 
     def render(self, context: Mapping[str, Any]) -> Scenario:
         """Render the scenario with the given context.
@@ -328,12 +322,10 @@ class Background:
     """Represents the background steps for a feature.
 
     Attributes:
-        parent (Feature | Rule): The feature or rule to which this background belongs.
         line_number (int): The line number where the background starts in the file.
         steps (List[Step]): The list of steps in the background.
     """
 
-    parent: Feature | Rule
     line_number: int
     steps: list[Step] = field(init=False, default_factory=list)
 
@@ -455,9 +447,8 @@ class FeatureParser:
 
         return scenario
 
-    def parse_background(self, background_data: GherkinBackground, parent: Feature | Rule) -> Background:
+    def parse_background(self, background_data: GherkinBackground) -> Background:
         background = Background(
-            parent=parent,
             line_number=background_data.location.line,
         )
         background.steps = self.parse_steps(background_data.steps)
@@ -492,7 +483,7 @@ class FeatureParser:
 
         for child in feature_data.children:
             if child.background:
-                feature.background = self.parse_background(child.background, feature)
+                feature.background = self.parse_background(child.background)
             elif child.rule:
                 self._parse_and_add_rule(child.rule, feature)
             elif child.scenario:
@@ -511,7 +502,7 @@ class FeatureParser:
         )
 
         # Add background if present within the rule
-        background = self._extract_rule_background(rule_data, rule)
+        background = self._extract_rule_background(rule_data)
         if background:
             rule.add_background(background)
 
@@ -520,11 +511,11 @@ class FeatureParser:
             scenario = self.parse_scenario(rule_scenario, feature, rule)
             feature.scenarios[scenario.name] = scenario
 
-    def _extract_rule_background(self, rule_data: GherkinRule, rule: Rule) -> Background | None:
+    def _extract_rule_background(self, rule_data: GherkinRule) -> Background | None:
         """Extract the first background from rule children if it exists."""
         for child in rule_data.children:
             if child.background:
-                return self.parse_background(child.background, rule)
+                return self.parse_background(child.background)
         return None
 
     @staticmethod

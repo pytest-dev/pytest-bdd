@@ -11,7 +11,7 @@ from mako.lookup import TemplateLookup  # type: ignore
 
 from .compat import getfixturedefs
 from .feature import get_features
-from .parser import Feature, Rule, ScenarioTemplate, Step
+from .parser import Feature, ScenarioTemplate, Step
 from .scenario import inject_fixturedefs_for_step, make_python_docstring, make_python_name, make_string_literal
 from .steps import get_step_fixture_name
 from .types import STEP_TYPES
@@ -110,21 +110,7 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
                 red=True,
             )
         elif step.background is not None:
-            parent = step.background.parent
-
-            if isinstance(parent, Rule):
-                parent_type = "rule"
-                filename = parent.feature.filename
-            elif isinstance(parent, Feature):
-                parent_type = "feature"
-                filename = parent.filename
-            else:
-                raise NotImplementedError(f"Unhandled parent type: {type(parent)}")
-
-            message = (
-                f"Step {step} is not defined in the background of the {parent_type} "
-                f'"{parent.name}" in the file {filename}:{step.line_number}'
-            )
+            message = f"Background step {step} is not defined."
             tw.line(message, red=True)
 
     if step:
