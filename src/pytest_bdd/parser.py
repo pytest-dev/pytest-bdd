@@ -107,7 +107,6 @@ class Rule:
     name: str
     description: str
     tags: set[str]
-    feature: Feature
     background: Background | None = None
 
     def add_background(self, background: Background) -> None:
@@ -498,7 +497,6 @@ class FeatureParser:
             name=rule_data.name,
             description=rule_data.description,
             tags=self.get_tag_names(rule_data.tags),
-            feature=feature,
         )
 
         # Add background if present within the rule
