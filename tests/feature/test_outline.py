@@ -79,6 +79,61 @@ def test_outlined(pytester):
     # fmt: on
 
 
+def test_multiple_outlined(pytester):
+    pytester.makefile(
+        ".feature",
+        outline_multi_example=textwrap.dedent(
+            """\
+            Feature: Outline With Multiple Examples
+                Scenario Outline: Outlined given, when, thens with multiple examples tables
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers
+
+                    @positive
+                    Examples: Positive results
+                        | start | eat | left |
+                        |  12   |  5  |  7   |
+                        |  5    |  4  |  1   |
+
+                    @negative
+                    Examples: Negative results
+                        | start | eat | left |
+                        |  3    |  9  |  -6  |
+                        |  1    |  4  |  -3  |
+            """
+        ),
+    )
+
+    pytester.makeconftest(textwrap.dedent(STEPS))
+
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenarios
+
+        scenarios('outline_multi_example.feature')
+
+        """
+        )
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=4)
+    # fmt: off
+    assert collect_dumped_objects(result) == [
+        12, 5.0, "7",
+        5, 4.0, "1",
+        3, 9.0, "-6",
+        1, 4.0, "-3",
+    ]
+    # fmt: on
+    result = pytester.runpytest("-k", "positive", "-vv")
+    result.assert_outcomes(passed=2, deselected=2)
+
+    result = pytester.runpytest("-k", "positive or negative", "-vv")
+    result.assert_outcomes(passed=4, deselected=0)
+
+
 def test_unused_params(pytester):
     """Test parametrized scenario when the test function lacks parameters."""
 
