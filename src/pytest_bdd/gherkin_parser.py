@@ -104,6 +104,7 @@ class Row:
 @dataclass
 class ExamplesTable:
     location: Location
+    tags: list[Tag]
     name: str | None = None
     table_header: Row | None = None
     table_body: list[Row] | None = field(default_factory=list)
@@ -115,6 +116,7 @@ class ExamplesTable:
             name=data.get("name"),
             table_header=Row.from_dict(data["tableHeader"]) if data.get("tableHeader") else None,
             table_body=[Row.from_dict(row) for row in data.get("tableBody", [])],
+            tags=[Tag.from_dict(tag) for tag in data["tags"]],
         )
 
 

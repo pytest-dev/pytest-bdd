@@ -23,6 +23,18 @@ from .types import STEP_TYPE_BY_PARSER_KEYWORD
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
 
 
+def get_tag_names(tag_data: list[GherkinTag]) -> set[str]:
+    """Extract tag names from tag data.
+
+    Args:
+        tag_data (List[dict]): The tag data to extract names from.
+
+    Returns:
+        set[str]: A set of tag names.
+    """
+    return {tag.name.lstrip("@") for tag in tag_data}
+
+
 @dataclass(eq=False)
 class Feature:
     """Represents a feature parsed from a feature file.
@@ -65,6 +77,7 @@ class Examples:
     name: str | None = None
     example_params: list[str] = field(default_factory=list)
     examples: list[Sequence[str]] = field(default_factory=list)
+    tags: set[str] = field(default_factory=set)
 
     def set_param_names(self, keys: Iterable[str]) -> None:
         """Set the parameter names for the examples.
@@ -135,7 +148,7 @@ class ScenarioTemplate:
     description: str | None = None
     tags: set[str] = field(default_factory=set)
     _steps: list[Step] = field(init=False, default_factory=list)
-    examples: Examples | None = field(default_factory=Examples)
+    examples: list[Examples] = field(default_factory=list[Examples])
     rule: Rule | None = None
 
     def add_step(self, step: Step) -> None:
@@ -349,18 +362,6 @@ class FeatureParser:
         self.rel_filename = os.path.join(os.path.basename(basedir), filename)
         self.encoding = encoding
 
-    @staticmethod
-    def get_tag_names(tag_data: list[GherkinTag]) -> set[str]:
-        """Extract tag names from tag data.
-
-        Args:
-            tag_data (List[dict]): The tag data to extract names from.
-
-        Returns:
-            set[str]: A set of tag names.
-        """
-        return {tag.name.lstrip("@") for tag in tag_data}
-
     def parse_steps(self, steps_data: list[GherkinStep]) -> list[Step]:
         """Parse a list of step data into Step objects.
 
@@ -420,17 +421,19 @@ class FeatureParser:
             name=scenario_data.name,
             line_number=scenario_data.location.line,
             templated=templated,
-            tags=self.get_tag_names(scenario_data.tags),
+            tags=get_tag_names(scenario_data.tags),
             description=textwrap.dedent(scenario_data.description),
             rule=rule,
         )
         for step in self.parse_steps(scenario_data.steps):
             scenario.add_step(step)
 
+        # Loop over multiple example tables if they exist
         for example_data in scenario_data.examples:
             examples = Examples(
                 line_number=example_data.location.line,
                 name=example_data.name,
+                tags=get_tag_names(example_data.tags),
             )
             if example_data.table_header is not None:
                 param_names = [cell.value for cell in example_data.table_header.cells]
@@ -439,7 +442,7 @@ class FeatureParser:
                     for row in example_data.table_body:
                         values = [cell.value or "" for cell in row.cells]
                         examples.add_example(values)
-                    scenario.examples = examples
+                scenario.examples.append(examples)
 
         return scenario
 
@@ -470,7 +473,7 @@ class FeatureParser:
             filename=self.abs_filename,
             rel_filename=self.rel_filename,
             name=feature_data.name,
-            tags=self.get_tag_names(feature_data.tags),
+            tags=get_tag_names(feature_data.tags),
             background=None,
             line_number=feature_data.location.line,
             description=textwrap.dedent(feature_data.description),

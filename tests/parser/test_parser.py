@@ -163,6 +163,7 @@ def test_parser():
                             ExamplesTable(
                                 location=Location(column=5, line=26),
                                 name="",
+                                tags=[],
                                 table_header=Row(
                                     id="11",
                                     location=Location(column=7, line=27),
