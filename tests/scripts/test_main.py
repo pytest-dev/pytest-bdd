@@ -19,8 +19,8 @@ def test_main(monkeypatch, capsys):
     assert "pytest-bdd: error:" in err
 
 
-def test_issue_173(pytester):
-    """Ensure step definitions are found when using pytest.main."""
+def test_step_definitions_found_using_main(pytester):
+    """Issue 173: Ensure step definitions are found when using pytest.main."""
     pytester.makefile(
         ".feature",
         outline=textwrap.dedent(
@@ -74,7 +74,7 @@ def test_issue_173(pytester):
 
             # Programmatically run pytest
             if __name__ == "__main__":
-                pytest.main([os.path.abspath("test_issue_173.py")])
+                pytest.main([os.path.abspath("test_step_definitions_found_using_main.py")])
             """
         )
     )
