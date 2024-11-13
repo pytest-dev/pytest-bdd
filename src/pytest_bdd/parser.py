@@ -498,7 +498,7 @@ class FeatureParser:
             keyword=rule_data.keyword,
             name=rule_data.name,
             description=rule_data.description,
-            tags=self.get_tag_names(rule_data.tags),
+            tags=get_tag_names(rule_data.tags),
             background=background,
         )
 
