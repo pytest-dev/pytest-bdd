@@ -7,6 +7,7 @@ Unreleased
 - Text after the `#` character is no longer stripped from the Scenario and Feature name.
 - Gherkin keyword aliases can now be used and correctly reported in json and terminal output (see `Keywords <https://cucumber.io/docs/gherkin/reference/#keywords>` for permitted list).
 - Added localization support. The language of the feature file can be specified using the `# language: <language>` directive at the beginning of the file.
+- Rule keyword can be used in feature files (see `Rule <https://cucumber.io/docs/gherkin/reference/#rule>`)
 - Multiple example tables supported
 - Added filtering by tags against example tables
 

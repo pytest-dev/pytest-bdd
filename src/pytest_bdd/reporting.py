@@ -77,7 +77,6 @@ class ScenarioReport:
         """Scenario report constructor.
 
         :param pytest_bdd.parser.Scenario scenario: Scenario.
-        :param node: pytest test node object
         """
         self.scenario: Scenario = scenario
         self.step_reports: list[StepReport] = []
@@ -108,7 +107,7 @@ class ScenarioReport:
         scenario = self.scenario
         feature = scenario.feature
 
-        return {
+        serialized = {
             "steps": [step_report.serialize() for step_report in self.step_reports],
             "keyword": scenario.keyword,
             "name": scenario.name,
@@ -125,6 +124,16 @@ class ScenarioReport:
                 "tags": sorted(feature.tags),
             },
         }
+
+        if scenario.rule:
+            serialized["rule"] = {
+                "keyword": scenario.rule.keyword,
+                "name": scenario.rule.name,
+                "description": scenario.rule.description,
+                "tags": scenario.rule.tags,
+            }
+
+        return serialized
 
     def fail(self) -> None:
         """Stop collecting information and finalize the report as failed."""
