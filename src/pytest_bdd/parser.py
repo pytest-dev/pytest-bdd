@@ -505,8 +505,7 @@ class FeatureParser:
             rule.add_background(background)
 
         # Parse and add scenarios under the rule
-        for rule_scenario in self._extract_rule_scenarios(rule_data):
-            scenario = self.parse_scenario(rule_scenario, feature, rule)
+        for scenario in self._extract_rule_scenarios(rule_data, feature, rule):
             feature.scenarios[scenario.name] = scenario
 
     def _extract_rule_background(self, rule_data: GherkinRule) -> Background | None:
@@ -516,12 +515,13 @@ class FeatureParser:
                 return self.parse_background(child.background)
         return None
 
-    @staticmethod
-    def _extract_rule_scenarios(rule_data: GherkinRule) -> Generator[GherkinScenario]:
-        """Yield each scenario under a rule."""
+    def _extract_rule_scenarios(
+        self, rule_data: GherkinRule, feature: Feature, rule: Rule
+    ) -> Generator[ScenarioTemplate]:
+        """Yield each parsed scenario under a rule."""
         for child in rule_data.children:
             if child.scenario:
-                yield child.scenario
+                yield self.parse_scenario(child.scenario, feature, rule)
 
     def _parse_and_add_scenario(
         self, scenario_data: GherkinScenario, feature: Feature, rule: Rule | None = None
