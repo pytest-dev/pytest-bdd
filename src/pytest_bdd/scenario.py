@@ -310,7 +310,7 @@ def collect_example_parametrizations(
 
         example_marks = [getattr(pytest.mark, tag) for tag in tags]
 
-        for context in examples.as_contexts() or [{}]:
+        for context in examples.as_contexts():
             param_id = "-".join(context.values())
             parametrizations.append(
                 pytest.param(
