@@ -130,7 +130,7 @@ class ScenarioReport:
                 "keyword": scenario.rule.keyword,
                 "name": scenario.rule.name,
                 "description": scenario.rule.description,
-                "tags": sorted(scenario.rule.tags),
+                "tags": scenario.rule.tags,
             }
 
         return serialized

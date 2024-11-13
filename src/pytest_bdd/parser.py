@@ -109,9 +109,6 @@ class Rule:
     tags: set[str]
     background: Background | None = None
 
-    def add_background(self, background: Background) -> None:
-        self.background = background
-
 
 @dataclass(eq=False)
 class ScenarioTemplate:
@@ -492,19 +489,16 @@ class FeatureParser:
 
     def _parse_and_add_rule(self, rule_data: GherkinRule, feature: Feature) -> None:
         """Parse a rule, including its background and scenarios, and add to the feature."""
+        background = self._extract_rule_background(rule_data)
+
         rule = Rule(
             keyword=rule_data.keyword,
             name=rule_data.name,
             description=rule_data.description,
             tags=self.get_tag_names(rule_data.tags),
+            background=background,
         )
 
-        # Add background if present within the rule
-        background = self._extract_rule_background(rule_data)
-        if background:
-            rule.add_background(background)
-
-        # Parse and add scenarios under the rule
         for scenario in self._extract_rule_scenarios(rule_data, feature, rule):
             feature.scenarios[scenario.name] = scenario
 
