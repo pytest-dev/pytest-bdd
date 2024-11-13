@@ -336,6 +336,15 @@ def test_rule_example_format_uses_correct_keywords(pytester):
         )
     )
 
+    result = pytester.runpytest("--gherkin-terminal-reporter", "-v")
+    result.assert_outcomes(passed=3, failed=0)
+    result.stdout.fnmatch_lines("*Feature: Gherkin terminal output with rules and examples*")
+    result.stdout.fnmatch_lines("*Rule: Rule 1*")
+    result.stdout.fnmatch_lines("*Example: Example 1*")
+    result.stdout.fnmatch_lines("*Scenario: Scenario 2*")
+    result.stdout.fnmatch_lines("*Rule: Rule 2*")
+    result.stdout.fnmatch_lines("*Example: Example 3*")
+
     result = pytester.runpytest("--gherkin-terminal-reporter", "-vv")
     result.assert_outcomes(passed=3, failed=0)
     result.stdout.fnmatch_lines("*Feature: Gherkin terminal output with rules and examples*")
