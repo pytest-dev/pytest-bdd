@@ -53,7 +53,7 @@ def test_every_step_takes_param_with_the_same_name(pytester):
         """
         )
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("-s", "-v", "--full-trace")
     result.assert_outcomes(passed=1)
 
 

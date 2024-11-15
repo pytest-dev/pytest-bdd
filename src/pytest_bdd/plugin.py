@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 import pytest
 from typing_extensions import ParamSpec
 
-from . import cucumber_json, generation, gherkin_terminal_reporter, given, reporting, then, when
+from . import cucumber_json, generation, gherkin_terminal_reporter, given, parsers, reporting, then, when
 from .utils import CONFIG_STACK
 
 if TYPE_CHECKING:
@@ -55,12 +55,19 @@ def _pytest_bdd_example() -> dict:
     return {}
 
 
+@pytest.fixture
+def _pytest_step_config(request) -> Config:
+    """Provide pytest config."""
+    return request.config
+
+
 def pytest_addoption(parser: Parser) -> None:
     """Add pytest-bdd options."""
     add_bdd_ini(parser)
     cucumber_json.add_options(parser)
     generation.add_options(parser)
     gherkin_terminal_reporter.add_options(parser)
+    parsers.add_options(parser)
 
 
 def add_bdd_ini(parser: Parser) -> None:
@@ -73,6 +80,7 @@ def pytest_configure(config: Config) -> None:
     CONFIG_STACK.append(config)
     cucumber_json.configure(config)
     gherkin_terminal_reporter.configure(config)
+    parsers.configure(config)
 
 
 def pytest_unconfigure(config: Config) -> None:

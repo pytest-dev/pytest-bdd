@@ -4,10 +4,36 @@ from __future__ import annotations
 
 import abc
 import re as base_re
-from typing import Any, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 import parse as base_parse
+from _pytest.config import Config
 from parse_type import cfparse as base_cfparse
+
+if TYPE_CHECKING:
+    from _pytest.config.argparsing import Parser as PytestArgParser
+
+
+def add_options(parser: PytestArgParser) -> None:
+    """Add pytest-bdd options."""
+    group = parser.getgroup("bdd")
+    group.addoption(
+        "--bdd-default-parser",
+        action="store",
+        default=None,
+        help="Set the default step parser type (e.g. string, parse, re, cfparse).",
+    )
+
+
+def configure(config: Config):
+    """Set the default parser in pytest configuration."""
+    try:
+        parser_type = config.getoption("bdd_default_parser") or config.getini("bdd_default_parser")
+    except ValueError:
+        # If the option is not found, fallback to the default parser
+        parser_type = "string"
+
+    config._bdd_default_parser = parser_type
 
 
 class StepParser(abc.ABC):
@@ -103,18 +129,19 @@ class string(StepParser):
 TStepParser = TypeVar("TStepParser", bound=StepParser)
 
 
-@overload
-def get_parser(step_name: str) -> string: ...
-
-
-@overload
-def get_parser(step_name: TStepParser) -> TStepParser: ...
-
-
-def get_parser(step_name: str | StepParser) -> StepParser:
+def get_parser(step_name: str | StepParser, config: Config | None = None) -> StepParser:
     """Get parser by given name."""
-
     if isinstance(step_name, StepParser):
         return step_name
 
-    return string(step_name)
+    default_parser = getattr(config, "_bdd_default_parser", "string") if config else "string"
+
+    parser_classes = {
+        "string": string,
+        "parse": parse,
+        "re": re,
+        "cfparse": cfparse,
+    }
+
+    parser_cls = parser_classes.get(default_parser, string)
+    return parser_cls(step_name)
