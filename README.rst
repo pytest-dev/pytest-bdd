@@ -513,6 +513,103 @@ Example:
     def should_have_left_cucumbers(cucumbers, left):
         assert cucumbers["start"] - cucumbers["eat"] == left
 
+Rules
+-----
+
+In Gherkin, `Rules` allow you to group related scenarios or examples under a shared context.
+This is useful when you want to define different conditions or behaviours
+for multiple examples that follow a similar structure.
+You can use either ``Scenario`` or ``Example`` to define individual cases, as they are aliases and function identically.
+
+Additionally, **tags** applied to a rule will be automatically applied to all the **examples or scenarios**
+under that rule, making it easier to organize and filter tests during execution.
+
+Example:
+
+.. code-block:: gherkin
+
+    Feature: Rules and examples
+
+        @feature_tag
+        Rule: A rule for valid cases
+
+            @rule_tag
+            Example: Valid case 1
+                Given I have a valid input
+                When I process the input
+                Then the result should be successful
+
+        Rule: A rule for invalid cases
+            Example: Invalid case
+                Given I have an invalid input
+                When I process the input
+                Then the result should be an error
+
+
+Scenario Outlines with Multiple Example Tables
+----------------------------------------------
+
+In `pytest-bdd`, you can use multiple example tables in a scenario outline to test
+different sets of input data under various conditions.
+You can define separate `Examples` blocks, each with its own table of data,
+and optionally tag them to differentiate between positive, negative, or any other conditions.
+
+Example:
+
+.. code-block:: gherkin
+
+    # content of scenario_outline.feature
+
+    Feature: Scenario outlines with multiple examples tables
+        Scenario Outline: Outlined with multiple example tables
+            Given there are <start> cucumbers
+            When I eat <eat> cucumbers
+            Then I should have <left> cucumbers
+
+            @positive
+            Examples: Positive results
+                | start | eat | left |
+                |  12   |  5  |  7   |
+                |  5    |  4  |  1   |
+
+            @negative
+            Examples: Impossible negative results
+                | start | eat | left |
+                |  3    |  9  |  -6  |
+                |  1    |  4  |  -3  |
+
+.. code-block:: python
+
+    from pytest_bdd import scenarios, given, when, then, parsers
+
+
+    scenarios("scenario_outline.feature")
+
+
+    @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="cucumbers")
+    def given_cucumbers(start):
+        return {"start": start, "eat": 0}
+
+
+    @when(parsers.parse("I eat {eat:d} cucumbers"))
+    def eat_cucumbers(cucumbers, eat):
+        cucumbers["eat"] += eat
+
+
+    @then(parsers.parse("I should have {left:d} cucumbers"))
+    def should_have_left_cucumbers(cucumbers, left):
+        assert cucumbers["start"] - cucumbers["eat"] == left
+
+
+When you filter scenarios by a tag, only the examples associated with that tag will be executed.
+This allows you to run a specific subset of your test cases based on the tag.
+For example, in the following scenario outline, if you filter by the @positive tag,
+only the examples under the "Positive results" table will be executed, and the "Negative results" table will be ignored.
+
+.. code-block:: bash
+
+    pytest -k "positive"
+
 
 Datatables
 ----------

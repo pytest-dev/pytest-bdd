@@ -291,7 +291,8 @@ def _get_scenario_decorator(
                 example_parametrizations,
             )(scenario_wrapper)
 
-        for tag in templated_scenario.tags.union(feature.tags):
+        rule_tags = set() if templated_scenario.rule is None else templated_scenario.rule.tags
+        for tag in templated_scenario.tags | feature.tags | rule_tags:
             config = CONFIG_STACK[-1]
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 
@@ -305,12 +306,24 @@ def _get_scenario_decorator(
 def collect_example_parametrizations(
     templated_scenario: ScenarioTemplate,
 ) -> list[ParameterSet] | None:
-    if templated_scenario.examples is None:
-        return None
-    if contexts := list(templated_scenario.examples.as_contexts()):
-        return [pytest.param(context, id="-".join(context.values())) for context in contexts]
-    else:
-        return None
+    parametrizations = []
+
+    for examples in templated_scenario.examples:
+        tags: set = examples.tags or set()
+
+        example_marks = [getattr(pytest.mark, tag) for tag in tags]
+
+        for context in examples.as_contexts():
+            param_id = "-".join(context.values())
+            parametrizations.append(
+                pytest.param(
+                    context,
+                    id=param_id,
+                    marks=example_marks,
+                ),
+            )
+
+    return parametrizations or None
 
 
 def scenario(

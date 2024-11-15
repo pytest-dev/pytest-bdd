@@ -26,13 +26,16 @@ def test_tags_selector(pytester):
     @feature_tag_1 @feature_tag_2
     Feature: Tags
 
-    @scenario_tag_01 @scenario_tag_02
-    Scenario: Tags
-        Given I have a bar
+        @scenario_tag_01 @scenario_tag_02
+        Scenario: Tags
+            Given I have a bar
 
-    @scenario_tag_10 @scenario_tag_20
-    Scenario: Tags 2
-        Given I have a bar
+        @rule_tag_01
+        Rule: Rule tag
+
+            @scenario_tag_10 @scenario_tag_20
+            Scenario: Tags 2
+                Given I have a bar
 
     """,
     )
@@ -62,6 +65,9 @@ def test_tags_selector(pytester):
 
     result = pytester.runpytest("-m", "feature_tag_10", "-vv").parseoutcomes()
     assert result["deselected"] == 2
+
+    result = pytester.runpytest("-m", "rule_tag_01", "-vv").parseoutcomes()
+    assert result["deselected"] == 1
 
 
 def test_tags_after_background_issue_160(pytester):

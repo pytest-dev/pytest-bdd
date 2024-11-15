@@ -80,9 +80,7 @@ def test_generate_missing(pytester):
         ]
     )
 
-    result.stdout.fnmatch_lines(
-        ['Step Given "I have a foobar" is not defined in the background of the feature "Missing code generation" *']
-    )
+    result.stdout.fnmatch_lines(['Background step Given "I have a foobar" is not defined*'])
 
     result.stdout.fnmatch_lines(["Please place the code above to the test file(s):"])
 
