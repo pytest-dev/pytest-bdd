@@ -279,3 +279,46 @@ def test_multilanguage_support(pytester):
         ("given", "che uso uno step con ", "esempio 2"),
         ("then", "va tutto bene"),
     ]
+
+
+def test_default_value_in_not_parsed(pytester):
+    """Test that angular brackets are not parsed for "Scenario"s.
+
+    (They should be parsed only when used in "Scenario Outline")
+
+    """
+    pytester.makefile(
+        ".feature",
+        simple="""
+        Feature: Simple feature
+            Scenario: Simple scenario
+                Given a user with username
+                Then check username defaultuser
+
+            Scenario Outline: Outlined scenario
+                Given a user with username <username>
+                Then check username <username>
+
+            Examples:
+                | username |
+                | user1    |
+        """,
+    )
+    pytester.makepyfile(
+        """
+        from pytest_bdd import scenarios, given, then, parsers
+
+        scenarios("simple.feature")
+
+        @given('a user with username', target_fixture="user")
+        @given(parsers.parse('a user with username {username}'), target_fixture="user")
+        def create_user(username="defaultuser"):
+            return username
+
+        @then(parsers.parse("check username {username}"))
+        def _(user, username):
+            assert user == username
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
