@@ -186,9 +186,7 @@ def _execute_step_function(
         """Parse and convert step arguments."""
         parsed_args = context.parser.parse_arguments(step.name)
         if parsed_args is None:
-            raise ValueError(
-                f"Unexpected `NoneType` returned from parse_arguments(...) in parser: {context.parser!r}"
-            )
+            raise ValueError(f"Unexpected `NoneType` returned from parse_arguments(...) in parser: {context.parser!r}")
         kwargs = {}
         for arg, value in parsed_args.items():
             param = func_sig.parameters.get(arg)
