@@ -18,6 +18,7 @@ import logging
 import os
 import re
 from collections.abc import Iterable, Iterator
+from inspect import signature
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import pytest
@@ -177,6 +178,38 @@ def _execute_step_function(
 ) -> None:
     """Execute step function."""
     __tracebackhide__ = True
+
+    func_sig = signature(context.step_func)
+    converters = context.converters
+
+    def _get_parsed_arguments():
+        """Parse and convert step arguments."""
+        parsed_args = context.parser.parse_arguments(step.name)
+        if parsed_args is None:
+            raise ValueError(
+                f"Unexpected `NoneType` returned from parse_arguments(...) in parser: {context.parser!r}"
+            )
+        kwargs = {}
+        for arg, value in parsed_args.items():
+            param = func_sig.parameters.get(arg)
+            if param:
+                if arg in converters:
+                    value = converters[arg](value)
+                kwargs[arg] = value
+        return kwargs
+
+    def _get_argument_values(kwargs):
+        """Get default values or request fixture values for missing arguments."""
+        for arg in get_args(context.step_func):
+            if arg not in kwargs:
+                param = func_sig.parameters.get(arg)
+                if param:
+                    if param.default != param.empty:
+                        kwargs[arg] = param.default
+                    else:
+                        kwargs[arg] = request.getfixturevalue(arg)
+        return kwargs
+
     kw = {
         "request": request,
         "feature": scenario.feature,
@@ -188,37 +221,23 @@ def _execute_step_function(
 
     request.config.hook.pytest_bdd_before_step(**kw)
 
-    # Get the step argument values.
-    converters = context.converters
-    kwargs = {}
-    args = get_args(context.step_func)
-
     try:
-        parsed_args = context.parser.parse_arguments(step.name)
-        assert parsed_args is not None, (
-            f"Unexpected `NoneType` returned from " f"parse_arguments(...) in parser: {context.parser!r}"
-        )
+        # Use internal methods without passing redundant arguments
+        kwargs = _get_parsed_arguments()
 
-        for arg, value in parsed_args.items():
-            if arg in converters:
-                value = converters[arg](value)
-            kwargs[arg] = value
-
-        if step.datatable is not None:
+        if "datatable" in func_sig.parameters and step.datatable is not None:
             kwargs["datatable"] = step.datatable.raw()
-
-        if step.docstring is not None:
+        if "docstring" in func_sig.parameters and step.docstring is not None:
             kwargs["docstring"] = step.docstring
 
-        for arg in args:
-            if arg not in kwargs:
-                kwargs[arg] = request.getfixturevalue(arg)
+        kwargs = _get_argument_values(kwargs)
 
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
-        # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
+
         return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
+
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
         raise
