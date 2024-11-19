@@ -182,7 +182,7 @@ def _execute_step_function(
     func_sig = signature(context.step_func)
     converters = context.converters
 
-    def _get_parsed_arguments():
+    def _get_parsed_arguments() -> dict:
         """Parse and convert step arguments."""
         parsed_args = context.parser.parse_arguments(step.name)
         if parsed_args is None:
@@ -196,7 +196,7 @@ def _execute_step_function(
                 kwargs[arg] = value
         return kwargs
 
-    def _get_argument_values(kwargs):
+    def _get_argument_values(kwargs: dict) -> dict:
         """Get default values or request fixture values for missing arguments."""
         for arg in get_args(context.step_func):
             if arg not in kwargs:
