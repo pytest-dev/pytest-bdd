@@ -10,164 +10,141 @@ Features
 Tutorial
 --------
 
-Launch.feature
-##############
+Launch
+######
 
-.. raw:: html
-   :file: ../features/Tutorial/Launch.feature.html
+.. include:: features/Tutorial/Launch.feature.rst
 
 Step definition
 ---------------
 
-Pytest fixtures substitution.feature
-####################################
+Pytest fixtures substitution
+############################
 
-.. raw:: html
-   :file: ../features/Step definition/Pytest fixtures substitution.feature.html
+.. include:: features/Step definition/Pytest fixtures substitution.feature.rst
 
-Target fixtures specification.feature
-#####################################
+Target fixtures specification
+#############################
 
-.. raw:: html
-   :file: ../features/Step definition/Target fixtures specification.feature.html
+.. include:: features/Step definition/Target fixtures specification.feature.rst
 
 Parameters
 ##########
 
-Conversion.feature
-!!!!!!!!!!!!!!!!!!
+Conversion
+!!!!!!!!!!
 
-.. raw:: html
-   :file: ../features/Step definition/Parameters/Conversion.feature.html
+.. include:: features/Step definition/Parameters/Conversion.feature.rst
 
-Defaults.feature
-!!!!!!!!!!!!!!!!
+Defaults
+!!!!!!!!
 
-.. raw:: html
-   :file: ../features/Step definition/Parameters/Defaults.feature.html
+.. include:: features/Step definition/Parameters/Defaults.feature.rst
 
-Injection as fixtures.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Injection as fixtures
+!!!!!!!!!!!!!!!!!!!!!
 
-.. raw:: html
-   :file: ../features/Step definition/Parameters/Injection as fixtures.feature.html
+.. include:: features/Step definition/Parameters/Injection as fixtures.feature.rst
 
-Parsing by custom parser.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Parsing by custom parser
+!!!!!!!!!!!!!!!!!!!!!!!!
 
-.. raw:: html
-   :file: ../features/Step definition/Parameters/Parsing by custom parser.feature.html
+.. include:: features/Step definition/Parameters/Parsing by custom parser.feature.rst
 
-Parsing.feature
-!!!!!!!!!!!!!!!
+Parsing
+!!!!!!!
 
-.. raw:: html
-   :file: ../features/Step definition/Parameters/Parsing.feature.html
+.. include:: features/Step definition/Parameters/Parsing.feature.rst
 
 Step
 ----
 
-Data table.feature
-##################
+Data table
+##########
 
-.. raw:: html
-   :file: ../features/Step/Data table.feature.html
+.. include:: features/Step/Data table.feature.rst
 
-Doc string.feature
-##################
+Doc string
+##########
 
-.. raw:: html
-   :file: ../features/Step/Doc string.feature.html
+.. include:: features/Step/Doc string.feature.rst
 
-Step definition bounding.feature
-################################
+Step definition bounding
+########################
 
-.. raw:: html
-   :file: ../features/Step/Step definition bounding.feature.html
+.. include:: features/Step/Step definition bounding.feature.rst
 
 Scenario
 --------
 
-Description.feature
-###################
-
-.. raw:: html
-   :file: ../features/Scenario/Description.feature.html
-
-Tag.feature
+Description
 ###########
 
-.. raw:: html
-   :file: ../features/Scenario/Tag.feature.html
+.. include:: features/Scenario/Description.feature.rst
+
+Tag
+###
+
+.. include:: features/Scenario/Tag.feature.rst
 
 Outline
 #######
 
-Examples Tag.feature
-!!!!!!!!!!!!!!!!!!!!
+Examples Tag
+!!!!!!!!!!!!
 
-.. raw:: html
-   :file: ../features/Scenario/Outline/Examples Tag.feature.html
+.. include:: features/Scenario/Outline/Examples Tag.feature.rst
 
 Report
 ------
 
-Gathering.feature
-#################
+Gathering
+#########
 
-.. raw:: html
-   :file: ../features/Report/Gathering.feature.html
+.. include:: features/Report/Gathering.feature.rst
 
 Feature
 -------
 
-Description.feature
-###################
-
-.. raw:: html
-   :file: ../features/Feature/Description.feature.html
-
-Localization.feature
-####################
-
-.. raw:: html
-   :file: ../features/Feature/Localization.feature.html
-
-Tag conversion.feature
-######################
-
-.. raw:: html
-   :file: ../features/Feature/Tag conversion.feature.html
-
-Tag.feature
+Description
 ###########
 
-.. raw:: html
-   :file: ../features/Feature/Tag.feature.html
+.. include:: features/Feature/Description.feature.rst
+
+Localization
+############
+
+.. include:: features/Feature/Localization.feature.rst
+
+Tag conversion
+##############
+
+.. include:: features/Feature/Tag conversion.feature.rst
+
+Tag
+###
+
+.. include:: features/Feature/Tag.feature.rst
 
 Load
 ####
 
-Autoload.feature
-!!!!!!!!!!!!!!!!
+Autoload
+!!!!!!!!
 
-.. raw:: html
-   :file: ../features/Feature/Load/Autoload.feature.html
+.. include:: features/Feature/Load/Autoload.feature.rst
 
-Scenario function loader.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Scenario function loader
+!!!!!!!!!!!!!!!!!!!!!!!!
 
-.. raw:: html
-   :file: ../features/Feature/Load/Scenario function loader.feature.html
+.. include:: features/Feature/Load/Scenario function loader.feature.rst
 
-Scenario search from base directory.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Scenario search from base directory
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-.. raw:: html
-   :file: ../features/Feature/Load/Scenario search from base directory.feature.html
+.. include:: features/Feature/Load/Scenario search from base directory.feature.rst
 
-Scenario search from base url.feature
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Scenario search from base url
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-.. raw:: html
-   :file: ../features/Feature/Load/Scenario search from base url.feature.html
+.. include:: features/Feature/Load/Scenario search from base url.feature.rst

@@ -5,7 +5,6 @@
 
 ## Scenario:
 * Given File "Description.feature" with content:
-
     ```gherkin
     Feature:
       My Feature description
@@ -13,7 +12,6 @@
         Given I check feature description
     ```
 * And File "conftest.py" with content:
-
     ```python
     from pytest_bdd import given
 
@@ -23,7 +21,6 @@
     ```
 * When run pytest
 * Then pytest outcome must contain tests with statuses:
-
     | passed | failed |
     |--------|--------|
     | 1      | 0      |

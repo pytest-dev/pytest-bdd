@@ -1,4 +1,4 @@
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from enum import Enum
 from functools import partial
@@ -6,7 +6,7 @@ from inspect import getfile
 from itertools import chain, product, starmap
 from operator import attrgetter, eq, is_not
 from pathlib import Path
-from typing import Annotated, Any, ClassVar, List, Literal, NamedTuple, Optional, Type, Union
+from typing import Annotated, Any, Callable, Literal, NamedTuple, Optional, Union, cast
 
 from attr import attrib, attrs
 from pydantic import (  # type:ignore[attr-defined] # migration to pydantic 2
@@ -62,16 +62,16 @@ class Node(BaseModel):
         populate_by_name=True,
     )
 
-    tags: Optional[Sequence[str]] = Field(default_factory=list, alias="Tags")
+    tags: Optional[Sequence[str]] = Field(default_factory=cast(Callable, list), alias="Tags")
     name: Optional[str] = Field(None, alias="Name")
     description: Optional[str] = Field(None, alias="Description")
-    comments: Optional[Sequence[str]] = Field(default_factory=list, alias="Comments")
+    comments: Optional[Sequence[str]] = Field(default_factory=cast(Callable, list), alias="Comments")
 
 
 class Table(Node):
     type: Optional[Literal["Rowed", "Columned"]] = Field("Rowed", alias="Type")
-    parameters: Optional[Sequence[str]] = Field(default_factory=list, alias="Parameters")
-    values: Optional[Sequence[Sequence[Any]]] = Field(default_factory=list, alias="Values")
+    parameters: Optional[Sequence[str]] = Field(default_factory=cast(Callable, list), alias="Parameters")
+    values: Optional[Sequence[Sequence[Any]]] = Field(default_factory=cast(Callable, list), alias="Values")
 
     @property
     def columned_values(self):
