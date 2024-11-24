@@ -50,6 +50,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "*"
+      - name: Install pandoc
+        uses: r-lib/actions/setup-pandoc@v2
       - name: Install PyPi dependencies
         run: |
           python -m pip install --upgrade pip

@@ -165,7 +165,7 @@ def test_wrongly_outlined_missing_parameter_scenario(testdir):
 
     result = testdir.runpytest()
     assert_outcomes(result, errors=1)
-    result.stdout.fnmatch_lines("*FeatureError*")
+    result.stdout.fnmatch_lines("*FeatureConcreteParseError*")
 
 
 def test_outlined_with_other_fixtures(testdir, tmp_path):

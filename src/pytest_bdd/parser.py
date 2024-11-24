@@ -7,7 +7,7 @@ from itertools import filterfalse
 from operator import contains, itemgetter
 from pathlib import Path
 from shutil import which
-from subprocess import check_output
+from subprocess import CalledProcessError, check_output
 from typing import Callable, Union
 
 from attr import attrib, attrs
@@ -21,7 +21,7 @@ from pytest_bdd.compatibility.parser import ParserProtocol
 from pytest_bdd.compatibility.path import relpath
 from pytest_bdd.compatibility.pytest import Config
 from pytest_bdd.compatibility.struct_bdd import STRUCT_BDD_INSTALLED
-from pytest_bdd.exceptions import FeatureError
+from pytest_bdd.exceptions import FeatureConcreteParseError, FeatureParseError
 from pytest_bdd.model import Feature
 from pytest_bdd.utils import PytestBDDIdGeneratorHandler
 
@@ -65,7 +65,7 @@ class GherkinParser(BaseParser):
         try:
             gherkin_document_raw_dict = gherkin_parser.parse(token_scanner_or_str=feature_file_data, *args, **kwargs)
         except CompositeParserException as e:
-            raise FeatureError(
+            raise FeatureConcreteParseError(
                 e.args[0],
                 e.errors[0].location["line"],
                 linecache.getline(str(path), e.errors[0].location["line"]).rstrip("\n"),
@@ -126,7 +126,12 @@ class MarkdownGherkinParser(BaseParser):
                 stack.enter_context(path.open(mode="rb")),
                 stack.enter_context(as_file(files("pytest_bdd").joinpath("markdown_parser.js"))),
             ]
-            gherkin_document_raw_dict = json.loads(check_output([which("node") or "", script_path], stdin=feature_file))
+            try:
+                gherkin_document_raw_dict = json.loads(
+                    check_output([which("node") or "", script_path], stdin=feature_file)
+                )
+            except CalledProcessError as e:
+                raise FeatureParseError(f"Unable to parse {path}") from e
         gherkin_document_raw_dict["uri"] = uri
 
         feature = self.build_feature(

@@ -22,4 +22,4 @@ def test_no_scenarios(testdir):
         """
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines(["*FeatureError*"])
+    result.stdout.fnmatch_lines(["*FeatureConcreteParseError*"])

@@ -4,5 +4,3 @@ Welcome to Pytest-BDD-NextGeneration's documentation!
    :glob:
 
    include.rst
-
-.. include:: include

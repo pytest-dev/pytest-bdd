@@ -160,4 +160,4 @@ def test_invalid_tags(testdir):
         ensure=True,
     )
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines(["*FeatureError*"])
+    result.stdout.fnmatch_lines(["*FeatureConcreteParseError*"])

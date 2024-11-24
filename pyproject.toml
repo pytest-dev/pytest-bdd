@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools<68", "wheel"]
+requires = ["setuptools", "wheel"]
 
 [project]
 authors = [
@@ -55,7 +55,7 @@ dependencies = [
   "decopatch",
   "docopt-ng",
   "filelock",
-  "gherkin-official>=24",
+  "gherkin-official>=24,<30",
   "importlib-metadata;python_version<'3.10.0'",
   "importlib-resources",
   "makefun",
@@ -68,7 +68,6 @@ dependencies = [
   "py",
   "pydantic>=2.0.3",
   "pytest>=5.2",
-  "setuptools>=58",
   "cucumber-tag-expressions",
   "typing-extensions;python_version<'3.11.0'"
 ]
@@ -90,8 +89,16 @@ allure = [
   "allure-python-commons",
   "allure-pytest"
 ]
+doc-gen = [
+  'docopt-ng',
+  'pandoc',
+  'panflute',
+  'pycmarkgfm',
+  'pypandoc'
+]
 full = [
   "pytest-bdd-ng[allure]",
+  "pytest-bdd-ng[doc-gen]",
   "pytest-bdd-ng[struct-bdd]",
   "pytest-bdd-ng[test]",
   "pytest-bdd-ng[testtypes]"
@@ -110,7 +117,8 @@ test = [
   "packaging",
   "PyHamcrest",
   "pytest-httpserver",
-  "python-coveralls"
+  "python-coveralls",
+  "pytest-bdd-ng[doc-gen];python_version>='3.12.0'"
 ]
 testenv = [
   "tox~=4.0",

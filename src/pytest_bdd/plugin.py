@@ -6,6 +6,7 @@ from inspect import signature
 from itertools import chain, starmap
 from operator import attrgetter, contains, methodcaller
 from pathlib import Path
+from subprocess import CalledProcessError
 from types import ModuleType
 from typing import Any, Deque, Optional, Union
 from unittest.mock import patch
@@ -48,6 +49,21 @@ from pytest_bdd.utils import IdGenerator, compose, getitemdefault, is_url_parsab
 
 if STRUCT_BDD_INSTALLED:
     from pytest_bdd.struct_bdd.plugin import StructBDDPlugin
+
+try:
+    is_npm_gherkin_installed = all(
+        [
+            check_npm(),
+            any(
+                [
+                    check_npm_package("@cucumber/gherkin", global_install=True),
+                    check_npm_package("@cucumber/gherkin"),
+                ]
+            ),
+        ]
+    )
+except CalledProcessError:
+    is_npm_gherkin_installed = False
 
 
 def pytest_addhooks(pluginmanager: PytestPluginManager) -> None:
@@ -348,17 +364,7 @@ def pytest_bdd_get_mimetype(config: Config, path: Path):
     # TODO use mimetypes module
     if str(path).endswith(".gherkin") or str(path).endswith(".feature"):
         return Mimetype.gherkin_plain.value
-    elif str(path).endswith(".gherkin.md") or str(path).endswith(".feature.md"):
-        if not check_npm():
-            return
-
-        if not any(
-            [
-                check_npm_package("@cucumber/gherkin", global_install=True),
-                check_npm_package("@cucumber/gherkin"),
-            ]
-        ):
-            return
+    elif (str(path).endswith(".gherkin.md") or str(path).endswith(".feature.md")) and is_npm_gherkin_installed:
         return Mimetype.markdown.value
 
 

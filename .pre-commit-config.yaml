@@ -1,6 +1,8 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 ---
+default_language_version:
+  python: python3.12
 repos:
   - repo: https://github.com/psf/black
     rev: 24.10.0
@@ -19,7 +21,9 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        exclude: "^.*\\.rst$"
       - id: end-of-file-fixer
+        exclude: "^.*\\.rst$"
       - id: check-yaml
       - id: check-added-large-files
       - id: check-toml
@@ -56,10 +60,13 @@ repos:
       - id: generate-feature-doc
         name: generate-feature-doc
         entry: >
-          python src/pytest_bdd/script/bdd_tree_to_rst.py
-          features
-          docs/features.rst
+          python src/pytest_bdd/script/bdd_tree_to_rst.py features docs/features
         language: python
         types: [python]
         pass_filenames: false
-        additional_dependencies: ['docopt-ng']
+        additional_dependencies:
+          - 'docopt-ng'
+          - 'pandoc'
+          - 'panflute'
+          - 'pycmarkgfm'
+          - 'pypandoc'
