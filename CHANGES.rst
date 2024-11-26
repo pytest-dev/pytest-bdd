@@ -4,28 +4,19 @@
 Changelog
 =========
 
-In-progress
------------
-- Move documentation to Gherkin itself
-
 Planned
 -------
 - Refactor internal parser API: split loader and parser APIs
-- Add mobile readthedocs site support theme
-- Convert e2e test features definitions to markdown
+- Check using Path globs on the feature loading via scenario/scenarios
 - API doc
 - Add struct_bdd autoload
 - Move tox.ini, pytest.ini into pyproject.toml
 - Review report generation to be conform with official tools
 - Add tests about linked files and features autoload (feature autoload must not be disabled on linked files)
-- Check using Path globs on the feature loading via scenario/scenarios
 - Rework extended_step_context method usage
 - Remove tests targeting Feature parsing
 
   - https://github.com/pytest-dev/pytest-bdd/issues/488
-- Nested Rules support
-
-  - Review after fix https://github.com/cucumber/gherkin/issues/126
 - Continue support of \*.md files
 
   - Waiting for upstream issue https://github.com/cucumber/gherkin/pull/64
@@ -57,15 +48,15 @@ Planned
   - pytest-rerunfailures
   - Parametrize step execution by different step realizations using https://smarie.github.io/python-pytest-cases/
 - Switch testdir to pytester after pytest<6.2 get EOL (python 3.8 and 3.9 get EOL)
-- Use Poetry
-
-  - Wait for https://github.com/python-poetry/roadmap/issues/3
+- Use uv/ruff
 - Contribute to messages repository with python model
 - Add support of native legacy cucumber-json
-- Test against https://github.com/cucumber/json-formatter
 
 Unreleased
 ----------
+- Add mobile readthedocs site support theme
+- Convert e2e test features definitions to markdown
+- Move documentation to Gherkin itself
 - Implement support of `Markdown <https://github.com/cucumber/gherkin/blob/main/MARKDOWN_WITH_GHERKIN.md>`_ using js based parser
 - Update versions:
 
@@ -74,7 +65,7 @@ Unreleased
  - Drop pytest<5.2
 
 - Added dummy html reporter
-- Fixed pytest.ini option "disable_feature_autoload"
+- Fixed pytest.ini non-working option "disable_feature_autoload"
 - Improved fixture injection by adding seamless fixtures on plugin/module collection
 
 2.2.0
