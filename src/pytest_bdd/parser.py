@@ -342,7 +342,7 @@ class Step:
         """
         return render_string(self.name, context)
 
-    def render_datatable(self, context: Mapping[str, Any]) -> datatable | None:
+    def render_datatable(self, context: Mapping[str, Any]) -> DataTable | None:
         """
         Render the datatable with the given context,
         but avoid replacing text inside angle brackets if context is missing.
@@ -351,7 +351,7 @@ class Step:
             context (Mapping[str, Any]): The context for rendering the datatable.
 
         Returns:
-            datatable: The rendered datatable with parameters replaced only if they exist in the context.
+            datatable (DataTable): The rendered datatable with parameters replaced only if they exist in the context.
         """
         if self.datatable:
             rendered_datatable = self.datatable
