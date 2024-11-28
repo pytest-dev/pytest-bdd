@@ -533,9 +533,9 @@ Example:
                 """
             When the user logs in
             Then the response should contain:
-                | field     | value       |
+                | field     | value      |
                 | username  | <username> |
-                | logged_in | true        |
+                | logged_in | true       |
 
             Examples:
             | username  | password  |
