@@ -17,11 +17,17 @@ if TYPE_CHECKING:
 def add_options(parser: PytestArgParser) -> None:
     """Add pytest-bdd options."""
     group = parser.getgroup("bdd")
-    group.addoption(
+    group._addoption(
         "--bdd-default-parser",
+        dest="bdd_default_parser",
         action="store",
         default=None,
         help="Set the default step parser type (e.g. string, parse, re, cfparse).",
+    )
+    parser._addini(
+        "bdd_default_parser",
+        help="Default step parser type (e.g. string, parse, re, cfparse) for pytest-bdd.",
+        default=None,
     )
 
 
@@ -129,19 +135,17 @@ class string(StepParser):
 TStepParser = TypeVar("TStepParser", bound=StepParser)
 
 
-def get_parser(step_name: str | StepParser, config: Config | None = None) -> StepParser:
-    """Get parser by given name."""
+def get_parser(step_name: str | StepParser, config: Config) -> StepParser:
     if isinstance(step_name, StepParser):
         return step_name
-
-    default_parser = getattr(config, "_bdd_default_parser", "string") if config else "string"
-
-    parser_classes = {
-        "string": string,
-        "parse": parse,
-        "re": re,
-        "cfparse": cfparse,
-    }
-
-    parser_cls = parser_classes.get(default_parser, string)
-    return parser_cls(step_name)
+    if config:
+        default_parser = getattr(config, "_bdd_default_parser", "string")
+        parser_classes = {
+            "string": string,
+            "parse": parse,
+            "re": re,
+            "cfparse": cfparse,
+        }
+        parser_cls = parser_classes.get(default_parser, string)
+        return parser_cls(step_name)
+    return string(step_name)

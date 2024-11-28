@@ -41,7 +41,7 @@ import enum
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from itertools import count
-from typing import Any, Callable, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Literal, TypeVar
 
 import pytest
 from typing_extensions import ParamSpec
@@ -50,6 +50,10 @@ from .parser import Step
 from .parsers import StepParser, get_parser
 from .types import GIVEN, THEN, WHEN
 from .utils import get_caller_module_locals
+
+if TYPE_CHECKING:
+    from _pytest.config import Config
+
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -63,11 +67,12 @@ class StepNamePrefix(enum.Enum):
 
 @dataclass
 class StepFunctionContext:
+    name: str
     type: Literal["given", "when", "then"] | None
     step_func: Callable[..., Any]
-    parser: StepParser
     converters: dict[str, Callable[[str], Any]] = field(default_factory=dict)
     target_fixture: str | None = None
+    parser: StepParser | None = None
 
 
 def get_step_fixture_name(step: Step) -> str:
@@ -159,12 +164,10 @@ def step(
         converters = {}
 
     def decorator(func: Callable[P, T]) -> Callable[P, T]:
-        parser = get_parser(name)
-
         context = StepFunctionContext(
+            name=name,
             type=type_,
             step_func=func,
-            parser=parser,
             converters=converters,
             target_fixture=target_fixture,
         )
@@ -175,8 +178,9 @@ def step(
         step_function_marker._pytest_bdd_step_context = context  # type: ignore
 
         caller_locals = get_caller_module_locals(stacklevel=stacklevel)
+        step_name = name.name if isinstance(name, StepParser) else name
         fixture_step_name = find_unique_name(
-            f"{StepNamePrefix.step_def.value}_{type_ or '*'}_{parser.name}", seen=caller_locals.keys()
+            f"{StepNamePrefix.step_def.value}_{type_ or '*'}_{step_name}", seen=caller_locals.keys()
         )
         caller_locals[fixture_step_name] = pytest.fixture(name=fixture_step_name)(step_function_marker)
         return func
@@ -205,3 +209,9 @@ def find_unique_name(name: str, seen: Iterable[str]) -> str:
 
     # This line will never be reached, but it's here to satisfy mypy
     raise RuntimeError("Unable to find a unique name")
+
+
+def register_step_context(step_context: StepFunctionContext, config: Config):
+    """Ensure step context has a parser set early in the lifecycle."""
+    if step_context.parser is None:
+        step_context.parser = get_parser(step_context.name, config)

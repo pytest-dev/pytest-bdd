@@ -24,7 +24,7 @@ import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
 from typing_extensions import ParamSpec
 
-from . import exceptions
+from . import exceptions, steps
 from .compat import getfixturedefs, inject_fixture
 from .feature import get_feature, get_features
 from .steps import StepFunctionContext, get_step_fixture_name
@@ -52,13 +52,14 @@ def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: 
     fixture_def_by_name = list(fixturemanager._arg2fixturedefs.items())
     for fixturename, fixturedefs in fixture_def_by_name:
         for _, fixturedef in enumerate(fixturedefs):
-            step_func_context = getattr(fixturedef.func, "_pytest_bdd_step_context", None)
+            step_func_context: steps.StepFunctionContext = getattr(fixturedef.func, "_pytest_bdd_step_context", None)
             if step_func_context is None:
                 continue
 
             if step_func_context.type is not None and step_func_context.type != step.type:
                 continue
 
+            steps.register_step_context(step_func_context, node.config)
             match = step_func_context.parser.is_matching(step.name)
             if not match:
                 continue
