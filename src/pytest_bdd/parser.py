@@ -23,6 +23,27 @@ from .types import STEP_TYPE_BY_PARSER_KEYWORD
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
 
 
+def render_string(input_string: str, render_context: Mapping[str, Any]) -> str:
+    """
+    Render the string with the given context,
+    but avoid replacing text inside angle brackets if context is missing.
+
+    Args:
+        input_string (str): The string for which to render/replace params.
+        render_context (Mapping[str, Any]): The context for rendering the string.
+
+    Returns:
+        str: The rendered string with parameters replaced only if they exist in the context.
+    """
+
+    def replacer(m: re.Match) -> str:
+        varname = m.group(1)
+        # If the context contains the variable, replace it. Otherwise, leave it unchanged.
+        return str(render_context.get(varname, f"<{varname}>"))
+
+    return STEP_PARAM_RE.sub(replacer, input_string)
+
+
 def get_tag_names(tag_data: list[GherkinTag]) -> set[str]:
     """Extract tag names from tag data.
 
@@ -191,13 +212,13 @@ class ScenarioTemplate:
         """
         scenario_steps = [
             Step(
-                name=step.render(context),
+                name=step.render_step_name(context),
                 type=step.type,
                 indent=step.indent,
                 line_number=step.line_number,
                 keyword=step.keyword,
-                datatable=step.datatable,
-                docstring=step.docstring,
+                datatable=step.render_datatable(context),
+                docstring=step.render_docstring(context),
             )
             for step in self._steps
         ]
@@ -308,8 +329,10 @@ class Step:
         """
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
-    def render(self, context: Mapping[str, Any]) -> str:
-        """Render the step name with the given context, but avoid replacing text inside angle brackets if context is missing.
+    def render_step_name(self, context: Mapping[str, Any]) -> str:
+        """
+        Render the step name with the given context,
+        but avoid replacing text inside angle brackets if context is missing.
 
         Args:
             context (Mapping[str, Any]): The context for rendering the step name.
@@ -317,13 +340,39 @@ class Step:
         Returns:
             str: The rendered step name with parameters replaced only if they exist in the context.
         """
+        return render_string(self.name, context)
 
-        def replacer(m: re.Match) -> str:
-            varname = m.group(1)
-            # If the context contains the variable, replace it. Otherwise, leave it unchanged.
-            return str(context.get(varname, f"<{varname}>"))
+    def render_datatable(self, context: Mapping[str, Any]) -> datatable | None:
+        """
+        Render the datatable with the given context,
+        but avoid replacing text inside angle brackets if context is missing.
 
-        return STEP_PARAM_RE.sub(replacer, self.name)
+        Args:
+            context (Mapping[str, Any]): The context for rendering the datatable.
+
+        Returns:
+            datatable: The rendered datatable with parameters replaced only if they exist in the context.
+        """
+        if self.datatable:
+            rendered_datatable = self.datatable
+            for row in rendered_datatable.rows:
+                for cell in row.cells:
+                    cell.value = render_string(cell.value, context)
+            return rendered_datatable
+        return None
+
+    def render_docstring(self, context: Mapping[str, Any]) -> str | None:
+        """
+        Render the docstring with the given context,
+        but avoid replacing text inside angle brackets if context is missing.
+
+        Args:
+            context (Mapping[str, Any]): The context for rendering the docstring.
+
+        Returns:
+            str: The rendered docstring with parameters replaced only if they exist in the context.
+        """
+        return render_string(self.docstring, context) if self.docstring else None
 
 
 @dataclass(eq=False)

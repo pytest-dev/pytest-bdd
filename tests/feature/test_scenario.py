@@ -161,7 +161,7 @@ def test_angular_brackets_are_not_parsed(pytester):
     """
     pytester.makefile(
         ".feature",
-        simple="""
+        simple='''
         Feature: Simple feature
             Scenario: Simple scenario
                 Given I have a <tag>
@@ -169,16 +169,24 @@ def test_angular_brackets_are_not_parsed(pytester):
 
             Scenario Outline: Outlined scenario
                 Given I have a templated <foo>
+                When I have a templated datatable
+                | <data>  |
+                | example |
+                And I have a templated docstring
+                """
+                This is a <doc>
+                """
                 Then pass
 
             Examples:
-                | foo |
-                | bar |
-        """,
+                | foo | data  | doc    |
+                | bar | table | string |
+        ''',
     )
     pytester.makepyfile(
         """
-        from pytest_bdd import scenarios, given, then, parsers
+        from pytest_bdd import scenarios, given, when, then, parsers
+        from pytest_bdd.utils import dump_obj
 
         scenarios("simple.feature")
 
@@ -190,13 +198,26 @@ def test_angular_brackets_are_not_parsed(pytester):
         def _(foo):
             return "foo"
 
+        @when("I have a templated datatable")
+        def _(datatable):
+            return dump_obj(("datatable", datatable))
+
+        @when("I have a templated docstring")
+        def _(docstring):
+            return dump_obj(("docstring", docstring))
+
         @then("pass")
         def _():
             pass
         """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("-s")
     result.assert_outcomes(passed=2)
+
+    assert collect_dumped_objects(result) == [
+        ("datatable", [["table"], ["example"]]),
+        ("docstring", "This is a string"),
+    ]
 
 
 def test_multilanguage_support(pytester):
