@@ -161,7 +161,7 @@ def test_angular_brackets_are_not_parsed(pytester):
     """
     pytester.makefile(
         ".feature",
-        simple='''
+        simple="""
         Feature: Simple feature
             Scenario: Simple scenario
                 Given I have a <tag>
@@ -169,24 +169,16 @@ def test_angular_brackets_are_not_parsed(pytester):
 
             Scenario Outline: Outlined scenario
                 Given I have a templated <foo>
-                When I have a templated datatable
-                | <data>  |
-                | example |
-                And I have a templated docstring
-                """
-                This is a <doc>
-                """
                 Then pass
 
             Examples:
-                | foo | data  | doc    |
-                | bar | table | string |
-        ''',
+                | foo |
+                | bar |
+        """,
     )
     pytester.makepyfile(
         """
-        from pytest_bdd import scenarios, given, when, then, parsers
-        from pytest_bdd.utils import dump_obj
+        from pytest_bdd import scenarios, given, then, parsers
 
         scenarios("simple.feature")
 
@@ -198,13 +190,85 @@ def test_angular_brackets_are_not_parsed(pytester):
         def _(foo):
             return "foo"
 
+        @then("pass")
+        def _():
+            pass
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=2)
+
+
+def test_example_params(pytester):
+    """Test example params are rendered where necessary:
+    * Step names
+    * Docstring
+    * Datatables
+    """
+    pytester.makefile(
+        ".feature",
+        example_params='''
+        Feature: Example params
+            Background:
+                Given I have a background <background>
+                And my background has:
+                """
+                Background <background>
+                """
+
+                Scenario Outline: Outlined scenario
+                    Given I have a templated <foo>
+                    When I have a templated datatable
+                        | <data>  |
+                        | example |
+                    And I have a templated docstring
+                    """
+                    This is a <doc>
+                    """
+                    Then pass
+
+                Examples:
+                    | background | foo | data  | doc    |
+                    | parameter  | bar | table | string |
+        ''',
+    )
+    pytester.makepyfile(
+        """
+        from pytest_bdd import scenarios, given, when, then, parsers
+        from pytest_bdd.utils import dump_obj
+
+        scenarios("example_params.feature")
+
+
+        @given(parsers.parse("I have a background {background}"))
+        def _(background):
+            return dump_obj(("background", background))
+
+
+        @given(parsers.parse("I have a templated {foo}"))
+        def _(foo):
+            return "foo"
+
+
+        @given("my background has:")
+        def _(docstring):
+            return dump_obj(("background_docstring", docstring))
+
+
+        @given("I have a rule table:")
+        def _(datatable):
+            return dump_obj(("rule", datatable))
+
+
         @when("I have a templated datatable")
         def _(datatable):
             return dump_obj(("datatable", datatable))
 
+
         @when("I have a templated docstring")
         def _(docstring):
             return dump_obj(("docstring", docstring))
+
 
         @then("pass")
         def _():
@@ -212,9 +276,11 @@ def test_angular_brackets_are_not_parsed(pytester):
         """
     )
     result = pytester.runpytest("-s")
-    result.assert_outcomes(passed=2)
+    result.assert_outcomes(passed=1)
 
     assert collect_dumped_objects(result) == [
+        ("background", "parameter"),
+        ("background_docstring", "Background parameter"),
         ("datatable", [["table"], ["example"]]),
         ("docstring", "This is a string"),
     ]

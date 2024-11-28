@@ -210,6 +210,7 @@ class ScenarioTemplate:
         Returns:
             Scenario: A Scenario object with steps rendered based on the context.
         """
+        base_steps = self.all_background_steps + self._steps
         scenario_steps = [
             Step(
                 name=step.render_step_name(context),
@@ -220,15 +221,14 @@ class ScenarioTemplate:
                 datatable=step.render_datatable(context),
                 docstring=step.render_docstring(context),
             )
-            for step in self._steps
+            for step in base_steps
         ]
-        steps = self.all_background_steps + scenario_steps
         return Scenario(
             feature=self.feature,
             keyword=self.keyword,
-            name=self.name,
+            name=render_string(self.name, context),
             line_number=self.line_number,
-            steps=steps,
+            steps=scenario_steps,
             tags=self.tags,
             description=self.description,
             rule=self.rule,
