@@ -74,7 +74,7 @@ def test_string_steps_dont_take_precedence(pytester):
     pytester.makeconftest(
         textwrap.dedent(
             """
-        from pytest_bdd import given, when, then, parsers
+        from pytest_bdd import given, when, then
         from pytest_bdd.utils import dump_obj
 
 
@@ -95,8 +95,7 @@ def test_string_steps_dont_take_precedence(pytester):
     pytester.makepyfile(
         textwrap.dedent(
             r"""
-        import pytest
-        from pytest_bdd import parsers, given, when, then, scenarios
+        from pytest_bdd import parsers, given, scenarios
         from pytest_bdd.utils import dump_obj
 
         scenarios("arguments.feature")
@@ -114,3 +113,49 @@ def test_string_steps_dont_take_precedence(pytester):
 
     [which] = collect_dumped_objects(result)
     assert which == "re"
+
+
+def test_same_name_for_step_arg_and_example_parameter(pytester):
+    """Test that using the same name for step arg and example parameter as intended."""
+    pytester.makefile(
+        ".feature",
+        step_args_examples_params=textwrap.dedent(
+            """\
+            Feature: Test feature
+
+              Scenario Outline: Scenario 1
+                Given Action "A" is taken
+                Then Some other action "<action>" is taken
+
+                Examples: Actions
+                  | action |
+                  | B      |
+            """
+        ),
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """
+        from pytest_bdd import scenarios, given, then, parsers
+
+        scenarios('.')
+
+
+        @given(parsers.parse('Action "{action}" is taken'))
+        def take_action1(action):
+            print(f'take_action1:{action}')
+
+
+        @then(parsers.parse('Some other action "{action}" is taken'))
+        def take_action2(action):
+            print(f'take_action2:{action}')
+
+        """
+        )
+    )
+
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=1)
+
+    result.stdout.fnmatch_lines(["*take_action1:A*"])
+    result.stdout.fnmatch_lines(["*take_action2:B*"])
