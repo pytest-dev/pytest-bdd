@@ -116,7 +116,7 @@ def test_string_steps_dont_take_precedence(pytester):
 
 
 def test_same_name_for_step_arg_and_example_parameter(pytester):
-    """Test that using the same name for step arg and example parameter as intended."""
+    """Test that using the same name for step arg and example parameter works as intended."""
     pytester.makefile(
         ".feature",
         step_args_examples_params=textwrap.dedent(
