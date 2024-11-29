@@ -320,3 +320,63 @@ def test_forward_slash_in_params(pytester):
     result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
     assert collect_dumped_objects(result) == ["https://my-site.com"]
+
+
+def test_variable_reuse(pytester):
+    """Test example parameter reuse."""
+
+    pytester.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Example parameters reuse
+                Scenario Outline: Check for example parameter re-use
+                    Given some <key> exists
+                    When I print <css_id>
+                    And I output "some value"
+                    And I echo <css_id>
+                    Then finish testing
+
+                    Examples:
+                        | key  | css_id |
+                        | foo  | bar    |
+                        | foo2 | bar2   |
+
+            """
+        ),
+    )
+
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+            from pytest_bdd import given, when, then, parsers, scenarios
+
+            scenarios('outline.feature')
+
+
+            @given(parsers.parse("some {key} exists"))
+            def some_key_exists(key):
+                print(f"some {key} exists")
+
+            @when(parsers.parse('I print {css_id}'))
+            def css_id(css_id):
+                assert css_id in ('bar', 'bar2')
+
+            @when(parsers.parse('I echo {css_id}'))
+            def echo_val(css_id):
+                assert css_id in ('bar', 'bar2')
+
+            @when(parsers.re('I output "(?P<css_id>.+)"'))
+            def i_output(css_id):
+                assert css_id == 'some value'
+
+            @then('finish testing')
+            def i_output():
+                print("finished")
+                assert True
+
+        """
+        )
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=2)
