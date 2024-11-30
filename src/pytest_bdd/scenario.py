@@ -175,7 +175,7 @@ def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContex
             return None
 
 
-def parse_step_arguments(step: Step, context: StepFunctionContext) -> dict[str, object] | None:
+def parse_step_arguments(step: Step, context: StepFunctionContext) -> dict[str, object]:
     """Parse step arguments."""
     parsed_args = context.parser.parse_arguments(step.name)
 
