@@ -257,14 +257,14 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequ
 
 def _get_scenario_decorator(
     feature: Feature, feature_name: str, templated_scenario: ScenarioTemplate, scenario_name: str
-) -> Callable[[Callable[..., T]], Callable[..., T]]:
+) -> Callable[[Callable[..., T]], Callable[[FixtureRequest, dict[str, str]], T]]:
     # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
     # when the decorator is misused.
     # Pytest inspect the signature to determine the required fixtures, and in that case it would look
     # for a fixture called "fn" that doesn't exist (if it exists then it's even worse).
     # It will error with a "fixture 'fn' not found" message instead.
     # We can avoid this hack by using a pytest hook and check for misuse instead.
-    def decorator(*args: Callable[..., T]) -> Callable[..., T]:
+    def decorator(*args: Callable[..., T]) -> Callable[[FixtureRequest, dict[str, str]], T]:
         if not args:
             raise exceptions.ScenarioIsDecoratorOnly(
                 "scenario function can only be used as a decorator. Refer to the documentation."
