@@ -23,6 +23,7 @@ Removed
 
 Fixed
 +++++
+* Fixed an issue with the upcoming pytest release related to the use of ``@pytest.mark.usefixtures`` with an empty list.
 
 Security
 ++++++++
