@@ -28,8 +28,8 @@ test_report_context: WeakKeyDictionary[TestReport, ReportContext] = WeakKeyDicti
 class StepReport:
     """Step execution report."""
 
-    failed = False
-    stopped = None
+    failed: bool = False
+    stopped: float | None = None
 
     def __init__(self, step: Step) -> None:
         """Step report constructor.
