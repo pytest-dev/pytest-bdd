@@ -271,15 +271,17 @@ def _get_scenario_decorator(
         [fn] = args
         func_args = get_args(fn)
 
-        # We need to tell pytest that the original function requires its fixtures,
-        # otherwise indirect fixtures would not work.
-        @pytest.mark.usefixtures(*func_args)
         def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> Any:
             __tracebackhide__ = True
             scenario = templated_scenario.render(_pytest_bdd_example)
             _execute_scenario(feature, scenario, request)
             fixture_values = [request.getfixturevalue(arg) for arg in func_args]
             return fn(*fixture_values)
+
+        if func_args:
+            # We need to tell pytest that the original function requires its fixtures,
+            # otherwise indirect fixtures would not work.
+            scenario_wrapper = pytest.mark.usefixtures(*func_args)(scenario_wrapper)
 
         example_parametrizations = collect_example_parametrizations(templated_scenario)
         if example_parametrizations is not None:
@@ -295,7 +297,7 @@ def _get_scenario_decorator(
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 
         scenario_wrapper.__doc__ = f"{feature_name}: {scenario_name}"
-        scenario_wrapper.__scenario__ = templated_scenario
+        scenario_wrapper.__scenario__ = templated_scenario  # type: ignore[attr-defined]
         return cast(Callable[P, T], scenario_wrapper)
 
     return decorator
