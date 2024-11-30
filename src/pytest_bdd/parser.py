@@ -21,7 +21,7 @@ from .gherkin_parser import Tag as GherkinTag
 from .gherkin_parser import get_gherkin_document
 from .types import STEP_TYPE_BY_PARSER_KEYWORD
 
-STEP_PARAM_RE = re.compile(r"<(.+?)>")
+PARAM_RE = re.compile(r"<(.+?)>")
 
 
 def render_string(input_string: str, render_context: Mapping[str, object]) -> str:
@@ -42,7 +42,7 @@ def render_string(input_string: str, render_context: Mapping[str, object]) -> st
         # If the context contains the variable, replace it. Otherwise, leave it unchanged.
         return str(render_context.get(varname, f"<{varname}>"))
 
-    return STEP_PARAM_RE.sub(replacer, input_string)
+    return PARAM_RE.sub(replacer, input_string)
 
 
 def get_tag_names(tag_data: list[GherkinTag]) -> set[str]:
