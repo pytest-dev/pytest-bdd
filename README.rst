@@ -514,8 +514,7 @@ Example:
         assert cucumbers["start"] - cucumbers["eat"] == left
 
 
-Example parameters from example tables can not only be used in step names with angular brackets (e.g., <start>),
-but also embedded directly within docstrings and datatables, allowing for dynamic substitution.
+Example parameters from example tables can not only be used in steps, but also embedded directly within docstrings and datatables, allowing for dynamic substitution.
 This provides added flexibility for scenarios that require complex setups or validations.
 
 Example:
