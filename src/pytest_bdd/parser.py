@@ -213,13 +213,13 @@ class ScenarioTemplate:
         base_steps = self.all_background_steps + self._steps
         scenario_steps = [
             Step(
-                name=step.render_step_name(context),
+                name=render_string(step.name, context),
                 type=step.type,
                 indent=step.indent,
                 line_number=step.line_number,
                 keyword=step.keyword,
                 datatable=step.render_datatable(context),
-                docstring=step.render_docstring(context),
+                docstring=render_string(step.docstring, context) if step.docstring else None,
             )
             for step in base_steps
         ]
@@ -329,19 +329,6 @@ class Step:
         """
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
-    def render_step_name(self, context: Mapping[str, Any]) -> str:
-        """
-        Render the step name with the given context,
-        but avoid replacing text inside angle brackets if context is missing.
-
-        Args:
-            context (Mapping[str, Any]): The context for rendering the step name.
-
-        Returns:
-            str: The rendered step name with parameters replaced only if they exist in the context.
-        """
-        return render_string(self.name, context)
-
     def render_datatable(self, context: Mapping[str, Any]) -> DataTable | None:
         """
         Render the datatable with the given context,
@@ -360,19 +347,6 @@ class Step:
                     cell.value = render_string(cell.value, context)
             return rendered_datatable
         return None
-
-    def render_docstring(self, context: Mapping[str, Any]) -> str | None:
-        """
-        Render the docstring with the given context,
-        but avoid replacing text inside angle brackets if context is missing.
-
-        Args:
-            context (Mapping[str, Any]): The context for rendering the docstring.
-
-        Returns:
-            str: The rendered docstring with parameters replaced only if they exist in the context.
-        """
-        return render_string(self.docstring, context) if self.docstring else None
 
 
 @dataclass(eq=False)
