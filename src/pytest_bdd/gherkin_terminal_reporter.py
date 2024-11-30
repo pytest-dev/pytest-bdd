@@ -4,7 +4,7 @@ import typing
 
 from _pytest.terminal import TerminalReporter
 
-from .reporting import test_report_context
+from .reporting import test_report_context_registry
 
 if typing.TYPE_CHECKING:
     from typing import Any
@@ -72,7 +72,7 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore
         rule_markup = {"purple": True}
 
         try:
-            scenario = test_report_context[report].scenario
+            scenario = test_report_context_registry[report].scenario
         except KeyError:
             scenario = None
 

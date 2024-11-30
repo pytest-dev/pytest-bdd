@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from .parser import Feature, Scenario, Step
 
 scenario_reports_registry: WeakKeyDictionary[Item, ScenarioReport] = WeakKeyDictionary()
-test_report_context: WeakKeyDictionary[TestReport, ReportContext] = WeakKeyDictionary()
+test_report_context_registry: WeakKeyDictionary[TestReport, ReportContext] = WeakKeyDictionary()
 
 
 class StepReport:
@@ -165,7 +165,7 @@ def runtest_makereport(item: Item, call: CallInfo, rep: TestReport) -> None:
     except KeyError:
         return
 
-    test_report_context[rep] = ReportContext(scenario=scenario_report.serialize(), name=item.name)
+    test_report_context_registry[rep] = ReportContext(scenario=scenario_report.serialize(), name=item.name)
 
 
 def before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:

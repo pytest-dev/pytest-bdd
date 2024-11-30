@@ -8,7 +8,7 @@ import os
 import time
 import typing
 
-from .reporting import test_report_context
+from .reporting import test_report_context_registry
 
 if typing.TYPE_CHECKING:
     from typing import Any
@@ -89,7 +89,7 @@ class LogBDDCucumberJSON:
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         try:
-            scenario = test_report_context[report].scenario
+            scenario = test_report_context_registry[report].scenario
         except KeyError:
             # skip reporting for non-bdd tests
             return
@@ -130,7 +130,7 @@ class LogBDDCucumberJSON:
         self.features[scenario["feature"]["filename"]]["elements"].append(
             {
                 "keyword": scenario["keyword"],
-                "id": test_report_context[report].name,
+                "id": test_report_context_registry[report].name,
                 "name": scenario["name"],
                 "line": scenario["line_number"],
                 "description": "",

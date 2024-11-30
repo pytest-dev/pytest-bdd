@@ -5,7 +5,7 @@ from typing import Optional
 
 import pytest
 
-from pytest_bdd.reporting import test_report_context
+from pytest_bdd.reporting import test_report_context_registry
 
 
 class OfType:
@@ -105,7 +105,7 @@ def test_step_trace(pytester):
     result = pytester.inline_run("-vvl")
     assert result.ret
     report = result.matchreport("test_passing", when="call")
-    scenario = test_report_context[report].scenario
+    scenario = test_report_context_registry[report].scenario
     expected = {
         "feature": {
             "description": "",
@@ -144,7 +144,7 @@ def test_step_trace(pytester):
     assert scenario == expected
 
     report = result.matchreport("test_failing", when="call")
-    scenario = test_report_context[report].scenario
+    scenario = test_report_context_registry[report].scenario
     expected = {
         "feature": {
             "description": "",
@@ -182,7 +182,7 @@ def test_step_trace(pytester):
     assert scenario == expected
 
     report = result.matchreport("test_outlined[12-5-7]", when="call")
-    scenario = test_report_context[report].scenario
+    scenario = test_report_context_registry[report].scenario
     expected = {
         "feature": {
             "description": "",
@@ -228,7 +228,7 @@ def test_step_trace(pytester):
     assert scenario == expected
 
     report = result.matchreport("test_outlined[5-4-1]", when="call")
-    scenario = test_report_context[report].scenario
+    scenario = test_report_context_registry[report].scenario
     expected = {
         "feature": {
             "description": "",
@@ -337,6 +337,6 @@ def test_complex_types(pytester, pytestconfig):
     report = result.matchreport("test_complex[10,20-alien0]", when="call")
     assert report.passed
 
-    report_context = test_report_context[report]
+    report_context = test_report_context_registry[report]
     assert execnet.gateway_base.dumps(report_context.name)
     assert execnet.gateway_base.dumps(report_context.scenario)
