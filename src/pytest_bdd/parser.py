@@ -23,14 +23,14 @@ from .types import STEP_TYPE_BY_PARSER_KEYWORD
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
 
 
-def render_string(input_string: str, render_context: Mapping[str, Any]) -> str:
+def render_string(input_string: str, render_context: Mapping[str, object]) -> str:
     """
     Render the string with the given context,
     but avoid replacing text inside angle brackets if context is missing.
 
     Args:
         input_string (str): The string for which to render/replace params.
-        render_context (Mapping[str, Any]): The context for rendering the string.
+        render_context (Mapping[str, object]): The context for rendering the string.
 
     Returns:
         str: The rendered string with parameters replaced only if they exist in the context.
