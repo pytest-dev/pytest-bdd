@@ -297,7 +297,7 @@ def _get_scenario_decorator(
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 
         scenario_wrapper.__doc__ = f"{feature_name}: {scenario_name}"
-        scenario_wrapper.__scenario__ = templated_scenario
+        scenario_wrapper.__scenario__ = templated_scenario  # type: ignore[attr-defined]
         return cast(Callable[P, T], scenario_wrapper)
 
     return decorator
