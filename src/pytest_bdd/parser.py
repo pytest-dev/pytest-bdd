@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import os.path
 import re
 import textwrap
@@ -218,7 +219,7 @@ class ScenarioTemplate:
                 indent=step.indent,
                 line_number=step.line_number,
                 keyword=step.keyword,
-                datatable=step.render_datatable(context),
+                datatable=step.render_datatable(step.datatable, context) if step.datatable else None,
                 docstring=render_string(step.docstring, context) if step.docstring else None,
             )
             for step in base_steps
@@ -329,24 +330,24 @@ class Step:
         """
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
-    def render_datatable(self, context: Mapping[str, Any]) -> DataTable | None:
+    @staticmethod
+    def render_datatable(datatable: DataTable, context: Mapping[str, object]) -> DataTable:
         """
         Render the datatable with the given context,
         but avoid replacing text inside angle brackets if context is missing.
 
         Args:
+            datatable (DataTable): The datatable to render.
             context (Mapping[str, Any]): The context for rendering the datatable.
 
         Returns:
             datatable (DataTable): The rendered datatable with parameters replaced only if they exist in the context.
         """
-        if self.datatable:
-            rendered_datatable = self.datatable
-            for row in rendered_datatable.rows:
-                for cell in row.cells:
-                    cell.value = render_string(cell.value, context)
-            return rendered_datatable
-        return None
+        rendered_datatable = copy.deepcopy(datatable)
+        for row in rendered_datatable.rows:
+            for cell in row.cells:
+                cell.value = render_string(cell.value, context)
+        return rendered_datatable
 
 
 @dataclass(eq=False)
