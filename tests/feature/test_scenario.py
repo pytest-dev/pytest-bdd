@@ -199,6 +199,93 @@ def test_angular_brackets_are_not_parsed(pytester):
     result.assert_outcomes(passed=2)
 
 
+def test_example_params(pytester):
+    """Test example params are rendered where necessary:
+    * Step names
+    * Docstring
+    * Datatables
+    """
+    pytester.makefile(
+        ".feature",
+        example_params='''
+        Feature: Example params
+            Background:
+                Given I have a background <background>
+                And my background has:
+                """
+                Background <background>
+                """
+
+                Scenario Outline: Outlined scenario
+                    Given I have a templated <foo>
+                    When I have a templated datatable
+                        | <data>  |
+                        | example |
+                    And I have a templated docstring
+                    """
+                    This is a <doc>
+                    """
+                    Then pass
+
+                Examples:
+                    | background | foo | data  | doc    |
+                    | parameter  | bar | table | string |
+        ''',
+    )
+    pytester.makepyfile(
+        """
+        from pytest_bdd import scenarios, given, when, then, parsers
+        from pytest_bdd.utils import dump_obj
+
+        scenarios("example_params.feature")
+
+
+        @given(parsers.parse("I have a background {background}"))
+        def _(background):
+            return dump_obj(("background", background))
+
+
+        @given(parsers.parse("I have a templated {foo}"))
+        def _(foo):
+            return "foo"
+
+
+        @given("my background has:")
+        def _(docstring):
+            return dump_obj(("background_docstring", docstring))
+
+
+        @given("I have a rule table:")
+        def _(datatable):
+            return dump_obj(("rule", datatable))
+
+
+        @when("I have a templated datatable")
+        def _(datatable):
+            return dump_obj(("datatable", datatable))
+
+
+        @when("I have a templated docstring")
+        def _(docstring):
+            return dump_obj(("docstring", docstring))
+
+
+        @then("pass")
+        def _():
+            pass
+        """
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=1)
+
+    assert collect_dumped_objects(result) == [
+        ("background", "parameter"),
+        ("background_docstring", "Background parameter"),
+        ("datatable", [["table"], ["example"]]),
+        ("docstring", "This is a string"),
+    ]
+
+
 def test_multilanguage_support(pytester):
     """Test multilanguage support."""
     pytester.makefile(
