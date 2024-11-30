@@ -28,7 +28,7 @@ from . import exceptions
 from .compat import getfixturedefs, inject_fixture
 from .feature import get_feature, get_features
 from .steps import StepFunctionContext, get_step_fixture_name
-from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
+from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path, identity
 
 if TYPE_CHECKING:
     from _pytest.mark.structures import ParameterSet
@@ -41,9 +41,12 @@ T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
-
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
+
+STEP_ARGUMENT_DATATABLE = "datatable"
+STEP_ARGUMENT_DOCSTRING = "docstring"
+STEP_ARGUMENTS_RESERVED_NAMES = {STEP_ARGUMENT_DATATABLE, STEP_ARGUMENT_DOCSTRING}
 
 
 def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: Node) -> Iterable[FixtureDef[Any]]:
@@ -172,6 +175,27 @@ def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContex
             return None
 
 
+def parse_step_arguments(step: Step, context: StepFunctionContext) -> dict[str, object] | None:
+    """Parse step arguments."""
+    parsed_args = context.parser.parse_arguments(step.name)
+
+    assert parsed_args is not None, (
+        f"Unexpected `NoneType` returned from " f"parse_arguments(...) in parser: {context.parser!r}"
+    )
+
+    reserved_args = set(parsed_args.keys()) & STEP_ARGUMENTS_RESERVED_NAMES
+    if reserved_args:
+        reserved_arguments_str = ", ".join(repr(arg) for arg in reserved_args)
+        raise exceptions.StepImplementationError(
+            f"Step {step.name!r} defines argument names that are reserved: {reserved_arguments_str}. "
+            "Please use different names."
+        )
+
+    converted_args = {key: (context.converters.get(key, identity)(value)) for key, value in parsed_args.items()}
+
+    return converted_args
+
+
 def _execute_step_function(
     request: FixtureRequest, scenario: Scenario, step: Step, context: StepFunctionContext
 ) -> None:
@@ -185,30 +209,17 @@ def _execute_step_function(
         "step_func": context.step_func,
         "step_func_args": {},
     }
-
     request.config.hook.pytest_bdd_before_step(**kw)
-
-    # Get the step argument values.
-    converters = context.converters
-    kwargs = {}
     args = get_args(context.step_func)
 
     try:
-        parsed_args = context.parser.parse_arguments(step.name)
-        assert parsed_args is not None, (
-            f"Unexpected `NoneType` returned from " f"parse_arguments(...) in parser: {context.parser!r}"
-        )
-
-        for arg, value in parsed_args.items():
-            if arg in converters:
-                value = converters[arg](value)
-            kwargs[arg] = value
+        kwargs = parse_step_arguments(step=step, context=context)
 
         if step.datatable is not None:
-            kwargs["datatable"] = step.datatable.raw()
+            kwargs[STEP_ARGUMENT_DATATABLE] = step.datatable.raw()
 
         if step.docstring is not None:
-            kwargs["docstring"] = step.docstring
+            kwargs[STEP_ARGUMENT_DOCSTRING] = step.docstring
 
         kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
 
