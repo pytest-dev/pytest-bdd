@@ -321,15 +321,6 @@ class Step:
         """
         return f'{self.type.capitalize()} "{self.name}"'
 
-    @property
-    def params(self) -> tuple[str, ...]:
-        """Get the parameters in the step name.
-
-        Returns:
-            Tuple[str, ...]: A tuple of parameter names found in the step name.
-        """
-        return tuple(frozenset(PARAM_RE.findall(self.name)))
-
     @staticmethod
     def render_datatable(datatable: DataTable, context: Mapping[str, object]) -> DataTable:
         """
