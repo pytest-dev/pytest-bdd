@@ -328,7 +328,7 @@ class Step:
         Returns:
             Tuple[str, ...]: A tuple of parameter names found in the step name.
         """
-        return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
+        return tuple(frozenset(PARAM_RE.findall(self.name)))
 
     @staticmethod
     def render_datatable(datatable: DataTable, context: Mapping[str, object]) -> DataTable:
