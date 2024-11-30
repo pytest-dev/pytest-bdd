@@ -3,210 +3,58 @@ from __future__ import annotations
 import os.path
 import re
 import textwrap
-import typing
 from collections import OrderedDict
+from collections.abc import Generator, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from functools import cached_property
-from typing import cast
+from typing import Any
 
-from . import exceptions, types
+from .exceptions import StepError
+from .gherkin_parser import Background as GherkinBackground
+from .gherkin_parser import DataTable
+from .gherkin_parser import Feature as GherkinFeature
+from .gherkin_parser import GherkinDocument
+from .gherkin_parser import Rule as GherkinRule
+from .gherkin_parser import Scenario as GherkinScenario
+from .gherkin_parser import Step as GherkinStep
+from .gherkin_parser import Tag as GherkinTag
+from .gherkin_parser import get_gherkin_document
+from .types import STEP_TYPE_BY_PARSER_KEYWORD
 
-SPLIT_LINE_RE = re.compile(r"(?<!\\)\|")
 STEP_PARAM_RE = re.compile(r"<(.+?)>")
-COMMENT_RE = re.compile(r"(^|(?<=\s))#")
-STEP_PREFIXES = [
-    ("Feature: ", types.FEATURE),
-    ("Scenario Outline: ", types.SCENARIO_OUTLINE),
-    ("Examples:", types.EXAMPLES),
-    ("Scenario: ", types.SCENARIO),
-    ("Background:", types.BACKGROUND),
-    ("Given ", types.GIVEN),
-    ("When ", types.WHEN),
-    ("Then ", types.THEN),
-    ("@", types.TAG),
-    # Continuation of the previously mentioned step type
-    ("And ", None),
-    ("But ", None),
-]
-
-TYPES_WITH_DESCRIPTIONS = [types.FEATURE, types.SCENARIO, types.SCENARIO_OUTLINE]
-
-if typing.TYPE_CHECKING:
-    from typing import Any, Iterable, Mapping, Match, Sequence
 
 
-def split_line(line: str) -> list[str]:
-    """Split the given Examples line.
+def get_tag_names(tag_data: list[GherkinTag]) -> set[str]:
+    """Extract tag names from tag data.
 
-    :param str|unicode line: Feature file Examples line.
+    Args:
+        tag_data (List[dict]): The tag data to extract names from.
 
-    :return: List of strings.
+    Returns:
+        set[str]: A set of tag names.
     """
-    return [cell.replace("\\|", "|").strip() for cell in SPLIT_LINE_RE.split(line)[1:-1]]
+    return {tag.name.lstrip("@") for tag in tag_data}
 
 
-def parse_line(line: str) -> tuple[str, str]:
-    """Parse step line to get the step prefix (Scenario, Given, When, Then or And) and the actual step name.
-
-    :param line: Line of the Feature file.
-
-    :return: `tuple` in form ("<prefix>", "<Line without the prefix>").
-    """
-    for prefix, _ in STEP_PREFIXES:
-        if line.startswith(prefix):
-            return prefix.strip(), line[len(prefix) :].strip()
-    return "", line
-
-
-def strip_comments(line: str) -> str:
-    """Remove comments.
-
-    :param str line: Line of the Feature file.
-
-    :return: Stripped line.
-    """
-    if res := COMMENT_RE.search(line):
-        line = line[: res.start()]
-    return line.strip()
-
-
-def get_step_type(line: str) -> str | None:
-    """Detect step type by the beginning of the line.
-
-    :param str line: Line of the Feature file.
-
-    :return: SCENARIO, GIVEN, WHEN, THEN, or `None` if can't be detected.
-    """
-    for prefix, _type in STEP_PREFIXES:
-        if line.startswith(prefix):
-            return _type
-    return None
-
-
-def parse_feature(basedir: str, filename: str, encoding: str = "utf-8") -> Feature:
-    """Parse the feature file.
-
-    :param str basedir: Feature files base directory.
-    :param str filename: Relative path to the feature file.
-    :param str encoding: Feature file encoding (utf-8 by default).
-    """
-    __tracebackhide__ = True
-    abs_filename = os.path.abspath(os.path.join(basedir, filename))
-    rel_filename = os.path.join(os.path.basename(basedir), filename)
-    feature = Feature(
-        scenarios=OrderedDict(),
-        filename=abs_filename,
-        rel_filename=rel_filename,
-        line_number=1,
-        name=None,
-        tags=set(),
-        background=None,
-        description="",
-    )
-    scenario: ScenarioTemplate | None = None
-    mode: str | None = None
-    prev_mode = None
-    description: list[str] = []
-    step = None
-    multiline_step = False
-    prev_line = None
-
-    with open(abs_filename, encoding=encoding) as f:
-        content = f.read()
-
-    for line_number, line in enumerate(content.splitlines(), start=1):
-        unindented_line = line.lstrip()
-        line_indent = len(line) - len(unindented_line)
-        if step and (step.indent < line_indent or ((not unindented_line) and multiline_step)):
-            multiline_step = True
-            # multiline step, so just add line and continue
-            step.add_line(line)
-            continue
-        else:
-            step = None
-            multiline_step = False
-        stripped_line = line.strip()
-        clean_line = strip_comments(line)
-        if not clean_line and (not prev_mode or prev_mode not in TYPES_WITH_DESCRIPTIONS):
-            # Blank lines are included in feature and scenario descriptions
-            continue
-        mode = get_step_type(clean_line) or mode
-
-        allowed_prev_mode = (types.BACKGROUND, types.GIVEN, types.WHEN)
-
-        if not scenario and prev_mode not in allowed_prev_mode and mode in types.STEP_TYPES:
-            raise exceptions.FeatureError(
-                "Step definition outside of a Scenario or a Background", line_number, clean_line, filename
-            )
-
-        if mode == types.FEATURE:
-            if prev_mode is None or prev_mode == types.TAG:
-                _, feature.name = parse_line(clean_line)
-                feature.line_number = line_number
-                feature.tags = get_tags(prev_line)
-            elif prev_mode == types.FEATURE:
-                # Do not include comments in descriptions
-                if not stripped_line.startswith("#"):
-                    description.append(clean_line)
-            else:
-                raise exceptions.FeatureError(
-                    "Multiple features are not allowed in a single feature file",
-                    line_number,
-                    clean_line,
-                    filename,
-                )
-
-        prev_mode = mode
-
-        # Remove Feature, Given, When, Then, And
-        keyword, parsed_line = parse_line(clean_line)
-
-        if mode in [types.SCENARIO, types.SCENARIO_OUTLINE]:
-            # Lines between the scenario declaration
-            # and the scenario's first step line
-            # are considered part of the scenario description.
-            if scenario and not keyword:
-                # Do not include comments in descriptions
-                if not stripped_line.startswith("#"):
-                    scenario.add_description_line(clean_line)
-                continue
-            tags = get_tags(prev_line)
-            scenario = ScenarioTemplate(
-                feature=feature,
-                name=parsed_line,
-                line_number=line_number,
-                tags=tags,
-                templated=mode == types.SCENARIO_OUTLINE,
-            )
-            feature.scenarios[parsed_line] = scenario
-        elif mode == types.BACKGROUND:
-            feature.background = Background(feature=feature, line_number=line_number)
-        elif mode == types.EXAMPLES:
-            mode = types.EXAMPLES_HEADERS
-            scenario.examples.line_number = line_number
-        elif mode == types.EXAMPLES_HEADERS:
-            scenario.examples.set_param_names([l for l in split_line(parsed_line) if l])
-            mode = types.EXAMPLE_LINE
-        elif mode == types.EXAMPLE_LINE:
-            scenario.examples.add_example(list(split_line(stripped_line)))
-        elif mode and mode not in (types.FEATURE, types.TAG):
-            step = Step(name=parsed_line, type=mode, indent=line_indent, line_number=line_number, keyword=keyword)
-            if feature.background and not scenario:
-                feature.background.add_step(step)
-            else:
-                scenario = cast(ScenarioTemplate, scenario)
-                scenario.add_step(step)
-        prev_line = clean_line
-
-    feature.description = "\n".join(description).strip()
-    return feature
-
-
-@dataclass
+@dataclass(eq=False)
 class Feature:
+    """Represents a feature parsed from a feature file.
+
+    Attributes:
+        scenarios (OrderedDict[str, ScenarioTemplate]): A dictionary of scenarios in the feature.
+        filename (str): The absolute path of the feature file.
+        rel_filename (str): The relative path of the feature file.
+        name (Optional[str]): The name of the feature.
+        tags (set[str]): A set of tags associated with the feature.
+        background (Optional[Background]): The background steps for the feature, if any.
+        line_number (int): The line number where the feature starts in the file.
+        description (str): The description of the feature.
+    """
+
     scenarios: OrderedDict[str, ScenarioTemplate]
     filename: str
     rel_filename: str
+    language: str
+    keyword: str
     name: str | None
     tags: set[str]
     background: Background | None
@@ -214,206 +62,467 @@ class Feature:
     description: str
 
 
-@dataclass
-class ScenarioTemplate:
-    """A scenario template.
+@dataclass(eq=False)
+class Examples:
+    """Represents examples used in scenarios for parameterization.
 
-    Created when parsing the feature file, it will then be combined with the examples to create a Scenario.
+    Attributes:
+        line_number (Optional[int]): The line number where the examples start.
+        name (Optional[str]): The name of the examples.
+        example_params (List[str]): The names of the parameters for the examples.
+        examples (List[Sequence[str]]): The list of example rows.
+    """
+
+    line_number: int | None = None
+    name: str | None = None
+    example_params: list[str] = field(default_factory=list)
+    examples: list[Sequence[str]] = field(default_factory=list)
+    tags: set[str] = field(default_factory=set)
+
+    def set_param_names(self, keys: Iterable[str]) -> None:
+        """Set the parameter names for the examples.
+
+        Args:
+            keys (Iterable[str]): The parameter names to set.
+        """
+        self.example_params = [str(key) for key in keys]
+
+    def add_example(self, values: Sequence[str]) -> None:
+        """Add a new example row.
+
+        Args:
+            values (Sequence[str]): The values for the example row.
+        """
+        self.examples.append([str(value) if value is not None else "" for value in values])
+
+    def as_contexts(self) -> Iterable[dict[str, Any]]:
+        """Generate contexts for the examples.
+
+        Yields:
+            Dict[str, Any]: A dictionary mapping parameter names to their values for each example row.
+        """
+        for row in self.examples:
+            assert len(self.example_params) == len(row)
+            yield dict(zip(self.example_params, row))
+
+    def __bool__(self) -> bool:
+        """Check if there are any examples.
+
+        Returns:
+            bool: True if there are examples, False otherwise.
+        """
+        return bool(self.examples)
+
+
+@dataclass(eq=False)
+class Rule:
+    keyword: str
+    name: str
+    description: str
+    tags: set[str]
+    background: Background | None = None
+
+
+@dataclass(eq=False)
+class ScenarioTemplate:
+    """Represents a scenario template within a feature.
+
+    Attributes:
+        feature (Feature): The feature to which this scenario belongs.
+        keyword (str): The keyword used to define the scenario.
+        name (str): The name of the scenario.
+        line_number (int): The line number where the scenario starts in the file.
+        templated (bool): Whether the scenario is templated.
+        description (Optional[str]): The description of the scenario.
+        tags (set[str]): A set of tags associated with the scenario.
+        _steps (List[Step]): The list of steps in the scenario (internal use only).
+        examples (Optional[Examples]): The examples used for parameterization in the scenario.
+        rule (Optional[Rule]): The rule to which the scenario may belong (None = no rule).
     """
 
     feature: Feature
+    keyword: str
     name: str
     line_number: int
     templated: bool
+    description: str | None = None
     tags: set[str] = field(default_factory=set)
-    examples: Examples = field(default_factory=lambda: Examples())
     _steps: list[Step] = field(init=False, default_factory=list)
-    _description_lines: list[str] = field(init=False, default_factory=list)
+    examples: list[Examples] = field(default_factory=list[Examples])
+    rule: Rule | None = None
 
     def add_step(self, step: Step) -> None:
+        """Add a step to the scenario.
+
+        Args:
+            step (Step): The step to add.
+        """
         step.scenario = self
         self._steps.append(step)
 
     @property
+    def all_background_steps(self) -> list[Step]:
+        steps = []
+        # Add background steps from the feature
+        if self.feature.background:
+            steps.extend(self.feature.background.steps)
+        if self.rule is not None and self.rule.background is not None:
+            # Add background steps from the rule
+            steps.extend(self.rule.background.steps)
+        return steps
+
+    @property
     def steps(self) -> list[Step]:
-        background = self.feature.background
-        return (background.steps if background else []) + self._steps
+        """Get all steps for the scenario, including background steps.
+
+        Returns:
+            List[Step]: A list of steps, including any background steps from the feature.
+        """
+        return self.all_background_steps + self._steps
 
     def render(self, context: Mapping[str, Any]) -> Scenario:
-        background_steps = self.feature.background.steps if self.feature.background else []
-        if not self.templated:
-            scenario_steps = self._steps
-        else:
-            scenario_steps = [
-                Step(
-                    name=step.render(context),
-                    type=step.type,
-                    indent=step.indent,
-                    line_number=step.line_number,
-                    keyword=step.keyword,
-                )
-                for step in self._steps
-            ]
-        steps = background_steps + scenario_steps
+        """Render the scenario with the given context.
+
+        Args:
+            context (Mapping[str, Any]): The context for rendering steps.
+
+        Returns:
+            Scenario: A Scenario object with steps rendered based on the context.
+        """
+        scenario_steps = [
+            Step(
+                name=step.render(context),
+                type=step.type,
+                indent=step.indent,
+                line_number=step.line_number,
+                keyword=step.keyword,
+                datatable=step.datatable,
+                docstring=step.docstring,
+            )
+            for step in self._steps
+        ]
+        steps = self.all_background_steps + scenario_steps
         return Scenario(
             feature=self.feature,
+            keyword=self.keyword,
             name=self.name,
             line_number=self.line_number,
             steps=steps,
             tags=self.tags,
-            description=self._description_lines,
+            description=self.description,
+            rule=self.rule,
         )
 
-    def add_description_line(self, description_line):
-        """Add a description line to the scenario.
-        :param str description_line:
-        """
-        self._description_lines.append(description_line)
 
-    @property
-    def description(self):
-        """Get the scenario's description.
-        :return: The scenario description
-        """
-        return "\n".join(self._description_lines)
-
-
-@dataclass
+@dataclass(eq=False)
 class Scenario:
+    """Represents a scenario with steps.
+
+    Attributes:
+        feature (Feature): The feature to which this scenario belongs.
+        keyword (str): The keyword used to define the scenario.
+        name (str): The name of the scenario.
+        line_number (int): The line number where the scenario starts in the file.
+        steps (List[Step]): The list of steps in the scenario.
+        description (Optional[str]): The description of the scenario.
+        tags (set[str]): A set of tags associated with the scenario.
+    """
+
     feature: Feature
+    keyword: str
     name: str
     line_number: int
     steps: list[Step]
+    description: str | None = None
     tags: set[str] = field(default_factory=set)
-    description: list[str] = field(default_factory=list)
+    rule: Rule | None = None
 
 
-@dataclass
+@dataclass(eq=False)
 class Step:
+    """Represents a step within a scenario or background.
+
+    Attributes:
+        type (str): The type of step (e.g., 'given', 'when', 'then').
+        name (str): The name of the step.
+        line_number (int): The line number where the step starts in the file.
+        indent (int): The indentation level of the step.
+        keyword (str): The keyword used for the step (e.g., 'Given', 'When', 'Then').
+        failed (bool): Whether the step has failed (internal use only).
+        scenario (Optional[ScenarioTemplate]): The scenario to which this step belongs (internal use only).
+        background (Optional[Background]): The background to which this step belongs (internal use only).
+    """
+
     type: str
-    _name: str
+    name: str
     line_number: int
     indent: int
     keyword: str
+    docstring: str | None = None
+    datatable: DataTable | None = None
     failed: bool = field(init=False, default=False)
     scenario: ScenarioTemplate | None = field(init=False, default=None)
     background: Background | None = field(init=False, default=None)
-    lines: list[str] = field(init=False, default_factory=list)
 
-    def __init__(self, name: str, type: str, indent: int, line_number: int, keyword: str) -> None:
+    def __init__(
+        self,
+        name: str,
+        type: str,
+        indent: int,
+        line_number: int,
+        keyword: str,
+        datatable: DataTable | None = None,
+        docstring: str | None = None,
+    ) -> None:
+        """Initialize a step.
+
+        Args:
+            name (str): The name of the step.
+            type (str): The type of the step (e.g., 'given', 'when', 'then').
+            indent (int): The indentation level of the step.
+            line_number (int): The line number where the step starts in the file.
+            keyword (str): The keyword used for the step (e.g., 'Given', 'When', 'Then').
+        """
         self.name = name
         self.type = type
         self.indent = indent
         self.line_number = line_number
         self.keyword = keyword
-
-        self.failed = False
-        self.scenario = None
-        self.background = None
-        self.lines = []
-
-    def add_line(self, line: str) -> None:
-        """Add line to the multiple step.
-
-        :param str line: Line of text - the continuation of the step name.
-        """
-        self.lines.append(line)
-        self._invalidate_full_name_cache()
-
-    @cached_property
-    def full_name(self) -> str:
-        multilines_content = textwrap.dedent("\n".join(self.lines)) if self.lines else ""
-
-        # Remove the multiline quotes, if present.
-        multilines_content = re.sub(
-            pattern=r'^"""\n(?P<content>.*)\n"""$',
-            repl=r"\g<content>",
-            string=multilines_content,
-            flags=re.DOTALL,  # Needed to make the "." match also new lines
-        )
-
-        lines = [self._name] + [multilines_content]
-        return "\n".join(lines).strip()
-
-    def _invalidate_full_name_cache(self) -> None:
-        """Invalidate the full_name cache."""
-        if "full_name" in self.__dict__:
-            del self.full_name
-
-    @property
-    def name(self) -> str:
-        return self.full_name
-
-    @name.setter
-    def name(self, value: str) -> None:
-        self._name = value
-        self._invalidate_full_name_cache()
+        self.datatable = datatable
+        self.docstring = docstring
 
     def __str__(self) -> str:
-        """Full step name including the type."""
+        """Return a string representation of the step.
+
+        Returns:
+            str: A string representation of the step.
+        """
         return f'{self.type.capitalize()} "{self.name}"'
 
     @property
     def params(self) -> tuple[str, ...]:
+        """Get the parameters in the step name.
+
+        Returns:
+            Tuple[str, ...]: A tuple of parameter names found in the step name.
+        """
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
     def render(self, context: Mapping[str, Any]) -> str:
-        def replacer(m: Match):
+        """Render the step name with the given context, but avoid replacing text inside angle brackets if context is missing.
+
+        Args:
+            context (Mapping[str, Any]): The context for rendering the step name.
+
+        Returns:
+            str: The rendered step name with parameters replaced only if they exist in the context.
+        """
+
+        def replacer(m: re.Match) -> str:
             varname = m.group(1)
-            return str(context[varname])
+            # If the context contains the variable, replace it. Otherwise, leave it unchanged.
+            return str(context.get(varname, f"<{varname}>"))
 
         return STEP_PARAM_RE.sub(replacer, self.name)
 
 
-@dataclass
+@dataclass(eq=False)
 class Background:
-    feature: Feature
+    """Represents the background steps for a feature.
+
+    Attributes:
+        line_number (int): The line number where the background starts in the file.
+        steps (List[Step]): The list of steps in the background.
+    """
+
     line_number: int
     steps: list[Step] = field(init=False, default_factory=list)
 
     def add_step(self, step: Step) -> None:
-        """Add step to the background."""
+        """Add a step to the background.
+
+        Args:
+            step (Step): The step to add.
+        """
         step.background = self
         self.steps.append(step)
 
 
-@dataclass
-class Examples:
-    """Example table."""
+class FeatureParser:
+    """Converts a feature file into a Feature object.
 
-    line_number: int | None = field(default=None)
-    name: str | None = field(default=None)
-
-    example_params: list[str] = field(init=False, default_factory=list)
-    examples: list[Sequence[str]] = field(init=False, default_factory=list)
-
-    def set_param_names(self, keys: Iterable[str]) -> None:
-        self.example_params = [str(key) for key in keys]
-
-    def add_example(self, values: Sequence[str]) -> None:
-        self.examples.append(values)
-
-    def as_contexts(self) -> Iterable[dict[str, Any]]:
-        if not self.examples:
-            return
-
-        header, rows = self.example_params, self.examples
-
-        for row in rows:
-            assert len(header) == len(row)
-            yield dict(zip(header, row))
-
-    def __bool__(self) -> bool:
-        return bool(self.examples)
-
-
-def get_tags(line: str | None) -> set[str]:
-    """Get tags out of the given line.
-
-    :param str line: Feature file text line.
-
-    :return: List of tags.
+    Args:
+        basedir (str): The basedir for locating feature files.
+        filename (str): The filename of the feature file.
+        encoding (str): File encoding of the feature file to parse.
     """
-    if not line or not line.strip().startswith("@"):
-        return set()
-    return {tag.lstrip("@") for tag in line.strip().split(" @") if len(tag) > 1}
+
+    def __init__(self, basedir: str, filename: str, encoding: str = "utf-8"):
+        self.abs_filename = os.path.abspath(os.path.join(basedir, filename))
+        self.rel_filename = os.path.join(os.path.basename(basedir), filename)
+        self.encoding = encoding
+
+    def parse_steps(self, steps_data: list[GherkinStep]) -> list[Step]:
+        """Parse a list of step data into Step objects.
+
+        Args:
+            steps_data (List[dict]): The list of step data.
+
+        Returns:
+            List[Step]: A list of Step objects.
+        """
+
+        if not steps_data:
+            return []
+
+        first_step = steps_data[0]
+        if first_step.keyword_type not in STEP_TYPE_BY_PARSER_KEYWORD:
+            raise StepError(
+                message=f"First step in a scenario or background must start with 'Given', 'When' or 'Then', but got {first_step.keyword}.",
+                line=first_step.location.line,
+                line_content=first_step.text,
+                filename=self.abs_filename,
+            )
+
+        steps = []
+        current_type = STEP_TYPE_BY_PARSER_KEYWORD[first_step.keyword_type]
+        for step in steps_data:
+            current_type = STEP_TYPE_BY_PARSER_KEYWORD.get(step.keyword_type, current_type)
+            steps.append(
+                Step(
+                    name=step.text,
+                    type=current_type,
+                    indent=step.location.column - 1,
+                    line_number=step.location.line,
+                    keyword=step.keyword.title(),
+                    datatable=step.datatable,
+                    docstring=step.docstring.content if step.docstring else None,
+                )
+            )
+        return steps
+
+    def parse_scenario(
+        self, scenario_data: GherkinScenario, feature: Feature, rule: Rule | None = None
+    ) -> ScenarioTemplate:
+        """Parse a scenario data dictionary into a ScenarioTemplate object.
+
+        Args:
+            scenario_data (dict): The dictionary containing scenario data.
+            feature (Feature): The feature to which this scenario belongs.
+            rule (Optional[Rule]): The rule to which this scenario may belong. (None = no rule)
+
+        Returns:
+            ScenarioTemplate: A ScenarioTemplate object representing the parsed scenario.
+        """
+        templated = bool(scenario_data.examples)
+        scenario = ScenarioTemplate(
+            feature=feature,
+            keyword=scenario_data.keyword,
+            name=scenario_data.name,
+            line_number=scenario_data.location.line,
+            templated=templated,
+            tags=get_tag_names(scenario_data.tags),
+            description=textwrap.dedent(scenario_data.description),
+            rule=rule,
+        )
+        for step in self.parse_steps(scenario_data.steps):
+            scenario.add_step(step)
+
+        # Loop over multiple example tables if they exist
+        for example_data in scenario_data.examples:
+            examples = Examples(
+                line_number=example_data.location.line,
+                name=example_data.name,
+                tags=get_tag_names(example_data.tags),
+            )
+            if example_data.table_header is not None:
+                param_names = [cell.value for cell in example_data.table_header.cells]
+                examples.set_param_names(param_names)
+                if example_data.table_body is not None:
+                    for row in example_data.table_body:
+                        values = [cell.value or "" for cell in row.cells]
+                        examples.add_example(values)
+                scenario.examples.append(examples)
+
+        return scenario
+
+    def parse_background(self, background_data: GherkinBackground) -> Background:
+        background = Background(
+            line_number=background_data.location.line,
+        )
+        background.steps = self.parse_steps(background_data.steps)
+        for step in background.steps:
+            step.background = background
+        return background
+
+    def _parse_feature_file(self) -> GherkinDocument:
+        """Parse a feature file into a Feature object.
+
+        Returns:
+            Dict: A Gherkin document representation of the feature file.
+        """
+        return get_gherkin_document(self.abs_filename, self.encoding)
+
+    def parse(self) -> Feature:
+        """Parse the feature file and return a Feature object with its backgrounds, rules, and scenarios."""
+        gherkin_doc: GherkinDocument = self._parse_feature_file()
+        feature_data: GherkinFeature = gherkin_doc.feature
+        feature = Feature(
+            scenarios=OrderedDict(),
+            keyword=feature_data.keyword,
+            filename=self.abs_filename,
+            rel_filename=self.rel_filename,
+            name=feature_data.name,
+            tags=get_tag_names(feature_data.tags),
+            background=None,
+            line_number=feature_data.location.line,
+            description=textwrap.dedent(feature_data.description),
+            language=feature_data.language,
+        )
+
+        for child in feature_data.children:
+            if child.background:
+                feature.background = self.parse_background(child.background)
+            elif child.rule:
+                self._parse_and_add_rule(child.rule, feature)
+            elif child.scenario:
+                self._parse_and_add_scenario(child.scenario, feature)
+
+        return feature
+
+    def _parse_and_add_rule(self, rule_data: GherkinRule, feature: Feature) -> None:
+        """Parse a rule, including its background and scenarios, and add to the feature."""
+        background = self._extract_rule_background(rule_data)
+
+        rule = Rule(
+            keyword=rule_data.keyword,
+            name=rule_data.name,
+            description=rule_data.description,
+            tags=get_tag_names(rule_data.tags),
+            background=background,
+        )
+
+        for scenario in self._extract_rule_scenarios(rule_data, feature, rule):
+            feature.scenarios[scenario.name] = scenario
+
+    def _extract_rule_background(self, rule_data: GherkinRule) -> Background | None:
+        """Extract the first background from rule children if it exists."""
+        for child in rule_data.children:
+            if child.background:
+                return self.parse_background(child.background)
+        return None
+
+    def _extract_rule_scenarios(
+        self, rule_data: GherkinRule, feature: Feature, rule: Rule
+    ) -> Generator[ScenarioTemplate]:
+        """Yield each parsed scenario under a rule."""
+        for child in rule_data.children:
+            if child.scenario:
+                yield self.parse_scenario(child.scenario, feature, rule)
+
+    def _parse_and_add_scenario(
+        self, scenario_data: GherkinScenario, feature: Feature, rule: Rule | None = None
+    ) -> None:
+        """Parse an individual scenario and add it to the feature's scenarios."""
+        scenario = self.parse_scenario(scenario_data, feature, rule)
+        feature.scenarios[scenario.name] = scenario

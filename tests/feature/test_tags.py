@@ -1,9 +1,6 @@
 """Test tags."""
+
 import textwrap
-
-import pytest
-
-from pytest_bdd.parser import get_tags
 
 
 def test_tags_selector(pytester):
@@ -29,13 +26,16 @@ def test_tags_selector(pytester):
     @feature_tag_1 @feature_tag_2
     Feature: Tags
 
-    @scenario_tag_01 @scenario_tag_02
-    Scenario: Tags
-        Given I have a bar
+        @scenario_tag_01 @scenario_tag_02
+        Scenario: Tags
+            Given I have a bar
 
-    @scenario_tag_10 @scenario_tag_20
-    Scenario: Tags 2
-        Given I have a bar
+        @rule_tag_01
+        Rule: Rule tag
+
+            @scenario_tag_10 @scenario_tag_20
+            Scenario: Tags 2
+                Given I have a bar
 
     """,
     )
@@ -65,6 +65,9 @@ def test_tags_selector(pytester):
 
     result = pytester.runpytest("-m", "feature_tag_10", "-vv").parseoutcomes()
     assert result["deselected"] == 2
+
+    result = pytester.runpytest("-m", "rule_tag_01", "-vv").parseoutcomes()
+    assert result["deselected"] == 1
 
 
 def test_tags_after_background_issue_160(pytester):
@@ -158,52 +161,7 @@ def test_apply_tag_hook(pytester):
     )
     result = pytester.runpytest("-rsx")
     result.stdout.fnmatch_lines(["SKIP*: Not implemented yet"])
-    result.stdout.fnmatch_lines(["*= 1 skipped, 1 xpassed * =*"])
-
-
-def test_tag_with_spaces(pytester):
-    pytester.makefile(
-        ".ini",
-        pytest=textwrap.dedent(
-            """
-    [pytest]
-    markers =
-        test with spaces
-    """
-        ),
-    )
-    pytester.makeconftest(
-        """
-        import pytest
-
-        @pytest.hookimpl(tryfirst=True)
-        def pytest_bdd_apply_tag(tag, function):
-            assert tag == 'test with spaces'
-    """
-    )
-    pytester.makefile(
-        ".feature",
-        test="""
-    Feature: Tag with spaces
-
-        @test with spaces
-        Scenario: Tags
-            Given I have a bar
-    """,
-    )
-    pytester.makepyfile(
-        """
-        from pytest_bdd import given, scenarios
-
-        @given('I have a bar')
-        def _():
-            return 'bar'
-
-        scenarios('test.feature')
-    """
-    )
-    result = pytester.runpytest_subprocess()
-    result.stdout.fnmatch_lines(["*= 1 passed * =*"])
+    result.stdout.fnmatch_lines(["*= 1 skipped, 1 xpassed*=*"])
 
 
 def test_at_in_scenario(pytester):
@@ -239,17 +197,38 @@ def test_at_in_scenario(pytester):
     result.stdout.fnmatch_lines(["*= 2 passed * =*"])
 
 
-@pytest.mark.parametrize(
-    "line, expected",
-    [
-        ("@foo @bar", {"foo", "bar"}),
-        ("@with spaces @bar", {"with spaces", "bar"}),
-        ("@double @double", {"double"}),
-        ("    @indented", {"indented"}),
-        (None, set()),
-        ("foobar", set()),
-        ("", set()),
-    ],
-)
-def test_get_tags(line, expected):
-    assert get_tags(line) == expected
+def test_multiline_tags(pytester):
+    pytester.makefile(
+        ".feature",
+        test="""
+    Feature: Scenario with tags over multiple lines
+
+        @tag1
+        @tag2
+        Scenario: Tags
+            Given I have a foo
+
+        Scenario: Second
+            Given I have a baz
+    """,
+    )
+    pytester.makepyfile(
+        """
+        from pytest_bdd import given, scenarios
+
+        @given('I have a foo')
+        def _():
+            pass
+
+        @given('I have a baz')
+        def _():
+            pass
+
+        scenarios('test.feature')
+    """
+    )
+    result = pytester.runpytest("-m", "tag1", "-vv")
+    result.assert_outcomes(passed=1, deselected=1)
+
+    result = pytester.runpytest("-m", "tag2", "-vv")
+    result.assert_outcomes(passed=1, deselected=1)

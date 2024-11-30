@@ -45,9 +45,10 @@ def configure(config: Config) -> None:
             raise Exception("gherkin-terminal-reporter is not compatible with 'xdist' plugin.")
 
 
-class GherkinTerminalReporter(TerminalReporter):
+class GherkinTerminalReporter(TerminalReporter):  # type: ignore
     def __init__(self, config: Config) -> None:
         super().__init__(config)
+        self.current_rule = None
 
     def pytest_runtest_logreport(self, report: TestReport) -> Any:
         rep = report
@@ -68,6 +69,7 @@ class GherkinTerminalReporter(TerminalReporter):
             word_markup = {"yellow": True}
         feature_markup = {"blue": True}
         scenario_markup = word_markup
+        rule_markup = {"purple": True}
 
         try:
             scenario = test_report_context[report].scenario
@@ -77,27 +79,44 @@ class GherkinTerminalReporter(TerminalReporter):
         if self.verbosity <= 0 or scenario is None:
             return super().pytest_runtest_logreport(rep)
 
+        rule = scenario.get("rule")
+        indent = "    " if rule else ""
+
         if self.verbosity == 1:
             self.ensure_newline()
-            self._tw.write("Feature: ", **feature_markup)
+            self._tw.write(f"{scenario['feature']['keyword']}: ", **feature_markup)
             self._tw.write(scenario["feature"]["name"], **feature_markup)
             self._tw.write("\n")
-            self._tw.write("    Scenario: ", **scenario_markup)
+
+            if rule and rule["name"] != self.current_rule:
+                self._tw.write(f"  {rule['keyword']}: ", **rule_markup)
+                self._tw.write(rule["name"], **rule_markup)
+                self._tw.write("\n")
+                self.current_rule = rule["name"]
+
+            self._tw.write(f"{indent}    {scenario['keyword']}: ", **scenario_markup)
             self._tw.write(scenario["name"], **scenario_markup)
             self._tw.write(" ")
             self._tw.write(word, **word_markup)
             self._tw.write("\n")
         elif self.verbosity > 1:
             self.ensure_newline()
-            self._tw.write("Feature: ", **feature_markup)
+            self._tw.write(f"{scenario['feature']['keyword']}: ", **feature_markup)
             self._tw.write(scenario["feature"]["name"], **feature_markup)
             self._tw.write("\n")
-            self._tw.write("    Scenario: ", **scenario_markup)
+
+            if rule and rule["name"] != self.current_rule:
+                self._tw.write(f"  {rule['keyword']}: ", **rule_markup)
+                self._tw.write(rule["name"], **rule_markup)
+                self._tw.write("\n")
+                self.current_rule = rule["name"]
+
+            self._tw.write(f"{indent}    {scenario['keyword']}: ", **scenario_markup)
             self._tw.write(scenario["name"], **scenario_markup)
             self._tw.write("\n")
             for step in scenario["steps"]:
-                self._tw.write(f"        {step['keyword']} {step['name']}\n", **scenario_markup)
-            self._tw.write(f"    {word}", **word_markup)
+                self._tw.write(f"{indent}        {step['keyword']} {step['name']}\n", **scenario_markup)
+            self._tw.write(f"{indent}    {word}", **word_markup)
             self._tw.write("\n\n")
 
         self.stats.setdefault(cat, []).append(rep)

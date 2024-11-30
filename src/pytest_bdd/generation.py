@@ -1,4 +1,5 @@
 """pytest-bdd missing test code generation."""
+
 from __future__ import annotations
 
 import itertools
@@ -7,9 +8,11 @@ from typing import TYPE_CHECKING, cast
 
 from _pytest._io import TerminalWriter
 from _pytest.python import Function
-from mako.lookup import TemplateLookup
+from mako.lookup import TemplateLookup  # type: ignore
 
+from .compat import getfixturedefs
 from .feature import get_features
+from .parser import Feature, ScenarioTemplate, Step
 from .scenario import (
     inject_fixturedefs_for_step,
     make_python_docstring,
@@ -21,7 +24,8 @@ from .steps import get_step_fixture_name
 from .types import STEP_TYPES
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from collections.abc import Sequence
+    from typing import Any
 
     from _pytest.config import Config
     from _pytest.config.argparsing import Parser
@@ -29,7 +33,6 @@ if TYPE_CHECKING:
     from _pytest.main import Session
     from _pytest.nodes import Node
 
-    from .parser import Feature, ScenarioTemplate, Step
 
 template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
 
@@ -92,8 +95,10 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
     for scenario in scenarios:
         tw.line()
         tw.line(
-            'Scenario "{scenario.name}" is not bound to any test in the feature "{scenario.feature.name}"'
-            " in the file {scenario.feature.filename}:{scenario.line_number}".format(scenario=scenario),
+            (
+                f'Scenario "{scenario.name}" is not bound to any test in the feature "{scenario.feature.name}" '
+                f"in the file {scenario.feature.filename}:{scenario.line_number}"
+            ),
             red=True,
         )
 
@@ -104,18 +109,16 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
         tw.line()
         if step.scenario is not None:
             tw.line(
-                """Step {step} is not defined in the scenario "{step.scenario.name}" in the feature"""
-                """ "{step.scenario.feature.name}" in the file"""
-                """ {step.scenario.feature.filename}:{step.line_number}""".format(step=step),
+                (
+                    f'Step {step} is not defined in the scenario "{step.scenario.name}" '
+                    f'in the feature "{step.scenario.feature.name}" in the file '
+                    f"{step.scenario.feature.filename}:{step.line_number}"
+                ),
                 red=True,
             )
         elif step.background is not None:
-            tw.line(
-                """Step {step} is not defined in the background of the feature"""
-                """ "{step.background.feature.name}" in the file"""
-                """ {step.background.feature.filename}:{step.line_number}""".format(step=step),
-                red=True,
-            )
+            message = f"Background step {step} is not defined."
+            tw.line(message, red=True)
 
     if step:
         tw.sep("-", red=True)
@@ -132,9 +135,9 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
 
 def _find_step_fixturedef(fixturemanager: FixtureManager, item: Node, step: Step) -> Sequence[FixtureDef[Any]] | None:
     """Find step fixturedef."""
-    with inject_fixturedefs_for_step(step=step, fixturemanager=fixturemanager, nodeid=item.nodeid):
+    with inject_fixturedefs_for_step(step=step, fixturemanager=fixturemanager, node=item):
         bdd_name = get_step_fixture_name(step=step)
-        return fixturemanager.getfixturedefs(bdd_name, item.nodeid)
+        return getfixturedefs(fixturemanager, bdd_name, item)
 
 
 def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature], list[ScenarioTemplate], list[Step]]:
@@ -190,7 +193,7 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
             if scenario in scenarios:
                 scenarios.remove(scenario)
             for step in scenario.steps:
-                if _find_step_fixturedef(fm, item, step=step):
+                if _find_step_fixturedef(fm, item, step=step):  # type: ignore
                     try:
                         steps.remove(step)
                     except ValueError:

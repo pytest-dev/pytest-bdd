@@ -1,4 +1,5 @@
 """Various utility functions."""
+
 from __future__ import annotations
 
 import base64
@@ -71,7 +72,7 @@ def collect_dumped_objects(result: RunResult) -> list:
     Note: You must run the result with output to stdout enabled.
     For example, using ``pytester.runpytest("-s")``.
     """
-    stdout = result.stdout.str()  # pytest < 6.2, otherwise we could just do str(result.stdout)
+    stdout = str(result.stdout)
     payloads = re.findall(rf"{_DUMP_START}(.*?){_DUMP_END}", stdout)
     return [pickle.loads(base64.b64decode(payload)) for payload in payloads]
 
@@ -85,7 +86,7 @@ def setdefault(obj: object, name: str, default: T) -> T:
         return default
 
 
-def registry_get_safe(registry: WeakKeyDictionary[Any, T], key: Any, default=None) -> T | None:
+def registry_get_safe(registry: WeakKeyDictionary[Any, T], key: Any, default: T | None = None) -> T | None:
     """Get a value from a registry, or None if the key is not in the registry.
     It ensures that this works even if the key cannot be weak-referenced (normally this would raise a TypeError).
     """

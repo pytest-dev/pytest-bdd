@@ -4,7 +4,7 @@ from unittest import mock
 
 import pytest
 
-from pytest_bdd import given, parser, parsers, then, when
+from pytest_bdd import given, parsers, then, when
 from pytest_bdd.utils import collect_dumped_objects
 
 
@@ -76,6 +76,48 @@ def test_step_function_multiple_target_fixtures(pytester):
     [foo, bar] = collect_dumped_objects(result)
     assert foo == "test foo"
     assert bar == "test bar"
+
+
+def test_step_function_target_fixture_redefined(pytester):
+    pytester.makefile(
+        ".feature",
+        target_fixture=textwrap.dedent(
+            """\
+            Feature: Redefine a target fixture
+                Scenario: Redefine the target fixture after it has been injected once in the same scenario
+                    Given there is a foo with value "test foo"
+                    Then foo should be "test foo"
+                    Given there is a foo with value "test bar"
+                    Then foo should be "test bar"
+            """
+        ),
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        import pytest
+        from pytest_bdd import given, when, then, scenarios, parsers
+        from pytest_bdd.utils import dump_obj
+
+        scenarios("target_fixture.feature")
+
+        @given(parsers.parse('there is a foo with value "{value}"'), target_fixture="foo")
+        def _(value):
+            return value
+
+        @then(parsers.parse('foo should be "{expected_value}"'))
+        def _(foo, expected_value):
+            dump_obj(foo)
+            assert foo == expected_value
+        """
+        )
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=1)
+
+    [foo1, foo2] = collect_dumped_objects(result)
+    assert foo1 == "test foo"
+    assert foo2 == "test bar"
 
 
 def test_step_functions_same_parser(pytester):
@@ -316,25 +358,3 @@ def test_step_catches_all(pytester):
 
     objects = collect_dumped_objects(result)
     assert objects == ["foo", ("foo parametrized", 1), "foo", ("foo parametrized", 2), "foo", ("foo parametrized", 3)]
-
-
-def test_step_name_is_cached():
-    """Test that the step name is cached and not re-computed eache time."""
-    step = parser.Step(name="step name", type="given", indent=8, line_number=3, keyword="Given")
-    assert step.name == "step name"
-
-    # manipulate the step name directly and validate the cache value is still returned
-    step._name = "incorrect step name"
-    assert step.name == "step name"
-
-    # change the step name using the property and validate the cache has been invalidated
-    step.name = "new step name"
-    assert step.name == "new step name"
-
-    # manipulate the step lines and validate the cache value is still returned
-    step.lines.append("step line 1")
-    assert step.name == "new step name"
-
-    # add a step line and validate the cache has been invalidated
-    step.add_line("step line 2")
-    assert step.name == "new step name\nstep line 1\nstep line 2"

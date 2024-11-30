@@ -10,27 +10,29 @@ test_publish_article = scenario(
     scenario_name="Publishing the article",
 )
 """
+
 from __future__ import annotations
 
 import contextlib
 import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, TypeVar, cast
+from collections.abc import Iterable, Iterator
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 from weakref import WeakKeyDictionary
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
-from _pytest.nodes import iterparentnodeids
-from typing_extensions import ParamSpec
 
 from . import exceptions
+from .compat import getfixturedefs, inject_fixture
 from .feature import get_feature, get_features
-from .steps import StepFunctionContext, get_step_fixture_name, inject_fixture, step_function_context_registry
+from .steps import StepFunctionContext, get_step_fixture_name, step_function_context_registry
 from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path, registry_get_safe
 
 if TYPE_CHECKING:
     from _pytest.mark.structures import ParameterSet
+    from _pytest.nodes import Node
 
     from .parser import Feature, Scenario, ScenarioTemplate, Step
 
@@ -45,12 +47,12 @@ ALPHA_REGEX = re.compile(r"^\d+_*")
 scenario_wrapper_template_registry: WeakKeyDictionary[Callable[..., Any], ScenarioTemplate] = WeakKeyDictionary()
 
 
-def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, nodeid: str) -> Iterable[FixtureDef[Any]]:
+def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: Node) -> Iterable[FixtureDef[Any]]:
     """Find the fixture defs that can parse a step."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     fixture_def_by_name = list(fixturemanager._arg2fixturedefs.items())
     for fixturename, fixturedefs in fixture_def_by_name:
-        for pos, fixturedef in enumerate(fixturedefs):
+        for _, fixturedef in enumerate(fixturedefs):
             step_func_context = step_function_context_registry.get(fixturedef.func)
             if step_func_context is None:
                 continue
@@ -62,14 +64,62 @@ def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, nodeid
             if not match:
                 continue
 
-            if fixturedef not in (fixturemanager.getfixturedefs(fixturename, nodeid) or []):
+            fixturedefs = cast(list[FixtureDef[Any]], getfixturedefs(fixturemanager, fixturename, node) or [])
+            if fixturedef not in fixturedefs:
                 continue
 
             yield fixturedef
 
 
+# Function copied from pytest 8.0 (removed in later versions).
+def iterparentnodeids(nodeid: str) -> Iterator[str]:
+    """Return the parent node IDs of a given node ID, inclusive.
+
+    For the node ID
+
+        "testing/code/test_excinfo.py::TestFormattedExcinfo::test_repr_source"
+
+    the result would be
+
+        ""
+        "testing"
+        "testing/code"
+        "testing/code/test_excinfo.py"
+        "testing/code/test_excinfo.py::TestFormattedExcinfo"
+        "testing/code/test_excinfo.py::TestFormattedExcinfo::test_repr_source"
+
+    Note that / components are only considered until the first ::.
+    """
+    SEP = "/"
+    pos = 0
+    first_colons: int | None = nodeid.find("::")
+    if first_colons == -1:
+        first_colons = None
+    # The root Session node - always present.
+    yield ""
+    # Eagerly consume SEP parts until first colons.
+    while True:
+        at = nodeid.find(SEP, pos, first_colons)
+        if at == -1:
+            break
+        if at > 0:
+            yield nodeid[:at]
+        pos = at + len(SEP)
+    # Eagerly consume :: parts.
+    while True:
+        at = nodeid.find("::", pos)
+        if at == -1:
+            break
+        if at > 0:
+            yield nodeid[:at]
+        pos = at + len("::")
+    # The node ID itself.
+    if nodeid:
+        yield nodeid
+
+
 @contextlib.contextmanager
-def inject_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, nodeid: str) -> Iterator[None]:
+def inject_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: Node) -> Iterator[None]:
     """Inject fixture definitions that can parse a step.
 
     We fist iterate over all the fixturedefs that can parse the step.
@@ -80,7 +130,7 @@ def inject_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node
     """
     bdd_name = get_step_fixture_name(step=step)
 
-    fixturedefs = list(find_fixturedefs_for_step(step=step, fixturemanager=fixturemanager, nodeid=nodeid))
+    fixturedefs = list(find_fixturedefs_for_step(step=step, fixturemanager=fixturemanager, node=node))
 
     # Sort the fixture definitions by their "path", so that the `bdd_name` fixture will
     # respect the fixture scope
@@ -103,7 +153,7 @@ def inject_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node
         del fixturemanager._arg2fixturedefs[bdd_name]
 
 
-def get_step_function(request, step: Step) -> StepFunctionContext | None:
+def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContext | None:
     """Get the step function (context) for the given step.
 
     We first figure out what's the step fixture name that we have to inject.
@@ -111,12 +161,12 @@ def get_step_function(request, step: Step) -> StepFunctionContext | None:
     Then we let `patch_argumented_step_functions` find out what step definition fixtures can parse the current step,
     and it will inject them for the step fixture name.
 
-    Finally we let request.getfixturevalue(...) fetch the step definition fixture.
+    Finally, we let request.getfixturevalue(...) fetch the step definition fixture.
     """
     __tracebackhide__ = True
     bdd_name = get_step_fixture_name(step=step)
 
-    with inject_fixturedefs_for_step(step=step, fixturemanager=request._fixturemanager, nodeid=request.node.nodeid):
+    with inject_fixturedefs_for_step(step=step, fixturemanager=request._fixturemanager, node=request.node):
         try:
             return cast(StepFunctionContext, request.getfixturevalue(bdd_name))
         except pytest.FixtureLookupError:
@@ -149,12 +199,20 @@ def _execute_step_function(
         assert parsed_args is not None, (
             f"Unexpected `NoneType` returned from " f"parse_arguments(...) in parser: {context.parser!r}"
         )
+
         for arg, value in parsed_args.items():
             if arg in converters:
                 value = converters[arg](value)
             kwargs[arg] = value
 
+        if step.datatable is not None:
+            kwargs["datatable"] = step.datatable.raw()
+
+        if step.docstring is not None:
+            kwargs["docstring"] = step.docstring
+
         kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
+
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
@@ -176,7 +234,6 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequ
     :param feature: Feature.
     :param scenario: Scenario.
     :param request: request.
-    :param encoding: Encoding.
     """
     __tracebackhide__ = True
     request.config.hook.pytest_bdd_before_scenario(request=request, feature=feature, scenario=scenario)
@@ -215,15 +272,17 @@ def _get_scenario_decorator(
         [fn] = args
         func_args = get_args(fn)
 
-        # We need to tell pytest that the original function requires its fixtures,
-        # otherwise indirect fixtures would not work.
-        @pytest.mark.usefixtures(*func_args)
         def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> T:
             __tracebackhide__ = True
             scenario = templated_scenario.render(_pytest_bdd_example)
             _execute_scenario(feature, scenario, request)
             fixture_values = [request.getfixturevalue(arg) for arg in func_args]
             return fn(*fixture_values)
+
+        if func_args:
+            # We need to tell pytest that the original function requires its fixtures,
+            # otherwise indirect fixtures would not work.
+            scenario_wrapper = pytest.mark.usefixtures(*func_args)(scenario_wrapper)
 
         example_parametrizations = collect_example_parametrizations(templated_scenario)
         if example_parametrizations is not None:
@@ -233,7 +292,8 @@ def _get_scenario_decorator(
                 example_parametrizations,
             )(scenario_wrapper)
 
-        for tag in templated_scenario.tags.union(feature.tags):
+        rule_tags = set() if templated_scenario.rule is None else templated_scenario.rule.tags
+        for tag in templated_scenario.tags | feature.tags | rule_tags:
             config = CONFIG_STACK[-1]
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 
@@ -248,10 +308,24 @@ def _get_scenario_decorator(
 def collect_example_parametrizations(
     templated_scenario: ScenarioTemplate,
 ) -> list[ParameterSet] | None:
-    if contexts := list(templated_scenario.examples.as_contexts()):
-        return [pytest.param(context, id="-".join(context.values())) for context in contexts]
-    else:
-        return None
+    parametrizations = []
+
+    for examples in templated_scenario.examples:
+        tags: set = examples.tags or set()
+
+        example_marks = [getattr(pytest.mark, tag) for tag in tags]
+
+        for context in examples.as_contexts():
+            param_id = "-".join(context.values())
+            parametrizations.append(
+                pytest.param(
+                    context,
+                    id=param_id,
+                    marks=example_marks,
+                ),
+            )
+
+    return parametrizations or None
 
 
 def scenario(
@@ -265,6 +339,7 @@ def scenario(
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
     :param str scenario_name: Scenario name.
     :param str encoding: Feature file encoding.
+    :param features_base_dir: Optional base dir location for locating feature files. If not set, it will try and resolve using property set in .ini file, then the caller_module_path.
     """
     __tracebackhide__ = True
     scenario_name = scenario_name
@@ -290,17 +365,17 @@ def scenario(
 
 
 def get_features_base_dir(caller_module_path: str) -> str:
-    d = get_from_ini("bdd_features_base_dir", None)
+    d = get_from_ini("bdd_features_base_dir")
     if d is None:
         return os.path.dirname(caller_module_path)
     rootdir = CONFIG_STACK[-1].rootpath
     return os.path.join(rootdir, d)
 
 
-def get_from_ini(key: str, default: T) -> str | T:
+def get_from_ini(key: str, default: str | None = None) -> str | None:
     """Get value from ini config. Return default if value has not been set.
 
-    Use if the default value is dynamic. Otherwise set default on addini call.
+    Use if the default value is dynamic. Otherwise, set default on addini call.
     """
     config = CONFIG_STACK[-1]
     value = config.getini(key)
@@ -376,7 +451,7 @@ def scenarios(*feature_paths: str, **kwargs: Any) -> None:
 
                 for test_name in get_python_name_generator(scenario_name):
                     if test_name not in caller_locals:
-                        # found an unique test name
+                        # found a unique test name
                         caller_locals[test_name] = _scenario
                         break
             found = True

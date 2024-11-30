@@ -1,15 +1,15 @@
-BDD library for the pytest runner
-=================================
+Pytest-BDD: the BDD framework for pytest
+========================================
 
-.. image:: http://img.shields.io/pypi/v/pytest-bdd.svg
+.. image:: https://img.shields.io/pypi/v/pytest-bdd.svg
    :target: https://pypi.python.org/pypi/pytest-bdd
 .. image:: https://codecov.io/gh/pytest-dev/pytest-bdd/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/pytest-dev/pytest-bdd
-.. image:: https://travis-ci.org/pytest-dev/pytest-bdd.svg?branch=master
-    :target: https://travis-ci.org/pytest-dev/pytest-bdd
+   :target: https://codecov.io/gh/pytest-dev/pytest-bdd
+.. image:: https://github.com/pytest-dev/pytest-bdd/actions/workflows/main.yml/badge.svg
+   :target: https://github.com/pytest-dev/pytest-bdd/actions/workflows/main.yml
 .. image:: https://readthedocs.org/projects/pytest-bdd/badge/?version=stable
-    :target: https://readthedocs.org/projects/pytest-bdd/
-    :alt: Documentation Status
+   :target: https://readthedocs.org/projects/pytest-bdd/
+   :alt: Documentation Status
 
 pytest-bdd implements a subset of the Gherkin language to enable automating project
 requirements testing and to facilitate behavioral driven development.
@@ -56,7 +56,7 @@ Note that pytest-splinter_ is used to get the browser fixture.
             And I press the publish button
 
             Then I should not see the error message
-            And the article should be published  # Note: will query the database
+            And the article should be published
 
 Note that only one feature is allowed per feature file.
 
@@ -154,6 +154,55 @@ default author.
         Scenario: I'm the admin
             Given I'm the admin
             And there's an article
+
+
+Using Asterisks in Place of Keywords
+------------------------------------
+
+To avoid redundancy or unnecessary repetition of keywords
+such as "And" or "But" in Gherkin scenarios,
+you can use an asterisk (*) as a shorthand.
+The asterisk acts as a wildcard, allowing for the same functionality
+without repeating the keyword explicitly.
+It improves readability by making the steps easier to follow,
+especially when the specific keyword does not add value to the scenario's clarity.
+
+The asterisk will work the same as other step keywords - Given, When, Then - it follows.
+
+For example:
+
+.. code-block:: gherkin
+
+    Feature: Resource owner
+        Scenario: I'm the author
+            Given I'm an author
+            * I have an article
+            * I have a pen
+
+
+.. code-block:: python
+
+    from pytest_bdd import given
+
+    @given("I'm an author")
+    def _():
+        pass
+
+    @given("I have an article")
+    def _():
+        pass
+
+    @given("I have a pen")
+    def _():
+        pass
+
+
+In the scenario above, the asterisk (*) replaces the And or Given keywords.
+This allows for cleaner scenarios while still linking related steps together in the context of the scenario.
+
+This approach is particularly useful when you have a series of steps
+that do not require explicitly stating whether they are part of the "Given", "When", or "Then" context
+but are part of the logical flow of the scenario.
 
 
 Step arguments
@@ -379,52 +428,6 @@ A common use case is when we have to assert the outcome of an HTTP request:
             Then the request should be successful
 
 
-Multiline steps
----------------
-
-As Gherkin, pytest-bdd supports multiline steps
-(a.k.a. `Doc Strings <https://cucumber.io/docs/gherkin/reference/#doc-strings>`_).
-But in much cleaner and powerful way:
-
-.. code-block:: gherkin
-
-    Feature: Multiline steps
-        Scenario: Multiline step using sub indentation
-            Given I have a step with:
-                Some
-                Extra
-                Lines
-            Then the text should be parsed with correct indentation
-
-A step is considered as a multiline one, if the **next** line(s) after it's first line is indented relatively
-to the first line. The step name is then simply extended by adding further lines with newlines.
-In the example above, the Given step name will be:
-
-.. code-block:: python
-
-    'I have a step with:\nSome\nExtra\nLines'
-
-You can of course register a step using the full name (including the newlines), but it seems more practical to use
-step arguments and capture lines after first line (or some subset of them) into the argument:
-
-.. code-block:: python
-
-    from pytest_bdd import given, then, scenario, parsers
-
-
-    scenarios("multiline.feature")
-
-
-    @given(parsers.parse("I have a step with:\n{content}"), target_fixture="text")
-    def given_text(content):
-        return content
-
-
-    @then("the text should be parsed with correct indentation")
-    def text_should_be_correct(text):
-        assert text == "Some\nExtra\nLines"
-
-
 Scenarios shortcut
 ------------------
 
@@ -510,6 +513,278 @@ Example:
     def should_have_left_cucumbers(cucumbers, left):
         assert cucumbers["start"] - cucumbers["eat"] == left
 
+Rules
+-----
+
+In Gherkin, `Rules` allow you to group related scenarios or examples under a shared context.
+This is useful when you want to define different conditions or behaviours
+for multiple examples that follow a similar structure.
+You can use either ``Scenario`` or ``Example`` to define individual cases, as they are aliases and function identically.
+
+Additionally, **tags** applied to a rule will be automatically applied to all the **examples or scenarios**
+under that rule, making it easier to organize and filter tests during execution.
+
+Example:
+
+.. code-block:: gherkin
+
+    Feature: Rules and examples
+
+        @feature_tag
+        Rule: A rule for valid cases
+
+            @rule_tag
+            Example: Valid case 1
+                Given I have a valid input
+                When I process the input
+                Then the result should be successful
+
+        Rule: A rule for invalid cases
+            Example: Invalid case
+                Given I have an invalid input
+                When I process the input
+                Then the result should be an error
+
+
+Scenario Outlines with Multiple Example Tables
+----------------------------------------------
+
+In `pytest-bdd`, you can use multiple example tables in a scenario outline to test
+different sets of input data under various conditions.
+You can define separate `Examples` blocks, each with its own table of data,
+and optionally tag them to differentiate between positive, negative, or any other conditions.
+
+Example:
+
+.. code-block:: gherkin
+
+    # content of scenario_outline.feature
+
+    Feature: Scenario outlines with multiple examples tables
+        Scenario Outline: Outlined with multiple example tables
+            Given there are <start> cucumbers
+            When I eat <eat> cucumbers
+            Then I should have <left> cucumbers
+
+            @positive
+            Examples: Positive results
+                | start | eat | left |
+                |  12   |  5  |  7   |
+                |  5    |  4  |  1   |
+
+            @negative
+            Examples: Impossible negative results
+                | start | eat | left |
+                |  3    |  9  |  -6  |
+                |  1    |  4  |  -3  |
+
+.. code-block:: python
+
+    from pytest_bdd import scenarios, given, when, then, parsers
+
+
+    scenarios("scenario_outline.feature")
+
+
+    @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="cucumbers")
+    def given_cucumbers(start):
+        return {"start": start, "eat": 0}
+
+
+    @when(parsers.parse("I eat {eat:d} cucumbers"))
+    def eat_cucumbers(cucumbers, eat):
+        cucumbers["eat"] += eat
+
+
+    @then(parsers.parse("I should have {left:d} cucumbers"))
+    def should_have_left_cucumbers(cucumbers, left):
+        assert cucumbers["start"] - cucumbers["eat"] == left
+
+
+When you filter scenarios by a tag, only the examples associated with that tag will be executed.
+This allows you to run a specific subset of your test cases based on the tag.
+For example, in the following scenario outline, if you filter by the @positive tag,
+only the examples under the "Positive results" table will be executed, and the "Negative results" table will be ignored.
+
+.. code-block:: bash
+
+    pytest -k "positive"
+
+
+Datatables
+----------
+
+The ``datatable`` argument allows you to utilise data tables defined in your Gherkin scenarios
+directly within your test functions. This is particularly useful for scenarios that require tabular data as input,
+enabling you to manage and manipulate this data conveniently.
+
+When you use the ``datatable`` argument in a step definition, it will return the table as a list of lists,
+where each inner list represents a row from the table.
+
+For example, the Gherkin table:
+
+.. code-block:: gherkin
+
+    | name  | email            |
+    | John  | john@example.com |
+
+Will be returned by the ``datatable`` argument as:
+
+.. code-block:: python
+
+    [
+        ["name", "email"],
+        ["John", "john@example.com"]
+    ]
+
+.. NOTE:: When using the datatable argument, it is essential to ensure that the step to which it is applied
+          actually has an associated data table. If the step does not have an associated data table,
+          attempting to use the datatable argument will raise an error.
+          Make sure that your Gherkin steps correctly reference the data table when defined.
+
+Full example:
+
+.. code-block:: gherkin
+
+    Feature: Manage user accounts
+
+      Scenario: Creating a new user with roles and permissions
+        Given the following user details:
+          | name  | email             | age |
+          | John  | john@example.com  | 30  |
+          | Alice | alice@example.com | 25  |
+
+        When each user is assigned the following roles:
+          | Admin       | Full access to the system |
+          | Contributor | Can add content           |
+
+        And the page is saved
+
+        Then the user should have the following permissions:
+          | permission     | allowed |
+          | view dashboard | true    |
+          | edit content   | true    |
+          | delete content | false   |
+
+.. code-block:: python
+
+    from pytest_bdd import given, when, then
+
+
+    @given("the following user details:", target_fixture="users")
+    def _(datatable):
+        users = []
+        for row in datatable[1:]:
+            users.append(row)
+
+        print(users)
+        return users
+
+
+    @when("each user is assigned the following roles:")
+    def _(datatable, users):
+        roles = datatable
+        for user in users:
+            for role_row in datatable:
+                assign_role(user, role_row)
+
+
+    @when("the page is saved")
+    def _():
+        save_page()
+
+
+    @then("the user should have the following permissions:")
+    def _(datatable, users):
+        expected_permissions = []
+        for row in datatable[1:]:
+            expected_permissions.append(row)
+
+        assert users_have_correct_permissions(users, expected_permissions)
+
+
+Docstrings
+----------
+
+The `docstring` argument allows you to access the Gherkin docstring defined in your steps as a multiline string.
+The content of the docstring is passed as a single string, with each line separated by `\\n`.
+Leading indentation are stripped.
+
+For example, the Gherkin docstring:
+
+
+.. code-block:: gherkin
+
+    """
+    This is a sample docstring.
+    It spans multiple lines.
+    """
+
+
+Will be returned as:
+
+.. code-block:: python
+
+    "This is a sample docstring.\nIt spans multiple lines."
+
+
+Full example:
+
+.. code-block:: gherkin
+
+    Feature: Docstring
+
+      Scenario: Step with docstrings
+        Given some steps will have docstrings
+
+        Then a step has a docstring
+        """
+        This is a docstring
+        on two lines
+        """
+
+        And a step provides a docstring with lower indentation
+        """
+    This is a docstring
+        """
+
+        And this step has no docstring
+
+        And this step has a greater indentation
+        """
+            This is a docstring
+        """
+
+        And this step has no docstring
+
+.. code-block:: python
+
+        from pytest_bdd import given, then
+
+
+        @given("some steps will have docstrings")
+        def _():
+            pass
+
+        @then("a step has a docstring")
+        def _(docstring):
+            assert docstring == "This is a docstring\non two lines"
+
+        @then("a step provides a docstring with lower indentation")
+        def _(docstring):
+            assert docstring == "This is a docstring"
+
+        @then("this step has a greater indentation")
+        def _(docstring):
+            assert docstring == "This is a docstring"
+
+        @then("this step has no docstring")
+        def _():
+            pass
+
+
+.. note::   The ``docstring`` argument can only be used for steps that have an associated docstring.
+            Otherwise, an error will be thrown.
 
 Organizing your scenarios
 -------------------------
@@ -582,7 +857,7 @@ scenario test, so we can use standard test selection:
     pytest -m "backend and login and successful"
 
 The feature and scenario markers are not different from standard pytest markers, and the ``@`` symbol is stripped out automatically to allow test selector expressions. If you want to have bdd-related tags to be distinguishable from the other test markers, use a prefix like ``bdd``.
-Note that if you use pytest with the ``--strict`` option, all bdd tags mentioned in the feature files should be also in the ``markers`` setting of the ``pytest.ini`` config. Also for tags please use names which are python-compatible variable names, i.e. start with a non-number, only underscores or alphanumeric characters, etc. That way you can safely use tags for tests filtering.
+Note that if you use pytest with the ``--strict-markers`` option, all Gherkin tags mentioned in the feature files should be also in the ``markers`` setting of the ``pytest.ini`` config. Also for tags please use names which are python-compatible variable names, i.e. start with a non-number, only underscores or alphanumeric characters, etc. That way you can safely use tags for tests filtering.
 
 You can customize how tags are converted to pytest marks by implementing the
 ``pytest_bdd_apply_tag`` hook and returning ``True`` from it:
@@ -714,8 +989,6 @@ About best practices for Background, please read Gherkin's
           related to actions and consuming outcomes; that is in conflict with the
           aim of "Background" - to prepare the system for tests or "put the system
           in a known state" as "Given" does it.
-          The statement above applies to strict Gherkin mode, which is
-          enabled by default.
 
 
 Reusing fixtures
@@ -1016,7 +1289,7 @@ which might be helpful building useful reporting, visualization, etc. on top of 
   (even if one of steps has failed)
 
 * `pytest_bdd_before_step(request, feature, scenario, step, step_func)` - Called before step function
-  is executed and it's arguments evaluated
+  is executed and its arguments evaluated
 
 * `pytest_bdd_before_step_call(request, feature, scenario, step, step_func, step_func_args)` - Called before step
   function is executed with evaluated arguments
@@ -1054,11 +1327,11 @@ To have an output in json format:
 
 This will output an expanded (meaning scenario outlines will be expanded to several scenarios) Cucumber format.
 
-To enable gherkin-formatted output on terminal, use
+To enable gherkin-formatted output on terminal, use `--gherkin-terminal-reporter` in conjunction with the `-v` or `-vv` options:
 
 ::
 
-    pytest --gherkin-terminal-reporter
+    pytest -v --gherkin-terminal-reporter
 
 
 Test code generation helpers

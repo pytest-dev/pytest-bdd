@@ -1,4 +1,5 @@
 """Test cucumber json output."""
+
 from __future__ import annotations
 
 import json
@@ -22,7 +23,7 @@ def runandparse(pytester: Pytester, *args: Any) -> tuple[RunResult, list[dict[st
 class OfType:
     """Helper object to help compare object type to initialization type"""
 
-    def __init__(self, type: type = None) -> None:
+    def __init__(self, type: type | None = None) -> None:
         self.type = type
 
     def __eq__(self, other: object) -> bool:
@@ -169,7 +170,7 @@ def test_step_trace(pytester):
                 },
                 {
                     "description": "",
-                    "keyword": "Scenario",
+                    "keyword": "Scenario Outline",
                     "tags": [{"line": 14, "name": "scenario-outline-passing-tag"}],
                     "steps": [
                         {
@@ -187,7 +188,7 @@ def test_step_trace(pytester):
                 },
                 {
                     "description": "",
-                    "keyword": "Scenario",
+                    "keyword": "Scenario Outline",
                     "tags": [{"line": 14, "name": "scenario-outline-passing-tag"}],
                     "steps": [
                         {
@@ -205,7 +206,7 @@ def test_step_trace(pytester):
                 },
                 {
                     "description": "",
-                    "keyword": "Scenario",
+                    "keyword": "Scenario Outline",
                     "tags": [{"line": 14, "name": "scenario-outline-passing-tag"}],
                     "steps": [
                         {
@@ -224,6 +225,7 @@ def test_step_trace(pytester):
             ],
             "id": os.path.join("test_step_trace0", "test.feature"),
             "keyword": "Feature",
+            "language": "en",
             "line": 2,
             "name": "One passing scenario, one failing scenario",
             "tags": [{"name": "feature-tag", "line": 1}],

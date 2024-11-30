@@ -1,4 +1,5 @@
 """Scenario Outline tests."""
+
 import textwrap
 
 from pytest_bdd.utils import collect_dumped_objects
@@ -78,6 +79,61 @@ def test_outlined(pytester):
     # fmt: on
 
 
+def test_multiple_outlined(pytester):
+    pytester.makefile(
+        ".feature",
+        outline_multi_example=textwrap.dedent(
+            """\
+            Feature: Outline With Multiple Examples
+                Scenario Outline: Outlined given, when, thens with multiple examples tables
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers
+
+                    @positive
+                    Examples: Positive results
+                        | start | eat | left |
+                        |  12   |  5  |  7   |
+                        |  5    |  4  |  1   |
+
+                    @negative
+                    Examples: Negative results
+                        | start | eat | left |
+                        |  3    |  9  |  -6  |
+                        |  1    |  4  |  -3  |
+            """
+        ),
+    )
+
+    pytester.makeconftest(textwrap.dedent(STEPS))
+
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenarios
+
+        scenarios('outline_multi_example.feature')
+
+        """
+        )
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=4)
+    # fmt: off
+    assert collect_dumped_objects(result) == [
+        12, 5.0, "7",
+        5, 4.0, "1",
+        3, 9.0, "-6",
+        1, 4.0, "-3",
+    ]
+    # fmt: on
+    result = pytester.runpytest("-k", "positive", "-vv")
+    result.assert_outcomes(passed=2, deselected=2)
+
+    result = pytester.runpytest("-k", "positive or negative", "-vv")
+    result.assert_outcomes(passed=4, deselected=0)
+
+
 def test_unused_params(pytester):
     """Test parametrized scenario when the test function lacks parameters."""
 
@@ -89,7 +145,6 @@ def test_unused_params(pytester):
                 Scenario Outline: Outlined with unused params
                     Given there are <start> cucumbers
                     When I eat <eat> cucumbers
-                    # And commented out step with <unused_param>
                     Then I should have <left> cucumbers
 
                     Examples:
@@ -170,8 +225,7 @@ def test_outline_with_escaped_pipes(pytester):
     pytester.makefile(
         ".feature",
         outline=textwrap.dedent(
-            r"""\
-            Feature: Outline With Special characters
+            r"""Feature: Outline With Special characters
 
                 Scenario Outline: Outline with escaped pipe character
                     # Just print the string so that we can assert later what it was by reading the output
@@ -219,3 +273,50 @@ def test_outline_with_escaped_pipes(pytester):
         r"bork      \\",
         r"bork    \\|",
     ]
+
+
+def test_forward_slash_in_params(pytester):
+    """Test parametrised scenario when the parameter contains a slash, such in a URL."""
+
+    pytester.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Outline
+                Scenario Outline: Outlined with slashes
+                    Given I am in <Country>
+                    Then I visit <Site>
+
+                    Examples:
+                        | Country  | Site                 |
+                        | US       | https://my-site.com  |
+
+            """
+        ),
+    )
+    pytester.makeconftest(textwrap.dedent(STEPS))
+
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+            from pytest_bdd import given, parsers, scenarios, then
+            from pytest_bdd.utils import dump_obj
+
+            scenarios('outline.feature')
+
+
+            @given(parsers.parse("I am in {country}"))
+            def _(country):
+                pass
+
+
+            @then(parsers.parse("I visit {site}"))
+            def _(site):
+                dump_obj(site)
+
+        """
+        )
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=1)
+    assert collect_dumped_objects(result) == ["https://my-site.com"]

@@ -1,7 +1,9 @@
 """Pytest plugin entry point. Used for any fixtures needed."""
+
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Generator, TypeVar, cast
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import pytest
 from typing_extensions import ParamSpec
@@ -47,7 +49,7 @@ def _pytest_bdd_example() -> dict:
 
     If no outline is used, we just return an empty dict to render
     the current template without any actual variable.
-    Otherwise pytest_bdd will add all the context variables in this fixture
+    Otherwise, pytest_bdd will add all the context variables in this fixture
     from the example definitions in the feature file.
     """
     return {}

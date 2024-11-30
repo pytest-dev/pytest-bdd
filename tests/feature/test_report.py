@@ -1,5 +1,7 @@
 """Test scenario reporting."""
+
 import textwrap
+from typing import Optional
 
 import pytest
 
@@ -9,7 +11,7 @@ from pytest_bdd.reporting import test_report_context
 class OfType:
     """Helper object comparison to which is always 'equal'."""
 
-    def __init__(self, type: type = None) -> None:
+    def __init__(self, type: Optional[type] = None) -> None:
         self.type = type
 
     def __eq__(self, other: object) -> bool:
@@ -107,12 +109,15 @@ def test_step_trace(pytester):
     expected = {
         "feature": {
             "description": "",
+            "keyword": "Feature",
+            "language": "en",
             "filename": str(feature),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
             "rel_filename": str(relpath),
             "tags": ["feature-tag"],
         },
+        "keyword": "Scenario",
         "line_number": 5,
         "name": "Passing",
         "steps": [
@@ -143,12 +148,15 @@ def test_step_trace(pytester):
     expected = {
         "feature": {
             "description": "",
+            "keyword": "Feature",
+            "language": "en",
             "filename": str(feature),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
             "rel_filename": str(relpath),
             "tags": ["feature-tag"],
         },
+        "keyword": "Scenario",
         "line_number": 10,
         "name": "Failing",
         "steps": [
@@ -178,12 +186,15 @@ def test_step_trace(pytester):
     expected = {
         "feature": {
             "description": "",
+            "keyword": "Feature",
+            "language": "en",
             "filename": str(feature),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
             "rel_filename": str(relpath),
             "tags": ["feature-tag"],
         },
+        "keyword": "Scenario Outline",
         "line_number": 14,
         "name": "Outlined",
         "steps": [
@@ -221,12 +232,15 @@ def test_step_trace(pytester):
     expected = {
         "feature": {
             "description": "",
+            "keyword": "Feature",
+            "language": "en",
             "filename": str(feature),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
             "rel_filename": str(relpath),
             "tags": ["feature-tag"],
         },
+        "keyword": "Scenario Outline",
         "line_number": 14,
         "name": "Outlined",
         "steps": [

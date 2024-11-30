@@ -1,6 +1,11 @@
 Changelog
 =========
 
+All notable changes to this project will be documented in this file.
+
+The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.1.0/>`_,
+and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
+
 Unreleased
 ----------
 - Address many ``mypy`` warnings. The following private attributes are not available anymore:
@@ -10,6 +15,108 @@ Unreleased
   * ``_pytest.nodes.Item.__scenario_report__`` (replaced by ``pytest_bdd.reporting.scenario_reports_registry`` WeakKeyDictionary)
   * ``_pytest_bdd_step_context`` attribute of internal test function markers (replaced by ``pytest_bdd.steps.step_function_context_registry`` WeakKeyDictionary)
   `#658 <https://github.com/pytest-dev/pytest-bdd/pull/658>`_
+
+Added
++++++
+
+Changed
++++++++
+
+Deprecated
+++++++++++
+
+Removed
++++++++
+
+Fixed
++++++
+* Fixed an issue with the upcoming pytest release related to the use of ``@pytest.mark.usefixtures`` with an empty list.
+
+Security
+++++++++
+
+
+[8.0.0] - 2024-11-14
+----------
+
+Added
++++++
+* Gherkin keyword aliases can now be used and correctly reported in json and terminal output (see `Keywords <https://cucumber.io/docs/gherkin/reference/#keywords>`_ for permitted list).
+* Added localization support. The language of the feature file can be specified using the `# language: <language>` directive at the beginning of the file.
+* Rule keyword can be used in feature files (see `Rule <https://cucumber.io/docs/gherkin/reference/#rule>`_)
+* Added support for multiple example tables
+* Added filtering by tags against example tables
+* Since the 7.x series:
+  * Tags can now be on multiple lines (stacked)
+  * Continuation of steps using asterisks (``*``) instead of ``And``/``But`` supported.
+  * Added ``datatable`` argument for steps that contain a datatable (see `Data Tables <https://cucumber.io/docs/gherkin/reference/#data-tables>`_).
+  * Added ``docstring`` argument for steps that contain a docstring (see `Doc Strings <https://cucumber.io/docs/gherkin/reference/#doc-strings>`_).
+
+Changed
++++++++
+* Changelog format updated to follow `Keep a Changelog <https://keepachangelog.com/en/1.1.0/>`_.
+* Text after the ``#`` character is no longer stripped from the Scenario and Feature name.
+* Since the 7.x series:
+
+  * Use the `gherkin-official <https://pypi.org/project/gherkin-official/>`_ parser, replacing the custom parsing logic. This will make pytest-bdd more compatible with the Gherkin specification.
+  * Multiline steps must now always use triple-quotes for the additional lines.
+  * All feature files must now use the keyword ``Feature:`` to be considered valid.
+  * Tags can no longer have spaces (e.g. ``@tag one`` and ``@tag two`` are no longer valid).
+  * Text after the ``#`` character is no longer stripped from the Step name.
+  * Multiline strings no longer match name based on multiple lines - only on the actual step text on the step line.
+
+Removed
++++++++
+* Dropped support for python 3.8. Supported python versions: 3.9, 3.10, 3.11, 3.12, 3.13.
+* Since the 7.x series:
+
+  * Drop compatibility with pytest < 7.0.0.
+
+Fixed
++++++
+* Since the 7.x series:
+
+  * Updated documentation to clarify that ``--gherkin-terminal-reporter`` needs to be used with ``-v`` or ``-vv``.
+
+8.0.0b2
+----------
+* Updated documentation to clarify that ``--gherkin-terminal-reporter`` needs to be used with ``-v`` or ``-vv``.
+* Drop compatibility with pytest < 7.0.0.
+* Continuation of steps using asterisks instead of And/But supported.
+* Added ``datatable`` argument for steps that contain a datatable (see `Data Tables <https://cucumber.io/docs/gherkin/reference/#data-tables>`_).
+* Added ``docstring`` argument for steps that contain a docstring (see `Doc Strings <https://cucumber.io/docs/gherkin/reference/#doc-strings>`_).
+* Multiline strings no longer match name based on multiple lines - only on the actual step text on the step line.
+
+8.0.0b1
+----------
+* Use the `gherkin-official <https://pypi.org/project/gherkin-official/>`_ parser, replacing the custom parsing logic. This will make pytest-bdd more compatible with the Gherkin specification.
+* Multiline steps must now always use triple-quotes for the additional lines.
+* All feature files must now use the keyword ``Feature:`` to be considered valid.
+* Tags can no longer have spaces (e.g. ``@tag one`` and ``@tag two`` are no longer valid).
+* Tags can now be on multiple lines (stacked)
+* Text after the ``#`` character is no longer stripped from the Step name.
+
+7.3.0
+----------
+- Fix an issue when only the first Step would inject a fixture, while later steps would not be able to.
+- Test against the latest versions of pytest (8.2, 8.3).
+
+7.2.0
+----------
+- Fix compatibility issue with Python 3.13.
+- Declare compatibility with Python 3.13.
+
+7.1.2
+----------
+- Address another compatibility issue with pytest 8.1 (fixture registration). `#680 <https://github.com/pytest-dev/pytest-bdd/pull/680>`_
+
+7.1.1
+----------
+- Address a bug introduced in pytest-bdd 7.1 caused by incorrect pytest version check.
+
+7.1
+----------
+- Address compatibility issue with pytest 8.1. `#666 <https://github.com/pytest-dev/pytest-bdd/pull/666>`_
 
 7.0.1
 -----

@@ -1,4 +1,5 @@
 """Test scenarios shortcut."""
+
 import textwrap
 
 
@@ -25,6 +26,7 @@ def test_scenarios(pytester, pytest_params):
     features.joinpath("test.feature").write_text(
         textwrap.dedent(
             """
+Feature: Test scenarios
     Scenario: Test scenario
         Given I have a bar
     """
@@ -36,6 +38,7 @@ def test_scenarios(pytester, pytest_params):
     subfolder.joinpath("test.feature").write_text(
         textwrap.dedent(
             """
+Feature: Test scenarios
     Scenario: Test subfolder scenario
         Given I have a bar
 
