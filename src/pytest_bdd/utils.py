@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     from _pytest.pytester import RunResult
 
 T = TypeVar("T")
+K = TypeVar("K")
+V = TypeVar("V")
 
 CONFIG_STACK: list[Config] = []
 
@@ -86,7 +88,7 @@ def setdefault(obj: object, name: str, default: T) -> T:
         return default
 
 
-def registry_get_safe(registry: WeakKeyDictionary[Any, T], key: Any, default: T | None = None) -> T | None:
+def registry_get_safe(registry: WeakKeyDictionary[K, V], key: K, default: V | None = None) -> V | None:
     """Get a value from a registry, or None if the key is not in the registry.
     It ensures that this works even if the key cannot be weak-referenced (normally this would raise a TypeError).
     """
