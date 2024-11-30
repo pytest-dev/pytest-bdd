@@ -7,12 +7,10 @@ import pickle
 import re
 from inspect import getframeinfo, signature
 from sys import _getframe
-from typing import TYPE_CHECKING, TypeVar, cast
+from typing import TYPE_CHECKING, Callable, TypeVar, cast, overload
 from weakref import WeakKeyDictionary
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
-
     from _pytest.config import Config
     from _pytest.pytester import RunResult
 
@@ -23,7 +21,7 @@ V = TypeVar("V")
 CONFIG_STACK: list[Config] = []
 
 
-def get_args(func: Callable[..., Any]) -> list[str]:
+def get_args(func: Callable[..., object]) -> list[str]:
     """Get a list of argument names for a function.
 
     :param func: The function to inspect.
@@ -37,7 +35,7 @@ def get_args(func: Callable[..., Any]) -> list[str]:
     ]
 
 
-def get_caller_module_locals(stacklevel: int = 1) -> dict[str, Any]:
+def get_caller_module_locals(stacklevel: int = 1) -> dict[str, object]:
     """Get the caller module locals dictionary.
 
     We use sys._getframe instead of inspect.stack(0) because the latter is way slower, since it iterates over
@@ -60,7 +58,7 @@ _DUMP_START = "_pytest_bdd_>>>"
 _DUMP_END = "<<<_pytest_bdd_"
 
 
-def dump_obj(*objects: Any) -> None:
+def dump_obj(*objects: object) -> None:
     """Dump objects to stdout so that they can be inspected by the test suite."""
     for obj in objects:
         dump = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
@@ -88,11 +86,17 @@ def setdefault(obj: object, name: str, default: T) -> T:
         return default
 
 
-def registry_get_safe(registry: WeakKeyDictionary[K, V], key: K, default: V | None = None) -> V | None:
+@overload
+def registry_get_safe(registry: WeakKeyDictionary[K, V], key: object, default: T) -> V | T: ...
+@overload
+def registry_get_safe(registry: WeakKeyDictionary[K, V], key: object, default: None = None) -> V | None: ...
+
+
+def registry_get_safe(registry: WeakKeyDictionary[K, V], key: object, default: T | None = None) -> T | V | None:
     """Get a value from a registry, or None if the key is not in the registry.
     It ensures that this works even if the key cannot be weak-referenced (normally this would raise a TypeError).
     """
     try:
-        return registry.get(key, default)
+        return registry.get(key, default)  # type: ignore[arg-type]
     except TypeError:
         return None

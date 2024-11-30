@@ -44,10 +44,10 @@ logger = logging.getLogger(__name__)
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
 
-scenario_wrapper_template_registry: WeakKeyDictionary[Callable[..., Any], ScenarioTemplate] = WeakKeyDictionary()
+scenario_wrapper_template_registry: WeakKeyDictionary[Callable[..., object], ScenarioTemplate] = WeakKeyDictionary()
 
 
-def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: Node) -> Iterable[FixtureDef[Any]]:
+def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: Node) -> Iterable[FixtureDef[object]]:
     """Find the fixture defs that can parse a step."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     fixture_def_by_name = list(fixturemanager._arg2fixturedefs.items())
@@ -64,7 +64,7 @@ def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: 
             if not match:
                 continue
 
-            fixturedefs = cast(list[FixtureDef[Any]], getfixturedefs(fixturemanager, fixturename, node) or [])
+            fixturedefs = list(getfixturedefs(fixturemanager, fixturename, node) or [])
             if fixturedef not in fixturedefs:
                 continue
 

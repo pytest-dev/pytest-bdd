@@ -6,7 +6,6 @@ import textwrap
 from collections import OrderedDict
 from collections.abc import Generator, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any
 
 from .exceptions import StepError
 from .gherkin_parser import Background as GherkinBackground
@@ -95,11 +94,11 @@ class Examples:
         """
         self.examples.append([str(value) if value is not None else "" for value in values])
 
-    def as_contexts(self) -> Iterable[dict[str, Any]]:
+    def as_contexts(self) -> Generator[dict[str, str]]:
         """Generate contexts for the examples.
 
         Yields:
-            Dict[str, Any]: A dictionary mapping parameter names to their values for each example row.
+            dict[str, str]: A dictionary mapping parameter names to their values for each example row.
         """
         for row in self.examples:
             assert len(self.example_params) == len(row)
@@ -180,11 +179,11 @@ class ScenarioTemplate:
         """
         return self.all_background_steps + self._steps
 
-    def render(self, context: Mapping[str, Any]) -> Scenario:
+    def render(self, context: Mapping[str, object]) -> Scenario:
         """Render the scenario with the given context.
 
         Args:
-            context (Mapping[str, Any]): The context for rendering steps.
+            context (Mapping[str, object]): The context for rendering steps.
 
         Returns:
             Scenario: A Scenario object with steps rendered based on the context.
@@ -308,11 +307,11 @@ class Step:
         """
         return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
 
-    def render(self, context: Mapping[str, Any]) -> str:
+    def render(self, context: Mapping[str, object]) -> str:
         """Render the step name with the given context, but avoid replacing text inside angle brackets if context is missing.
 
         Args:
-            context (Mapping[str, Any]): The context for rendering the step name.
+            context (Mapping[str, object]): The context for rendering the step name.
 
         Returns:
             str: The rendered step name with parameters replaced only if they exist in the context.

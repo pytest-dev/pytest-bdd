@@ -7,8 +7,6 @@ from _pytest.terminal import TerminalReporter
 from .reporting import test_report_context_registry
 
 if typing.TYPE_CHECKING:
-    from typing import Any
-
     from _pytest.config import Config
     from _pytest.config.argparsing import Parser
     from _pytest.reports import TestReport
@@ -50,7 +48,7 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore
         super().__init__(config)
         self.current_rule = None
 
-    def pytest_runtest_logreport(self, report: TestReport) -> Any:
+    def pytest_runtest_logreport(self, report: TestReport) -> None:
         rep = report
         res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
         cat, letter, word = res
@@ -120,4 +118,3 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore
             self._tw.write("\n\n")
 
         self.stats.setdefault(cat, []).append(rep)
-        return None

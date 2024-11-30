@@ -25,7 +25,6 @@ from .types import STEP_TYPES
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from typing import Any
 
     from _pytest.config import Config
     from _pytest.config.argparsing import Parser
@@ -133,14 +132,18 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
     tw.write(code)
 
 
-def _find_step_fixturedef(fixturemanager: FixtureManager, item: Node, step: Step) -> Sequence[FixtureDef[Any]] | None:
+def _find_step_fixturedef(
+    fixturemanager: FixtureManager, item: Node, step: Step
+) -> Sequence[FixtureDef[object]] | None:
     """Find step fixturedef."""
     with inject_fixturedefs_for_step(step=step, fixturemanager=fixturemanager, node=item):
         bdd_name = get_step_fixture_name(step=step)
         return getfixturedefs(fixturemanager, bdd_name, item)
 
 
-def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature], list[ScenarioTemplate], list[Step]]:
+def parse_feature_files(
+    paths: list[str], encoding: str = "utf-8"
+) -> tuple[list[Feature], list[ScenarioTemplate], list[Step]]:
     """Parse feature files of given paths.
 
     :param paths: `list` of paths (file or dirs)
@@ -148,7 +151,7 @@ def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature],
     :return: `list` of `tuple` in form:
              (`list` of `Feature` objects, `list` of `Scenario` objects, `list` of `Step` objects).
     """
-    features = get_features(paths, **kwargs)
+    features = get_features(paths, encoding=encoding)
     scenarios = sorted(
         itertools.chain.from_iterable(feature.scenarios.values() for feature in features),
         key=lambda scenario: (scenario.feature.name or scenario.feature.filename, scenario.name),

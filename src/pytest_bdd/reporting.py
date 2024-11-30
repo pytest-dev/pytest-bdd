@@ -39,7 +39,7 @@ class StepReport:
         self.step = step
         self.started = time.perf_counter()
 
-    def serialize(self) -> dict[str, Any]:
+    def serialize(self) -> dict[str, object]:
         """Serialize the step execution report.
 
         :return: Serialized step execution report.
@@ -103,7 +103,7 @@ class ScenarioReport:
         """
         self.step_reports.append(step_report)
 
-    def serialize(self) -> dict[str, Any]:
+    def serialize(self) -> dict[str, object]:
         """Serialize scenario execution report in order to transfer reporting from nodes in the distributed mode.
 
         :return: Serialized report.
@@ -178,8 +178,8 @@ def step_error(
     feature: Feature,
     scenario: Scenario,
     step: Step,
-    step_func: Callable[..., Any],
-    step_func_args: dict,
+    step_func: Callable[..., object],
+    step_func_args: dict[str, object],
     exception: Exception,
 ) -> None:
     """Finalize the step report as failed."""

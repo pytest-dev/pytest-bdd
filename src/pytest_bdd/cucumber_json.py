@@ -6,13 +6,13 @@ import json
 import math
 import os
 import time
-import typing
+from typing import TYPE_CHECKING, Any, Literal, TypedDict
+
+from typing_extensions import NotRequired
 
 from .reporting import test_report_context_registry
 
-if typing.TYPE_CHECKING:
-    from typing import Any
-
+if TYPE_CHECKING:
     from _pytest.config import Config
     from _pytest.config.argparsing import Parser
     from _pytest.reports import TestReport
@@ -48,6 +48,12 @@ def unconfigure(config: Config) -> None:
         config.pluginmanager.unregister(xml)
 
 
+class Result(TypedDict):
+    status: Literal["passed", "failed", "skipped"]
+    duration: int  # in nanoseconds
+    error_message: NotRequired[str]
+
+
 class LogBDDCucumberJSON:
     """Logging plugin for cucumber like json output."""
 
@@ -56,22 +62,28 @@ class LogBDDCucumberJSON:
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.features: dict[str, dict] = {}
 
-    def _get_result(self, step: dict[str, Any], report: TestReport, error_message: bool = False) -> dict[str, Any]:
+    def _get_result(self, step: dict[str, Any], report: TestReport, error_message: bool = False) -> Result:
         """Get scenario test run result.
 
         :param step: `Step` step we get result for
         :param report: pytest `Report` object
         :return: `dict` in form {"status": "<passed|failed|skipped>", ["error_message": "<error_message>"]}
         """
-        result: dict[str, Any] = {}
-        if report.passed or not step["failed"]:  # ignore setup/teardown
-            result = {"status": "passed"}
-        elif report.failed:
-            result = {"status": "failed", "error_message": str(report.longrepr) if error_message else ""}
-        elif report.skipped:
-            result = {"status": "skipped"}
-        result["duration"] = int(math.floor((10**9) * step["duration"]))  # nanosec
-        return result
+        status: Literal["passed", "failed", "skipped"]
+        res_message = None
+        if report.outcome == "passed" or not step["failed"]:  # ignore setup/teardown
+            status = "passed"
+        elif report.outcome == "failed":
+            status = "failed"
+            res_message = str(report.longrepr) if error_message else ""
+        elif report.outcome == "skipped":
+            status = "skipped"
+        else:
+            raise ValueError(f"Unknown test outcome {report.outcome}")
+        res: Result = {"status": status, "duration": int(math.floor((10**9) * step["duration"]))}  # nanosec
+        if res_message is not None:
+            res["error_message"] = res_message
+        return res
 
     def _serialize_tags(self, item: dict[str, Any]) -> list[dict[str, Any]]:
         """Serialize item's tags.

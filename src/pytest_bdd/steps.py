@@ -41,7 +41,7 @@ import enum
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from itertools import count
-from typing import Any, Callable, Literal, TypeVar
+from typing import Callable, Literal, TypeVar
 from weakref import WeakKeyDictionary
 
 import pytest
@@ -54,7 +54,7 @@ from .utils import get_caller_module_locals
 P = ParamSpec("P")
 T = TypeVar("T")
 
-step_function_context_registry: WeakKeyDictionary[Callable[..., Any], StepFunctionContext] = WeakKeyDictionary()
+step_function_context_registry: WeakKeyDictionary[Callable[..., object], StepFunctionContext] = WeakKeyDictionary()
 
 
 @enum.unique
@@ -66,9 +66,9 @@ class StepNamePrefix(enum.Enum):
 @dataclass
 class StepFunctionContext:
     type: Literal["given", "when", "then"] | None
-    step_func: Callable[..., Any]
+    step_func: Callable[..., object]
     parser: StepParser
-    converters: dict[str, Callable[[str], Any]] = field(default_factory=dict)
+    converters: dict[str, Callable[[str], object]] = field(default_factory=dict)
     target_fixture: str | None = None
 
 
@@ -79,7 +79,7 @@ def get_step_fixture_name(step: Step) -> str:
 
 def given(
     name: str | StepParser,
-    converters: dict[str, Callable[[str], Any]] | None = None,
+    converters: dict[str, Callable[[str], object]] | None = None,
     target_fixture: str | None = None,
     stacklevel: int = 1,
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
@@ -98,7 +98,7 @@ def given(
 
 def when(
     name: str | StepParser,
-    converters: dict[str, Callable[[str], Any]] | None = None,
+    converters: dict[str, Callable[[str], object]] | None = None,
     target_fixture: str | None = None,
     stacklevel: int = 1,
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
@@ -117,7 +117,7 @@ def when(
 
 def then(
     name: str | StepParser,
-    converters: dict[str, Callable[[str], Any]] | None = None,
+    converters: dict[str, Callable[[str], object]] | None = None,
     target_fixture: str | None = None,
     stacklevel: int = 1,
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
@@ -137,7 +137,7 @@ def then(
 def step(
     name: str | StepParser,
     type_: Literal["given", "when", "then"] | None = None,
-    converters: dict[str, Callable[[str], Any]] | None = None,
+    converters: dict[str, Callable[[str], object]] | None = None,
     target_fixture: str | None = None,
     stacklevel: int = 1,
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
