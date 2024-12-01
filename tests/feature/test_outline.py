@@ -323,7 +323,10 @@ def test_forward_slash_in_params(pytester):
 
 
 def test_variable_reuse(pytester):
-    """Test example parameter reuse."""
+    """
+    Test same example parameter name used for step args between calls
+    doesn't redefine example arg value.
+    """
 
     pytester.makefile(
         ".feature",
@@ -358,17 +361,21 @@ def test_variable_reuse(pytester):
             def some_key_exists(key):
                 print(f"some {key} exists")
 
+
             @when(parsers.parse('I print {css_id}'))
             def css_id(css_id):
                 assert css_id in ('bar', 'bar2')
+
 
             @when(parsers.parse('I echo {css_id}'))
             def echo_val(css_id):
                 assert css_id in ('bar', 'bar2')
 
+
             @when(parsers.re('I output "(?P<css_id>.+)"'))
             def i_output(css_id):
                 assert css_id == 'some value'
+
 
             @then('finish testing')
             def i_output():
