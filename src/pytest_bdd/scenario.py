@@ -18,6 +18,7 @@ import logging
 import os
 import re
 from collections.abc import Iterable, Iterator
+from inspect import signature
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import pytest
@@ -28,7 +29,7 @@ from . import exceptions
 from .compat import getfixturedefs, inject_fixture
 from .feature import get_feature, get_features
 from .steps import StepFunctionContext, get_step_fixture_name
-from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path, identity
+from .utils import CONFIG_STACK, get_caller_module_locals, get_caller_module_path, get_required_args, identity
 
 if TYPE_CHECKING:
     from _pytest.mark.structures import ParameterSet
@@ -201,6 +202,9 @@ def _execute_step_function(
 ) -> None:
     """Execute step function."""
     __tracebackhide__ = True
+
+    func_sig = signature(context.step_func)
+
     kw = {
         "request": request,
         "feature": scenario.feature,
@@ -210,24 +214,31 @@ def _execute_step_function(
         "step_func_args": {},
     }
     request.config.hook.pytest_bdd_before_step(**kw)
-    args = get_args(context.step_func)
 
     try:
-        kwargs = parse_step_arguments(step=step, context=context)
+        parsed_args = parse_step_arguments(step=step, context=context)
 
-        if step.datatable is not None:
+        # Filter out the arguments that are not in the function signature
+        kwargs = {k: v for k, v in parsed_args.items() if k in func_sig.parameters}
+
+        if STEP_ARGUMENT_DATATABLE in func_sig.parameters and step.datatable is not None:
             kwargs[STEP_ARGUMENT_DATATABLE] = step.datatable.raw()
-
-        if step.docstring is not None:
+        if STEP_ARGUMENT_DOCSTRING in func_sig.parameters and step.docstring is not None:
             kwargs[STEP_ARGUMENT_DOCSTRING] = step.docstring
 
-        kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
+        # Fill the missing arguments requesting the fixture values
+        kwargs |= {
+            arg: request.getfixturevalue(arg) for arg in get_required_args(context.step_func) if arg not in kwargs
+        }
 
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
-        # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
+
+        # Execute the step as if it was a pytest fixture using `call_fixture_func`,
+        # so that we can allow "yield" statements in it
         return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
+
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
         raise
@@ -280,7 +291,7 @@ def _get_scenario_decorator(
                 "scenario function can only be used as a decorator. Refer to the documentation."
             )
         [fn] = args
-        func_args = get_args(fn)
+        func_args = get_required_args(fn)
 
         def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> Any:
             __tracebackhide__ = True
