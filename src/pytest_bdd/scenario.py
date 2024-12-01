@@ -29,7 +29,7 @@ from . import exceptions
 from .compat import getfixturedefs, inject_fixture
 from .feature import get_feature, get_features
 from .steps import StepFunctionContext, get_step_fixture_name
-from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path, identity
+from .utils import CONFIG_STACK, get_caller_module_locals, get_caller_module_path, get_required_args, identity
 
 if TYPE_CHECKING:
     from _pytest.mark.structures import ParameterSet
@@ -227,7 +227,9 @@ def _execute_step_function(
             kwargs[STEP_ARGUMENT_DOCSTRING] = step.docstring
 
         # Fill the missing arguments requesting the fixture values
-        kwargs |= {arg: request.getfixturevalue(arg) for arg in get_args(context.step_func) if arg not in kwargs}
+        kwargs |= {
+            arg: request.getfixturevalue(arg) for arg in get_required_args(context.step_func) if arg not in kwargs
+        }
 
         kw["step_func_args"] = kwargs
 
@@ -287,7 +289,7 @@ def _get_scenario_decorator(
                 "scenario function can only be used as a decorator. Refer to the documentation."
             )
         [fn] = args
-        func_args = get_args(fn)
+        func_args = get_required_args(fn)
 
         def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> Any:
             __tracebackhide__ = True
