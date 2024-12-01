@@ -235,6 +235,8 @@ def _execute_step_function(
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
 
+        # Execute the step as if it was a pytest fixture using `call_fixture_func`,
+        # so that we can allow "yield" statements in it
         return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
 
     except Exception as exception:
