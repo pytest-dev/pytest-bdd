@@ -65,6 +65,10 @@ def test_scenario_with_empty_example_values(pytester):
 
 
 def test_scenario_with_empty_example_values_none_transformer(pytester):
+    """
+    Checks that `parsers.re` can transform empty values to None with a converter.
+    `parsers.parse` and `parsers.cfparse` won't work out of the box this way as they will fail to match the steps.
+    """
     pytester.makefile(
         ".feature",
         outline=textwrap.dedent(
