@@ -210,3 +210,48 @@ def test_steps_with_datatable_missing_argument_in_step(pytester):
     )
     result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
+
+
+def test_datatable_step_argument_is_reserved_and_cannot_be_used(pytester):
+    pytester.makefile(
+        ".feature",
+        reserved_datatable_arg=textwrap.dedent(
+            """\
+            Feature: Reserved datatable argument
+
+              Scenario: Reserved datatable argument
+                Given this step has a {datatable} argument
+                Then the test fails
+            """
+        ),
+    )
+
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario, given, then, parsers
+
+        @scenario("reserved_datatable_arg.feature", "Reserved datatable argument")
+        def test_datatable():
+            pass
+
+
+        @given(parsers.parse("this step has a {datatable} argument"))
+        def _(datatable):
+            pass
+
+
+        @then("the test fails")
+        def _():
+            pass
+        """
+        )
+    )
+
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*Step 'this step has a {datatable} argument' defines argument names that are reserved: 'datatable'. Please use different names.*"
+        ]
+    )

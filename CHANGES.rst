@@ -14,6 +14,7 @@ Added
 
 Changed
 +++++++
+* Step arguments ``"datatable"`` and ``"docstring"`` are now reserved, and they can't be used as step argument names.
 
 Deprecated
 ++++++++++
