@@ -64,7 +64,7 @@ class Feature:
         scenarios (OrderedDict[str, ScenarioTemplate]): A dictionary of scenarios in the feature.
         filename (str): The absolute path of the feature file.
         rel_filename (str): The relative path of the feature file.
-        name (Optional[str]): The name of the feature.
+        name (str): The name of the feature.
         tags (set[str]): A set of tags associated with the feature.
         background (Optional[Background]): The background steps for the feature, if any.
         line_number (int): The line number where the feature starts in the file.
@@ -76,7 +76,7 @@ class Feature:
     rel_filename: str
     language: str
     keyword: str
-    name: str | None
+    name: str
     tags: set[str]
     background: Background | None
     line_number: int

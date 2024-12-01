@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, TypedDict
 from weakref import WeakKeyDictionary
 
-if TYPE_CHECKING:
-    from typing import Any, Callable
+from typing_extensions import NotRequired
 
+if TYPE_CHECKING:
     from _pytest.fixtures import FixtureRequest
     from _pytest.nodes import Item
     from _pytest.reports import TestReport
@@ -23,6 +23,44 @@ if TYPE_CHECKING:
 
 scenario_reports_registry: WeakKeyDictionary[Item, ScenarioReport] = WeakKeyDictionary()
 test_report_context_registry: WeakKeyDictionary[TestReport, ReportContext] = WeakKeyDictionary()
+
+
+class FeatureDict(TypedDict):
+    keyword: str
+    name: str
+    filename: str
+    rel_filename: str
+    language: str
+    line_number: int
+    description: str
+    tags: list[str]
+
+
+class RuleDict(TypedDict):
+    keyword: str
+    name: str
+    description: str
+    tags: list[str]
+
+
+class StepReportDict(TypedDict):
+    name: str
+    type: str
+    keyword: str
+    line_number: int
+    failed: bool
+    duration: float
+
+
+class ScenarioReportDict(TypedDict):
+    steps: list[StepReportDict]
+    keyword: str
+    name: str
+    line_number: int
+    tags: list[str]
+    feature: FeatureDict
+    rule: NotRequired[RuleDict]
+    failed: NotRequired[bool]
 
 
 class StepReport:
@@ -39,11 +77,10 @@ class StepReport:
         self.step = step
         self.started = time.perf_counter()
 
-    def serialize(self) -> dict[str, object]:
+    def serialize(self) -> StepReportDict:
         """Serialize the step execution report.
 
         :return: Serialized step execution report.
-        :rtype: dict
         """
         return {
             "name": self.step.name,
@@ -103,16 +140,15 @@ class ScenarioReport:
         """
         self.step_reports.append(step_report)
 
-    def serialize(self) -> dict[str, object]:
+    def serialize(self) -> ScenarioReportDict:
         """Serialize scenario execution report in order to transfer reporting from nodes in the distributed mode.
 
         :return: Serialized report.
-        :rtype: dict
         """
         scenario = self.scenario
         feature = scenario.feature
 
-        serialized = {
+        serialized: ScenarioReportDict = {
             "steps": [step_report.serialize() for step_report in self.step_reports],
             "keyword": scenario.keyword,
             "name": scenario.name,
@@ -131,12 +167,13 @@ class ScenarioReport:
         }
 
         if scenario.rule:
-            serialized["rule"] = {
+            rule_dict: RuleDict = {
                 "keyword": scenario.rule.keyword,
                 "name": scenario.rule.name,
                 "description": scenario.rule.description,
-                "tags": scenario.rule.tags,
+                "tags": sorted(scenario.rule.tags),
             }
+            serialized["rule"] = rule_dict
 
         return serialized
 
@@ -154,7 +191,7 @@ class ScenarioReport:
 
 @dataclass
 class ReportContext:
-    scenario: dict[str, Any]
+    scenario: ScenarioReportDict
     name: str
 
 
@@ -191,7 +228,7 @@ def before_step(
     feature: Feature,
     scenario: Scenario,
     step: Step,
-    step_func: Callable[..., Any],
+    step_func: Callable[..., object],
 ) -> None:
     """Store step start time."""
     scenario_reports_registry[request.node].add_step_report(StepReport(step=step))

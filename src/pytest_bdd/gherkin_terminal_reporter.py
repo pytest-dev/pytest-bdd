@@ -43,10 +43,10 @@ def configure(config: Config) -> None:
             raise Exception("gherkin-terminal-reporter is not compatible with 'xdist' plugin.")
 
 
-class GherkinTerminalReporter(TerminalReporter):  # type: ignore
+class GherkinTerminalReporter(TerminalReporter):  # type: ignore[misc]
     def __init__(self, config: Config) -> None:
         super().__init__(config)
-        self.current_rule = None
+        self.current_rule: str | None = None
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         rep = report
