@@ -14,6 +14,7 @@ Added
 
 Changed
 +++++++
+* Step arguments ``"datatable"`` and ``"docstring"`` are now reserved, and they can't be used as step argument names.
 
 Deprecated
 ++++++++++
@@ -23,6 +24,8 @@ Removed
 
 Fixed
 +++++
+* Fixed an issue with the upcoming pytest release related to the use of ``@pytest.mark.usefixtures`` with an empty list.
+* Render template variables in docstrings and datatable cells with example table entries, as we already do for steps definitions.
 
 Security
 ++++++++

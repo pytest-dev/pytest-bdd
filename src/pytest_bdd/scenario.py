@@ -18,6 +18,7 @@ import logging
 import os
 import re
 from collections.abc import Iterable, Iterator
+from inspect import signature
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 import pytest
@@ -28,7 +29,7 @@ from . import exceptions
 from .compat import getfixturedefs, inject_fixture
 from .feature import get_feature, get_features
 from .steps import StepFunctionContext, get_step_fixture_name
-from .utils import CONFIG_STACK, get_args, get_caller_module_locals, get_caller_module_path
+from .utils import CONFIG_STACK, get_caller_module_locals, get_caller_module_path, get_required_args, identity
 
 if TYPE_CHECKING:
     from _pytest.mark.structures import ParameterSet
@@ -41,9 +42,12 @@ T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
-
 PYTHON_REPLACE_REGEX = re.compile(r"\W")
 ALPHA_REGEX = re.compile(r"^\d+_*")
+
+STEP_ARGUMENT_DATATABLE = "datatable"
+STEP_ARGUMENT_DOCSTRING = "docstring"
+STEP_ARGUMENTS_RESERVED_NAMES = {STEP_ARGUMENT_DATATABLE, STEP_ARGUMENT_DOCSTRING}
 
 
 def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: Node) -> Iterable[FixtureDef[Any]]:
@@ -172,11 +176,35 @@ def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContex
             return None
 
 
+def parse_step_arguments(step: Step, context: StepFunctionContext) -> dict[str, object]:
+    """Parse step arguments."""
+    parsed_args = context.parser.parse_arguments(step.name)
+
+    assert parsed_args is not None, (
+        f"Unexpected `NoneType` returned from " f"parse_arguments(...) in parser: {context.parser!r}"
+    )
+
+    reserved_args = set(parsed_args.keys()) & STEP_ARGUMENTS_RESERVED_NAMES
+    if reserved_args:
+        reserved_arguments_str = ", ".join(repr(arg) for arg in reserved_args)
+        raise exceptions.StepImplementationError(
+            f"Step {step.name!r} defines argument names that are reserved: {reserved_arguments_str}. "
+            "Please use different names."
+        )
+
+    converted_args = {key: (context.converters.get(key, identity)(value)) for key, value in parsed_args.items()}
+
+    return converted_args
+
+
 def _execute_step_function(
     request: FixtureRequest, scenario: Scenario, step: Step, context: StepFunctionContext
 ) -> None:
     """Execute step function."""
     __tracebackhide__ = True
+
+    func_sig = signature(context.step_func)
+
     kw = {
         "request": request,
         "feature": scenario.feature,
@@ -185,38 +213,32 @@ def _execute_step_function(
         "step_func": context.step_func,
         "step_func_args": {},
     }
-
     request.config.hook.pytest_bdd_before_step(**kw)
 
-    # Get the step argument values.
-    converters = context.converters
-    kwargs = {}
-    args = get_args(context.step_func)
-
     try:
-        parsed_args = context.parser.parse_arguments(step.name)
-        assert parsed_args is not None, (
-            f"Unexpected `NoneType` returned from " f"parse_arguments(...) in parser: {context.parser!r}"
-        )
+        parsed_args = parse_step_arguments(step=step, context=context)
 
-        for arg, value in parsed_args.items():
-            if arg in converters:
-                value = converters[arg](value)
-            kwargs[arg] = value
+        # Filter out the arguments that are not in the function signature
+        kwargs = {k: v for k, v in parsed_args.items() if k in func_sig.parameters}
 
-        if step.datatable is not None:
-            kwargs["datatable"] = step.datatable.raw()
+        if STEP_ARGUMENT_DATATABLE in func_sig.parameters and step.datatable is not None:
+            kwargs[STEP_ARGUMENT_DATATABLE] = step.datatable.raw()
+        if STEP_ARGUMENT_DOCSTRING in func_sig.parameters and step.docstring is not None:
+            kwargs[STEP_ARGUMENT_DOCSTRING] = step.docstring
 
-        if step.docstring is not None:
-            kwargs["docstring"] = step.docstring
-
-        kwargs = {arg: kwargs[arg] if arg in kwargs else request.getfixturevalue(arg) for arg in args}
+        # Fill the missing arguments requesting the fixture values
+        kwargs |= {
+            arg: request.getfixturevalue(arg) for arg in get_required_args(context.step_func) if arg not in kwargs
+        }
 
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
-        # Execute the step as if it was a pytest fixture, so that we can allow "yield" statements in it
+
+        # Execute the step as if it was a pytest fixture using `call_fixture_func`,
+        # so that we can allow "yield" statements in it
         return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
+
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
         raise
@@ -269,17 +291,19 @@ def _get_scenario_decorator(
                 "scenario function can only be used as a decorator. Refer to the documentation."
             )
         [fn] = args
-        func_args = get_args(fn)
+        func_args = get_required_args(fn)
 
-        # We need to tell pytest that the original function requires its fixtures,
-        # otherwise indirect fixtures would not work.
-        @pytest.mark.usefixtures(*func_args)
         def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> Any:
             __tracebackhide__ = True
             scenario = templated_scenario.render(_pytest_bdd_example)
             _execute_scenario(feature, scenario, request)
             fixture_values = [request.getfixturevalue(arg) for arg in func_args]
             return fn(*fixture_values)
+
+        if func_args:
+            # We need to tell pytest that the original function requires its fixtures,
+            # otherwise indirect fixtures would not work.
+            scenario_wrapper = pytest.mark.usefixtures(*func_args)(scenario_wrapper)
 
         example_parametrizations = collect_example_parametrizations(templated_scenario)
         if example_parametrizations is not None:
@@ -295,7 +319,7 @@ def _get_scenario_decorator(
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 
         scenario_wrapper.__doc__ = f"{feature_name}: {scenario_name}"
-        scenario_wrapper.__scenario__ = templated_scenario
+        scenario_wrapper.__scenario__ = templated_scenario  # type: ignore[attr-defined]
         return cast(Callable[P, T], scenario_wrapper)
 
     return decorator
