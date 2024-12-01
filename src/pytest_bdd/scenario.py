@@ -19,7 +19,7 @@ import os
 import re
 from collections.abc import Iterable, Iterator
 from inspect import signature
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, Callable, TypeVar, cast
 from weakref import WeakKeyDictionary
 
 import pytest
@@ -444,15 +444,17 @@ def get_python_name_generator(name: str) -> Iterable[str]:
         suffix = f"_{index}"
 
 
-def scenarios(*feature_paths: str, **kwargs: Any) -> None:
+def scenarios(*feature_paths: str, encoding: str = "utf-8", features_base_dir: str | None = None) -> None:
+    caller_locals = get_caller_module_locals()
     """Parse features from the paths and put all found scenarios in the caller module.
 
     :param *feature_paths: feature file paths to use for scenarios
+    :param str encoding: Feature file encoding.
+    :param features_base_dir: Optional base dir location for locating feature files. If not set, it will try and
+      resolve using property set in .ini file, otherwise it is assumed to be relative from the caller path location.
     """
-    caller_locals = get_caller_module_locals()
     caller_path = get_caller_module_path()
 
-    features_base_dir = kwargs.get("features_base_dir")
     if features_base_dir is None:
         features_base_dir = get_features_base_dir(caller_path)
 
@@ -474,7 +476,7 @@ def scenarios(*feature_paths: str, **kwargs: Any) -> None:
             # skip already bound scenarios
             if (scenario_object.feature.filename, scenario_name) not in module_scenarios:
 
-                @scenario(feature.filename, scenario_name, **kwargs)
+                @scenario(feature.filename, scenario_name, encoding=encoding, features_base_dir=features_base_dir)
                 def _scenario() -> None:
                     pass  # pragma: no cover
 
