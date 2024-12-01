@@ -117,6 +117,7 @@ def test_step_trace(pytester):
         "keyword": "Scenario",
         "line_number": 5,
         "name": "Passing",
+        "description": "",
         "steps": [
             {
                 "duration": OfType(float),
@@ -155,6 +156,7 @@ def test_step_trace(pytester):
         "keyword": "Scenario",
         "line_number": 10,
         "name": "Failing",
+        "description": "",
         "steps": [
             {
                 "duration": OfType(float),
@@ -192,6 +194,7 @@ def test_step_trace(pytester):
         "keyword": "Scenario Outline",
         "line_number": 14,
         "name": "Outlined",
+        "description": "",
         "steps": [
             {
                 "duration": OfType(float),
@@ -237,6 +240,7 @@ def test_step_trace(pytester):
         "keyword": "Scenario Outline",
         "line_number": 14,
         "name": "Outlined",
+        "description": "",
         "steps": [
             {
                 "duration": OfType(float),
