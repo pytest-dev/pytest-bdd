@@ -368,44 +368,34 @@ def test_multilanguage_support(pytester):
     ]
 
 
-def test_default_value_in_not_parsed(pytester):
-    """Test that angular brackets are not parsed for "Scenario"s.
-
-    (They should be parsed only when used in "Scenario Outline")
-
-    """
+def test_default_value_is_used_as_fallback(pytester):
+    """Test that the default value for a step implementation is only used as a fallback."""
     pytester.makefile(
         ".feature",
         simple="""
         Feature: Simple feature
-            Scenario: Simple scenario
-                Given a user with username
-                Then check username defaultuser
+            Scenario: Step using default arg
+                Given a user with default username
 
-            Scenario Outline: Outlined scenario
-                Given a user with username <username>
-                Then check username <username>
-
-            Examples:
-                | username |
-                | user1    |
+            Scenario: Step using explicit value
+                Given a user with username "user1"
         """,
     )
     pytester.makepyfile(
         """
         from pytest_bdd import scenarios, given, then, parsers
+        from pytest_bdd.utils import dump_obj
 
         scenarios("simple.feature")
 
-        @given('a user with username', target_fixture="user")
-        @given(parsers.parse('a user with username {username}'), target_fixture="user")
+        @given('a user with default username', target_fixture="user")
+        @given(parsers.parse('a user with username "{username}"'), target_fixture="user")
         def create_user(username="defaultuser"):
-            return username
+            dump_obj(username)
 
-        @then(parsers.parse("check username {username}"))
-        def _(user, username):
-            assert user == username
         """
     )
-    result = pytester.runpytest()
+    result = pytester.runpytest("-s")
     result.assert_outcomes(passed=2)
+
+    assert collect_dumped_objects(result) == ["defaultuser", "user1"]
