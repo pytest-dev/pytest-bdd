@@ -83,3 +83,8 @@ def setdefault(obj: object, name: str, default: T) -> T:
     except AttributeError:
         setattr(obj, name, default)
         return default
+
+
+def identity(x: T) -> T:
+    """Return the argument."""
+    return x
