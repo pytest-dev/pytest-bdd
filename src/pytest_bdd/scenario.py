@@ -205,12 +205,6 @@ def _execute_step_function(
 
     func_sig = signature(context.step_func)
 
-    def _get_parsed_arguments() -> dict:
-        """Parse and convert step arguments."""
-        parsed_args = parse_step_arguments(step=step, context=context)
-
-        return {k: v for k, v in parsed_args.items() if k in func_sig.parameters}
-
     def _get_argument_values(kwargs: dict) -> dict:
         """Get default values or request fixture values for missing arguments."""
         for arg in get_args(context.step_func):
@@ -235,7 +229,8 @@ def _execute_step_function(
 
     try:
         # Use internal methods without passing redundant arguments
-        kwargs = _get_parsed_arguments()
+        parsed_args = parse_step_arguments(step=step, context=context)
+        kwargs = {k: v for k, v in parsed_args.items() if k in func_sig.parameters}
 
         if STEP_ARGUMENT_DATATABLE in func_sig.parameters and step.datatable is not None:
             kwargs[STEP_ARGUMENT_DATATABLE] = step.datatable.raw()
