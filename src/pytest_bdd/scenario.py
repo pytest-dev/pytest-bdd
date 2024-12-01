@@ -205,18 +205,6 @@ def _execute_step_function(
 
     func_sig = signature(context.step_func)
 
-    def _get_argument_values(kwargs: dict) -> dict:
-        """Get default values or request fixture values for missing arguments."""
-        for arg in get_args(context.step_func):
-            if arg not in kwargs:
-                param = func_sig.parameters.get(arg)
-                if param:
-                    if param.default != param.empty:
-                        kwargs[arg] = param.default
-                    else:
-                        kwargs[arg] = request.getfixturevalue(arg)
-        return kwargs
-
     kw = {
         "request": request,
         "feature": scenario.feature,
@@ -237,7 +225,8 @@ def _execute_step_function(
         if STEP_ARGUMENT_DOCSTRING in func_sig.parameters and step.docstring is not None:
             kwargs[STEP_ARGUMENT_DOCSTRING] = step.docstring
 
-        kwargs = _get_argument_values(kwargs)
+        # Fill the missing arguments requesting the fixture values
+        kwargs |= {arg: request.getfixturevalue(arg) for arg in get_args(context.step_func) if arg not in kwargs}
 
         kw["step_func_args"] = kwargs
 
