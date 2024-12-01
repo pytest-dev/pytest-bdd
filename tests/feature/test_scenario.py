@@ -286,6 +286,33 @@ def test_example_params(pytester):
     ]
 
 
+def test_step_parser_argument_not_in_function_signature_does_not_fail(pytester):
+    """Test that if the step parser defines an argument, but step function does not accept it,
+    then it does not fail and the params is just not filled."""
+
+    pytester.makefile(
+        ".feature",
+        simple="""
+        Feature: Simple feature
+            Scenario: Step with missing argument
+                Given a user with username "user1"
+        """,
+    )
+    pytester.makepyfile(
+        """
+        from pytest_bdd import scenarios, given, parsers
+
+        scenarios("simple.feature")
+
+        @given(parsers.parse('a user with username "{username}"'))
+        def create_user():
+            pass
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
 def test_multilanguage_support(pytester):
     """Test multilanguage support."""
     pytester.makefile(
