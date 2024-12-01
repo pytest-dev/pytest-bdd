@@ -324,8 +324,8 @@ def test_forward_slash_in_params(pytester):
 
 def test_variable_reuse(pytester):
     """
-    Test same example parameter name used for step args between calls
-    doesn't redefine example arg value.
+    Test example parameter name and step arg do not redefine each other's value
+    if the same name is used for both in different steps.
     """
 
     pytester.makefile(
