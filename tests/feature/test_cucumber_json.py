@@ -51,6 +51,7 @@ def test_step_trace(pytester):
             """
     @feature-tag
     Feature: One passing scenario, one failing scenario
+    This is a feature description
 
         @scenario-passing-tag
         Scenario: Passing
@@ -116,72 +117,72 @@ def test_step_trace(pytester):
     assert result.ret
     expected = [
         {
-            "description": "",
+            "description": "This is a feature description",
             "elements": [
                 {
                     "description": "",
                     "id": "test_passing",
                     "keyword": "Scenario",
-                    "line": 5,
+                    "line": 6,
                     "name": "Passing",
                     "steps": [
                         {
                             "keyword": "Given",
-                            "line": 6,
+                            "line": 7,
                             "match": {"location": ""},
                             "name": "a passing step",
                             "result": {"status": "passed", "duration": OfType(int)},
                         },
                         {
                             "keyword": "And",
-                            "line": 7,
+                            "line": 8,
                             "match": {"location": ""},
                             "name": "some other passing step",
                             "result": {"status": "passed", "duration": OfType(int)},
                         },
                     ],
-                    "tags": [{"name": "scenario-passing-tag", "line": 4}],
+                    "tags": [{"name": "scenario-passing-tag", "line": 5}],
                     "type": "scenario",
                 },
                 {
                     "description": "",
                     "id": "test_failing",
                     "keyword": "Scenario",
-                    "line": 10,
+                    "line": 11,
                     "name": "Failing",
                     "steps": [
                         {
                             "keyword": "Given",
-                            "line": 11,
+                            "line": 12,
                             "match": {"location": ""},
                             "name": "a passing step",
                             "result": {"status": "passed", "duration": OfType(int)},
                         },
                         {
                             "keyword": "And",
-                            "line": 12,
+                            "line": 13,
                             "match": {"location": ""},
                             "name": "a failing step",
                             "result": {"error_message": OfType(str), "status": "failed", "duration": OfType(int)},
                         },
                     ],
-                    "tags": [{"name": "scenario-failing-tag", "line": 9}],
+                    "tags": [{"name": "scenario-failing-tag", "line": 10}],
                     "type": "scenario",
                 },
                 {
                     "description": "",
                     "keyword": "Scenario Outline",
-                    "tags": [{"line": 14, "name": "scenario-outline-passing-tag"}],
+                    "tags": [{"line": 15, "name": "scenario-outline-passing-tag"}],
                     "steps": [
                         {
-                            "line": 16,
+                            "line": 17,
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
                             "name": "type str and value hello",
                         }
                     ],
-                    "line": 15,
+                    "line": 16,
                     "type": "scenario",
                     "id": "test_passing_outline[str-hello]",
                     "name": "Passing outline",
@@ -189,17 +190,17 @@ def test_step_trace(pytester):
                 {
                     "description": "",
                     "keyword": "Scenario Outline",
-                    "tags": [{"line": 14, "name": "scenario-outline-passing-tag"}],
+                    "tags": [{"line": 15, "name": "scenario-outline-passing-tag"}],
                     "steps": [
                         {
-                            "line": 16,
+                            "line": 17,
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
                             "name": "type int and value 42",
                         }
                     ],
-                    "line": 15,
+                    "line": 16,
                     "type": "scenario",
                     "id": "test_passing_outline[int-42]",
                     "name": "Passing outline",
@@ -207,17 +208,17 @@ def test_step_trace(pytester):
                 {
                     "description": "",
                     "keyword": "Scenario Outline",
-                    "tags": [{"line": 14, "name": "scenario-outline-passing-tag"}],
+                    "tags": [{"line": 15, "name": "scenario-outline-passing-tag"}],
                     "steps": [
                         {
-                            "line": 16,
+                            "line": 17,
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
                             "name": "type float and value 1.0",
                         }
                     ],
-                    "line": 15,
+                    "line": 16,
                     "type": "scenario",
                     "id": "test_passing_outline[float-1.0]",
                     "name": "Passing outline",
