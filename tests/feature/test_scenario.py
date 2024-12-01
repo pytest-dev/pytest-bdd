@@ -286,6 +286,33 @@ def test_example_params(pytester):
     ]
 
 
+def test_step_parser_argument_not_in_function_signature_does_not_fail(pytester):
+    """Test that if the step parser defines an argument, but step function does not accept it,
+    then it does not fail and the params is just not filled."""
+
+    pytester.makefile(
+        ".feature",
+        simple="""
+        Feature: Simple feature
+            Scenario: Step with missing argument
+                Given a user with username "user1"
+        """,
+    )
+    pytester.makepyfile(
+        """
+        from pytest_bdd import scenarios, given, parsers
+
+        scenarios("simple.feature")
+
+        @given(parsers.parse('a user with username "{username}"'))
+        def create_user():
+            pass
+        """
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
 def test_multilanguage_support(pytester):
     """Test multilanguage support."""
     pytester.makefile(
@@ -366,3 +393,36 @@ def test_multilanguage_support(pytester):
         ("given", "che uso uno step con ", "esempio 2"),
         ("then", "va tutto bene"),
     ]
+
+
+def test_default_value_is_used_as_fallback(pytester):
+    """Test that the default value for a step implementation is only used as a fallback."""
+    pytester.makefile(
+        ".feature",
+        simple="""
+        Feature: Simple feature
+            Scenario: Step using default arg
+                Given a user with default username
+
+            Scenario: Step using explicit value
+                Given a user with username "user1"
+        """,
+    )
+    pytester.makepyfile(
+        """
+        from pytest_bdd import scenarios, given, then, parsers
+        from pytest_bdd.utils import dump_obj
+
+        scenarios("simple.feature")
+
+        @given('a user with default username', target_fixture="user")
+        @given(parsers.parse('a user with username "{username}"'), target_fixture="user")
+        def create_user(username="defaultuser"):
+            dump_obj(username)
+
+        """
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=2)
+
+    assert collect_dumped_objects(result) == ["defaultuser", "user1"]
