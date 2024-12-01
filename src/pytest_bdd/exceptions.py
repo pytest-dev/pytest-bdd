@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 
+class StepImplementationError(Exception):
+    """Step implementation error."""
+
+
 class ScenarioIsDecoratorOnly(Exception):
     """Scenario can be only used as decorator."""
 

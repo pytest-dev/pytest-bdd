@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import os.path
 import re
 import textwrap
@@ -19,7 +20,28 @@ from .gherkin_parser import Tag as GherkinTag
 from .gherkin_parser import get_gherkin_document
 from .types import STEP_TYPE_BY_PARSER_KEYWORD
 
-STEP_PARAM_RE = re.compile(r"<(.+?)>")
+PARAM_RE = re.compile(r"<(.+?)>")
+
+
+def render_string(input_string: str, render_context: Mapping[str, object]) -> str:
+    """
+    Render the string with the given context,
+    but avoid replacing text inside angle brackets if context is missing.
+
+    Args:
+        input_string (str): The string for which to render/replace params.
+        render_context (Mapping[str, object]): The context for rendering the string.
+
+    Returns:
+        str: The rendered string with parameters replaced only if they exist in the context.
+    """
+
+    def replacer(m: re.Match) -> str:
+        varname = m.group(1)
+        # If the context contains the variable, replace it. Otherwise, leave it unchanged.
+        return str(render_context.get(varname, f"<{varname}>"))
+
+    return PARAM_RE.sub(replacer, input_string)
 
 
 def get_tag_names(tag_data: list[GherkinTag]) -> set[str]:
@@ -188,25 +210,25 @@ class ScenarioTemplate:
         Returns:
             Scenario: A Scenario object with steps rendered based on the context.
         """
+        base_steps = self.all_background_steps + self._steps
         scenario_steps = [
             Step(
-                name=step.render(context),
+                name=render_string(step.name, context),
                 type=step.type,
                 indent=step.indent,
                 line_number=step.line_number,
                 keyword=step.keyword,
-                datatable=step.datatable,
-                docstring=step.docstring,
+                datatable=step.render_datatable(step.datatable, context) if step.datatable else None,
+                docstring=render_string(step.docstring, context) if step.docstring else None,
             )
-            for step in self._steps
+            for step in base_steps
         ]
-        steps = self.all_background_steps + scenario_steps
         return Scenario(
             feature=self.feature,
             keyword=self.keyword,
-            name=self.name,
+            name=render_string(self.name, context),
             line_number=self.line_number,
-            steps=steps,
+            steps=scenario_steps,
             tags=self.tags,
             description=self.description,
             rule=self.rule,
@@ -298,31 +320,24 @@ class Step:
         """
         return f'{self.type.capitalize()} "{self.name}"'
 
-    @property
-    def params(self) -> tuple[str, ...]:
-        """Get the parameters in the step name.
-
-        Returns:
-            Tuple[str, ...]: A tuple of parameter names found in the step name.
+    @staticmethod
+    def render_datatable(datatable: DataTable, context: Mapping[str, object]) -> DataTable:
         """
-        return tuple(frozenset(STEP_PARAM_RE.findall(self.name)))
-
-    def render(self, context: Mapping[str, object]) -> str:
-        """Render the step name with the given context, but avoid replacing text inside angle brackets if context is missing.
+        Render the datatable with the given context,
+        but avoid replacing text inside angle brackets if context is missing.
 
         Args:
-            context (Mapping[str, object]): The context for rendering the step name.
+            datatable (DataTable): The datatable to render.
+            context (Mapping[str, object]): The context for rendering the datatable.
 
         Returns:
-            str: The rendered step name with parameters replaced only if they exist in the context.
+            datatable (DataTable): The rendered datatable with parameters replaced only if they exist in the context.
         """
-
-        def replacer(m: re.Match) -> str:
-            varname = m.group(1)
-            # If the context contains the variable, replace it. Otherwise, leave it unchanged.
-            return str(context.get(varname, f"<{varname}>"))
-
-        return STEP_PARAM_RE.sub(replacer, self.name)
+        rendered_datatable = copy.deepcopy(datatable)
+        for row in rendered_datatable.rows:
+            for cell in row.cells:
+                cell.value = render_string(cell.value, context)
+        return rendered_datatable
 
 
 @dataclass(eq=False)
