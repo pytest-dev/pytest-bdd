@@ -513,6 +513,58 @@ Example:
     def should_have_left_cucumbers(cucumbers, left):
         assert cucumbers["start"] - cucumbers["eat"] == left
 
+
+Example parameters from example tables can not only be used in steps, but also embedded directly within docstrings and datatables, allowing for dynamic substitution.
+This provides added flexibility for scenarios that require complex setups or validations.
+
+Example:
+
+.. code-block:: gherkin
+
+    # content of docstring_and_datatable_with_params.feature
+
+    Feature: Docstring and Datatable with example parameters
+        Scenario Outline: Using parameters in docstrings and datatables
+            Given the following configuration:
+                """
+                username: <username>
+                password: <password>
+                """
+            When the user logs in
+            Then the response should contain:
+                | field     | value      |
+                | username  | <username> |
+                | logged_in | true       |
+
+            Examples:
+            | username  | password  |
+            | user1     | pass123   |
+            | user2     | 123secure |
+
+.. code-block:: python
+
+    from pytest_bdd import scenarios, given, when, then
+    import json
+
+    # Load scenarios from the feature file
+    scenarios("docstring_and_datatable_with_params.feature")
+
+
+    @given("the following configuration:")
+    def given_user_config(docstring):
+        print(docstring)
+
+
+    @when("the user logs in")
+    def user_logs_in(logged_in):
+        logged_in = True
+
+
+    @then("the response should contain:")
+    def response_should_contain(datatable):
+        assert datatable[1][1] in ["user1", "user2"]
+
+
 Rules
 -----
 

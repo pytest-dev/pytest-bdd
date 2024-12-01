@@ -20,13 +20,12 @@ T = TypeVar("T")
 CONFIG_STACK: list[Config] = []
 
 
-def get_args(func: Callable[..., Any]) -> list[str]:
-    """Get a list of argument names for a function.
+def get_required_args(func: Callable[..., Any]) -> list[str]:
+    """Get a list of argument that are required for a function.
 
     :param func: The function to inspect.
 
     :return: A list of argument names.
-    :rtype: list
     """
     params = signature(func).parameters.values()
     return [
@@ -83,3 +82,8 @@ def setdefault(obj: object, name: str, default: T) -> T:
     except AttributeError:
         setattr(obj, name, default)
         return default
+
+
+def identity(x: T) -> T:
+    """Return the argument."""
+    return x
