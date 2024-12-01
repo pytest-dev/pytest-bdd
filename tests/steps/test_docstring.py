@@ -193,3 +193,48 @@ def test_docstring_argument_in_step_impl_is_optional(pytester):
     )
     result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
+
+
+def test_docstring_step_argument_is_reserved_and_cannot_be_used(pytester):
+    pytester.makefile(
+        ".feature",
+        reserved_docstring_arg=textwrap.dedent(
+            """\
+            Feature: Reserved docstring argument
+
+              Scenario: Reserved docstring argument
+                Given this step has a {docstring} argument
+                Then the test fails
+            """
+        ),
+    )
+
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario, given, then, parsers
+
+        @scenario("reserved_docstring_arg.feature", "Reserved docstring argument")
+        def test_docstring():
+            pass
+
+
+        @given(parsers.parse("this step has a {docstring} argument"))
+        def _(docstring):
+            pass
+
+
+        @then("the test fails")
+        def _():
+            pass
+        """
+        )
+    )
+
+    result = pytester.runpytest()
+    result.assert_outcomes(failed=1)
+    result.stdout.fnmatch_lines(
+        [
+            "*Step 'this step has a {docstring} argument' defines argument names that are reserved: 'docstring'. Please use different names.*"
+        ]
+    )
