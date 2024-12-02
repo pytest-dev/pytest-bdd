@@ -15,6 +15,7 @@ Added
 Changed
 +++++++
 * Step arguments ``"datatable"`` and ``"docstring"`` are now reserved, and they can't be used as step argument names.
+* Scenario ``description`` field is now set for JSON output
 
 Deprecated
 ++++++++++

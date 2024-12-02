@@ -113,6 +113,7 @@ class ScenarioReport:
             "name": scenario.name,
             "line_number": scenario.line_number,
             "tags": sorted(scenario.tags),
+            "description": scenario.description,
             "feature": {
                 "keyword": feature.keyword,
                 "name": feature.name,
