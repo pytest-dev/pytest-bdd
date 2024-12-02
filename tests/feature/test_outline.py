@@ -334,9 +334,9 @@ def test_variable_reuse(pytester):
             """\
             Feature: Example parameters reuse
                 Scenario Outline: Check for example parameter re-use
-                    Given I get <param>
-                    When I set param to "other"
-                    Then I check <param>
+                    Given the param is initially set from the example table as <param>
+                    When a step arg of the same name is set to "other"
+                    Then the param is still set from the example table as <param>
 
                     Examples:
                         | param |
@@ -355,17 +355,17 @@ def test_variable_reuse(pytester):
             scenarios('outline.feature')
 
 
-            @given(parsers.parse('I get {param}'))
+            @given(parsers.parse('the param is initially set from the example table as {param}'))
             def _(param):
                 dump_obj(("param1", param))
 
 
-            @when(parsers.re('I set param to "(?P<param>.+)"'))
+            @when(parsers.re('a step arg of the same name is set to "(?P<param>.+)"'))
             def _(param):
                 dump_obj(("param2", param))
 
 
-            @then(parsers.parse('I check {param}'))
+            @then(parsers.parse('the param is still set from the example table as {param}'))
             def _(param):
                 dump_obj(("param3", param))
 
