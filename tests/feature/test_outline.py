@@ -334,16 +334,13 @@ def test_variable_reuse(pytester):
             """\
             Feature: Example parameters reuse
                 Scenario Outline: Check for example parameter re-use
-                    Given some <key> exists
-                    When I print <css_id>
-                    And I output "some value"
-                    And I echo <css_id>
-                    Then finish testing
+                    Given I get <param>
+                    When I set param to "other"
+                    Then I check <param>
 
                     Examples:
-                        | key  | css_id |
-                        | foo  | bar    |
-                        | foo2 | bar2   |
+                        | param |
+                        | value |
 
             """
         ),
@@ -353,37 +350,28 @@ def test_variable_reuse(pytester):
         textwrap.dedent(
             """\
             from pytest_bdd import given, when, then, parsers, scenarios
+            from pytest_bdd.utils import dump_obj
 
             scenarios('outline.feature')
 
 
-            @given(parsers.parse("some {key} exists"))
-            def some_key_exists(key):
-                print(f"some {key} exists")
+            @given(parsers.parse('I get {param}'))
+            def _(param):
+                dump_obj(("param1", param))
 
 
-            @when(parsers.parse('I print {css_id}'))
-            def css_id(css_id):
-                assert css_id in ('bar', 'bar2')
+            @when(parsers.re('I set param to "(?P<param>.+)"'))
+            def _(param):
+                dump_obj(("param2", param))
 
 
-            @when(parsers.parse('I echo {css_id}'))
-            def echo_val(css_id):
-                assert css_id in ('bar', 'bar2')
-
-
-            @when(parsers.re('I output "(?P<css_id>.+)"'))
-            def i_output(css_id):
-                assert css_id == 'some value'
-
-
-            @then('finish testing')
-            def i_output():
-                print("finished")
-                assert True
+            @then(parsers.parse('I check {param}'))
+            def _(param):
+                dump_obj(("param3", param))
 
         """
         )
     )
     result = pytester.runpytest("-s")
-    result.assert_outcomes(passed=2)
+    result.assert_outcomes(passed=1)
+    assert collect_dumped_objects(result) == [("param1", "value"), ("param2", "other"), ("param3", "value")]
