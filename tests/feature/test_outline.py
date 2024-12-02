@@ -320,3 +320,58 @@ def test_forward_slash_in_params(pytester):
     result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
     assert collect_dumped_objects(result) == ["https://my-site.com"]
+
+
+def test_variable_reuse(pytester):
+    """
+    Test example parameter name and step arg do not redefine each other's value
+    if the same name is used for both in different steps.
+    """
+
+    pytester.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Example parameters reuse
+                Scenario Outline: Check for example parameter re-use
+                    Given the param is initially set from the example table as <param>
+                    When a step arg of the same name is set to "other"
+                    Then the param is still set from the example table as <param>
+
+                    Examples:
+                        | param |
+                        | value |
+
+            """
+        ),
+    )
+
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+            from pytest_bdd import given, when, then, parsers, scenarios
+            from pytest_bdd.utils import dump_obj
+
+            scenarios('outline.feature')
+
+
+            @given(parsers.parse('the param is initially set from the example table as {param}'))
+            def _(param):
+                dump_obj(("param1", param))
+
+
+            @when(parsers.re('a step arg of the same name is set to "(?P<param>.+)"'))
+            def _(param):
+                dump_obj(("param2", param))
+
+
+            @then(parsers.parse('the param is still set from the example table as {param}'))
+            def _(param):
+                dump_obj(("param3", param))
+
+        """
+        )
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=1)
+    assert collect_dumped_objects(result) == [("param1", "value"), ("param2", "other"), ("param3", "value")]
