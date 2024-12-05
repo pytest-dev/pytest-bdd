@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-bdd"
-version = "8.0.0"
+version = "8.1.0"
 description = "BDD for pytest"
 authors = ["Oleg Pidsadnyi <oleg.pidsadnyi@gmail.com>", "Anatoly Bubenkov <bubenkoff@gmail.com>"]
 maintainers = ["Alessio Bogon <778703+youtux@users.noreply.github.com>"]
