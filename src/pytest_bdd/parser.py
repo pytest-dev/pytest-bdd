@@ -166,7 +166,7 @@ class ScenarioTemplate:
     name: str
     line_number: int
     templated: bool
-    description: str | None = None
+    description: str
     tags: set[str] = field(default_factory=set)
     _steps: list[Step] = field(init=False, default_factory=list)
     examples: list[Examples] = field(default_factory=list[Examples])
@@ -254,7 +254,7 @@ class Scenario:
     name: str
     line_number: int
     steps: list[Step]
-    description: str | None = None
+    description: str
     tags: set[str] = field(default_factory=set)
     rule: Rule | None = None
 

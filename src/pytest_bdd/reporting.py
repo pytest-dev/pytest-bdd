@@ -59,6 +59,7 @@ class ScenarioReportDict(TypedDict):
     line_number: int
     tags: list[str]
     feature: FeatureDict
+    description: str
     rule: NotRequired[RuleDict]
     failed: NotRequired[bool]
 
