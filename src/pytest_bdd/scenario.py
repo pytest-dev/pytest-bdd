@@ -19,17 +19,24 @@ import os
 import re
 from collections.abc import Iterable, Iterator
 from inspect import signature
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, Callable, TypeVar, cast
+from weakref import WeakKeyDictionary
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
-from typing_extensions import ParamSpec
 
 from . import exceptions
 from .compat import getfixturedefs, inject_fixture
 from .feature import get_feature, get_features
-from .steps import StepFunctionContext, get_step_fixture_name
-from .utils import CONFIG_STACK, get_caller_module_locals, get_caller_module_path, get_required_args, identity
+from .steps import StepFunctionContext, get_step_fixture_name, step_function_context_registry
+from .utils import (
+    CONFIG_STACK,
+    get_caller_module_locals,
+    get_caller_module_path,
+    get_required_args,
+    identity,
+    registry_get_safe,
+)
 
 if TYPE_CHECKING:
     from _pytest.mark.structures import ParameterSet
@@ -37,7 +44,6 @@ if TYPE_CHECKING:
 
     from .parser import Feature, Scenario, ScenarioTemplate, Step
 
-P = ParamSpec("P")
 T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
@@ -49,14 +55,16 @@ STEP_ARGUMENT_DATATABLE = "datatable"
 STEP_ARGUMENT_DOCSTRING = "docstring"
 STEP_ARGUMENTS_RESERVED_NAMES = {STEP_ARGUMENT_DATATABLE, STEP_ARGUMENT_DOCSTRING}
 
+scenario_wrapper_template_registry: WeakKeyDictionary[Callable[..., object], ScenarioTemplate] = WeakKeyDictionary()
 
-def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: Node) -> Iterable[FixtureDef[Any]]:
+
+def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: Node) -> Iterable[FixtureDef[object]]:
     """Find the fixture defs that can parse a step."""
     # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
     fixture_def_by_name = list(fixturemanager._arg2fixturedefs.items())
     for fixturename, fixturedefs in fixture_def_by_name:
         for _, fixturedef in enumerate(fixturedefs):
-            step_func_context = getattr(fixturedef.func, "_pytest_bdd_step_context", None)
+            step_func_context = step_function_context_registry.get(fixturedef.func)
             if step_func_context is None:
                 continue
 
@@ -67,7 +75,7 @@ def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: 
             if not match:
                 continue
 
-            fixturedefs = cast(list[FixtureDef[Any]], getfixturedefs(fixturemanager, fixturename, node) or [])
+            fixturedefs = list(getfixturedefs(fixturemanager, fixturename, node) or [])
             if fixturedef not in fixturedefs:
                 continue
 
@@ -278,14 +286,14 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequ
 
 def _get_scenario_decorator(
     feature: Feature, feature_name: str, templated_scenario: ScenarioTemplate, scenario_name: str
-) -> Callable[[Callable[P, T]], Callable[P, T]]:
+) -> Callable[[Callable[..., T]], Callable[[FixtureRequest, dict[str, str]], T]]:
     # HACK: Ideally we would use `def decorator(fn)`, but we want to return a custom exception
     # when the decorator is misused.
     # Pytest inspect the signature to determine the required fixtures, and in that case it would look
     # for a fixture called "fn" that doesn't exist (if it exists then it's even worse).
     # It will error with a "fixture 'fn' not found" message instead.
     # We can avoid this hack by using a pytest hook and check for misuse instead.
-    def decorator(*args: Callable[P, T]) -> Callable[P, T]:
+    def decorator(*args: Callable[..., T]) -> Callable[[FixtureRequest, dict[str, str]], T]:
         if not args:
             raise exceptions.ScenarioIsDecoratorOnly(
                 "scenario function can only be used as a decorator. Refer to the documentation."
@@ -293,7 +301,7 @@ def _get_scenario_decorator(
         [fn] = args
         func_args = get_required_args(fn)
 
-        def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> Any:
+        def scenario_wrapper(request: FixtureRequest, _pytest_bdd_example: dict[str, str]) -> T:
             __tracebackhide__ = True
             scenario = templated_scenario.render(_pytest_bdd_example)
             _execute_scenario(feature, scenario, request)
@@ -319,8 +327,9 @@ def _get_scenario_decorator(
             config.hook.pytest_bdd_apply_tag(tag=tag, function=scenario_wrapper)
 
         scenario_wrapper.__doc__ = f"{feature_name}: {scenario_name}"
-        scenario_wrapper.__scenario__ = templated_scenario  # type: ignore[attr-defined]
-        return cast(Callable[P, T], scenario_wrapper)
+
+        scenario_wrapper_template_registry[scenario_wrapper] = templated_scenario
+        return scenario_wrapper
 
     return decorator
 
@@ -353,7 +362,7 @@ def scenario(
     scenario_name: str,
     encoding: str = "utf-8",
     features_base_dir: str | None = None,
-) -> Callable[[Callable[P, T]], Callable[P, T]]:
+) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """Scenario decorator.
 
     :param str feature_name: Feature file name. Absolute or relative to the configured feature base path.
@@ -435,15 +444,17 @@ def get_python_name_generator(name: str) -> Iterable[str]:
         suffix = f"_{index}"
 
 
-def scenarios(*feature_paths: str, **kwargs: Any) -> None:
+def scenarios(*feature_paths: str, encoding: str = "utf-8", features_base_dir: str | None = None) -> None:
+    caller_locals = get_caller_module_locals()
     """Parse features from the paths and put all found scenarios in the caller module.
 
     :param *feature_paths: feature file paths to use for scenarios
+    :param str encoding: Feature file encoding.
+    :param features_base_dir: Optional base dir location for locating feature files. If not set, it will try and
+      resolve using property set in .ini file, otherwise it is assumed to be relative from the caller path location.
     """
-    caller_locals = get_caller_module_locals()
     caller_path = get_caller_module_path()
 
-    features_base_dir = kwargs.get("features_base_dir")
     if features_base_dir is None:
         features_base_dir = get_features_base_dir(caller_path)
 
@@ -455,9 +466,9 @@ def scenarios(*feature_paths: str, **kwargs: Any) -> None:
     found = False
 
     module_scenarios = frozenset(
-        (attr.__scenario__.feature.filename, attr.__scenario__.name)
+        (s.feature.filename, s.name)
         for name, attr in caller_locals.items()
-        if hasattr(attr, "__scenario__")
+        if (s := registry_get_safe(scenario_wrapper_template_registry, attr)) is not None
     )
 
     for feature in get_features(abs_feature_paths):
@@ -465,7 +476,7 @@ def scenarios(*feature_paths: str, **kwargs: Any) -> None:
             # skip already bound scenarios
             if (scenario_object.feature.filename, scenario_name) not in module_scenarios:
 
-                @scenario(feature.filename, scenario_name, **kwargs)
+                @scenario(feature.filename, scenario_name, encoding=encoding, features_base_dir=features_base_dir)
                 def _scenario() -> None:
                     pass  # pragma: no cover
 

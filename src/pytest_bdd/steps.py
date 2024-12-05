@@ -41,18 +41,20 @@ import enum
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from itertools import count
-from typing import Any, Callable, Literal, TypeVar
+from typing import Callable, Literal, TypeVar
+from weakref import WeakKeyDictionary
 
 import pytest
 from typing_extensions import ParamSpec
 
 from .parser import Step
 from .parsers import StepParser, get_parser
-from .types import GIVEN, THEN, WHEN
 from .utils import get_caller_module_locals
 
 P = ParamSpec("P")
 T = TypeVar("T")
+
+step_function_context_registry: WeakKeyDictionary[Callable[..., object], StepFunctionContext] = WeakKeyDictionary()
 
 
 @enum.unique
@@ -64,9 +66,9 @@ class StepNamePrefix(enum.Enum):
 @dataclass
 class StepFunctionContext:
     type: Literal["given", "when", "then"] | None
-    step_func: Callable[..., Any]
+    step_func: Callable[..., object]
     parser: StepParser
-    converters: dict[str, Callable[[str], Any]] = field(default_factory=dict)
+    converters: dict[str, Callable[[str], object]] = field(default_factory=dict)
     target_fixture: str | None = None
 
 
@@ -77,7 +79,7 @@ def get_step_fixture_name(step: Step) -> str:
 
 def given(
     name: str | StepParser,
-    converters: dict[str, Callable[[str], Any]] | None = None,
+    converters: dict[str, Callable[[str], object]] | None = None,
     target_fixture: str | None = None,
     stacklevel: int = 1,
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
@@ -91,12 +93,12 @@ def given(
 
     :return: Decorator function for the step.
     """
-    return step(name, GIVEN, converters=converters, target_fixture=target_fixture, stacklevel=stacklevel)
+    return step(name, "given", converters=converters, target_fixture=target_fixture, stacklevel=stacklevel)
 
 
 def when(
     name: str | StepParser,
-    converters: dict[str, Callable[[str], Any]] | None = None,
+    converters: dict[str, Callable[[str], object]] | None = None,
     target_fixture: str | None = None,
     stacklevel: int = 1,
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
@@ -110,12 +112,12 @@ def when(
 
     :return: Decorator function for the step.
     """
-    return step(name, WHEN, converters=converters, target_fixture=target_fixture, stacklevel=stacklevel)
+    return step(name, "when", converters=converters, target_fixture=target_fixture, stacklevel=stacklevel)
 
 
 def then(
     name: str | StepParser,
-    converters: dict[str, Callable[[str], Any]] | None = None,
+    converters: dict[str, Callable[[str], object]] | None = None,
     target_fixture: str | None = None,
     stacklevel: int = 1,
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
@@ -129,13 +131,13 @@ def then(
 
     :return: Decorator function for the step.
     """
-    return step(name, THEN, converters=converters, target_fixture=target_fixture, stacklevel=stacklevel)
+    return step(name, "then", converters=converters, target_fixture=target_fixture, stacklevel=stacklevel)
 
 
 def step(
     name: str | StepParser,
     type_: Literal["given", "when", "then"] | None = None,
-    converters: dict[str, Callable[[str], Any]] | None = None,
+    converters: dict[str, Callable[[str], object]] | None = None,
     target_fixture: str | None = None,
     stacklevel: int = 1,
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
@@ -172,7 +174,7 @@ def step(
         def step_function_marker() -> StepFunctionContext:
             return context
 
-        step_function_marker._pytest_bdd_step_context = context  # type: ignore
+        step_function_context_registry[step_function_marker] = context
 
         caller_locals = get_caller_module_locals(stacklevel=stacklevel)
         fixture_step_name = find_unique_name(

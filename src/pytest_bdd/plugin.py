@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, Callable, TypeVar, cast
 
 import pytest
 from typing_extensions import ParamSpec
@@ -99,8 +99,8 @@ def pytest_bdd_step_error(
     feature: Feature,
     scenario: Scenario,
     step: Step,
-    step_func: Callable[..., Any],
-    step_func_args: dict,
+    step_func: Callable[..., object],
+    step_func_args: dict[str, object],
     exception: Exception,
 ) -> None:
     reporting.step_error(request, feature, scenario, step, step_func, step_func_args, exception)
@@ -112,7 +112,7 @@ def pytest_bdd_before_step(
     feature: Feature,
     scenario: Scenario,
     step: Step,
-    step_func: Callable[..., Any],
+    step_func: Callable[..., object],
 ) -> None:
     reporting.before_step(request, feature, scenario, step, step_func)
 
@@ -123,8 +123,8 @@ def pytest_bdd_after_step(
     feature: Feature,
     scenario: Scenario,
     step: Step,
-    step_func: Callable[..., Any],
-    step_func_args: dict[str, Any],
+    step_func: Callable[..., object],
+    step_func_args: dict[str, object],
 ) -> None:
     reporting.after_step(request, feature, scenario, step, step_func, step_func_args)
 

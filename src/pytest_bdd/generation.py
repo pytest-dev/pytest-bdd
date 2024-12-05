@@ -7,24 +7,30 @@ import os.path
 from typing import TYPE_CHECKING, cast
 
 from _pytest._io import TerminalWriter
+from _pytest.python import Function
 from mako.lookup import TemplateLookup  # type: ignore
 
 from .compat import getfixturedefs
 from .feature import get_features
 from .parser import Feature, ScenarioTemplate, Step
-from .scenario import inject_fixturedefs_for_step, make_python_docstring, make_python_name, make_string_literal
+from .scenario import (
+    inject_fixturedefs_for_step,
+    make_python_docstring,
+    make_python_name,
+    make_string_literal,
+    scenario_wrapper_template_registry,
+)
 from .steps import get_step_fixture_name
 from .types import STEP_TYPES
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from typing import Any
 
     from _pytest.config import Config
     from _pytest.config.argparsing import Parser
     from _pytest.fixtures import FixtureDef, FixtureManager
     from _pytest.main import Session
-    from _pytest.python import Function
+    from _pytest.nodes import Node
 
 
 template_lookup = TemplateLookup(directories=[os.path.join(os.path.dirname(__file__), "templates")])
@@ -127,15 +133,17 @@ def print_missing_code(scenarios: list[ScenarioTemplate], steps: list[Step]) -> 
 
 
 def _find_step_fixturedef(
-    fixturemanager: FixtureManager, item: Function, step: Step
-) -> Sequence[FixtureDef[Any]] | None:
+    fixturemanager: FixtureManager, item: Node, step: Step
+) -> Sequence[FixtureDef[object]] | None:
     """Find step fixturedef."""
     with inject_fixturedefs_for_step(step=step, fixturemanager=fixturemanager, node=item):
         bdd_name = get_step_fixture_name(step=step)
         return getfixturedefs(fixturemanager, bdd_name, item)
 
 
-def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature], list[ScenarioTemplate], list[Step]]:
+def parse_feature_files(
+    paths: list[str], encoding: str = "utf-8"
+) -> tuple[list[Feature], list[ScenarioTemplate], list[Step]]:
     """Parse feature files of given paths.
 
     :param paths: `list` of paths (file or dirs)
@@ -143,7 +151,7 @@ def parse_feature_files(paths: list[str], **kwargs: Any) -> tuple[list[Feature],
     :return: `list` of `tuple` in form:
              (`list` of `Feature` objects, `list` of `Scenario` objects, `list` of `Step` objects).
     """
-    features = get_features(paths, **kwargs)
+    features = get_features(paths, encoding=encoding)
     scenarios = sorted(
         itertools.chain.from_iterable(feature.scenarios.values() for feature in features),
         key=lambda scenario: (scenario.feature.name or scenario.feature.filename, scenario.name),
@@ -182,7 +190,9 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
     features, scenarios, steps = parse_feature_files(config.option.features)
 
     for item in session.items:
-        if scenario := getattr(item.obj, "__scenario__", None):  # type: ignore
+        if not isinstance(item, Function):
+            continue
+        if (scenario := scenario_wrapper_template_registry.get(item.obj)) is not None:
             if scenario in scenarios:
                 scenarios.remove(scenario)
             for step in scenario.steps:
