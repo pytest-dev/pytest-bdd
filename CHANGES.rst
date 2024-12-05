@@ -23,6 +23,7 @@ Removed
 
 Fixed
 +++++
+* Fixed regression introduced in version 8.1.0 where the Cucumber JSON output maybe have `scenario.description` set to `null` instead of the empty string. We now set it to the empty string as expected.
 
 Security
 ++++++++
