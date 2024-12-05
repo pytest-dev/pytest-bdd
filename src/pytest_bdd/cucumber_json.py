@@ -189,7 +189,7 @@ class LogBDDCucumberJSON:
                 "id": test_report_context_registry[report].name,
                 "name": scenario["name"],
                 "line": scenario["line_number"],
-                "description": "",
+                "description": scenario["description"],
                 "tags": self._serialize_tags(scenario),
                 "type": "scenario",
                 "steps": [stepmap(step) for step in scenario["steps"]],

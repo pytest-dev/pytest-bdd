@@ -14,7 +14,29 @@ Added
 
 Changed
 +++++++
-* Step arguments ``"datatable"`` and ``"docstring"`` are now reserved, and they can't be used as step argument names.
+
+Deprecated
+++++++++++
+
+Removed
++++++++
+
+Fixed
++++++
+
+Security
+++++++++
+
+[8.1.0] - 2024-12-05
+----------
+
+Added
++++++
+
+Changed
++++++++
+* Step arguments ``"datatable"`` and ``"docstring"`` are now reserved, and they can't be used as step argument names. An error is raised if a step parser uses these names.
+* Scenario ``description`` field is now set for Cucumber JSON output.
 
 Deprecated
 ++++++++++

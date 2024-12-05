@@ -565,39 +565,6 @@ Example:
         assert datatable[1][1] in ["user1", "user2"]
 
 
-Rules
------
-
-In Gherkin, `Rules` allow you to group related scenarios or examples under a shared context.
-This is useful when you want to define different conditions or behaviours
-for multiple examples that follow a similar structure.
-You can use either ``Scenario`` or ``Example`` to define individual cases, as they are aliases and function identically.
-
-Additionally, **tags** applied to a rule will be automatically applied to all the **examples or scenarios**
-under that rule, making it easier to organize and filter tests during execution.
-
-Example:
-
-.. code-block:: gherkin
-
-    Feature: Rules and examples
-
-        @feature_tag
-        Rule: A rule for valid cases
-
-            @rule_tag
-            Example: Valid case 1
-                Given I have a valid input
-                When I process the input
-                Then the result should be successful
-
-        Rule: A rule for invalid cases
-            Example: Invalid case
-                Given I have an invalid input
-                When I process the input
-                Then the result should be an error
-
-
 Scenario Outlines with Multiple Example Tables
 ----------------------------------------------
 
@@ -661,6 +628,91 @@ only the examples under the "Positive results" table will be executed, and the "
 .. code-block:: bash
 
     pytest -k "positive"
+
+
+Handling Empty Example Cells
+----------------------------
+
+By default, empty cells in the example tables are interpreted as empty strings ("").
+However, there may be cases where it is more appropriate to handle them as ``None``.
+In such scenarios, you can use a converter with the ``parsers.re`` parser to define a custom behavior for empty values.
+
+For example, the following code demonstrates how to use a custom converter to return ``None`` when an empty cell is encountered:
+
+.. code-block:: gherkin
+
+    # content of empty_example_cells.feature
+
+    Feature: Handling empty example cells
+        Scenario Outline: Using converters for empty cells
+            Given I am starting lunch
+            Then there are <start> cucumbers
+
+            Examples:
+            | start |
+            |       |
+
+.. code-block:: python
+
+    from pytest_bdd import then, parsers
+
+
+    # Define a converter that returns None for empty strings
+    def empty_to_none(value):
+        return None if value.strip() == "" else value
+
+
+    @given("I am starting lunch")
+    def _():
+        pass
+
+
+    @then(
+        parsers.re("there are (?P<start>.*?) cucumbers"),
+        converters={"start": empty_to_none}
+    )
+    def _(start):
+        # Example assertion to demonstrate the conversion
+        assert start is None
+
+
+Here, the `start` cell in the example table is empty.
+When the ``parsers.re`` parser is combined with the ``empty_to_none`` converter,
+the empty cell will be converted to ``None`` and can be handled accordingly in the step definition.
+
+
+Rules
+-----
+
+In Gherkin, `Rules` allow you to group related scenarios or examples under a shared context.
+This is useful when you want to define different conditions or behaviours
+for multiple examples that follow a similar structure.
+You can use either ``Scenario`` or ``Example`` to define individual cases, as they are aliases and function identically.
+
+Additionally, **tags** applied to a rule will be automatically applied to all the **examples or scenarios**
+under that rule, making it easier to organize and filter tests during execution.
+
+Example:
+
+.. code-block:: gherkin
+
+    Feature: Rules and examples
+
+        @feature_tag
+        Rule: A rule for valid cases
+
+            @rule_tag
+            Example: Valid case 1
+                Given I have a valid input
+                When I process the input
+                Then the result should be successful
+
+        Rule: A rule for invalid cases
+
+            Example: Invalid case
+                Given I have an invalid input
+                When I process the input
+                Then the result should be an error
 
 
 Datatables
