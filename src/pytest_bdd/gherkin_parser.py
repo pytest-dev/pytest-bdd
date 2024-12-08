@@ -4,7 +4,7 @@ import linecache
 import re
 import textwrap
 import typing
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -297,7 +297,7 @@ class GherkinDocument:
     comments: list[Comment]
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> Self:
+    def from_dict(cls, data: Mapping[str, Any]) -> Self:
         return cls(
             feature=Feature.from_dict(data["feature"]),
             comments=[Comment.from_dict(comment) for comment in data["comments"]],
