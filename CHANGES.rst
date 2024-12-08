@@ -14,6 +14,7 @@ Added
 
 Changed
 +++++++
+* Relaxed `gherkin-official` dependency requirement to `>=29.0.0` to allow for newer versions of the `gherkin-official` package.
 
 Deprecated
 ++++++++++
