@@ -106,8 +106,9 @@ jobs:
         run: |
           source .venv/bin/activate
           coverage erase
+          # Using `--parallel 4` as it's the number of CPUs in the GitHub Actions runner
           # Using `installpkg dist/*.tar.gz` because we want to install the pre-built package (want to test against that)
-          tox run-parallel -f ${{ matrix.toxfactor }} --parallel-no-spinner --parallel-live --installpkg dist/*.whl
+          tox run-parallel -f ${{ matrix.toxfactor }} --parallel 4 --parallel-no-spinner --parallel-live --installpkg dist/*.whl
           coverage combine
           coverage xml
 
