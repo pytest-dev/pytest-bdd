@@ -1,5 +1,7 @@
 """Function name same as step name."""
 
+from __future__ import annotations
+
 import textwrap
 
 

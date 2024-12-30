@@ -3,6 +3,8 @@
 Check the parent givens are collected and overridden in the local conftest.
 """
 
+from __future__ import annotations
+
 import textwrap
 
 from pytest_bdd.utils import collect_dumped_objects

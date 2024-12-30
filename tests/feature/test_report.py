@@ -1,7 +1,8 @@
 """Test scenario reporting."""
 
+from __future__ import annotations
+
 import textwrap
-from typing import Optional
 
 import pytest
 
@@ -11,7 +12,7 @@ from pytest_bdd.reporting import test_report_context_registry
 class OfType:
     """Helper object comparison to which is always 'equal'."""
 
-    def __init__(self, type: Optional[type] = None) -> None:
+    def __init__(self, type: type | None = None) -> None:
         self.type = type
 
     def __eq__(self, other: object) -> bool:

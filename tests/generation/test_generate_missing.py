@@ -1,5 +1,7 @@
 """Code generation and assertion tests."""
 
+from __future__ import annotations
+
 import itertools
 import textwrap
 

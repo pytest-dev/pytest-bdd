@@ -73,10 +73,6 @@ lint.isort.required-imports = [
     "from __future__ import annotations",
 ]
 
-[tool.ruff.lint.per-file-ignores]
-# Lint `I002` (required imports) for `from __future__ import annotations` in `src/`
-"!src/**.py" = ["I002"]
-
 [tool.coverage.report]
 exclude_lines = [
     "if TYPE_CHECKING:",

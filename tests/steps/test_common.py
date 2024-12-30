@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import textwrap
 from typing import Any, Callable
 from unittest import mock

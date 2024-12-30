@@ -1,5 +1,7 @@
 """Scenario Outline tests."""
 
+from __future__ import annotations
+
 import textwrap
 
 from pytest_bdd.utils import collect_dumped_objects
