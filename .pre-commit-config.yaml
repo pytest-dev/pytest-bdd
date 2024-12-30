@@ -1,33 +1,16 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
--   repo: https://github.com/psf/black
-    # If you update the version here, also update it in tox.ini (py*-pytestlatest-linters)
-    rev: 24.10.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # frozen: v5.0.0
     hooks:
-    - id: black
--   repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: f0b5944bef86f50d875305821a0ab0d8c601e465  # frozen: v0.8.4
     hooks:
-      - id: isort
-        name: isort (python)
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-    -   id: trailing-whitespace
-    -   id: end-of-file-fixer
-    -   id: check-yaml
-    -   id: check-added-large-files
--   repo: https://github.com/asottile/pyupgrade
-    rev: v3.19.0
-    hooks:
-    -   id: pyupgrade
-        args: ["--py39-plus"]
--   repo: https://github.com/pycqa/flake8
-    rev: "7.1.1"
-    hooks:
-    -   id: flake8
-        additional_dependencies: [
-          "flake8-pyproject",
-          "flake8-bugbear",
-        ]
+      - id: ruff
+        args: [ --fix ]
+      - id: ruff-format

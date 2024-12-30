@@ -57,21 +57,25 @@ sphinx-autobuild = "*"
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
+[tool.ruff]
 line-length = 120
-target-version = ["py39", "py310", "py311", "py312", "py313"]
+target-version = "py39"
+lint.select = [
+    "B",  # flake8-bugbear
+    "E4",  # pycodestyle - error - import
+    "E7",  # pycodestyle - error - statement
+    "E9",  # pycodestyle - error - runtime
+    "F",  # pyflakes
+    "I",  # isort
+    "UP",  # pyupgrade
+]
+lint.isort.required-imports = [
+    "from __future__ import annotations",
+]
 
-[tool.flake8]
-# E1: indentation: already covered by `black`
-# E2: whitespace: already covered by `black`
-# E3: blank line: already covered by `black`
-# E501: line length: already covered by `black`
-extend-ignore = "E1,E2,E3,E501"
-
-[tool.isort]
-profile = "black"
-line_length = 120
-multi_line_output = 3
+[tool.ruff.lint.per-file-ignores]
+# Lint `I002` (required imports) for `from __future__ import annotations` in `src/`
+"!src/**.py" = ["I002"]
 
 [tool.coverage.report]
 exclude_lines = [

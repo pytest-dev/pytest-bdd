@@ -10,14 +10,12 @@ from dataclasses import dataclass, field
 
 from .exceptions import StepError
 from .gherkin_parser import Background as GherkinBackground
-from .gherkin_parser import DataTable
+from .gherkin_parser import DataTable, GherkinDocument, get_gherkin_document
 from .gherkin_parser import Feature as GherkinFeature
-from .gherkin_parser import GherkinDocument
 from .gherkin_parser import Rule as GherkinRule
 from .gherkin_parser import Scenario as GherkinScenario
 from .gherkin_parser import Step as GherkinStep
 from .gherkin_parser import Tag as GherkinTag
-from .gherkin_parser import get_gherkin_document
 from .types import STEP_TYPE_BY_PARSER_KEYWORD
 
 PARAM_RE = re.compile(r"<(.+?)>")

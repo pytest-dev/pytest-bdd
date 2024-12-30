@@ -59,12 +59,10 @@ def test_feature_path_by_param_ok(pytester, base_dir):
 
 def prepare_testdir(pytester, ini_base_dir):
     pytester.makeini(
-        """
+        f"""
             [pytest]
-            bdd_features_base_dir={}
-        """.format(
-            ini_base_dir
-        )
+            bdd_features_base_dir={ini_base_dir}
+        """
     )
 
     feature_file = pytester.mkdir("features").joinpath("steps.feature")
@@ -77,7 +75,7 @@ def prepare_testdir(pytester, ini_base_dir):
     )
 
     pytester.makepyfile(
-        """
+        f"""
     import os.path
 
     import pytest
@@ -103,7 +101,7 @@ def prepare_testdir(pytester, ini_base_dir):
                 scenarios(FEATURE)
             else:
                 scenario(FEATURE, scenario_name)
-        assert os.path.abspath(os.path.join('{}', FEATURE)) in str(exc.value)
+        assert os.path.abspath(os.path.join('{ini_base_dir}', FEATURE)) in str(exc.value)
 
 
     @pytest.mark.parametrize(
@@ -145,7 +143,5 @@ def prepare_testdir(pytester, ini_base_dir):
         else:
             scenario(FEATURE, scenario_name, features_base_dir='features')
 
-    """.format(
-            ini_base_dir
-        )
+    """
     )

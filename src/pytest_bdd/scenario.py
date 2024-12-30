@@ -384,7 +384,7 @@ def scenario(
         scenario = feature.scenarios[scenario_name]
     except KeyError:
         feature_name = feature.name or "[Empty]"
-        raise exceptions.ScenarioNotFound(
+        raise exceptions.ScenarioNotFound(  # noqa: B904
             f'Scenario "{scenario_name}" in feature "{feature_name}" in {feature.filename} is not found.'
         )
 
