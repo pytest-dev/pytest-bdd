@@ -31,10 +31,8 @@ def configure(config: Config) -> None:
             raise Exception(
                 "gherkin-terminal-reporter is not compatible with any other terminal reporter."
                 "You can use only one terminal reporter."
-                "Currently '{0}' is used."
-                "Please decide to use one by deactivating {0} or gherkin-terminal-reporter.".format(
-                    current_reporter.__class__
-                )
+                f" Currently '{current_reporter.__class__}' is used."
+                f" Please decide to use one by deactivating {current_reporter.__class__} or gherkin-terminal-reporter."
             )
         gherkin_reporter = GherkinTerminalReporter(config)
         config.pluginmanager.unregister(current_reporter)
@@ -49,25 +47,11 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore[misc]
         self.current_rule: str | None = None
 
     def pytest_runtest_logreport(self, report: TestReport) -> None:
-        rep = report
-        res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
-        cat, letter, word = res
+        result = self.config.hook.pytest_report_teststatus(report=report, config=self.config)
+        result_category, result_letter, result_word = result
 
-        if not letter and not word:
-            # probably passed setup/teardown
+        if not result_letter and not result_word:
             return None
-
-        if isinstance(word, tuple):
-            word, word_markup = word
-        elif rep.passed:
-            word_markup = {"green": True}
-        elif rep.failed:
-            word_markup = {"red": True}
-        elif rep.skipped:
-            word_markup = {"yellow": True}
-        feature_markup = {"blue": True}
-        scenario_markup = word_markup
-        rule_markup = {"purple": True}
 
         try:
             scenario = test_report_context_registry[report].scenario
@@ -75,46 +59,84 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore[misc]
             scenario = None
 
         if self.verbosity <= 0 or scenario is None:
-            return super().pytest_runtest_logreport(rep)
+            return super().pytest_runtest_logreport(report)
 
-        rule = scenario.get("rule")
-        indent = "    " if rule else ""
+        report_renderer = ReportRenderer(self, report, scenario, result_word)
 
         if self.verbosity == 1:
-            self.ensure_newline()
-            self._tw.write(f"{scenario['feature']['keyword']}: ", **feature_markup)
-            self._tw.write(scenario["feature"]["name"], **feature_markup)
-            self._tw.write("\n")
-
-            if rule and rule["name"] != self.current_rule:
-                self._tw.write(f"  {rule['keyword']}: ", **rule_markup)
-                self._tw.write(rule["name"], **rule_markup)
-                self._tw.write("\n")
-                self.current_rule = rule["name"]
-
-            self._tw.write(f"{indent}    {scenario['keyword']}: ", **scenario_markup)
-            self._tw.write(scenario["name"], **scenario_markup)
-            self._tw.write(" ")
-            self._tw.write(word, **word_markup)
-            self._tw.write("\n")
+            report_renderer.write_scenario_summary()
         elif self.verbosity > 1:
-            self.ensure_newline()
-            self._tw.write(f"{scenario['feature']['keyword']}: ", **feature_markup)
-            self._tw.write(scenario["feature"]["name"], **feature_markup)
-            self._tw.write("\n")
+            report_renderer.write_detailed_scenario_with_steps()
 
-            if rule and rule["name"] != self.current_rule:
-                self._tw.write(f"  {rule['keyword']}: ", **rule_markup)
-                self._tw.write(rule["name"], **rule_markup)
-                self._tw.write("\n")
-                self.current_rule = rule["name"]
+        self.stats.setdefault(result_category, []).append(report)
 
-            self._tw.write(f"{indent}    {scenario['keyword']}: ", **scenario_markup)
-            self._tw.write(scenario["name"], **scenario_markup)
-            self._tw.write("\n")
-            for step in scenario["steps"]:
-                self._tw.write(f"{indent}        {step['keyword']} {step['name']}\n", **scenario_markup)
-            self._tw.write(f"{indent}    {word}", **word_markup)
-            self._tw.write("\n\n")
 
-        self.stats.setdefault(cat, []).append(rep)
+class ReportRenderer:
+    def __init__(
+        self, reporter: GherkinTerminalReporter, report: TestReport, scenario: dict, result_outcome: str
+    ) -> None:
+        self.reporter = reporter
+        self.report = report
+        self.scenario = scenario
+        self.rule = scenario.get("rule")
+        if isinstance(result_outcome, tuple):
+            self.result_outcome, self.feature_markup = result_outcome
+        else:
+            self.result_outcome = result_outcome
+            self.feature_markup = {"blue": True}
+        self.rule_markup = {"purple": True}
+        self.tw = self.reporter._tw
+        self.current_indentation_index = 0
+
+    def get_outcome_markup(self) -> dict:
+        if self.report.passed:
+            return {"green": True}
+        elif self.report.failed:
+            return {"red": True}
+        elif self.report.skipped:
+            return {"yellow": True}
+
+    def write_scenario_summary(self, has_steps: bool = False) -> None:
+        """Write the feature and scenario header to the terminal."""
+        self.tw.write("\n")
+        self.tw.write(f"{self.scenario['feature']['keyword']}: ", **self.feature_markup)
+        self.tw.write(self.scenario["feature"]["name"], **self.feature_markup)
+        self.tw.write("\n")
+
+        if self.rule and self.rule["name"] != self.reporter.current_rule:
+            self.current_indentation_index = 1
+            self.tw.write(
+                f"{self._get_indent(self.current_indentation_index)}{self.rule['keyword']}: ", **self.rule_markup
+            )
+            self.tw.write(self.rule["name"], **self.rule_markup)
+            self.tw.write("\n")
+            self.reporter.current_rule = self.rule["name"]
+
+        self.current_indentation_index += 1
+        self.tw.write(
+            f"{self._get_indent(self.current_indentation_index)}{self.scenario['keyword']}: ",
+            **self.get_outcome_markup(),
+        )
+        self.tw.write(self.scenario["name"], **self.get_outcome_markup())
+        if not has_steps:
+            self.tw.write(" ", **self.get_outcome_markup())
+            self.tw.write(self.result_outcome, **self.get_outcome_markup())
+        self.tw.write("\n")
+
+    def write_detailed_scenario_with_steps(self) -> None:
+        """Write the full details of the scenario including the steps."""
+        self.write_scenario_summary(has_steps=True)
+
+        for step in self.scenario["steps"]:
+            self.current_indentation_index += 1
+            self.tw.write(
+                f"{self._get_indent(self.current_indentation_index)}{step['keyword']} {step['name']}\n",
+                **self.get_outcome_markup(),
+            )
+
+        self.tw.write(f"{self._get_indent(2)}{self.result_outcome}", **self.get_outcome_markup())
+        self.tw.write("\n\n")
+
+    @staticmethod
+    def _get_indent(level: int) -> str:
+        return "    " * level
