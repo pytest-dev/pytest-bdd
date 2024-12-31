@@ -369,7 +369,7 @@ class FeatureParser:
         encoding (str): File encoding of the feature file to parse.
     """
 
-    def __init__(self, basedir: str, filename: str, encoding: str = "utf-8"):
+    def __init__(self, basedir: str, filename: str, encoding: str = "utf-8") -> None:
         self.abs_filename = os.path.abspath(os.path.join(basedir, filename))
         self.rel_filename = os.path.join(os.path.basename(basedir), filename)
         self.encoding = encoding
