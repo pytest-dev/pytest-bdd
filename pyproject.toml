@@ -62,12 +62,15 @@ line-length = 120
 target-version = "py39"
 lint.select = [
     "B",     # flake8-bugbear
+    "BLE",   # flake8-blind-except
+    "C4",    # flake8-comprehensions
     "E4",    # pycodestyle - error - import
     "E7",    # pycodestyle - error - statement
     "E9",    # pycodestyle - error - runtime
     "F",     # pyflakes
     "I",     # isort
     "ISC",   # flake8-implicit-str-concat
+    "PERF",  # perflint
     "UP",    # pyupgrade
 ]
 lint.isort.required-imports = [
