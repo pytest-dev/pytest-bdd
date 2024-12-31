@@ -61,13 +61,14 @@ build-backend = "poetry.core.masonry.api"
 line-length = 120
 target-version = "py39"
 lint.select = [
-    "B",   # flake8-bugbear
-    "E4",  # pycodestyle - error - import
-    "E7",  # pycodestyle - error - statement
-    "E9",  # pycodestyle - error - runtime
-    "F",   # pyflakes
-    "I",   # isort
-    "UP",  # pyupgrade
+    "B",     # flake8-bugbear
+    "E4",    # pycodestyle - error - import
+    "E7",    # pycodestyle - error - statement
+    "E9",    # pycodestyle - error - runtime
+    "F",     # pyflakes
+    "I",     # isort
+    "ISC",   # flake8-implicit-str-concat
+    "UP",    # pyupgrade
 ]
 lint.isort.required-imports = [
     "from __future__ import annotations",
