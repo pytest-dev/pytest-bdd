@@ -41,7 +41,7 @@ parse-type = "*"
 pytest = ">=7.0.0"
 typing-extensions = "*"
 packaging = "*"
-gherkin-official = ">=29.0.0"
+gherkin-official = ">=30.0.3"
 
 [tool.poetry.group.dev.dependencies]
 tox = ">=4.11.3"
