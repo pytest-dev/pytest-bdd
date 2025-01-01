@@ -384,9 +384,9 @@ def scenario(
         scenario = feature.scenarios[scenario_name]
     except KeyError:
         feature_name = feature.name or "[Empty]"
-        raise exceptions.ScenarioNotFound(  # noqa: B904
+        raise exceptions.ScenarioNotFound(
             f'Scenario "{scenario_name}" in feature "{feature_name}" in {feature.filename} is not found.'
-        )
+        ) from None
 
     return _get_scenario_decorator(
         feature=feature, feature_name=feature_name, templated_scenario=scenario, scenario_name=scenario_name
