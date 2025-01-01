@@ -4,19 +4,21 @@ import copy
 import os.path
 import re
 import textwrap
-from collections import OrderedDict
-from collections.abc import Generator, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Iterable, Mapping, Sequence
+
+    from gherkin.parser_types import Background as GherkinBackground
+    from gherkin.parser_types import DataTable as GherkinDataTable
+    from gherkin.parser_types import GherkinDocument
+    from gherkin.parser_types import Rule as GherkinRule
+    from gherkin.parser_types import Scenario as GherkinScenario
+    from gherkin.parser_types import Step as GherkinStep
+    from gherkin.parser_types import Tag as GherkinTag
 
 from .exceptions import StepError
-from .gherkin_parser import Background as GherkinBackground
-from .gherkin_parser import DataTable
-from .gherkin_parser import Feature as GherkinFeature
-from .gherkin_parser import GherkinDocument
-from .gherkin_parser import Rule as GherkinRule
-from .gherkin_parser import Scenario as GherkinScenario
-from .gherkin_parser import Step as GherkinStep
-from .gherkin_parser import Tag as GherkinTag
 from .gherkin_parser import get_gherkin_document
 from .types import STEP_TYPE_BY_PARSER_KEYWORD
 
@@ -48,12 +50,12 @@ def get_tag_names(tag_data: list[GherkinTag]) -> set[str]:
     """Extract tag names from tag data.
 
     Args:
-        tag_data (List[dict]): The tag data to extract names from.
+        tag_data (List[Tag]): The tag data to extract names from.
 
     Returns:
         set[str]: A set of tag names.
     """
-    return {tag.name.lstrip("@") for tag in tag_data}
+    return {tag["name"].lstrip("@") for tag in tag_data}
 
 
 @dataclass(eq=False)
@@ -71,7 +73,7 @@ class Feature:
         description (str): The description of the feature.
     """
 
-    scenarios: OrderedDict[str, ScenarioTemplate]
+    scenarios: dict[str, ScenarioTemplate]
     filename: str
     rel_filename: str
     language: str
@@ -280,7 +282,7 @@ class Step:
     indent: int
     keyword: str
     docstring: str | None = None
-    datatable: DataTable | None = None
+    datatable: GherkinDataTable | None = None
     failed: bool = field(init=False, default=False)
     scenario: ScenarioTemplate | None = field(init=False, default=None)
     background: Background | None = field(init=False, default=None)
@@ -292,7 +294,7 @@ class Step:
         indent: int,
         line_number: int,
         keyword: str,
-        datatable: DataTable | None = None,
+        datatable: GherkinDataTable | None = None,
         docstring: str | None = None,
     ) -> None:
         """Initialize a step.
@@ -321,7 +323,7 @@ class Step:
         return f'{self.type.capitalize()} "{self.name}"'
 
     @staticmethod
-    def render_datatable(datatable: DataTable, context: Mapping[str, object]) -> DataTable:
+    def render_datatable(datatable: GherkinDataTable, context: Mapping[str, object]) -> GherkinDataTable:
         """
         Render the datatable with the given context,
         but avoid replacing text inside angle brackets if context is missing.
@@ -334,9 +336,9 @@ class Step:
             datatable (DataTable): The rendered datatable with parameters replaced only if they exist in the context.
         """
         rendered_datatable = copy.deepcopy(datatable)
-        for row in rendered_datatable.rows:
-            for cell in row.cells:
-                cell.value = render_string(cell.value, context)
+        for row in rendered_datatable["rows"]:
+            for cell in row["cells"]:
+                cell["value"] = render_string(cell["value"], context)
         return rendered_datatable
 
 
@@ -390,27 +392,27 @@ class FeatureParser:
             return []
 
         first_step = steps_data[0]
-        if first_step.keyword_type not in STEP_TYPE_BY_PARSER_KEYWORD:
+        if first_step["keywordType"] not in STEP_TYPE_BY_PARSER_KEYWORD:
             raise StepError(
-                message=f"First step in a scenario or background must start with 'Given', 'When' or 'Then', but got {first_step.keyword}.",
-                line=first_step.location.line,
-                line_content=first_step.text,
+                message=f"First step in a scenario or background must start with 'Given', 'When' or 'Then', but got {first_step['keyword'].strip()}.",
+                line=first_step["location"]["line"],
+                line_content=first_step["text"],
                 filename=self.abs_filename,
             )
 
         steps = []
-        current_type = STEP_TYPE_BY_PARSER_KEYWORD[first_step.keyword_type]
+        current_type = STEP_TYPE_BY_PARSER_KEYWORD[first_step["keywordType"]]
         for step in steps_data:
-            current_type = STEP_TYPE_BY_PARSER_KEYWORD.get(step.keyword_type, current_type)
+            current_type = STEP_TYPE_BY_PARSER_KEYWORD.get(step["keywordType"], current_type)
             steps.append(
                 Step(
-                    name=step.text,
+                    name=step["text"],
                     type=current_type,
-                    indent=step.location.column - 1,
-                    line_number=step.location.line,
-                    keyword=step.keyword.title(),
-                    datatable=step.datatable,
-                    docstring=step.docstring.content if step.docstring else None,
+                    indent=step["location"]["column"] - 1,
+                    line_number=step["location"]["line"],
+                    keyword=step["keyword"].strip().title(),
+                    datatable=step["dataTable"] if "dataTable" in step else None,
+                    docstring=textwrap.dedent(step["docString"]["content"]) if "docString" in step else None,
                 )
             )
         return steps
@@ -428,33 +430,33 @@ class FeatureParser:
         Returns:
             ScenarioTemplate: A ScenarioTemplate object representing the parsed scenario.
         """
-        templated = bool(scenario_data.examples)
+        templated = bool(scenario_data["examples"])
         scenario = ScenarioTemplate(
             feature=feature,
-            keyword=scenario_data.keyword,
-            name=scenario_data.name,
-            line_number=scenario_data.location.line,
+            keyword=scenario_data["keyword"],
+            name=scenario_data["name"],
+            line_number=scenario_data["location"]["line"],
             templated=templated,
-            tags=get_tag_names(scenario_data.tags),
-            description=textwrap.dedent(scenario_data.description),
+            tags=get_tag_names(scenario_data["tags"]),
+            description=textwrap.dedent(scenario_data["description"]),
             rule=rule,
         )
-        for step in self.parse_steps(scenario_data.steps):
+        for step in self.parse_steps(scenario_data["steps"]):
             scenario.add_step(step)
 
         # Loop over multiple example tables if they exist
-        for example_data in scenario_data.examples:
+        for example_data in scenario_data["examples"]:
             examples = Examples(
-                line_number=example_data.location.line,
-                name=example_data.name,
-                tags=get_tag_names(example_data.tags),
+                line_number=example_data["location"]["line"],
+                name=example_data["name"],
+                tags=get_tag_names(example_data["tags"]),
             )
-            if example_data.table_header is not None:
-                param_names = [cell.value for cell in example_data.table_header.cells]
+            if example_data["tableHeader"] is not None:
+                param_names = [cell["value"] for cell in example_data["tableHeader"]["cells"]]
                 examples.set_param_names(param_names)
-                if example_data.table_body is not None:
-                    for row in example_data.table_body:
-                        values = [cell.value or "" for cell in row.cells]
+                if example_data["tableBody"] is not None:
+                    for row in example_data["tableBody"]:
+                        values = [cell["value"] if "value" in cell else "" for cell in row["cells"]]
                         examples.add_example(values)
                 scenario.examples.append(examples)
 
@@ -462,9 +464,9 @@ class FeatureParser:
 
     def parse_background(self, background_data: GherkinBackground) -> Background:
         background = Background(
-            line_number=background_data.location.line,
+            line_number=background_data["location"]["line"],
         )
-        background.steps = self.parse_steps(background_data.steps)
+        background.steps = self.parse_steps(background_data["steps"])
         for step in background.steps:
             step.background = background
         return background
@@ -480,27 +482,26 @@ class FeatureParser:
     def parse(self) -> Feature:
         """Parse the feature file and return a Feature object with its backgrounds, rules, and scenarios."""
         gherkin_doc: GherkinDocument = self._parse_feature_file()
-        feature_data: GherkinFeature = gherkin_doc.feature
         feature = Feature(
-            scenarios=OrderedDict(),
-            keyword=feature_data.keyword,
+            scenarios={},
+            keyword=gherkin_doc["feature"]["keyword"],
             filename=self.abs_filename,
             rel_filename=self.rel_filename,
-            name=feature_data.name,
-            tags=get_tag_names(feature_data.tags),
+            name=gherkin_doc["feature"]["name"],
+            tags=get_tag_names(gherkin_doc["feature"]["tags"]),
             background=None,
-            line_number=feature_data.location.line,
-            description=textwrap.dedent(feature_data.description),
-            language=feature_data.language,
+            line_number=gherkin_doc["feature"]["location"]["line"],
+            description=textwrap.dedent(gherkin_doc["feature"]["description"]),
+            language=gherkin_doc["feature"]["language"],
         )
 
-        for child in feature_data.children:
-            if child.background:
-                feature.background = self.parse_background(child.background)
-            elif child.rule:
-                self._parse_and_add_rule(child.rule, feature)
-            elif child.scenario:
-                self._parse_and_add_scenario(child.scenario, feature)
+        for child in gherkin_doc["feature"]["children"]:
+            if "background" in child:
+                feature.background = self.parse_background(child["background"])  # type: ignore[typeddict-item]
+            elif "rule" in child:
+                self._parse_and_add_rule(child["rule"], feature)  # type: ignore[typeddict-item]
+            elif "scenario" in child:
+                self._parse_and_add_scenario(child["scenario"], feature)  # type: ignore[typeddict-item]
 
         return feature
 
@@ -509,10 +510,10 @@ class FeatureParser:
         background = self._extract_rule_background(rule_data)
 
         rule = Rule(
-            keyword=rule_data.keyword,
-            name=rule_data.name,
-            description=rule_data.description,
-            tags=get_tag_names(rule_data.tags),
+            keyword=rule_data["keyword"],
+            name=rule_data["name"],
+            description=rule_data["description"],
+            tags=get_tag_names(rule_data["tags"]),
             background=background,
         )
 
@@ -521,18 +522,18 @@ class FeatureParser:
 
     def _extract_rule_background(self, rule_data: GherkinRule) -> Background | None:
         """Extract the first background from rule children if it exists."""
-        for child in rule_data.children:
-            if child.background:
-                return self.parse_background(child.background)
+        for child in rule_data["children"]:
+            if "background" in child:
+                return self.parse_background(child["background"])  # type: ignore[typeddict-item]
         return None
 
     def _extract_rule_scenarios(
         self, rule_data: GherkinRule, feature: Feature, rule: Rule
     ) -> Generator[ScenarioTemplate]:
         """Yield each parsed scenario under a rule."""
-        for child in rule_data.children:
-            if child.scenario:
-                yield self.parse_scenario(child.scenario, feature, rule)
+        for child in rule_data["children"]:
+            if "scenario" in child:
+                yield self.parse_scenario(child["scenario"], feature, rule)  # type: ignore[typeddict-item]
 
     def _parse_and_add_scenario(
         self, scenario_data: GherkinScenario, feature: Feature, rule: Rule | None = None

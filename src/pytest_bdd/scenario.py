@@ -230,7 +230,8 @@ def _execute_step_function(
         kwargs = {k: v for k, v in parsed_args.items() if k in func_sig.parameters}
 
         if STEP_ARGUMENT_DATATABLE in func_sig.parameters and step.datatable is not None:
-            kwargs[STEP_ARGUMENT_DATATABLE] = step.datatable.raw()
+            raw_datatable = [[cell["value"] for cell in row["cells"]] for row in step.datatable["rows"]]
+            kwargs[STEP_ARGUMENT_DATATABLE] = raw_datatable
         if STEP_ARGUMENT_DOCSTRING in func_sig.parameters and step.docstring is not None:
             kwargs[STEP_ARGUMENT_DOCSTRING] = step.docstring
 
