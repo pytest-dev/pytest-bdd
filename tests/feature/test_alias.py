@@ -1,5 +1,7 @@
 """Test step alias when decorated multiple times."""
 
+from __future__ import annotations
+
 import textwrap
 
 

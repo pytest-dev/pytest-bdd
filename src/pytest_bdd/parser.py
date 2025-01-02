@@ -10,14 +10,12 @@ from dataclasses import dataclass, field
 
 from .exceptions import StepError
 from .gherkin_parser import Background as GherkinBackground
-from .gherkin_parser import DataTable
+from .gherkin_parser import DataTable, GherkinDocument, get_gherkin_document
 from .gherkin_parser import Feature as GherkinFeature
-from .gherkin_parser import GherkinDocument
 from .gherkin_parser import Rule as GherkinRule
 from .gherkin_parser import Scenario as GherkinScenario
 from .gherkin_parser import Step as GherkinStep
 from .gherkin_parser import Tag as GherkinTag
-from .gherkin_parser import get_gherkin_document
 from .types import STEP_TYPE_BY_PARSER_KEYWORD
 
 PARAM_RE = re.compile(r"<(.+?)>")
@@ -48,7 +46,7 @@ def get_tag_names(tag_data: list[GherkinTag]) -> set[str]:
     """Extract tag names from tag data.
 
     Args:
-        tag_data (List[dict]): The tag data to extract names from.
+        tag_data (list[dict]): The tag data to extract names from.
 
     Returns:
         set[str]: A set of tag names.
@@ -66,7 +64,7 @@ class Feature:
         rel_filename (str): The relative path of the feature file.
         name (str): The name of the feature.
         tags (set[str]): A set of tags associated with the feature.
-        background (Optional[Background]): The background steps for the feature, if any.
+        background (Background | None): The background steps for the feature, if any.
         line_number (int): The line number where the feature starts in the file.
         description (str): The description of the feature.
     """
@@ -88,10 +86,10 @@ class Examples:
     """Represents examples used in scenarios for parameterization.
 
     Attributes:
-        line_number (Optional[int]): The line number where the examples start.
-        name (Optional[str]): The name of the examples.
-        example_params (List[str]): The names of the parameters for the examples.
-        examples (List[Sequence[str]]): The list of example rows.
+        line_number (int | None): The line number where the examples start.
+        name (str | None): The name of the examples.
+        example_params (list[str]): The names of the parameters for the examples.
+        examples (list[Sequence[str]]): The list of example rows.
     """
 
     line_number: int | None = None
@@ -154,11 +152,11 @@ class ScenarioTemplate:
         name (str): The name of the scenario.
         line_number (int): The line number where the scenario starts in the file.
         templated (bool): Whether the scenario is templated.
-        description (Optional[str]): The description of the scenario.
+        description (str | None): The description of the scenario.
         tags (set[str]): A set of tags associated with the scenario.
-        _steps (List[Step]): The list of steps in the scenario (internal use only).
-        examples (Optional[Examples]): The examples used for parameterization in the scenario.
-        rule (Optional[Rule]): The rule to which the scenario may belong (None = no rule).
+        _steps (list[Step]): The list of steps in the scenario (internal use only).
+        examples (Examples | None): The examples used for parameterization in the scenario.
+        rule (Rule | None): The rule to which the scenario may belong (None = no rule).
     """
 
     feature: Feature
@@ -197,7 +195,7 @@ class ScenarioTemplate:
         """Get all steps for the scenario, including background steps.
 
         Returns:
-            List[Step]: A list of steps, including any background steps from the feature.
+            list[Step]: A list of steps, including any background steps from the feature.
         """
         return self.all_background_steps + self._steps
 
@@ -244,8 +242,8 @@ class Scenario:
         keyword (str): The keyword used to define the scenario.
         name (str): The name of the scenario.
         line_number (int): The line number where the scenario starts in the file.
-        steps (List[Step]): The list of steps in the scenario.
-        description (Optional[str]): The description of the scenario.
+        steps (list[Step]): The list of steps in the scenario.
+        description (str | None): The description of the scenario.
         tags (set[str]): A set of tags associated with the scenario.
     """
 
@@ -270,8 +268,8 @@ class Step:
         indent (int): The indentation level of the step.
         keyword (str): The keyword used for the step (e.g., 'Given', 'When', 'Then').
         failed (bool): Whether the step has failed (internal use only).
-        scenario (Optional[ScenarioTemplate]): The scenario to which this step belongs (internal use only).
-        background (Optional[Background]): The background to which this step belongs (internal use only).
+        scenario (ScenarioTemplate | None): The scenario to which this step belongs (internal use only).
+        background (Background | None): The background to which this step belongs (internal use only).
     """
 
     type: str
@@ -346,7 +344,7 @@ class Background:
 
     Attributes:
         line_number (int): The line number where the background starts in the file.
-        steps (List[Step]): The list of steps in the background.
+        steps (list[Step]): The list of steps in the background.
     """
 
     line_number: int
@@ -371,7 +369,7 @@ class FeatureParser:
         encoding (str): File encoding of the feature file to parse.
     """
 
-    def __init__(self, basedir: str, filename: str, encoding: str = "utf-8"):
+    def __init__(self, basedir: str, filename: str, encoding: str = "utf-8") -> None:
         self.abs_filename = os.path.abspath(os.path.join(basedir, filename))
         self.rel_filename = os.path.join(os.path.basename(basedir), filename)
         self.encoding = encoding
@@ -380,10 +378,10 @@ class FeatureParser:
         """Parse a list of step data into Step objects.
 
         Args:
-            steps_data (List[dict]): The list of step data.
+            steps_data (list[dict]): The list of step data.
 
         Returns:
-            List[Step]: A list of Step objects.
+            list[Step]: A list of Step objects.
         """
 
         if not steps_data:
@@ -423,7 +421,7 @@ class FeatureParser:
         Args:
             scenario_data (dict): The dictionary containing scenario data.
             feature (Feature): The feature to which this scenario belongs.
-            rule (Optional[Rule]): The rule to which this scenario may belong. (None = no rule)
+            rule (Rule | None): The rule to which this scenario may belong. (None = no rule)
 
         Returns:
             ScenarioTemplate: A ScenarioTemplate object representing the parsed scenario.

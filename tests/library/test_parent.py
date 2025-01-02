@@ -3,6 +3,8 @@
 Check the parent givens are collected and overridden in the local conftest.
 """
 
+from __future__ import annotations
+
 import textwrap
 
 from pytest_bdd.utils import collect_dumped_objects
@@ -233,7 +235,7 @@ def test_local(pytester):
 
 def test_uses_correct_step_in_the_hierarchy(pytester):
     """
-    Test regression found in issue #524, where we couldn't find the correct step implemntation in the
+    Test regression found in issue #524, where we couldn't find the correct step implementation in the
     hierarchy of files/folder as expected.
     This test uses many files and folders that act as decoy, while the real step implementation is defined
     in the last file (test_b/test_b.py).

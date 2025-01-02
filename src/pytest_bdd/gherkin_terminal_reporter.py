@@ -31,10 +31,9 @@ def configure(config: Config) -> None:
             raise Exception(
                 "gherkin-terminal-reporter is not compatible with any other terminal reporter."
                 "You can use only one terminal reporter."
-                "Currently '{0}' is used."
-                "Please decide to use one by deactivating {0} or gherkin-terminal-reporter.".format(
-                    current_reporter.__class__
-                )
+                f"Currently '{current_reporter.__class__}' is used."
+                f"Please decide to use one by deactivating {current_reporter.__class__} "
+                "or gherkin-terminal-reporter."
             )
         gherkin_reporter = GherkinTerminalReporter(config)
         config.pluginmanager.unregister(current_reporter)

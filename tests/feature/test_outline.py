@@ -1,5 +1,7 @@
 """Scenario Outline tests."""
 
+from __future__ import annotations
+
 import textwrap
 
 from pytest_bdd.utils import collect_dumped_objects
@@ -333,7 +335,7 @@ def test_variable_reuse(pytester):
         outline=textwrap.dedent(
             """\
             Feature: Example parameters reuse
-                Scenario Outline: Check for example parameter re-use
+                Scenario Outline: Check for example parameter reuse
                     Given the param is initially set from the example table as <param>
                     When a step arg of the same name is set to "other"
                     Then the param is still set from the example table as <param>

@@ -1,5 +1,7 @@
 """Tests for testing cases when we have unicode in feature file."""
 
+from __future__ import annotations
+
 import textwrap
 
 

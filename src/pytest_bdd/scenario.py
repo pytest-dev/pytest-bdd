@@ -188,9 +188,9 @@ def parse_step_arguments(step: Step, context: StepFunctionContext) -> dict[str, 
     """Parse step arguments."""
     parsed_args = context.parser.parse_arguments(step.name)
 
-    assert parsed_args is not None, (
-        f"Unexpected `NoneType` returned from " f"parse_arguments(...) in parser: {context.parser!r}"
-    )
+    assert (
+        parsed_args is not None
+    ), f"Unexpected `NoneType` returned from parse_arguments(...) in parser: {context.parser!r}"
 
     reserved_args = set(parsed_args.keys()) & STEP_ARGUMENTS_RESERVED_NAMES
     if reserved_args:
@@ -386,7 +386,7 @@ def scenario(
         feature_name = feature.name or "[Empty]"
         raise exceptions.ScenarioNotFound(
             f'Scenario "{scenario_name}" in feature "{feature_name}" in {feature.filename} is not found.'
-        )
+        ) from None
 
     return _get_scenario_decorator(
         feature=feature, feature_name=feature_name, templated_scenario=scenario, scenario_name=scenario_name

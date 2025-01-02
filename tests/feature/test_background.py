@@ -1,5 +1,7 @@
 """Test feature background."""
 
+from __future__ import annotations
+
 import textwrap
 
 FEATURE = '''\

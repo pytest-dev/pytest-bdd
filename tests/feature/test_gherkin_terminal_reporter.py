@@ -200,9 +200,7 @@ def test_step_parameters_should_be_replaced_by_their_values(pytester):
             Examples:
             | start | eat | left |
             |{start}|{eat}|{left}|
-        """.format(
-                **example
-            )
+        """.format(**example)
         ),
     )
     pytester.makepyfile(
