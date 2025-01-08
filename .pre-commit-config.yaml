@@ -18,4 +18,4 @@ repos:
     rev: '8cad7a423b459871e9ed6094252b15c9ddb8a7dd'  # frozen: 2.0.0
     hooks:
     -   id: poetry-check
-    -   id: poetry-lock
+        args: ["--lock"]
