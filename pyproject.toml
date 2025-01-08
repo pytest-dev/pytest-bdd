@@ -1,9 +1,14 @@
-[tool.poetry]
+[project]
 name = "pytest-bdd"
 version = "8.1.0"
 description = "BDD for pytest"
-authors = ["Oleg Pidsadnyi <oleg.pidsadnyi@gmail.com>", "Anatoly Bubenkov <bubenkoff@gmail.com>"]
-maintainers = ["Alessio Bogon <778703+youtux@users.noreply.github.com>"]
+authors = [
+    {name="Oleg Pidsadnyi", email="oleg.pidsadnyi@gmail.com"},
+    {name="Anatoly Bubenkov", email="bubenkoff@gmail.com"},
+]
+maintainers = [
+    {name="Alessio Bogon", email="778703+youtux@users.noreply.github.com"},
+]
 license = "MIT"
 readme = "README.rst"
 homepage = "https://pytest-bdd.readthedocs.io/"
@@ -26,22 +31,22 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
+requires-python = ">=3.9"
+dependencies = [
+    "Mako",
+    "parse",
+    "parse-type",
+    "pytest>=7.0.0",
+    "typing-extensions",
+    "packaging",
+    "gherkin-official>=29.0.0",
+]
 
-[tool.poetry.plugins."pytest11"]
+[project.entry-points."pytest11"]
 "pytest-bdd" = "pytest_bdd.plugin"
 
-[tool.poetry.scripts]
+[project.scripts]
 "pytest-bdd" = "pytest_bdd.scripts:main"
-
-[tool.poetry.dependencies]
-python = ">=3.9"
-Mako = "*"
-parse = "*"
-parse-type = "*"
-pytest = ">=7.0.0"
-typing-extensions = "*"
-packaging = "*"
-gherkin-official = ">=29.0.0"
 
 [tool.poetry.group.dev.dependencies]
 tox = ">=4.11.3"
@@ -54,7 +59,7 @@ sphinx = "*"
 sphinx-autobuild = "*"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
