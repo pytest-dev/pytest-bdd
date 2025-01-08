@@ -2,15 +2,20 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # frozen: v5.0.0
+    rev: "cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b"  # frozen: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: f0b5944bef86f50d875305821a0ab0d8c601e465  # frozen: v0.8.4
+    rev: "89c421dff2e1026ba12cdb9ebd731f4a83aa8021"  # frozen: v0.8.6
     hooks:
       - id: ruff
         args: [ --fix ]
       - id: ruff-format
+  - repo: https://github.com/python-poetry/poetry
+    rev: "f03d8f98781934df7910be5b6c14756e047ef432"  # frozen: 2.0.0
+    hooks:
+    -   id: poetry-check
+        args: ["--lock"]
