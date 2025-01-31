@@ -181,7 +181,6 @@ def test_local_variables_should_be_displayed_when_showlocals_option_is_used(pyte
     )
     result = pytester.runpytest("--gherkin-terminal-reporter", "--showlocals")
     result.assert_outcomes(passed=0, failed=1)
-    result.stdout.fnmatch_lines("""request*=*<FixtureRequest for *""")
     result.stdout.fnmatch_lines("""local_var*=*MULTIPASS*""")
 
 

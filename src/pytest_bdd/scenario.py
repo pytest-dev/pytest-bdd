@@ -245,7 +245,19 @@ def _execute_step_function(
 
         # Execute the step as if it was a pytest fixture using `call_fixture_func`,
         # so that we can allow "yield" statements in it
-        return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
+        try:
+            return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
+        except BaseException as e:
+            # BaseException needed to catch pytest.fail.
+
+            # HACK: call_fixture_func will appear in the traceback whenever a
+            # step fails. This is ugly and irrelevant, so this hack will hide
+            # it by injecting __tracebackhide__ into the local variables of the
+            # stack trace. This is always the second frame, and this is safe
+            # because this is the frame of code that is no longer running.
+            if e.__traceback__ is not None and e.__traceback__.tb_next is not None:
+                e.__traceback__.tb_next.tb_frame.f_locals["__tracebackhide__"] = True
+            raise
 
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
