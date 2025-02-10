@@ -188,9 +188,9 @@ def parse_step_arguments(step: Step, context: StepFunctionContext) -> dict[str, 
     """Parse step arguments."""
     parsed_args = context.parser.parse_arguments(step.name)
 
-    assert (
-        parsed_args is not None
-    ), f"Unexpected `NoneType` returned from parse_arguments(...) in parser: {context.parser!r}"
+    assert parsed_args is not None, (
+        f"Unexpected `NoneType` returned from parse_arguments(...) in parser: {context.parser!r}"
+    )
 
     reserved_args = set(parsed_args.keys()) & STEP_ARGUMENTS_RESERVED_NAMES
     if reserved_args:
