@@ -9,13 +9,13 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "895ebb389825c29bd4e0addcf7579d6c69d199cc"  # frozen: v0.9.6
+    rev: "41d2daf392fbf43341a77f24a9c6481a4b66af98"  # frozen: v0.9.10
     hooks:
       - id: ruff
         args: [ --fix ]
       - id: ruff-format
   - repo: https://github.com/python-poetry/poetry
-    rev: "bd500dd3bdfaec3de6894144c9cedb3a9358be84"  # frozen: 2.0.1
+    rev: "6e61c8b25f034aea350284a426499c70be2fa816"  # frozen: 2.1.1
     hooks:
     -   id: poetry-check
         args: ["--lock"]
