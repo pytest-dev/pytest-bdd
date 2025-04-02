@@ -208,6 +208,7 @@ class ScenarioTemplate:
         Returns:
             Scenario: A Scenario object with steps rendered based on the context.
         """
+        example = self.find_scenario_example_from_context(context)
         base_steps = self.all_background_steps + self._steps
         scenario_steps = [
             Step(
@@ -227,10 +228,17 @@ class ScenarioTemplate:
             name=render_string(self.name, context),
             line_number=self.line_number,
             steps=scenario_steps,
-            tags=self.tags,
+            tags=self.tags | example.tags if example else self.tags,
             description=self.description,
             rule=self.rule,
         )
+
+    def find_scenario_example_from_context(self, context: Mapping[str, object]) -> Examples | None:
+        for example in self.examples:
+            example_param = dict(zip(example.example_params, example.examples[0]))
+            if example_param == context:
+                return example
+        return None
 
 
 @dataclass(eq=False)
