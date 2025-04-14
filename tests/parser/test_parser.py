@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from collections import OrderedDict
 from pathlib import Path
 
+from pytest_bdd.parser import Examples, Feature, ScenarioTemplate, Step
 from src.pytest_bdd.gherkin_parser import (
     Background,
     Cell,
@@ -10,13 +12,11 @@ from src.pytest_bdd.gherkin_parser import (
     DataTable,
     DocString,
     ExamplesTable,
-    Feature,
     GherkinDocument,
     Location,
     Row,
     Rule,
     Scenario,
-    Step,
     Tag,
     get_gherkin_document,
 )
@@ -1092,3 +1092,81 @@ def test_parser():
     )
 
     assert gherkin_doc == expected_document
+
+
+def test_render_scenario_with_example_tags():
+    # Mock feature and context
+    feature = Feature(
+        scenarios=OrderedDict(),
+        filename="test.feature",
+        rel_filename="test.feature",
+        language="en",
+        keyword="Feature",
+        name="Test Feature",
+        tags=set(),
+        background=None,
+        line_number=1,
+        description="A test feature",
+    )
+    context = {"username": "user123", "password": "incorrect", "error_message": "Invalid username or password"}
+
+    # Mock examples with tags
+    examples = Examples(
+        line_number=10,
+        name="Example with tags",
+        example_params=["username", "password", "error_message"],
+        examples=[
+            ["user123", "incorrect", "Invalid username or password"],
+        ],
+        tags={"example_tag_1", "example_tag_2"},
+    )
+
+    # Mock steps
+    steps = [
+        Step(
+            name="Given the user enters <username> as username",
+            type="given",
+            indent=0,
+            line_number=2,
+            keyword="Given",
+        ),
+        Step(
+            name="And the user enters <password> as password",
+            type="and",
+            indent=0,
+            line_number=3,
+            keyword="And",
+        ),
+        Step(
+            name="Then the user should see an error message <error_message>",
+            type="then",
+            indent=0,
+            line_number=4,
+            keyword="Then",
+        ),
+    ]
+
+    # Create a ScenarioTemplate
+    scenario_template = ScenarioTemplate(
+        feature=feature,
+        keyword="Scenario Outline",
+        name="Test Scenario with Example Tags",
+        line_number=2,
+        templated=True,
+        description="A test scenario with example tags",
+        tags={"scenario_tag"},
+        examples=[examples],
+    )
+    for step in steps:
+        scenario_template.add_step(step)
+
+    # Render the scenario
+    rendered_scenario = scenario_template.render(context)
+
+    # Assertions
+    assert rendered_scenario.name == "Test Scenario with Example Tags"
+    assert len(rendered_scenario.steps) == 3
+    assert rendered_scenario.steps[0].name == "Given the user enters user123 as username"
+    assert rendered_scenario.steps[1].name == "And the user enters incorrect as password"
+    assert rendered_scenario.steps[2].name == "Then the user should see an error message Invalid username or password"
+    assert rendered_scenario.tags == {"scenario_tag", "example_tag_1", "example_tag_2"}
