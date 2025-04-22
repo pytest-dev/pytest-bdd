@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections import OrderedDict
 from pathlib import Path
 
-from pytest_bdd.parser import Examples, Feature, ScenarioTemplate, Step
 from src.pytest_bdd.gherkin_parser import (
     Background,
     Cell,
@@ -12,14 +11,19 @@ from src.pytest_bdd.gherkin_parser import (
     DataTable,
     DocString,
     ExamplesTable,
+    Feature,
     GherkinDocument,
     Location,
     Row,
     Rule,
     Scenario,
+    Step,
     Tag,
     get_gherkin_document,
 )
+from src.pytest_bdd.parser import Examples, ScenarioTemplate
+from src.pytest_bdd.parser import Feature as PytestBddFeature
+from src.pytest_bdd.parser import Step as PytestBddStep
 
 
 def test_parser():
@@ -1096,7 +1100,7 @@ def test_parser():
 
 def test_render_scenario_with_example_tags():
     # Mock feature and context
-    feature = Feature(
+    feature = PytestBddFeature(
         scenarios=OrderedDict(),
         filename="test.feature",
         rel_filename="test.feature",
@@ -1123,21 +1127,21 @@ def test_render_scenario_with_example_tags():
 
     # Mock steps
     steps = [
-        Step(
+        PytestBddStep(
             name="Given the user enters <username> as username",
             type="given",
             indent=0,
             line_number=2,
             keyword="Given",
         ),
-        Step(
+        PytestBddStep(
             name="And the user enters <password> as password",
             type="and",
             indent=0,
             line_number=3,
             keyword="And",
         ),
-        Step(
+        PytestBddStep(
             name="Then the user should see an error message <error_message>",
             type="then",
             indent=0,
