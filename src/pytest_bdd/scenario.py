@@ -14,16 +14,20 @@ test_publish_article = scenario(
 from __future__ import annotations
 
 import contextlib
+import contextvars
+import inspect
 import logging
 import os
 import re
+import sys
 from collections.abc import Iterable, Iterator
 from inspect import signature
-from typing import TYPE_CHECKING, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, Callable, Literal, TypeVar, cast
 from weakref import WeakKeyDictionary
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
+from _pytest.mark.structures import Mark
 
 from . import exceptions
 from .compat import getfixturedefs, inject_fixture
@@ -239,13 +243,24 @@ def _execute_step_function(
             arg: request.getfixturevalue(arg) for arg in get_required_args(context.step_func) if arg not in kwargs
         }
 
+        _resolve_async_arguments(request=request, context=context, kwargs=kwargs)
+
         kw["step_func_args"] = kwargs
 
         request.config.hook.pytest_bdd_before_step_call(**kw)
 
-        # Execute the step as if it was a pytest fixture using `call_fixture_func`,
-        # so that we can allow "yield" statements in it
-        return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
+        if context.is_async or context.is_async_gen:
+            return_value = _execute_async_step(request=request, context=context, kwargs=kwargs)
+        else:
+            # Execute the step as if it was a pytest fixture using `call_fixture_func`,
+            # so that we can allow "yield" statements in it
+            return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
+            if inspect.isawaitable(return_value):
+                return_value = _await_async_result(request=request, context=context, awaitable=return_value)
+            elif inspect.isasyncgen(return_value):
+                return_value = _consume_async_generator_result(
+                    request=request, context=context, async_gen=return_value
+                )
 
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
@@ -255,6 +270,429 @@ def _execute_step_function(
         inject_fixture(request, context.target_fixture, return_value)
 
     request.config.hook.pytest_bdd_after_step(**kw)
+
+
+def _execute_async_step(
+    request: FixtureRequest, context: StepFunctionContext, kwargs: dict[str, object]
+) -> object:
+    backend, marker = _resolve_async_backend_preference(request=request, step_func=context.step_func)
+    pluginmanager = request.config.pluginmanager
+    errors: list[str] = []
+
+    if backend in (None, "asyncio"):
+        if _has_pytest_asyncio_plugin(pluginmanager):
+            try:
+                return _run_async_step_with_pytest_asyncio(
+                    request=request, context=context, kwargs=kwargs, asyncio_marker=marker if backend else None
+                )
+            except exceptions.StepImplementationError as exc:
+                errors.append(str(exc))
+        elif backend == "asyncio":
+            errors.append(
+                "Async step is marked with pytest.mark.asyncio but pytest-asyncio is not installed or not active."
+            )
+
+    if backend in (None, "anyio"):
+        if pluginmanager.has_plugin("anyio"):
+            try:
+                return _run_async_step_with_anyio(request=request, context=context, kwargs=kwargs)
+            except exceptions.StepImplementationError as exc:
+                errors.append(str(exc))
+        elif backend == "anyio":
+            errors.append(
+                "Async step is marked with pytest.mark.anyio but the anyio pytest plugin is not installed or not active."
+            )
+
+    if not errors:
+        message = (
+            "Async step functions require pytest-asyncio or the anyio pytest plugin to be installed and enabled."
+        )
+    else:
+        # Deduplicate messages while preserving order
+        message = "\n".join(dict.fromkeys(errors))
+
+    raise exceptions.StepImplementationError(message)
+
+
+def _await_async_result(
+    request: FixtureRequest, context: StepFunctionContext, awaitable: object
+) -> object:
+    backend, marker = _resolve_async_backend_preference(request=request, step_func=context.step_func)
+    pluginmanager = request.config.pluginmanager
+    errors: list[str] = []
+
+    if backend in (None, "asyncio") and _has_pytest_asyncio_plugin(pluginmanager):
+        try:
+            return _await_with_pytest_asyncio(
+                request=request, step_func=context.step_func, awaitable=awaitable, asyncio_marker=marker if backend else None
+            )
+        except exceptions.StepImplementationError as exc:
+            errors.append(str(exc))
+    elif backend == "asyncio":
+        errors.append("Awaiting async result requires pytest-asyncio, which is not installed or active.")
+
+    if backend in (None, "anyio") and pluginmanager.has_plugin("anyio"):
+        try:
+            return _await_with_anyio(request=request, awaitable=awaitable)
+        except exceptions.StepImplementationError as exc:
+            errors.append(str(exc))
+    elif backend == "anyio":
+        errors.append("Awaiting async result requires the anyio pytest plugin, which is not installed or active.")
+
+    if not errors:
+        message = (
+            "Async step result requires pytest-asyncio or the anyio pytest plugin to be installed and enabled."
+        )
+    else:
+        message = "\n".join(dict.fromkeys(errors))
+
+    raise exceptions.StepImplementationError(message)
+
+
+def _resolve_async_arguments(
+    *, request: FixtureRequest, context: StepFunctionContext, kwargs: dict[str, object]
+) -> None:
+    for name, value in list(kwargs.items()):
+        if inspect.isawaitable(value):
+            resolved = _await_async_result(request=request, context=context, awaitable=value)
+            kwargs[name] = resolved
+            inject_fixture(request, name, resolved)
+        elif inspect.isasyncgen(value):
+            resolved = _consume_async_generator_result(request=request, context=context, async_gen=value)
+            kwargs[name] = resolved
+            inject_fixture(request, name, resolved)
+
+
+def _resolve_async_backend_preference(
+    request: FixtureRequest, step_func: Callable[..., object]
+) -> tuple[Literal["asyncio", "anyio"] | None, Mark | None]:
+    step_marks = _collect_callable_marks(step_func)
+    step_anyio = _find_mark(step_marks, "anyio")
+    step_asyncio = _find_mark(step_marks, "asyncio")
+
+    node_anyio = _first_node_marker(request, "anyio")
+    node_asyncio = _first_node_marker(request, "asyncio")
+
+    candidates: list[tuple[Literal["asyncio", "anyio"], Mark]] = []
+    if step_anyio is not None:
+        candidates.append(("anyio", step_anyio))
+    if step_asyncio is not None:
+        candidates.append(("asyncio", step_asyncio))
+    if node_anyio is not None:
+        candidates.append(("anyio", node_anyio))
+    if node_asyncio is not None:
+        candidates.append(("asyncio", node_asyncio))
+
+    if not candidates:
+        return None, None
+
+    backend, marker = candidates[0]
+    for candidate_backend, candidate_marker in candidates[1:]:
+        if candidate_backend != backend:
+            raise exceptions.StepImplementationError(
+                "Async step has conflicting pytest markers: both 'asyncio' and 'anyio' are present."
+            )
+        if marker is None and candidate_marker is not None:
+            marker = candidate_marker
+
+    return backend, marker
+
+
+def _collect_callable_marks(step_func: Callable[..., object]) -> list[Mark]:
+    marks = getattr(step_func, "pytestmark", [])
+    if isinstance(marks, Mark):
+        return [marks]
+    if not isinstance(marks, (list, tuple)):
+        return []
+    return [mark for mark in marks if isinstance(mark, Mark)]
+
+
+def _find_mark(marks: Iterable[Mark], name: str) -> Mark | None:
+    for mark in marks:
+        if mark.name == name:
+            return mark
+    return None
+
+
+def _first_node_marker(request: FixtureRequest, name: str) -> Mark | None:
+    try:
+        return next(request.node.iter_markers(name))
+    except StopIteration:
+        return None
+
+
+def _has_pytest_asyncio_plugin(pluginmanager: pytest.PytestPluginManager) -> bool:
+    return any(
+        pluginmanager.has_plugin(alias)
+        for alias in ("asyncio", "pytest_asyncio", "pytest-asyncio", "pytest_asyncio.plugin")
+    )
+
+
+def _run_async_step_with_pytest_asyncio(
+    *,
+    request: FixtureRequest,
+    context: StepFunctionContext,
+    kwargs: dict[str, object],
+    asyncio_marker: Mark | None,
+) -> object:
+    try:
+        from pytest_asyncio.plugin import _wrap_async_fixture, _wrap_asyncgen_fixture
+    except ImportError as exc:  # pragma: no cover - defensive guard when plugin missing at runtime
+        raise exceptions.StepImplementationError("pytest-asyncio is not importable.") from exc
+
+    loop_scope = _determine_asyncio_loop_scope(request=request, step_func=context.step_func, marker=asyncio_marker)
+    runner_fixture_name = f"_{loop_scope}_scoped_runner"
+
+    try:
+        runner = request.getfixturevalue(runner_fixture_name)
+    except pytest.FixtureLookupError as exc:
+        raise exceptions.StepImplementationError(
+            f"Unable to obtain '{runner_fixture_name}' fixture provided by pytest-asyncio."
+        ) from exc
+
+    fixture_function = context.step_func
+
+    if context.is_async_gen:
+        wrapped = _wrap_asyncgen_fixture(fixture_function, runner, request)
+    else:
+        wrapped = _wrap_async_fixture(fixture_function, runner, request)
+
+    return wrapped(**kwargs)
+
+
+def _determine_asyncio_loop_scope(
+    *, request: FixtureRequest, step_func: Callable[..., object], marker: Mark | None
+) -> str:
+    from pytest_asyncio.plugin import _get_marked_loop_scope
+
+    default_scope = request.config.getini("asyncio_default_fixture_loop_scope")
+    if not default_scope:
+        default_scope = "function"
+
+    scope = getattr(step_func, "_loop_scope", None)
+
+    if marker is not None:
+        scope = _get_marked_loop_scope(marker, default_scope)
+
+    if scope is None:
+        scope = default_scope
+
+    assert scope in {"function", "class", "module", "package", "session"}
+    return scope
+
+
+def _run_async_step_with_anyio(
+    *, request: FixtureRequest, context: StepFunctionContext, kwargs: dict[str, object]
+) -> object:
+    try:
+        import anyio.pytest_plugin as anyio_pytest_plugin
+    except ImportError as exc:  # pragma: no cover - defensive guard when plugin missing at runtime
+        raise exceptions.StepImplementationError("anyio is not importable.") from exc
+
+    try:
+        backend_value = request.getfixturevalue("anyio_backend")
+    except pytest.FixtureLookupError as exc:
+        raise exceptions.StepImplementationError(
+            "Async step requested anyio backend but the 'anyio_backend' fixture is not available."
+        ) from exc
+
+    backend_name, backend_options = anyio_pytest_plugin.extract_backend_and_options(backend_value)
+
+    func_parameters = signature(context.step_func).parameters
+    if "anyio_backend" in func_parameters and "anyio_backend" not in kwargs:
+        kwargs["anyio_backend"] = backend_value
+    if "request" in func_parameters and "request" not in kwargs:
+        kwargs["request"] = request
+
+    with anyio_pytest_plugin.get_runner(backend_name, backend_options) as runner:
+        if context.is_async_gen:
+            iterator = runner.run_asyncgen_fixture(context.step_func, kwargs)
+            try:
+                result = next(iterator)
+            except StopIteration as exc:
+                raise ValueError("Async step function did not yield a value") from exc
+
+            def finalizer() -> None:
+                with contextlib.suppress(StopIteration):
+                    next(iterator)
+
+            request.addfinalizer(finalizer)
+            return result
+
+        return runner.run_fixture(context.step_func, kwargs)
+
+
+def _await_with_pytest_asyncio(
+    *,
+    request: FixtureRequest,
+    step_func: Callable[..., object],
+    awaitable: object,
+    asyncio_marker: Mark | None,
+) -> object:
+    try:
+        from pytest_asyncio.plugin import _apply_contextvar_changes
+    except ImportError as exc:  # pragma: no cover - defensive guard
+        raise exceptions.StepImplementationError("pytest-asyncio is not importable.") from exc
+
+    loop_scope = _determine_asyncio_loop_scope(request=request, step_func=step_func, marker=asyncio_marker)
+    runner_fixture_name = f"_{loop_scope}_scoped_runner"
+
+    try:
+        runner = request.getfixturevalue(runner_fixture_name)
+    except pytest.FixtureLookupError as exc:
+        raise exceptions.StepImplementationError(
+            f"Unable to obtain '{runner_fixture_name}' fixture provided by pytest-asyncio."
+        ) from exc
+
+    if not hasattr(runner, "run"):
+        raise exceptions.StepImplementationError("Unsupported pytest-asyncio runner implementation encountered.")
+
+    ctx = contextvars.copy_context()
+    result = runner.run(awaitable, context=ctx)
+    reset = _apply_contextvar_changes(ctx)
+    if reset is not None:
+        request.addfinalizer(reset)
+    return result
+
+
+def _await_with_anyio(*, request: FixtureRequest, awaitable: object) -> object:
+    try:
+        import anyio.pytest_plugin as anyio_pytest_plugin
+    except ImportError as exc:  # pragma: no cover - defensive guard
+        raise exceptions.StepImplementationError("anyio is not importable.") from exc
+
+    try:
+        backend_value = request.getfixturevalue("anyio_backend")
+    except pytest.FixtureLookupError as exc:
+        raise exceptions.StepImplementationError(
+            "Async step requested anyio backend but the 'anyio_backend' fixture is not available."
+        ) from exc
+
+    backend_name, backend_options = anyio_pytest_plugin.extract_backend_and_options(backend_value)
+
+    async def _consume() -> object:
+        return await awaitable  # type: ignore[arg-type]
+
+    with anyio_pytest_plugin.get_runner(backend_name, backend_options) as runner:
+        return runner.run_fixture(_consume, {})
+
+
+def _consume_async_generator_result(
+    request: FixtureRequest, context: StepFunctionContext, async_gen: object
+) -> object:
+    backend, marker = _resolve_async_backend_preference(request=request, step_func=context.step_func)
+    pluginmanager = request.config.pluginmanager
+    errors: list[str] = []
+
+    if backend in (None, "asyncio") and _has_pytest_asyncio_plugin(pluginmanager):
+        try:
+            return _consume_async_gen_with_pytest_asyncio(
+                request=request,
+                context=context,
+                async_gen=async_gen,
+                asyncio_marker=marker if backend else None,
+            )
+        except exceptions.StepImplementationError as exc:
+            errors.append(str(exc))
+    elif backend == "asyncio":
+        errors.append(
+            "Async generator step requires pytest-asyncio, which is not installed or not active."
+        )
+
+    if backend in (None, "anyio") and pluginmanager.has_plugin("anyio"):
+        try:
+            return _consume_async_gen_with_anyio(request=request, async_gen=async_gen)
+        except exceptions.StepImplementationError as exc:
+            errors.append(str(exc))
+    elif backend == "anyio":
+        errors.append(
+            "Async generator step requires the anyio pytest plugin, which is not installed or not active."
+        )
+
+    if not errors:
+        message = (
+            "Async generator steps require pytest-asyncio or the anyio pytest plugin to be installed and enabled."
+        )
+    else:
+        message = "\n".join(dict.fromkeys(errors))
+
+    raise exceptions.StepImplementationError(message)
+
+
+def _consume_async_gen_with_pytest_asyncio(
+    *,
+    request: FixtureRequest,
+    context: StepFunctionContext,
+    async_gen: object,
+    asyncio_marker: Mark | None,
+) -> object:
+    try:
+        from pytest_asyncio.plugin import _wrap_asyncgen_fixture
+    except ImportError as exc:  # pragma: no cover - defensive guard
+        raise exceptions.StepImplementationError("pytest-asyncio is not importable.") from exc
+
+    loop_scope = _determine_asyncio_loop_scope(request=request, step_func=context.step_func, marker=asyncio_marker)
+    runner_fixture_name = f"_{loop_scope}_scoped_runner"
+
+    try:
+        runner = request.getfixturevalue(runner_fixture_name)
+    except pytest.FixtureLookupError as exc:
+        raise exceptions.StepImplementationError(
+            f"Unable to obtain '{runner_fixture_name}' fixture provided by pytest-asyncio."
+        ) from exc
+
+    def _factory() -> object:
+        async def _proxy() -> object:
+            async for item in async_gen:  # type: ignore[async-for]
+                yield item
+
+        return _proxy()
+
+    wrapped = _wrap_asyncgen_fixture(_factory, runner, request)
+    return wrapped()
+
+
+def _consume_async_gen_with_anyio(*, request: FixtureRequest, async_gen: object) -> object:
+    try:
+        import anyio.pytest_plugin as anyio_pytest_plugin
+    except ImportError as exc:  # pragma: no cover - defensive guard
+        raise exceptions.StepImplementationError("anyio is not importable.") from exc
+
+    try:
+        backend_value = request.getfixturevalue("anyio_backend")
+    except pytest.FixtureLookupError as exc:
+        raise exceptions.StepImplementationError(
+            "Async generator step requested anyio backend but the 'anyio_backend' fixture is not available."
+        ) from exc
+
+    backend_name, backend_options = anyio_pytest_plugin.extract_backend_and_options(backend_value)
+
+    async def _proxy() -> object:
+        async for item in async_gen:  # type: ignore[async-for]
+            yield item
+
+    runner_cm = anyio_pytest_plugin.get_runner(backend_name, backend_options)
+    runner = runner_cm.__enter__()
+
+    iterator = runner.run_asyncgen_fixture(lambda: _proxy(), {})
+    try:
+        result = next(iterator)
+    except StopIteration as exc:
+        runner_cm.__exit__(None, None, None)
+        raise ValueError("Async generator step function did not yield a value") from exc
+    except Exception:
+        runner_cm.__exit__(*sys.exc_info())
+        raise
+
+    def finalizer() -> None:
+        try:
+            with contextlib.suppress(StopAsyncIteration, StopIteration):
+                next(iterator)
+        finally:
+            runner_cm.__exit__(None, None, None)
+
+    request.addfinalizer(finalizer)
+    return result
 
 
 def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequest) -> None:

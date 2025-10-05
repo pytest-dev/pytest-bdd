@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import enum
 from collections.abc import Iterable
+import inspect
 from dataclasses import dataclass, field
 from itertools import count
 from typing import Callable, Literal, TypeVar
@@ -70,6 +71,8 @@ class StepFunctionContext:
     parser: StepParser
     converters: dict[str, Callable[[str], object]] = field(default_factory=dict)
     target_fixture: str | None = None
+    is_async: bool = False
+    is_async_gen: bool = False
 
 
 def get_step_fixture_name(step: Step) -> str:
@@ -169,6 +172,8 @@ def step(
             parser=parser,
             converters=converters,
             target_fixture=target_fixture,
+            is_async=inspect.iscoroutinefunction(func),
+            is_async_gen=inspect.isasyncgenfunction(func),
         )
 
         def step_function_marker() -> StepFunctionContext:
