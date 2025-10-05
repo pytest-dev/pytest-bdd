@@ -38,8 +38,8 @@ def _(article):
 from __future__ import annotations
 
 import enum
-from collections.abc import Iterable
 import inspect
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from itertools import count
 from typing import Callable, Literal, TypeVar

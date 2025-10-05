@@ -258,9 +258,7 @@ def _execute_step_function(
             if inspect.isawaitable(return_value):
                 return_value = _await_async_result(request=request, context=context, awaitable=return_value)
             elif inspect.isasyncgen(return_value):
-                return_value = _consume_async_generator_result(
-                    request=request, context=context, async_gen=return_value
-                )
+                return_value = _consume_async_generator_result(request=request, context=context, async_gen=return_value)
 
     except Exception as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
@@ -272,9 +270,7 @@ def _execute_step_function(
     request.config.hook.pytest_bdd_after_step(**kw)
 
 
-def _execute_async_step(
-    request: FixtureRequest, context: StepFunctionContext, kwargs: dict[str, object]
-) -> object:
+def _execute_async_step(request: FixtureRequest, context: StepFunctionContext, kwargs: dict[str, object]) -> object:
     backend, marker = _resolve_async_backend_preference(request=request, step_func=context.step_func)
     pluginmanager = request.config.pluginmanager
     errors: list[str] = []
@@ -304,9 +300,7 @@ def _execute_async_step(
             )
 
     if not errors:
-        message = (
-            "Async step functions require pytest-asyncio or the anyio pytest plugin to be installed and enabled."
-        )
+        message = "Async step functions require pytest-asyncio or the anyio pytest plugin to be installed and enabled."
     else:
         # Deduplicate messages while preserving order
         message = "\n".join(dict.fromkeys(errors))
@@ -314,9 +308,7 @@ def _execute_async_step(
     raise exceptions.StepImplementationError(message)
 
 
-def _await_async_result(
-    request: FixtureRequest, context: StepFunctionContext, awaitable: object
-) -> object:
+def _await_async_result(request: FixtureRequest, context: StepFunctionContext, awaitable: object) -> object:
     backend, marker = _resolve_async_backend_preference(request=request, step_func=context.step_func)
     pluginmanager = request.config.pluginmanager
     errors: list[str] = []
@@ -324,7 +316,10 @@ def _await_async_result(
     if backend in (None, "asyncio") and _has_pytest_asyncio_plugin(pluginmanager):
         try:
             return _await_with_pytest_asyncio(
-                request=request, step_func=context.step_func, awaitable=awaitable, asyncio_marker=marker if backend else None
+                request=request,
+                step_func=context.step_func,
+                awaitable=awaitable,
+                asyncio_marker=marker if backend else None,
             )
         except exceptions.StepImplementationError as exc:
             errors.append(str(exc))
@@ -340,9 +335,7 @@ def _await_async_result(
         errors.append("Awaiting async result requires the anyio pytest plugin, which is not installed or active.")
 
     if not errors:
-        message = (
-            "Async step result requires pytest-asyncio or the anyio pytest plugin to be installed and enabled."
-        )
+        message = "Async step result requires pytest-asyncio or the anyio pytest plugin to be installed and enabled."
     else:
         message = "\n".join(dict.fromkeys(errors))
 
@@ -577,9 +570,7 @@ def _await_with_anyio(*, request: FixtureRequest, awaitable: object) -> object:
         return runner.run_fixture(_consume, {})
 
 
-def _consume_async_generator_result(
-    request: FixtureRequest, context: StepFunctionContext, async_gen: object
-) -> object:
+def _consume_async_generator_result(request: FixtureRequest, context: StepFunctionContext, async_gen: object) -> object:
     backend, marker = _resolve_async_backend_preference(request=request, step_func=context.step_func)
     pluginmanager = request.config.pluginmanager
     errors: list[str] = []
@@ -595,9 +586,7 @@ def _consume_async_generator_result(
         except exceptions.StepImplementationError as exc:
             errors.append(str(exc))
     elif backend == "asyncio":
-        errors.append(
-            "Async generator step requires pytest-asyncio, which is not installed or not active."
-        )
+        errors.append("Async generator step requires pytest-asyncio, which is not installed or not active.")
 
     if backend in (None, "anyio") and pluginmanager.has_plugin("anyio"):
         try:
@@ -605,14 +594,10 @@ def _consume_async_generator_result(
         except exceptions.StepImplementationError as exc:
             errors.append(str(exc))
     elif backend == "anyio":
-        errors.append(
-            "Async generator step requires the anyio pytest plugin, which is not installed or not active."
-        )
+        errors.append("Async generator step requires the anyio pytest plugin, which is not installed or not active.")
 
     if not errors:
-        message = (
-            "Async generator steps require pytest-asyncio or the anyio pytest plugin to be installed and enabled."
-        )
+        message = "Async generator steps require pytest-asyncio or the anyio pytest plugin to be installed and enabled."
     else:
         message = "\n".join(dict.fromkeys(errors))
 
