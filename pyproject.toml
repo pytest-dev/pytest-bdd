@@ -15,7 +15,6 @@ readme = "README.rst"
 classifiers = [
     "Development Status :: 6 - Mature",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS :: MacOS X",
@@ -61,6 +60,7 @@ coverage = {extras = ["toml"], version = ">=6.5.0"}
 Pygments = ">=2.13.0"  # for code-block highlighting
 sphinx = "*"
 sphinx-autobuild = "*"
+
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = [ "setuptools>=77" ]
