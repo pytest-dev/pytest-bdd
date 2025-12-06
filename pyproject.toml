@@ -62,7 +62,7 @@ sphinx = "*"
 sphinx-autobuild = "*"
 
 [build-system]
-requires = ["poetry-core>=2.0.0"]
+requires = ["poetry-core>=2.2.1"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
