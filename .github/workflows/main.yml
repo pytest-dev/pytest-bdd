@@ -19,7 +19,7 @@ jobs:
       - name: Build a binary wheel and a source tarball
         run: python3 -m build
       - name: Check the distribution files with `twine`
-        run: twine check --strict dist/*
+        run: python3 -m twine check --strict dist/*
       - name: Upload artifact
         id: artifact-upload-step
         uses: actions/upload-artifact@v4
