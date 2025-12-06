@@ -61,10 +61,9 @@ coverage = {extras = ["toml"], version = ">=6.5.0"}
 Pygments = ">=2.13.0"  # for code-block highlighting
 sphinx = "*"
 sphinx-autobuild = "*"
-
 [build-system]
-requires = ["poetry-core>=2.2.1"]
-build-backend = "poetry.core.masonry.api"
+build-backend = "setuptools.build_meta"
+requires = [ "setuptools>=77" ]
 
 [tool.ruff]
 line-length = 120
