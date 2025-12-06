@@ -17,7 +17,7 @@ jobs:
           cache: "pip"
       - name: Install pypa/build
         run: >-
-          python3 -m pip install --user --upgrade build twine pkginfo poetry
+          python3 -m pip install --user --upgrade build twine poetry
       - name: Build a binary wheel and a source tarball
         run: python3 -m build
       - name: Check the distribution files with `twine`
