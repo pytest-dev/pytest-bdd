@@ -15,11 +15,11 @@ jobs:
         uses: actions/setup-python@v5
       - name: Install pypa/build
         run: >-
-          python3 -m pip install --user build twine pkginfo --upgrade
+          python3 -m pip install --user --upgrade build twine pkginfo poetry
       - name: Build a binary wheel and a source tarball
         run: python3 -m build
-#      - name: Check the distribution files with `twine`
-#        run: python3 -m twine check --strict dist/*
+      - name: Check the distribution files with `twine`
+        run: python3 -m twine check --strict dist/*
       - name: Upload artifact
         id: artifact-upload-step
         uses: actions/upload-artifact@v4
