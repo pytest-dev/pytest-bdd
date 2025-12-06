@@ -13,8 +13,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
-        with:
-          cache: "pip"
       - name: Install pypa/build
         run: >-
           python3 -m pip install --user build twine --upgrade
@@ -74,15 +72,7 @@ jobs:
         run: |
           python -m poetry config virtualenvs.in-project true
 
-      - name: Cache the virtualenv
-        id: poetry-dependencies-cache
-        uses: actions/cache@v3
-        with:
-          path: ./.venv
-          key: ${{ runner.os }}-venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
       - name: Install dev dependencies
-        if: steps.poetry-dependencies-cache.outputs.cache-hit != 'true'
         run: |
           python -m poetry install --only=dev
 
