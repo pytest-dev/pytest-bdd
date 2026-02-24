@@ -1260,7 +1260,7 @@ Let's look at a concrete example; let's say you have a class ``Wallet`` that has
 
     # contents of wallet.py
 
-    import dataclass
+    from dataclasses import dataclass
 
     @dataclass
     class Wallet:
@@ -1286,7 +1286,8 @@ You can use pytest-factoryboy to automatically create model fixtures for this cl
     class WalletFactory(factory.Factory):
         class Meta:
             model = Wallet
-
+        
+        verified = False
         amount_eur = 0
         amount_usd = 0
         amount_gbp = 0
@@ -1305,9 +1306,8 @@ Now we can define a function ``generate_wallet_steps(...)`` that creates the ste
     import re
     from dataclasses import fields
 
-    import factory
-    import pytest
-    from pytest_bdd import given, when, then, scenarios, parsers
+    from pytest_bdd import given, then, parsers
+    from wallet import Wallet
 
 
     def generate_wallet_steps(model_name="wallet", stacklevel=1):
@@ -1373,12 +1373,12 @@ and finally a test file that puts it all together and run the scenarios:
 
     # contents of test_wallet.py
 
-    from pytest_factoryboy import scenarios
+    from pytest_bdd import scenarios
 
     from wallet_factory import *  # import the registered fixtures "wallet" and "second_wallet"
-    from wallet_steps import *  # import all the step definitions into this test file
+    from step_defs.wallet_steps import *  # import all the step definitions into this test file
 
-    scenarios("wallet.feature")
+    scenarios('../features/wallet.feature')
 
 
 Hooks
