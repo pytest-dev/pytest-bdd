@@ -1286,7 +1286,7 @@ You can use pytest-factoryboy to automatically create model fixtures for this cl
     class WalletFactory(factory.Factory):
         class Meta:
             model = Wallet
-        
+
         verified = False
         amount_eur = 0
         amount_usd = 0
