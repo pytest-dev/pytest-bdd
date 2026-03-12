@@ -1,5 +1,5 @@
 <%
-    feature_paths = sorted(set(s.feature.rel_filename for s in scenarios))
+    feature_paths = sorted(set(f.rel_filename for f in features))
 %>\
 % if features:
 """${ features[0].name or features[0].rel_filename } feature tests."""
