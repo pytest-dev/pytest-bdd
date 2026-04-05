@@ -397,6 +397,35 @@ def test_multilanguage_support(pytester):
     ]
 
 
+def test_no_usefixtures_warning_when_no_args(pytester):
+    """Test that no PytestWarning about usefixtures() without arguments is emitted
+    when scenario functions have no arguments (e.g. when using scenarios()).
+
+    Regression test for https://github.com/pytest-dev/pytest-bdd/issues/XXX
+    """
+    pytester.makefile(
+        ".feature",
+        simple="""
+        Feature: Simple feature
+            Scenario: Simple scenario with no args
+                Given I have a bar
+        """,
+    )
+    pytester.makepyfile(
+        """
+        from pytest_bdd import scenarios, given
+
+        scenarios("simple.feature")
+
+        @given("I have a bar")
+        def _():
+            return "bar"
+        """
+    )
+    result = pytester.runpytest("-W", "error::pytest.PytestWarning")
+    result.assert_outcomes(passed=1)
+
+
 def test_default_value_is_used_as_fallback(pytester):
     """Test that the default value for a step implementation is only used as a fallback."""
     pytester.makefile(
