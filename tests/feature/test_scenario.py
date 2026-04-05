@@ -401,7 +401,7 @@ def test_no_usefixtures_warning_when_no_args(pytester):
     """Test that no PytestWarning about usefixtures() without arguments is emitted
     when scenario functions have no arguments (e.g. when using scenarios()).
 
-    Regression test for https://github.com/pytest-dev/pytest-bdd/issues/XXX
+    Regression test for https://github.com/pytest-dev/pytest-bdd/issues/802
     """
     pytester.makefile(
         ".feature",
