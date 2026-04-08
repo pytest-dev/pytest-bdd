@@ -351,3 +351,56 @@ def test_rule_example_format_uses_correct_keywords(pytester):
     result.stdout.fnmatch_lines("*Scenario: Scenario 2*")
     result.stdout.fnmatch_lines("*Rule: Rule 2*")
     result.stdout.fnmatch_lines("*Example: Example 3*")
+
+
+FEATURE_WITH_TAGS = """\
+@feature-tag
+Feature: Tagged feature
+    @scenario-tag-1 @scenario-tag-2
+    Scenario: Tagged scenario
+        Given there is a bar
+        When the bar is accessed
+        Then world explodes
+"""
+
+TEST_WITH_TAGS = """\
+from pytest_bdd import given, when, then, scenario
+
+
+@given('there is a bar')
+def _():
+    return 'bar'
+
+@when('the bar is accessed')
+def _():
+    pass
+
+
+@then('world explodes')
+def _():
+    pass
+
+
+@scenario('test.feature', 'Tagged scenario')
+def test_tagged_scenario():
+    pass
+
+"""
+
+
+def test_verbose_mode_should_display_tags(pytester):
+    pytester.makefile(".feature", test=FEATURE_WITH_TAGS)
+    pytester.makepyfile(TEST_WITH_TAGS)
+    result = pytester.runpytest("--gherkin-terminal-reporter", "-v")
+    result.assert_outcomes(passed=1, failed=0)
+    result.stdout.fnmatch_lines("*Feature: Tagged feature @feature-tag*")
+    result.stdout.fnmatch_lines("*Scenario: Tagged scenario @scenario-tag-1 @scenario-tag-2*")
+
+
+def test_double_verbose_mode_should_display_tags(pytester):
+    pytester.makefile(".feature", test=FEATURE_WITH_TAGS)
+    pytester.makepyfile(TEST_WITH_TAGS)
+    result = pytester.runpytest("--gherkin-terminal-reporter", "-vv")
+    result.assert_outcomes(passed=1, failed=0)
+    result.stdout.fnmatch_lines("*Feature: Tagged feature @feature-tag*")
+    result.stdout.fnmatch_lines("*Scenario: Tagged scenario @scenario-tag-1 @scenario-tag-2*")

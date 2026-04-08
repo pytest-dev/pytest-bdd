@@ -42,6 +42,13 @@ def configure(config: Config) -> None:
             raise Exception("gherkin-terminal-reporter is not compatible with 'xdist' plugin.")
 
 
+def _format_tags(tags: list[str]) -> str:
+    """Format a list of tags for display, prefixed with @."""
+    if not tags:
+        return ""
+    return " @" + " @".join(tags)
+
+
 class GherkinTerminalReporter(TerminalReporter):  # type: ignore[misc]
     def __init__(self, config: Config) -> None:
         super().__init__(config)
@@ -83,16 +90,19 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore[misc]
             self.ensure_newline()
             self._tw.write(f"{scenario['feature']['keyword']}: ", **feature_markup)
             self._tw.write(scenario["feature"]["name"], **feature_markup)
+            self._tw.write(_format_tags(scenario["feature"].get("tags", [])), **feature_markup)
             self._tw.write("\n")
 
             if rule and rule["name"] != self.current_rule:
                 self._tw.write(f"  {rule['keyword']}: ", **rule_markup)
                 self._tw.write(rule["name"], **rule_markup)
+                self._tw.write(_format_tags(rule.get("tags", [])), **rule_markup)
                 self._tw.write("\n")
                 self.current_rule = rule["name"]
 
             self._tw.write(f"{indent}    {scenario['keyword']}: ", **scenario_markup)
             self._tw.write(scenario["name"], **scenario_markup)
+            self._tw.write(_format_tags(scenario.get("tags", [])), **scenario_markup)
             self._tw.write(" ")
             self._tw.write(word, **word_markup)
             self._tw.write("\n")
@@ -100,16 +110,19 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore[misc]
             self.ensure_newline()
             self._tw.write(f"{scenario['feature']['keyword']}: ", **feature_markup)
             self._tw.write(scenario["feature"]["name"], **feature_markup)
+            self._tw.write(_format_tags(scenario["feature"].get("tags", [])), **feature_markup)
             self._tw.write("\n")
 
             if rule and rule["name"] != self.current_rule:
                 self._tw.write(f"  {rule['keyword']}: ", **rule_markup)
                 self._tw.write(rule["name"], **rule_markup)
+                self._tw.write(_format_tags(rule.get("tags", [])), **rule_markup)
                 self._tw.write("\n")
                 self.current_rule = rule["name"]
 
             self._tw.write(f"{indent}    {scenario['keyword']}: ", **scenario_markup)
             self._tw.write(scenario["name"], **scenario_markup)
+            self._tw.write(_format_tags(scenario.get("tags", [])), **scenario_markup)
             self._tw.write("\n")
             for step in scenario["steps"]:
                 self._tw.write(f"{indent}        {step['keyword']} {step['name']}\n", **scenario_markup)
