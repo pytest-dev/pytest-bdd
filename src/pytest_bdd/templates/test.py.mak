@@ -3,17 +3,15 @@
 
 from pytest_bdd import (
     given,
-    scenario,
+    scenarios,
     then,
     when,
 )
 
 
 % endif
-% for scenario in sorted(scenarios, key=lambda scenario: scenario.name):
-@scenario('${scenario.feature.rel_filename}', ${ make_string_literal(scenario.name)})
-def test_${ make_python_name(scenario.name)}():
-    ${make_python_docstring(scenario.name)}
+% for feature in dict.fromkeys(scenario.feature for scenario in scenarios):
+scenarios(${ make_string_literal(feature.rel_filename.replace("\\", "/"))})
 
 
 % endfor
