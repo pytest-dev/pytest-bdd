@@ -217,7 +217,7 @@ class ScenarioTemplate:
                 line_number=step.line_number,
                 keyword=step.keyword,
                 datatable=step.render_datatable(step.datatable, context) if step.datatable else None,
-                docstring=render_string(step.docstring, context) if step.docstring else None,
+                docstring=render_string(step.docstring, context) if step.docstring is not None else None,
             )
             for step in base_steps
         ]
