@@ -247,7 +247,7 @@ def _execute_step_function(
         # so that we can allow "yield" statements in it
         return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
 
-    except Exception as exception:
+    except BaseException as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
         raise
 
