@@ -234,9 +234,16 @@ class ScenarioTemplate:
         )
 
     def find_scenario_example_from_context(self, context: Mapping[str, object]) -> Examples | None:
+        """Find the Examples block that produced the given parametrization context.
+
+        A scenario outline may declare several Examples blocks, each with its own
+        tags and several rows. The rendering ``context`` is exactly one row dict as
+        produced by :meth:`Examples.as_contexts`, so we match it against every row
+        of every block (not just the first one). If two blocks happen to yield an
+        identical row, the first declared block wins.
+        """
         for example in self.examples:
-            example_param = dict(zip(example.example_params, example.examples[0]))
-            if example_param == context:
+            if any(context == row_context for row_context in example.as_contexts()):
                 return example
         return None
 

@@ -1205,3 +1205,59 @@ def test_step_before_first_scenario_is_parsed_as_description(tmp_path):
     assert gherkin_doc.feature.description == "Given a step that is not inside a scenario or background"
     scenario_names = [child.scenario.name for child in gherkin_doc.feature.children if child.scenario]
     assert scenario_names == ["A valid scenario"]
+
+
+def test_render_scenario_with_example_tags_non_first_row():
+    """Example tags must be applied regardless of which row the context comes from.
+
+    Regression test: matching used to compare only the first example row, so any
+    row past the first lost its block's tags.
+    """
+    feature = PytestBddFeature(
+        scenarios=OrderedDict(),
+        filename="test.feature",
+        rel_filename="test.feature",
+        language="en",
+        keyword="Feature",
+        name="Test Feature",
+        tags=set(),
+        background=None,
+        line_number=1,
+        description="A test feature",
+    )
+
+    examples = Examples(
+        line_number=10,
+        name="Multi-row example",
+        example_params=["username", "password"],
+        examples=[
+            ["user1", "pw1"],
+            ["user2", "pw2"],
+        ],
+        tags={"example_tag"},
+    )
+
+    scenario_template = ScenarioTemplate(
+        feature=feature,
+        keyword="Scenario Outline",
+        name="Scenario",
+        line_number=2,
+        templated=True,
+        description="",
+        tags={"scenario_tag"},
+        examples=[examples],
+    )
+    scenario_template.add_step(
+        PytestBddStep(
+            name="Given the user enters <username> as username",
+            type="given",
+            indent=0,
+            line_number=2,
+            keyword="Given",
+        )
+    )
+
+    # Context taken from the SECOND row.
+    rendered_scenario = scenario_template.render({"username": "user2", "password": "pw2"})
+
+    assert rendered_scenario.tags == {"scenario_tag", "example_tag"}
