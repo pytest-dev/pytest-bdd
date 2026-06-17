@@ -34,44 +34,6 @@ def test_multiple_features_error(pytester):
     result.stdout.fnmatch_lines(["*FeatureError: Multiple features are not allowed in a single feature file.*"])
 
 
-def test_step_outside_scenario_or_background_error(pytester):
-    """Test step outside of a Scenario or Background."""
-    features = pytester.mkdir("features")
-    features.joinpath("test.feature").write_text(
-        textwrap.dedent(
-            """
-            Feature: Invalid Feature
-            # Step not inside a scenario or background
-            Given a step that is not inside a scenario or background
-
-                Scenario: A valid scenario
-                    Given a step inside a scenario
-
-            """
-        ),
-        encoding="utf-8",
-    )
-
-    pytester.makepyfile(
-        textwrap.dedent(
-            """
-            from pytest_bdd import scenarios, given
-
-            @given("a step inside a scenario")
-            def step_inside_scenario():
-                pass
-
-            scenarios('features')
-            """
-        )
-    )
-
-    result = pytester.runpytest()
-
-    # Expect the FeatureError for the step outside of scenario or background
-    result.stdout.fnmatch_lines(["*FeatureError: Step definition outside of a Scenario or a Background.*"])
-
-
 def test_multiple_backgrounds_error(pytester):
     """Test multiple backgrounds in a single feature."""
     features = pytester.mkdir("features")

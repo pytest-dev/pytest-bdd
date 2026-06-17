@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import textwrap
 from collections import OrderedDict
 from pathlib import Path
 
@@ -1174,3 +1175,33 @@ def test_render_scenario_with_example_tags():
     assert rendered_scenario.steps[1].name == "And the user enters incorrect as password"
     assert rendered_scenario.steps[2].name == "Then the user should see an error message Invalid username or password"
     assert rendered_scenario.tags == {"scenario_tag", "example_tag_1", "example_tag_2"}
+
+
+def test_step_before_first_scenario_is_parsed_as_description(tmp_path):
+    """A step placed before the first Scenario/Background is parsed as description.
+
+    Since gherkin-official >=29, a ``Given/When/Then`` line that appears before the
+    first Scenario or Background is absorbed into the feature *description* instead
+    of raising a parse error. This pins that behavior. It replaces the former
+    ``test_step_outside_scenario_or_background_error`` (in tests/parser/test_errors.py),
+    which asserted a ``FeatureError`` that no supported gherkin version raises anymore.
+    """
+    feature_file = tmp_path / "test.feature"
+    feature_file.write_text(
+        textwrap.dedent(
+            """\
+            Feature: Feature with a step before the first scenario
+            Given a step that is not inside a scenario or background
+
+                Scenario: A valid scenario
+                    Given a step inside a scenario
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    gherkin_doc = get_gherkin_document(str(feature_file))
+
+    assert gherkin_doc.feature.description == "Given a step that is not inside a scenario or background"
+    scenario_names = [child.scenario.name for child in gherkin_doc.feature.children if child.scenario]
+    assert scenario_names == ["A valid scenario"]
