@@ -29,6 +29,7 @@ Removed
 
 Fixed
 +++++
+* Restored the ``FeatureError`` for a step placed before the first scenario or background. ``gherkin-official`` 31 and later no longer raise a parse error for this and fold the line into the feature description, so the check is now performed by pytest-bdd to keep the behaviour consistent across supported ``gherkin-official`` versions. `#779 <https://github.com/pytest-dev/pytest-bdd/issues/779>`_
 * Made type annotations stronger and removed most of the ``typing.Any`` usages and ``# type: ignore`` annotations. `#658 <https://github.com/pytest-dev/pytest-bdd/pull/658>`_
 
 Security

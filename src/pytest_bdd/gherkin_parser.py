@@ -56,6 +56,14 @@ ERROR_PATTERNS = [
 ]
 
 
+# Gherkin-official >= 31 no longer raises a parse error when a step keyword
+# appears before the first scenario or background; it folds the line into the
+# feature description instead. We re-detect that case so pytest-bdd reports the
+# same FeatureError across every supported gherkin-official version (issue #779).
+# Like ERROR_PATTERNS above, this matches the English step keywords only.
+STEP_KEYWORD_IN_DESCRIPTION = re.compile(r"^(Given|When|Then|And|But)\s")
+
+
 @dataclass
 class Location:
     column: int
@@ -324,7 +332,46 @@ def get_gherkin_document(abs_filename: str, encoding: str = "utf-8") -> GherkinD
         raise exceptions.GherkinParseError(f"Unknown parsing error: {message}", line, line_content, filename) from e
 
     # At this point, the `gherkin_data` should be valid if no exception was raised
+    _raise_if_step_in_feature_description(gherkin_data, feature_file_text, abs_filename)
+
     return GherkinDocument.from_dict(gherkin_data)
+
+
+def _raise_if_step_in_feature_description(
+    gherkin_data: Mapping[str, Any], feature_file_text: str, abs_filename: str
+) -> None:
+    """Raise a FeatureError if a step keyword sits before the first scenario or background.
+
+    Older gherkin-official versions raised a parse error in this case; newer ones
+    (>= 31) fold the offending line into the feature description instead. We detect
+    it here so the behaviour stays consistent across gherkin-official versions (#779).
+    """
+    feature = gherkin_data.get("feature")
+    if not feature:
+        return
+    description = feature.get("description") or ""
+    non_empty_lines = [line for line in description.splitlines() if line.strip()]
+    if not non_empty_lines:
+        return
+    # A step keyword is only misplaced when it opens the description. A keyword that
+    # appears later is legitimate free-text inside a multi-line description.
+    first_line = non_empty_lines[0].strip()
+    if not STEP_KEYWORD_IN_DESCRIPTION.match(first_line):
+        return
+    for lineno, file_line in enumerate(feature_file_text.splitlines(), start=1):
+        if file_line.strip() == first_line:
+            raise exceptions.FeatureError(
+                "Step definition outside of a Scenario or a Background.",
+                lineno,
+                file_line,
+                abs_filename,
+            )
+    raise exceptions.FeatureError(
+        "Step definition outside of a Scenario or a Background.",
+        feature["location"]["line"],
+        first_line,
+        abs_filename,
+    )
 
 
 def handle_gherkin_parser_error(
