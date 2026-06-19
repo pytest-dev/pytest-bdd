@@ -72,6 +72,47 @@ def test_step_outside_scenario_or_background_error(pytester):
     result.stdout.fnmatch_lines(["*FeatureError: Step definition outside of a Scenario or a Background.*"])
 
 
+def test_step_outside_scenario_or_background_error_localized(pytester):
+    """A misplaced step is detected regardless of the feature language.
+
+    The detection uses the Gherkin dialect for the file's language, so a step
+    keyword from a non-English dialect (here French ``Soit``) is reported the
+    same way as the English one.
+    """
+    features = pytester.mkdir("features")
+    features.joinpath("test.feature").write_text(
+        textwrap.dedent(
+            """\
+            # language: fr
+            Fonctionnalité: Fonctionnalité invalide
+            Soit une étape hors de tout scénario
+
+                Scénario: Un scénario valide
+                    Soit une étape dans le scénario
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    pytester.makepyfile(
+        textwrap.dedent(
+            """
+            from pytest_bdd import scenarios, given
+
+            @given("une étape dans le scénario")
+            def step_inside_scenario():
+                pass
+
+            scenarios('features')
+            """
+        )
+    )
+
+    result = pytester.runpytest()
+
+    result.stdout.fnmatch_lines(["*FeatureError: Step definition outside of a Scenario or a Background.*"])
+
+
 def test_multiple_backgrounds_error(pytester):
     """Test multiple backgrounds in a single feature."""
     features = pytester.mkdir("features")

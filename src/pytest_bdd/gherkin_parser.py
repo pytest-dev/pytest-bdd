@@ -8,6 +8,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
+from gherkin.dialect import Dialect  # type: ignore
 from gherkin.errors import CompositeParserException  # type: ignore
 from gherkin.parser import Parser  # type: ignore
 
@@ -54,14 +55,6 @@ ERROR_PATTERNS = [
         "Unexpected token found. Check Gherkin syntax near the reported error.",
     ),
 ]
-
-
-# Gherkin-official >= 31 no longer raises a parse error when a step keyword
-# appears before the first scenario or background; it folds the line into the
-# feature description instead. We re-detect that case so pytest-bdd reports the
-# same FeatureError across every supported gherkin-official version (issue #779).
-# Like ERROR_PATTERNS above, this matches the English step keywords only.
-STEP_KEYWORD_IN_DESCRIPTION = re.compile(r"^(Given|When|Then|And|But)\s")
 
 
 @dataclass
@@ -337,6 +330,28 @@ def get_gherkin_document(abs_filename: str, encoding: str = "utf-8") -> GherkinD
     return GherkinDocument.from_dict(gherkin_data)
 
 
+def _description_step_keywords(language: str) -> tuple[str, ...]:
+    """Return the step keywords for ``language`` as Gherkin itself defines them.
+
+    Reusing the dialect keywords means the check follows the same logic Gherkin
+    uses to recognise steps, so it works for every language Gherkin supports
+    rather than English alone. The generic ``*`` keyword is omitted: it only
+    opens a step inside a scenario, and matching it against a description would
+    flag an ordinary bullet list.
+    """
+    dialect = Dialect.for_name(language)
+    if dialect is None:
+        return ()
+    keywords = (
+        dialect.given_keywords
+        + dialect.when_keywords
+        + dialect.then_keywords
+        + dialect.and_keywords
+        + dialect.but_keywords
+    )
+    return tuple(keyword for keyword in keywords if keyword.strip() != "*")
+
+
 def _raise_if_step_in_feature_description(
     gherkin_data: Mapping[str, Any], feature_file_text: str, abs_filename: str
 ) -> None:
@@ -356,7 +371,8 @@ def _raise_if_step_in_feature_description(
     # A step keyword is only misplaced when it opens the description. A keyword that
     # appears later is legitimate free-text inside a multi-line description.
     first_line = non_empty_lines[0].strip()
-    if not STEP_KEYWORD_IN_DESCRIPTION.match(first_line):
+    step_keywords = _description_step_keywords(feature.get("language", "en"))
+    if not any(first_line.startswith(keyword) for keyword in step_keywords):
         return
     for lineno, file_line in enumerate(feature_file_text.splitlines(), start=1):
         if file_line.strip() == first_line:
