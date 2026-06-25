@@ -10,6 +10,8 @@ from sys import _getframe
 from typing import TYPE_CHECKING, Callable, TypeVar, cast, overload
 from weakref import WeakKeyDictionary
 
+from _pytest.compat import num_mock_patch_args
+
 if TYPE_CHECKING:
     from _pytest.config import Config
     from _pytest.pytester import RunResult
@@ -29,9 +31,10 @@ def get_required_args(func: Callable[..., object]) -> list[str]:
     :return: A list of argument names.
     """
     params = signature(func).parameters.values()
-    return [
+    required_args = [
         param.name for param in params if param.kind == param.POSITIONAL_OR_KEYWORD and param.default is param.empty
     ]
+    return required_args[num_mock_patch_args(func) :]
 
 
 def get_caller_module_locals(stacklevel: int = 1) -> dict[str, object]:
