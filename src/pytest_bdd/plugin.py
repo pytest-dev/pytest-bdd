@@ -101,7 +101,7 @@ def pytest_bdd_step_error(
     step: Step,
     step_func: Callable[..., object],
     step_func_args: dict[str, object],
-    exception: Exception,
+    exception: BaseException,
 ) -> None:
     reporting.step_error(request, feature, scenario, step, step_func, step_func_args, exception)
 

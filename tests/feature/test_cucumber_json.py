@@ -237,3 +237,40 @@ def test_step_trace(pytester):
     ]
 
     assert jsonobject == expected
+
+
+def test_pytest_outcome_exception_marks_step_failed(pytester):
+    """Test pytest outcome exceptions are reflected in cucumber json."""
+    pytester.makefile(
+        ".feature",
+        test=textwrap.dedent(
+            """
+            Feature: Outcome exceptions
+
+                Scenario: Failing outcome
+                    When a pytest outcome failure is raised
+            """
+        ),
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """
+            import pytest
+            from pytest_bdd import scenario, when
+
+            @scenario("test.feature", "Failing outcome")
+            def test_failing_outcome():
+                pass
+
+            @when("a pytest outcome failure is raised")
+            def _():
+                pytest.fail("timeout-style failure")
+            """
+        )
+    )
+
+    result, jsonobject = runandparse(pytester)
+    result.assert_outcomes(failed=1)
+    [scenario] = jsonobject[0]["elements"]
+    [step] = scenario["steps"]
+    assert step["result"]["status"] == "failed"

@@ -53,7 +53,7 @@ def pytest_bdd_step_error(
     step: Step,
     step_func: Callable[..., object],
     step_func_args: dict[str, object],
-    exception: Exception,
+    exception: BaseException,
 ) -> object:
     """Called when step function failed to execute."""
 

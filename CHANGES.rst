@@ -30,6 +30,7 @@ Removed
 Fixed
 +++++
 * Made type annotations stronger and removed most of the ``typing.Any`` usages and ``# type: ignore`` annotations. `#658 <https://github.com/pytest-dev/pytest-bdd/pull/658>`_
+* Mark steps that raise pytest outcome exceptions as failed in cucumber JSON output. `#770 <https://github.com/pytest-dev/pytest-bdd/issues/770>`_
 
 Security
 ++++++++
