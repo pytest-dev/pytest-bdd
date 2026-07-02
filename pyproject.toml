@@ -36,7 +36,8 @@ dependencies = [
     "pytest>=7.0.0",
     "typing-extensions",
     "packaging",
-    "gherkin-official>=29.0.0",
+    # 31.0.0 and 32.0.0 crash with StopIteration on empty descriptions (fixed in 32.0.1)
+    "gherkin-official>=29.0.0,!=31.0.0,!=32.0.0",
 ]
 
 [project.urls]
@@ -56,7 +57,7 @@ mypy = ">=1.6.0"
 types-setuptools = ">=68.2.0.0"
 pytest-xdist = ">=3.3.1"
 coverage = {extras = ["toml"], version = ">=6.5.0"}
-Pygments = ">=2.13.0"  # for code-block highlighting
+Pygments = ">=2.20.0"  # for code-block highlighting
 sphinx = "*"
 sphinx-autobuild = "*"
 
