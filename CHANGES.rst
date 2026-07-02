@@ -30,6 +30,7 @@ Removed
 
 Fixed
 +++++
+* Backslashes in datatable and examples table cells are no longer over-quoted. A cell containing a single backslash now reaches the step as a single backslash, matching the Gherkin escaping rules. `#769 <https://github.com/pytest-dev/pytest-bdd/issues/769>`_
 * Made type annotations stronger and removed most of the ``typing.Any`` usages and ``# type: ignore`` annotations. `#658 <https://github.com/pytest-dev/pytest-bdd/pull/658>`_
 
 Security
