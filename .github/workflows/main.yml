@@ -61,6 +61,15 @@ jobs:
             toxfactor: py3.13
             ignore-typecheck-outcome: false
             ignore-test-outcome: false
+          - python-version: "3.14"
+            toxfactor: py3.14
+            ignore-typecheck-outcome: false
+            ignore-test-outcome: false
+          # Python 3.15 is in development; allow failures until it is stable
+          - python-version: "3.15-dev"
+            toxfactor: py3.15
+            ignore-typecheck-outcome: true
+            ignore-test-outcome: true
 
     steps:
       - uses: actions/checkout@v4
