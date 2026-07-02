@@ -37,6 +37,10 @@ jobs:
   test-run:
     runs-on: ubuntu-latest
     needs: build
+    # Never fail the workflow for pre-release pythons, even when a step
+    # outside of typecheck/test breaks (e.g. a dependency that does not
+    # build yet on that version).
+    continue-on-error: ${{ matrix.ignore-test-outcome }}
     strategy:
       fail-fast: false
       matrix:
