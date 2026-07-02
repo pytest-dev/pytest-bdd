@@ -119,7 +119,9 @@ source = [
 
 
 [tool.mypy]
-python_version = "3.9"
+# No `python_version` pin: use the running interpreter, so that the pytest
+# version locked for that interpreter is parsed with matching syntax rules
+# (pytest>=9 uses `match` statements, which are invalid syntax under 3.9).
 warn_return_any = true
 warn_unused_configs = true
 files = "src/pytest_bdd/**/*.py"
