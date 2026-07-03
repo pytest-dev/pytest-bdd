@@ -24,6 +24,7 @@ from weakref import WeakKeyDictionary
 
 import pytest
 from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fixture_func
+from _pytest.outcomes import TEST_OUTCOME
 
 from . import exceptions
 from .compat import getfixturedefs, inject_fixture
@@ -247,7 +248,7 @@ def _execute_step_function(
         # so that we can allow "yield" statements in it
         return_value = call_fixture_func(fixturefunc=context.step_func, request=request, kwargs=kwargs)
 
-    except Exception as exception:
+    except TEST_OUTCOME as exception:
         request.config.hook.pytest_bdd_step_error(exception=exception, **kw)
         raise
 

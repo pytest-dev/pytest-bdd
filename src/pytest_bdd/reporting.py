@@ -219,7 +219,7 @@ def step_error(
     step: Step,
     step_func: Callable[..., object],
     step_func_args: dict[str, object],
-    exception: Exception,
+    exception: BaseException,
 ) -> None:
     """Finalize the step report as failed."""
     scenario_reports_registry[request.node].fail()
