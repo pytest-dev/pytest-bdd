@@ -40,10 +40,10 @@ def test_step_outside_scenario_or_background_error(pytester):
     features.joinpath("test.feature").write_text(
         textwrap.dedent(
             """
-            Feature: Invalid Feature
             # Step not inside a scenario or background
             Given a step that is not inside a scenario or background
 
+            Feature: Invalid Feature
                 Scenario: A valid scenario
                     Given a step inside a scenario
 
