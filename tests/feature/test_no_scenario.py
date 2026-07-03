@@ -1,5 +1,7 @@
 """Test no scenarios defined in the feature file."""
 
+from __future__ import annotations
+
 import textwrap
 
 

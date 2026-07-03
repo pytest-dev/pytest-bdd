@@ -1,5 +1,7 @@
 """Test wrong feature syntax."""
 
+from __future__ import annotations
+
 import textwrap
 
 

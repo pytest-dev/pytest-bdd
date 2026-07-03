@@ -4,7 +4,7 @@ import linecache
 import re
 import textwrap
 import typing
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -104,6 +104,7 @@ class Row:
 @dataclass
 class ExamplesTable:
     location: Location
+    tags: list[Tag]
     name: str | None = None
     table_header: Row | None = None
     table_body: list[Row] | None = field(default_factory=list)
@@ -115,6 +116,7 @@ class ExamplesTable:
             name=data.get("name"),
             table_header=Row.from_dict(data["tableHeader"]) if data.get("tableHeader") else None,
             table_body=[Row.from_dict(row) for row in data.get("tableBody", [])],
+            tags=[Tag.from_dict(tag) for tag in data["tags"]],
         )
 
 
@@ -269,6 +271,7 @@ class Child:
 @dataclass
 class Feature:
     location: Location
+    language: str
     keyword: str
     tags: list[Tag]
     name: str
@@ -279,6 +282,7 @@ class Feature:
     def from_dict(cls, data: dict[str, Any]) -> Self:
         return cls(
             location=Location.from_dict(data["location"]),
+            language=data["language"],
             keyword=data["keyword"],
             tags=[Tag.from_dict(tag) for tag in data["tags"]],
             name=data["name"],
@@ -293,7 +297,7 @@ class GherkinDocument:
     comments: list[Comment]
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> Self:
+    def from_dict(cls, data: Mapping[str, Any]) -> Self:
         return cls(
             feature=Feature.from_dict(data["feature"]),
             comments=[Comment.from_dict(comment) for comment in data["comments"]],

@@ -1,5 +1,7 @@
 """Scenario Outline tests."""
 
+from __future__ import annotations
+
 import textwrap
 
 from pytest_bdd.utils import collect_dumped_objects
@@ -79,6 +81,61 @@ def test_outlined(pytester):
     # fmt: on
 
 
+def test_multiple_outlined(pytester):
+    pytester.makefile(
+        ".feature",
+        outline_multi_example=textwrap.dedent(
+            """\
+            Feature: Outline With Multiple Examples
+                Scenario Outline: Outlined given, when, thens with multiple examples tables
+                    Given there are <start> cucumbers
+                    When I eat <eat> cucumbers
+                    Then I should have <left> cucumbers
+
+                    @positive
+                    Examples: Positive results
+                        | start | eat | left |
+                        |  12   |  5  |  7   |
+                        |  5    |  4  |  1   |
+
+                    @negative
+                    Examples: Negative results
+                        | start | eat | left |
+                        |  3    |  9  |  -6  |
+                        |  1    |  4  |  -3  |
+            """
+        ),
+    )
+
+    pytester.makeconftest(textwrap.dedent(STEPS))
+
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenarios
+
+        scenarios('outline_multi_example.feature')
+
+        """
+        )
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=4)
+    # fmt: off
+    assert collect_dumped_objects(result) == [
+        12, 5.0, "7",
+        5, 4.0, "1",
+        3, 9.0, "-6",
+        1, 4.0, "-3",
+    ]
+    # fmt: on
+    result = pytester.runpytest("-k", "positive", "-vv")
+    result.assert_outcomes(passed=2, deselected=2)
+
+    result = pytester.runpytest("-k", "positive or negative", "-vv")
+    result.assert_outcomes(passed=4, deselected=0)
+
+
 def test_unused_params(pytester):
     """Test parametrized scenario when the test function lacks parameters."""
 
@@ -90,7 +147,6 @@ def test_unused_params(pytester):
                 Scenario Outline: Outlined with unused params
                     Given there are <start> cucumbers
                     When I eat <eat> cucumbers
-                    # And commented out step with <unused_param>
                     Then I should have <left> cucumbers
 
                     Examples:
@@ -266,3 +322,58 @@ def test_forward_slash_in_params(pytester):
     result = pytester.runpytest("-s")
     result.assert_outcomes(passed=1)
     assert collect_dumped_objects(result) == ["https://my-site.com"]
+
+
+def test_variable_reuse(pytester):
+    """
+    Test example parameter name and step arg do not redefine each other's value
+    if the same name is used for both in different steps.
+    """
+
+    pytester.makefile(
+        ".feature",
+        outline=textwrap.dedent(
+            """\
+            Feature: Example parameters reuse
+                Scenario Outline: Check for example parameter reuse
+                    Given the param is initially set from the example table as <param>
+                    When a step arg of the same name is set to "other"
+                    Then the param is still set from the example table as <param>
+
+                    Examples:
+                        | param |
+                        | value |
+
+            """
+        ),
+    )
+
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+            from pytest_bdd import given, when, then, parsers, scenarios
+            from pytest_bdd.utils import dump_obj
+
+            scenarios('outline.feature')
+
+
+            @given(parsers.parse('the param is initially set from the example table as {param}'))
+            def _(param):
+                dump_obj(("param1", param))
+
+
+            @when(parsers.re('a step arg of the same name is set to "(?P<param>.+)"'))
+            def _(param):
+                dump_obj(("param2", param))
+
+
+            @then(parsers.parse('the param is still set from the example table as {param}'))
+            def _(param):
+                dump_obj(("param3", param))
+
+        """
+        )
+    )
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=1)
+    assert collect_dumped_objects(result) == [("param1", "value"), ("param2", "other"), ("param3", "value")]

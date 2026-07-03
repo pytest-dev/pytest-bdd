@@ -7,11 +7,13 @@ that enriches the pytest test reporting.
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Callable, TypedDict
+from weakref import WeakKeyDictionary
+
+from typing_extensions import NotRequired
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
-
     from _pytest.fixtures import FixtureRequest
     from _pytest.nodes import Item
     from _pytest.reports import TestReport
@@ -19,12 +21,54 @@ if TYPE_CHECKING:
 
     from .parser import Feature, Scenario, Step
 
+scenario_reports_registry: WeakKeyDictionary[Item, ScenarioReport] = WeakKeyDictionary()
+test_report_context_registry: WeakKeyDictionary[TestReport, ReportContext] = WeakKeyDictionary()
+
+
+class FeatureDict(TypedDict):
+    keyword: str
+    name: str
+    filename: str
+    rel_filename: str
+    language: str
+    line_number: int
+    description: str
+    tags: list[str]
+
+
+class RuleDict(TypedDict):
+    keyword: str
+    name: str
+    description: str
+    tags: list[str]
+
+
+class StepReportDict(TypedDict):
+    name: str
+    type: str
+    keyword: str
+    line_number: int
+    failed: bool
+    duration: float
+
+
+class ScenarioReportDict(TypedDict):
+    steps: list[StepReportDict]
+    keyword: str
+    name: str
+    line_number: int
+    tags: list[str]
+    feature: FeatureDict
+    description: str
+    rule: NotRequired[RuleDict]
+    failed: NotRequired[bool]
+
 
 class StepReport:
     """Step execution report."""
 
-    failed = False
-    stopped = None
+    failed: bool = False
+    stopped: float | None = None
 
     def __init__(self, step: Step) -> None:
         """Step report constructor.
@@ -34,11 +78,10 @@ class StepReport:
         self.step = step
         self.started = time.perf_counter()
 
-    def serialize(self) -> dict[str, Any]:
+    def serialize(self) -> StepReportDict:
         """Serialize the step execution report.
 
         :return: Serialized step execution report.
-        :rtype: dict
         """
         return {
             "name": self.step.name,
@@ -77,7 +120,6 @@ class ScenarioReport:
         """Scenario report constructor.
 
         :param pytest_bdd.parser.Scenario scenario: Scenario.
-        :param node: pytest test node object
         """
         self.scenario: Scenario = scenario
         self.step_reports: list[StepReport] = []
@@ -99,29 +141,43 @@ class ScenarioReport:
         """
         self.step_reports.append(step_report)
 
-    def serialize(self) -> dict[str, Any]:
+    def serialize(self) -> ScenarioReportDict:
         """Serialize scenario execution report in order to transfer reporting from nodes in the distributed mode.
 
         :return: Serialized report.
-        :rtype: dict
         """
         scenario = self.scenario
         feature = scenario.feature
 
-        return {
+        serialized: ScenarioReportDict = {
             "steps": [step_report.serialize() for step_report in self.step_reports],
+            "keyword": scenario.keyword,
             "name": scenario.name,
             "line_number": scenario.line_number,
             "tags": sorted(scenario.tags),
+            "description": scenario.description,
             "feature": {
+                "keyword": feature.keyword,
                 "name": feature.name,
                 "filename": feature.filename,
                 "rel_filename": feature.rel_filename,
+                "language": feature.language,
                 "line_number": feature.line_number,
                 "description": feature.description,
                 "tags": sorted(feature.tags),
             },
         }
+
+        if scenario.rule:
+            rule_dict: RuleDict = {
+                "keyword": scenario.rule.keyword,
+                "name": scenario.rule.name,
+                "description": scenario.rule.description,
+                "tags": sorted(scenario.rule.tags),
+            }
+            serialized["rule"] = rule_dict
+
+        return serialized
 
     def fail(self) -> None:
         """Stop collecting information and finalize the report as failed."""
@@ -135,17 +191,25 @@ class ScenarioReport:
             self.add_step_report(report)
 
 
+@dataclass
+class ReportContext:
+    scenario: ScenarioReportDict
+    name: str
+
+
 def runtest_makereport(item: Item, call: CallInfo, rep: TestReport) -> None:
     """Store item in the report object."""
-    scenario_report = getattr(item, "__scenario_report__", None)
-    if scenario_report is not None:
-        rep.scenario = scenario_report.serialize()  # type: ignore
-        rep.item = {"name": item.name}  # type: ignore
+    try:
+        scenario_report: ScenarioReport = scenario_reports_registry[item]
+    except KeyError:
+        return
+
+    test_report_context_registry[rep] = ReportContext(scenario=scenario_report.serialize(), name=item.name)
 
 
 def before_scenario(request: FixtureRequest, feature: Feature, scenario: Scenario) -> None:
     """Create scenario report for the item."""
-    request.node.__scenario_report__ = ScenarioReport(scenario=scenario)
+    scenario_reports_registry[request.node] = ScenarioReport(scenario=scenario)
 
 
 def step_error(
@@ -153,12 +217,12 @@ def step_error(
     feature: Feature,
     scenario: Scenario,
     step: Step,
-    step_func: Callable[..., Any],
-    step_func_args: dict,
+    step_func: Callable[..., object],
+    step_func_args: dict[str, object],
     exception: Exception,
 ) -> None:
     """Finalize the step report as failed."""
-    request.node.__scenario_report__.fail()
+    scenario_reports_registry[request.node].fail()
 
 
 def before_step(
@@ -166,10 +230,10 @@ def before_step(
     feature: Feature,
     scenario: Scenario,
     step: Step,
-    step_func: Callable[..., Any],
+    step_func: Callable[..., object],
 ) -> None:
     """Store step start time."""
-    request.node.__scenario_report__.add_step_report(StepReport(step=step))
+    scenario_reports_registry[request.node].add_step_report(StepReport(step=step))
 
 
 def after_step(
@@ -181,4 +245,4 @@ def after_step(
     step_func_args: dict,
 ) -> None:
     """Finalize the step report as successful."""
-    request.node.__scenario_report__.current_step_report.finalize(failed=False)
+    scenario_reports_registry[request.node].current_step_report.finalize(failed=False)

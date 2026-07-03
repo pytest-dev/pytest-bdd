@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import glob
 import os.path
+from collections.abc import Iterable
 
 from .parser import Feature, FeatureParser
 
@@ -57,7 +58,7 @@ def get_feature(base_path: str, filename: str, encoding: str = "utf-8") -> Featu
     return feature
 
 
-def get_features(paths: list[str], encoding: str = "utf-8") -> list[Feature]:
+def get_features(paths: Iterable[str], encoding: str = "utf-8") -> list[Feature]:
     """Get features for given paths.
 
     :param list paths: `list` of paths (file or dirs)

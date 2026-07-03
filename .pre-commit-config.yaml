@@ -1,31 +1,21 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
--   repo: https://github.com/psf/black
-    # If you update the version here, also update it in tox.ini (py*-pytestlatest-linters)
-    rev: 24.10.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: "3e8a8703264a2f4a69428a0aa4dcb512790b2c8c"  # frozen: v6.0.0
     hooks:
-    - id: black
--   repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "c59bba8fb259db0fec2bbb77ad8ba51ea7341b56"  # frozen: v0.15.20
     hooks:
-      - id: isort
-        name: isort (python)
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+      - id: ruff
+        args: [ --fix ]
+      - id: ruff-format
+  - repo: https://github.com/python-poetry/poetry
+    rev: "811a12dae0fe81f199e3f1b88b8b8be9eed543c2"  # frozen: 2.4.1
     hooks:
-    -   id: trailing-whitespace
-    -   id: end-of-file-fixer
-    -   id: check-yaml
-    -   id: check-added-large-files
--   repo: https://github.com/asottile/pyupgrade
-    rev: v3.17.0
-    hooks:
-    -   id: pyupgrade
-        args: ["--py38-plus"]
-# TODO: Enable mypy checker when the checks succeed
-#-   repo: https://github.com/pre-commit/mirrors-mypy
-#    rev: v0.931
-#    hooks:
-#    -   id: mypy
-#        additional_dependencies: [types-setuptools]
+    -   id: poetry-check
+        args: ["--lock"]

@@ -1,8 +1,7 @@
-BDD Library for the pytest Runner
-=================================
+Pytest-BDD: the BDD framework for pytest
 
 .. image:: https://img.shields.io/pypi/v/pytest-bdd.svg
-   :target: https://pypi.python.org/pypi/pytest-bdd
+   :target: https://pypi.org/project/pytest-bdd
 .. image:: https://codecov.io/gh/pytest-dev/pytest-bdd/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/pytest-dev/pytest-bdd
 .. image:: https://github.com/pytest-dev/pytest-bdd/actions/workflows/main.yml/badge.svg
@@ -17,7 +16,7 @@ Unlike many other BDD tools, `pytest-bdd` does not require a separate runner and
 
 `pytest` fixtures written for unit tests can be reused for setup and actions mentioned in feature steps with dependency injection. This allows a true BDD just-enough specification of the requirements without maintaining any context object containing the side effects of Gherkin imperative declarations.
 
-.. _behave: https://pypi.python.org/pypi/behave
+.. _behave: https://pypi.org/project/behave
 .. _pytest-splinter: https://github.com/pytest-dev/pytest-splinter
 
 Installation
@@ -46,6 +45,8 @@ An example test for a blog hosting software could look like this. Note that pyte
             And I press the publish button
             Then I should not see the error message
             And the article should be published
+
+Note that only one feature is allowed per feature file.
 
 .. code-block:: python
 
@@ -198,8 +199,49 @@ There are several types of step parameter parsers at your disposal:
 - **cfparse** (`parse_type <http://pypi.python.org/pypi/parse_type>`_ library): Extends `parse` with Cardinality Field support, allowing expressions like ``{values:Type+}``.
 - **re**: Uses full regular expressions with named groups to define variables.
 
+Often it's possible to reuse steps giving them a parameter(s).
+This allows to have single implementation and multiple use, so less code.
+Also opens the possibility to use same step twice in single scenario and with different arguments!
+And even more, there are several types of step parameter parsers at your disposal
+(idea taken from behave_ implementation):
+
+.. _pypi_parse: https://pypi.org/project/parse
+.. _pypi_parse_type: https://pypi.org/project/parse-type
+
+**string** (the default)
+    This is the default and can be considered as a `null` or `exact` parser. It parses no parameters
+    and matches the step name by equality of strings.
+**parse** (based on: pypi_parse_)
+    Provides a simple parser that replaces regular expressions for
+    step parameters with a readable syntax like ``{param:Type}``.
+    The syntax is inspired by the Python builtin ``string.format()``
+    function.
+    Step parameters must use the named fields syntax of pypi_parse_
+    in step definitions. The named fields are extracted,
+    optionally type converted and then used as step function arguments.
+    Supports type conversions by using type converters passed via `extra_types`
+**cfparse** (extends: pypi_parse_, based on: pypi_parse_type_)
+    Provides an extended parser with "Cardinality Field" (CF) support.
+    Automatically creates missing type converters for related cardinality
+    as long as a type converter for cardinality=1 is provided.
+    Supports parse expressions like:
+    * ``{values:Type+}`` (cardinality=1..N, many)
+    * ``{values:Type*}`` (cardinality=0..N, many0)
+    * ``{value:Type?}``  (cardinality=0..1, optional)
+    Supports type conversions (as above).
+**re**
+    This uses full regular expressions to parse the clause text. You will
+    need to use named groups "(?P<name>...)" to define the variables pulled
+    from the text and passed to your ``step()`` function.
+    Type conversion can only be done via `converters` step decorator argument (see example below).
+
+The default parser is `string`, so just plain one-to-one match to the keyword definition.
+Parsers except `string`, as well as their optional arguments are specified like:
+
 Example with `cfparse` parser
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+for `cfparse` parser
 
 .. code-block:: python
 
@@ -328,7 +370,50 @@ A common use case is when we want to access the result of an HTTP request in lat
 
             Then the request should be successful
 
-Scenario Outlines
+
+Scenarios shortcut
+------------------
+
+If you have a relatively large set of feature files, it's boring to manually bind scenarios to the tests using the scenario decorator. Of course with the manual approach you get all the power to be able to additionally parametrize the test, give the test function a nice name, document it, etc, but in the majority of the cases you don't need that.
+Instead, you want to bind all the scenarios found in the ``features`` folder(s) recursively automatically, by using the ``scenarios`` helper.
+
+.. code-block:: python
+
+    from pytest_bdd import scenarios
+
+    # assume 'features' subfolder is in this file's directory
+    scenarios('features')
+
+That's all you need to do to bind all scenarios found in the ``features`` folder!
+Note that you can pass multiple paths, and those paths can be either feature files or feature folders.
+
+
+.. code-block:: python
+
+    from pytest_bdd import scenarios
+
+    # pass multiple paths/files
+    scenarios('features', 'other_features/some.feature', 'some_other_features')
+
+But what if you need to manually bind a certain scenario, leaving others to be automatically bound?
+Just write your scenario in a "normal" way, but ensure you do it **before** the call of ``scenarios`` helper.
+
+
+.. code-block:: python
+
+    from pytest_bdd import scenario, scenarios
+
+    @scenario('features/some.feature', 'Test something')
+    def test_something():
+        pass
+
+    # assume 'features' subfolder is in this file's directory
+    scenarios('features')
+
+In the example above, the ``test_something`` scenario binding will be kept manual, other scenarios found in the ``features`` folder will be bound automatically.
+
+
+Scenario outlines
 -----------------
 
 Scenarios can be parameterized to cover multiple cases using `Scenario Outlines <https://cucumber.io/docs/gherkin/reference/#scenario-outline>`_.
@@ -368,8 +453,209 @@ Scenarios can be parameterized to cover multiple cases using `Scenario Outlines 
     def should_have_left_cucumbers(cucumbers, left):
         assert cucumbers["count"] == left
 
-Step Definitions and Accessing the Datatable
---------------------------------------------
+Example parameters from example tables can not only be used in steps, but also embedded directly within docstrings and datatables, allowing for dynamic substitution.
+This provides added flexibility for scenarios that require complex setups or validations.
+
+Example:
+
+.. code-block:: gherkin
+
+    # content of docstring_and_datatable_with_params.feature
+
+    Feature: Docstring and Datatable with example parameters
+        Scenario Outline: Using parameters in docstrings and datatables
+            Given the following configuration:
+                """
+                username: <username>
+                password: <password>
+                """
+            When the user logs in
+            Then the response should contain:
+                | field     | value      |
+                | username  | <username> |
+                | logged_in | true       |
+
+            Examples:
+            | username  | password  |
+            | user1     | pass123   |
+            | user2     | 123secure |
+
+.. code-block:: python
+
+    from pytest_bdd import scenarios, given, when, then
+    import json
+
+    # Load scenarios from the feature file
+    scenarios("docstring_and_datatable_with_params.feature")
+
+
+    @given("the following configuration:")
+    def given_user_config(docstring):
+        print(docstring)
+
+
+    @when("the user logs in")
+    def user_logs_in(logged_in):
+        logged_in = True
+
+
+    @then("the response should contain:")
+    def response_should_contain(datatable):
+        assert datatable[1][1] in ["user1", "user2"]
+
+
+Scenario Outlines with Multiple Example Tables
+----------------------------------------------
+
+In `pytest-bdd`, you can use multiple example tables in a scenario outline to test
+different sets of input data under various conditions.
+You can define separate `Examples` blocks, each with its own table of data,
+and optionally tag them to differentiate between positive, negative, or any other conditions.
+
+Example:
+
+.. code-block:: gherkin
+
+    # content of scenario_outline.feature
+
+    Feature: Scenario outlines with multiple examples tables
+        Scenario Outline: Outlined with multiple example tables
+            Given there are <start> cucumbers
+            When I eat <eat> cucumbers
+            Then I should have <left> cucumbers
+
+            @positive
+            Examples: Positive results
+                | start | eat | left |
+                |  12   |  5  |  7   |
+                |  5    |  4  |  1   |
+
+            @negative
+            Examples: Impossible negative results
+                | start | eat | left |
+                |  3    |  9  |  -6  |
+                |  1    |  4  |  -3  |
+
+.. code-block:: python
+
+    from pytest_bdd import scenarios, given, when, then, parsers
+
+
+    scenarios("scenario_outline.feature")
+
+
+    @given(parsers.parse("there are {start:d} cucumbers"), target_fixture="cucumbers")
+    def given_cucumbers(start):
+        return {"start": start, "eat": 0}
+
+
+    @when(parsers.parse("I eat {eat:d} cucumbers"))
+    def eat_cucumbers(cucumbers, eat):
+        cucumbers["eat"] += eat
+
+
+    @then(parsers.parse("I should have {left:d} cucumbers"))
+    def should_have_left_cucumbers(cucumbers, left):
+        assert cucumbers["start"] - cucumbers["eat"] == left
+
+
+When you filter scenarios by a tag, only the examples associated with that tag will be executed.
+This allows you to run a specific subset of your test cases based on the tag.
+For example, in the following scenario outline, if you filter by the @positive tag,
+only the examples under the "Positive results" table will be executed, and the "Negative results" table will be ignored.
+
+.. code-block:: bash
+
+    pytest -k "positive"
+
+
+Handling Empty Example Cells
+----------------------------
+
+By default, empty cells in the example tables are interpreted as empty strings ("").
+However, there may be cases where it is more appropriate to handle them as ``None``.
+In such scenarios, you can use a converter with the ``parsers.re`` parser to define a custom behavior for empty values.
+
+For example, the following code demonstrates how to use a custom converter to return ``None`` when an empty cell is encountered:
+
+.. code-block:: gherkin
+
+    # content of empty_example_cells.feature
+
+    Feature: Handling empty example cells
+        Scenario Outline: Using converters for empty cells
+            Given I am starting lunch
+            Then there are <start> cucumbers
+
+            Examples:
+            | start |
+            |       |
+
+.. code-block:: python
+
+    from pytest_bdd import then, parsers
+
+
+    # Define a converter that returns None for empty strings
+    def empty_to_none(value):
+        return None if value.strip() == "" else value
+
+
+    @given("I am starting lunch")
+    def _():
+        pass
+
+
+    @then(
+        parsers.re("there are (?P<start>.*?) cucumbers"),
+        converters={"start": empty_to_none}
+    )
+    def _(start):
+        # Example assertion to demonstrate the conversion
+        assert start is None
+
+
+Here, the `start` cell in the example table is empty.
+When the ``parsers.re`` parser is combined with the ``empty_to_none`` converter,
+the empty cell will be converted to ``None`` and can be handled accordingly in the step definition.
+
+
+Rules
+-----
+
+In Gherkin, `Rules` allow you to group related scenarios or examples under a shared context.
+This is useful when you want to define different conditions or behaviours
+for multiple examples that follow a similar structure.
+You can use either ``Scenario`` or ``Example`` to define individual cases, as they are aliases and function identically.
+
+Additionally, **tags** applied to a rule will be automatically applied to all the **examples or scenarios**
+under that rule, making it easier to organize and filter tests during execution.
+
+Example:
+
+.. code-block:: gherkin
+
+    Feature: Rules and examples
+
+        @feature_tag
+        Rule: A rule for valid cases
+
+            @rule_tag
+            Example: Valid case 1
+                Given I have a valid input
+                When I process the input
+                Then the result should be successful
+
+        Rule: A rule for invalid cases
+
+            Example: Invalid case
+                Given I have an invalid input
+                When I process the input
+                Then the result should be an error
+
+
+Datatables
+----------
 
 The ``datatable`` argument allows you to utilise data tables defined in your Gherkin scenarios
 directly within your test functions. This is particularly useful for scenarios that require tabular data as input,
@@ -460,6 +746,89 @@ Full example:
         assert users_have_correct_permissions(users, expected_permissions)
 
 
+Docstrings
+----------
+
+The `docstring` argument allows you to access the Gherkin docstring defined in your steps as a multiline string.
+The content of the docstring is passed as a single string, with each line separated by `\\n`.
+Leading indentation are stripped.
+
+For example, the Gherkin docstring:
+
+
+.. code-block:: gherkin
+
+    """
+    This is a sample docstring.
+    It spans multiple lines.
+    """
+
+
+Will be returned as:
+
+.. code-block:: python
+
+    "This is a sample docstring.\nIt spans multiple lines."
+
+
+Full example:
+
+.. code-block:: gherkin
+
+    Feature: Docstring
+
+      Scenario: Step with docstrings
+        Given some steps will have docstrings
+
+        Then a step has a docstring
+        """
+        This is a docstring
+        on two lines
+        """
+
+        And a step provides a docstring with lower indentation
+        """
+    This is a docstring
+        """
+
+        And this step has no docstring
+
+        And this step has a greater indentation
+        """
+            This is a docstring
+        """
+
+        And this step has no docstring
+
+.. code-block:: python
+
+        from pytest_bdd import given, then
+
+
+        @given("some steps will have docstrings")
+        def _():
+            pass
+
+        @then("a step has a docstring")
+        def _(docstring):
+            assert docstring == "This is a docstring\non two lines"
+
+        @then("a step provides a docstring with lower indentation")
+        def _(docstring):
+            assert docstring == "This is a docstring"
+
+        @then("this step has a greater indentation")
+        def _(docstring):
+            assert docstring == "This is a docstring"
+
+        @then("this step has no docstring")
+        def _():
+            pass
+
+
+.. note::   The ``docstring`` argument can only be used for steps that have an associated docstring.
+            Otherwise, an error will be thrown.
+
 Organizing your scenarios
 -------------------------
 
@@ -531,7 +900,7 @@ scenario test, so we can use standard test selection:
     pytest -m "backend and login and successful"
 
 The feature and scenario markers are not different from standard pytest markers, and the ``@`` symbol is stripped out automatically to allow test selector expressions. If you want to have bdd-related tags to be distinguishable from the other test markers, use a prefix like ``bdd``.
-Note that if you use pytest with the ``--strict`` option, all bdd tags mentioned in the feature files should be also in the ``markers`` setting of the ``pytest.ini`` config. Also for tags please use names which are python-compatible variable names, i.e. start with a non-number, only underscores or alphanumeric characters, etc. That way you can safely use tags for tests filtering.
+Note that if you use pytest with the ``--strict-markers`` option, all Gherkin tags mentioned in the feature files should be also in the ``markers`` setting of the ``pytest.ini`` config. Also for tags please use names which are python-compatible variable names, i.e. start with a non-number, only underscores or alphanumeric characters, etc. That way you can safely use tags for tests filtering.
 
 You can customize how tags are converted to pytest marks by implementing the
 ``pytest_bdd_apply_tag`` hook and returning ``True`` from it:
@@ -663,8 +1032,6 @@ About best practices for Background, please read Gherkin's
           related to actions and consuming outcomes; that is in conflict with the
           aim of "Background" - to prepare the system for tests or "put the system
           in a known state" as "Given" does it.
-          The statement above applies to strict Gherkin mode, which is
-          enabled by default.
 
 
 Reusing fixtures
@@ -832,7 +1199,7 @@ Let's look at a concrete example; let's say you have a class ``Wallet`` that has
 
     # contents of wallet.py
 
-    import dataclass
+    from dataclasses import dataclass
 
     @dataclass
     class Wallet:
@@ -859,6 +1226,7 @@ You can use pytest-factoryboy to automatically create model fixtures for this cl
         class Meta:
             model = Wallet
 
+        verified = False
         amount_eur = 0
         amount_usd = 0
         amount_gbp = 0
@@ -877,9 +1245,7 @@ Now we can define a function ``generate_wallet_steps(...)`` that creates the ste
     import re
     from dataclasses import fields
 
-    import factory
-    import pytest
-    from pytest_bdd import given, when, then, scenarios, parsers
+    from pytest_bdd import given, then, parsers
 
 
     def generate_wallet_steps(model_name="wallet", stacklevel=1):
@@ -910,7 +1276,7 @@ Now we can define a function ``generate_wallet_steps(...)`` that creates the ste
                 parsers.parse(f"I should have {{value:d}} {currency.upper()} in my {human_name}"),
                 stacklevel=stacklevel,
             )
-            def _(value: int, _currency=currency, _model_name=model_name) -> None:
+            def _(request, value: int, _currency=currency, _model_name=model_name) -> None:
                 wallet = request.getfixturevalue(_model_name)
                 assert getattr(wallet, f"amount_{_currency}") == value
 
@@ -991,7 +1357,7 @@ Reporting
 ---------
 
 It's important to have nice reporting out of your bdd tests. Cucumber introduced some kind of standard for
-`json format <https://www.relishapp.com/cucumber/cucumber/docs/json-output-formatter>`_
+`json format <https://github.com/cucumber/cucumber-json-formatter>`_
 which can be used for, for example, by `this <https://plugins.jenkins.io/cucumber-testresult-plugin/>`_ Jenkins
 plugin.
 

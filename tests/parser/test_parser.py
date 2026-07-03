@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 from src.pytest_bdd.gherkin_parser import (
@@ -36,6 +38,7 @@ def test_parser():
             tags=[],
             name="User login",
             description="  As a registered user\n  I want to be able to log in\n  So that I can access my account",
+            language="en",
             children=[
                 Child(
                     background=Background(
@@ -162,6 +165,7 @@ def test_parser():
                             ExamplesTable(
                                 location=Location(column=5, line=26),
                                 name="",
+                                tags=[],
                                 table_header=Row(
                                     id="11",
                                     location=Location(column=7, line=27),

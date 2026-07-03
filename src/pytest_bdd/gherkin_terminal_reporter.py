@@ -4,9 +4,9 @@ import typing
 
 from _pytest.terminal import TerminalReporter
 
-if typing.TYPE_CHECKING:
-    from typing import Any
+from .reporting import test_report_context_registry
 
+if typing.TYPE_CHECKING:
     from _pytest.config import Config
     from _pytest.config.argparsing import Parser
     from _pytest.reports import TestReport
@@ -31,10 +31,9 @@ def configure(config: Config) -> None:
             raise Exception(
                 "gherkin-terminal-reporter is not compatible with any other terminal reporter."
                 "You can use only one terminal reporter."
-                "Currently '{0}' is used."
-                "Please decide to use one by deactivating {0} or gherkin-terminal-reporter.".format(
-                    current_reporter.__class__
-                )
+                f"Currently '{current_reporter.__class__}' is used."
+                f"Please decide to use one by deactivating {current_reporter.__class__} "
+                "or gherkin-terminal-reporter."
             )
         gherkin_reporter = GherkinTerminalReporter(config)
         config.pluginmanager.unregister(current_reporter)
@@ -43,11 +42,12 @@ def configure(config: Config) -> None:
             raise Exception("gherkin-terminal-reporter is not compatible with 'xdist' plugin.")
 
 
-class GherkinTerminalReporter(TerminalReporter):  # type: ignore
+class GherkinTerminalReporter(TerminalReporter):  # type: ignore[misc]
     def __init__(self, config: Config) -> None:
         super().__init__(config)
+        self.current_rule: str | None = None
 
-    def pytest_runtest_logreport(self, report: TestReport) -> Any:
+    def pytest_runtest_logreport(self, report: TestReport) -> None:
         rep = report
         res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
         cat, letter, word = res
@@ -66,32 +66,54 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore
             word_markup = {"yellow": True}
         feature_markup = {"blue": True}
         scenario_markup = word_markup
+        rule_markup = {"purple": True}
 
-        if self.verbosity <= 0 or not hasattr(report, "scenario"):
+        try:
+            scenario = test_report_context_registry[report].scenario
+        except KeyError:
+            scenario = None
+
+        if self.verbosity <= 0 or scenario is None:
             return super().pytest_runtest_logreport(rep)
+
+        rule = scenario.get("rule")
+        indent = "    " if rule else ""
 
         if self.verbosity == 1:
             self.ensure_newline()
-            self._tw.write("Feature: ", **feature_markup)
-            self._tw.write(report.scenario["feature"]["name"], **feature_markup)
+            self._tw.write(f"{scenario['feature']['keyword']}: ", **feature_markup)
+            self._tw.write(scenario["feature"]["name"], **feature_markup)
             self._tw.write("\n")
-            self._tw.write("    Scenario: ", **scenario_markup)
-            self._tw.write(report.scenario["name"], **scenario_markup)
+
+            if rule and rule["name"] != self.current_rule:
+                self._tw.write(f"  {rule['keyword']}: ", **rule_markup)
+                self._tw.write(rule["name"], **rule_markup)
+                self._tw.write("\n")
+                self.current_rule = rule["name"]
+
+            self._tw.write(f"{indent}    {scenario['keyword']}: ", **scenario_markup)
+            self._tw.write(scenario["name"], **scenario_markup)
             self._tw.write(" ")
             self._tw.write(word, **word_markup)
             self._tw.write("\n")
         elif self.verbosity > 1:
             self.ensure_newline()
-            self._tw.write("Feature: ", **feature_markup)
-            self._tw.write(report.scenario["feature"]["name"], **feature_markup)
+            self._tw.write(f"{scenario['feature']['keyword']}: ", **feature_markup)
+            self._tw.write(scenario["feature"]["name"], **feature_markup)
             self._tw.write("\n")
-            self._tw.write("    Scenario: ", **scenario_markup)
-            self._tw.write(report.scenario["name"], **scenario_markup)
+
+            if rule and rule["name"] != self.current_rule:
+                self._tw.write(f"  {rule['keyword']}: ", **rule_markup)
+                self._tw.write(rule["name"], **rule_markup)
+                self._tw.write("\n")
+                self.current_rule = rule["name"]
+
+            self._tw.write(f"{indent}    {scenario['keyword']}: ", **scenario_markup)
+            self._tw.write(scenario["name"], **scenario_markup)
             self._tw.write("\n")
-            for step in report.scenario["steps"]:
-                self._tw.write(f"        {step['keyword']} {step['name']}\n", **scenario_markup)
-            self._tw.write(f"    {word}", **word_markup)
+            for step in scenario["steps"]:
+                self._tw.write(f"{indent}        {step['keyword']} {step['name']}\n", **scenario_markup)
+            self._tw.write(f"{indent}    {word}", **word_markup)
             self._tw.write("\n\n")
 
         self.stats.setdefault(cat, []).append(rep)
-        return None

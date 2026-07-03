@@ -1,14 +1,16 @@
-[tool.poetry]
+[project]
 name = "pytest-bdd"
-version = "8.0.0b1"
+version = "8.1.0"
 description = "BDD for pytest"
-authors = ["Oleg Pidsadnyi <oleg.pidsadnyi@gmail.com>", "Anatoly Bubenkov <bubenkoff@gmail.com>"]
-maintainers = ["Alessio Bogon <778703+youtux@users.noreply.github.com>"]
+authors = [
+    {name="Oleg Pidsadnyi", email="oleg.pidsadnyi@gmail.com"},
+    {name="Anatoly Bubenkov", email="bubenkoff@gmail.com"},
+]
+maintainers = [
+    {name="Alessio Bogon", email="778703+youtux@users.noreply.github.com"},
+]
 license = "MIT"
 readme = "README.rst"
-homepage = "https://pytest-bdd.readthedocs.io/"
-documentation = "https://pytest-bdd.readthedocs.io/"
-repository = "https://github.com/pytest-dev/pytest-bdd"
 classifiers = [
     "Development Status :: 6 - Mature",
     "Intended Audience :: Developers",
@@ -20,29 +22,35 @@ classifiers = [
     "Topic :: Software Development :: Libraries",
     "Topic :: Utilities",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "Mako",
+    "parse",
+    "parse-type",
+    "pytest>=7.0.0",
+    "typing-extensions",
+    "packaging",
+    # 31.0.0 and 32.0.0 crash with StopIteration on empty descriptions (fixed in 32.0.1)
+    "gherkin-official>=29.0.0,!=31.0.0,!=32.0.0",
 ]
 
-[tool.poetry.plugins."pytest11"]
+[project.urls]
+homepage = "https://pytest-bdd.readthedocs.io/"
+documentation = "https://pytest-bdd.readthedocs.io/"
+repository = "https://github.com/pytest-dev/pytest-bdd"
+
+[project.entry-points."pytest11"]
 "pytest-bdd" = "pytest_bdd.plugin"
 
-[tool.poetry.scripts]
+[project.scripts]
 "pytest-bdd" = "pytest_bdd.scripts:main"
-
-[tool.poetry.dependencies]
-python = ">=3.8"
-Mako = "*"
-parse = "*"
-parse-type = "*"
-pytest = ">=7.0.0"
-typing-extensions = "*"
-packaging = "*"
-gherkin-official = "^29.0.0"
 
 [tool.poetry.group.dev.dependencies]
 tox = ">=4.11.3"
@@ -50,20 +58,43 @@ mypy = ">=1.6.0"
 types-setuptools = ">=68.2.0.0"
 pytest-xdist = ">=3.3.1"
 coverage = {extras = ["toml"], version = ">=6.5.0"}
-Pygments = ">=2.13.0"  # for code-block highlighting
+Pygments = ">=2.20.0"  # for code-block highlighting
+# Docs tooling is not needed by the CI test jobs; sphinx-autobuild pulls in
+# watchfiles, which does not build (yet) on pre-release pythons.
+sphinx = {version = "*", python = "<3.15"}
+sphinx-autobuild = {version = "*", python = "<3.15"}
+
+[tool.poetry.group.build.dependencies]
+build = "*"
+twine = "*"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core==2.2.1"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
+[tool.ruff]
 line-length = 120
-target-version = ["py38", "py39", "py310", "py311", "py312"]
-
-[tool.isort]
-profile = "black"
-line_length = 120
-multi_line_output = 3
+target-version = "py39"
+lint.select = [
+    "B",     # flake8-bugbear
+    "BLE",   # flake8-blind-except
+    "C4",    # flake8-comprehensions
+    "E4",    # pycodestyle - error - import
+    "E7",    # pycodestyle - error - statement
+    "E9",    # pycodestyle - error - runtime
+    "F",     # pyflakes
+    "I",     # isort
+    "ISC",   # flake8-implicit-str-concat
+    "PERF",  # perflint
+    "UP",    # pyupgrade
+]
+lint.ignore = [
+    # Covered by formatter
+    "ISC001" # single-line-implicit-string-concatenation
+]
+lint.isort.required-imports = [
+    "from __future__ import annotations",
+]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -90,7 +121,9 @@ source = [
 
 
 [tool.mypy]
-python_version = "3.8"
+# No `python_version` pin: use the running interpreter, so that the pytest
+# version locked for that interpreter is parsed with matching syntax rules
+# (pytest>=9 uses `match` statements, which are invalid syntax under 3.9).
 warn_return_any = true
 warn_unused_configs = true
 files = "src/pytest_bdd/**/*.py"

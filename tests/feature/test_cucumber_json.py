@@ -8,8 +8,6 @@ import textwrap
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from typing import Optional
-
     from _pytest.pytester import Pytester, RunResult
 
 
@@ -53,9 +51,12 @@ def test_step_trace(pytester):
             """
     @feature-tag
     Feature: One passing scenario, one failing scenario
+    This is a feature description
 
         @scenario-passing-tag
         Scenario: Passing
+            This is a scenario description
+
             Given a passing step
             And some other passing step
 
@@ -118,108 +119,108 @@ def test_step_trace(pytester):
     assert result.ret
     expected = [
         {
-            "description": "",
+            "description": "This is a feature description",
             "elements": [
                 {
-                    "description": "",
+                    "description": "This is a scenario description",
                     "id": "test_passing",
                     "keyword": "Scenario",
-                    "line": 5,
+                    "line": 6,
                     "name": "Passing",
                     "steps": [
                         {
                             "keyword": "Given",
-                            "line": 6,
+                            "line": 9,
                             "match": {"location": ""},
                             "name": "a passing step",
                             "result": {"status": "passed", "duration": OfType(int)},
                         },
                         {
                             "keyword": "And",
-                            "line": 7,
+                            "line": 10,
                             "match": {"location": ""},
                             "name": "some other passing step",
                             "result": {"status": "passed", "duration": OfType(int)},
                         },
                     ],
-                    "tags": [{"name": "scenario-passing-tag", "line": 4}],
+                    "tags": [{"name": "scenario-passing-tag", "line": 5}],
                     "type": "scenario",
                 },
                 {
                     "description": "",
                     "id": "test_failing",
                     "keyword": "Scenario",
-                    "line": 10,
+                    "line": 13,
                     "name": "Failing",
                     "steps": [
                         {
                             "keyword": "Given",
-                            "line": 11,
+                            "line": 14,
                             "match": {"location": ""},
                             "name": "a passing step",
                             "result": {"status": "passed", "duration": OfType(int)},
                         },
                         {
                             "keyword": "And",
-                            "line": 12,
+                            "line": 15,
                             "match": {"location": ""},
                             "name": "a failing step",
                             "result": {"error_message": OfType(str), "status": "failed", "duration": OfType(int)},
                         },
                     ],
-                    "tags": [{"name": "scenario-failing-tag", "line": 9}],
+                    "tags": [{"name": "scenario-failing-tag", "line": 12}],
                     "type": "scenario",
                 },
                 {
                     "description": "",
-                    "keyword": "Scenario",
-                    "tags": [{"line": 14, "name": "scenario-outline-passing-tag"}],
+                    "keyword": "Scenario Outline",
+                    "tags": [{"line": 17, "name": "scenario-outline-passing-tag"}],
                     "steps": [
                         {
-                            "line": 16,
+                            "line": 19,
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
                             "name": "type str and value hello",
                         }
                     ],
-                    "line": 15,
+                    "line": 18,
                     "type": "scenario",
                     "id": "test_passing_outline[str-hello]",
                     "name": "Passing outline",
                 },
                 {
                     "description": "",
-                    "keyword": "Scenario",
-                    "tags": [{"line": 14, "name": "scenario-outline-passing-tag"}],
+                    "keyword": "Scenario Outline",
+                    "tags": [{"line": 17, "name": "scenario-outline-passing-tag"}],
                     "steps": [
                         {
-                            "line": 16,
+                            "line": 19,
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
                             "name": "type int and value 42",
                         }
                     ],
-                    "line": 15,
+                    "line": 18,
                     "type": "scenario",
                     "id": "test_passing_outline[int-42]",
                     "name": "Passing outline",
                 },
                 {
                     "description": "",
-                    "keyword": "Scenario",
-                    "tags": [{"line": 14, "name": "scenario-outline-passing-tag"}],
+                    "keyword": "Scenario Outline",
+                    "tags": [{"line": 17, "name": "scenario-outline-passing-tag"}],
                     "steps": [
                         {
-                            "line": 16,
+                            "line": 19,
                             "match": {"location": ""},
                             "result": {"status": "passed", "duration": OfType(int)},
                             "keyword": "Given",
                             "name": "type float and value 1.0",
                         }
                     ],
-                    "line": 15,
+                    "line": 18,
                     "type": "scenario",
                     "id": "test_passing_outline[float-1.0]",
                     "name": "Passing outline",
@@ -227,6 +228,7 @@ def test_step_trace(pytester):
             ],
             "id": os.path.join("test_step_trace0", "test.feature"),
             "keyword": "Feature",
+            "language": "en",
             "line": 2,
             "name": "One passing scenario, one failing scenario",
             "tags": [{"name": "feature-tag", "line": 1}],

@@ -1,15 +1,18 @@
 """Test scenario reporting."""
 
+from __future__ import annotations
+
 import textwrap
-from typing import Optional
 
 import pytest
+
+from pytest_bdd.reporting import test_report_context_registry
 
 
 class OfType:
     """Helper object comparison to which is always 'equal'."""
 
-    def __init__(self, type: Optional[type] = None) -> None:
+    def __init__(self, type: type | None = None) -> None:
         self.type = type
 
     def __eq__(self, other: object) -> bool:
@@ -102,18 +105,23 @@ def test_step_trace(pytester):
     )
     result = pytester.inline_run("-vvl")
     assert result.ret
-    report = result.matchreport("test_passing", when="call").scenario
+    report = result.matchreport("test_passing", when="call")
+    scenario = test_report_context_registry[report].scenario
     expected = {
         "feature": {
             "description": "",
+            "keyword": "Feature",
+            "language": "en",
             "filename": str(feature),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
             "rel_filename": str(relpath),
             "tags": ["feature-tag"],
         },
+        "keyword": "Scenario",
         "line_number": 5,
         "name": "Passing",
+        "description": "",
         "steps": [
             {
                 "duration": OfType(float),
@@ -135,20 +143,25 @@ def test_step_trace(pytester):
         "tags": ["scenario-passing-tag"],
     }
 
-    assert report == expected
+    assert scenario == expected
 
-    report = result.matchreport("test_failing", when="call").scenario
+    report = result.matchreport("test_failing", when="call")
+    scenario = test_report_context_registry[report].scenario
     expected = {
         "feature": {
             "description": "",
+            "keyword": "Feature",
+            "language": "en",
             "filename": str(feature),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
             "rel_filename": str(relpath),
             "tags": ["feature-tag"],
         },
+        "keyword": "Scenario",
         "line_number": 10,
         "name": "Failing",
+        "description": "",
         "steps": [
             {
                 "duration": OfType(float),
@@ -169,20 +182,25 @@ def test_step_trace(pytester):
         ],
         "tags": ["scenario-failing-tag"],
     }
-    assert report == expected
+    assert scenario == expected
 
-    report = result.matchreport("test_outlined[12-5-7]", when="call").scenario
+    report = result.matchreport("test_outlined[12-5-7]", when="call")
+    scenario = test_report_context_registry[report].scenario
     expected = {
         "feature": {
             "description": "",
+            "keyword": "Feature",
+            "language": "en",
             "filename": str(feature),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
             "rel_filename": str(relpath),
             "tags": ["feature-tag"],
         },
+        "keyword": "Scenario Outline",
         "line_number": 14,
         "name": "Outlined",
+        "description": "",
         "steps": [
             {
                 "duration": OfType(float),
@@ -211,20 +229,25 @@ def test_step_trace(pytester):
         ],
         "tags": [],
     }
-    assert report == expected
+    assert scenario == expected
 
-    report = result.matchreport("test_outlined[5-4-1]", when="call").scenario
+    report = result.matchreport("test_outlined[5-4-1]", when="call")
+    scenario = test_report_context_registry[report].scenario
     expected = {
         "feature": {
             "description": "",
+            "keyword": "Feature",
+            "language": "en",
             "filename": str(feature),
             "line_number": 2,
             "name": "One passing scenario, one failing scenario",
             "rel_filename": str(relpath),
             "tags": ["feature-tag"],
         },
+        "keyword": "Scenario Outline",
         "line_number": 14,
         "name": "Outlined",
+        "description": "",
         "steps": [
             {
                 "duration": OfType(float),
@@ -253,7 +276,7 @@ def test_step_trace(pytester):
         ],
         "tags": [],
     }
-    assert report == expected
+    assert scenario == expected
 
 
 def test_complex_types(pytester, pytestconfig):
@@ -318,5 +341,7 @@ def test_complex_types(pytester, pytestconfig):
     result = pytester.inline_run("-vvl")
     report = result.matchreport("test_complex[10,20-alien0]", when="call")
     assert report.passed
-    assert execnet.gateway_base.dumps(report.item)
-    assert execnet.gateway_base.dumps(report.scenario)
+
+    report_context = test_report_context_registry[report]
+    assert execnet.gateway_base.dumps(report_context.name)
+    assert execnet.gateway_base.dumps(report_context.scenario)

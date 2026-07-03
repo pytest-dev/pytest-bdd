@@ -1,5 +1,7 @@
 """Test code generation command."""
 
+from __future__ import annotations
+
 import os
 import sys
 import textwrap
@@ -31,11 +33,7 @@ def test_migrate(monkeypatch, capsys, pytester):
     expected = textwrap.dedent(
         """
     migrated: {0}/test_foo.py
-    skipped: {0}/__init__.py""".format(
-            str(tests)
-        )[
-            1:
-        ]
+    skipped: {0}/__init__.py""".format(str(tests))[1:]
     )
     assert out == expected
     assert tests.joinpath("test_foo.py").read_text() == textwrap.dedent(

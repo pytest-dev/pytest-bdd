@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Generator, TypeVar, cast
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Callable, TypeVar, cast
 
 import pytest
 from typing_extensions import ParamSpec
@@ -48,7 +49,7 @@ def _pytest_bdd_example() -> dict:
 
     If no outline is used, we just return an empty dict to render
     the current template without any actual variable.
-    Otherwise pytest_bdd will add all the context variables in this fixture
+    Otherwise, pytest_bdd will add all the context variables in this fixture
     from the example definitions in the feature file.
     """
     return {}
@@ -98,8 +99,8 @@ def pytest_bdd_step_error(
     feature: Feature,
     scenario: Scenario,
     step: Step,
-    step_func: Callable[..., Any],
-    step_func_args: dict,
+    step_func: Callable[..., object],
+    step_func_args: dict[str, object],
     exception: Exception,
 ) -> None:
     reporting.step_error(request, feature, scenario, step, step_func, step_func_args, exception)
@@ -111,7 +112,7 @@ def pytest_bdd_before_step(
     feature: Feature,
     scenario: Scenario,
     step: Step,
-    step_func: Callable[..., Any],
+    step_func: Callable[..., object],
 ) -> None:
     reporting.before_step(request, feature, scenario, step, step_func)
 
@@ -122,8 +123,8 @@ def pytest_bdd_after_step(
     feature: Feature,
     scenario: Scenario,
     step: Step,
-    step_func: Callable[..., Any],
-    step_func_args: dict[str, Any],
+    step_func: Callable[..., object],
+    step_func_args: dict[str, object],
 ) -> None:
     reporting.after_step(request, feature, scenario, step, step_func, step_func_args)
 
