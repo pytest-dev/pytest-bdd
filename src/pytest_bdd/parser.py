@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 
 from .exceptions import StepError
 from .gherkin_parser import Background as GherkinBackground
-from .gherkin_parser import DataTable, GherkinDocument, get_gherkin_document
+from .gherkin_parser import Child, DataTable, GherkinDocument, get_gherkin_document
 from .gherkin_parser import Feature as GherkinFeature
 from .gherkin_parser import Rule as GherkinRule
 from .gherkin_parser import Scenario as GherkinScenario
@@ -492,12 +492,13 @@ class FeatureParser:
         )
 
         for child in feature_data.children:
-            if child.background:
-                feature.background = self.parse_background(child.background)
-            elif child.rule:
-                self._parse_and_add_rule(child.rule, feature)
-            elif child.scenario:
-                self._parse_and_add_scenario(child.scenario, feature)
+            match child:
+                case Child(background=GherkinBackground() as background):
+                    feature.background = self.parse_background(background)
+                case Child(rule=GherkinRule() as rule):
+                    self._parse_and_add_rule(rule, feature)
+                case Child(scenario=GherkinScenario() as scenario):
+                    self._parse_and_add_scenario(scenario, feature)
 
         return feature
 
