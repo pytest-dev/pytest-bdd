@@ -122,6 +122,40 @@ def test_step_function_target_fixture_redefined(pytester):
     assert foo2 == "test bar"
 
 
+def test_step_function_accepts_unittest_mock_patch_argument(pytester):
+    pytester.makefile(
+        ".feature",
+        mock_patch=textwrap.dedent(
+            """\
+            Feature: Mock patch arguments
+                Scenario: A step uses unittest.mock.patch as a decorator
+                    Then the patched function is called
+            """
+        ),
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        from pathlib import Path
+        from unittest.mock import patch
+
+        from pytest_bdd import scenarios, then
+
+        scenarios("mock_patch.feature")
+
+
+        @then("the patched function is called")
+        @patch("pathlib.Path.cwd")
+        def _(cwd_mock):
+            Path.cwd()
+            cwd_mock.assert_called_once_with()
+        """
+        )
+    )
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=1)
+
+
 def test_step_functions_same_parser(pytester):
     pytester.makefile(
         ".feature",

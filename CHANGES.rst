@@ -31,6 +31,7 @@ Removed
 Fixed
 +++++
 * Made type annotations stronger and removed most of the ``typing.Any`` usages and ``# type: ignore`` annotations. `#658 <https://github.com/pytest-dev/pytest-bdd/pull/658>`_
+* Ignore ``unittest.mock.patch``-provided arguments when resolving step fixtures. `#330 <https://github.com/pytest-dev/pytest-bdd/issues/330>`_
 
 Security
 ++++++++
