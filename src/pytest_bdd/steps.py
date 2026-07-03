@@ -41,11 +41,10 @@ import enum
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from itertools import count
-from typing import Literal, TypeVar
+from typing import Literal, ParamSpec, TypeVar
 from weakref import WeakKeyDictionary
 
 import pytest
-from typing_extensions import ParamSpec
 
 from .parser import Step
 from .parsers import StepParser, get_parser
