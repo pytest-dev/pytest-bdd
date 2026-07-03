@@ -37,6 +37,10 @@ jobs:
   test-run:
     runs-on: ubuntu-latest
     needs: build
+    # Never fail the workflow for pre-release pythons, even when a step
+    # outside of typecheck/test breaks (e.g. a dependency that does not
+    # build yet on that version).
+    continue-on-error: ${{ matrix.ignore-test-outcome }}
     strategy:
       fail-fast: false
       matrix:
@@ -61,6 +65,15 @@ jobs:
             toxfactor: py3.13
             ignore-typecheck-outcome: false
             ignore-test-outcome: false
+          - python-version: "3.14"
+            toxfactor: py3.14
+            ignore-typecheck-outcome: false
+            ignore-test-outcome: false
+          # Python 3.15 is in development; allow failures until it is stable
+          - python-version: "3.15-dev"
+            toxfactor: py3.15
+            ignore-typecheck-outcome: true
+            ignore-test-outcome: true
 
     steps:
       - uses: actions/checkout@v4
