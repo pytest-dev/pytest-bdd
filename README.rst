@@ -2,7 +2,7 @@ Pytest-BDD: the BDD framework for pytest
 ========================================
 
 .. image:: https://img.shields.io/pypi/v/pytest-bdd.svg
-   :target: https://pypi.python.org/pypi/pytest-bdd
+   :target: https://pypi.org/project/pytest-bdd
 .. image:: https://codecov.io/gh/pytest-dev/pytest-bdd/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/pytest-dev/pytest-bdd
 .. image:: https://github.com/pytest-dev/pytest-bdd/actions/workflows/main.yml/badge.svg
@@ -24,7 +24,7 @@ mentioned in feature steps with dependency injection. This allows a true BDD
 just-enough specification of the requirements without maintaining any context object
 containing the side effects of Gherkin imperative declarations.
 
-.. _behave: https://pypi.python.org/pypi/behave
+.. _behave: https://pypi.org/project/behave
 .. _pytest-splinter: https://github.com/pytest-dev/pytest-splinter
 
 Install pytest-bdd
@@ -214,8 +214,8 @@ Also opens the possibility to use same step twice in single scenario and with di
 And even more, there are several types of step parameter parsers at your disposal
 (idea taken from behave_ implementation):
 
-.. _pypi_parse: http://pypi.python.org/pypi/parse
-.. _pypi_parse_type: http://pypi.python.org/pypi/parse_type
+.. _pypi_parse: https://pypi.org/project/parse
+.. _pypi_parse_type: https://pypi.org/project/parse-type
 
 **string** (the default)
     This is the default and can be considered as a `null` or `exact` parser. It parses no parameters
@@ -1260,7 +1260,7 @@ Let's look at a concrete example; let's say you have a class ``Wallet`` that has
 
     # contents of wallet.py
 
-    import dataclass
+    from dataclasses import dataclass
 
     @dataclass
     class Wallet:
@@ -1287,6 +1287,7 @@ You can use pytest-factoryboy to automatically create model fixtures for this cl
         class Meta:
             model = Wallet
 
+        verified = False
         amount_eur = 0
         amount_usd = 0
         amount_gbp = 0
@@ -1305,9 +1306,7 @@ Now we can define a function ``generate_wallet_steps(...)`` that creates the ste
     import re
     from dataclasses import fields
 
-    import factory
-    import pytest
-    from pytest_bdd import given, when, then, scenarios, parsers
+    from pytest_bdd import given, then, parsers
 
 
     def generate_wallet_steps(model_name="wallet", stacklevel=1):
@@ -1338,7 +1337,7 @@ Now we can define a function ``generate_wallet_steps(...)`` that creates the ste
                 parsers.parse(f"I should have {{value:d}} {currency.upper()} in my {human_name}"),
                 stacklevel=stacklevel,
             )
-            def _(value: int, _currency=currency, _model_name=model_name) -> None:
+            def _(request, value: int, _currency=currency, _model_name=model_name) -> None:
                 wallet = request.getfixturevalue(_model_name)
                 assert getattr(wallet, f"amount_{_currency}") == value
 
@@ -1419,7 +1418,7 @@ Reporting
 ---------
 
 It's important to have nice reporting out of your bdd tests. Cucumber introduced some kind of standard for
-`json format <https://www.relishapp.com/cucumber/cucumber/docs/json-output-formatter>`_
+`json format <https://github.com/cucumber/cucumber-json-formatter>`_
 which can be used for, for example, by `this <https://plugins.jenkins.io/cucumber-testresult-plugin/>`_ Jenkins
 plugin.
 

@@ -27,6 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 requires-python = ">=3.9"
 dependencies = [
@@ -36,7 +37,8 @@ dependencies = [
     "pytest>=7.0.0",
     "typing-extensions",
     "packaging",
-    "gherkin-official>=29.0.0",
+    # 31.0.0 and 32.0.0 crash with StopIteration on empty descriptions (fixed in 32.0.1)
+    "gherkin-official>=29.0.0,!=31.0.0,!=32.0.0",
 ]
 
 [project.urls]
@@ -56,12 +58,18 @@ mypy = ">=1.6.0"
 types-setuptools = ">=68.2.0.0"
 pytest-xdist = ">=3.3.1"
 coverage = {extras = ["toml"], version = ">=6.5.0"}
-Pygments = ">=2.13.0"  # for code-block highlighting
-sphinx = "*"
-sphinx-autobuild = "*"
+Pygments = ">=2.20.0"  # for code-block highlighting
+# Docs tooling is not needed by the CI test jobs; sphinx-autobuild pulls in
+# watchfiles, which does not build (yet) on pre-release pythons.
+sphinx = {version = "*", python = "<3.15"}
+sphinx-autobuild = {version = "*", python = "<3.15"}
+
+[tool.poetry.group.build.dependencies]
+build = "*"
+twine = "*"
 
 [build-system]
-requires = ["poetry-core>=2.0.0"]
+requires = ["poetry-core==2.2.1"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
@@ -113,7 +121,9 @@ source = [
 
 
 [tool.mypy]
-python_version = "3.9"
+# No `python_version` pin: use the running interpreter, so that the pytest
+# version locked for that interpreter is parsed with matching syntax rules
+# (pytest>=9 uses `match` statements, which are invalid syntax under 3.9).
 warn_return_any = true
 warn_unused_configs = true
 files = "src/pytest_bdd/**/*.py"
