@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import textwrap
 from pathlib import Path
 
+from src.pytest_bdd import parser as parser_module
 from src.pytest_bdd.gherkin_parser import (
     Background,
     Cell,
@@ -851,3 +853,35 @@ def test_parser():
     )
 
     assert gherkin_doc == expected_document
+
+
+def test_feature_parser_skips_unknown_child_kinds(tmp_path, monkeypatch):
+    """A Child with none of background/rule/scenario set is skipped.
+
+    The gherkin AST reserves the right to grow new child kinds; ``Child.from_dict``
+    would map such a child to an all-``None`` dataclass, and ``FeatureParser.parse``
+    must ignore it instead of crashing.
+    """
+    (tmp_path / "minimal.feature").write_text(
+        textwrap.dedent(
+            """\
+            Feature: Minimal
+              Scenario: A scenario
+                Given a step
+            """
+        )
+    )
+
+    real_get_gherkin_document = parser_module.get_gherkin_document
+
+    def get_gherkin_document_with_unknown_child(abs_filename: str, encoding: str = "utf-8") -> GherkinDocument:
+        document = real_get_gherkin_document(abs_filename, encoding)
+        document.feature.children.append(Child())
+        return document
+
+    monkeypatch.setattr(parser_module, "get_gherkin_document", get_gherkin_document_with_unknown_child)
+
+    feature = parser_module.FeatureParser(str(tmp_path), "minimal.feature").parse()
+
+    assert list(feature.scenarios) == ["A scenario"]
+    assert feature.background is None
