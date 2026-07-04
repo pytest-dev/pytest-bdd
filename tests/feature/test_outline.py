@@ -272,8 +272,9 @@ def test_outline_with_escaped_pipes(pytester):
         r"bork |",
         r"bork||bork",
         r"|",
-        r"bork      \\",
-        r"bork    \\|",
+        # An escaped backslash "\\" in a cell is a single backslash, per the Gherkin spec.
+        "bork      \\",
+        r"bork    \|",
     ]
 
 
