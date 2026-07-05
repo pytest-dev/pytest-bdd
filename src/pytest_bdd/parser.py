@@ -121,8 +121,7 @@ class Examples:
             dict[str, str]: A dictionary mapping parameter names to their values for each example row.
         """
         for row in self.examples:
-            assert len(self.example_params) == len(row)
-            yield dict(zip(self.example_params, row))
+            yield dict(zip(self.example_params, row, strict=True))
 
     def __bool__(self) -> bool:
         """Check if there are any examples.

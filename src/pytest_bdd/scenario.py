@@ -17,9 +17,9 @@ import contextlib
 import logging
 import os
 import re
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from inspect import signature
-from typing import TYPE_CHECKING, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, TypeVar, cast
 from weakref import WeakKeyDictionary
 
 import pytest

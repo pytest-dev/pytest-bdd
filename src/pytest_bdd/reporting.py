@@ -7,8 +7,9 @@ that enriches the pytest test reporting.
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, TypedDict
+from typing import TYPE_CHECKING, TypedDict
 from weakref import WeakKeyDictionary
 
 from typing_extensions import NotRequired
