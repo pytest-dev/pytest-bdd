@@ -8,9 +8,11 @@ from collections import OrderedDict
 from collections.abc import Generator, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 
+from typing_extensions import assert_never
+
 from .exceptions import StepError
 from .gherkin_parser import Background as GherkinBackground
-from .gherkin_parser import Child, DataTable, GherkinDocument, get_gherkin_document
+from .gherkin_parser import DataTable, GherkinDocument, get_gherkin_document
 from .gherkin_parser import Feature as GherkinFeature
 from .gherkin_parser import Rule as GherkinRule
 from .gherkin_parser import Scenario as GherkinScenario
@@ -492,13 +494,19 @@ class FeatureParser:
         )
 
         for child in feature_data.children:
-            match child:
-                case Child(background=GherkinBackground() as background):
+            match child.background or child.rule or child.scenario:
+                case GherkinBackground() as background:
                     feature.background = self.parse_background(background)
-                case Child(rule=GherkinRule() as rule):
+                case GherkinRule() as rule:
                     self._parse_and_add_rule(rule, feature)
-                case Child(scenario=GherkinScenario() as scenario):
+                case GherkinScenario() as scenario:
                     self._parse_and_add_scenario(scenario, feature)
+                case None:  # pragma: no cover
+                    # An empty Child (a child kind newer than this gherkin version);
+                    # skip it, like unknown children were skipped before the match.
+                    pass
+                case unreachable:  # pragma: no cover
+                    assert_never(unreachable)
 
         return feature
 
