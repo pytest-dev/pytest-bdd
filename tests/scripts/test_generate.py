@@ -151,6 +151,37 @@ def test_generate_with_quotes(pytester):
     )
 
 
+def test_generate_is_idempotent(pytester):
+    """Test that invoking the generation script twice yields the same output.
+
+    Also make sure that applying the generated code twice to the same module
+    does not duplicate tests, since scenarios() skips already bound scenarios.
+    """
+    pytester.makefile(
+        ".feature",
+        idempotency=textwrap.dedent(
+            """\
+            Feature: Idempotent code generation
+
+                Scenario: First scenario
+                    Given I have a step
+
+                Scenario: Second scenario
+                    Given I have a step
+            """
+        ),
+    )
+
+    first = pytester.run("pytest-bdd", "generate", "idempotency.feature")
+    second = pytester.run("pytest-bdd", "generate", "idempotency.feature")
+    assert str(first.stdout) == str(second.stdout)
+
+    pytester.makepyfile(str(first.stdout) + "\n\nscenarios('idempotency.feature')\n")
+    result = pytester.runpytest("--collect-only", "-q")
+    collected = [line for line in result.stdout.lines if "::test_" in line]
+    assert len(collected) == 2
+
+
 def test_unicode_characters(pytester, monkeypatch):
     """Test generating code with unicode characters.
 

@@ -1,6 +1,3 @@
-<%
-    feature_paths = sorted(set(f.rel_filename for f in features))
-%>\
 % if features:
 """${ features[0].name or features[0].rel_filename } feature tests."""
 
@@ -11,6 +8,9 @@ from pytest_bdd import (
     when,
 )
 
+<%
+    feature_paths = sorted(set(f.rel_filename for f in features))
+%>\
 % for feature_path in feature_paths:
 scenarios('${feature_path}')
 % endfor
