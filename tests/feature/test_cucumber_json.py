@@ -237,3 +237,91 @@ def test_step_trace(pytester):
     ]
 
     assert jsonobject == expected
+
+
+def test_pytest_fail_in_step_body(pytester):
+    """pytest.fail() raised directly inside a step body is captured as failed in the JSON."""
+    pytester.makefile(
+        ".feature",
+        test=textwrap.dedent(
+            """
+    Feature: Failing via pytest.fail in step body
+        Scenario: Fail in step body
+            Given a passing step
+            And a step that calls pytest.fail
+    """
+        ),
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """
+        import pytest
+        from pytest_bdd import given, scenario
+
+        @given('a passing step')
+        def _():
+            pass
+
+        @given('a step that calls pytest.fail')
+        def _():
+            pytest.fail('deliberate failure')
+
+        @scenario('test.feature', 'Fail in step body')
+        def test_scenario():
+            pass
+    """
+        )
+    )
+    result, jsonobject = runandparse(pytester)
+    result.assert_outcomes(failed=1)
+
+    steps = jsonobject[0]["elements"][0]["steps"]
+    assert steps[0]["result"]["status"] == "passed"
+    assert steps[1]["result"]["status"] == "failed"
+    assert "deliberate failure" in steps[1]["result"]["error_message"]
+
+
+def test_pytest_fail_in_fixture(pytester):
+    """pytest.fail() raised in a fixture used by a step is captured as failed in the JSON."""
+    pytester.makefile(
+        ".feature",
+        test=textwrap.dedent(
+            """
+    Feature: Failing via pytest.fail in fixture
+        Scenario: Fail in fixture
+            Given a passing step
+            And a step whose fixture fails
+    """
+        ),
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """
+        import pytest
+        from pytest_bdd import given, scenario
+
+        @pytest.fixture
+        def failing_fixture():
+            pytest.fail('fixture failure')
+
+        @given('a passing step')
+        def _():
+            pass
+
+        @given('a step whose fixture fails')
+        def _(failing_fixture):
+            pass
+
+        @scenario('test.feature', 'Fail in fixture')
+        def test_scenario():
+            pass
+    """
+        )
+    )
+    result, jsonobject = runandparse(pytester)
+    result.assert_outcomes(failed=1)
+
+    steps = jsonobject[0]["elements"][0]["steps"]
+    assert steps[0]["result"]["status"] == "passed"
+    assert steps[1]["result"]["status"] == "failed"
+    assert "fixture failure" in steps[1]["result"]["error_message"]
