@@ -197,6 +197,56 @@ def test_docstring_argument_in_step_impl_is_optional(pytester):
     result.assert_outcomes(passed=1)
 
 
+def test_steps_with_empty_docstring(pytester):
+    """Regression test for #809.
+
+    An empty docstring must be passed to the step function as an empty
+    string. Before the fix it was dropped, and pytest then treated
+    ``docstring`` as a missing fixture.
+    """
+    pytester.makefile(
+        ".feature",
+        empty_docstring=textwrap.dedent(
+            '''\
+            Feature: Empty docstring
+
+              Scenario: Step receives an empty docstring
+                Given a step has an empty docstring
+                """
+                """
+            '''
+        ),
+    )
+    pytester.makeconftest(
+        textwrap.dedent(
+            r"""
+        from pytest_bdd import given
+        from pytest_bdd.utils import dump_obj
+
+
+        @given("a step has an empty docstring")
+        def _(docstring):
+            dump_obj(docstring)
+            """
+        )
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+            from pytest_bdd import scenarios
+
+            scenarios("empty_docstring.feature")
+            """
+        )
+    )
+
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=1)
+
+    docstrings = collect_dumped_objects(result)
+    assert docstrings == [""]
+
+
 def test_docstring_step_argument_is_reserved_and_cannot_be_used(pytester):
     pytester.makefile(
         ".feature",

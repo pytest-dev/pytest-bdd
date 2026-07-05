@@ -48,7 +48,9 @@ def test_default_output_should_be_the_same_as_regular_terminal_reporter(pytester
     def parse_lines(lines: list[str]) -> list[str]:
         return [line for line in lines if not line.startswith("===")]
 
-    assert all(l1 == l2 for l1, l2 in zip(parse_lines(regular.stdout.lines), parse_lines(gherkin.stdout.lines)))
+    assert all(
+        l1 == l2 for l1, l2 in zip(parse_lines(regular.stdout.lines), parse_lines(gherkin.stdout.lines), strict=True)
+    )
 
 
 def test_verbose_mode_should_display_feature_and_scenario_names_instead_of_test_names_in_a_single_line(pytester):
