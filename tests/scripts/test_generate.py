@@ -42,12 +42,15 @@ def test_generate(pytester, monkeypatch, capsys):
 
     from pytest_bdd import (
         given,
-        scenarios,
+        scenario,
         then,
         when,
     )
 
-    scenarios('scripts/generate.feature')
+
+    @scenario('scripts/generate.feature', 'Given and when using the same fixture should not evaluate it twice')
+    def test_given_and_when_using_the_same_fixture_should_not_evaluate_it_twice():
+        """Given and when using the same fixture should not evaluate it twice."""
 
 
     @given('1 have a fixture (appends 1 to a list) in reuse syntax')
@@ -105,12 +108,15 @@ def test_generate_with_quotes(pytester):
 
     from pytest_bdd import (
         given,
-        scenarios,
+        scenario,
         then,
         when,
     )
 
-    scenarios('generate_with_quotes.feature')
+
+    @scenario('generate_with_quotes.feature', 'A step definition with quotes should be escaped as needed')
+    def test_a_step_definition_with_quotes_should_be_escaped_as_needed():
+        """A step definition with quotes should be escaped as needed."""
 
 
     @given('I have a fixture with "double" quotes')
@@ -178,12 +184,15 @@ def test_unicode_characters(pytester, monkeypatch):
 
             from pytest_bdd import (
                 given,
-                scenarios,
+                scenario,
                 then,
                 when,
             )
 
-            scenarios('unicode_characters.feature')
+
+            @scenario('unicode_characters.feature', 'Calculating the circumference of a circle')
+            def test_calculating_the_circumference_of_a_circle():
+                """Calculating the circumference of a circle."""
 
 
             @given('We have a circle')
