@@ -5,7 +5,7 @@ from __future__ import annotations
 import typing
 
 if typing.TYPE_CHECKING:
-    from typing_extensions import Literal
+    from typing import Literal
 
 GIVEN: Literal["given"] = "given"
 WHEN: Literal["when"] = "when"

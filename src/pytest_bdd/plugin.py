@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator
-from typing import TYPE_CHECKING, Callable, TypeVar, cast
+from collections.abc import Callable, Generator
+from typing import TYPE_CHECKING, ParamSpec, TypeVar, cast
 
 import pytest
-from typing_extensions import ParamSpec
 
 from . import cucumber_json, generation, gherkin_terminal_reporter, given, reporting, then, when
 from .utils import CONFIG_STACK
