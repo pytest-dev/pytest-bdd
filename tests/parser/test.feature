@@ -9,7 +9,7 @@ Feature: User login
     # Background steps run before each scenario
     Given the login page is open
 
-    # Scenario within the rule
+  # Scenario within the rule
   Scenario: Successful login with valid credentials
     Given the user enters a valid username
     And the user enters a valid password
@@ -22,7 +22,7 @@ Feature: User login
     When the user clicks the login button
     Then the user should see an error message "<error_message>"
 
-      # Examples table provides data for the scenario outline
+    # Examples table provides data for the scenario outline
     Examples:
       | username    | password  | error_message                |
       | invalidUser | wrongPass | Invalid username or password |
@@ -83,15 +83,32 @@ Feature: User login
       Please check your username and password and try again.
       If the problem persists, contact support.
       """
+  # Tags can also be used on exemples
+  @scenario_tag
+  Scenario Outline: Test tags on Examples
+    Given the user enters "<username>" as username
+    And the user enters "<password>" as password
+    When the user clicks the login button
+    Then the user should see an error message "<error_message>"
+
+    @example_tag_1
+    Examples:
+      | username    | password  | error_message                |
+      | invalidUser | wrongPass | Invalid username or password |
+
+    @example_tag_2
+    Examples:
+      | username | password  | error_message                |
+      | user123  | incorrect | Invalid username or password |
 
   @some-tag
   Rule: a sale cannot happen if there is no stock
-  # Unhappy path
-  Example: No chocolates left
-    Given the customer has 100 cents
-    And there are no chocolate bars in stock
-    When the customer tries to buy a 1 cent chocolate bar
-    Then the sale should not happen
+    # Unhappy path
+    Example: No chocolates left
+      Given the customer has 100 cents
+      And there are no chocolate bars in stock
+      When the customer tries to buy a 1 cent chocolate bar
+      Then the sale should not happen
 
   Rule: A sale cannot happen if the customer does not have enough money
     # Unhappy path

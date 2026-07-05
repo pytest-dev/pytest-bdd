@@ -208,6 +208,7 @@ class ScenarioTemplate:
         Returns:
             Scenario: A Scenario object with steps rendered based on the context.
         """
+        example = self.find_scenario_example_from_context(context)
         base_steps = self.all_background_steps + self._steps
         scenario_steps = [
             Step(
@@ -227,10 +228,24 @@ class ScenarioTemplate:
             name=render_string(self.name, context),
             line_number=self.line_number,
             steps=scenario_steps,
-            tags=self.tags,
+            tags=self.tags | example.tags if example else self.tags,
             description=self.description,
             rule=self.rule,
         )
+
+    def find_scenario_example_from_context(self, context: Mapping[str, object]) -> Examples | None:
+        """Find the Examples block that produced the given parametrization context.
+
+        A scenario outline may declare several Examples blocks, each with its own
+        tags and several rows. The rendering ``context`` is exactly one row dict as
+        produced by :meth:`Examples.as_contexts`, so we match it against every row
+        of every block (not just the first one). If two blocks happen to yield an
+        identical row, the first declared block wins.
+        """
+        for example in self.examples:
+            if any(context == row_context for row_context in example.as_contexts()):
+                return example
+        return None
 
 
 @dataclass(eq=False)

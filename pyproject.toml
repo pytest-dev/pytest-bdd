@@ -1,6 +1,6 @@
 [project]
 name = "pytest-bdd"
-version = "8.1.0"
+version = "8.1.1"
 description = "BDD for pytest"
 authors = [
     {name="Oleg Pidsadnyi", email="oleg.pidsadnyi@gmail.com"},

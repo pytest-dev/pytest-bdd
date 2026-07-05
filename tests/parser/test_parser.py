@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import textwrap
+from collections import OrderedDict
 from pathlib import Path
 
 from src.pytest_bdd.gherkin_parser import (
@@ -20,6 +22,9 @@ from src.pytest_bdd.gherkin_parser import (
     Tag,
     get_gherkin_document,
 )
+from src.pytest_bdd.parser import Examples, ScenarioTemplate
+from src.pytest_bdd.parser import Feature as PytestBddFeature
+from src.pytest_bdd.parser import Step as PytestBddStep
 
 
 def test_parser():
@@ -634,16 +639,250 @@ def test_parser():
                 ),
                 Child(
                     background=None,
+                    rule=None,
+                    scenario=Scenario(
+                        id="71",
+                        location=Location(
+                            column=3,
+                            line=88,
+                        ),
+                        keyword="Scenario Outline",
+                        name="Test tags on Examples",
+                        description="",
+                        steps=[
+                            Step(
+                                id="58",
+                                location=Location(
+                                    column=5,
+                                    line=89,
+                                ),
+                                keyword="Given",
+                                keyword_type="Context",
+                                text='the user enters "<username>" as username',
+                                datatable=None,
+                                docstring=None,
+                            ),
+                            Step(
+                                id="59",
+                                location=Location(
+                                    column=5,
+                                    line=90,
+                                ),
+                                keyword="And",
+                                keyword_type="Conjunction",
+                                text='the user enters "<password>" as password',
+                                datatable=None,
+                                docstring=None,
+                            ),
+                            Step(
+                                id="60",
+                                location=Location(
+                                    column=5,
+                                    line=91,
+                                ),
+                                keyword="When",
+                                keyword_type="Action",
+                                text="the user clicks the login button",
+                                datatable=None,
+                                docstring=None,
+                            ),
+                            Step(
+                                id="61",
+                                location=Location(
+                                    column=5,
+                                    line=92,
+                                ),
+                                keyword="Then",
+                                keyword_type="Outcome",
+                                text='the user should see an error message "<error_message>"',
+                                datatable=None,
+                                docstring=None,
+                            ),
+                        ],
+                        tags=[
+                            Tag(
+                                id="70",
+                                location=Location(
+                                    column=3,
+                                    line=87,
+                                ),
+                                name="@scenario_tag",
+                            ),
+                        ],
+                        examples=[
+                            ExamplesTable(
+                                location=Location(
+                                    column=5,
+                                    line=95,
+                                ),
+                                tags=[
+                                    Tag(
+                                        id="64",
+                                        location=Location(
+                                            column=5,
+                                            line=94,
+                                        ),
+                                        name="@example_tag_1",
+                                    ),
+                                ],
+                                name="",
+                                table_header=Row(
+                                    id="62",
+                                    location=Location(
+                                        column=7,
+                                        line=96,
+                                    ),
+                                    cells=[
+                                        Cell(
+                                            location=Location(
+                                                column=9,
+                                                line=96,
+                                            ),
+                                            value="username",
+                                        ),
+                                        Cell(
+                                            location=Location(
+                                                column=23,
+                                                line=96,
+                                            ),
+                                            value="password",
+                                        ),
+                                        Cell(
+                                            location=Location(
+                                                column=35,
+                                                line=96,
+                                            ),
+                                            value="error_message",
+                                        ),
+                                    ],
+                                ),
+                                table_body=[
+                                    Row(
+                                        id="63",
+                                        location=Location(
+                                            column=7,
+                                            line=97,
+                                        ),
+                                        cells=[
+                                            Cell(
+                                                location=Location(
+                                                    column=9,
+                                                    line=97,
+                                                ),
+                                                value="invalidUser",
+                                            ),
+                                            Cell(
+                                                location=Location(
+                                                    column=23,
+                                                    line=97,
+                                                ),
+                                                value="wrongPass",
+                                            ),
+                                            Cell(
+                                                location=Location(
+                                                    column=35,
+                                                    line=97,
+                                                ),
+                                                value="Invalid username or password",
+                                            ),
+                                        ],
+                                    ),
+                                ],
+                            ),
+                            ExamplesTable(
+                                location=Location(
+                                    column=5,
+                                    line=100,
+                                ),
+                                tags=[
+                                    Tag(
+                                        id="68",
+                                        location=Location(
+                                            column=5,
+                                            line=99,
+                                        ),
+                                        name="@example_tag_2",
+                                    ),
+                                ],
+                                name="",
+                                table_header=Row(
+                                    id="66",
+                                    location=Location(
+                                        column=7,
+                                        line=101,
+                                    ),
+                                    cells=[
+                                        Cell(
+                                            location=Location(
+                                                column=9,
+                                                line=101,
+                                            ),
+                                            value="username",
+                                        ),
+                                        Cell(
+                                            location=Location(
+                                                column=20,
+                                                line=101,
+                                            ),
+                                            value="password",
+                                        ),
+                                        Cell(
+                                            location=Location(
+                                                column=32,
+                                                line=101,
+                                            ),
+                                            value="error_message",
+                                        ),
+                                    ],
+                                ),
+                                table_body=[
+                                    Row(
+                                        id="67",
+                                        location=Location(
+                                            column=7,
+                                            line=102,
+                                        ),
+                                        cells=[
+                                            Cell(
+                                                location=Location(
+                                                    column=9,
+                                                    line=102,
+                                                ),
+                                                value="user123",
+                                            ),
+                                            Cell(
+                                                location=Location(
+                                                    column=20,
+                                                    line=102,
+                                                ),
+                                                value="incorrect",
+                                            ),
+                                            Cell(
+                                                location=Location(
+                                                    column=32,
+                                                    line=102,
+                                                ),
+                                                value="Invalid username or password",
+                                            ),
+                                        ],
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                ),
+                Child(
+                    background=None,
                     rule=Rule(
-                        id="64",
+                        id="78",
                         keyword="Rule",
-                        location=Location(column=3, line=88),
+                        location=Location(column=3, line=105),
                         name="a sale cannot happen if there is no stock",
                         description="",
                         tags=[
                             Tag(
-                                id="63",
-                                location=Location(column=3, line=87),
+                                id="77",
+                                location=Location(column=3, line=104),
                                 name="@some-tag",
                             )
                         ],
@@ -652,44 +891,44 @@ def test_parser():
                                 background=None,
                                 rule=None,
                                 scenario=Scenario(
-                                    id="62",
+                                    id="76",
                                     keyword="Example",
-                                    location=Location(column=3, line=90),
+                                    location=Location(column=5, line=107),
                                     name="No chocolates left",
                                     description="",
                                     steps=[
                                         Step(
-                                            id="58",
+                                            id="72",
                                             keyword="Given",
                                             keyword_type="Context",
-                                            location=Location(column=5, line=91),
+                                            location=Location(column=7, line=108),
                                             text="the customer has 100 cents",
                                             datatable=None,
                                             docstring=None,
                                         ),
                                         Step(
-                                            id="59",
+                                            id="73",
                                             keyword="And",
                                             keyword_type="Conjunction",
-                                            location=Location(column=5, line=92),
+                                            location=Location(column=7, line=109),
                                             text="there are no chocolate bars in stock",
                                             datatable=None,
                                             docstring=None,
                                         ),
                                         Step(
-                                            id="60",
+                                            id="74",
                                             keyword="When",
                                             keyword_type="Action",
-                                            location=Location(column=5, line=93),
+                                            location=Location(column=7, line=110),
                                             text="the customer tries to buy a 1 cent chocolate bar",
                                             datatable=None,
                                             docstring=None,
                                         ),
                                         Step(
-                                            id="61",
+                                            id="75",
                                             keyword="Then",
                                             keyword_type="Outcome",
-                                            location=Location(column=5, line=94),
+                                            location=Location(column=7, line=111),
                                             text="the sale should not happen",
                                             datatable=None,
                                             docstring=None,
@@ -706,9 +945,9 @@ def test_parser():
                 Child(
                     background=None,
                     rule=Rule(
-                        id="75",
+                        id="89",
                         keyword="Rule",
-                        location=Location(column=3, line=96),
+                        location=Location(column=3, line=113),
                         name="A sale cannot happen if the customer does not have enough money",
                         description="",
                         tags=[],
@@ -717,44 +956,44 @@ def test_parser():
                                 background=None,
                                 rule=None,
                                 scenario=Scenario(
-                                    id="69",
+                                    id="83",
                                     keyword="Example",
-                                    location=Location(column=5, line=98),
+                                    location=Location(column=5, line=115),
                                     name="Not enough money",
                                     description="",
                                     steps=[
                                         Step(
-                                            id="65",
+                                            id="79",
                                             keyword="Given",
                                             keyword_type="Context",
-                                            location=Location(column=7, line=99),
+                                            location=Location(column=7, line=116),
                                             text="the customer has 100 cents",
                                             datatable=None,
                                             docstring=None,
                                         ),
                                         Step(
-                                            id="66",
+                                            id="80",
                                             keyword="And",
                                             keyword_type="Conjunction",
-                                            location=Location(column=7, line=100),
+                                            location=Location(column=7, line=117),
                                             text="there are chocolate bars in stock",
                                             datatable=None,
                                             docstring=None,
                                         ),
                                         Step(
-                                            id="67",
+                                            id="81",
                                             keyword="When",
                                             keyword_type="Action",
-                                            location=Location(column=7, line=101),
+                                            location=Location(column=7, line=118),
                                             text="the customer tries to buy a 125 cent chocolate bar",
                                             datatable=None,
                                             docstring=None,
                                         ),
                                         Step(
-                                            id="68",
+                                            id="82",
                                             keyword="Then",
                                             keyword_type="Outcome",
-                                            location=Location(column=7, line=102),
+                                            location=Location(column=7, line=119),
                                             text="the sale should not happen",
                                             datatable=None,
                                             docstring=None,
@@ -768,44 +1007,44 @@ def test_parser():
                                 background=None,
                                 rule=None,
                                 scenario=Scenario(
-                                    id="74",
+                                    id="88",
                                     keyword="Example",
-                                    location=Location(column=5, line=105),
+                                    location=Location(column=5, line=122),
                                     name="Enough money",
                                     description="",
                                     steps=[
                                         Step(
-                                            id="70",
+                                            id="84",
                                             keyword="Given",
                                             keyword_type="Context",
-                                            location=Location(column=7, line=106),
+                                            location=Location(column=7, line=123),
                                             text="the customer has 100 cents",
                                             datatable=None,
                                             docstring=None,
                                         ),
                                         Step(
-                                            id="71",
+                                            id="85",
                                             keyword="And",
                                             keyword_type="Conjunction",
-                                            location=Location(column=7, line=107),
+                                            location=Location(column=7, line=124),
                                             text="there are chocolate bars in stock",
                                             datatable=None,
                                             docstring=None,
                                         ),
                                         Step(
-                                            id="72",
+                                            id="86",
                                             keyword="When",
                                             keyword_type="Action",
-                                            location=Location(column=7, line=108),
+                                            location=Location(column=7, line=125),
                                             text="the customer tries to buy a 75 cent chocolate bar",
                                             datatable=None,
                                             docstring=None,
                                         ),
                                         Step(
-                                            id="73",
+                                            id="87",
                                             keyword="Then",
                                             keyword_type="Outcome",
-                                            location=Location(column=7, line=109),
+                                            location=Location(column=7, line=126),
                                             text="the sale should happen",
                                             datatable=None,
                                             docstring=None,
@@ -827,10 +1066,10 @@ def test_parser():
                 location=Location(column=1, line=9),
                 text="    # Background steps run before each scenario",
             ),
-            Comment(location=Location(column=1, line=12), text="    # Scenario within the rule"),
+            Comment(location=Location(column=1, line=12), text="  # Scenario within the rule"),
             Comment(
                 location=Location(column=1, line=25),
-                text="      # Examples table provides data for the scenario outline",
+                text="    # Examples table provides data for the scenario outline",
             ),
             Comment(
                 location=Location(column=1, line=54),
@@ -844,10 +1083,181 @@ def test_parser():
                 location=Location(column=1, line=76),
                 text="  # Using Doc Strings for multi-line text",
             ),
-            Comment(location=Location(column=1, line=89), text="  # Unhappy path"),
-            Comment(location=Location(column=1, line=97), text="    # Unhappy path"),
-            Comment(location=Location(column=1, line=104), text="    # Happy path"),
+            Comment(
+                location=Location(
+                    column=1,
+                    line=86,
+                ),
+                text="  # Tags can also be used on exemples",
+            ),
+            Comment(location=Location(column=1, line=106), text="    # Unhappy path"),
+            Comment(location=Location(column=1, line=114), text="    # Unhappy path"),
+            Comment(location=Location(column=1, line=121), text="    # Happy path"),
         ],
     )
 
     assert gherkin_doc == expected_document
+
+
+def test_render_scenario_with_example_tags():
+    # Mock feature and context
+    feature = PytestBddFeature(
+        scenarios=OrderedDict(),
+        filename="test.feature",
+        rel_filename="test.feature",
+        language="en",
+        keyword="Feature",
+        name="Test Feature",
+        tags=set(),
+        background=None,
+        line_number=1,
+        description="A test feature",
+    )
+    context = {"username": "user123", "password": "incorrect", "error_message": "Invalid username or password"}
+
+    # Mock examples with tags
+    examples = Examples(
+        line_number=10,
+        name="Example with tags",
+        example_params=["username", "password", "error_message"],
+        examples=[
+            ["user123", "incorrect", "Invalid username or password"],
+        ],
+        tags={"example_tag_1", "example_tag_2"},
+    )
+
+    # Mock steps
+    steps = [
+        PytestBddStep(
+            name="Given the user enters <username> as username",
+            type="given",
+            indent=0,
+            line_number=2,
+            keyword="Given",
+        ),
+        PytestBddStep(
+            name="And the user enters <password> as password",
+            type="and",
+            indent=0,
+            line_number=3,
+            keyword="And",
+        ),
+        PytestBddStep(
+            name="Then the user should see an error message <error_message>",
+            type="then",
+            indent=0,
+            line_number=4,
+            keyword="Then",
+        ),
+    ]
+
+    # Create a ScenarioTemplate
+    scenario_template = ScenarioTemplate(
+        feature=feature,
+        keyword="Scenario Outline",
+        name="Test Scenario with Example Tags",
+        line_number=2,
+        templated=True,
+        description="A test scenario with example tags",
+        tags={"scenario_tag"},
+        examples=[examples],
+    )
+    for step in steps:
+        scenario_template.add_step(step)
+
+    # Render the scenario
+    rendered_scenario = scenario_template.render(context)
+
+    # Assertions
+    assert rendered_scenario.name == "Test Scenario with Example Tags"
+    assert len(rendered_scenario.steps) == 3
+    assert rendered_scenario.steps[0].name == "Given the user enters user123 as username"
+    assert rendered_scenario.steps[1].name == "And the user enters incorrect as password"
+    assert rendered_scenario.steps[2].name == "Then the user should see an error message Invalid username or password"
+    assert rendered_scenario.tags == {"scenario_tag", "example_tag_1", "example_tag_2"}
+
+
+def test_step_before_first_scenario_is_parsed_as_description(tmp_path):
+    """A step placed before the first Scenario/Background is parsed as description.
+
+    Since gherkin-official >=29, a ``Given/When/Then`` line that appears before the
+    first Scenario or Background is absorbed into the feature *description* instead
+    of raising a parse error. This pins that behavior. It replaces the former
+    ``test_step_outside_scenario_or_background_error`` (in tests/parser/test_errors.py),
+    which asserted a ``FeatureError`` that no supported gherkin version raises anymore.
+    """
+    feature_file = tmp_path / "test.feature"
+    feature_file.write_text(
+        textwrap.dedent(
+            """\
+            Feature: Feature with a step before the first scenario
+            Given a step that is not inside a scenario or background
+
+                Scenario: A valid scenario
+                    Given a step inside a scenario
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    gherkin_doc = get_gherkin_document(str(feature_file))
+
+    assert gherkin_doc.feature.description == "Given a step that is not inside a scenario or background"
+    scenario_names = [child.scenario.name for child in gherkin_doc.feature.children if child.scenario]
+    assert scenario_names == ["A valid scenario"]
+
+
+def test_render_scenario_with_example_tags_non_first_row():
+    """Example tags must be applied regardless of which row the context comes from.
+
+    Regression test: matching used to compare only the first example row, so any
+    row past the first lost its block's tags.
+    """
+    feature = PytestBddFeature(
+        scenarios=OrderedDict(),
+        filename="test.feature",
+        rel_filename="test.feature",
+        language="en",
+        keyword="Feature",
+        name="Test Feature",
+        tags=set(),
+        background=None,
+        line_number=1,
+        description="A test feature",
+    )
+
+    examples = Examples(
+        line_number=10,
+        name="Multi-row example",
+        example_params=["username", "password"],
+        examples=[
+            ["user1", "pw1"],
+            ["user2", "pw2"],
+        ],
+        tags={"example_tag"},
+    )
+
+    scenario_template = ScenarioTemplate(
+        feature=feature,
+        keyword="Scenario Outline",
+        name="Scenario",
+        line_number=2,
+        templated=True,
+        description="",
+        tags={"scenario_tag"},
+        examples=[examples],
+    )
+    scenario_template.add_step(
+        PytestBddStep(
+            name="Given the user enters <username> as username",
+            type="given",
+            indent=0,
+            line_number=2,
+            keyword="Given",
+        )
+    )
+
+    # Context taken from the SECOND row.
+    rendered_scenario = scenario_template.render({"username": "user2", "password": "pw2"})
+
+    assert rendered_scenario.tags == {"scenario_tag", "example_tag"}
