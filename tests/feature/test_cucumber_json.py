@@ -240,7 +240,7 @@ def test_step_trace(pytester):
 
 
 def test_pytest_fail_in_step_body(pytester):
-    """pytest.fail() raised directly inside a step body is captured as failed in the JSON."""
+    """Test that pytest.fail() in a step body is captured as failed in the JSON output."""
     pytester.makefile(
         ".feature",
         test=textwrap.dedent(
@@ -282,7 +282,7 @@ def test_pytest_fail_in_step_body(pytester):
 
 
 def test_pytest_fail_in_fixture(pytester):
-    """pytest.fail() raised in a fixture used by a step is captured as failed in the JSON."""
+    """Test that pytest.fail() in a fixture used by a step is captured as failed in the JSON output."""
     pytester.makefile(
         ".feature",
         test=textwrap.dedent(
