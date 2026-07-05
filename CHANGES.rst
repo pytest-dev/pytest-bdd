@@ -8,6 +8,10 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 
 Unreleased
 ----------
+- Update documentation to clarify that `--gherkin-terminal-reporter` needs to be used with `-v` or `-vv`.
+- Drop compatibility with pytest < 7.0.0.
+- Support continuation of steps using asterisks `*` instead of `And`/`But`.
+- Added `datatable` argument for steps that contain a datatable.
 
 Added
 +++++
