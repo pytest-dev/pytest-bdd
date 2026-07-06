@@ -4,6 +4,7 @@ import copy
 import os.path
 import re
 import textwrap
+import warnings
 from collections import OrderedDict
 from collections.abc import Generator, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -492,12 +493,21 @@ class FeatureParser:
         )
 
         for child in feature_data.children:
-            if child.background:
-                feature.background = self.parse_background(child.background)
-            elif child.rule:
-                self._parse_and_add_rule(child.rule, feature)
-            elif child.scenario:
-                self._parse_and_add_scenario(child.scenario, feature)
+            match child.background or child.rule or child.scenario:
+                case GherkinBackground() as background:
+                    feature.background = self.parse_background(background)
+                case GherkinRule() as rule:
+                    self._parse_and_add_rule(rule, feature)
+                case GherkinScenario() as scenario:
+                    self._parse_and_add_scenario(scenario, feature)
+                case _:
+                    # An empty Child, or a child kind newer than this gherkin version;
+                    # skip it and warn instead of crashing, to keep working against
+                    # future gherkin releases that add new child types.
+                    warnings.warn(
+                        f"Unknown gherkin child skipped in {self.rel_filename!r}; consider upgrading pytest-bdd.",
+                        stacklevel=2,
+                    )
 
         return feature
 

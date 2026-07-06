@@ -96,6 +96,7 @@ lint.isort.required-imports = [
 
 [tool.coverage.report]
 exclude_lines = [
+    "pragma: no cover",
     "if TYPE_CHECKING:",
     "if typing\\.TYPE_CHECKING:",
 ]
