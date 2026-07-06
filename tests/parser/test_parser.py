@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import textwrap
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -857,7 +858,7 @@ def test_parser():
     assert gherkin_doc == expected_document
 
 
-def test_feature_parser_warns_on_unknown_child_kinds(tmp_path, monkeypatch):
+def test_feature_parser_warns_on_unknown_child_kinds(tmp_path):
     """A Child with none of background/rule/scenario set is skipped with a warning.
 
     The gherkin AST reserves the right to grow new child kinds; ``Child.from_dict``
@@ -882,10 +883,9 @@ def test_feature_parser_warns_on_unknown_child_kinds(tmp_path, monkeypatch):
         document.feature.children.append(Child())
         return document
 
-    monkeypatch.setattr(parser_module, "get_gherkin_document", get_gherkin_document_with_unknown_child)
-
-    with pytest.warns(UserWarning, match="Unknown gherkin child"):
-        feature = parser_module.FeatureParser(str(tmp_path), "minimal.feature").parse()
+    with patch.object(parser_module, "get_gherkin_document", get_gherkin_document_with_unknown_child):
+        with pytest.warns(UserWarning, match="Unknown gherkin child"):
+            feature = parser_module.FeatureParser(str(tmp_path), "minimal.feature").parse()
 
     assert list(feature.scenarios) == ["A scenario"]
     assert feature.background is None
