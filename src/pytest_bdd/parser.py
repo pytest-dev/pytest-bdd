@@ -4,11 +4,10 @@ import copy
 import os.path
 import re
 import textwrap
+import warnings
 from collections import OrderedDict
 from collections.abc import Generator, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-
-from typing_extensions import assert_never
 
 from .exceptions import StepError
 from .gherkin_parser import Background as GherkinBackground
@@ -501,12 +500,14 @@ class FeatureParser:
                     self._parse_and_add_rule(rule, feature)
                 case GherkinScenario() as scenario:
                     self._parse_and_add_scenario(scenario, feature)
-                case None:  # pragma: no cover
-                    # An empty Child (a child kind newer than this gherkin version);
-                    # skip it, like unknown children were skipped before the match.
-                    pass
-                case unreachable:  # pragma: no cover
-                    assert_never(unreachable)
+                case _:
+                    # An empty Child, or a child kind newer than this gherkin version;
+                    # skip it and warn instead of crashing, to keep working against
+                    # future gherkin releases that add new child types.
+                    warnings.warn(
+                        f"Unknown gherkin child skipped in {self.rel_filename!r}; consider upgrading pytest-bdd.",
+                        stacklevel=2,
+                    )
 
         return feature
 
