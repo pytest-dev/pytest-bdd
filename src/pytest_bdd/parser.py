@@ -121,8 +121,7 @@ class Examples:
             dict[str, str]: A dictionary mapping parameter names to their values for each example row.
         """
         for row in self.examples:
-            assert len(self.example_params) == len(row)
-            yield dict(zip(self.example_params, row))
+            yield dict(zip(self.example_params, row, strict=True))
 
     def __bool__(self) -> bool:
         """Check if there are any examples.
@@ -217,7 +216,7 @@ class ScenarioTemplate:
                 line_number=step.line_number,
                 keyword=step.keyword,
                 datatable=step.render_datatable(step.datatable, context) if step.datatable else None,
-                docstring=render_string(step.docstring, context) if step.docstring else None,
+                docstring=render_string(step.docstring, context) if step.docstring is not None else None,
             )
             for step in base_steps
         ]

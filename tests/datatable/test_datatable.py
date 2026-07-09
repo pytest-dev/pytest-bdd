@@ -214,6 +214,61 @@ def test_steps_with_datatable_missing_argument_in_step(pytester):
     result.assert_outcomes(passed=1)
 
 
+def test_datatable_preserves_backslashes(pytester):
+    """Backslashes in a datatable cell must not be over-quoted (see issue #769).
+
+    Gherkin already resolves cell escaping: "\\\\" is a single backslash, "\\|" is a
+    literal pipe, and a lone backslash stays a single backslash. The cell value must
+    reach the step exactly as the feature author wrote it.
+    """
+    pytester.makefile(
+        ".feature",
+        backslash_datatable=textwrap.dedent(
+            r"""Feature: Backslashes in datatables
+
+              Scenario: Backslashes are not over-quoted
+                Given a datatable with backslashes:
+                  | single | double | escaped_pipe | path          |
+                  | \      | \\     | \|           | C:\Users\John |
+            """
+        ),
+    )
+    pytester.makeconftest(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given
+        from pytest_bdd.utils import dump_obj
+
+
+        @given("a datatable with backslashes:")
+        def _(datatable):
+            dump_obj(datatable)
+
+    """
+        )
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario
+
+        @scenario("backslash_datatable.feature", "Backslashes are not over-quoted")
+        def test_backslash_datatable():
+            pass
+        """
+        )
+    )
+
+    result = pytester.runpytest("-s")
+    result.assert_outcomes(passed=1)
+
+    datatable = collect_dumped_objects(result)[0]
+    assert datatable == [
+        ["single", "double", "escaped_pipe", "path"],
+        ["\\", "\\", "|", r"C:\Users\John"],
+    ]
+
+
 def test_datatable_step_argument_is_reserved_and_cannot_be_used(pytester):
     pytester.makefile(
         ".feature",

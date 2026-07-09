@@ -5,9 +5,10 @@ from __future__ import annotations
 import base64
 import pickle
 import re
+from collections.abc import Callable
 from inspect import getframeinfo, signature
 from sys import _getframe
-from typing import TYPE_CHECKING, Callable, TypeVar, cast, overload
+from typing import TYPE_CHECKING, TypeVar, cast, overload
 from weakref import WeakKeyDictionary
 
 if TYPE_CHECKING:
