@@ -544,7 +544,9 @@ def scenarios_class(
             test_function = scenario(
                 feature.filename, scenario_name, encoding=encoding, features_base_dir=features_base_dir
             )(lambda: None)
-            for test_name in get_python_name_generator(scenario_name):
+            # The generator is unbounded, so a free name is always found and the loop
+            # always exits via ``break``; the fall-through branch is unreachable.
+            for test_name in get_python_name_generator(scenario_name):  # pragma: no branch
                 if test_name not in used_names:
                     used_names.add(test_name)
                     # Wrap as a staticmethod so pytest does not pass ``self`` to the
