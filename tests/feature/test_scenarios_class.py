@@ -195,9 +195,7 @@ def test_scenarios_class_deduplicates_colliding_method_names(pytester):
     )
     result = pytester.runpytest("-v")
     result.assert_outcomes(passed=2)
-    result.stdout.fnmatch_lines(
-        ["*TestFeature::test_do_a_thing*", "*TestFeature::test_do_a_thing_1*"]
-    )
+    result.stdout.fnmatch_lines(["*TestFeature::test_do_a_thing*", "*TestFeature::test_do_a_thing_1*"])
 
 
 def test_scenarios_class_raises_when_no_scenarios_found(pytester):
