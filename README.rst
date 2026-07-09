@@ -2,7 +2,7 @@ Pytest-BDD: the BDD framework for pytest
 ========================================
 
 .. image:: https://img.shields.io/pypi/v/pytest-bdd.svg
-   :target: https://pypi.python.org/pypi/pytest-bdd
+   :target: https://pypi.org/project/pytest-bdd
 .. image:: https://codecov.io/gh/pytest-dev/pytest-bdd/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/pytest-dev/pytest-bdd
 .. image:: https://github.com/pytest-dev/pytest-bdd/actions/workflows/main.yml/badge.svg
@@ -24,7 +24,7 @@ mentioned in feature steps with dependency injection. This allows a true BDD
 just-enough specification of the requirements without maintaining any context object
 containing the side effects of Gherkin imperative declarations.
 
-.. _behave: https://pypi.python.org/pypi/behave
+.. _behave: https://pypi.org/project/behave
 .. _pytest-splinter: https://github.com/pytest-dev/pytest-splinter
 
 Install pytest-bdd
@@ -214,8 +214,8 @@ Also opens the possibility to use same step twice in single scenario and with di
 And even more, there are several types of step parameter parsers at your disposal
 (idea taken from behave_ implementation):
 
-.. _pypi_parse: http://pypi.python.org/pypi/parse
-.. _pypi_parse_type: http://pypi.python.org/pypi/parse_type
+.. _pypi_parse: https://pypi.org/project/parse
+.. _pypi_parse_type: https://pypi.org/project/parse-type
 
 **string** (the default)
     This is the default and can be considered as a `null` or `exact` parser. It parses no parameters
@@ -1418,7 +1418,7 @@ Reporting
 ---------
 
 It's important to have nice reporting out of your bdd tests. Cucumber introduced some kind of standard for
-`json format <https://www.relishapp.com/cucumber/cucumber/docs/json-output-formatter>`_
+`json format <https://github.com/cucumber/cucumber-json-formatter>`_
 which can be used for, for example, by `this <https://plugins.jenkins.io/cucumber-testresult-plugin/>`_ Jenkins
 plugin.
 
