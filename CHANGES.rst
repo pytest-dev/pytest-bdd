@@ -11,6 +11,7 @@ Unreleased
 
 Added
 +++++
+* Added ``scenarios_class``, which returns a test class instead of injecting the generated tests into the caller module, so the tests are visible to editors and linters and a single scenario can be overridden by subclassing. `#545 <https://github.com/pytest-dev/pytest-bdd/discussions/545>`_
 
 Changed
 +++++++
