@@ -42,15 +42,12 @@ def test_generate(pytester, monkeypatch, capsys):
 
     from pytest_bdd import (
         given,
-        scenario,
+        scenarios,
         then,
         when,
     )
 
-
-    @scenario('scripts/generate.feature', 'Given and when using the same fixture should not evaluate it twice')
-    def test_given_and_when_using_the_same_fixture_should_not_evaluate_it_twice():
-        """Given and when using the same fixture should not evaluate it twice."""
+    scenarios('scripts/generate.feature')
 
 
     @given('1 have a fixture (appends 1 to a list) in reuse syntax')
@@ -108,15 +105,12 @@ def test_generate_with_quotes(pytester):
 
     from pytest_bdd import (
         given,
-        scenario,
+        scenarios,
         then,
         when,
     )
 
-
-    @scenario('generate_with_quotes.feature', 'A step definition with quotes should be escaped as needed')
-    def test_a_step_definition_with_quotes_should_be_escaped_as_needed():
-        """A step definition with quotes should be escaped as needed."""
+    scenarios('generate_with_quotes.feature')
 
 
     @given('I have a fixture with "double" quotes')
@@ -157,6 +151,37 @@ def test_generate_with_quotes(pytester):
     )
 
 
+def test_generate_is_idempotent(pytester):
+    """Test that invoking the generation script twice yields the same output.
+
+    Also make sure that applying the generated code twice to the same module
+    does not duplicate tests, since scenarios() skips already bound scenarios.
+    """
+    pytester.makefile(
+        ".feature",
+        idempotency=textwrap.dedent(
+            """\
+            Feature: Idempotent code generation
+
+                Scenario: First scenario
+                    Given I have a step
+
+                Scenario: Second scenario
+                    Given I have a step
+            """
+        ),
+    )
+
+    first = pytester.run("pytest-bdd", "generate", "idempotency.feature")
+    second = pytester.run("pytest-bdd", "generate", "idempotency.feature")
+    assert str(first.stdout) == str(second.stdout)
+
+    pytester.makepyfile(str(first.stdout) + "\n\nscenarios('idempotency.feature')\n")
+    result = pytester.runpytest("--collect-only", "-q")
+    collected = [line for line in result.stdout.lines if "::test_" in line]
+    assert len(collected) == 2
+
+
 def test_unicode_characters(pytester, monkeypatch):
     """Test generating code with unicode characters.
 
@@ -184,15 +209,12 @@ def test_unicode_characters(pytester, monkeypatch):
 
             from pytest_bdd import (
                 given,
-                scenario,
+                scenarios,
                 then,
                 when,
             )
 
-
-            @scenario('unicode_characters.feature', 'Calculating the circumference of a circle')
-            def test_calculating_the_circumference_of_a_circle():
-                """Calculating the circumference of a circle."""
+            scenarios('unicode_characters.feature')
 
 
             @given('We have a circle')

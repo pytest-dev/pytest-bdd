@@ -14,6 +14,7 @@ Added
 
 Changed
 +++++++
+* The code generation template (``pytest-bdd generate`` and ``--generate-missing``) now uses the ``scenarios()`` shortcut instead of one ``@scenario()`` decorator per scenario (`#535 <https://github.com/pytest-dev/pytest-bdd/issues/535>`_, `#796 <https://github.com/pytest-dev/pytest-bdd/pull/796>`_).
 * Relaxed `gherkin-official` dependency requirement to `>=29.0.0` to allow for newer versions of the `gherkin-official` package.
 * Excluded `gherkin-official` `31.0.0` and `32.0.0`, which crash with ``StopIteration`` when parsing empty descriptions (fixed upstream in `32.0.1`).
 
