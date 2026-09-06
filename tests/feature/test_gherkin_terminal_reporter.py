@@ -12,6 +12,15 @@ Feature: Gherkin terminal output feature
         Then world explodes
 """
 
+FEATURE_WITH_TAGS = """\
+Feature: Gherkin terminal output feature
+    @R1.1 @R1.2
+    Scenario: Scenario example 1
+        Given there is a bar
+        When the bar is accessed
+        Then world explodes
+"""
+
 TEST = """\
 from pytest_bdd import given, when, then, scenario
 
@@ -95,6 +104,23 @@ def test_double_verbose_mode_should_display_full_scenario_description(pytester):
     result.stdout.fnmatch_lines("*When the bar is accessed")
     result.stdout.fnmatch_lines("*Then world explodes")
     result.stdout.fnmatch_lines("*PASSED")
+
+
+@pytest.mark.parametrize("verbosity", ["-v", "-vv"])
+def test_verbose_modes_display_scenario_tags(pytester, verbosity):
+    pytester.makeini("""\
+[pytest]
+markers =
+    R1.1
+    R1.2
+""")
+    pytester.makefile(".feature", test=FEATURE_WITH_TAGS)
+    pytester.makepyfile(TEST)
+
+    result = pytester.runpytest("--gherkin-terminal-reporter", verbosity)
+
+    result.assert_outcomes(passed=1, failed=0)
+    result.stdout.fnmatch_lines("*(tags: R1.1, R1.2)")
 
 
 @pytest.mark.parametrize("verbosity", ["", "-v", "-vv"])

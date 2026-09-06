@@ -11,6 +11,7 @@ Unreleased
 
 Added
 +++++
+* Gherkin terminal reporter output now includes scenario tags in verbose modes. `#476 <https://github.com/pytest-dev/pytest-bdd/issues/476>`_
 
 Changed
 +++++++

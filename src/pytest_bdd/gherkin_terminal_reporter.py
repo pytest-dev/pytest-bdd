@@ -47,6 +47,10 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore[misc]
         super().__init__(config)
         self.current_rule: str | None = None
 
+    def _write_tags(self, tags: list[str], indent: str) -> None:
+        if tags:
+            self._tw.write(f"{indent}        (tags: {', '.join(tags)})\n")
+
     def pytest_runtest_logreport(self, report: TestReport) -> None:
         rep = report
         res = self.config.hook.pytest_report_teststatus(report=rep, config=self.config)
@@ -96,6 +100,7 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore[misc]
             self._tw.write(" ")
             self._tw.write(word, **word_markup)
             self._tw.write("\n")
+            self._write_tags(scenario["tags"], indent)
         elif self.verbosity > 1:
             self.ensure_newline()
             self._tw.write(f"{scenario['feature']['keyword']}: ", **feature_markup)
@@ -114,6 +119,8 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore[misc]
             for step in scenario["steps"]:
                 self._tw.write(f"{indent}        {step['keyword']} {step['name']}\n", **scenario_markup)
             self._tw.write(f"{indent}    {word}", **word_markup)
-            self._tw.write("\n\n")
+            self._tw.write("\n")
+            self._write_tags(scenario["tags"], indent)
+            self._tw.write("\n")
 
         self.stats.setdefault(cat, []).append(rep)
