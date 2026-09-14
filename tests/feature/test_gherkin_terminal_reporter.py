@@ -95,6 +95,52 @@ def test_double_verbose_mode_should_display_full_scenario_description(pytester):
     result.stdout.fnmatch_lines("*When the bar is accessed")
     result.stdout.fnmatch_lines("*Then world explodes")
     result.stdout.fnmatch_lines("*PASSED")
+    assert not any("(tags:" in line for line in result.stdout.lines)
+
+
+@pytest.mark.parametrize("verbosity", ["-v", "-vv"])
+def test_verbose_mode_should_display_scenario_tags(pytester, verbosity):
+    pytester.makefile(
+        ".feature",
+        test=textwrap.dedent(
+            """\
+        Feature: Tool for network testing
+            @R1.1 @R1.2
+            Scenario: Send packages to socket
+                Given a service listening on a random socket
+                When tool sends packages to socket
+                Then packages are received in the service
+        """
+        ),
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import given, when, then, scenario
+
+
+        @given("a service listening on a random socket")
+        def _():
+            pass
+
+        @when("tool sends packages to socket")
+        def _():
+            pass
+
+        @then("packages are received in the service")
+        def _():
+            pass
+
+        @scenario("test.feature", "Send packages to socket")
+        def test_send_packages_to_socket():
+            pass
+        """
+        )
+    )
+
+    result = pytester.runpytest("--gherkin-terminal-reporter", verbosity)
+    result.assert_outcomes(passed=1, failed=0)
+    result.stdout.fnmatch_lines("*(tags: R1.1, R1.2)")
 
 
 @pytest.mark.parametrize("verbosity", ["", "-v", "-vv"])

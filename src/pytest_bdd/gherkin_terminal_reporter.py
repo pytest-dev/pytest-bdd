@@ -78,6 +78,8 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore[misc]
 
         rule = scenario.get("rule")
         indent = "    " if rule else ""
+        tags = [tag.lstrip("@") for tag in scenario["tags"]]
+        tags_text = ", ".join(tags)
 
         if self.verbosity == 1:
             self.ensure_newline()
@@ -96,6 +98,8 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore[misc]
             self._tw.write(" ")
             self._tw.write(word, **word_markup)
             self._tw.write("\n")
+            if tags:
+                self._tw.write(f"{indent}    (tags: {tags_text})\n", **scenario_markup)
         elif self.verbosity > 1:
             self.ensure_newline()
             self._tw.write(f"{scenario['feature']['keyword']}: ", **feature_markup)
@@ -114,6 +118,10 @@ class GherkinTerminalReporter(TerminalReporter):  # type: ignore[misc]
             for step in scenario["steps"]:
                 self._tw.write(f"{indent}        {step['keyword']} {step['name']}\n", **scenario_markup)
             self._tw.write(f"{indent}    {word}", **word_markup)
-            self._tw.write("\n\n")
+            if tags:
+                self._tw.write("\n")
+                self._tw.write(f"{indent}    (tags: {tags_text})\n\n", **scenario_markup)
+            else:
+                self._tw.write("\n\n")
 
         self.stats.setdefault(cat, []).append(rep)
