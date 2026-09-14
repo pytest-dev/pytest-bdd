@@ -41,7 +41,7 @@ def get_caller_module_locals(stacklevel: int = 1) -> dict[str, object]:
     We use sys._getframe instead of inspect.stack(0) because the latter is way slower, since it iterates over
     all the frames in the stack.
     """
-    return _getframe(stacklevel + 1).f_locals
+    return cast(dict[str, object], _getframe(stacklevel + 1).f_locals)
 
 
 def get_caller_module_path(depth: int = 2) -> str:
