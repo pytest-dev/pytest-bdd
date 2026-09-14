@@ -68,7 +68,7 @@ build = "*"
 twine = "*"
 
 [build-system]
-requires = ["poetry-core==2.2.1"]
+requires = ["poetry-core==2.4.1"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
