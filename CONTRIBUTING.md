@@ -18,5 +18,5 @@ rm -rf ./dist
 uv build
 
 # Upload them
-uv run --group build twine upload dist/*
+uv run --only-group build twine upload dist/*
 ```
