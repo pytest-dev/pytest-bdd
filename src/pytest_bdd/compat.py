@@ -25,18 +25,18 @@ if pytest_version.release >= (8, 1):
         :param arg: argument name
         :param value: argument value
         """
-        # Ensure there's a fixture definition for the argument.
-        # pytest 9.1 deprecated the ``nodeid`` argument in favour of ``node``.
-        scoping: dict[str, object]
         if pytest_version.release >= (9, 1):
-            scoping = {"node": request.node}
+            request._fixturemanager._register_fixture(
+                name=arg,
+                func=lambda: value,
+                node=request.node,
+            )
         else:
-            scoping = {"nodeid": request.node.nodeid}
-        request._fixturemanager._register_fixture(
-            name=arg,
-            func=lambda: value,
-            **scoping,  # type: ignore[arg-type]
-        )
+            request._fixturemanager._register_fixture(
+                name=arg,
+                func=lambda: value,
+                nodeid=request.node.nodeid,
+            )
         # Note the fixture we just registered will have a lower priority
         # if there was already one registered, so we need to force its value
         # to the one we want to inject.
