@@ -78,5 +78,11 @@ def test_given_injection_no_deprecation_warning(pytester):
         """
         )
     )
-    result = pytester.runpytest("-W", "error::DeprecationWarning", "-W", "error::PendingDeprecationWarning")
+    # fmt: off
+    result = pytester.runpytest(
+        "-W", "error::DeprecationWarning",
+        "-W", "error::PendingDeprecationWarning",
+        "-W", "ignore:A private pytest class or function was used:pytest.PytestDeprecationWarning",
+    )
+    # fmat: on
     result.assert_outcomes(passed=1)
