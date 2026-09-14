@@ -5,27 +5,20 @@ on:
   pull_request:
   workflow_dispatch:
 
-env:
-  POETRY_VERSION: "2.4.3"
-
 jobs:
   build:
     name: Build package
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
       - name: Set up Python
         uses: actions/setup-python@v5
-        with:
-          cache: "pip"
-      - name: Install poetry
-        run: python3 -m pip install poetry==${{ env.POETRY_VERSION }}
-      - name: Install build dependencies
-        run: poetry install --only build
       - name: Build a binary wheel and a source tarball
-        run: poetry run python -m build
+        run: uv build
       - name: Check the distribution files with `twine`
-        run: poetry run twine check --strict dist/*
+        run: uv run --group build twine check --strict dist/*
       - name: Upload artifact
         id: artifact-upload-step
         uses: actions/upload-artifact@v4
@@ -73,32 +66,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         id: setup-python
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install poetry
-        run: |
-          # When upgrading poetry, remember to upgrade poetry-core in `pyproject.toml` (`build-system.requires`)
-          python -m pip install poetry==${{ env.POETRY_VERSION }}
-
-      - name: Configure poetry
-        run: |
-          python -m poetry config virtualenvs.in-project true
-
-      - name: Cache the virtualenv
-        id: poetry-dependencies-cache
-        uses: actions/cache@v3
-        with:
-          path: ./.venv
-          key: ${{ runner.os }}-venv-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
       - name: Install dev dependencies
-        if: steps.poetry-dependencies-cache.outputs.cache-hit != 'true'
-        run: |
-          python -m poetry install --only=dev
+        run: uv sync --only-group dev
 
       - name: Download artifact
         uses: actions/download-artifact@v4

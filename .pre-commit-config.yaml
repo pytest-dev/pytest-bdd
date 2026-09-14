@@ -14,8 +14,7 @@ repos:
       - id: ruff
         args: [ --fix ]
       - id: ruff-format
-  - repo: https://github.com/python-poetry/poetry
-    rev: "811a12dae0fe81f199e3f1b88b8b8be9eed543c2"  # frozen: 2.4.1
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: "4f783b6470be305483837130a5be2e21ed7ff52b"  # frozen: 0.12.13
     hooks:
-    -   id: poetry-check
-        args: ["--lock"]
+      - id: uv-lock

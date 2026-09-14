@@ -3,18 +3,17 @@ name = "pytest-bdd"
 version = "8.1.0"
 description = "BDD for pytest"
 authors = [
-    {name="Oleg Pidsadnyi", email="oleg.pidsadnyi@gmail.com"},
-    {name="Anatoly Bubenkov", email="bubenkoff@gmail.com"},
+    { name = "Oleg Pidsadnyi", email = "oleg.pidsadnyi@gmail.com" },
+    { name = "Anatoly Bubenkov", email = "bubenkoff@gmail.com" },
 ]
-maintainers = [
-    {name="Alessio Bogon", email="778703+youtux@users.noreply.github.com"},
-]
-license = "MIT"
+requires-python = ">=3.10"
 readme = "README.rst"
+license = "MIT"
+license-files = ["LICENSE.txt"]
+maintainers = [{ name = "Alessio Bogon", email = "778703+youtux@users.noreply.github.com" }]
 classifiers = [
     "Development Status :: 6 - Mature",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS :: MacOS X",
@@ -29,7 +28,6 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3.15",
 ]
-requires-python = ">=3.10"
 dependencies = [
     "Mako",
     "parse",
@@ -46,31 +44,34 @@ homepage = "https://pytest-bdd.readthedocs.io/"
 documentation = "https://pytest-bdd.readthedocs.io/"
 repository = "https://github.com/pytest-dev/pytest-bdd"
 
-[project.entry-points."pytest11"]
-"pytest-bdd" = "pytest_bdd.plugin"
-
 [project.scripts]
-"pytest-bdd" = "pytest_bdd.scripts:main"
+pytest-bdd = "pytest_bdd.scripts:main"
 
-[tool.poetry.group.dev.dependencies]
-tox = ">=4.11.3"
-mypy = ">=1.6.0"
-types-setuptools = ">=68.2.0.0"
-pytest-xdist = ">=3.3.1"
-coverage = {extras = ["toml"], version = ">=6.5.0"}
-Pygments = ">=2.20.0"  # for code-block highlighting
-# Docs tooling is not needed by the CI test jobs; sphinx-autobuild pulls in
-# watchfiles, which does not build (yet) on pre-release pythons.
-sphinx = {version = "*", python = "<3.15"}
-sphinx-autobuild = {version = "*", python = "<3.15"}
+[project.entry-points.pytest11]
+pytest-bdd = "pytest_bdd.plugin"
 
-[tool.poetry.group.build.dependencies]
-build = "*"
-twine = "*"
+[dependency-groups]
+dev = [
+    "tox>=4.22.0",
+    "mypy>=1.6.0",
+    "types-setuptools>=68.2.0.0",
+    "pytest-xdist>=3.3.1",
+    "coverage[toml]>=6.5.0",
+    "Pygments>=2.20.0",
+    "sphinx",
+    "sphinx-autobuild",
+]
+build = [
+    "build",
+    "twine",
+]
+
+[tool.uv]
+default-groups = "all"
 
 [build-system]
-requires = ["poetry-core==2.4.1"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.12.13,<0.13.0"]
+build-backend = "uv_build"
 
 [tool.ruff]
 line-length = 120
