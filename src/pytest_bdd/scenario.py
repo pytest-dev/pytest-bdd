@@ -489,3 +489,74 @@ def scenarios(*feature_paths: str, encoding: str = "utf-8", features_base_dir: s
             found = True
     if not found:
         raise exceptions.NoScenariosFound(abs_feature_paths)
+
+
+def scenarios_class(
+    *feature_paths: str,
+    encoding: str = "utf-8",
+    features_base_dir: str | None = None,
+    class_name: str = "GeneratedScenarios",
+) -> type:
+    """Build and return a test class from the scenarios in the given feature files.
+
+    Unlike :func:`scenarios`, which injects the generated tests into the caller
+    module, this returns a class. The generated tests are then visible to editors
+    and linters, and a single scenario can be overridden by subclassing::
+
+        from pytest_bdd import scenarios_class
+
+        TestLogin = scenarios_class("login.feature")
+
+    To override one scenario, subclass the returned class and redefine the matching
+    method. The method names follow the same ``test_<scenario name>`` convention as
+    :func:`scenarios`::
+
+        from pytest_bdd import scenario, scenarios_class
+
+        class TestLogin(scenarios_class("login.feature")):
+            @scenario("login.feature", "Failed login")
+            def test_failed_login(self):
+                ...
+
+    :param feature_paths: Feature file paths to use for scenarios.
+    :param encoding: Feature file encoding.
+    :param features_base_dir: Optional base dir for locating feature files. If not
+        set, it is resolved from the ``bdd_features_base_dir`` ini option, otherwise
+        relative to the caller path.
+    :param class_name: Name given to the generated class.
+    :return: A class whose ``test_*`` methods run the collected scenarios.
+    """
+    caller_path = get_caller_module_path()
+
+    if features_base_dir is None:
+        features_base_dir = get_features_base_dir(caller_path)
+
+    abs_feature_paths = []
+    for path in feature_paths:
+        if not os.path.isabs(path):
+            path = os.path.abspath(os.path.join(features_base_dir, path))
+        abs_feature_paths.append(path)
+
+    namespace: dict[str, object] = {}
+    used_names: set[str] = set()
+    found = False
+    for feature in get_features(abs_feature_paths):
+        for scenario_name in feature.scenarios:
+            test_function = scenario(
+                feature.filename, scenario_name, encoding=encoding, features_base_dir=features_base_dir
+            )(lambda: None)
+            # The generator is unbounded, so a free name is always found and the loop
+            # always exits via ``break``; the fall-through branch is unreachable.
+            for test_name in get_python_name_generator(scenario_name):  # pragma: no branch
+                if test_name not in used_names:
+                    used_names.add(test_name)
+                    # Wrap as a staticmethod so pytest does not pass ``self`` to the
+                    # generated wrapper, which only expects the request and example
+                    # fixtures rather than an instance.
+                    namespace[test_name] = staticmethod(test_function)
+                    break
+            found = True
+    if not found:
+        raise exceptions.NoScenariosFound(abs_feature_paths)
+
+    return type(class_name, (), namespace)
