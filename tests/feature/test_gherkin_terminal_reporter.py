@@ -379,7 +379,20 @@ def test_other_terminal_reporter_is_not_compatible(pytester):
 
 
 def test_xdist_is_not_compatible(pytester):
+    pytester.makeconftest(
+        textwrap.dedent(
+            """\
+        import pytest
+
+
+        @pytest.hookimpl(tryfirst=True)
+        def pytest_configure(config):
+            # Pretend xdist is running, without needing xdist installed
+            config.pluginmanager.register(object(), "dsession")
+        """
+        )
+    )
     pytester.makepyfile("def test_apple(): pass")
-    result = pytester.runpytest("--gherkin-terminal-reporter", "-p", "xdist", "-n", "1")
+    result = pytester.runpytest("--gherkin-terminal-reporter")
     assert result.ret == pytest.ExitCode.USAGE_ERROR
     result.stderr.fnmatch_lines("*gherkin-terminal-reporter is not compatible with 'xdist' plugin.")
