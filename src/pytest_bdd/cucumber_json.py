@@ -124,7 +124,7 @@ class LogBDDCucumberJSON:
             status = "skipped"
         else:
             raise ValueError(f"Unknown test outcome {report.outcome}")
-        res: ResultElementDict = {"status": status, "duration": int(math.floor((10**9) * step["duration"]))}  # nanosec
+        res: ResultElementDict = {"status": status, "duration": math.floor((10**9) * step["duration"])}  # nanosec
         if res_message is not None:
             res["error_message"] = res_message
         return res

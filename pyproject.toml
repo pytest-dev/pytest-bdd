@@ -76,7 +76,7 @@ build-backend = "uv_build"
 
 [tool.ruff]
 line-length = 120
-lint.select = [
+lint.extend-select = [
     "B",     # flake8-bugbear
     "BLE",   # flake8-blind-except
     "C4",    # flake8-comprehensions

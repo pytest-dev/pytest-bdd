@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import typing
 
+import pytest
 from _pytest.terminal import TerminalReporter
 
 from .reporting import test_report_context_registry
@@ -28,7 +29,7 @@ def configure(config: Config) -> None:
         # Get the standard terminal reporter plugin and replace it with our
         current_reporter = config.pluginmanager.getplugin("terminalreporter")
         if current_reporter.__class__ != TerminalReporter:
-            raise Exception(
+            raise pytest.UsageError(
                 "gherkin-terminal-reporter is not compatible with any other terminal reporter."
                 "You can use only one terminal reporter."
                 f"Currently '{current_reporter.__class__}' is used."
@@ -39,7 +40,7 @@ def configure(config: Config) -> None:
         config.pluginmanager.unregister(current_reporter)
         config.pluginmanager.register(gherkin_reporter, "terminalreporter")
         if config.pluginmanager.getplugin("dsession"):
-            raise Exception("gherkin-terminal-reporter is not compatible with 'xdist' plugin.")
+            raise pytest.UsageError("gherkin-terminal-reporter is not compatible with 'xdist' plugin.")
 
 
 class GherkinTerminalReporter(TerminalReporter):  # type: ignore[misc]

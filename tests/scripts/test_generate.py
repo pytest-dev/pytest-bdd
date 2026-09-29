@@ -35,7 +35,7 @@ def test_generate(pytester, monkeypatch, capsys):
 
     monkeypatch.setattr(sys, "argv", ["", "generate", str(feature)])
     main()
-    out, err = capsys.readouterr()
+    out, _ = capsys.readouterr()
     assert out == textwrap.dedent(
         '''\
     """Code generation feature tests."""

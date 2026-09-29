@@ -353,3 +353,46 @@ def test_rule_example_format_uses_correct_keywords(pytester):
     result.stdout.fnmatch_lines("*Scenario: Scenario 2*")
     result.stdout.fnmatch_lines("*Rule: Rule 2*")
     result.stdout.fnmatch_lines("*Example: Example 3*")
+
+
+def test_other_terminal_reporter_is_not_compatible(pytester):
+    pytester.makeconftest(
+        textwrap.dedent(
+            """\
+        from _pytest.terminal import TerminalReporter
+
+
+        class AppleReporter(TerminalReporter):
+            pass
+
+
+        def pytest_plugin_registered(plugin):
+            if type(plugin) is TerminalReporter:
+                plugin.__class__ = AppleReporter
+        """
+        )
+    )
+    pytester.makepyfile("def test_apple(): pass")
+    result = pytester.runpytest("--gherkin-terminal-reporter")
+    assert result.ret == pytest.ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines("*gherkin-terminal-reporter is not compatible with any other terminal reporter.*")
+
+
+def test_xdist_is_not_compatible(pytester):
+    pytester.makeconftest(
+        textwrap.dedent(
+            """\
+        import pytest
+
+
+        @pytest.hookimpl(tryfirst=True)
+        def pytest_configure(config):
+            # Pretend xdist is running, without needing xdist installed
+            config.pluginmanager.register(object(), "dsession")
+        """
+        )
+    )
+    pytester.makepyfile("def test_apple(): pass")
+    result = pytester.runpytest("--gherkin-terminal-reporter")
+    assert result.ret == pytest.ExitCode.USAGE_ERROR
+    result.stderr.fnmatch_lines("*gherkin-terminal-reporter is not compatible with 'xdist' plugin.")

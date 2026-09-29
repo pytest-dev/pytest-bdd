@@ -16,7 +16,7 @@ def test_main(monkeypatch, capsys):
     monkeypatch.setattr(sys, "argv", ["pytest-bdd"])
     monkeypatch.setattr(sys, "exit", lambda x: x)
     main()
-    out, err = capsys.readouterr()
+    _, err = capsys.readouterr()
     assert "usage: pytest-bdd [-h]" in err
     assert "pytest-bdd: error:" in err
 
