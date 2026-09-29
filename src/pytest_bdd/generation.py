@@ -187,7 +187,7 @@ def _show_missing_code_main(config: Config, session: Session) -> None:
         session.exitstatus = 100
         return
 
-    features, scenarios, steps = parse_feature_files(config.option.features)
+    _, scenarios, steps = parse_feature_files(config.option.features)
 
     for item in session.items:
         if not isinstance(item, Function):

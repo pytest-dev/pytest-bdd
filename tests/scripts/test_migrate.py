@@ -28,7 +28,7 @@ def test_migrate(monkeypatch, capsys, pytester):
 
     monkeypatch.setattr(sys, "argv", ["", "migrate", str(tests)])
     main()
-    out, err = capsys.readouterr()
+    out, _ = capsys.readouterr()
     out = "\n".join(sorted(out.splitlines()))
     expected = textwrap.dedent(
         """

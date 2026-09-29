@@ -372,7 +372,6 @@ def scenario(
     :param features_base_dir: Optional base dir location for locating feature files. If not set, it will try and resolve using property set in .ini file, then the caller_module_path.
     """
     __tracebackhide__ = True
-    scenario_name = scenario_name
     caller_module_path = get_caller_module_path()
 
     # Get the feature
