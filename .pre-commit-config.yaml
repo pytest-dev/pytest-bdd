@@ -9,12 +9,12 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "c59bba8fb259db0fec2bbb77ad8ba51ea7341b56"  # frozen: v0.15.20
+    rev: "a56c0b927e6465d37cae3e97d35d4d18ab2b96cd"  # frozen: v0.16.9
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [ --fix ]
       - id: ruff-format
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: "4f783b6470be305483837130a5be2e21ed7ff52b"  # frozen: 0.12.13
+    rev: "2aeb804518b4373dbf5adb8dddc5466d9a6e6b21"  # frozen: 0.12.19
     hooks:
       - id: uv-lock
