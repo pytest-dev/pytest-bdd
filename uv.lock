@@ -1256,7 +1256,7 @@ wheels = [
 
 [[package]]
 name = "pytest-bdd"
-version = "8.1.0"
+version = "9.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "gherkin-official" },
