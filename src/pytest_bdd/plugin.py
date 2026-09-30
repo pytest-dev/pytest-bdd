@@ -128,6 +128,17 @@ def pytest_bdd_after_step(
     reporting.after_step(request, feature, scenario, step, step_func, step_func_args)
 
 
+@pytest.hookimpl(tryfirst=True)
+def pytest_bdd_step_func_lookup_error(
+    request: FixtureRequest,
+    feature: Feature,
+    scenario: Scenario,
+    step: Step,
+    exception: Exception,
+) -> None:
+    reporting.step_func_lookup_error(request, feature, scenario, step, exception)
+
+
 def pytest_cmdline_main(config: Config) -> int | None:
     return generation.cmdline_main(config)
 

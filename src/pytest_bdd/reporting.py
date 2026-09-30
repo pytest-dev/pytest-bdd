@@ -226,6 +226,24 @@ def step_error(
     scenario_reports_registry[request.node].fail()
 
 
+def step_func_lookup_error(
+    request: FixtureRequest,
+    feature: Feature,
+    scenario: Scenario,
+    step: Step,
+    exception: Exception,
+) -> None:
+    """Record the step with the missing definition as failed.
+
+    Without this, a scenario whose first step has no definition would leave
+    no step reports behind, and reporters (e.g. the cucumber json report)
+    would silently drop the whole scenario.
+    """
+    scenario_report = scenario_reports_registry[request.node]
+    scenario_report.add_step_report(StepReport(step=step))
+    scenario_report.fail()
+
+
 def before_step(
     request: FixtureRequest,
     feature: Feature,

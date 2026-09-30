@@ -239,6 +239,56 @@ def test_step_trace(pytester):
     assert jsonobject == expected
 
 
+def test_missing_first_step_definition(pytester):
+    """Test that a scenario whose first step is not implemented is still reported (see issue #721)."""
+    pytester.makefile(
+        ".feature",
+        test=textwrap.dedent(
+            """
+    Feature: Missing step definitions
+        Scenario: First step missing
+            Given a missing first step
+            When a present second step
+            Then a present third step
+    """
+        ),
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """
+        from pytest_bdd import scenario, then, when
+
+        @when('a present second step')
+        def _():
+            pass
+
+        @then('a present third step')
+        def _():
+            pass
+
+        @scenario('test.feature', 'First step missing')
+        def test_scenario():
+            pass
+    """
+        )
+    )
+    result, jsonobject = runandparse(pytester)
+    result.assert_outcomes(failed=1)
+
+    elements = jsonobject[0]["elements"]
+    assert len(elements) == 1
+    assert elements[0]["name"] == "First step missing"
+
+    steps = elements[0]["steps"]
+    assert [step["name"] for step in steps] == [
+        "a missing first step",
+        "a present second step",
+        "a present third step",
+    ]
+    assert steps[0]["result"]["status"] == "failed"
+    assert "Step definition is not found" in steps[0]["result"]["error_message"]
+
+
 def test_pytest_fail_in_step_body(pytester):
     """Test that pytest.fail() in a step body is captured as failed in the JSON output."""
     pytester.makefile(
