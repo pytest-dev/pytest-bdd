@@ -23,6 +23,7 @@ Removed
 
 Fixed
 +++++
+* ``--generate-missing`` no longer reports a defined background step as missing when the feature also has a scenario that is not bound to a test.
 
 Security
 ++++++++
