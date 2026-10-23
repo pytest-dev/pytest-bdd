@@ -1054,6 +1054,25 @@ of the "published_article" and the "article" fixtures is the same object.
 
 Fixtures are evaluated **only once** within the PyTest scope and their values are cached.
 
+By default the fixtures used by a step are requested when that step runs, so an exception
+raised by one of them is reported as a test failure and attributed to that step
+(through the ``pytest_bdd_step_error`` hook and in the cucumber JSON report).
+If you prefer such exceptions to be reported as errors, like in regular pytest tests,
+set ``bdd_setup_step_fixtures`` in the pytest configuration file:
+
+.. code-block:: ini
+
+    [pytest]
+    bdd_setup_step_fixtures = true
+
+The step fixtures are then requested during the test setup, before any step runs.
+Fixtures that are, or depend on, a ``target_fixture`` of a step are still requested
+by the steps, since their value is only known once that step has run.
+Other fixtures are created before the steps, so a fixture that reads state changed
+by an earlier step should not be used with this option.
+A scenario whose setup fails does not run any step, so it does not appear in the
+cucumber JSON report.
+
 
 Backgrounds
 -----------

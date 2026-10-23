@@ -285,6 +285,56 @@ def _execute_scenario(feature: Feature, scenario: Scenario, request: FixtureRequ
         request.config.hook.pytest_bdd_after_scenario(request=request, feature=feature, scenario=scenario)
 
 
+def _depends_on(fixturemanager: FixtureManager, node: Node, fixturename: str, names: set[str]) -> bool:
+    """Check whether ``fixturename`` is, or transitively requests, one of ``names``."""
+    seen: set[str] = set()
+    pending = [fixturename]
+    while pending:
+        name = pending.pop()
+        if name in names:
+            return True
+        if name in seen:
+            continue
+        seen.add(name)
+        # Check every definition, since an overriding fixture can request the one it overrides.
+        for fixturedef in getfixturedefs(fixturemanager, name, node) or ():
+            pending.extend(fixturedef.argnames)
+    return False
+
+
+def setup_step_fixtures(item: pytest.Item) -> None:
+    """Request the fixtures used by the scenario steps during the setup phase.
+
+    Otherwise they would only be requested while the steps run, and an exception raised
+    by one of them would be reported as a test failure instead of an error.
+
+    Fixtures that are (or depend on) a ``target_fixture`` of any step are left for the
+    steps to request, since their value is only known once that step has run.
+    """
+    __tracebackhide__ = True
+    templated_scenario = registry_get_safe(scenario_wrapper_template_registry, getattr(item, "obj", None))
+    request = getattr(item, "_request", None)
+    if templated_scenario is None or request is None:
+        return
+
+    scenario = templated_scenario.render(request.getfixturevalue("_pytest_bdd_example"))
+    contexts = [get_step_function(request=request, step=step) for step in scenario.steps]
+    target_fixtures = {context.target_fixture for context in contexts if context and context.target_fixture}
+
+    for step, context in zip(scenario.steps, contexts, strict=True):
+        if context is None:
+            # A missing step definition is reported when the scenario runs.
+            return
+        # Only the argument names are needed here; values are parsed and converted when the step runs.
+        # "datatable" and "docstring" are filled in by the step, not by fixtures.
+        step_args = set(context.parser.parse_arguments(step.name) or {}) | STEP_ARGUMENTS_RESERVED_NAMES
+
+        for arg in get_required_args(context.step_func):
+            if arg in step_args or _depends_on(request._fixturemanager, item, arg, target_fixtures):
+                continue
+            request.getfixturevalue(arg)
+
+
 def _get_scenario_decorator(
     feature: Feature, feature_name: str, templated_scenario: ScenarioTemplate, scenario_name: str
 ) -> Callable[[Callable[..., T]], Callable[[FixtureRequest, dict[str, str]], T]]:
