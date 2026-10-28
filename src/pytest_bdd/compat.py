@@ -148,7 +148,7 @@ else:
         add_fixturename = arg not in request.fixturenames
 
         def fin() -> None:
-            request._fixturemanager._arg2fixturedefs[arg].remove(fd)
+            request._fixturemanager._arg2fixturedefs[arg].remove(fd)  # type: ignore
 
             if old_fd is not None:
                 request._fixture_defs[arg] = old_fd
@@ -159,7 +159,7 @@ else:
         request.addfinalizer(fin)
 
         # inject fixture definition
-        request._fixturemanager._arg2fixturedefs.setdefault(arg, []).append(fd)
+        request._fixturemanager._arg2fixturedefs.setdefault(arg, []).append(fd)  # type: ignore
 
         # inject fixture value in request cache
         request._fixture_defs[arg] = fd
