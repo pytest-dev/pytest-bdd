@@ -9,6 +9,14 @@ import pytest
 from pytest_bdd.reporting import test_report_context_registry
 
 
+def match_call_report(result, name):
+    """Find the call report of the test with the given name (parametrization included)."""
+    [report] = [
+        r for r in result.getreports("pytest_runtest_logreport") if r.when == "call" and r.nodeid.endswith(f"::{name}")
+    ]
+    return report
+
+
 class OfType:
     """Helper object comparison to which is always 'equal'."""
 
@@ -184,7 +192,7 @@ def test_step_trace(pytester):
     }
     assert scenario == expected
 
-    report = result.matchreport("test_outlined[12-5-7]", when="call")
+    report = match_call_report(result, "test_outlined[12-5-7]")
     scenario = test_report_context_registry[report].scenario
     expected = {
         "feature": {
@@ -231,7 +239,7 @@ def test_step_trace(pytester):
     }
     assert scenario == expected
 
-    report = result.matchreport("test_outlined[5-4-1]", when="call")
+    report = match_call_report(result, "test_outlined[5-4-1]")
     scenario = test_report_context_registry[report].scenario
     expected = {
         "feature": {
@@ -339,7 +347,7 @@ def test_complex_types(pytester, pytestconfig):
         )
     )
     result = pytester.inline_run("-vvl")
-    report = result.matchreport("test_complex[10,20-alien0]", when="call")
+    report = match_call_report(result, "test_complex[10,20-alien0]")
     assert report.passed
 
     report_context = test_report_context_registry[report]
