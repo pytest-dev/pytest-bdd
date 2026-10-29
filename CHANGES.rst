@@ -23,6 +23,7 @@ Removed
 
 Fixed
 +++++
+* Fixed ``AttributeError: 'FixtureManager' object has no attribute '_arg2fixturedefs'`` with pytest 9.2.0 (`#850 <https://github.com/pytest-dev/pytest-bdd/issues/850>`_).
 
 Security
 ++++++++
