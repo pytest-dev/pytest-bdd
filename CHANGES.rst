@@ -11,6 +11,7 @@ Unreleased
 
 Added
 +++++
+* New ``bdd_setup_step_fixtures`` ini option: request the fixtures used by steps during the test setup, so that an exception raised by one of them is reported as an error instead of a failure. `#782 <https://github.com/pytest-dev/pytest-bdd/issues/782>`_
 
 Changed
 +++++++
