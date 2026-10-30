@@ -27,7 +27,7 @@ from _pytest.fixtures import FixtureDef, FixtureManager, FixtureRequest, call_fi
 from _pytest.outcomes import Failed
 
 from . import exceptions
-from .compat import getfixturedefs, inject_fixture
+from .compat import get_fixture_names, getfixturedefs, inject_fixture, inject_temporary_fixturedefs
 from .feature import get_feature, get_features
 from .steps import StepFunctionContext, get_step_fixture_name, step_function_context_registry
 from .utils import (
@@ -60,11 +60,13 @@ scenario_wrapper_template_registry: WeakKeyDictionary[Callable[..., object], Sce
 
 
 def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: Node) -> Iterable[FixtureDef[object]]:
-    """Find the fixture defs that can parse a step."""
-    # happens to be that _arg2fixturedefs is changed during the iteration so we use a copy
-    fixture_def_by_name = list(fixturemanager._arg2fixturedefs.items())
-    for fixturename, fixturedefs in fixture_def_by_name:
-        for _, fixturedef in enumerate(fixturedefs):
+    """Find the fixture defs (of step definitions) that can parse a step and are visible to the given node."""
+    # pytest has no public API to list the registered fixtures, so we go through all their names.
+    # The names are a snapshot, so we can safely iterate even if fixtures are registered meanwhile.
+    for fixturename in get_fixture_names(fixturemanager=fixturemanager):
+        # We let pytest decide which definitions are visible to `node` (scoping and overriding rules),
+        # instead of re-implementing that logic here.
+        for fixturedef in getfixturedefs(fixturemanager, fixturename, node) or []:
             step_func_context = step_function_context_registry.get(fixturedef.func)
             if step_func_context is None:
                 continue
@@ -74,10 +76,6 @@ def find_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: 
 
             match = step_func_context.parser.is_matching(step.name)
             if not match:
-                continue
-
-            fixturedefs = list(getfixturedefs(fixturemanager, fixturename, node) or [])
-            if fixturedef not in fixturedefs:
                 continue
 
             yield fixturedef
@@ -134,11 +132,14 @@ def iterparentnodeids(nodeid: str) -> Iterator[str]:
 def inject_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node: Node) -> Iterator[None]:
     """Inject fixture definitions that can parse a step.
 
+    This is a context manager: the injected fixture only exists while the `with` block is active.
+
     We fist iterate over all the fixturedefs that can parse the step.
 
     Then we sort them by their "path" (list of parent IDs) so that we respect the fixture scoping rules.
 
-    Finally, we inject them into the request.
+    Finally, we register them all under a single synthetic fixture name (see `get_step_fixture_name`),
+    so that `request.getfixturevalue(...)` can resolve the right step definition using pytest's own machinery.
     """
     bdd_name = get_step_fixture_name(step=step)
 
@@ -157,12 +158,9 @@ def inject_fixturedefs_for_step(step: Step, fixturemanager: FixtureManager, node
         return
 
     logger.debug("Adding providers for fixture %r: %r", bdd_name, fixturedefs)
-    fixturemanager._arg2fixturedefs[bdd_name] = fixturedefs
-
-    try:
+    # The injection is removed when the block exits, so that the step fixture doesn't outlive this lookup.
+    with inject_temporary_fixturedefs(fixturemanager=fixturemanager, name=bdd_name, fixturedefs=fixturedefs, node=node):
         yield
-    finally:
-        del fixturemanager._arg2fixturedefs[bdd_name]
 
 
 def get_step_function(request: FixtureRequest, step: Step) -> StepFunctionContext | None:

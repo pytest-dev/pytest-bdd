@@ -24,6 +24,7 @@ Removed
 Fixed
 +++++
 * ``--generate-missing`` no longer reports a defined background step as missing when the feature also has a scenario that is not bound to a test.
+* Fixed ``AttributeError: 'FixtureManager' object has no attribute '_arg2fixturedefs'`` with pytest 9.2.0 (`#850 <https://github.com/pytest-dev/pytest-bdd/issues/850>`_).
 
 Security
 ++++++++
