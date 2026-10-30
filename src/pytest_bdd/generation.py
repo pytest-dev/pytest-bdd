@@ -156,7 +156,8 @@ def parse_feature_files(
         itertools.chain.from_iterable(feature.scenarios.values() for feature in features),
         key=lambda scenario: (scenario.feature.name or scenario.feature.filename, scenario.name),
     )
-    steps = sorted((step for scenario in scenarios for step in scenario.steps), key=lambda step: step.name)
+    # Background steps are shared by every scenario of the feature (or rule), so keep each step object only once.
+    steps = sorted(dict.fromkeys(step for scenario in scenarios for step in scenario.steps), key=lambda step: step.name)
     return features, scenarios, steps
 
 
