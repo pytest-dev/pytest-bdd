@@ -1,10 +1,35 @@
 Changelog
 =========
 
-All notable changes to this project will be documented in this file.
+..
+  All notable changes to this project will be documented in this file.
 
-The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.1.0/>`_,
-and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
+  The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.1.0/>`_,
+  and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
+
+  This is the template to copy and paste every time we make a release:
+
+  Unreleased
+  ----------
+
+  Added
+  +++++
+
+  Changed
+  +++++++
+
+  Deprecated
+  ++++++++++
+
+  Removed
+  +++++++
+
+  Fixed
+  +++++
+
+  Security
+  ++++++++
+
 
 Unreleased
 ----------
@@ -31,40 +56,19 @@ Security
 [9.0.1] - 2026-10-31
 ----------
 
-Added
-+++++
-
-Changed
-+++++++
-
-Deprecated
-++++++++++
-
-Removed
-+++++++
-
 Fixed
 +++++
 * Fixed ``AttributeError: 'FixtureManager' object has no attribute '_arg2fixturedefs'`` with pytest 9.2.0 (`#850 <https://github.com/pytest-dev/pytest-bdd/issues/850>`_).
 
-Security
-++++++++
-
 
 [9.0.0] - 2026-09-30
 ----------
-
-Added
-+++++
 
 Changed
 +++++++
 * Relaxed `gherkin-official` dependency requirement to `>=29.0.0` to allow for newer versions of the `gherkin-official` package.
 * Excluded `gherkin-official` `31.0.0` and `32.0.0`, which crash with ``StopIteration`` when parsing empty descriptions (fixed upstream in `32.0.1`).
 * The ``--gherkin-terminal-reporter`` incompatibility errors (with another terminal reporter or with ``xdist``) are now raised as ``pytest.UsageError`` instead of a bare ``Exception``.
-
-Deprecated
-++++++++++
 
 Removed
 +++++++
@@ -82,33 +86,18 @@ Fixed
 * Empty docstrings are now correctly forwarded to step functions as an empty string instead of being silently dropped, which previously caused pytest to report a missing ``docstring`` fixture. `#809 <https://github.com/pytest-dev/pytest-bdd/issues/809>`_
 * Injecting a ``target_fixture`` no longer emits ``PytestRemovedIn10Warning`` on pytest 9.1+, which deprecated passing ``nodeid`` to ``_register_fixture``. `#823 <https://github.com/pytest-dev/pytest-bdd/issues/823>`_
 
-Security
-++++++++
-
 [8.1.0] - 2024-12-05
 ----------
-
-Added
-+++++
 
 Changed
 +++++++
 * Step arguments ``"datatable"`` and ``"docstring"`` are now reserved, and they can't be used as step argument names. An error is raised if a step parser uses these names.
 * Scenario ``description`` field is now set for Cucumber JSON output.
 
-Deprecated
-++++++++++
-
-Removed
-+++++++
-
 Fixed
 +++++
 * Fixed an issue with the upcoming pytest release related to the use of ``@pytest.mark.usefixtures`` with an empty list.
 * Render template variables in docstrings and datatable cells with example table entries, as we already do for steps definitions.
-
-Security
-++++++++
 
 
 [8.0.0] - 2024-11-14
