@@ -8,6 +8,8 @@
 
 ## ✅ Checklist
 
+<!-- Do not delete checklist items. If an item does not apply, keep it and add a sub-bullet saying "Waived: does not apply because ...". -->
+
 - [ ] I have added an entry to `CHANGES.rst`.
 - [ ] The changes are covered by tests.
 - [ ] I have updated the documentation where necessary.
