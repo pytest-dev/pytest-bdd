@@ -89,6 +89,56 @@ def test_generate_missing(pytester):
     result.stdout.fnmatch_lines(["Please place the code above to the test file(s):"])
 
 
+def test_generate_missing_defined_background_step_with_unbound_scenario(pytester):
+    """Test that a defined background step is not reported as missing when another scenario is not bound."""
+    pytester.makefile(
+        ".feature",
+        generation=textwrap.dedent(
+            """\
+            Feature: Missing code generation with a background
+
+                Background:
+                    Given I have a foobar
+
+                Scenario: Bound scenario
+                    Given I have a bar
+
+                Scenario: Unbound scenario
+                    Given I have a bar
+            """
+        ),
+    )
+
+    pytester.makepyfile(
+        textwrap.dedent(
+            """\
+        from pytest_bdd import scenario, given
+
+        @given("I have a foobar")
+        def _():
+            return "foobar"
+
+        @given("I have a bar")
+        def _():
+            return "bar"
+
+        @scenario("generation.feature", "Bound scenario")
+        def test_bound():
+            pass
+        """
+        )
+    )
+
+    result = pytester.runpytest("--generate-missing", "--feature", "generation.feature")
+    result.assert_outcomes(passed=0, failed=0, errors=0)
+    assert not result.stderr.str()
+    assert result.ret == 0
+
+    result.stdout.fnmatch_lines(['Scenario "Unbound scenario" is not bound to any test *'])
+    result.stdout.no_fnmatch_line("*Background step*is not defined*")
+    result.stdout.no_fnmatch_line("*@given('I have a foobar')*")
+
+
 def test_generate_missing_with_step_parsers(pytester):
     """Test that step parsers are correctly discovered and won't be part of the missing steps."""
     pytester.makefile(
