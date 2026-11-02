@@ -1256,7 +1256,7 @@ wheels = [
 
 [[package]]
 name = "pytest-bdd"
-version = "9.0.0"
+version = "9.0.1"
 source = { editable = "." }
 default-groups = "all"
 dependencies = [
