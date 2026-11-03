@@ -36,6 +36,7 @@ Unreleased
 
 Added
 +++++
+* Support `Markdown with Gherkin <https://github.com/cucumber/gherkin/blob/main/MARKDOWN_WITH_GHERKIN.md>`_ feature files. Files ending in ``.md`` are parsed with the official Markdown token matcher, and ``scenarios()`` collects ``*.feature.md`` files from directories. Requires ``gherkin-official>=32.2.0``; older releases raise ``FeatureError`` for Markdown files. `#780 <https://github.com/pytest-dev/pytest-bdd/issues/780>`_
 
 Changed
 +++++++

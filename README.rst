@@ -1212,6 +1212,33 @@ tests/test_publish_article.py:
 The `features_base_dir` parameter can also be passed to the `@scenario` decorator.
 
 
+Markdown with Gherkin
+---------------------
+
+Feature files can also be written in `Markdown with Gherkin <https://github.com/cucumber/gherkin/blob/main/MARKDOWN_WITH_GHERKIN.md>`__ (MDG), so that prose documentation and scenarios live in the same document.
+A feature file whose name ends with ``.md`` is parsed as MDG, and ``scenarios()`` collects ``*.feature.md`` files from directories next to ``*.feature`` files. Other Markdown files, such as ``README.md``, are not collected.
+MDG requires ``gherkin-official>=32.2.0``.
+
+features/publish_article.feature.md:
+
+.. code-block:: markdown
+
+    `@article`
+    # Feature: Blog
+
+    Prose that documents the feature stays out of the scenarios.
+
+    ## Scenario: Publishing the article
+
+    * Given I'm an author user
+    * And I have an article
+    * When I go to the article page
+    * Then I should see the published article
+
+Headings carry the keywords, steps are list items, tags are inline code on the line above a heading, doc strings are fenced code blocks right after a step, and data tables and examples tables must be indented by two to five spaces.
+Because of these rules, a fenced code block placed directly after a step becomes that step's doc string, and inline code that looks like a tag (for example `` `@slow` ``) in a prose line is read as a tag line.
+
+
 Avoid retyping the feature file name
 ------------------------------------
 
