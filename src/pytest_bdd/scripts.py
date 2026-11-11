@@ -68,7 +68,12 @@ def main() -> None:
     parser_generate.set_defaults(func=print_generated_code)
 
     parser_migrate = subparsers.add_parser("migrate", help="migrate help")
-    parser_migrate.add_argument("path", metavar="PATH", help="Migrate outdated tests to the most recent form")
+    parser_migrate.add_argument(
+        "path",
+        metavar="PATH",
+        type=check_existense,
+        help="Migrate outdated tests to the most recent form",
+    )
     parser_migrate.set_defaults(func=migrate_tests)
 
     args = parser.parse_args()
