@@ -6,6 +6,8 @@ import os
 import sys
 import textwrap
 
+import pytest
+
 from pytest_bdd.scripts import main
 
 PATH = os.path.dirname(__file__)
@@ -46,3 +48,13 @@ def test_migrate(monkeypatch, capsys, pytester):
         pass
     '''
     )
+
+
+def test_migrate_missing_path(monkeypatch, capsys):
+    """Migrating a nonexistent path must fail loudly instead of silently doing nothing."""
+    monkeypatch.setattr(sys, "argv", ["", "migrate", os.path.join(PATH, "does-not-exist")])
+    with pytest.raises(SystemExit) as excinfo:
+        main()
+    assert excinfo.value.code == 2
+    _, err = capsys.readouterr()
+    assert "invalid file or directory name" in err
