@@ -35,6 +35,9 @@ from .parser import Feature, FeatureParser
 # Global features dictionary
 features: dict[str, Feature] = {}
 
+# Gherkin files and Markdown with Gherkin files collected from directories
+FEATURE_FILE_PATTERNS = ("*.feature", "*.feature.md")
+
 
 def get_feature(base_path: str, filename: str, encoding: str = "utf-8") -> Feature:
     """Get a feature by the filename.
@@ -71,7 +74,11 @@ def get_features(paths: Iterable[str], encoding: str = "utf-8") -> list[Feature]
         if path not in seen_names:
             seen_names.add(path)
             if os.path.isdir(path):
-                file_paths = list(glob.iglob(os.path.join(path, "**", "*.feature"), recursive=True))
+                file_paths = [
+                    file_path
+                    for pattern in FEATURE_FILE_PATTERNS
+                    for file_path in glob.iglob(os.path.join(path, "**", pattern), recursive=True)
+                ]
                 _features.extend(get_features(file_paths, encoding=encoding))
             else:
                 base, name = os.path.split(path)
