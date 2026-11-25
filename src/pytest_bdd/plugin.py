@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, ParamSpec, TypeVar, cast
 import pytest
 
 from . import cucumber_json, generation, gherkin_terminal_reporter, given, reporting, then, when
+from .scenario import setup_step_fixtures
 from .utils import CONFIG_STACK
 
 if TYPE_CHECKING:
@@ -64,6 +65,12 @@ def pytest_addoption(parser: Parser) -> None:
 
 def add_bdd_ini(parser: Parser) -> None:
     parser.addini("bdd_features_base_dir", "Base features directory.")
+    parser.addini(
+        "bdd_setup_step_fixtures",
+        "Request the fixtures used by steps during test setup, so that errors in them are reported as errors.",
+        type="bool",
+        default=False,
+    )
 
 
 @pytest.hookimpl(trylast=True)
@@ -79,6 +86,14 @@ def pytest_unconfigure(config: Config) -> None:
     if CONFIG_STACK:
         CONFIG_STACK.pop()
     cucumber_json.unconfigure(config)
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_runtest_setup(item: Item) -> None:
+    # Runs after pytest has set up the test's own fixtures, so errors in step fixtures
+    # are reported as setup errors.
+    if item.config.getini("bdd_setup_step_fixtures"):
+        setup_step_fixtures(item)
 
 
 @pytest.hookimpl(hookwrapper=True)
