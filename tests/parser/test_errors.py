@@ -2,6 +2,14 @@ from __future__ import annotations
 
 import textwrap
 
+import pytest
+
+from pytest_bdd import exceptions
+from pytest_bdd.gherkin_parser import (
+    _description_step_keywords,
+    _raise_if_step_in_feature_description,
+)
+
 
 def test_multiple_features_error(pytester):
     """Test multiple features in a single feature file."""
@@ -70,6 +78,106 @@ def test_step_outside_scenario_or_background_error(pytester):
 
     # Expect the FeatureError for the step outside of scenario or background
     result.stdout.fnmatch_lines(["*FeatureError: Step definition outside of a Scenario or a Background.*"])
+
+
+def test_step_outside_scenario_or_background_error_localized(pytester):
+    """A misplaced step is detected regardless of the feature language.
+
+    The detection uses the Gherkin dialect for the file's language, so a step
+    keyword from a non-English dialect (here French ``Soit``) is reported the
+    same way as the English one.
+    """
+    features = pytester.mkdir("features")
+    features.joinpath("test.feature").write_text(
+        textwrap.dedent(
+            """\
+            # language: fr
+            Fonctionnalité: Fonctionnalité invalide
+            Soit une étape hors de tout scénario
+
+                Scénario: Un scénario valide
+                    Soit une étape dans le scénario
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    pytester.makepyfile(
+        textwrap.dedent(
+            """
+            from pytest_bdd import scenarios, given
+
+            @given("une étape dans le scénario")
+            def step_inside_scenario():
+                pass
+
+            scenarios('features')
+            """
+        )
+    )
+
+    result = pytester.runpytest()
+
+    result.stdout.fnmatch_lines(["*FeatureError: Step definition outside of a Scenario or a Background.*"])
+
+
+def test_step_keyword_later_in_description_is_allowed(pytester):
+    """A step keyword is only flagged when it opens the description, not later on."""
+    features = pytester.mkdir("features")
+    features.joinpath("test.feature").write_text(
+        textwrap.dedent(
+            """\
+            Feature: Documented feature
+                This description opens with plain text.
+                Given lines like this are legitimate free text once they are not first.
+
+                Scenario: A valid scenario
+                    Given a step in the scenario
+            """
+        ),
+        encoding="utf-8",
+    )
+    pytester.makepyfile(
+        textwrap.dedent(
+            """
+            from pytest_bdd import scenarios, given
+
+            @given("a step in the scenario")
+            def step_inside_scenario():
+                pass
+
+            scenarios('features')
+            """
+        )
+    )
+
+    result = pytester.runpytest()
+
+    result.assert_outcomes(passed=1)
+
+
+def test_description_step_keywords_unknown_language_returns_empty():
+    """An unknown language yields no keywords instead of raising."""
+    assert _description_step_keywords("not-a-language") == ()
+
+
+def test_raise_if_step_in_feature_description_ignores_missing_feature():
+    """The check is a no-op when the parsed data has no feature."""
+    _raise_if_step_in_feature_description({}, "", "dummy.feature")
+
+
+def test_raise_if_step_in_feature_description_falls_back_to_feature_location():
+    """When the offending line is not found verbatim, the feature location is used."""
+    data = {
+        "feature": {
+            "description": "Given something",
+            "language": "en",
+            "location": {"line": 3},
+        }
+    }
+    with pytest.raises(exceptions.FeatureError) as excinfo:
+        _raise_if_step_in_feature_description(data, "Feature: x\n", "dummy.feature")
+    assert excinfo.value.line == 3
 
 
 def test_multiple_backgrounds_error(pytester):
