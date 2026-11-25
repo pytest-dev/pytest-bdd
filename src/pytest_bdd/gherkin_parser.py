@@ -6,16 +6,23 @@ import textwrap
 import typing
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from importlib.metadata import version
 from typing import Any
 
 from gherkin.errors import CompositeParserException  # type: ignore
 from gherkin.parser import Parser  # type: ignore
+from gherkin.token_matcher_markdown import GherkinInMarkdownTokenMatcher  # type: ignore
+from gherkin.token_scanner import TokenScanner  # type: ignore
+from packaging.version import parse as parse_version
 
 from . import exceptions
 
 if typing.TYPE_CHECKING:
     from typing_extensions import Self
 
+MARKDOWN_SUFFIX = ".md"
+# Earlier releases crash on any Markdown with Gherkin document in the Python parser.
+MARKDOWN_MINIMUM_GHERKIN_VERSION = parse_version("32.2.0")
 
 ERROR_PATTERNS = [
     (
@@ -304,12 +311,28 @@ class GherkinDocument:
         )
 
 
+def parse_gherkin(feature_file_text: str, abs_filename: str) -> Mapping[str, Any]:
+    """Parse Gherkin, or Markdown with Gherkin when the file name ends with ``.md``."""
+    if not abs_filename.endswith(MARKDOWN_SUFFIX):
+        return Parser().parse(feature_file_text)
+    gherkin_version = parse_version(version("gherkin-official"))
+    if gherkin_version < MARKDOWN_MINIMUM_GHERKIN_VERSION:
+        raise exceptions.FeatureError(
+            f"Markdown with Gherkin requires gherkin-official>={MARKDOWN_MINIMUM_GHERKIN_VERSION}, "
+            f"found {gherkin_version}",
+            0,
+            "",
+            abs_filename,
+        )
+    return Parser().parse(TokenScanner(feature_file_text), GherkinInMarkdownTokenMatcher())
+
+
 def get_gherkin_document(abs_filename: str, encoding: str = "utf-8") -> GherkinDocument:
     with open(abs_filename, encoding=encoding) as f:
         feature_file_text = f.read()
 
     try:
-        gherkin_data = Parser().parse(feature_file_text)
+        gherkin_data = parse_gherkin(feature_file_text, abs_filename)
     except CompositeParserException as e:
         message = e.args[0]
         line = e.errors[0].location["line"]
